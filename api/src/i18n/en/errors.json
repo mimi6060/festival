@@ -1,0 +1,59 @@
+{
+  "http": {
+    "400": "Bad request",
+    "401": "Authentication required",
+    "403": "Access denied",
+    "404": "Resource not found",
+    "405": "Method not allowed",
+    "409": "Conflict with current resource state",
+    "422": "Unprocessable entity",
+    "429": "Too many requests. Please try again later.",
+    "500": "Internal server error",
+    "502": "Gateway error",
+    "503": "Service temporarily unavailable"
+  },
+  "database": {
+    "connectionFailed": "Failed to connect to database",
+    "queryFailed": "Error executing query",
+    "recordNotFound": "Record not found",
+    "duplicateEntry": "This entry already exists",
+    "constraintViolation": "Database constraint violation"
+  },
+  "file": {
+    "uploadFailed": "File upload failed",
+    "tooLarge": "File is too large. Maximum size: {maxSize}",
+    "invalidType": "File type not allowed. Accepted types: {allowedTypes}",
+    "notFound": "File not found"
+  },
+  "payment": {
+    "failed": "Payment failed",
+    "cancelled": "Payment was cancelled",
+    "insufficientFunds": "Insufficient funds",
+    "cardDeclined": "Card declined",
+    "refundFailed": "Unable to process refund"
+  },
+  "festival": {
+    "notFound": "Festival not found",
+    "alreadyExists": "A festival with this name already exists",
+    "dateConflict": "Festival dates conflict with another event",
+    "cannotDelete": "Cannot delete this festival because it contains associated data",
+    "registrationClosed": "Registration is closed"
+  },
+  "ticket": {
+    "notFound": "Ticket not found",
+    "alreadyUsed": "This ticket has already been used",
+    "expired": "This ticket has expired",
+    "soldOut": "This ticket category is sold out",
+    "purchaseLimitExceeded": "Purchase limit exceeded",
+    "invalidQrCode": "Invalid QR code",
+    "transferFailed": "Ticket transfer failed"
+  },
+  "cashless": {
+    "accountNotFound": "Cashless account not found",
+    "insufficientBalance": "Insufficient balance",
+    "nfcNotLinked": "No NFC wristband linked to this account",
+    "nfcAlreadyLinked": "This NFC wristband is already linked to an account",
+    "topupFailed": "Top-up failed",
+    "transactionFailed": "Transaction failed"
+  }
+}
