@@ -1,14 +1,49 @@
 # See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
-# compiled output
+# =============================================================================
+# COMPILED OUTPUT
+# =============================================================================
 dist
 tmp
 out-tsc
+build
+.next
+.nuxt
 
-# dependencies
+# =============================================================================
+# DEPENDENCIES
+# =============================================================================
 node_modules
+.pnp
+.pnp.js
 
-# IDEs and editors
+# =============================================================================
+# ENVIRONMENT FILES
+# =============================================================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+!.env.example
+
+# =============================================================================
+# NX CACHE
+# =============================================================================
+.nx/cache
+.nx/workspace-data
+
+# =============================================================================
+# TESTING
+# =============================================================================
+coverage
+*.lcov
+.nyc_output
+
+# =============================================================================
+# IDES AND EDITORS
+# =============================================================================
 /.idea
 .project
 .classpath
@@ -16,6 +51,9 @@ node_modules
 *.launch
 .settings/
 *.sublime-workspace
+*.swp
+*.swo
+*~
 
 # IDE - VSCode
 .vscode/*
@@ -23,20 +61,92 @@ node_modules
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+!.vscode/recommendations.json
 
-# misc
+# =============================================================================
+# LOGS
+# =============================================================================
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+
+# =============================================================================
+# RUNTIME DATA
+# =============================================================================
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# =============================================================================
+# MISC
+# =============================================================================
 /.sass-cache
 /connect.lock
-/coverage
 /libpeerconnection.log
-npm-debug.log
-yarn-error.log
 testem.log
 /typings
+*.tsbuildinfo
 
-# System Files
+# =============================================================================
+# SYSTEM FILES
+# =============================================================================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+desktop.ini
 
-.nx/cache
-.nx/workspace-data
+# =============================================================================
+# REACT NATIVE / MOBILE
+# =============================================================================
+.expo/
+expo-env.d.ts
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# Android
+android/.gradle
+android/app/build
+android/build
+android/local.properties
+
+# iOS
+ios/Pods/
+ios/build/
+ios/*.xcworkspace
+!ios/*.xcworkspace/contents.xcworkspacedata
+ios/DerivedData/
+
+# =============================================================================
+# DOCKER
+# =============================================================================
+.docker-volumes/
+
+# =============================================================================
+# SECRETS & CREDENTIALS
+# =============================================================================
+*.pem
+*.key
+credentials.json
+service-account.json
+google-credentials.json
+firebase-adminsdk*.json
+
+# =============================================================================
+# UPLOADS & MEDIA (local development)
+# =============================================================================
+uploads/
+tmp-uploads/
