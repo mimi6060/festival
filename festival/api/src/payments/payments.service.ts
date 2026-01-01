@@ -8,6 +8,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { StripeService } from './stripe.service';
+import { AuditService } from '../audit/audit.service';
+import { AuditActions, EntityTypes } from '../audit/decorators/audit-action.decorator';
 import {
   CreateCheckoutDto,
   CheckoutType,
@@ -62,6 +64,7 @@ export class PaymentsService {
     private readonly prisma: PrismaService,
     private readonly stripeService: StripeService,
     private readonly configService: ConfigService,
+    private readonly auditService: AuditService,
   ) {
     this.frontendUrl =
       this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
@@ -414,6 +417,16 @@ export class PaymentsService {
         );
       }
     });
+
+    // Audit log for successful payment
+    await this.auditService.log(
+      AuditActions.PAYMENT_COMPLETED,
+      EntityTypes.PAYMENT,
+      paymentId,
+      { status: PaymentStatus.PENDING },
+      { status: PaymentStatus.COMPLETED, amount: Number(payment.amount), type },
+      { userId },
+    );
 
     this.logger.log(`Payment processed successfully: ${paymentId}`);
   }

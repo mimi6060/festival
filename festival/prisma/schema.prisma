@@ -76,6 +76,47 @@ enum TransactionType {
   CORRECTION
 }
 
+enum VendorType {
+  FOOD
+  DRINK
+  MERCHANDISE
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY
+  DELIVERED
+  CANCELLED
+}
+
+enum NotificationType {
+  TICKET_PURCHASED
+  PAYMENT_SUCCESS
+  PAYMENT_FAILED
+  CASHLESS_TOPUP
+  ARTIST_REMINDER
+  FESTIVAL_UPDATE
+  SYSTEM
+}
+
+enum AccommodationType {
+  TENT_SPOT
+  CARAVAN_SPOT
+  GLAMPING
+  CABIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CHECKED_IN
+  CHECKED_OUT
+  CANCELLED
+  NO_SHOW
+}
+
 // Models
 model User {
   id                String      @id @default(uuid())
@@ -98,6 +139,11 @@ model User {
   cashlessAccount   CashlessAccount?
   staffAssignments  StaffAssignment[]
   organizedFestivals Festival[]       // Festivals organized by this user
+  vendorOrders      VendorOrder[]
+  notifications     Notification[]
+  pushToken         PushToken?
+  campingBookings   CampingBooking[]
+  supportTickets    SupportTicket[]
 
   @@index([email])
   @@index([role])
@@ -134,6 +180,10 @@ model Festival {
   zones            Zone[]
   staffAssignments StaffAssignment[]
   cashlessTransactions CashlessTransaction[]
+  vendors          Vendor[]
+  stages           Stage[]
+  campingSpots     CampingSpot[]
+  mapPois          MapPoi[]
 
   @@index([organizerId])
   @@index([slug])
@@ -186,6 +236,7 @@ model Ticket {
   user            User          @relation(fields: [userId], references: [id])
   payment         Payment?      @relation(fields: [paymentId], references: [id])
   paymentId       String?
+  zoneAccessLogs  ZoneAccessLog[]
 
   @@index([festivalId])
   @@index([userId])
@@ -266,6 +317,7 @@ model Zone {
   name          String
   description   String?
   capacity      Int?
+  currentOccupancy Int      @default(0)
   requiresTicketType TicketType[]
   isActive      Boolean     @default(true)
   createdAt     DateTime    @default(now())
@@ -274,8 +326,32 @@ model Zone {
   // Relations
   festival      Festival    @relation(fields: [festivalId], references: [id], onDelete: Cascade)
   staffAssignments StaffAssignment[]
+  accessLogs    ZoneAccessLog[]
 
   @@index([festivalId])
+}
+
+enum ZoneAccessAction {
+  ENTRY
+  EXIT
+}
+
+model ZoneAccessLog {
+  id          String           @id @default(uuid())
+  zoneId      String
+  ticketId    String
+  action      ZoneAccessAction
+  performedById String?
+  timestamp   DateTime         @default(now())
+
+  // Relations
+  zone        Zone             @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  ticket      Ticket           @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([zoneId])
+  @@index([ticketId])
+  @@index([timestamp])
+  @@index([zoneId, timestamp])
 }
 
 model StaffAssignment {
@@ -298,4 +374,376 @@ model StaffAssignment {
   @@index([userId])
   @@index([festivalId])
   @@index([zoneId])
+}
+
+model Artist {
+  id            String        @id @default(uuid())
+  name          String
+  genre         String?
+  bio           String?
+  imageUrl      String?
+  spotifyUrl    String?
+  instagramUrl  String?
+  websiteUrl    String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  performances  Performance[]
+
+  @@index([name])
+  @@index([genre])
+}
+
+model Stage {
+  id            String        @id @default(uuid())
+  festivalId    String
+  name          String
+  description   String?
+  capacity      Int?
+  location      String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  festival      Festival      @relation(fields: [festivalId], references: [id], onDelete: Cascade)
+  performances  Performance[]
+
+  @@unique([festivalId, name])
+  @@index([festivalId])
+}
+
+model Performance {
+  id            String        @id @default(uuid())
+  artistId      String
+  stageId       String
+  startTime     DateTime
+  endTime       DateTime
+  description   String?
+  isCancelled   Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  // Relations
+  artist        Artist        @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  stage         Stage         @relation(fields: [stageId], references: [id], onDelete: Cascade)
+
+  @@index([artistId])
+  @@index([stageId])
+  @@index([startTime])
+  @@index([stageId, startTime])
+}
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  userId      String?
+  action      String
+  entityType  String
+  entityId    String?
+  oldValue    Json?
+  newValue    Json?
+  ipAddress   String?
+  userAgent   String?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([action])
+  @@index([entityType])
+  @@index([entityId])
+  @@index([createdAt])
+}
+
+// Map POI Types
+enum PoiType {
+  STAGE
+  FOOD
+  DRINK
+  TOILET
+  MEDICAL
+  INFO
+  ATM
+  PARKING
+  CAMPING
+  ENTRANCE
+  EXIT
+  CHARGING
+  LOCKER
+}
+
+model MapPoi {
+  id          String    @id @default(uuid())
+  festivalId  String
+  name        String
+  type        PoiType
+  description String?
+  latitude    Float
+  longitude   Float
+  iconUrl     String?
+  metadata    Json?
+  isActive    Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  // Relations
+  festival    Festival  @relation(fields: [festivalId], references: [id], onDelete: Cascade)
+
+  @@index([festivalId])
+  @@index([type])
+  @@index([latitude, longitude])
+}
+
+model Notification {
+  id          String           @id @default(uuid())
+  userId      String
+  title       String
+  body        String
+  type        NotificationType
+  data        Json?
+  isRead      Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+
+  // Relations
+  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, isRead])
+  @@index([createdAt])
+}
+
+model PushToken {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  token       String
+  platform    String   // ios, android, web
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+}
+
+model Vendor {
+  id          String      @id @default(uuid())
+  festivalId  String
+  name        String
+  type        VendorType
+  description String?
+  logoUrl     String?
+  location    String?
+  isOpen      Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  festival    Festival    @relation(fields: [festivalId], references: [id], onDelete: Cascade)
+  menuItems   MenuItem[]
+  orders      VendorOrder[]
+
+  @@index([festivalId])
+  @@index([type])
+  @@index([isOpen])
+}
+
+model MenuItem {
+  id          String   @id @default(uuid())
+  vendorId    String
+  name        String
+  description String?
+  price       Decimal  @db.Decimal(10, 2)
+  category    String?
+  imageUrl    String?
+  isAvailable Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  vendor      Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@index([vendorId])
+  @@index([category])
+  @@index([isAvailable])
+}
+
+model VendorOrder {
+  id          String      @id @default(uuid())
+  vendorId    String
+  userId      String
+  items       Json
+  totalAmount Decimal     @db.Decimal(10, 2)
+  status      OrderStatus @default(PENDING)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  vendor      Vendor      @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  user        User        @relation(fields: [userId], references: [id])
+
+  @@index([vendorId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Support & FAQ Enums
+enum SupportTicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_FOR_USER
+  RESOLVED
+  CLOSED
+}
+
+enum Priority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum LostItemStatus {
+  REPORTED
+  FOUND
+  RETURNED
+  UNCLAIMED
+}
+
+// Support & FAQ Models
+model FaqCategory {
+  id        String    @id @default(uuid())
+  name      String
+  order     Int       @default(0)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  // Relations
+  items     FaqItem[]
+
+  @@index([order])
+}
+
+model FaqItem {
+  id          String      @id @default(uuid())
+  categoryId  String
+  question    String
+  answer      String      @db.Text
+  order       Int         @default(0)
+  isActive    Boolean     @default(true)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+
+  // Relations
+  category    FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@index([categoryId])
+  @@index([order])
+  @@index([isActive])
+}
+
+model SupportTicket {
+  id          String              @id @default(uuid())
+  userId      String
+  festivalId  String?
+  subject     String
+  description String              @db.Text
+  status      SupportTicketStatus @default(OPEN)
+  priority    Priority            @default(MEDIUM)
+  assignedTo  String?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  // Relations
+  user        User                @relation(fields: [userId], references: [id])
+  messages    SupportMessage[]
+
+  @@index([userId])
+  @@index([festivalId])
+  @@index([status])
+  @@index([priority])
+  @@index([createdAt])
+}
+
+model SupportMessage {
+  id        String        @id @default(uuid())
+  ticketId  String
+  senderId  String
+  message   String        @db.Text
+  isStaff   Boolean       @default(false)
+  createdAt DateTime      @default(now())
+
+  // Relations
+  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+model LostItem {
+  id          String         @id @default(uuid())
+  festivalId  String
+  reportedBy  String
+  description String         @db.Text
+  location    String?
+  status      LostItemStatus @default(REPORTED)
+  foundBy     String?
+  contactInfo String?
+  imageUrl    String?
+  claimedAt   DateTime?
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([festivalId])
+  @@index([reportedBy])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Camping / Accommodation Models
+model CampingSpot {
+  id          String            @id @default(uuid())
+  festivalId  String
+  type        AccommodationType
+  name        String
+  description String?
+  price       Decimal           @db.Decimal(10, 2)
+  capacity    Int
+  amenities   String[]
+  isAvailable Boolean           @default(true)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  // Relations
+  festival    Festival          @relation(fields: [festivalId], references: [id], onDelete: Cascade)
+  bookings    CampingBooking[]
+
+  @@index([festivalId])
+  @@index([type])
+  @@index([isAvailable])
+}
+
+model CampingBooking {
+  id           String        @id @default(uuid())
+  spotId       String
+  userId       String
+  checkIn      DateTime
+  checkOut     DateTime
+  guestCount   Int
+  status       BookingStatus @default(PENDING)
+  totalPrice   Decimal       @db.Decimal(10, 2)
+  notes        String?
+  checkedInAt  DateTime?
+  checkedOutAt DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  // Relations
+  spot        CampingSpot   @relation(fields: [spotId], references: [id], onDelete: Cascade)
+  user        User          @relation(fields: [userId], references: [id])
+
+  @@index([spotId])
+  @@index([userId])
+  @@index([status])
+  @@index([checkIn, checkOut])
 }

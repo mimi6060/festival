@@ -1,0 +1,59 @@
+{
+  "http": {
+    "400": "Requete invalide",
+    "401": "Authentification requise",
+    "403": "Acces refuse",
+    "404": "Ressource non trouvee",
+    "405": "Methode non autorisee",
+    "409": "Conflit avec l'etat actuel de la ressource",
+    "422": "Entite non traitable",
+    "429": "Trop de requetes. Veuillez reessayer plus tard.",
+    "500": "Erreur interne du serveur",
+    "502": "Erreur de passerelle",
+    "503": "Service temporairement indisponible"
+  },
+  "database": {
+    "connectionFailed": "Impossible de se connecter a la base de donnees",
+    "queryFailed": "Erreur lors de l'execution de la requete",
+    "recordNotFound": "Enregistrement non trouve",
+    "duplicateEntry": "Cette entree existe deja",
+    "constraintViolation": "Violation de contrainte de base de donnees"
+  },
+  "file": {
+    "uploadFailed": "Echec du telechargement du fichier",
+    "tooLarge": "Le fichier est trop volumineux. Taille maximum: {maxSize}",
+    "invalidType": "Type de fichier non autorise. Types acceptes: {allowedTypes}",
+    "notFound": "Fichier non trouve"
+  },
+  "payment": {
+    "failed": "Le paiement a echoue",
+    "cancelled": "Le paiement a ete annule",
+    "insufficientFunds": "Fonds insuffisants",
+    "cardDeclined": "Carte refusee",
+    "refundFailed": "Impossible d'effectuer le remboursement"
+  },
+  "festival": {
+    "notFound": "Festival non trouve",
+    "alreadyExists": "Un festival avec ce nom existe deja",
+    "dateConflict": "Les dates du festival sont en conflit avec un autre evenement",
+    "cannotDelete": "Impossible de supprimer ce festival car il contient des donnees associees",
+    "registrationClosed": "Les inscriptions sont fermees"
+  },
+  "ticket": {
+    "notFound": "Billet non trouve",
+    "alreadyUsed": "Ce billet a deja ete utilise",
+    "expired": "Ce billet a expire",
+    "soldOut": "Cette categorie de billets est epuisee",
+    "purchaseLimitExceeded": "Limite d'achat depassee",
+    "invalidQrCode": "QR code invalide",
+    "transferFailed": "Echec du transfert de billet"
+  },
+  "cashless": {
+    "accountNotFound": "Compte cashless non trouve",
+    "insufficientBalance": "Solde insuffisant",
+    "nfcNotLinked": "Aucun bracelet NFC associe a ce compte",
+    "nfcAlreadyLinked": "Ce bracelet NFC est deja associe a un compte",
+    "topupFailed": "Echec du rechargement",
+    "transactionFailed": "Echec de la transaction"
+  }
+}

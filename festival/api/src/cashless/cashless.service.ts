@@ -6,6 +6,8 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
+import { AuditActions, EntityTypes } from '../audit/decorators/audit-action.decorator';
 import {
   CreateAccountDto,
   TopupDto,
@@ -50,7 +52,10 @@ export interface RefundResult {
 
 @Injectable()
 export class CashlessService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditService: AuditService,
+  ) {}
 
   /**
    * Create a new cashless account for a user

@@ -1,0 +1,82 @@
+{
+  "common": {
+    "greeting": "Bonjour {firstName},",
+    "footer": "Cordialement,\nL'equipe Festival",
+    "supportText": "Si vous avez des questions, contactez notre support a {supportEmail}",
+    "doNotReply": "Ceci est un email automatique, merci de ne pas y repondre."
+  },
+  "verification": {
+    "subject": "Verifiez votre adresse email",
+    "title": "Verification de votre email",
+    "body": "Merci de vous etre inscrit sur notre plateforme Festival. Pour activer votre compte, veuillez cliquer sur le bouton ci-dessous.",
+    "button": "Verifier mon email",
+    "expiry": "Ce lien expirera dans {hours} heures.",
+    "ignoreIfNotYou": "Si vous n'avez pas cree de compte, vous pouvez ignorer cet email."
+  },
+  "passwordReset": {
+    "subject": "Reinitialisation de votre mot de passe",
+    "title": "Reinitialisation du mot de passe",
+    "body": "Vous avez demande la reinitialisation de votre mot de passe. Cliquez sur le bouton ci-dessous pour choisir un nouveau mot de passe.",
+    "button": "Reinitialiser mon mot de passe",
+    "expiry": "Ce lien expirera dans {hours} heures.",
+    "ignoreIfNotYou": "Si vous n'avez pas demande cette reinitialisation, vous pouvez ignorer cet email. Votre mot de passe restera inchange."
+  },
+  "welcome": {
+    "subject": "Bienvenue sur Festival!",
+    "title": "Bienvenue!",
+    "body": "Votre compte a ete active avec succes. Vous pouvez maintenant profiter de toutes les fonctionnalites de notre plateforme.",
+    "button": "Acceder a mon compte",
+    "features": {
+      "title": "Decouvrez ce que vous pouvez faire:",
+      "tickets": "Acheter des billets pour les festivals",
+      "cashless": "Recharger votre compte cashless",
+      "schedule": "Consulter le programme des evenements"
+    }
+  },
+  "ticketPurchase": {
+    "subject": "Confirmation de votre achat de billets",
+    "title": "Votre achat est confirme!",
+    "body": "Merci pour votre achat. Voici le recapitulatif de votre commande:",
+    "orderNumber": "Numero de commande: {orderNumber}",
+    "ticketDetails": "Details des billets",
+    "quantity": "Quantite: {quantity}",
+    "category": "Categorie: {category}",
+    "price": "Prix total: {amount} EUR",
+    "downloadButton": "Telecharger mes billets",
+    "qrCodeInfo": "Presentez le QR code de vos billets a l'entree du festival."
+  },
+  "ticketTransfer": {
+    "subject": "Vous avez recu un billet!",
+    "title": "Un billet vous a ete transfere",
+    "body": "{senderName} vous a transfere un billet pour {festivalName}.",
+    "ticketInfo": "Informations du billet",
+    "button": "Voir mon billet"
+  },
+  "cashlessTopup": {
+    "subject": "Confirmation de rechargement cashless",
+    "title": "Rechargement effectue",
+    "body": "Votre compte cashless a ete recharge avec succes.",
+    "amount": "Montant ajoute: {amount} EUR",
+    "newBalance": "Nouveau solde: {balance} EUR"
+  },
+  "refund": {
+    "subject": "Confirmation de remboursement",
+    "title": "Remboursement traite",
+    "body": "Votre demande de remboursement a ete traitee avec succes.",
+    "amount": "Montant rembourse: {amount} EUR",
+    "method": "Mode de remboursement: {method}",
+    "delay": "Le remboursement apparaitra sur votre compte dans un delai de 5 a 10 jours ouvrables."
+  },
+  "eventReminder": {
+    "subject": "Rappel: {festivalName} commence bientot!",
+    "title": "Ne manquez pas l'evenement!",
+    "body": "Le festival {festivalName} commence dans {days} jour(s). Preparez-vous pour une experience inoubliable!",
+    "button": "Voir le programme",
+    "tips": {
+      "title": "Conseils utiles:",
+      "arrive": "Arrivez tot pour eviter les files d'attente",
+      "cashless": "Pensez a recharger votre compte cashless",
+      "weather": "Verifiez la meteo et preparez-vous en consequence"
+    }
+  }
+}

@@ -28,12 +28,43 @@ export interface QrCodeConfig {
   baseUrl: string;
 }
 
+export interface RedisConfig {
+  url: string;
+  host: string;
+  port: number;
+  password?: string;
+}
+
+export interface UploadConfig {
+  /** Storage type: 'local' or 's3' */
+  storageType: 'local' | 's3';
+  /** Maximum file size in bytes */
+  maxFileSize: number;
+  /** Maximum image size in bytes */
+  maxImageSize: number;
+  /** Local storage path (for local storage) */
+  localPath: string;
+  /** Base URL for serving files (for local storage) */
+  baseUrl: string;
+  /** S3 configuration (for S3 storage) */
+  s3: {
+    bucket: string;
+    region: string;
+    accessKeyId: string;
+    secretAccessKey: string;
+    endpoint?: string;
+    signedUrlExpiry: number;
+  };
+}
+
 export interface Configuration {
   app: AppConfig;
   database: DatabaseConfig;
   jwt: JwtConfig;
   stripe: StripeConfig;
   qrCode: QrCodeConfig;
+  redis: RedisConfig;
+  upload: UploadConfig;
 }
 
 export default (): Configuration => ({
@@ -61,5 +92,26 @@ export default (): Configuration => ({
   },
   qrCode: {
     baseUrl: process.env.QR_CODE_BASE_URL || 'http://localhost:3000/api/tickets/validate',
+  },
+  redis: {
+    url: process.env.REDIS_URL || 'redis://localhost:6379',
+    host: process.env.REDIS_HOST || 'localhost',
+    port: parseInt(process.env.REDIS_PORT || '6379', 10),
+    password: process.env.REDIS_PASSWORD || undefined,
+  },
+  upload: {
+    storageType: (process.env.STORAGE_TYPE as 'local' | 's3') || 'local',
+    maxFileSize: parseInt(process.env.UPLOAD_MAX_SIZE || '10485760', 10), // 10MB
+    maxImageSize: parseInt(process.env.UPLOAD_MAX_IMAGE_SIZE || '5242880', 10), // 5MB
+    localPath: process.env.UPLOAD_LOCAL_PATH || './uploads',
+    baseUrl: process.env.UPLOAD_BASE_URL || '/uploads',
+    s3: {
+      bucket: process.env.AWS_BUCKET || '',
+      region: process.env.AWS_REGION || 'eu-west-1',
+      accessKeyId: process.env.AWS_ACCESS_KEY || '',
+      secretAccessKey: process.env.AWS_SECRET_KEY || '',
+      endpoint: process.env.AWS_ENDPOINT || undefined,
+      signedUrlExpiry: parseInt(process.env.AWS_SIGNED_URL_EXPIRY || '3600', 10),
+    },
   },
 });

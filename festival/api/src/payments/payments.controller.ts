@@ -22,8 +22,14 @@ import { PaymentStatus, UserRole } from '@prisma/client';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { CurrentUser, AuthenticatedUser } from '../auth/decorators/current-user.decorator';
+import { ThrottlePayment, SkipThrottle } from '../throttler';
 
+/**
+ * Payment controller handling all payment-related endpoints.
+ * Rate limiting: 10 requests/minute for payment endpoints
+ */
 @Controller('payments')
+@ThrottlePayment()
 export class PaymentsController {
   private readonly logger = new Logger(PaymentsController.name);
 
@@ -63,9 +69,11 @@ export class PaymentsController {
    * Handles incoming Stripe webhook events
    * Note: This endpoint must receive raw body for signature verification
    * This endpoint is public (no auth required) as Stripe sends the requests
+   * Rate limiting is skipped for webhooks as Stripe handles its own retry logic
    */
   @Post('webhook')
   @Public()
+  @SkipThrottle()
   @HttpCode(HttpStatus.OK)
   async handleWebhook(
     @Req() req: RawBodyRequest<Request>,

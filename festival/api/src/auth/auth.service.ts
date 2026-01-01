@@ -12,6 +12,8 @@ import { UserRole, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService, AuditContext } from '../audit/audit.service';
+import { AuditActions, EntityTypes } from '../audit/decorators/audit-action.decorator';
 import { AuthenticatedUser } from './decorators/current-user.decorator';
 import {
   ForgotPasswordDto,
@@ -72,6 +74,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
+    private readonly auditService: AuditService,
   ) {
     // Parse expiresIn configuration (e.g., '15m' -> 900 seconds)
     const accessExpiresIn = this.configService.get<string>('jwt.expiresIn') || '15m';
@@ -218,7 +221,7 @@ export class AuthService {
   /**
    * Registers a new user account.
    */
-  async register(dto: RegisterDto): Promise<RegisterResponse> {
+  async register(dto: RegisterDto, context?: AuditContext): Promise<RegisterResponse> {
     const normalizedEmail = dto.email.toLowerCase().trim();
 
     // Check if email already exists
@@ -258,6 +261,16 @@ export class AuthService {
         `User registered: ${user.email}, verification token: ${verificationToken}`,
       );
 
+      // Log user registration
+      await this.auditService.log(
+        AuditActions.REGISTER,
+        EntityTypes.USER,
+        user.id,
+        null,
+        { email: user.email, firstName: user.firstName, lastName: user.lastName, role: user.role },
+        context || {},
+      );
+
       return {
         user: {
           id: user.id,
@@ -278,8 +291,34 @@ export class AuthService {
   /**
    * Authenticates a user and returns tokens.
    */
-  async login(user: AuthenticatedUser): Promise<TokenResponse> {
-    return this.generateTokens(user);
+  async login(user: AuthenticatedUser, context?: AuditContext): Promise<TokenResponse> {
+    const tokens = await this.generateTokens(user);
+
+    // Log successful login
+    await this.auditService.log(
+      AuditActions.LOGIN,
+      EntityTypes.AUTH,
+      user.id,
+      null,
+      { email: user.email, role: user.role },
+      context || { userId: user.id },
+    );
+
+    return tokens;
+  }
+
+  /**
+   * Logs a failed login attempt for security auditing.
+   */
+  async logFailedLogin(email: string, context?: AuditContext): Promise<void> {
+    await this.auditService.log(
+      AuditActions.FAILED_LOGIN,
+      EntityTypes.AUTH,
+      null,
+      null,
+      { email, reason: 'Invalid credentials' },
+      context || {},
+    );
   }
 
   /**
@@ -356,11 +395,21 @@ export class AuthService {
   /**
    * Invalidates a user's refresh token (logout).
    */
-  async invalidateRefreshToken(userId: string): Promise<void> {
+  async invalidateRefreshToken(userId: string, context?: AuditContext): Promise<void> {
     await this.prisma.user.update({
       where: { id: userId },
       data: { refreshToken: null },
     });
+
+    // Log logout
+    await this.auditService.log(
+      AuditActions.LOGOUT,
+      EntityTypes.AUTH,
+      userId,
+      null,
+      null,
+      context || { userId },
+    );
   }
 
   /**
