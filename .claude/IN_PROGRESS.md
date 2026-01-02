@@ -9,11 +9,11 @@ Voir `.claude/DONE.md` pour le détail complet.
 
 ## Prochaines Phases Disponibles
 
-### Phase Mobile Avancée
-- [ ] Mode offline complet avec sync
-- [ ] Scan NFC pour cashless
-- [ ] Géolocalisation indoor
-- [ ] Apple Wallet / Google Wallet
+### Phase Mobile Avancée (2026-01-02) - COMPLETED
+- [x] Mode offline complet avec sync (DataSyncService)
+- [x] Scan NFC pour cashless (NFCCashlessService)
+- [x] Géolocalisation indoor (useIndoorLocation)
+- [x] Apple Wallet / Google Wallet (useWallet)
 
 ### Phase IA
 - [ ] Service Python IA
@@ -101,3 +101,14 @@ Voir `.claude/DONE.md` pour le détail complet.
 
 ---
 Derniere mise a jour: 2026-01-02 - Phase CI/CD Avancee (workflows GitHub Actions ameliores)
+
+### Phase Error Handling & Logging (2026-01-02) - COMPLETED
+- [x] HttpExceptionFilter - Filtre global pour HttpException
+- [x] AllExceptionsFilter - Filtre global pour erreurs non-HTTP et Prisma
+- [x] ValidationExceptionFilter - Filtre specialise class-validator avec i18n
+- [x] Custom exceptions metier: staff, camping, program
+- [x] 60+ nouveaux codes d'erreur standardises (12xxx-17xxx)
+- [x] Messages d'erreur FR/EN pour tous les codes
+- [x] ErrorLoggerService - Logging structure avec stats
+- [x] RetryService - Retry exponential backoff avec jitter
+- [x] RetryPresets - Configurations pre-faites (database, API, payment, email)
