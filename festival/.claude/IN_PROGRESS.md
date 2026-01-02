@@ -7,6 +7,645 @@ Voir `.claude/DONE.md` pour le détail complet.
 
 ---
 
+# ROADMAP FONCTIONNALITES PROFESSIONNELLES
+
+## Analyse CTO/PO - Festival Platform (2026-01-02)
+
+### Resume Executif
+
+**Etat actuel:**
+- 23 modules backend implementes
+- Schema Prisma avec 40+ modeles
+- Admin utilise mock data (pas connecte a l'API)
+- 3 modules critiques sans controllers REST (bloquants)
+
+**Problemes critiques:**
+1. `tickets` - Service existe, pas de controller REST
+2. `cashless` - Service existe, pas de controller REST, methode `transfer()` manquante
+3. `notifications` - Service existe, pas de controller REST
+4. Admin app non connectee a l'API backend
+
+**Technologies cartographie:**
+- Maps: **OpenStreetMap + Leaflet.js** (open source, pas de frais API)
+- Localisation indoor: **Beacons BLE** ou **WiFi fingerprinting**
+
+---
+
+## Phase 1 - CRITIQUE: Controllers REST Manquants (Bloquant Production)
+
+### 1.1 Tickets Controller
+**Objectif:** Exposer les endpoints REST pour la billetterie
+**Priorite:** CRITIQUE
+**Fichier service existant:** `apps/api/src/modules/tickets/tickets.service.ts`
+
+#### Backend (API NestJS)
+- [ ] Creer `apps/api/src/modules/tickets/tickets.controller.ts`:
+  ```
+  POST   /api/tickets/buy           - Acheter des billets
+  GET    /api/tickets/me            - Mes billets (user connecte)
+  GET    /api/tickets/:id           - Detail d'un billet
+  POST   /api/tickets/:id/validate  - Valider QR code (staff)
+  POST   /api/tickets/:id/scan      - Scanner entree (staff)
+  DELETE /api/tickets/:id           - Annuler billet
+  GET    /api/tickets/:id/qr        - Telecharger QR code PNG
+  ```
+- [ ] Creer DTOs dans `apps/api/src/modules/tickets/dto/`:
+  - `purchase-ticket.dto.ts` (festivalId, categoryId, quantity)
+  - `validate-ticket.dto.ts` (qrCode)
+  - `ticket-response.dto.ts` (entity serialization)
+- [ ] Ajouter Guards: `@UseGuards(JwtAuthGuard)`, `@Roles('STAFF')` pour scan/validate
+- [ ] Ajouter decorateurs Swagger: `@ApiTags('tickets')`, `@ApiBearerAuth()`
+- [ ] Enregistrer controller dans `tickets.module.ts`
+
+#### Tests
+- [ ] Tests unitaires `tickets.controller.spec.ts`
+- [ ] Tests E2E `tickets.e2e-spec.ts`
+
+---
+
+### 1.2 Cashless Controller + Transfer Method
+**Objectif:** Exposer endpoints REST cashless + implementer transferts
+**Priorite:** CRITIQUE
+**Fichier service existant:** `apps/api/src/modules/cashless/cashless.service.ts`
+
+#### Backend (API NestJS)
+- [ ] **IMPLEMENTER** methode `transfer()` dans `cashless.service.ts`:
+  ```typescript
+  async transfer(userId: string, dto: TransferDto): Promise<TransferResult> {
+    // 1. Valider festival actif
+    // 2. Verifier compte source (userId) avec solde suffisant
+    // 3. Verifier compte destination (dto.toUserId) existe et actif
+    // 4. Transaction Prisma atomique:
+    //    - Creer transaction TRANSFER_OUT (source, debit)
+    //    - Creer transaction TRANSFER_IN (destination, credit)
+    //    - Mettre a jour soldes des 2 comptes
+    // 5. Retourner nouveau solde source
+  }
+  ```
+- [ ] Creer `apps/api/src/modules/cashless/cashless.controller.ts`:
+  ```
+  POST   /api/cashless/account      - Creer/obtenir compte
+  GET    /api/cashless/account      - Mon compte
+  GET    /api/cashless/balance      - Mon solde
+  POST   /api/cashless/topup        - Recharger (+ paiement)
+  POST   /api/cashless/pay          - Payer (vendeur)
+  POST   /api/cashless/refund       - Rembourser transaction
+  POST   /api/cashless/transfer     - Transferer a un ami
+  GET    /api/cashless/transactions - Historique
+  POST   /api/cashless/link-nfc     - Associer bracelet NFC
+  GET    /api/cashless/nfc/:tagId   - Trouver compte par NFC
+  POST   /api/cashless/deactivate   - Desactiver compte
+  POST   /api/cashless/reactivate   - Reactiver compte
+  ```
+- [ ] Enregistrer controller dans `cashless.module.ts`
+
+#### Tests
+- [ ] Tests unitaires pour `transfer()` method
+- [ ] Tests E2E endpoints cashless
+
+---
+
+### 1.3 Notifications Controller
+**Objectif:** Exposer endpoints REST notifications
+**Priorite:** CRITIQUE
+**Fichiers service existants:** `apps/api/src/modules/notifications/services/`
+
+#### Backend (API NestJS)
+- [ ] Creer `apps/api/src/modules/notifications/notifications.controller.ts`:
+  ```
+  GET    /api/notifications           - Liste mes notifications
+  GET    /api/notifications/unread    - Nombre non lues
+  POST   /api/notifications/:id/read  - Marquer comme lue
+  POST   /api/notifications/read-all  - Tout marquer lu
+  DELETE /api/notifications/:id       - Supprimer
+  GET    /api/notifications/preferences    - Mes preferences
+  PUT    /api/notifications/preferences    - Modifier preferences
+  POST   /api/notifications/push-token     - Enregistrer token FCM/APNs
+  DELETE /api/notifications/push-token/:token - Supprimer token
+  ```
+- [ ] Enregistrer controller dans `notifications.module.ts`
+
+---
+
+## Phase 2 - HAUTE: Integration API dans Admin (Supprimer Mock Data)
+
+### 2.1 Client API et Hooks React Query
+**Objectif:** Connecter l'admin a l'API backend
+**Priorite:** HAUTE
+**Impact:** Toutes les pages admin
+
+#### Frontend Admin - Infrastructure
+- [ ] Creer `apps/admin/lib/api-client.ts`:
+  ```typescript
+  // Configuration Axios
+  // - baseURL: process.env.NEXT_PUBLIC_API_URL
+  // - Interceptor: ajouter Authorization header (JWT)
+  // - Interceptor: refresh token si 401
+  // - Error handling global
+  ```
+- [ ] Creer `apps/admin/lib/api/index.ts` - Export toutes les fonctions API
+- [ ] Installer React Query: `npm install @tanstack/react-query`
+- [ ] Creer `apps/admin/providers/QueryProvider.tsx`
+- [ ] Ajouter QueryProvider dans `app/layout.tsx`
+
+#### Frontend Admin - Hooks par Module
+- [ ] `hooks/api/useFestivals.ts`:
+  - `useFestivals()` - Liste avec pagination/filtres
+  - `useFestival(id)` - Detail festival
+  - `useCreateFestival()` - Mutation creation
+  - `useUpdateFestival()` - Mutation modification
+  - `useDeleteFestival()` - Mutation suppression
+- [ ] `hooks/api/useTickets.ts`:
+  - `useTicketCategories(festivalId)` - Categories du festival
+  - `useCreateCategory()`, `useUpdateCategory()`, `useDeleteCategory()`
+  - `useTickets(festivalId)` - Billets vendus
+  - `useTicketStats(festivalId)` - Statistiques ventes
+- [ ] `hooks/api/useUsers.ts`:
+  - `useUsers()` - Liste utilisateurs
+  - `useUser(id)` - Detail utilisateur
+  - `useUpdateUser()`, `useBanUser()`, `useUnbanUser()`
+- [ ] `hooks/api/useStaff.ts`:
+  - `useStaffMembers(festivalId)` - Staff du festival
+  - `useCreateStaff()`, `useUpdateStaff()`, `useDeleteStaff()`
+- [ ] `hooks/api/useZones.ts`:
+  - `useZones(festivalId)` - Zones du festival
+  - `useZoneStats(festivalId)` - Stats entrees/sorties
+- [ ] `hooks/api/useCashless.ts`:
+  - `useCashlessStats(festivalId)` - Stats globales
+  - `useCashlessTransactions(festivalId)` - Transactions
+- [ ] `hooks/api/useAnalytics.ts`:
+  - `useDashboardStats(festivalId)` - KPIs dashboard
+  - `useRevenueChart(festivalId, period)` - Graphique revenus
+
+#### Frontend Admin - Refactoring Pages
+- [ ] `app/festivals/page.tsx` - Remplacer `mockFestivals` par `useFestivals()`
+- [ ] `app/festivals/[id]/page.tsx` - Remplacer mock par `useFestival(id)`
+- [ ] `app/festivals/[id]/tickets/page.tsx` - Utiliser `useTicketCategories()`
+- [ ] `app/festivals/[id]/lineup/page.tsx` - Creer hook `useArtists()` + API
+- [ ] `app/users/page.tsx` - Remplacer `mockUsers` par `useUsers()`
+- [ ] `app/staff/page.tsx` - Utiliser `useStaffMembers()`
+- [ ] `app/zones/page.tsx` - Utiliser `useZones()`
+- [ ] `app/cashless/page.tsx` - Utiliser `useCashlessStats()`
+- [ ] `app/payments/page.tsx` - Creer `usePayments()` hook
+- [ ] `app/reports/page.tsx` - Utiliser `useAnalytics()`
+
+---
+
+## Phase 3 - HAUTE: Module Programme/Artistes
+
+### 3.1 Program Module Backend - COMPLETED (2026-01-02)
+**Objectif:** API complete pour gestion programme artistique
+**Priorite:** HAUTE
+**Schema Prisma existant:** `Artist`, `Stage`, `Performance`
+
+#### Backend (API NestJS) - DONE
+- [x] Creer module `apps/api/src/modules/program/`
+- [x] Creer `program.service.ts`:
+  ```typescript
+  // Artistes
+  createArtist(festivalId, dto): Artist
+  getArtists(festivalId, filters): Artist[]
+  getArtist(id): Artist
+  updateArtist(id, dto): Artist
+  deleteArtist(id): void
+
+  // Scenes
+  createStage(festivalId, dto): Stage
+  getStages(festivalId): Stage[]
+  updateStage(id, dto): Stage
+  deleteStage(id): void
+
+  // Performances (programmation)
+  schedulePerformance(dto): Performance
+  getPerformances(festivalId, filters): Performance[]
+  updatePerformance(id, dto): Performance
+  cancelPerformance(id, reason): Performance // + notification
+
+  // Programme
+  getProgram(festivalId): FullProgram
+  getProgramByDay(festivalId, date): DayProgram
+  getProgramByStage(festivalId, stageId): StageProgram
+  detectConflicts(festivalId): Conflict[]
+
+  // Favoris utilisateur
+  addFavoriteArtist(userId, artistId): void
+  removeFavoriteArtist(userId, artistId): void
+  getFavoriteArtists(userId): Artist[]
+  ```
+- [x] Creer `program.controller.ts`:
+  ```
+  GET    /artists                        - Liste tous les artistes
+  POST   /artists                        - Creer artiste (ADMIN/ORGANIZER)
+  GET    /artists/genres                 - Liste genres uniques
+  GET    /artists/:id                    - Detail artiste
+  PUT    /artists/:id                    - Modifier artiste
+  DELETE /artists/:id                    - Supprimer artiste
+
+  GET    /festivals/:id/stages           - Scenes du festival
+  POST   /festivals/:id/stages           - Ajouter scene
+  GET    /stages/:id                     - Detail scene avec performances
+  PUT    /stages/:id                     - Modifier scene
+  DELETE /stages/:id                     - Supprimer scene
+
+  GET    /festivals/:id/lineup           - Programme du festival (filtrable)
+  GET    /festivals/:id/artists          - Artistes du festival
+  POST   /festivals/:id/performances     - Programmer performance
+  GET    /performances/:id               - Detail performance
+  PUT    /performances/:id               - Modifier performance
+  DELETE /performances/:id               - Supprimer performance
+  PATCH  /performances/:id/cancel        - Annuler (soft delete)
+  ```
+- [x] DTOs: `create-artist.dto.ts`, `update-artist.dto.ts`, `create-stage.dto.ts`, `update-stage.dto.ts`, `create-performance.dto.ts`, `update-performance.dto.ts`, `query-program.dto.ts`
+- [x] Enregistrer module dans `app.module.ts`
+
+#### Frontend Admin
+- [ ] Ameliorer `app/festivals/[id]/lineup/page.tsx`:
+  - Connecter a l'API au lieu de mock
+  - Ajouter gestion des scenes
+  - Vue timeline drag & drop
+  - Detection conflits horaires
+- [ ] Creer `app/festivals/[id]/stages/page.tsx` - Gestion scenes
+
+#### Frontend Web
+- [ ] Creer `app/festivals/[slug]/program/page.tsx` - Programme public
+- [ ] Creer composant `ProgramTimeline` - Vue timeline interactive
+- [ ] Ajouter bouton "Ajouter aux favoris" sur artistes
+
+#### Mobile
+- [ ] Ecran `ProgramScreen` - Programme du festival
+- [ ] Composant `ArtistCard` avec bouton favori
+- [ ] Notifications push rappel avant artiste favori
+
+---
+
+## Phase 4 - MOYENNE: Nouveaux Modules Metier
+
+### 4.1 Transport Module (NOUVEAU)
+**Objectif:** Gestion navettes, parking, covoiturage
+**Priorite:** MOYENNE
+**Maps:** OpenStreetMap + Leaflet.js
+
+#### Schema Prisma (ajouter dans schema.prisma)
+```prisma
+enum TransportType {
+  SHUTTLE
+  PARKING
+  CARPOOL
+}
+
+model ParkingLot {
+  id          String   @id @default(uuid())
+  festivalId  String
+  name        String
+  type        String   // standard, vip, rv, disabled
+  capacity    Int
+  pricePerDay Decimal  @db.Decimal(10, 2)
+  latitude    Float?
+  longitude   Float?
+  isActive    Boolean  @default(true)
+  festival    Festival @relation(fields: [festivalId], references: [id])
+  spots       ParkingSpot[]
+}
+
+model ParkingSpot {
+  id           String   @id @default(uuid())
+  lotId        String
+  number       String
+  status       String   @default("available")
+  vehiclePlate String?
+  reservedBy   String?
+  validFrom    DateTime?
+  validUntil   DateTime?
+  lot          ParkingLot @relation(fields: [lotId], references: [id])
+}
+
+model ShuttleRoute {
+  id          String   @id @default(uuid())
+  festivalId  String
+  name        String
+  description String?
+  stops       Json     // [{name, lat, lng, arrivalOffset}]
+  frequency   Int      // minutes
+  startTime   DateTime
+  endTime     DateTime
+  isActive    Boolean  @default(true)
+  festival    Festival @relation(fields: [festivalId], references: [id])
+  schedules   ShuttleSchedule[]
+}
+
+model ShuttleSchedule {
+  id            String   @id @default(uuid())
+  routeId       String
+  departureTime DateTime
+  status        String   @default("SCHEDULED")
+  vehicleId     String?
+  driverName    String?
+  capacity      Int
+  bookedSeats   Int      @default(0)
+  route         ShuttleRoute @relation(fields: [routeId], references: [id])
+  bookings      ShuttleBooking[]
+}
+
+model ShuttleBooking {
+  id          String   @id @default(uuid())
+  scheduleId  String
+  userId      String
+  seats       Int
+  pickupStop  String
+  dropoffStop String
+  status      String   @default("CONFIRMED")
+  qrCode      String   @unique
+  bookedAt    DateTime @default(now())
+  schedule    ShuttleSchedule @relation(fields: [scheduleId], references: [id])
+  user        User @relation(fields: [userId], references: [id])
+}
+```
+
+#### Backend
+- [ ] Creer module `apps/api/src/modules/transport/`
+- [ ] Services: `parking.service.ts`, `shuttle.service.ts`
+- [ ] Controller avec endpoints CRUD + reservations
+- [ ] Integration paiement pour parking
+
+#### Frontend Admin
+- [ ] Page `app/festivals/[id]/transport/page.tsx` - Dashboard transport
+- [ ] Page `app/festivals/[id]/parking/page.tsx` - Gestion parking
+- [ ] Page `app/festivals/[id]/shuttles/page.tsx` - Gestion navettes
+- [ ] Composant carte Leaflet avec emplacements
+
+#### Frontend Web/Mobile
+- [ ] Page reservation parking
+- [ ] Page reservation navette
+- [ ] Carte interactive avec arrets
+
+---
+
+### 4.2 Security/Incidents Module (NOUVEAU)
+**Objectif:** Gestion securite, incidents, alertes temps reel
+**Priorite:** MOYENNE
+
+#### Schema Prisma
+```prisma
+enum IncidentSeverity {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+enum IncidentStatus {
+  REPORTED
+  ASSIGNED
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum IncidentType {
+  MEDICAL
+  THEFT
+  ASSAULT
+  DISTURBANCE
+  LOST_PERSON
+  FIRE
+  EQUIPMENT_FAILURE
+  CROWD_CONTROL
+  OTHER
+}
+
+model SecurityIncident {
+  id             String   @id @default(uuid())
+  festivalId     String
+  incidentNumber String   @unique
+  type           IncidentType
+  severity       IncidentSeverity
+  status         IncidentStatus @default(REPORTED)
+  title          String
+  description    String   @db.Text
+  location       String?
+  latitude       Float?
+  longitude      Float?
+  zoneId         String?
+  reportedBy     String   // staffId
+  assignedTo     String?  // staffId
+  resolvedAt     DateTime?
+  resolution     String?  @db.Text
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  festival       Festival @relation(fields: [festivalId], references: [id])
+  zone           Zone?    @relation(fields: [zoneId], references: [id])
+  logs           IncidentLog[]
+}
+
+model IncidentLog {
+  id          String   @id @default(uuid())
+  incidentId  String
+  action      String
+  notes       String?
+  performedBy String
+  createdAt   DateTime @default(now())
+  incident    SecurityIncident @relation(fields: [incidentId], references: [id])
+}
+
+model SecurityAlert {
+  id          String   @id @default(uuid())
+  festivalId  String
+  type        String   // capacity, weather, security, medical
+  severity    IncidentSeverity
+  title       String
+  message     String
+  zones       String[] // zone IDs affectees
+  isActive    Boolean  @default(true)
+  expiresAt   DateTime?
+  createdBy   String
+  createdAt   DateTime @default(now())
+  festival    Festival @relation(fields: [festivalId], references: [id])
+}
+```
+
+#### Backend
+- [ ] Module `apps/api/src/modules/security/`
+- [ ] Service avec CRUD incidents, alertes, stats
+- [ ] WebSocket gateway pour alertes temps reel
+- [ ] Integration push notifications
+
+#### Frontend Admin
+- [ ] Page `app/festivals/[id]/security/page.tsx` - Dashboard securite
+- [ ] Page `app/festivals/[id]/incidents/page.tsx` - Liste incidents
+- [ ] Carte Leaflet avec incidents geolocalisés
+- [ ] Systeme d'alerte broadcast
+
+#### Mobile (Staff Security)
+- [ ] Ecran signalement incident rapide
+- [ ] Notifications push alertes
+
+---
+
+### 4.3 Promo Codes Module (NOUVEAU)
+**Objectif:** Codes promo et reductions billetterie
+**Priorite:** MOYENNE
+
+#### Schema Prisma
+```prisma
+enum PromoCodeType {
+  PERCENTAGE
+  FIXED_AMOUNT
+  FREE_TICKET
+}
+
+model PromoCode {
+  id                String   @id @default(uuid())
+  festivalId        String
+  code              String   @unique
+  type              PromoCodeType
+  value             Decimal  @db.Decimal(10, 2)
+  maxUses           Int?     // null = illimite
+  usedCount         Int      @default(0)
+  maxUsesPerUser    Int      @default(1)
+  minPurchaseAmount Decimal? @db.Decimal(10, 2)
+  validFrom         DateTime
+  validUntil        DateTime
+  ticketCategoryIds String[] // categories applicables
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  festival          Festival @relation(fields: [festivalId], references: [id])
+  usages            PromoCodeUsage[]
+}
+
+model PromoCodeUsage {
+  id          String   @id @default(uuid())
+  promoCodeId String
+  userId      String
+  orderId     String?
+  discount    Decimal  @db.Decimal(10, 2)
+  usedAt      DateTime @default(now())
+  promoCode   PromoCode @relation(fields: [promoCodeId], references: [id])
+}
+```
+
+#### Backend
+- [ ] Module `apps/api/src/modules/promo/`
+- [ ] Service: validation, application, stats
+- [ ] Integration dans checkout tickets
+
+#### Frontend Admin
+- [ ] Page `app/festivals/[id]/promo/page.tsx` - Gestion codes promo
+
+---
+
+### 4.4 Communication/Campaigns Module (NOUVEAU)
+**Objectif:** Campagnes email/SMS/push, annonces
+**Priorite:** MOYENNE
+
+#### Schema Prisma
+```prisma
+enum CampaignType {
+  EMAIL
+  SMS
+  PUSH
+  IN_APP
+}
+
+enum CampaignStatus {
+  DRAFT
+  SCHEDULED
+  SENDING
+  SENT
+  CANCELLED
+}
+
+model Campaign {
+  id           String   @id @default(uuid())
+  festivalId   String?
+  name         String
+  type         CampaignType
+  subject      String?
+  content      String   @db.Text
+  status       CampaignStatus @default(DRAFT)
+  scheduledFor DateTime?
+  sentAt       DateTime?
+  targetRoles  String[]
+  targetTicketTypes String[]
+  sentCount    Int      @default(0)
+  openedCount  Int      @default(0)
+  createdBy    String
+  createdAt    DateTime @default(now())
+  festival     Festival? @relation(fields: [festivalId], references: [id])
+}
+
+model Announcement {
+  id          String   @id @default(uuid())
+  festivalId  String
+  title       String
+  content     String   @db.Text
+  priority    String   @default("MEDIUM")
+  isPinned    Boolean  @default(false)
+  showUntil   DateTime?
+  createdBy   String
+  createdAt   DateTime @default(now())
+  festival    Festival @relation(fields: [festivalId], references: [id])
+}
+```
+
+#### Backend
+- [ ] Module `apps/api/src/modules/communication/`
+- [ ] Integration Twilio pour SMS
+- [ ] Queue BullMQ pour envoi asynchrone
+
+#### Frontend Admin
+- [ ] Page `app/festivals/[id]/communication/page.tsx`
+- [ ] Editeur campagne avec selection audience
+
+---
+
+## Phase 5 - Cartes et Localisation (OpenStreetMap)
+
+### 5.1 Integration Leaflet.js
+**Objectif:** Cartes interactives open source
+**Priorite:** MOYENNE
+
+#### Installation
+```bash
+npm install leaflet react-leaflet @types/leaflet
+```
+
+#### Composants a creer
+- [ ] `components/maps/FestivalMap.tsx` - Carte festival avec zones
+- [ ] `components/maps/IncidentMap.tsx` - Carte incidents temps reel
+- [ ] `components/maps/ParkingMap.tsx` - Carte parkings
+- [ ] `components/maps/ShuttleMap.tsx` - Carte navettes avec trajets
+- [ ] `components/maps/LocationPicker.tsx` - Selection position
+
+#### Pages avec cartes
+- [ ] Admin: `/festivals/[id]/map` - Configuration carte festival
+- [ ] Web: `/festivals/[slug]/map` - Carte publique interactive
+- [ ] Mobile: Ecran carte avec position GPS
+
+---
+
+## Phase 6 - Corrections TypeScript/Build
+
+### Issues documentes a resoudre
+- [ ] Payments: Mettre a jour Stripe apiVersion
+- [ ] Analytics: Enregistrer controller dans module
+- [ ] Analytics: Fix duplicate functions
+- [ ] Shared/validation: Installer `zod`
+- [ ] Shared/utils: Fix types DOM dans file.utils.ts
+
+---
+
+## Ordre d'Implementation Recommande
+
+1. **Semaine 1-2:** Phase 1 (Controllers REST critiques)
+2. **Semaine 3-4:** Phase 2 (Integration API Admin)
+3. **Semaine 5-6:** Phase 3 (Module Programme)
+4. **Semaine 7-8:** Phase 4.1-4.2 (Transport, Security)
+5. **Semaine 9-10:** Phase 4.3-4.4 (Promo, Communication)
+6. **Semaine 11:** Phase 5 (Cartes Leaflet)
+7. **Continu:** Phase 6 (Corrections)
+
+---
+
 ## Corrections Build (2026-01-02)
 
 ### Fix Build API - COMPLETED

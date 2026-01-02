@@ -1260,4 +1260,55 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
 - [x] Fixed Unsplash image configuration in admin next.config.js
 
 ---
-Derniere mise a jour: 2026-01-02 - Phase Admin Dashboard Forms Fix
+
+## Phase Program Module (2026-01-02)
+
+### Module Complete Backend
+- [x] Creation apps/api/src/modules/program/ module complet
+- [x] program.module.ts - Module NestJS avec ProgramController et ProgramService
+- [x] program.service.ts - Service avec operations CRUD completes (550+ lignes)
+  - Artists: create, findAll, findById, update, delete
+  - Stages: create, findByFestival, findById, update, delete
+  - Performances: create, findFestivalLineup, findById, update, delete, cancel
+  - Utilities: getGenres, getArtistsByFestival
+  - Validation conflits horaires (stage et artiste)
+  - Gestion erreurs (NotFoundException, BadRequestException, ConflictException)
+- [x] program.controller.ts - Controller REST avec 16 endpoints (400+ lignes)
+  - GET /artists - Liste tous les artistes avec pagination
+  - POST /artists - Creer artiste (ADMIN/ORGANIZER)
+  - GET /artists/genres - Liste genres uniques
+  - GET /artists/:id - Detail artiste avec performances
+  - PUT /artists/:id - Modifier artiste
+  - DELETE /artists/:id - Supprimer artiste
+  - GET /festivals/:festivalId/stages - Scenes du festival
+  - POST /festivals/:festivalId/stages - Creer scene
+  - GET /stages/:id - Detail scene avec performances
+  - PUT /stages/:id - Modifier scene
+  - DELETE /stages/:id - Supprimer scene
+  - GET /festivals/:festivalId/lineup - Programme complet filtrable
+  - GET /festivals/:festivalId/artists - Artistes du festival
+  - POST /festivals/:festivalId/performances - Programmer performance
+  - GET /performances/:id - Detail performance
+  - PUT /performances/:id - Modifier performance
+  - DELETE /performances/:id - Supprimer performance
+  - PATCH /performances/:id/cancel - Annuler (soft delete)
+- [x] index.ts - Barrel exports
+
+### DTOs
+- [x] dto/create-artist.dto.ts - Validation artiste (name, genre, bio, URLs)
+- [x] dto/update-artist.dto.ts - PartialType pour mise a jour
+- [x] dto/create-stage.dto.ts - Validation scene (name, description, capacity, location)
+- [x] dto/update-stage.dto.ts - PartialType pour mise a jour
+- [x] dto/create-performance.dto.ts - Validation performance (artistId, stageId, times)
+- [x] dto/update-performance.dto.ts - Mise a jour avec isCancelled
+- [x] dto/query-program.dto.ts - QueryArtistsDto et QueryLineupDto pour filtres/pagination
+- [x] dto/index.ts - Barrel exports
+
+### Integration
+- [x] Module enregistre dans app.module.ts
+- [x] Guards JWT et Roles configures
+- [x] Decorateur @Public pour endpoints publics
+- [x] Documentation Swagger complete (@ApiTags, @ApiOperation, @ApiResponse, @ApiBearerAuth)
+
+---
+Derniere mise a jour: 2026-01-02 - Phase Program Module

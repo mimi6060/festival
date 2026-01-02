@@ -21,6 +21,7 @@ import { StaffModule } from '../modules/staff';
 import { CampingModule } from '../modules/camping';
 import { TicketsModule } from '../modules/tickets';
 import { CashlessModule } from '../modules/cashless';
+import { ProgramModule } from '../modules/program';
 
 // Service modules
 import { EmailModule } from '../modules/email';
@@ -57,6 +58,7 @@ import { PaymentsModule } from '../modules/payments';
     CampingModule,
     TicketsModule,
     CashlessModule,
+    ProgramModule,
 
     // Service modules
     EmailModule,
