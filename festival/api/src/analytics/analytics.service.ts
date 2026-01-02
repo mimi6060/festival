@@ -11,7 +11,6 @@ import {
   ZoneHeatmapData,
   TimeSeriesDataPoint,
   ExportResult,
-  ExportOptions,
   VendorStats,
   DashboardSummary,
   AlertEvent,
@@ -26,7 +25,6 @@ import {
   TicketStatus,
   TransactionType,
   PaymentStatus,
-  FestivalStatus,
 } from '@prisma/client';
 
 @Injectable()
@@ -66,7 +64,7 @@ export class AnalyticsService {
   private getCacheKey(
     festivalId: string,
     type: string,
-    params?: Record<string, unknown>,
+    params?: object,
   ): string {
     const paramsStr = params ? JSON.stringify(params) : '';
     return `analytics:${festivalId}:${type}:${paramsStr}`;
@@ -251,7 +249,7 @@ export class AnalyticsService {
   ): Promise<SalesTimeSeries> {
     await this.validateFestival(festivalId);
 
-    const cacheKey = this.getCacheKey(festivalId, 'sales', query);
+    const cacheKey = this.getCacheKey(festivalId, 'sales', { ...query });
     const cached = await this.cacheManager.get<SalesTimeSeries>(cacheKey);
     if (cached) return cached;
 
@@ -261,7 +259,12 @@ export class AnalyticsService {
     const end = endDate ? new Date(endDate) : new Date();
     const start = startDate ? new Date(startDate) : new Date(end.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    const where: any = {
+    const where: {
+      festivalId: string;
+      status: { in: TicketStatus[] };
+      createdAt: { gte: Date; lte: Date };
+      categoryId?: string;
+    } = {
       festivalId,
       status: { in: [TicketStatus.SOLD, TicketStatus.USED] },
       createdAt: { gte: start, lte: end },
@@ -296,7 +299,7 @@ export class AnalyticsService {
     // Convert to time series
     const data: TimeSeriesDataPoint[] = Array.from(dataMap.entries()).map(
       ([key, value]) => ({
-        timestamp: this.parsePeridKey(key, period),
+        timestamp: this.parsePeriodKey(key, period),
         value,
         label: key,
       }),
@@ -341,7 +344,7 @@ export class AnalyticsService {
   ): Promise<AttendanceTimeSeries> {
     await this.validateFestival(festivalId);
 
-    const cacheKey = this.getCacheKey(festivalId, 'attendance', query);
+    const cacheKey = this.getCacheKey(festivalId, 'attendance', { ...query });
     const cached = await this.cacheManager.get<AttendanceTimeSeries>(cacheKey);
     if (cached) return cached;
 
@@ -354,8 +357,12 @@ export class AnalyticsService {
       ? new Date(startDate)
       : new Date(end.getTime() - defaultDays * 24 * 60 * 60 * 1000);
 
-    // Get zone access logs
-    const whereCondition: any = {
+    // Get zone access logs using Prisma
+    const whereCondition: {
+      zone: { festivalId: string };
+      timestamp: { gte: Date; lte: Date };
+      zoneId?: string;
+    } = {
       zone: { festivalId },
       timestamp: { gte: start, lte: end },
     };
@@ -364,14 +371,26 @@ export class AnalyticsService {
       whereCondition.zoneId = zoneId;
     }
 
-    const accessLogs = await this.prisma.zoneAccessLog.findMany({
-      where: whereCondition,
-      select: {
-        action: true,
-        timestamp: true,
+    // Query ZoneAccessLog through the Zone relation
+    const accessLogs = await this.prisma.zone.findMany({
+      where: { festivalId },
+      include: {
+        accessLogs: {
+          where: {
+            timestamp: { gte: start, lte: end },
+          },
+          orderBy: { timestamp: 'asc' },
+        },
       },
-      orderBy: { timestamp: 'asc' },
     });
+
+    // Flatten access logs
+    const allLogs = accessLogs.flatMap(zone =>
+      zone.accessLogs.map(log => ({
+        action: log.action,
+        timestamp: log.timestamp,
+      }))
+    ).sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 
     // Calculate running attendance per period
     const periodData = new Map<string, { entries: number; exits: number; count: number }>();
@@ -379,7 +398,7 @@ export class AnalyticsService {
     let peakCount = 0;
     let peakTime: Date | null = null;
 
-    for (const log of accessLogs) {
+    for (const log of allLogs) {
       const key = this.getPeriodKey(log.timestamp, period);
       const entry = periodData.get(key) || { entries: 0, exits: 0, count: 0 };
 
@@ -409,15 +428,15 @@ export class AnalyticsService {
     // Convert to time series (net attendance per period)
     const data: TimeSeriesDataPoint[] = Array.from(periodData.entries()).map(
       ([key, value]) => ({
-        timestamp: this.parsePeridKey(key, period),
+        timestamp: this.parsePeriodKey(key, period),
         value: value.count,
         label: key,
       }),
     );
 
     // Calculate average stay duration (simplified estimation)
-    const totalEntries = accessLogs.filter((l) => l.action === 'ENTRY').length;
-    const totalExits = accessLogs.filter((l) => l.action === 'EXIT').length;
+    const totalEntries = allLogs.filter((l) => l.action === 'ENTRY').length;
+    const totalExits = allLogs.filter((l) => l.action === 'EXIT').length;
     const completedVisits = Math.min(totalEntries, totalExits);
 
     // Estimate average stay: total time range / average visits
@@ -448,17 +467,20 @@ export class AnalyticsService {
   ): Promise<CashlessStats> {
     await this.validateFestival(festivalId);
 
-    const cacheKey = this.getCacheKey(festivalId, 'cashless', query);
+    const cacheKey = this.getCacheKey(festivalId, 'cashless', { ...query });
     const cached = await this.cacheManager.get<CashlessStats>(cacheKey);
     if (cached) return cached;
 
-    const { startDate, endDate, vendorId } = query;
+    const { startDate, endDate } = query;
 
-    const dateFilter: any = {};
+    const dateFilter: { gte?: Date; lte?: Date } = {};
     if (startDate) dateFilter.gte = new Date(startDate);
     if (endDate) dateFilter.lte = new Date(endDate);
 
-    const whereCondition: any = { festivalId };
+    const whereCondition: {
+      festivalId: string;
+      createdAt?: { gte?: Date; lte?: Date };
+    } = { festivalId };
     if (Object.keys(dateFilter).length > 0) {
       whereCondition.createdAt = dateFilter;
     }
@@ -585,7 +607,7 @@ export class AnalyticsService {
     const cached = await this.cacheManager.get<ZoneFrequentation>(cacheKey);
     if (cached) return cached;
 
-    // Get all zones for the festival
+    // Get all zones for the festival with their access logs
     const zones = await this.prisma.zone.findMany({
       where: { festivalId, isActive: true },
       include: {
@@ -604,13 +626,14 @@ export class AnalyticsService {
     let minOccupancy = Infinity;
 
     const zoneData: ZoneHeatmapData[] = zones.map((zone) => {
-      // Calculate peak from access logs
+      // Calculate current occupancy from access logs
+      let currentOccupancy = 0;
       let peakOccupancy = 0;
       let peakTime: Date | null = null;
       let runningCount = 0;
       let totalVisitors = 0;
 
-      // Sort logs by timestamp
+      // Sort logs by timestamp (oldest first for running count)
       const sortedLogs = [...zone.accessLogs].sort(
         (a, b) => a.timestamp.getTime() - b.timestamp.getTime(),
       );
@@ -628,10 +651,11 @@ export class AnalyticsService {
         }
       }
 
+      currentOccupancy = runningCount;
       const capacity = zone.capacity || 1000;
-      const occupancyPercentage = (zone.currentOccupancy / capacity) * 100;
+      const occupancyPercentage = (currentOccupancy / capacity) * 100;
 
-      totalOccupancy += zone.currentOccupancy;
+      totalOccupancy += currentOccupancy;
       totalCapacity += capacity;
 
       if (occupancyPercentage > maxOccupancy) {
@@ -648,7 +672,7 @@ export class AnalyticsService {
         zoneId: zone.id,
         zoneName: zone.name,
         zoneType: zone.requiresTicketType.join(', ') || 'GENERAL',
-        currentOccupancy: zone.currentOccupancy,
+        currentOccupancy,
         maxCapacity: capacity,
         occupancyPercentage,
         averageStayDuration: 0, // Would need entry/exit pairing
@@ -693,7 +717,7 @@ export class AnalyticsService {
     };
 
     // Gather data for each section
-    for (const section of sections) {
+    for (const section of sections || []) {
       switch (section) {
         case 'overview':
           reportData.overview = await this.calculateOverview(festivalId);
@@ -870,7 +894,7 @@ export class AnalyticsService {
     }
   }
 
-  private parsePeridKey(key: string, period: string): Date {
+  private parsePeriodKey(key: string, period: string): Date {
     switch (period) {
       case 'hour':
         return new Date(key.replace(' ', 'T') + ':00:00');

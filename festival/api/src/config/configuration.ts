@@ -22,10 +22,20 @@ export interface AppConfig {
   port: number;
   apiPrefix: string;
   corsOrigins: string[];
+  frontendUrl: string;
 }
 
 export interface QrCodeConfig {
   baseUrl: string;
+}
+
+export interface MailConfig {
+  host: string;
+  port: number;
+  user: string;
+  pass: string;
+  from: string;
+  supportEmail: string;
 }
 
 export interface RedisConfig {
@@ -63,6 +73,7 @@ export interface Configuration {
   jwt: JwtConfig;
   stripe: StripeConfig;
   qrCode: QrCodeConfig;
+  mail: MailConfig;
   redis: RedisConfig;
   upload: UploadConfig;
 }
@@ -73,6 +84,7 @@ export default (): Configuration => ({
     port: parseInt(process.env.PORT || '3000', 10),
     apiPrefix: process.env.API_PREFIX || 'api',
     corsOrigins: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:4200'],
+    frontendUrl: process.env.FRONTEND_URL || 'http://localhost:4200',
   },
   database: {
     url: process.env.DATABASE_URL || 'postgresql://festival:festival@localhost:5432/festival?schema=public',
@@ -92,6 +104,14 @@ export default (): Configuration => ({
   },
   qrCode: {
     baseUrl: process.env.QR_CODE_BASE_URL || 'http://localhost:3000/api/tickets/validate',
+  },
+  mail: {
+    host: process.env.SMTP_HOST || 'localhost',
+    port: parseInt(process.env.SMTP_PORT || '587', 10),
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+    from: process.env.EMAIL_FROM || '"Festival App" <noreply@festival.com>',
+    supportEmail: process.env.EMAIL_SUPPORT || 'support@festival.com',
   },
   redis: {
     url: process.env.REDIS_URL || 'redis://localhost:6379',

@@ -3,6 +3,11 @@
   "version": "0.0.0",
   "license": "MIT",
   "scripts": {
+    "start": "node dist/api/main.js",
+    "start:prod": "NODE_ENV=production node dist/api/main.js",
+    "build": "nx build api --prod",
+    "build:api": "nx build api --prod",
+    "serve:api": "nx serve api",
     "docker:up": "docker-compose up -d",
     "docker:down": "docker-compose down",
     "docker:logs": "docker-compose logs -f",
@@ -13,10 +18,24 @@
     "prisma:reset": "prisma migrate reset",
     "db:reset": "prisma migrate reset --force && npm run prisma:seed",
     "db:seed:demo": "SEED_DEMO_MODE=true ts-node prisma/seed.ts",
+    "test:e2e": "nx e2e api-e2e",
+    "test:e2e:watch": "nx run api-e2e:e2e:watch",
+    "test:e2e:coverage": "nx run api-e2e:e2e:coverage",
+    "test:e2e:ci": "nx run api-e2e:e2e:ci",
+    "test:e2e:auth": "nx e2e api-e2e --testPathPattern=auth.spec.ts",
+    "test:e2e:festivals": "nx e2e api-e2e --testPathPattern=festivals.spec.ts",
+    "test:e2e:tickets": "nx e2e api-e2e --testPathPattern=tickets.spec.ts",
+    "test:e2e:cashless": "nx e2e api-e2e --testPathPattern=cashless.spec.ts",
+    "test:api": "nx test api",
+    "test:api:watch": "nx test api --configuration=watch",
+    "test:api:cov": "nx test:cov api",
+    "test:api:ci": "nx test api --configuration=ci",
     "vercel:build": "nx build web --prod",
     "vercel:dev": "nx serve web",
     "vercel:build:api": "nx build api --prod",
-    "vercel:build:all": "nx run-many --target=build --projects=api,web --prod"
+    "vercel:build:all": "nx run-many --target=build --projects=api,web --prod",
+    "docs:generate": "ts-node scripts/generate-openapi.ts",
+    "docs:serve": "nx serve api && echo 'Swagger UI available at http://localhost:3000/docs'"
   },
   "private": true,
   "devDependencies": {
@@ -75,6 +94,7 @@
     "@nestjs/platform-socket.io": "^11.1.11",
     "@nestjs/swagger": "^11.2.3",
     "@nestjs/terminus": "^11.0.0",
+    "@nestjs/throttler": "^6.5.0",
     "@nestjs/websockets": "^11.1.11",
     "@prisma/client": "^7.2.0",
     "@sentry/nestjs": "^10.32.1",
@@ -90,6 +110,7 @@
     "class-validator": "^0.14.3",
     "ioredis": "^5.8.2",
     "multer": "^2.0.2",
+    "nestjs-i18n": "^10.6.0",
     "next": "^16.1.1",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
@@ -107,6 +128,7 @@
     "stripe": "^20.1.0",
     "swagger-ui-express": "^5.0.1",
     "uuid": "^13.0.0",
-    "winston-daily-rotate-file": "^5.0.0"
+    "winston-daily-rotate-file": "^5.0.0",
+    "yaml": "^2.3.4"
   }
 }

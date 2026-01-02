@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { Prisma, Artist, Stage, Performance } from '@prisma/client';
+import { CacheService, CACHE_KEYS, CACHE_TTL } from '../cache';
 import {
   CreateArtistDto,
   UpdateArtistDto,
@@ -41,7 +42,10 @@ import {
 export class ProgramService {
   private readonly logger = new Logger(ProgramService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   // ==================== ARTISTS ====================
 
@@ -428,6 +432,9 @@ export class ProgramService {
       },
     });
 
+    // Invalidate program cache for this festival
+    await this.invalidateProgramCache(festivalId);
+
     return this.toPerformanceResponse(performance);
   }
 
@@ -612,6 +619,10 @@ export class ProgramService {
     });
 
     this.logger.log(`Performance ${performanceId} updated`);
+
+    // Invalidate program cache for this festival
+    await this.invalidateProgramCache(festivalId);
+
     return this.toPerformanceResponse(performance);
   }
 
@@ -622,7 +633,19 @@ export class ProgramService {
     await this.findPerformanceById(festivalId, performanceId); // Ensure exists
 
     await this.prisma.performance.delete({ where: { id: performanceId } });
+
+    // Invalidate program cache for this festival
+    await this.invalidateProgramCache(festivalId);
+
     this.logger.log(`Performance ${performanceId} deleted`);
+  }
+
+  /**
+   * Invalidate program cache for a festival
+   */
+  private async invalidateProgramCache(festivalId: string): Promise<void> {
+    await this.cacheService.del(CACHE_KEYS.FESTIVAL.PROGRAM(festivalId));
+    this.logger.debug(`Program cache invalidated for festival ${festivalId}`);
   }
 
   private toPerformanceResponse(
@@ -647,8 +670,22 @@ export class ProgramService {
 
   /**
    * Get complete festival program
+   * Cached for 10 minutes (CACHE_TTL.FESTIVAL_PROGRAM)
    */
   async getFestivalProgram(festivalId: string): Promise<FestivalProgramDto> {
+    const cacheKey = CACHE_KEYS.FESTIVAL.PROGRAM(festivalId);
+
+    return this.cacheService.wrap(
+      cacheKey,
+      () => this.getFestivalProgramFromDb(festivalId),
+      CACHE_TTL.FESTIVAL_PROGRAM,
+    );
+  }
+
+  /**
+   * Internal method to fetch festival program from database
+   */
+  private async getFestivalProgramFromDb(festivalId: string): Promise<FestivalProgramDto> {
     const festival = await this.prisma.festival.findUnique({
       where: { id: festivalId },
     });

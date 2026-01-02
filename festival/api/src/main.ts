@@ -396,6 +396,7 @@ For API support, contact the development team or open an issue in the repository
       .addTag('Cashless', 'Cashless payment system - NFC, balance, transactions')
       .addTag('Payments', 'Payment processing with Stripe')
       .addTag('Health', 'API health and status checks')
+      .addTag('Analytics', 'Real-time analytics, KPIs, and dashboard data with WebSocket support')
       .addServer(`http://localhost:${port}`, 'Local Development')
       .addServer('https://api.festival.io', 'Production')
       .addServer('https://staging-api.festival.io', 'Staging')

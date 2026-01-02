@@ -10,6 +10,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { StripeService } from './stripe.service';
 import { AuditService } from '../audit/audit.service';
 import { AuditActions, EntityTypes } from '../audit/decorators/audit-action.decorator';
+import { NotificationsService } from '../notifications/notifications.service';
 import {
   CreateCheckoutDto,
   CheckoutType,
@@ -65,6 +66,7 @@ export class PaymentsService {
     private readonly stripeService: StripeService,
     private readonly configService: ConfigService,
     private readonly auditService: AuditService,
+    private readonly notificationsService: NotificationsService,
   ) {
     this.frontendUrl =
       this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
@@ -428,6 +430,43 @@ export class PaymentsService {
       { userId },
     );
 
+    // Send notification based on payment type
+    try {
+      if (type === CheckoutType.TICKET) {
+        const items = JSON.parse(metadata.items as string) as Array<{ quantity: number }>;
+        const ticketCount = items.reduce((sum, item) => sum + item.quantity, 0);
+        const festival = await this.prisma.festival.findFirst({
+          where: { tickets: { some: { paymentId } } },
+        });
+        await this.notificationsService.notifyTicketPurchased(
+          userId,
+          ticketCount,
+          festival?.name || 'the festival',
+          paymentId,
+        );
+      } else if (type === CheckoutType.CASHLESS) {
+        const account = await this.prisma.cashlessAccount.findUnique({
+          where: { userId },
+        });
+        await this.notificationsService.notifyCashlessTopup(
+          userId,
+          Number(payment.amount),
+          Number(account?.balance || 0),
+          payment.currency,
+        );
+      } else {
+        await this.notificationsService.notifyPaymentSuccess(
+          userId,
+          Number(payment.amount),
+          payment.currency,
+          payment.description || 'Payment',
+          paymentId,
+        );
+      }
+    } catch (error) {
+      this.logger.warn(`Failed to send notification for payment ${paymentId}: ${error.message}`);
+    }
+
     this.logger.log(`Payment processed successfully: ${paymentId}`);
   }
 
@@ -663,6 +702,18 @@ export class PaymentsService {
         },
       },
     });
+
+    // Send payment failed notification
+    try {
+      await this.notificationsService.notifyPaymentFailed(
+        payment.userId,
+        Number(payment.amount),
+        payment.currency,
+        paymentIntent.last_payment_error?.message || 'Payment was declined',
+      );
+    } catch (error) {
+      this.logger.warn(`Failed to send failure notification: ${error.message}`);
+    }
 
     this.logger.log(`Payment failed: ${payment.id}`);
   }

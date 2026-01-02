@@ -6,12 +6,44 @@
   "targets": {
     "e2e": {
       "executor": "@nx/jest:jest",
-      "outputs": ["{workspaceRoot}/coverage/{e2eProjectRoot}"],
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
       "options": {
         "jestConfig": "api-e2e/jest.config.cts",
-        "passWithNoTests": true
+        "passWithNoTests": false,
+        "runInBand": false
       },
-      "dependsOn": ["api:build", "api:serve"]
+      "dependsOn": ["api:build"]
+    },
+    "e2e:watch": {
+      "executor": "@nx/jest:jest",
+      "options": {
+        "jestConfig": "api-e2e/jest.config.cts",
+        "watch": true,
+        "passWithNoTests": false
+      }
+    },
+    "e2e:coverage": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "api-e2e/jest.config.cts",
+        "passWithNoTests": false,
+        "coverage": true,
+        "coverageReporters": ["text", "lcov", "html"]
+      },
+      "dependsOn": ["api:build"]
+    },
+    "e2e:ci": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "api-e2e/jest.config.cts",
+        "passWithNoTests": false,
+        "ci": true,
+        "coverage": true,
+        "runInBand": true
+      },
+      "dependsOn": ["api:build"]
     }
   }
 }

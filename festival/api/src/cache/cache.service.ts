@@ -1,7 +1,22 @@
 import { Injectable, Inject, Logger } from '@nestjs/common';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
-import { Cache } from 'cache-manager';
 import { CACHE_TTL } from './cache.constants';
+
+// Type for the cache manager
+interface CacheManagerType {
+  get<T>(key: string): Promise<T | undefined>;
+  set<T>(key: string, value: T, ttl?: number): Promise<void>;
+  del(key: string): Promise<void>;
+  stores?: Array<{
+    client?: RedisClientType;
+    getClient?: () => RedisClientType;
+  }>;
+}
+
+interface RedisClientType {
+  keys: (pattern: string) => Promise<string[]>;
+  del: (...keys: string[]) => Promise<number>;
+}
 
 /**
  * Cache Service
@@ -13,7 +28,7 @@ import { CACHE_TTL } from './cache.constants';
 export class CacheService {
   private readonly logger = new Logger(CacheService.name);
 
-  constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: Cache) {}
+  constructor(@Inject(CACHE_MANAGER) private readonly cacheManager: CacheManagerType) {}
 
   /**
    * Get a value from the cache
@@ -75,32 +90,28 @@ export class CacheService {
    */
   async delPattern(pattern: string): Promise<void> {
     try {
-      // Access the underlying Redis client
-      const store = this.cacheManager.store as unknown as {
-        client?: {
-          keys: (pattern: string) => Promise<string[]>;
-          del: (keys: string[]) => Promise<number>;
-        };
-        getClient?: () => {
-          keys: (pattern: string) => Promise<string[]>;
-          del: (keys: string[]) => Promise<number>;
-        };
-      };
+      // Access the underlying Redis client through stores
+      const stores = this.cacheManager.stores;
 
-      const client = store.client || store.getClient?.();
+      if (stores && stores.length > 0) {
+        const store = stores[0];
+        const client = store.client || store.getClient?.();
 
-      if (client && typeof client.keys === 'function') {
-        const keys = await client.keys(pattern);
+        if (client && typeof client.keys === 'function') {
+          const keys = await client.keys(pattern);
 
-        if (keys.length > 0) {
-          await client.del(keys);
-          this.logger.debug(`Cache DEL pattern "${pattern}": ${keys.length} keys deleted`);
-        } else {
-          this.logger.debug(`Cache DEL pattern "${pattern}": no matching keys`);
+          if (keys.length > 0) {
+            await client.del(...keys);
+            this.logger.debug(`Cache DEL pattern "${pattern}": ${keys.length} keys deleted`);
+          } else {
+            this.logger.debug(`Cache DEL pattern "${pattern}": no matching keys`);
+          }
+          return;
         }
-      } else {
-        this.logger.warn(`Pattern deletion not supported by cache store`);
       }
+
+      // Fallback: log warning if pattern deletion is not supported
+      this.logger.warn(`Pattern deletion not supported by cache store, skipping: ${pattern}`);
     } catch (error) {
       this.logger.error(`Cache DEL pattern error for "${pattern}":`, error);
     }
@@ -178,7 +189,8 @@ export class CacheService {
    */
   async reset(): Promise<void> {
     try {
-      await this.cacheManager.reset();
+      // Use pattern deletion to clear all keys
+      await this.delPattern('*');
       this.logger.warn('Cache RESET: all keys cleared');
     } catch (error) {
       this.logger.error('Cache RESET error:', error);

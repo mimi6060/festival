@@ -1,6 +1,5 @@
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { APP_FILTER, APP_GUARD, APP_INTERCEPTOR } from '@nestjs/core';
-import { ThrottlerGuard } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '../config/config.module';
@@ -25,6 +24,13 @@ import { SecurityModule } from '../security/security.module';
 import { UploadModule } from '../upload/upload.module';
 import { ProgramModule } from '../program/program.module';
 import { NotificationsModule } from '../notifications/notifications.module';
+import { ZonesModule } from '../zones/zones.module';
+import { VendorsModule } from '../vendors/vendors.module';
+import { CampingModule } from '../camping/camping.module';
+import { MailModule } from '../mail/mail.module';
+import { SupportModule } from '../support/support.module';
+import { AnalyticsModule } from '../analytics/analytics.module';
+import { SentryModule, SentryUserMiddleware } from '../sentry';
 import { HttpExceptionFilter } from '../common/filters/http-exception.filter';
 import { TransformInterceptor } from '../common/interceptors/transform.interceptor';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -76,6 +82,30 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 
     // Program (Artists, Stages, Performances)
     ProgramModule,
+
+    // Notifications (Push + In-app)
+    NotificationsModule,
+
+    // Zones (Access Control)
+    ZonesModule,
+
+    // Vendors (Food & Drinks)
+    VendorsModule,
+
+    // Camping / Accommodation
+    CampingModule,
+
+    // Email Service
+    MailModule,
+
+    // Support & FAQ
+    SupportModule,
+
+    // Analytics (Real-time Dashboard & WebSocket)
+    AnalyticsModule,
+
+    // Error Monitoring (Sentry)
+    SentryModule,
   ],
   controllers: [AppController],
   providers: [
@@ -93,11 +123,9 @@ import { RolesGuard } from '../auth/guards/roles.guard';
       useClass: TransformInterceptor,
     },
 
-    // Global guards - Rate limiting, JWT authentication and role-based access control
-    {
-      provide: APP_GUARD,
-      useClass: ThrottlerGuard,
-    },
+    // Global guards - JWT authentication and role-based access control
+    // Note: CustomThrottlerGuard is registered globally via ThrottlerModule
+    // Rate limits: Global(100/min), Auth(5/min), Payment(10/min), Public(200/min), Strict(3/5min)
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
@@ -108,4 +136,9 @@ import { RolesGuard } from '../auth/guards/roles.guard';
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    // Apply Sentry user context middleware to all routes
+    consumer.apply(SentryUserMiddleware).forRoutes('*');
+  }
+}

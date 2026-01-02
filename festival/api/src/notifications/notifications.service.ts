@@ -349,11 +349,17 @@ export class NotificationsService {
     ticketCount: number,
     festivalName: string,
     paymentId: string,
+    lang: string = 'fr',
   ): Promise<Notification> {
+    const { title, body } = this.getTranslatedPushNotification('ticketPurchased', lang, {
+      quantity: ticketCount,
+      festivalName,
+    });
+
     return this.sendNotification({
       userId,
-      title: 'Tickets Purchased!',
-      body: `You have successfully purchased ${ticketCount} ticket(s) for ${festivalName}.`,
+      title,
+      body,
       type: NotificationType.TICKET_PURCHASED,
       data: { ticketCount, festivalName, paymentId },
     });
@@ -365,11 +371,16 @@ export class NotificationsService {
     currency: string,
     description: string,
     paymentId: string,
+    lang: string = 'fr',
   ): Promise<Notification> {
+    const { title, message } = this.getTranslatedInAppNotification('ticketPurchased', lang, {
+      festivalName: description,
+    });
+
     return this.sendNotification({
       userId,
-      title: 'Payment Successful',
-      body: `Your payment of ${amount.toFixed(2)} ${currency} for ${description} has been processed.`,
+      title,
+      body: message,
       type: NotificationType.PAYMENT_SUCCESS,
       data: { amount, currency, paymentId },
     });
@@ -380,11 +391,16 @@ export class NotificationsService {
     amount: number,
     currency: string,
     reason: string,
+    lang: string = 'fr',
   ): Promise<Notification> {
+    const { title, message } = this.getTranslatedInAppNotification('paymentFailed', lang, {
+      amount: amount.toFixed(2),
+    });
+
     return this.sendNotification({
       userId,
-      title: 'Payment Failed',
-      body: `Your payment of ${amount.toFixed(2)} ${currency} could not be processed. Reason: ${reason}`,
+      title,
+      body: message,
       type: NotificationType.PAYMENT_FAILED,
       data: { amount, currency, reason },
     });
@@ -395,11 +411,17 @@ export class NotificationsService {
     amount: number,
     newBalance: number,
     currency: string,
+    lang: string = 'fr',
   ): Promise<Notification> {
+    const { title, body } = this.getTranslatedPushNotification('cashlessTopup', lang, {
+      amount: amount.toFixed(2),
+      balance: newBalance.toFixed(2),
+    });
+
     return this.sendNotification({
       userId,
-      title: 'Cashless Account Topped Up',
-      body: `${amount.toFixed(2)} ${currency} has been added to your cashless account. New balance: ${newBalance.toFixed(2)} ${currency}`,
+      title,
+      body,
       type: NotificationType.CASHLESS_TOPUP,
       data: { amount, newBalance, currency },
     });
@@ -410,16 +432,17 @@ export class NotificationsService {
     artistName: string,
     stageName: string,
     startTime: Date,
+    lang: string = 'fr',
   ): Promise<Notification> {
-    const timeString = startTime.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit',
+    const { title, body } = this.getTranslatedPushNotification('eventReminder', lang, {
+      festivalName: artistName,
+      hours: 0.25, // 15 minutes
     });
 
     return this.sendNotification({
       userId,
-      title: 'Artist Performance Reminder',
-      body: `${artistName} is performing at ${stageName} in 15 minutes (${timeString})!`,
+      title,
+      body,
       type: NotificationType.ARTIST_REMINDER,
       data: { artistName, stageName, startTime: startTime.toISOString() },
     });

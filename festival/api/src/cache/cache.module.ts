@@ -1,7 +1,6 @@
 import { Module, Global } from '@nestjs/common';
 import { CacheModule as NestCacheModule } from '@nestjs/cache-manager';
 import { ConfigModule, ConfigService } from '@nestjs/config';
-import { redisStore } from 'cache-manager-redis-store';
 import { CacheService } from './cache.service';
 import { CACHE_TTL } from './cache.constants';
 
@@ -18,15 +17,19 @@ import { CACHE_TTL } from './cache.constants';
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => {
         const redisUrl = configService.get<string>('redis.url') || 'redis://localhost:6379';
+
+        // Dynamic import for redis store
+        const redisStore = await import('cache-manager-redis-store');
         const url = new URL(redisUrl);
 
         return {
-          store: redisStore as unknown as string,
-          host: url.hostname,
-          port: parseInt(url.port, 10) || 6379,
+          store: redisStore.redisStore,
+          socket: {
+            host: url.hostname,
+            port: parseInt(url.port, 10) || 6379,
+          },
           password: url.password || undefined,
-          ttl: CACHE_TTL.DEFAULT,
-          max: 1000, // Maximum number of items in cache
+          ttl: CACHE_TTL.DEFAULT * 1000, // cache-manager uses milliseconds
         };
       },
       inject: [ConfigService],

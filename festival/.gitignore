@@ -48,6 +48,9 @@ Thumbs.db
 
 /generated/prisma
 
+# Uploads (local development)
+/uploads
+
 # React Native
 
 # OSX

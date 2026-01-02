@@ -11,9 +11,11 @@ import { JwtService } from '@nestjs/jwt';
 import { UserRole, UserStatus } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
+import { I18nService, I18nContext } from 'nestjs-i18n';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuditService, AuditContext } from '../audit/audit.service';
 import { AuditActions, EntityTypes } from '../audit/decorators/audit-action.decorator';
+import { MailService } from '../mail/mail.service';
 import { AuthenticatedUser } from './decorators/current-user.decorator';
 import {
   ForgotPasswordDto,
@@ -75,6 +77,8 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
     private readonly auditService: AuditService,
+    private readonly i18n: I18nService,
+    private readonly mailService: MailService,
   ) {
     // Parse expiresIn configuration (e.g., '15m' -> 900 seconds)
     const accessExpiresIn = this.configService.get<string>('jwt.expiresIn') || '15m';
@@ -82,6 +86,21 @@ export class AuthService {
 
     this.accessTokenExpiresIn = this.parseExpiresIn(accessExpiresIn);
     this.refreshTokenExpiresIn = this.parseExpiresIn(refreshExpiresIn);
+  }
+
+  /**
+   * Translate a key with the current request context language.
+   */
+  private t(key: string, args?: Record<string, unknown>): string {
+    const lang = I18nContext.current()?.lang || 'fr';
+    return this.i18n.t(key, { lang, args }) as string;
+  }
+
+  /**
+   * Translate a key with a specific language.
+   */
+  private translate(key: string, lang: string, args?: Record<string, unknown>): string {
+    return this.i18n.t(key, { lang, args }) as string;
   }
 
   /**
@@ -162,11 +181,11 @@ export class AuthService {
     }
 
     if (user.status === UserStatus.BANNED) {
-      throw new UnauthorizedException('Account has been banned');
+      throw new UnauthorizedException(this.t('auth.login.accountBanned'));
     }
 
     if (user.status === UserStatus.INACTIVE) {
-      throw new UnauthorizedException('Account is inactive');
+      throw new UnauthorizedException(this.t('auth.login.accountInactive'));
     }
 
     return {
@@ -230,7 +249,7 @@ export class AuthService {
     });
 
     if (existingUser) {
-      throw new ConflictException('An account with this email already exists');
+      throw new ConflictException(this.t('auth.register.emailExists'));
     }
 
     // Hash password
@@ -256,10 +275,22 @@ export class AuthService {
       });
 
       // TODO: Store verification token in a separate table or use a token service
-      // TODO: Send verification email with token
-      this.logger.log(
-        `User registered: ${user.email}, verification token: ${verificationToken}`,
-      );
+      // Send verification email with token
+      try {
+        await this.mailService.sendVerificationEmail(
+          {
+            id: user.id,
+            email: user.email,
+            firstName: user.firstName,
+            lastName: user.lastName,
+          },
+          verificationToken,
+        );
+        this.logger.log(`Verification email sent to: ${user.email}`);
+      } catch (emailError) {
+        this.logger.error(`Failed to send verification email to ${user.email}: ${emailError.message}`);
+        // Don't fail registration if email fails - user can request resend
+      }
 
       // Log user registration
       await this.auditService.log(
@@ -279,12 +310,11 @@ export class AuthService {
           lastName: user.lastName,
           role: user.role,
         },
-        message:
-          'Registration successful. Please check your email to verify your account.',
+        message: this.t('auth.register.success'),
       };
     } catch (error) {
       this.logger.error(`Failed to register user: ${error.message}`, error.stack);
-      throw new InternalServerErrorException('Failed to create account');
+      throw new InternalServerErrorException(this.t('auth.register.failed'));
     }
   }
 
@@ -335,7 +365,7 @@ export class AuthService {
       });
 
       if (payload.type !== 'refresh') {
-        throw new UnauthorizedException('Invalid token type');
+        throw new UnauthorizedException(this.t('auth.token.invalid'));
       }
 
       // Find user and validate stored refresh token
@@ -353,7 +383,7 @@ export class AuthService {
       });
 
       if (!user || !user.refreshToken) {
-        throw new UnauthorizedException('Invalid refresh token');
+        throw new UnauthorizedException(this.t('auth.token.invalid'));
       }
 
       // Verify stored hash matches
@@ -364,15 +394,15 @@ export class AuthService {
           where: { id: user.id },
           data: { refreshToken: null },
         });
-        throw new UnauthorizedException('Token has been revoked');
+        throw new UnauthorizedException(this.t('auth.token.revoked'));
       }
 
       if (user.status === UserStatus.BANNED) {
-        throw new UnauthorizedException('Account has been banned');
+        throw new UnauthorizedException(this.t('auth.login.accountBanned'));
       }
 
       if (user.status === UserStatus.INACTIVE) {
-        throw new UnauthorizedException('Account is inactive');
+        throw new UnauthorizedException(this.t('auth.login.accountInactive'));
       }
 
       // Generate new tokens (token rotation)
@@ -388,7 +418,7 @@ export class AuthService {
       if (error instanceof UnauthorizedException) {
         throw error;
       }
-      throw new UnauthorizedException('Invalid or expired refresh token');
+      throw new UnauthorizedException(this.t('auth.token.expired'));
     }
   }
 
@@ -428,8 +458,7 @@ export class AuthService {
         `Password reset requested for non-existent email: ${normalizedEmail}`,
       );
       return {
-        message:
-          'If an account with that email exists, a password reset link has been sent.',
+        message: this.t('auth.password.resetRequested'),
       };
     }
 
@@ -438,14 +467,26 @@ export class AuthService {
     const hashedResetToken = this.hashToken(resetToken);
 
     // TODO: Store reset token with expiration in database
-    // TODO: Send password reset email
-    this.logger.log(
-      `Password reset requested for: ${user.email}, token: ${resetToken}`,
-    );
+
+    // Send password reset email
+    try {
+      await this.mailService.sendPasswordResetEmail(
+        {
+          id: user.id,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+        },
+        resetToken,
+      );
+      this.logger.log(`Password reset email sent to: ${user.email}`);
+    } catch (emailError) {
+      this.logger.error(`Failed to send password reset email to ${user.email}: ${emailError.message}`);
+      // Still return success to prevent email enumeration
+    }
 
     return {
-      message:
-        'If an account with that email exists, a password reset link has been sent.',
+      message: this.t('auth.password.resetRequested'),
     };
   }
 
@@ -468,8 +509,7 @@ export class AuthService {
     this.logger.log(`Password reset attempted with token: ${dto.token}`);
 
     return {
-      message:
-        'Password has been reset successfully. You can now login with your new password.',
+      message: this.t('auth.password.resetSuccess'),
     };
   }
 
@@ -486,7 +526,7 @@ export class AuthService {
     this.logger.log(`Email verification attempted with token: ${dto.token}`);
 
     return {
-      message: 'Email verified successfully. You can now login to your account.',
+      message: this.t('auth.email.verificationSuccess'),
     };
   }
 
@@ -511,7 +551,7 @@ export class AuthService {
     });
 
     if (!user) {
-      throw new UnauthorizedException('User not found');
+      throw new UnauthorizedException(this.t('auth.profile.notFound'));
     }
 
     return user;
