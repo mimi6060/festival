@@ -9,11 +9,11 @@ Voir `.claude/DONE.md` pour le détail complet.
 
 ## Prochaines Phases Disponibles
 
-### Phase Mobile Avancée
-- [ ] Mode offline complet avec sync
-- [ ] Scan NFC pour cashless
-- [ ] Géolocalisation indoor
-- [ ] Apple Wallet / Google Wallet
+### Phase Mobile Avancée (2026-01-02) - COMPLETED
+- [x] Mode offline complet avec sync (DataSyncService)
+- [x] Scan NFC pour cashless (NFCCashlessService)
+- [x] Géolocalisation indoor (useIndoorLocation)
+- [x] Apple Wallet / Google Wallet (useWallet)
 
 ### Phase IA
 - [ ] Service Python IA
@@ -74,14 +74,22 @@ Voir `.claude/DONE.md` pour le détail complet.
 - [x] Scripts npm build:web, build:admin avec NODE_ENV=production
 - [x] Validation Docker-compose config
 
+### Phase CI/CD Avancee (2026-01-02) - COMPLETED
+- [x] ci.yml ameliore avec matrix builds (Node 18/20, Ubuntu/macOS)
+- [x] Caching avance (node_modules, NX, Prisma, Docker layers)
+- [x] deploy-staging.yml - Deploiement automatique staging
+- [x] deploy-production.yml - Deploiement production avec approval gates
+- [x] mobile-build.yml - Build iOS/Android complet avec EAS
+- [x] database-migration.yml - Workflow migrations Prisma
+
 ---
 
 ## Stats Projet Actuel
 
 | Métrique | Valeur |
 |----------|--------|
-| Fichiers créés | 820+ |
-| Lignes de code | 160,000+ |
+| Fichiers créés | 825+ |
+| Lignes de code | 162,000+ |
 | Modules backend | 25+ |
 | Composants frontend | 50+ |
 | Écrans mobile | 15+ |
@@ -89,6 +97,18 @@ Voir `.claude/DONE.md` pour le détail complet.
 | Templates PDF | 6 |
 | Tests | 300+ |
 | Traductions | 1000+ |
+| Workflows CI/CD | 10+ |
 
 ---
-Derniere mise a jour: 2026-01-02 - Phase Tests & QA (unit tests, E2E tests, Jest config 80% coverage)
+Derniere mise a jour: 2026-01-02 - Phase CI/CD Avancee (workflows GitHub Actions ameliores)
+
+### Phase Error Handling & Logging (2026-01-02) - COMPLETED
+- [x] HttpExceptionFilter - Filtre global pour HttpException
+- [x] AllExceptionsFilter - Filtre global pour erreurs non-HTTP et Prisma
+- [x] ValidationExceptionFilter - Filtre specialise class-validator avec i18n
+- [x] Custom exceptions metier: staff, camping, program
+- [x] 60+ nouveaux codes d'erreur standardises (12xxx-17xxx)
+- [x] Messages d'erreur FR/EN pour tous les codes
+- [x] ErrorLoggerService - Logging structure avec stats
+- [x] RetryService - Retry exponential backoff avec jitter
+- [x] RetryPresets - Configurations pre-faites (database, API, payment, email)
