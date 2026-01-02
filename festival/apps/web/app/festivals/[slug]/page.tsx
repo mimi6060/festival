@@ -295,7 +295,9 @@ export default async function FestivalDetailPage({ params }: PageProps) {
                 ))}
               </div>
               <div className="mt-6 text-center">
-                <Button variant="secondary">View Full Lineup</Button>
+                <Button as="link" href={`/festivals/${festival.slug}/tickets`} variant="secondary">
+                  Get Tickets for These Artists
+                </Button>
               </div>
             </section>
 
