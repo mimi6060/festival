@@ -1,34 +1,8 @@
-// =============================================================================
-// FESTIVAL MANAGEMENT PLATFORM - DATABASE SCHEMA
-// =============================================================================
-//
-// Description: Complete database schema for a multi-tenant festival management
-//              platform supporting ticketing, cashless payments, staff management,
-//              camping, vendors, and real-time analytics.
-//
-// Version: 2.0.0
-// Last Updated: 2026-01-02
-// Author: Festival Platform Team
-//
-// Key Features:
-// - Multi-tenant architecture (festivals are isolated by organizerId)
-// - GDPR-compliant data model with consent tracking
-// - Optimized indexes for high-volume queries (10K-500K users)
-// - Full audit logging for security compliance
-// - Soft delete support for critical entities
-//
-// Performance Optimizations:
-// - 80+ composite indexes for common query patterns
-// - Covering indexes for SELECT queries
-// - Optimized for ticket scanning (QR lookup < 10ms)
-// - Cashless transaction indexes for real-time analytics
-//
-// =============================================================================
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["fullTextSearch"]
-  binaryTargets   = ["native", "linux-musl-arm64-openssl-3.0.x", "linux-musl-openssl-3.0.x"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
@@ -36,9 +10,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// =============================================================================
-// ENUMS - Status and Type Definitions
-// =============================================================================
+// Enums
 enum UserRole {
   ADMIN
   ORGANIZER
@@ -215,31 +187,29 @@ model User {
   updatedAt         DateTime    @updatedAt
 
   // Relations
-  tickets                Ticket[]
-  payments               Payment[]
-  cashlessAccount        CashlessAccount?
-  staffAssignments       StaffAssignment[]
-  organizedFestivals     Festival[]             // Festivals organized by this user
-  vendorOrders           VendorOrder[]
-  notifications          Notification[]
-  pushTokens             PushToken[]
+  tickets           Ticket[]
+  payments          Payment[]
+  cashlessAccount   CashlessAccount?
+  staffAssignments  StaffAssignment[]
+  organizedFestivals Festival[]       // Festivals organized by this user
+  vendorOrders      VendorOrder[]
+  notifications     Notification[]
+  pushTokens        PushToken[]
   notificationPreference NotificationPreference?
-  campingBookings        CampingBooking[]
-  supportTickets         SupportTicket[]
-  staffMembers           StaffMember[]
-  userConsents           UserConsent[]          // GDPR consent records
-  gdprRequests           GdprRequest[]          // GDPR data requests
-  sessions               Session[]              // Active sessions
+  campingBookings   CampingBooking[]
+  supportTickets    SupportTicket[]
+  staffMembers      StaffMember[]
+  userConsents      UserConsent[]          // GDPR consent records
+  gdprRequests      GdprRequest[]          // GDPR data requests
+  sessions          Session[]              // Active sessions
 
-  // Performance indexes - optimized for common query patterns
-  @@index([email])                    // Email lookup (login)
-  @@index([role])                     // Filter by role (admin views)
-  @@index([status])                   // Filter by status
-  @@index([role, status])             // Combined filter for user management
-  @@index([createdAt])                // Time-based queries (registration stats)
-  @@index([lastLoginAt])              // Active user tracking
-  @@index([firstName, lastName])      // Name search
-  @@index([emailVerified, status])    // Verified users filter
+  // Performance indexes
+  @@index([email])
+  @@index([role])
+  @@index([status])
+  @@index([role, status])
+  @@index([createdAt])
+  @@index([lastLoginAt])
 }
 
 model Festival {
@@ -279,22 +249,12 @@ model Festival {
   mapPois          MapPoi[]
   staffMembers     StaffMember[]
 
-  // Performance indexes - optimized for multi-tenant queries
-  @@index([organizerId])             // Organizer's festivals
-  @@index([slug])                    // URL lookup
-  @@index([status])                  // Filter by status
-  @@index([startDate, endDate])      // Date range queries
-  @@index([isDeleted])               // Exclude deleted
-  @@index([status, isDeleted])       // Active festivals filter
-  @@index([organizerId, status])     // Organizer dashboard
-  @@index([startDate])               // Upcoming festivals
-  @@index([endDate])                 // Past festivals
-  @@index([location])                // Location-based search
+  @@index([organizerId])
+  @@index([slug])
+  @@index([status])
+  @@index([startDate, endDate])
+  @@index([isDeleted])
 }
-
-// =============================================================================
-// TICKETING MODELS
-// =============================================================================
 
 model TicketCategory {
   id            String      @id @default(uuid())
@@ -316,12 +276,8 @@ model TicketCategory {
   festival      Festival    @relation(fields: [festivalId], references: [id], onDelete: Cascade)
   tickets       Ticket[]
 
-  // Performance indexes
-  @@index([festivalId])                    // Festival's categories
-  @@index([type])                          // Filter by type
-  @@index([festivalId, type])              // Festival type filter
-  @@index([festivalId, isActive])          // Active categories
-  @@index([saleStartDate, saleEndDate])    // Sale period filter
+  @@index([festivalId])
+  @@index([type])
 }
 
 model Ticket {
@@ -346,26 +302,19 @@ model Ticket {
   paymentId       String?
   zoneAccessLogs  ZoneAccessLog[]
 
-  // Performance indexes - optimized for high-volume scanning
-  @@index([festivalId])                    // Festival tickets
-  @@index([userId])                        // User's tickets
-  @@index([qrCode])                        // QR code lookup (scanning) - CRITICAL
-  @@index([status])                        // Status filter
-  @@index([festivalId, status])            // Festival analytics by status
-  @@index([festivalId, categoryId])        // Reports by category
-  @@index([festivalId, createdAt])         // Time-based festival reports
-  @@index([userId, status])                // User's tickets by status
-  @@index([userId, festivalId])            // User's tickets per festival
-  @@index([categoryId, status])            // Category sales analysis
-  @@index([createdAt])                     // Time-based analytics
-  @@index([paymentId])                     // Payment lookup
-  @@index([usedAt])                        // Entry time analysis
-  @@index([festivalId, usedAt])            // Entry flow analysis
+  // Performance indexes - optimized for common queries
+  @@index([festivalId])
+  @@index([userId])
+  @@index([qrCode])
+  @@index([status])
+  @@index([festivalId, status])           // Analytics: tickets by festival and status
+  @@index([festivalId, categoryId])       // Reports: tickets by festival and category
+  @@index([festivalId, createdAt])        // Time-based queries
+  @@index([userId, status])               // User's tickets by status
+  @@index([categoryId, status])           // Category sales
+  @@index([createdAt])                    // Time-based analytics
+  @@index([paymentId])                    // Payment lookup
 }
-
-// =============================================================================
-// PAYMENT MODELS
-// =============================================================================
 
 model Payment {
   id              String          @id @default(uuid())
@@ -389,21 +338,15 @@ model Payment {
   cashlessTopup   CashlessTransaction?
 
   // Performance indexes
-  @@index([userId])                        // User's payments
-  @@index([status])                        // Payment status filter
-  @@index([providerPaymentId])             // Provider lookup (webhooks) - CRITICAL
-  @@index([userId, status])                // User payments by status
-  @@index([createdAt])                     // Time-based queries
-  @@index([status, createdAt])             // Payment analytics
-  @@index([provider, status])              // Provider analysis
-  @@index([paidAt])                        // Completed payments timeline
-  @@index([provider, createdAt])           // Provider trends
-  @@index([userId, createdAt])             // User payment history
+  @@index([userId])
+  @@index([status])
+  @@index([providerPaymentId])
+  @@index([userId, status])               // User payments by status
+  @@index([createdAt])                    // Time-based queries
+  @@index([status, createdAt])            // Payment analytics
+  @@index([provider, status])             // Provider analysis
+  @@index([paidAt])                       // Completed payments timeline
 }
-
-// =============================================================================
-// CASHLESS MODELS
-// =============================================================================
 
 model CashlessAccount {
   id            String      @id @default(uuid())
@@ -418,10 +361,7 @@ model CashlessAccount {
   user          User        @relation(fields: [userId], references: [id])
   transactions  CashlessTransaction[]
 
-  // Performance indexes
-  @@index([nfcTagId])              // NFC scan lookup - CRITICAL
-  @@index([isActive])              // Active accounts
-  @@index([userId, isActive])      // Active user account
+  @@index([nfcTagId])
 }
 
 model CashlessTransaction {
@@ -444,22 +384,16 @@ model CashlessTransaction {
   payment         Payment?        @relation(fields: [paymentId], references: [id])
 
   // Performance indexes - critical for high-volume transactions
-  @@index([accountId])                       // Account transactions
-  @@index([festivalId])                      // Festival transactions
-  @@index([type])                            // Transaction type filter
-  @@index([createdAt])                       // Time-based queries
-  @@index([festivalId, type])                // Festival cashless analytics
-  @@index([festivalId, createdAt])           // Time-based festival reports
-  @@index([festivalId, type, createdAt])     // Full analytics queries
-  @@index([accountId, createdAt])            // User transaction history
-  @@index([performedById])                   // Staff activity tracking
-  @@index([accountId, type])                 // Account type filter
-  @@index([accountId, festivalId])           // User's festival transactions
+  @@index([accountId])
+  @@index([festivalId])
+  @@index([type])
+  @@index([createdAt])
+  @@index([festivalId, type])             // Festival cashless analytics
+  @@index([festivalId, createdAt])        // Time-based festival reports
+  @@index([festivalId, type, createdAt])  // Full analytics queries
+  @@index([accountId, createdAt])         // User transaction history
+  @@index([performedById])                // Staff activity tracking
 }
-
-// =============================================================================
-// ZONE & ACCESS CONTROL MODELS
-// =============================================================================
 
 model Zone {
   id            String      @id @default(uuid())
@@ -479,10 +413,7 @@ model Zone {
   accessLogs    ZoneAccessLog[]
   staffShifts   StaffShift[]
 
-  // Performance indexes
-  @@index([festivalId])              // Festival zones
-  @@index([festivalId, isActive])    // Active zones
-  @@index([festivalId, name])        // Zone lookup by name
+  @@index([festivalId])
 }
 
 enum ZoneAccessAction {
@@ -502,14 +433,10 @@ model ZoneAccessLog {
   zone        Zone             @relation(fields: [zoneId], references: [id], onDelete: Cascade)
   ticket      Ticket           @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
-  // Performance indexes
-  @@index([zoneId])                  // Zone access logs
-  @@index([ticketId])                // Ticket access history
-  @@index([timestamp])               // Time-based queries
-  @@index([zoneId, timestamp])       // Zone activity over time
-  @@index([zoneId, action])          // Entry/exit counts
-  @@index([ticketId, timestamp])     // User movement tracking
-  @@index([zoneId, action, timestamp]) // Zone flow analysis
+  @@index([zoneId])
+  @@index([ticketId])
+  @@index([timestamp])
+  @@index([zoneId, timestamp])
 }
 
 model StaffAssignment {
@@ -1347,6 +1274,9 @@ model UserConsent {
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
 
+  // Relations
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([userId, type])
   @@index([userId])
   @@index([type])
@@ -1369,6 +1299,9 @@ model GdprRequest {
   createdAt       DateTime          @default(now())
   updatedAt       DateTime          @updatedAt
 
+  // Relations
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([userId])
   @@index([type])
   @@index([status])
@@ -1387,6 +1320,9 @@ model Session {
   lastActiveAt DateTime @default(now())
   expiresAt   DateTime
   createdAt   DateTime  @default(now())
+
+  // Relations
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([token])
