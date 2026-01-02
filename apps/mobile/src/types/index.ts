@@ -92,6 +92,10 @@ export type RootStackParamList = {
   Transactions: undefined;
   Map: { filter?: 'all' | 'stages' | 'food' | 'drinks' | 'services' | 'info' | 'emergency' };
   Settings: undefined;
+  EditProfile: undefined;
+  ChangePassword: undefined;
+  HelpCenter: undefined;
+  ContactUs: undefined;
 };
 
 export type AuthStackParamList = {

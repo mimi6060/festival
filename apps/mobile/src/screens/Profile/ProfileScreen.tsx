@@ -143,27 +143,27 @@ export const ProfileScreen: React.FC = () => {
             <MenuItem
               icon="👤"
               label="Informations personnelles"
-              onPress={() => Alert.alert('Info', 'Fonctionnalite a venir')}
+              onPress={() => navigation.navigate('EditProfile')}
             />
             <View style={styles.menuDivider} />
             <MenuItem
               icon="📧"
               label="Email"
               value={user?.email}
-              onPress={() => Alert.alert('Info', 'Fonctionnalite a venir')}
+              onPress={() => navigation.navigate('EditProfile')}
             />
             <View style={styles.menuDivider} />
             <MenuItem
               icon="📱"
               label="Telephone"
               value={user?.phone || 'Non renseigne'}
-              onPress={() => Alert.alert('Info', 'Fonctionnalite a venir')}
+              onPress={() => navigation.navigate('EditProfile')}
             />
             <View style={styles.menuDivider} />
             <MenuItem
               icon="🔒"
               label="Mot de passe"
-              onPress={() => Alert.alert('Info', 'Fonctionnalite a venir')}
+              onPress={() => navigation.navigate('ChangePassword')}
             />
           </Card>
         </View>
@@ -202,25 +202,25 @@ export const ProfileScreen: React.FC = () => {
             <MenuItem
               icon="❓"
               label="Centre d'aide"
-              onPress={() => Alert.alert('Info', 'Fonctionnalite a venir')}
+              onPress={() => navigation.navigate('HelpCenter')}
             />
             <View style={styles.menuDivider} />
             <MenuItem
               icon="💬"
               label="Nous contacter"
-              onPress={() => Alert.alert('Info', 'Fonctionnalite a venir')}
+              onPress={() => navigation.navigate('ContactUs')}
             />
             <View style={styles.menuDivider} />
             <MenuItem
               icon="📄"
               label="Conditions d'utilisation"
-              onPress={() => Alert.alert('Info', 'Fonctionnalite a venir')}
+              onPress={() => navigation.navigate('HelpCenter')}
             />
             <View style={styles.menuDivider} />
             <MenuItem
               icon="🔐"
               label="Politique de confidentialite"
-              onPress={() => Alert.alert('Info', 'Fonctionnalite a venir')}
+              onPress={() => navigation.navigate('HelpCenter')}
             />
           </Card>
         </View>

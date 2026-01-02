@@ -13,6 +13,8 @@ import { TopupScreen } from '../../screens/Wallet/TopupScreen';
 import { TransactionsScreen } from '../../screens/Wallet/TransactionsScreen';
 import { MapScreen } from '../../screens/Map/MapScreen';
 import { SettingsScreen } from '../../screens/Settings/SettingsScreen';
+import { EditProfileScreen, ChangePasswordScreen } from '../../screens/Profile';
+import { HelpCenterScreen, ContactUsScreen } from '../../screens/Support';
 
 import { useAuthStore } from '../../store';
 import { pushService } from '../../services';
@@ -47,6 +49,10 @@ const linking: LinkingOptions<RootStackParamList> = {
       Transactions: 'wallet/transactions',
       Map: 'map',
       Settings: 'settings',
+      EditProfile: 'profile/edit',
+      ChangePassword: 'profile/password',
+      HelpCenter: 'help',
+      ContactUs: 'contact',
     },
   },
 };
@@ -168,6 +174,38 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen
               name="Settings"
               component={SettingsScreen}
+              options={{
+                animation: 'slide_from_right',
+              }}
+            />
+
+            <Stack.Screen
+              name="EditProfile"
+              component={EditProfileScreen}
+              options={{
+                animation: 'slide_from_right',
+              }}
+            />
+
+            <Stack.Screen
+              name="ChangePassword"
+              component={ChangePasswordScreen}
+              options={{
+                animation: 'slide_from_right',
+              }}
+            />
+
+            <Stack.Screen
+              name="HelpCenter"
+              component={HelpCenterScreen}
+              options={{
+                animation: 'slide_from_right',
+              }}
+            />
+
+            <Stack.Screen
+              name="ContactUs"
+              component={ContactUsScreen}
               options={{
                 animation: 'slide_from_right',
               }}

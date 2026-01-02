@@ -1131,5 +1131,14 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
 - [x] Integration dans app.module.ts
 - [x] Service donnees demo pour developpement
 
+### Profile & Support Screens (2026-01-03)
+- [x] EditProfileScreen avec validation email/telephone
+- [x] ChangePasswordScreen avec verification force mot de passe
+- [x] HelpCenterScreen avec FAQ et categories
+- [x] ContactUsScreen avec formulaire de contact
+- [x] AuthStore updateUser function
+- [x] Navigation fonctionnelle dans ProfileScreen
+- [x] URL linking configuration pour web
+
 ---
-Derniere mise a jour: 2026-01-03 - Phase Mobile UX (Settings, Quick Access, Backend API)
+Derniere mise a jour: 2026-01-03 - Profile & Support Screens
