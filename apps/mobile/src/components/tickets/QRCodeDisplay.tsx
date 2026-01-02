@@ -1,7 +1,60 @@
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import QRCode from 'react-native-qrcode-svg';
+import { View, Text, StyleSheet, Platform } from 'react-native';
 import { colors, spacing, borderRadius, typography } from '../../theme';
+
+// Web-safe QR placeholder (native uses react-native-qrcode-svg)
+let QRCodeComponent: React.FC<{ value: string; size: number }> = ({ value, size }) => {
+  // Fallback for web - display a placeholder with the code
+  return (
+    <View style={[placeholderStyles.qrPlaceholder, { width: size, height: size }]}>
+      <Text style={placeholderStyles.qrIcon}>📱</Text>
+      <Text style={placeholderStyles.qrText}>QR Code</Text>
+      <Text style={placeholderStyles.qrValue} numberOfLines={2}>{value}</Text>
+    </View>
+  );
+};
+
+// Try to load native QR code component
+if (Platform.OS !== 'web') {
+  try {
+    const QRCode = require('react-native-qrcode-svg').default;
+    QRCodeComponent = ({ value, size }) => (
+      <QRCode
+        value={value}
+        size={size}
+        color={colors.black}
+        backgroundColor={colors.white}
+      />
+    );
+  } catch (e) {
+    // Keep fallback
+  }
+}
+
+const placeholderStyles = StyleSheet.create({
+  qrPlaceholder: {
+    backgroundColor: colors.white,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+  },
+  qrIcon: {
+    fontSize: 48,
+    marginBottom: spacing.sm,
+  },
+  qrText: {
+    ...typography.body,
+    color: colors.black,
+    fontWeight: '600',
+  },
+  qrValue: {
+    ...typography.caption,
+    color: colors.textMuted,
+    textAlign: 'center',
+    marginTop: spacing.xs,
+  },
+});
 
 interface QRCodeDisplayProps {
   value: string;
@@ -25,16 +78,7 @@ export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = ({
 
       <View style={[styles.qrContainer, showBorder && styles.qrBorder]}>
         <View style={styles.qrBackground}>
-          <QRCode
-            value={value}
-            size={size}
-            color={colors.black}
-            backgroundColor={colors.white}
-            logo={undefined}
-            logoSize={40}
-            logoMargin={2}
-            logoBorderRadius={5}
-          />
+          <QRCodeComponent value={value} size={size} />
         </View>
 
         {/* Corner decorations */}
