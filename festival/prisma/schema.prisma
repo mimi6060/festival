@@ -208,6 +208,8 @@ model User {
   @@index([role])
   @@index([status])
   @@index([role, status])
+  @@index([email, status])
+  @@index([email, role])
   @@index([createdAt])
   @@index([lastLoginAt])
 }
@@ -254,6 +256,8 @@ model Festival {
   @@index([status])
   @@index([startDate, endDate])
   @@index([isDeleted])
+  @@index([slug, status])
+  @@index([organizerId, status])
 }
 
 model TicketCategory {
@@ -318,6 +322,7 @@ model Ticket {
   @@index([festivalId, categoryId]) // Reports: tickets by festival and category
   @@index([festivalId, createdAt]) // Time-based queries
   @@index([userId, status]) // User's tickets by status
+  @@index([userId, festivalId]) // User's festival tickets
   @@index([categoryId, status]) // Category sales
   @@index([createdAt]) // Time-based analytics
   @@index([paymentId]) // Payment lookup
@@ -351,6 +356,7 @@ model Payment {
   @@index([status])
   @@index([providerPaymentId])
   @@index([userId, status]) // User payments by status
+  @@index([festivalId, status]) // Festival payments by status
   @@index([createdAt]) // Time-based queries
   @@index([status, createdAt]) // Payment analytics
   @@index([provider, status]) // Provider analysis
@@ -424,6 +430,8 @@ model Zone {
   staffShifts      StaffShift[]
 
   @@index([festivalId])
+  @@index([festivalId, isActive]) // Active zones by festival
+  @@index([isActive])
 }
 
 enum ZoneAccessAction {
@@ -469,6 +477,8 @@ model StaffAssignment {
   @@index([userId])
   @@index([festivalId])
   @@index([zoneId])
+  @@index([festivalId, userId]) // Festival staff lookup
+  @@index([festivalId, isActive]) // Active staff by festival
 }
 
 model Artist {
@@ -528,6 +538,7 @@ model Performance {
   @@index([stageId])
   @@index([startTime])
   @@index([stageId, startTime])
+  @@index([artistId, startTime]) // Artist's performances timeline
 }
 
 model AuditLog {
