@@ -69,18 +69,37 @@ describe('PaymentsService', () => {
     },
   };
 
+  // Config values
+  const testConfig: Record<string, any> = {
+    STRIPE_SECRET_KEY: 'sk_test_mock_key',
+    STRIPE_WEBHOOK_SECRET: 'whsec_test_secret',
+  };
+
   const mockConfigService = {
-    get: jest.fn((key: string, defaultValue?: any) => {
-      const config: Record<string, any> = {
-        STRIPE_SECRET_KEY: 'sk_test_mock_key',
-        STRIPE_WEBHOOK_SECRET: 'whsec_test_secret',
-      };
-      return config[key] ?? defaultValue;
+    get: jest.fn().mockImplementation((key: string, defaultValue?: any) => {
+      return testConfig[key] ?? defaultValue;
     }),
   };
 
   beforeEach(async () => {
     jest.clearAllMocks();
+
+    // Re-set config mock after clearAllMocks
+    mockConfigService.get.mockImplementation((key: string, defaultValue?: any) => {
+      return testConfig[key] ?? defaultValue;
+    });
+
+    // Re-set Stripe mocks - they need default implementations
+    mockStripePaymentIntents.create.mockResolvedValue({
+      id: 'pi_default',
+      client_secret: 'pi_default_secret',
+      amount: 0,
+      currency: 'eur',
+      status: 'requires_payment_method',
+    });
+    mockStripePaymentIntents.cancel.mockResolvedValue({ id: 'pi_cancelled', status: 'canceled' });
+    mockStripeRefunds.create.mockResolvedValue({ id: 're_default', status: 'succeeded' });
+    mockStripeWebhooks.constructEvent.mockReturnValue({ type: 'test', data: { object: {} } });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

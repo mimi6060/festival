@@ -70,20 +70,27 @@ describe('AuthService', () => {
     verify: jest.fn(),
   };
 
+  // Config values
+  const testConfig: Record<string, any> = {
+    JWT_ACCESS_SECRET: 'test-access-secret',
+    JWT_REFRESH_SECRET: 'test-refresh-secret',
+    JWT_ACCESS_EXPIRES_IN: 900,
+    JWT_REFRESH_EXPIRES_IN: 604800,
+  };
+
   const mockConfigService = {
-    get: jest.fn((key: string, defaultValue?: any) => {
-      const config: Record<string, any> = {
-        JWT_ACCESS_SECRET: 'test-access-secret',
-        JWT_REFRESH_SECRET: 'test-refresh-secret',
-        JWT_ACCESS_EXPIRES_IN: 900,
-        JWT_REFRESH_EXPIRES_IN: 604800,
-      };
-      return config[key] ?? defaultValue;
+    get: jest.fn().mockImplementation((key: string, defaultValue?: any) => {
+      return testConfig[key] ?? defaultValue;
     }),
   };
 
   beforeEach(async () => {
     jest.clearAllMocks();
+
+    // Re-set config mock after clearAllMocks
+    mockConfigService.get.mockImplementation((key: string, defaultValue?: any) => {
+      return testConfig[key] ?? defaultValue;
+    });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
