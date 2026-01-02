@@ -27,6 +27,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
   const [localCategories, setLocalCategories] = useState(mockTicketCategories.filter((c) => c.festivalId === id));
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<TicketCategory | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   const [formData, setFormData] = useState<CategoryFormData>({
     name: '',
     description: '',
@@ -116,7 +117,18 @@ export default function TicketsPage({ params }: TicketsPageProps) {
     }
   };
 
-  const categories = localCategories;
+  // Filter categories by status
+  const categories = statusFilter === 'all'
+    ? localCategories
+    : statusFilter === 'active'
+    ? localCategories.filter((c) => c.isActive)
+    : localCategories.filter((c) => !c.isActive);
+
+  const statusOptions = [
+    { value: 'all', label: 'Toutes les categories' },
+    { value: 'active', label: 'Actives' },
+    { value: 'inactive', label: 'Inactives' },
+  ];
 
   if (!festival) {
     return (
@@ -131,9 +143,9 @@ export default function TicketsPage({ params }: TicketsPageProps) {
     );
   }
 
-  const totalSold = categories.reduce((sum, c) => sum + c.sold, 0);
-  const totalCapacity = categories.reduce((sum, c) => sum + c.quantity, 0);
-  const totalRevenue = categories.reduce((sum, c) => sum + c.sold * c.price, 0);
+  const totalSold = localCategories.reduce((sum, c) => sum + c.sold, 0);
+  const totalCapacity = localCategories.reduce((sum, c) => sum + c.quantity, 0);
+  const totalRevenue = localCategories.reduce((sum, c) => sum + c.sold * c.price, 0);
 
   return (
     <div className="space-y-6">
@@ -241,8 +253,26 @@ export default function TicketsPage({ params }: TicketsPageProps) {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <p className="text-sm text-gray-500">Categories actives</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
-            {categories.filter((c) => c.isActive).length} / {categories.length}
+            {localCategories.filter((c) => c.isActive).length} / {localCategories.length}
           </p>
+        </div>
+      </div>
+
+      {/* Filter */}
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="flex items-center gap-2">
+          <label className="text-sm text-gray-600">Statut:</label>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+          >
+            {statusOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
