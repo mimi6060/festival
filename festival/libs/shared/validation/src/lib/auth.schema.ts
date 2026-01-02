@@ -102,9 +102,7 @@ export const registerSchema = z
       .string()
       .regex(PATTERNS.PHONE_INTERNATIONAL, { message: m().invalidPhone })
       .optional(),
-    acceptTerms: z.literal(true, {
-      errorMap: () => ({ message: m().required }),
-    }),
+    acceptTerms: z.literal(true, { message: m().required }),
     acceptMarketing: z.boolean().optional().default(false),
   })
   .refine((data) => data.password === data.confirmPassword, {

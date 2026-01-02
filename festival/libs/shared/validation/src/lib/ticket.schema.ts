@@ -14,7 +14,6 @@ import {
   amountSchema,
   currencySchema,
   paginationSchema,
-  PATTERNS,
 } from './common.schema';
 
 // ============================================================================
@@ -150,7 +149,7 @@ export const createTicketTypeSchema = z.object({
   requiresHolderInfo: z.boolean().default(false),
   ageRestriction: z.number().int().min(0).max(21).optional(),
   termsAndConditions: z.string().max(10000).optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 }).refine(
   (data) => new Date(data.salesEndDate) > new Date(data.salesStartDate),
   {
@@ -203,7 +202,7 @@ export const updateTicketTypeSchema = z.object({
   ageRestriction: z.number().int().min(0).max(21).optional(),
   termsAndConditions: z.string().max(10000).optional(),
   status: ticketTypeStatusEnum.optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type UpdateTicketType = z.infer<typeof updateTicketTypeSchema>;
@@ -238,11 +237,11 @@ export const purchaseTicketsSchema = z.object({
     .trim(),
   promoCode: z.string().max(50).optional(),
   acceptsTerms: z.literal(true, {
-    errorMap: () => ({ message: 'Vous devez accepter les conditions' }),
+    message: 'Vous devez accepter les conditions',
   }),
   acceptsMarketing: z.boolean().default(false),
   locale: z.enum(['fr', 'en']).default('fr'),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 }).refine(
   (data) => {
     // Validate that holders are provided if required by ticket type
@@ -387,7 +386,7 @@ export const scanEventSchema = z.object({
   }).optional(),
   timestamp: dateTimeStringSchema.optional(),
   isOffline: z.boolean().default(false),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type ScanEvent = z.infer<typeof scanEventSchema>;

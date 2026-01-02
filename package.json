@@ -110,6 +110,7 @@
     "simple-swizzle": "^0.2.4",
     "tailwind-merge": "^3.4.0",
     "use-latest-callback": "^0.3.3",
-    "warn-once": "^0.1.1"
+    "warn-once": "^0.1.1",
+    "zod": "^4.3.4"
   }
 }

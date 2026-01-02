@@ -162,7 +162,7 @@ export const verifyNewEmailSchema = z.object({
  */
 export const avatarUploadSchema = z.object({
   contentType: z.enum(['image/jpeg', 'image/png', 'image/webp', 'image/gif'], {
-    errorMap: () => ({ message: 'Format d\'image non supporte (JPEG, PNG, WebP, GIF uniquement)' }),
+    message: 'Format d\'image non supporte (JPEG, PNG, WebP, GIF uniquement)',
   }),
   size: z.number().max(5 * 1024 * 1024, {
     message: 'Taille maximale du fichier: 5 Mo',
@@ -274,7 +274,7 @@ export const suspendUserSchema = z.object({
 export const deleteAccountSchema = z.object({
   password: z.string().min(1, { message: m().required }),
   confirmation: z.literal('DELETE', {
-    errorMap: () => ({ message: 'Tapez DELETE pour confirmer' }),
+    message: 'Tapez DELETE pour confirmer',
   }),
   reason: z.string().max(500).optional(),
 });

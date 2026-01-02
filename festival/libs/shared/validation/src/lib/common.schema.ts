@@ -207,7 +207,7 @@ export const paginationSchema = z.object({
  */
 export const searchSchema = z.object({
   query: z.string().min(1).max(255).optional(),
-  filters: z.record(z.unknown()).optional(),
+  filters: z.record(z.string(), z.unknown()).optional(),
 });
 
 /**
@@ -311,7 +311,7 @@ export const frenchAddressSchema = z.object({
 /**
  * Generic metadata object
  */
-export const metadataSchema = z.record(z.unknown()).optional();
+export const metadataSchema = z.record(z.string(), z.unknown()).optional();
 
 /**
  * Tags array (unique strings)

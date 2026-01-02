@@ -15,7 +15,6 @@ import {
   dateStringSchema,
   dateTimeStringSchema,
   paginationSchema,
-  PATTERNS,
 } from './common.schema';
 
 // ============================================================================
@@ -169,7 +168,7 @@ export const createPaymentIntentSchema = z.object({
     .max(22, { message: 'Le descripteur ne peut pas depasser 22 caracteres' })
     .regex(/^[a-zA-Z0-9 ]*$/, { message: 'Caracteres non autorises' })
     .optional(),
-  metadata: z.record(z.string()).optional(),
+  metadata: z.record(z.string(), z.string()).optional(),
   customerId: uuidSchema.optional(),
   orderId: uuidSchema.optional(),
   returnUrl: z.string().url().optional(),
@@ -222,7 +221,7 @@ export const createRefundSchema = z.object({
   reason: refundReasonEnum,
   reasonDetails: z.string().max(1000).optional(),
   notifyCustomer: z.boolean().default(true),
-  metadata: z.record(z.string()).optional(),
+  metadata: z.record(z.string(), z.string()).optional(),
 });
 
 export type CreateRefund = z.infer<typeof createRefundSchema>;
@@ -310,7 +309,7 @@ export const webhookEventSchema = z.object({
   id: z.string().min(1),
   type: z.string().min(1),
   provider: paymentProviderEnum,
-  data: z.record(z.unknown()),
+  data: z.record(z.string(), z.unknown()),
   timestamp: dateTimeStringSchema.optional(),
   signature: z.string().optional(),
   rawBody: z.string().optional(),
@@ -342,7 +341,7 @@ export const createPayoutSchema = z.object({
   ),
   description: z.string().max(500).optional(),
   statementDescriptor: z.string().max(22).optional(),
-  metadata: z.record(z.string()).optional(),
+  metadata: z.record(z.string(), z.string()).optional(),
 });
 
 export type CreatePayout = z.infer<typeof createPayoutSchema>;

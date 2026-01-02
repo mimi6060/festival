@@ -123,7 +123,7 @@ export const createCashlessAccountSchema = z.object({
   currency: currencySchema.default('EUR'),
   allowNegativeBalance: z.boolean().default(false),
   creditLimit: amountSchema.default(0),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type CreateCashlessAccount = z.infer<typeof createCashlessAccountSchema>;
@@ -142,7 +142,7 @@ export const updateCashlessAccountSchema = z.object({
   lastName: z.string().min(1).max(100).trim().optional(),
   allowNegativeBalance: z.boolean().optional(),
   creditLimit: amountSchema.optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 });
 
 export type UpdateCashlessAccount = z.infer<typeof updateCashlessAccountSchema>;
@@ -209,7 +209,7 @@ export const topupSchema = z.object({
   operatorId: uuidSchema.optional(),
   bonusAmount: amountSchema.default(0),
   reference: z.string().max(100).optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 }).refine(
   (data) => data.accountId || data.nfcTagId,
   {
@@ -246,7 +246,7 @@ export const cashlessPaymentSchema = z.object({
   reference: z.string().max(100).optional(),
   isOffline: z.boolean().default(false),
   offlineTimestamp: dateTimeStringSchema.optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 }).refine(
   (data) => data.accountId || data.nfcTagId,
   {
@@ -272,7 +272,7 @@ export const cashlessTransferSchema = z.object({
     .min(100, { message: 'Le montant minimum est de 1,00 EUR' }),
   pin: pinSchema.optional(),
   reason: z.string().max(200).optional(),
-  metadata: z.record(z.unknown()).optional(),
+  metadata: z.record(z.string(), z.unknown()).optional(),
 }).refine(
   (data) => data.fromAccountId || data.fromNfcTagId,
   {
