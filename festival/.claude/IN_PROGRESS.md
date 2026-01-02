@@ -90,7 +90,7 @@ Build command: `NODE_ENV=production npx nx build admin`
 - [x] Input sanitization validators
 - [x] Secrets management documentation
 - [ ] Pen testing documentation
-- [ ] WAF configuration
+- [x] WAF configuration (docs/security/WAF_CONFIGURATION.md - 2200+ lines)
 - [x] DDoS protection (docs/security/DDOS_PROTECTION.md - 1500+ lines)
 - [x] Secrets rotation automation (docs/security/SECRETS_ROTATION.md - 1800+ lines)
 
@@ -285,3 +285,30 @@ Derniere mise a jour: 2026-01-02 - Phase Monitoring Avancee (Prometheus, Grafana
   - Types: camping.types.ts, notification.types.ts, vendor.types.ts, support.types.ts
   - Utils: geo.utils.ts, file.utils.ts, phone.utils.ts
   - Hooks: useDebounce.ts, useLocalStorage.ts, useMediaQuery.ts
+
+### QA Review: Payments Module (2026-01-02) - TO FIX
+**Path:** `apps/api/src/modules/payments/`
+
+**Stripe API Version Mismatch** - Installed Stripe package (v17.7.0) requires API version "2025-02-24.acacia" but all services use "2024-12-18.acacia":
+- [ ] `payments.service.ts:88` - Update apiVersion to "2025-02-24.acacia"
+- [ ] `services/checkout.service.ts:51` - Update apiVersion
+- [ ] `services/refund.service.ts:70` - Update apiVersion
+- [ ] `services/stripe-connect.service.ts:47` - Update apiVersion
+- [ ] `services/subscription.service.ts:47` - Update apiVersion
+
+**TypeScript Errors in payments.service.ts**:
+- [ ] Line 214: Logic bug - comparing `status !== COMPLETED` then `status === REFUNDED` is redundant
+- [ ] Line 257: Type error - `providerPaymentId` can be null but return type expects string
+
+**TypeScript Errors in checkout.service.ts**:
+- [ ] Line 454: providerData assignment type mismatch with Prisma JsonValue
+
+**TypeScript Errors in refund.service.ts**:
+- [ ] Line 99: Missing `currency` property in RefundablePayment interface
+- [ ] Line 541: providerData type mismatch with Prisma JsonValue
+
+**TypeScript Errors in stripe-connect.service.ts**:
+- [ ] Line 515: account.created possibly undefined - needs null check
+
+**TypeScript Errors in payments.controller.ts**:
+- [ ] Line 463: Need to use `import type` for RawBodyRequest (isolatedModules)
