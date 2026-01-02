@@ -67,7 +67,7 @@ export class RefundService {
 
     if (stripeSecretKey) {
       this.stripe = new Stripe(stripeSecretKey, {
-        apiVersion: '2024-12-18.acacia',
+        apiVersion: '2025-02-24.acacia',
       });
     } else {
       this.logger.warn('STRIPE_SECRET_KEY not configured - Refund features disabled');
