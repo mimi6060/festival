@@ -140,10 +140,13 @@ For API support, contact: api-support@festival-platform.com
     .addTag('Webhooks', 'Webhook endpoints for external services')
     .build();
 
-  const document = SwaggerModule.createDocument(app, config);
+  // Only setup Swagger if not in minimal mode
+  if (process.env.SKIP_SWAGGER !== 'true') {
+    try {
+      const document = SwaggerModule.createDocument(app, config);
 
-  // Setup Swagger UI at /api/docs
-  SwaggerModule.setup('api/docs', app, document, {
+      // Setup Swagger UI at /api/docs
+      SwaggerModule.setup('api/docs', app, document, {
     customSiteTitle: 'Festival Platform API Documentation',
     customfavIcon: 'https://festival-platform.com/favicon.ico',
     customCss: `
@@ -158,9 +161,13 @@ For API support, contact: api-support@festival-platform.com
       filter: true,
       showExtensions: true,
       tagsSorter: 'alpha',
-      operationsSorter: 'alpha',
-    },
-  });
+        operationsSorter: 'alpha',
+      },
+    });
+    } catch (e) {
+      Logger.warn(`Swagger setup failed: ${e instanceof Error ? e.message : 'Unknown error'}`);
+    }
+  }
 
   const port = process.env.PORT || 3000;
   await app.listen(port);

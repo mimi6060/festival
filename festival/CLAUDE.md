@@ -82,3 +82,35 @@ Festival Management Platform - a multi-tenant system for managing festivals (tic
 ## Reference Document
 
 `DOSSIER_FINAL_FESTIVAL_CTO.md` is the contractual basis for development - consult it for detailed specifications.
+
+## Règles d'Orchestration Automatique d'Agents
+
+**Lancement automatique d'agents pour les tâches IN_PROGRESS:**
+
+1. Au début de chaque session, après lecture de `IN_PROGRESS.md`:
+   - Identifier toutes les tâches marquées `[ ]` (non complétées)
+   - Pour chaque tâche sans agent assigné, lancer un agent approprié
+   - Lancer plusieurs agents en parallèle (minimum 5, jusqu'à 30 selon la charge)
+
+2. Types d'agents à utiliser:
+   - **Agent Fix**: Pour les corrections de bugs et erreurs TypeScript
+   - **Agent Test**: Pour vérifier que les fonctionnalités marchent
+   - **Agent Doc**: Pour la documentation
+   - **Agent Build**: Pour les problèmes de compilation
+
+3. Quand un agent termine une tâche:
+   - Marquer la tâche comme `[x]` dans `IN_PROGRESS.md`
+   - Déplacer la tâche vers `DONE.md` avec la date
+   - Vérifier s'il reste des tâches à faire dans `IN_PROGRESS.md`
+   - Si oui, prendre la prochaine tâche
+
+4. Script de démarrage (`scripts/start.sh`):
+   - Démarre tous les services Docker
+   - Lance l'API, Web et Admin
+   - Exécute les tests curl
+   - Itère jusqu'à 0 erreur
+
+**Commande pour lancer l'orchestration:**
+```bash
+./scripts/start.sh
+```
