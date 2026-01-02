@@ -135,15 +135,30 @@ Voir `.claude/DONE.md` pour le détail complet.
 **Impact:** Toutes les pages admin
 
 #### Frontend Admin - Infrastructure
-- [ ] Creer `apps/admin/lib/api-client.ts`:
-  ```typescript
-  // Configuration Axios
-  // - baseURL: process.env.NEXT_PUBLIC_API_URL
-  // - Interceptor: ajouter Authorization header (JWT)
-  // - Interceptor: refresh token si 401
-  // - Error handling global
-  ```
-- [ ] Creer `apps/admin/lib/api/index.ts` - Export toutes les fonctions API
+- [x] Creer `apps/admin/lib/api-client.ts`:
+  - Axios client avec baseURL configurable (NEXT_PUBLIC_API_URL ou localhost:3333/api)
+  - Interceptor requete: ajoute Authorization header (Bearer token)
+  - Interceptor reponse: gestion 401 et refresh token automatique
+  - Queue des requetes pendant refresh pour eviter race conditions
+  - Token manager pour localStorage (access_token, refresh_token)
+  - Error handling global avec messages detailles
+- [x] Creer `apps/admin/lib/api/festivals.ts` - API Festivals:
+  - getFestivals(params), getFestival(id), getFestivalBySlug(slug)
+  - createFestival(data), updateFestival(id, data), deleteFestival(id)
+  - publishFestival(id), cancelFestival(id), getFestivalStats(id)
+- [x] Creer `apps/admin/lib/api/tickets.ts` - API Tickets:
+  - getTicketCategories(festivalId), createCategory(festivalId, data)
+  - updateCategory(id, data), deleteCategory(id)
+  - getTickets(festivalId, params), validateTicket(id), cancelTicket(id)
+- [x] Creer `apps/admin/lib/api/users.ts` - API Users:
+  - getUsers(params), getUser(id), createUser(data)
+  - updateUser(id, data), deleteUser(id)
+  - banUser(id), unbanUser(id), changeUserRole(id, role)
+- [x] Creer `apps/admin/lib/api/program.ts` - API Program:
+  - getArtists(params), createArtist(data), updateArtist(id, data), deleteArtist(id)
+  - getStages(festivalId), createStage(festivalId, data), updateStage(id, data), deleteStage(id)
+  - getLineup(festivalId), createPerformance(festivalId, data)
+- [x] Creer `apps/admin/lib/api/index.ts` - Export toutes les fonctions API
 - [ ] Installer React Query: `npm install @tanstack/react-query`
 - [ ] Creer `apps/admin/providers/QueryProvider.tsx`
 - [ ] Ajouter QueryProvider dans `app/layout.tsx`
