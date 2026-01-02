@@ -32,15 +32,20 @@ const DEMO_ADMIN: User = {
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
   const router = useRouter();
 
   const checkAuth = useCallback(async () => {
+    // Skip on server side
+    if (typeof window === 'undefined') {
+      return;
+    }
+
     try {
       const token = localStorage.getItem('admin_token');
       if (!token) {
         setUser(null);
-        setIsLoading(false);
         return;
       }
 
@@ -56,7 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem('admin_token');
       localStorage.removeItem('admin_user');
     } finally {
-      setIsLoading(false);
+      setIsInitialized(true);
     }
   }, []);
 
@@ -69,9 +74,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // Demo mode: accept specific credentials
       if (email === 'admin@festival.com' && password === 'admin123') {
-        const token = 'demo_token_' + Date.now();
+        // Create a simple JWT-like token for demo (with exp claim)
+        const payload = { email, role: 'admin', exp: Math.floor(Date.now() / 1000) + 86400 }; // 24h
+        const token = 'header.' + btoa(JSON.stringify(payload)) + '.signature';
+
+        // Store in localStorage
         localStorage.setItem('admin_token', token);
         localStorage.setItem('admin_user', JSON.stringify(DEMO_ADMIN));
+
+        // Also set cookie for middleware
+        document.cookie = `admin_token=${token}; path=/; max-age=86400; SameSite=Lax`;
+
         setUser(DEMO_ADMIN);
         router.push('/');
         return;
@@ -110,6 +123,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     localStorage.removeItem('admin_token');
     localStorage.removeItem('admin_user');
+    // Clear cookie
+    document.cookie = 'admin_token=; path=/; max-age=0';
     setUser(null);
     router.push('/login');
   };

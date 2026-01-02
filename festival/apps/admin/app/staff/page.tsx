@@ -6,12 +6,104 @@ import { mockStaff, mockUsers, mockFestivals, getUserById, getFestivalById } fro
 import { formatDateTime, getInitials, cn } from '../../lib/utils';
 import type { Staff, TableColumn } from '../../types';
 
+interface StaffFormData {
+  userId: string;
+  festivalId: string;
+  role: string;
+  permissions: string[];
+  isActive: boolean;
+}
+
 export default function StaffPage() {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [showModal, setShowModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
+  const [localStaff, setLocalStaff] = useState<Staff[]>(mockStaff);
+  const [formData, setFormData] = useState<StaffFormData>({
+    userId: '',
+    festivalId: '',
+    role: 'volunteer',
+    permissions: [],
+    isActive: true,
+  });
 
-  const enrichedStaff = mockStaff.map((s) => ({
+  const resetForm = () => {
+    setFormData({
+      userId: '',
+      festivalId: '',
+      role: 'volunteer',
+      permissions: [],
+      isActive: true,
+    });
+  };
+
+  const openCreateModal = () => {
+    setSelectedStaff(null);
+    resetForm();
+    setShowModal(true);
+  };
+
+  const openEditModal = (staff: Staff) => {
+    setSelectedStaff(staff);
+    setFormData({
+      userId: staff.userId,
+      festivalId: staff.festivalId,
+      role: staff.role,
+      permissions: staff.permissions,
+      isActive: staff.isActive,
+    });
+    setShowModal(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (selectedStaff) {
+      // Update existing staff
+      setLocalStaff(prev => prev.map(s =>
+        s.id === selectedStaff.id
+          ? { ...s, ...formData }
+          : s
+      ));
+    } else {
+      // Create new staff assignment
+      const newStaff: Staff = {
+        id: `staff-${Date.now()}`,
+        userId: formData.userId,
+        festivalId: formData.festivalId,
+        role: formData.role as Staff['role'],
+        permissions: formData.permissions,
+        isActive: formData.isActive,
+        assignedAt: new Date().toISOString(),
+      };
+      setLocalStaff(prev => [...prev, newStaff]);
+    }
+
+    setShowModal(false);
+    resetForm();
+  };
+
+  const handleDelete = (staffId: string) => {
+    if (confirm('Etes-vous sur de vouloir supprimer cette assignation ?')) {
+      setLocalStaff(prev => prev.filter(s => s.id !== staffId));
+    }
+  };
+
+  const handlePermissionChange = (permission: string, checked: boolean) => {
+    if (permission === 'all') {
+      setFormData({
+        ...formData,
+        permissions: checked ? ['all'] : [],
+      });
+    } else {
+      const newPermissions = checked
+        ? [...formData.permissions.filter(p => p !== 'all'), permission]
+        : formData.permissions.filter(p => p !== permission);
+      setFormData({ ...formData, permissions: newPermissions });
+    }
+  };
+
+  const enrichedStaff = localStaff.map((s) => ({
     ...s,
     user: getUserById(s.userId),
     festival: getFestivalById(s.festivalId),
@@ -156,10 +248,7 @@ export default function StaffPage() {
           </p>
         </div>
         <button
-          onClick={() => {
-            setSelectedStaff(null);
-            setShowModal(true);
-          }}
+          onClick={openCreateModal}
           className="btn-primary flex items-center gap-2 w-fit"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -225,19 +314,16 @@ export default function StaffPage() {
         data={filteredStaff}
         columns={columns}
         searchPlaceholder="Rechercher un membre..."
-        onRowClick={(staff) => {
-          setSelectedStaff(staff);
-          setShowModal(true);
-        }}
+        onRowClick={(staff) => openEditModal(staff)}
         actions={(staff) => (
           <div className="flex items-center gap-1">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setSelectedStaff(staff);
-                setShowModal(true);
+                openEditModal(staff);
               }}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Modifier"
             >
               <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -246,9 +332,10 @@ export default function StaffPage() {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                // Remove staff
+                handleDelete(staff.id);
               }}
               className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+              title="Supprimer"
             >
               <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -275,12 +362,14 @@ export default function StaffPage() {
                 </svg>
               </button>
             </div>
-            <form className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="form-label">Utilisateur</label>
+                <label className="form-label">Utilisateur *</label>
                 <select
                   className="input-field"
-                  defaultValue={selectedStaff?.userId || ''}
+                  value={formData.userId}
+                  onChange={(e) => setFormData({ ...formData, userId: e.target.value })}
+                  required
                 >
                   <option value="">Selectionner un utilisateur</option>
                   {mockUsers.map((user) => (
@@ -291,10 +380,12 @@ export default function StaffPage() {
                 </select>
               </div>
               <div>
-                <label className="form-label">Festival</label>
+                <label className="form-label">Festival *</label>
                 <select
                   className="input-field"
-                  defaultValue={selectedStaff?.festivalId || ''}
+                  value={formData.festivalId}
+                  onChange={(e) => setFormData({ ...formData, festivalId: e.target.value })}
+                  required
                 >
                   <option value="">Selectionner un festival</option>
                   {mockFestivals.filter((f) => f.status !== 'completed').map((festival) => (
@@ -305,10 +396,12 @@ export default function StaffPage() {
                 </select>
               </div>
               <div>
-                <label className="form-label">Role</label>
+                <label className="form-label">Role *</label>
                 <select
                   className="input-field"
-                  defaultValue={selectedStaff?.role || 'volunteer'}
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
+                  required
                 >
                   {roleOptions.filter((r) => r.value !== 'all').map((option) => (
                     <option key={option.value} value={option.value}>
@@ -325,7 +418,8 @@ export default function StaffPage() {
                       <input
                         type="checkbox"
                         className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                        defaultChecked={selectedStaff?.permissions.includes(perm.value)}
+                        checked={formData.permissions.includes(perm.value)}
+                        onChange={(e) => handlePermissionChange(perm.value, e.target.checked)}
                       />
                       <span className="text-sm text-gray-700">{perm.label}</span>
                     </label>
@@ -337,7 +431,8 @@ export default function StaffPage() {
                   type="checkbox"
                   id="isActive"
                   className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                  defaultChecked={selectedStaff?.isActive ?? true}
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                 />
                 <label htmlFor="isActive" className="text-sm text-gray-700">
                   Assignation active
@@ -346,12 +441,17 @@ export default function StaffPage() {
             </form>
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
               <button
+                type="button"
                 onClick={() => setShowModal(false)}
                 className="btn-secondary"
               >
                 Annuler
               </button>
-              <button className="btn-primary">
+              <button
+                type="submit"
+                onClick={handleSubmit}
+                className="btn-primary"
+              >
                 {selectedStaff ? 'Enregistrer' : 'Assigner'}
               </button>
             </div>

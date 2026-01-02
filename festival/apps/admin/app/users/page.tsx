@@ -1,19 +1,102 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import DataTable from '../../components/tables/DataTable';
 import { mockUsers } from '../../lib/mock-data';
 import { formatDateTime, getInitials, cn } from '../../lib/utils';
 import type { User, TableColumn } from '../../types';
 
+interface UserFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  role: 'admin' | 'organizer' | 'staff' | 'user';
+  isActive: boolean;
+}
+
 export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [showModal, setShowModal] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [localUsers, setLocalUsers] = useState<User[]>(mockUsers);
+  const [formData, setFormData] = useState<UserFormData>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    password: '',
+    role: 'user',
+    isActive: true,
+  });
+
+  const resetForm = () => {
+    setFormData({
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      role: 'user',
+      isActive: true,
+    });
+  };
+
+  const openCreateModal = () => {
+    setSelectedUser(null);
+    resetForm();
+    setShowModal(true);
+  };
+
+  const openEditModal = (user: User) => {
+    setSelectedUser(user);
+    setFormData({
+      firstName: user.firstName,
+      lastName: user.lastName,
+      email: user.email,
+      password: '',
+      role: user.role,
+      isActive: user.isActive,
+    });
+    setShowModal(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (selectedUser) {
+      // Update existing user
+      setLocalUsers(prev => prev.map(u =>
+        u.id === selectedUser.id
+          ? { ...u, firstName: formData.firstName, lastName: formData.lastName, email: formData.email, role: formData.role, isActive: formData.isActive }
+          : u
+      ));
+    } else {
+      // Create new user
+      const newUser: User = {
+        id: `user-${Date.now()}`,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        role: formData.role,
+        isActive: formData.isActive,
+        createdAt: new Date().toISOString(),
+      };
+      setLocalUsers(prev => [...prev, newUser]);
+    }
+
+    setShowModal(false);
+    resetForm();
+  };
+
+  const toggleUserStatus = (userId: string) => {
+    setLocalUsers(prev => prev.map(u =>
+      u.id === userId ? { ...u, isActive: !u.isActive } : u
+    ));
+  };
 
   const filteredUsers = roleFilter === 'all'
-    ? mockUsers
-    : mockUsers.filter((u) => u.role === roleFilter);
+    ? localUsers
+    : localUsers.filter((u) => u.role === roleFilter);
 
   const roleLabels: Record<string, string> = {
     admin: 'Administrateur',
@@ -111,10 +194,7 @@ export default function UsersPage() {
           </p>
         </div>
         <button
-          onClick={() => {
-            setSelectedUser(null);
-            setShowModal(true);
-          }}
+          onClick={openCreateModal}
           className="btn-primary flex items-center gap-2 w-fit"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -128,24 +208,24 @@ export default function UsersPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <p className="text-sm text-gray-500">Total utilisateurs</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{mockUsers.length}</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">{localUsers.length}</p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <p className="text-sm text-gray-500">Administrateurs</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
-            {mockUsers.filter((u) => u.role === 'admin').length}
+            {localUsers.filter((u) => u.role === 'admin').length}
           </p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <p className="text-sm text-gray-500">Organisateurs</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
-            {mockUsers.filter((u) => u.role === 'organizer').length}
+            {localUsers.filter((u) => u.role === 'organizer').length}
           </p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <p className="text-sm text-gray-500">Actifs</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
-            {mockUsers.filter((u) => u.isActive).length}
+            {localUsers.filter((u) => u.isActive).length}
           </p>
         </div>
       </div>
@@ -167,12 +247,12 @@ export default function UsersPage() {
           </select>
         </div>
         <div className="flex-1" />
-        <button className="btn-secondary flex items-center gap-2">
+        <Link href="/exports" className="btn-secondary flex items-center gap-2">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
           Exporter
-        </button>
+        </Link>
       </div>
 
       {/* Table */}
@@ -181,19 +261,16 @@ export default function UsersPage() {
         columns={columns}
         searchPlaceholder="Rechercher un utilisateur..."
         selectable
-        onRowClick={(user) => {
-          setSelectedUser(user);
-          setShowModal(true);
-        }}
+        onRowClick={(user) => openEditModal(user)}
         actions={(user) => (
           <div className="flex items-center gap-1">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setSelectedUser(user);
-                setShowModal(true);
+                openEditModal(user);
               }}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              title="Modifier"
             >
               <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -202,12 +279,13 @@ export default function UsersPage() {
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                // Toggle active status
+                toggleUserStatus(user.id);
               }}
               className={cn(
                 'p-2 rounded-lg transition-colors',
                 user.isActive ? 'hover:bg-orange-50' : 'hover:bg-green-50'
               )}
+              title={user.isActive ? 'Desactiver' : 'Activer'}
             >
               {user.isActive ? (
                 <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -240,51 +318,63 @@ export default function UsersPage() {
                 </svg>
               </button>
             </div>
-            <form className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="form-label">Prenom</label>
+                  <label className="form-label">Prenom *</label>
                   <input
                     type="text"
                     className="input-field"
                     placeholder="Jean"
-                    defaultValue={selectedUser?.firstName}
+                    value={formData.firstName}
+                    onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
+                    required
                   />
                 </div>
                 <div>
-                  <label className="form-label">Nom</label>
+                  <label className="form-label">Nom *</label>
                   <input
                     type="text"
                     className="input-field"
                     placeholder="Dupont"
-                    defaultValue={selectedUser?.lastName}
+                    value={formData.lastName}
+                    onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
+                    required
                   />
                 </div>
               </div>
               <div>
-                <label className="form-label">Email</label>
+                <label className="form-label">Email *</label>
                 <input
                   type="email"
                   className="input-field"
                   placeholder="jean@example.com"
-                  defaultValue={selectedUser?.email}
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  required
                 />
               </div>
               {!selectedUser && (
                 <div>
-                  <label className="form-label">Mot de passe</label>
+                  <label className="form-label">Mot de passe *</label>
                   <input
                     type="password"
                     className="input-field"
                     placeholder="********"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required
+                    minLength={8}
                   />
                 </div>
               )}
               <div>
-                <label className="form-label">Role</label>
+                <label className="form-label">Role *</label>
                 <select
                   className="input-field"
-                  defaultValue={selectedUser?.role || 'user'}
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value as UserFormData['role'] })}
+                  required
                 >
                   <option value="user">Utilisateur</option>
                   <option value="staff">Staff</option>
@@ -297,7 +387,8 @@ export default function UsersPage() {
                   type="checkbox"
                   id="isActive"
                   className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                  defaultChecked={selectedUser?.isActive ?? true}
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                 />
                 <label htmlFor="isActive" className="text-sm text-gray-700">
                   Compte actif
@@ -306,12 +397,17 @@ export default function UsersPage() {
             </form>
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
               <button
+                type="button"
                 onClick={() => setShowModal(false)}
                 className="btn-secondary"
               >
                 Annuler
               </button>
-              <button className="btn-primary">
+              <button
+                type="submit"
+                onClick={handleSubmit}
+                className="btn-primary"
+              >
                 {selectedUser ? 'Enregistrer' : 'Creer'}
               </button>
             </div>

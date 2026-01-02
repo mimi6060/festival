@@ -7,6 +7,75 @@ type SettingsTab = 'general' | 'notifications' | 'payments' | 'security' | 'api'
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<SettingsTab>('general');
   const [saved, setSaved] = useState(false);
+  const [copied, setCopied] = useState<string | null>(null);
+
+  // Password form state
+  const [passwordForm, setPasswordForm] = useState({
+    current: '',
+    new: '',
+    confirm: '',
+  });
+
+  // Settings form state
+  const [generalSettings, setGeneralSettings] = useState({
+    platformName: 'Festival Platform',
+    contactEmail: 'contact@festival.com',
+    timezone: 'Europe/Paris',
+    currency: 'EUR',
+    theme: 'light',
+  });
+
+  const handleCopy = async (text: string, key: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(key);
+      setTimeout(() => setCopied(null), 2000);
+    } catch (err) {
+      console.error('Failed to copy:', err);
+    }
+  };
+
+  const handleChangePassword = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordForm.new !== passwordForm.confirm) {
+      alert('Les mots de passe ne correspondent pas');
+      return;
+    }
+    if (passwordForm.new.length < 8) {
+      alert('Le mot de passe doit contenir au moins 8 caracteres');
+      return;
+    }
+    // Simulate password change
+    alert('Mot de passe modifie avec succes');
+    setPasswordForm({ current: '', new: '', confirm: '' });
+  };
+
+  const handleRegenerateKeys = () => {
+    if (confirm('Etes-vous sur de vouloir regenerer les cles API ? Les anciennes cles seront invalidees.')) {
+      alert('Cles API regenerees avec succes');
+    }
+  };
+
+  const handleConfigureTwoFactor = () => {
+    alert('Configuration de l\'authentification a deux facteurs - Fonctionnalite a venir');
+  };
+
+  const handleViewSessions = () => {
+    alert('Sessions actives:\n- Ce navigateur (actuelle)\n- Chrome sur Windows (il y a 2 jours)');
+  };
+
+  const handleChangeLogo = () => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = 'image/*';
+    input.onchange = (e) => {
+      const file = (e.target as HTMLInputElement).files?.[0];
+      if (file) {
+        alert(`Logo selectionne: ${file.name}`);
+      }
+    };
+    input.click();
+  };
 
   const tabs: { id: SettingsTab; label: string; icon: React.ReactNode }[] = [
     {
@@ -105,15 +174,29 @@ export default function SettingsPage() {
                   <div className="space-y-4">
                     <div>
                       <label className="form-label">Nom de la plateforme</label>
-                      <input type="text" className="input-field" defaultValue="Festival Platform" />
+                      <input
+                        type="text"
+                        className="input-field"
+                        value={generalSettings.platformName}
+                        onChange={(e) => setGeneralSettings({ ...generalSettings, platformName: e.target.value })}
+                      />
                     </div>
                     <div>
                       <label className="form-label">Email de contact</label>
-                      <input type="email" className="input-field" defaultValue="contact@festival.com" />
+                      <input
+                        type="email"
+                        className="input-field"
+                        value={generalSettings.contactEmail}
+                        onChange={(e) => setGeneralSettings({ ...generalSettings, contactEmail: e.target.value })}
+                      />
                     </div>
                     <div>
                       <label className="form-label">Fuseau horaire</label>
-                      <select className="input-field">
+                      <select
+                        className="input-field"
+                        value={generalSettings.timezone}
+                        onChange={(e) => setGeneralSettings({ ...generalSettings, timezone: e.target.value })}
+                      >
                         <option value="Europe/Paris">Europe/Paris (UTC+1)</option>
                         <option value="Europe/London">Europe/London (UTC+0)</option>
                         <option value="America/New_York">America/New_York (UTC-5)</option>
@@ -121,7 +204,11 @@ export default function SettingsPage() {
                     </div>
                     <div>
                       <label className="form-label">Devise par defaut</label>
-                      <select className="input-field">
+                      <select
+                        className="input-field"
+                        value={generalSettings.currency}
+                        onChange={(e) => setGeneralSettings({ ...generalSettings, currency: e.target.value })}
+                      >
                         <option value="EUR">Euro (EUR)</option>
                         <option value="USD">Dollar US (USD)</option>
                         <option value="GBP">Livre Sterling (GBP)</option>
@@ -141,22 +228,43 @@ export default function SettingsPage() {
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
                           </svg>
                         </div>
-                        <button className="btn-secondary">Changer le logo</button>
+                        <button type="button" onClick={handleChangeLogo} className="btn-secondary">Changer le logo</button>
                       </div>
                     </div>
                     <div>
                       <label className="form-label">Theme</label>
                       <div className="flex gap-4">
                         <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="radio" name="theme" value="light" defaultChecked className="w-4 h-4 text-primary-600" />
+                          <input
+                            type="radio"
+                            name="theme"
+                            value="light"
+                            checked={generalSettings.theme === 'light'}
+                            onChange={(e) => setGeneralSettings({ ...generalSettings, theme: e.target.value })}
+                            className="w-4 h-4 text-primary-600"
+                          />
                           <span className="text-gray-700">Clair</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="radio" name="theme" value="dark" className="w-4 h-4 text-primary-600" />
+                          <input
+                            type="radio"
+                            name="theme"
+                            value="dark"
+                            checked={generalSettings.theme === 'dark'}
+                            onChange={(e) => setGeneralSettings({ ...generalSettings, theme: e.target.value })}
+                            className="w-4 h-4 text-primary-600"
+                          />
                           <span className="text-gray-700">Sombre</span>
                         </label>
                         <label className="flex items-center gap-2 cursor-pointer">
-                          <input type="radio" name="theme" value="system" className="w-4 h-4 text-primary-600" />
+                          <input
+                            type="radio"
+                            name="theme"
+                            value="system"
+                            checked={generalSettings.theme === 'system'}
+                            onChange={(e) => setGeneralSettings({ ...generalSettings, theme: e.target.value })}
+                            className="w-4 h-4 text-primary-600"
+                          />
                           <span className="text-gray-700">Systeme</span>
                         </label>
                       </div>
@@ -260,36 +368,56 @@ export default function SettingsPage() {
                         <p className="font-medium text-gray-900">Authentification a deux facteurs</p>
                         <p className="text-sm text-gray-500">Ajouter une couche de securite supplementaire</p>
                       </div>
-                      <button className="btn-secondary">Configurer</button>
+                      <button type="button" onClick={handleConfigureTwoFactor} className="btn-secondary">Configurer</button>
                     </div>
                     <div className="flex items-center justify-between p-4 border border-gray-100 rounded-lg">
                       <div>
                         <p className="font-medium text-gray-900">Sessions actives</p>
                         <p className="text-sm text-gray-500">Gerer vos sessions connectees</p>
                       </div>
-                      <button className="btn-secondary">Voir</button>
+                      <button type="button" onClick={handleViewSessions} className="btn-secondary">Voir</button>
                     </div>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-gray-100">
+                <form onSubmit={handleChangePassword} className="pt-4 border-t border-gray-100">
                   <h2 className="text-lg font-semibold text-gray-900 mb-4">Mot de passe</h2>
                   <div className="space-y-4">
                     <div>
-                      <label className="form-label">Mot de passe actuel</label>
-                      <input type="password" className="input-field" />
+                      <label className="form-label">Mot de passe actuel *</label>
+                      <input
+                        type="password"
+                        className="input-field"
+                        value={passwordForm.current}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, current: e.target.value })}
+                        required
+                      />
                     </div>
                     <div>
-                      <label className="form-label">Nouveau mot de passe</label>
-                      <input type="password" className="input-field" />
+                      <label className="form-label">Nouveau mot de passe *</label>
+                      <input
+                        type="password"
+                        className="input-field"
+                        value={passwordForm.new}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, new: e.target.value })}
+                        required
+                        minLength={8}
+                      />
                     </div>
                     <div>
-                      <label className="form-label">Confirmer le mot de passe</label>
-                      <input type="password" className="input-field" />
+                      <label className="form-label">Confirmer le mot de passe *</label>
+                      <input
+                        type="password"
+                        className="input-field"
+                        value={passwordForm.confirm}
+                        onChange={(e) => setPasswordForm({ ...passwordForm, confirm: e.target.value })}
+                        required
+                        minLength={8}
+                      />
                     </div>
-                    <button className="btn-primary">Changer le mot de passe</button>
+                    <button type="submit" className="btn-primary">Changer le mot de passe</button>
                   </div>
-                </div>
+                </form>
               </div>
             )}
 
@@ -311,7 +439,13 @@ export default function SettingsPage() {
                           value="fst_live_xxxxxxxxxxxxxxxxxxxxxxxx"
                           readOnly
                         />
-                        <button className="btn-secondary">Copier</button>
+                        <button
+                          type="button"
+                          onClick={() => handleCopy('fst_live_xxxxxxxxxxxxxxxxxxxxxxxx', 'live')}
+                          className="btn-secondary"
+                        >
+                          {copied === 'live' ? 'Copie !' : 'Copier'}
+                        </button>
                       </div>
                     </div>
                     <div>
@@ -323,10 +457,16 @@ export default function SettingsPage() {
                           value="fst_test_xxxxxxxxxxxxxxxxxxxxxxxx"
                           readOnly
                         />
-                        <button className="btn-secondary">Copier</button>
+                        <button
+                          type="button"
+                          onClick={() => handleCopy('fst_test_xxxxxxxxxxxxxxxxxxxxxxxx', 'test')}
+                          className="btn-secondary"
+                        >
+                          {copied === 'test' ? 'Copie !' : 'Copier'}
+                        </button>
                       </div>
                     </div>
-                    <button className="btn-danger">Regenerer les cles</button>
+                    <button type="button" onClick={handleRegenerateKeys} className="btn-danger">Regenerer les cles</button>
                   </div>
                 </div>
 

@@ -10,12 +10,108 @@ interface TicketsPageProps {
   params: Promise<{ id: string }>;
 }
 
+interface CategoryFormData {
+  name: string;
+  description: string;
+  price: number;
+  quantity: number;
+  maxPerOrder: number;
+  salesStart: string;
+  salesEnd: string;
+  isActive: boolean;
+}
+
 export default function TicketsPage({ params }: TicketsPageProps) {
   const { id } = use(params);
   const festival = mockFestivals.find((f) => f.id === id);
-  const categories = mockTicketCategories.filter((c) => c.festivalId === id);
+  const [localCategories, setLocalCategories] = useState(mockTicketCategories.filter((c) => c.festivalId === id));
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<TicketCategory | null>(null);
+  const [formData, setFormData] = useState<CategoryFormData>({
+    name: '',
+    description: '',
+    price: 0,
+    quantity: 100,
+    maxPerOrder: 4,
+    salesStart: '',
+    salesEnd: '',
+    isActive: true,
+  });
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      price: 0,
+      quantity: 100,
+      maxPerOrder: 4,
+      salesStart: '',
+      salesEnd: '',
+      isActive: true,
+    });
+  };
+
+  const openCreateModal = () => {
+    setEditingCategory(null);
+    resetForm();
+    setShowModal(true);
+  };
+
+  const openEditModal = (category: TicketCategory) => {
+    setEditingCategory(category);
+    setFormData({
+      name: category.name,
+      description: category.description || '',
+      price: category.price,
+      quantity: category.quantity,
+      maxPerOrder: category.maxPerOrder,
+      salesStart: category.salesStart?.split('T')[0] || '',
+      salesEnd: category.salesEnd?.split('T')[0] || '',
+      isActive: category.isActive,
+    });
+    setShowModal(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (editingCategory) {
+      // Update existing category
+      setLocalCategories(prev => prev.map(cat =>
+        cat.id === editingCategory.id
+          ? { ...cat, ...formData, salesStart: formData.salesStart + 'T00:00:00Z', salesEnd: formData.salesEnd + 'T23:59:59Z' }
+          : cat
+      ));
+    } else {
+      // Create new category
+      const newCategory: TicketCategory = {
+        id: `cat-${Date.now()}`,
+        festivalId: id,
+        name: formData.name,
+        description: formData.description,
+        price: formData.price,
+        quantity: formData.quantity,
+        sold: 0,
+        maxPerOrder: formData.maxPerOrder,
+        salesStart: formData.salesStart + 'T00:00:00Z',
+        salesEnd: formData.salesEnd + 'T23:59:59Z',
+        isActive: formData.isActive,
+        benefits: [],
+      };
+      setLocalCategories(prev => [...prev, newCategory]);
+    }
+
+    setShowModal(false);
+    resetForm();
+  };
+
+  const handleDelete = (categoryId: string) => {
+    if (confirm('Etes-vous sur de vouloir supprimer cette categorie ?')) {
+      setLocalCategories(prev => prev.filter(cat => cat.id !== categoryId));
+    }
+  };
+
+  const categories = localCategories;
 
   if (!festival) {
     return (
@@ -60,10 +156,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
           <p className="text-gray-500 mt-1">{festival.name}</p>
         </div>
         <button
-          onClick={() => {
-            setEditingCategory(null);
-            setShowModal(true);
-          }}
+          onClick={openCreateModal}
           className="btn-primary flex items-center gap-2 w-fit"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -202,17 +295,19 @@ export default function TicketsPage({ params }: TicketsPageProps) {
 
                       <div className="flex items-center gap-2">
                         <button
-                          onClick={() => {
-                            setEditingCategory(category);
-                            setShowModal(true);
-                          }}
+                          onClick={() => openEditModal(category)}
                           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                          title="Modifier"
                         >
                           <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
                         </button>
-                        <button className="p-2 hover:bg-red-50 rounded-lg transition-colors">
+                        <button
+                          onClick={() => handleDelete(category.id)}
+                          className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Supprimer"
+                        >
                           <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
                           </svg>
@@ -244,14 +339,16 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                 </svg>
               </button>
             </div>
-            <form className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="form-label">Nom de la categorie</label>
+                <label className="form-label">Nom de la categorie *</label>
                 <input
                   type="text"
                   className="input-field"
                   placeholder="Ex: Pass VIP"
-                  defaultValue={editingCategory?.name}
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
                 />
               </div>
               <div>
@@ -260,53 +357,68 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                   className="input-field"
                   rows={3}
                   placeholder="Description de la categorie..."
-                  defaultValue={editingCategory?.description}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="form-label">Prix (EUR)</label>
+                  <label className="form-label">Prix (EUR) *</label>
                   <input
                     type="number"
                     className="input-field"
                     placeholder="0.00"
-                    defaultValue={editingCategory?.price}
+                    min="0"
+                    step="0.01"
+                    value={formData.price}
+                    onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
+                    required
                   />
                 </div>
                 <div>
-                  <label className="form-label">Quantite</label>
+                  <label className="form-label">Quantite *</label>
                   <input
                     type="number"
                     className="input-field"
                     placeholder="100"
-                    defaultValue={editingCategory?.quantity}
+                    min="1"
+                    value={formData.quantity}
+                    onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
+                    required
                   />
                 </div>
               </div>
               <div>
-                <label className="form-label">Max par commande</label>
+                <label className="form-label">Max par commande *</label>
                 <input
                   type="number"
                   className="input-field"
                   placeholder="4"
-                  defaultValue={editingCategory?.maxPerOrder}
+                  min="1"
+                  value={formData.maxPerOrder}
+                  onChange={(e) => setFormData({ ...formData, maxPerOrder: parseInt(e.target.value) || 1 })}
+                  required
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="form-label">Debut des ventes</label>
+                  <label className="form-label">Debut des ventes *</label>
                   <input
                     type="date"
                     className="input-field"
-                    defaultValue={editingCategory?.salesStart?.split('T')[0]}
+                    value={formData.salesStart}
+                    onChange={(e) => setFormData({ ...formData, salesStart: e.target.value })}
+                    required
                   />
                 </div>
                 <div>
-                  <label className="form-label">Fin des ventes</label>
+                  <label className="form-label">Fin des ventes *</label>
                   <input
                     type="date"
                     className="input-field"
-                    defaultValue={editingCategory?.salesEnd?.split('T')[0]}
+                    value={formData.salesEnd}
+                    onChange={(e) => setFormData({ ...formData, salesEnd: e.target.value })}
+                    required
                   />
                 </div>
               </div>
@@ -315,7 +427,8 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                   type="checkbox"
                   id="isActive"
                   className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                  defaultChecked={editingCategory?.isActive ?? true}
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                 />
                 <label htmlFor="isActive" className="text-sm text-gray-700">
                   Categorie active (visible et achetable)
@@ -324,12 +437,18 @@ export default function TicketsPage({ params }: TicketsPageProps) {
             </form>
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
               <button
+                type="button"
                 onClick={() => setShowModal(false)}
                 className="btn-secondary"
               >
                 Annuler
               </button>
-              <button className="btn-primary">
+              <button
+                type="submit"
+                form="category-form"
+                onClick={handleSubmit}
+                className="btn-primary"
+              >
                 {editingCategory ? 'Enregistrer' : 'Creer'}
               </button>
             </div>

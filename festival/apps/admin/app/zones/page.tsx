@@ -161,6 +161,16 @@ const mockAccessLogs: AccessLog[] = [
   },
 ];
 
+interface ZoneFormData {
+  name: string;
+  description: string;
+  type: Zone['type'];
+  accessLevel: Zone['accessLevel'];
+  capacity: number;
+  checkpoints: number;
+  status: 'active' | 'inactive';
+}
+
 export default function ZonesPage() {
   const [activeTab, setActiveTab] = useState<'zones' | 'logs'>('zones');
   const [typeFilter, setTypeFilter] = useState<string>('all');
@@ -168,10 +178,85 @@ export default function ZonesPage() {
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [zoneToDelete, setZoneToDelete] = useState<Zone | null>(null);
+  const [localZones, setLocalZones] = useState<Zone[]>(mockZones);
+  const [formData, setFormData] = useState<ZoneFormData>({
+    name: '',
+    description: '',
+    type: 'entrance',
+    accessLevel: 'ticket',
+    capacity: 1000,
+    checkpoints: 1,
+    status: 'active',
+  });
+
+  const resetForm = () => {
+    setFormData({
+      name: '',
+      description: '',
+      type: 'entrance',
+      accessLevel: 'ticket',
+      capacity: 1000,
+      checkpoints: 1,
+      status: 'active',
+    });
+  };
+
+  const openCreateModal = () => {
+    setSelectedZone(null);
+    resetForm();
+    setShowZoneModal(true);
+  };
+
+  const openEditModal = (zone: Zone) => {
+    setSelectedZone(zone);
+    setFormData({
+      name: zone.name,
+      description: zone.description,
+      type: zone.type,
+      accessLevel: zone.accessLevel,
+      capacity: zone.capacity,
+      checkpoints: zone.checkpoints,
+      status: zone.status === 'full' ? 'active' : zone.status,
+    });
+    setShowZoneModal(true);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (selectedZone) {
+      // Update existing zone
+      setLocalZones(prev => prev.map(z =>
+        z.id === selectedZone.id
+          ? { ...z, ...formData }
+          : z
+      ));
+    } else {
+      // Create new zone
+      const newZone: Zone = {
+        id: `zone-${Date.now()}`,
+        name: formData.name,
+        description: formData.description,
+        type: formData.type,
+        festivalId: '1', // Default festival
+        festivalName: 'Summer Beats Festival',
+        capacity: formData.capacity,
+        currentOccupancy: 0,
+        accessLevel: formData.accessLevel,
+        checkpoints: formData.checkpoints,
+        status: formData.status,
+        createdAt: new Date().toISOString(),
+      };
+      setLocalZones(prev => [...prev, newZone]);
+    }
+
+    setShowZoneModal(false);
+    resetForm();
+  };
 
   const filteredZones = typeFilter === 'all'
-    ? mockZones
-    : mockZones.filter((z) => z.type === typeFilter);
+    ? localZones
+    : localZones.filter((z) => z.type === typeFilter);
 
   const typeLabels: Record<string, string> = {
     entrance: 'Entree',
@@ -343,17 +428,18 @@ export default function ZonesPage() {
   };
 
   const confirmDelete = () => {
-    // Handle delete logic here
-    console.log('Deleting zone:', zoneToDelete?.id);
+    if (zoneToDelete) {
+      setLocalZones(prev => prev.filter(z => z.id !== zoneToDelete.id));
+    }
     setShowDeleteModal(false);
     setZoneToDelete(null);
   };
 
   // Stats
-  const totalCapacity = mockZones.reduce((sum, z) => sum + z.capacity, 0);
-  const totalOccupancy = mockZones.reduce((sum, z) => sum + z.currentOccupancy, 0);
-  const activeZones = mockZones.filter((z) => z.status === 'active').length;
-  const fullZones = mockZones.filter((z) => z.status === 'full').length;
+  const totalCapacity = localZones.reduce((sum, z) => sum + z.capacity, 0);
+  const totalOccupancy = localZones.reduce((sum, z) => sum + z.currentOccupancy, 0);
+  const activeZones = localZones.filter((z) => z.status === 'active').length;
+  const fullZones = localZones.filter((z) => z.status === 'full').length;
 
   return (
     <div className="space-y-6">
@@ -366,10 +452,7 @@ export default function ZonesPage() {
           </p>
         </div>
         <button
-          onClick={() => {
-            setSelectedZone(null);
-            setShowZoneModal(true);
-          }}
+          onClick={openCreateModal}
           className="btn-primary flex items-center gap-2 w-fit"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -427,7 +510,7 @@ export default function ZonesPage() {
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             )}
           >
-            Zones ({mockZones.length})
+            Zones ({localZones.length})
           </button>
           <button
             onClick={() => setActiveTab('logs')}
@@ -467,19 +550,16 @@ export default function ZonesPage() {
             data={filteredZones}
             columns={zoneColumns}
             searchPlaceholder="Rechercher une zone..."
-            onRowClick={(zone) => {
-              setSelectedZone(zone);
-              setShowZoneModal(true);
-            }}
+            onRowClick={(zone) => openEditModal(zone)}
             actions={(zone) => (
               <div className="flex items-center gap-1">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setSelectedZone(zone);
-                    setShowZoneModal(true);
+                    openEditModal(zone);
                   }}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                  title="Modifier"
                 >
                   <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -491,6 +571,7 @@ export default function ZonesPage() {
                     handleDeleteZone(zone);
                   }}
                   className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                  title="Supprimer"
                 >
                   <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
@@ -526,14 +607,16 @@ export default function ZonesPage() {
                 </svg>
               </button>
             </div>
-            <form className="p-6 space-y-4">
+            <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="form-label">Nom de la zone</label>
+                <label className="form-label">Nom de la zone *</label>
                 <input
                   type="text"
                   className="input-field"
                   placeholder="Ex: Entree Principale"
-                  defaultValue={selectedZone?.name}
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
                 />
               </div>
               <div>
@@ -542,21 +625,32 @@ export default function ZonesPage() {
                   className="input-field"
                   rows={3}
                   placeholder="Description de la zone..."
-                  defaultValue={selectedZone?.description}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="form-label">Type</label>
-                  <select className="input-field" defaultValue={selectedZone?.type || 'entrance'}>
+                  <label className="form-label">Type *</label>
+                  <select
+                    className="input-field"
+                    value={formData.type}
+                    onChange={(e) => setFormData({ ...formData, type: e.target.value as Zone['type'] })}
+                    required
+                  >
                     {Object.entries(typeLabels).map(([value, label]) => (
                       <option key={value} value={value}>{label}</option>
                     ))}
                   </select>
                 </div>
                 <div>
-                  <label className="form-label">Niveau d'acces</label>
-                  <select className="input-field" defaultValue={selectedZone?.accessLevel || 'ticket'}>
+                  <label className="form-label">Niveau d'acces *</label>
+                  <select
+                    className="input-field"
+                    value={formData.accessLevel}
+                    onChange={(e) => setFormData({ ...formData, accessLevel: e.target.value as Zone['accessLevel'] })}
+                    required
+                  >
                     {Object.entries(accessLevelLabels).map(([value, label]) => (
                       <option key={value} value={value}>{label}</option>
                     ))}
@@ -565,12 +659,15 @@ export default function ZonesPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="form-label">Capacite</label>
+                  <label className="form-label">Capacite *</label>
                   <input
                     type="number"
                     className="input-field"
                     placeholder="5000"
-                    defaultValue={selectedZone?.capacity}
+                    min="1"
+                    value={formData.capacity}
+                    onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) || 1 })}
+                    required
                   />
                 </div>
                 <div>
@@ -579,13 +676,19 @@ export default function ZonesPage() {
                     type="number"
                     className="input-field"
                     placeholder="4"
-                    defaultValue={selectedZone?.checkpoints}
+                    min="0"
+                    value={formData.checkpoints}
+                    onChange={(e) => setFormData({ ...formData, checkpoints: parseInt(e.target.value) || 0 })}
                   />
                 </div>
               </div>
               <div>
                 <label className="form-label">Statut</label>
-                <select className="input-field" defaultValue={selectedZone?.status || 'active'}>
+                <select
+                  className="input-field"
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })}
+                >
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                 </select>
@@ -593,12 +696,17 @@ export default function ZonesPage() {
             </form>
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
               <button
+                type="button"
                 onClick={() => setShowZoneModal(false)}
                 className="btn-secondary"
               >
                 Annuler
               </button>
-              <button className="btn-primary">
+              <button
+                type="submit"
+                onClick={handleSubmit}
+                className="btn-primary"
+              >
                 {selectedZone ? 'Enregistrer' : 'Creer'}
               </button>
             </div>

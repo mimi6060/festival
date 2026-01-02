@@ -2,12 +2,14 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useAuth } from '../../lib/auth-context';
 
 interface AdminHeaderProps {
   onMenuClick: () => void;
 }
 
 export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
+  const { logout, user } = useAuth();
   const [showNotifications, setShowNotifications] = useState(false);
   const [showProfile, setShowProfile] = useState(false);
 
@@ -161,8 +163,8 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
             {showProfile && (
               <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
                 <div className="px-4 py-3 border-b border-gray-100">
-                  <p className="font-medium text-gray-900">Jean Dupont</p>
-                  <p className="text-sm text-gray-500">admin@festival.com</p>
+                  <p className="font-medium text-gray-900">{user?.firstName} {user?.lastName}</p>
+                  <p className="text-sm text-gray-500">{user?.email}</p>
                 </div>
                 <div className="py-1">
                   <Link
@@ -187,6 +189,10 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
                 </div>
                 <div className="border-t border-gray-100 py-1">
                   <button
+                    onClick={() => {
+                      setShowProfile(false);
+                      logout();
+                    }}
                     className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 hover:bg-red-50"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
