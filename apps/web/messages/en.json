@@ -21,26 +21,54 @@
     "or": "or",
     "selectLanguage": "Select language",
     "french": "Francais",
-    "english": "English"
+    "english": "English",
+    "spanish": "Espanol",
+    "german": "Deutsch",
+    "more": "More",
+    "less": "Less",
+    "all": "All",
+    "none": "None"
   },
   "home": {
     "title": "Festival Platform",
     "subtitle": "The all-in-one platform to manage your festival",
+    "heroTitle": "Manage your festival like a pro",
+    "heroSubtitle": "Ticketing, cashless, program and more - everything you need.",
     "ticketing": {
       "title": "Ticketing",
-      "description": "Online ticket sales with secure QR codes"
+      "description": "Online ticket sales with secure QR codes and real-time access control."
     },
     "cashless": {
       "title": "Cashless",
-      "description": "Fast and contactless NFC payments"
+      "description": "Fast and contactless NFC payments. Easy top-up and instant refund."
     },
     "program": {
       "title": "Program",
-      "description": "Artist and stage management"
+      "description": "Artist, stage and schedule management. Interactive planning."
+    },
+    "features": {
+      "title": "Features",
+      "realtime": "Real-time",
+      "realtimeDesc": "Live tracking of sales and payments.",
+      "secure": "Secure",
+      "secureDesc": "Secure payments, GDPR compliance.",
+      "scalable": "Scalable",
+      "scalableDesc": "From 1,000 to 500,000 attendees.",
+      "mobile": "Mobile",
+      "mobileDesc": "Apps for festivalgoers and staff."
     },
     "cta": {
       "login": "Log in",
-      "register": "Create an account"
+      "register": "Create an account",
+      "demo": "Request a demo",
+      "contact": "Contact us",
+      "learnMore": "Learn more"
+    },
+    "stats": {
+      "festivals": "Festivals",
+      "tickets": "Tickets sold",
+      "transactions": "Cashless transactions",
+      "users": "Users"
     }
   },
   "auth": {
@@ -59,10 +87,12 @@
     "lastName": "Last name",
     "phone": "Phone",
     "termsAgree": "I agree to the terms of service",
+    "privacyAgree": "I agree to the privacy policy",
     "loginSuccess": "Successfully logged in",
     "loginError": "Invalid email or password",
     "registerSuccess": "Account created successfully",
-    "registerError": "Error creating account"
+    "registerError": "Error creating account",
+    "orContinueWith": "Or continue with"
   },
   "navigation": {
     "home": "Home",
@@ -75,8 +105,12 @@
     "contact": "Contact",
     "myAccount": "My Account",
     "myTickets": "My Tickets",
+    "myOrders": "My Orders",
     "profile": "Profile",
-    "settings": "Settings"
+    "settings": "Settings",
+    "dashboard": "Dashboard",
+    "help": "Help",
+    "support": "Support"
   },
   "festival": {
     "title": "Festivals",
@@ -86,9 +120,14 @@
     "soldOut": "Sold out",
     "upcoming": "Upcoming",
     "ongoing": "Ongoing",
+    "past": "Completed",
     "location": "Location",
     "dates": "Dates",
-    "noFestivalsFound": "No festivals found"
+    "noFestivalsFound": "No festivals found",
+    "featuredFestivals": "Featured festivals",
+    "upcomingFestivals": "Upcoming festivals",
+    "lineup": "Lineup",
+    "schedule": "Schedule"
   },
   "tickets": {
     "title": "Ticketing",
@@ -101,33 +140,47 @@
     "checkout": "Checkout",
     "cart": "Cart",
     "emptyCart": "Your cart is empty",
+    "removeFromCart": "Remove from cart",
     "orderSummary": "Order summary",
     "subtotal": "Subtotal",
     "fees": "Service fees",
+    "discount": "Discount",
     "promoCode": "Promo code",
     "applyPromoCode": "Apply",
+    "invalidPromoCode": "Invalid promo code",
     "purchaseSuccess": "Purchase successful! Your tickets have been sent by email.",
+    "purchaseError": "Purchase error. Please try again.",
     "downloadTicket": "Download ticket",
+    "printTicket": "Print",
+    "qrCode": "QR Code",
+    "ticketNumber": "Ticket number",
     "categories": {
       "standard": "Standard",
       "vip": "VIP",
       "premium": "Premium",
+      "earlyBird": "Early Bird",
       "dayPass": "Day Pass",
-      "weekendPass": "Weekend Pass"
+      "weekendPass": "Weekend Pass",
+      "fullPass": "Full Pass"
     }
   },
   "payment": {
     "title": "Payment",
     "method": "Payment method",
     "creditCard": "Credit card",
+    "paypal": "PayPal",
+    "applePay": "Apple Pay",
+    "googlePay": "Google Pay",
     "cardNumber": "Card number",
     "expiryDate": "Expiry date",
     "cvv": "CVV",
     "cardholderName": "Cardholder name",
+    "billingAddress": "Billing address",
     "processing": "Processing...",
     "success": "Payment successful",
     "failed": "Payment failed",
-    "securePayment": "Secure payment"
+    "securePayment": "Secure payment",
+    "termsPayment": "By paying, you agree to our terms of sale"
   },
   "cashless": {
     "title": "Cashless",
@@ -138,7 +191,12 @@
     "history": "History",
     "amount": "Amount",
     "topUpSuccess": "Top up successful",
-    "insufficientBalance": "Insufficient balance"
+    "paymentSuccess": "Payment successful",
+    "transferSuccess": "Transfer successful",
+    "insufficientBalance": "Insufficient balance",
+    "nfcBracelet": "NFC bracelet",
+    "linkBracelet": "Link bracelet",
+    "refundBalance": "Request refund"
   },
   "program": {
     "title": "Program",
@@ -149,45 +207,67 @@
     "artists": "Artists",
     "startTime": "Start",
     "endTime": "End",
+    "duration": "Duration",
+    "genre": "Genre",
+    "description": "Description",
+    "biography": "Biography",
     "myFavorites": "My favorites",
     "addToFavorites": "Add to favorites",
     "removeFromFavorites": "Remove from favorites",
     "now": "Now",
-    "upcoming": "Upcoming"
+    "upcoming": "Upcoming",
+    "past": "Past",
+    "filterByDay": "Filter by day",
+    "filterByStage": "Filter by stage"
   },
   "user": {
     "profile": "My profile",
     "editProfile": "Edit profile",
+    "personalInfo": "Personal information",
     "email": "Email",
     "phone": "Phone",
     "address": "Address",
     "city": "City",
     "country": "Country",
+    "postalCode": "Postal code",
     "language": "Language",
     "notifications": "Notifications",
+    "emailNotifications": "Email notifications",
+    "pushNotifications": "Push notifications",
     "changePassword": "Change password",
     "currentPassword": "Current password",
     "newPassword": "New password",
-    "deleteAccount": "Delete my account"
+    "confirmNewPassword": "Confirm new password",
+    "deleteAccount": "Delete my account",
+    "deleteAccountWarning": "This action is irreversible."
   },
   "errors": {
     "required": "This field is required",
     "invalidEmail": "Invalid email",
     "invalidPhone": "Invalid phone number",
+    "invalidDate": "Invalid date",
     "passwordTooShort": "Password must be at least 8 characters",
     "passwordMismatch": "Passwords do not match",
-    "networkError": "Connection error",
-    "serverError": "Server error",
+    "networkError": "Connection error. Check your internet connection.",
+    "serverError": "Server error. Please try again later.",
     "notFound": "Page not found",
-    "unauthorized": "Unauthorized access"
+    "unauthorized": "Unauthorized access",
+    "sessionExpired": "Session expired. Please log in again."
   },
   "footer": {
     "about": "About",
+    "aboutUs": "About us",
     "legal": "Legal",
     "privacy": "Privacy",
+    "privacyPolicy": "Privacy policy",
     "terms": "Terms",
+    "termsOfService": "Terms of service",
     "contact": "Contact",
+    "support": "Support",
+    "help": "Help",
+    "faq": "FAQ",
     "followUs": "Follow us",
+    "newsletter": "Newsletter",
     "copyright": "All rights reserved"
   },
   "metadata": {
@@ -206,6 +286,14 @@
     "register": {
       "title": "Sign up - Festival Platform",
       "description": "Create your Festival Platform account"
+    },
+    "tickets": {
+      "title": "Ticketing - Festival Platform",
+      "description": "Buy your festival tickets online"
+    },
+    "program": {
+      "title": "Program - Festival Platform",
+      "description": "View the full program of artists and stages"
     }
   }
 }
