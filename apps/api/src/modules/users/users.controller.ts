@@ -36,6 +36,7 @@ import {
   UserSortBy,
   SortOrder,
 } from './dto';
+import { Cacheable, CacheEvict, CacheTag } from '../cache';
 
 // Import decorators - adjust paths as needed for your project structure
 // These should come from a common/shared module
@@ -73,6 +74,7 @@ export class UsersController {
    * Admin only.
    */
   @Post()
+  @CacheEvict({ tags: [CacheTag.USER] })
   @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: 'Create a new user (Admin)',
@@ -101,6 +103,11 @@ export class UsersController {
    * Admin only.
    */
   @Get()
+  @Cacheable({
+    key: { prefix: 'users:list', paramIndices: [0] },
+    ttl: 30,
+    tags: [CacheTag.USER]
+  })
   @Roles(UserRole.ADMIN)
   @ApiOperation({
     summary: 'List all users (Admin)',
@@ -206,6 +213,7 @@ export class UsersController {
    * Admin can update any user, users can only update themselves.
    */
   @Patch(':id')
+  @CacheEvict({ tags: [CacheTag.USER] })
   @ApiOperation({
     summary: 'Update user profile',
     description:
@@ -244,6 +252,7 @@ export class UsersController {
    * Admin only.
    */
   @Delete(':id')
+  @CacheEvict({ tags: [CacheTag.USER] })
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
@@ -285,6 +294,7 @@ export class UsersController {
    * Admin only.
    */
   @Patch(':id/role')
+  @CacheEvict({ tags: [CacheTag.USER] })
   @Roles(UserRole.ADMIN)
   @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute (sensitive)
   @ApiOperation({
@@ -320,6 +330,7 @@ export class UsersController {
    * Admin only.
    */
   @Post(':id/ban')
+  @CacheEvict({ tags: [CacheTag.USER] })
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.OK)
   @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute (sensitive)
@@ -362,6 +373,7 @@ export class UsersController {
    * Admin only.
    */
   @Post(':id/unban')
+  @CacheEvict({ tags: [CacheTag.USER] })
   @Roles(UserRole.ADMIN)
   @HttpCode(HttpStatus.OK)
   @ApiOperation({

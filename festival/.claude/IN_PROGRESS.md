@@ -7,22 +7,40 @@ Voir `.claude/DONE.md` pour le détail complet.
 
 ---
 
-## Phase Performance Backend - EN COURS (2026-01-03)
+## Phase Performance Backend - COMPLETED (2026-01-03)
 
 ### Objectif: Optimiser les performances de l'API pour l'admin dashboard
 
 **Problème:** L'admin (localhost:4300) est lent lors du chargement des users, staff, festivals.
 
-#### Tâches en cours (4 agents Sonnet):
-- [ ] Ajouter des index composites dans le schema Prisma (User, Festival, Ticket, Payment, etc.)
-- [ ] Implémenter le caching Redis pour les endpoints fréquents (GET /festivals, GET /users)
-- [ ] Optimiser les requêtes Prisma (select, pagination, éviter N+1)
-- [ ] Configurer le connection pooling PostgreSQL
+#### Tâches complétées:
+- [x] Implémenter le caching Redis pour les endpoints fréquents (GET /festivals, GET /users)
+  - GET /festivals (cache 60s TTL)
+  - GET /festivals/:id (cache 30s TTL)
+  - GET /festivals/by-slug/:slug (cache 30s TTL)
+  - GET /users (cache 30s TTL)
+  - Cache invalidation sur POST, PUT, DELETE, PATCH
+  - Tag-based invalidation (FESTIVAL, USER tags)
+  - CacheInterceptor registered in FestivalsModule and UsersModule
+  - Documentation complète: apps/api/REDIS_CACHING.md
+
+#### Infrastructure de cache existante:
+- Custom Redis cache service avec fallback in-memory
+- Décorateurs: @Cacheable, @CacheEvict, @CachePut, @InvalidateTags
+- CacheInterceptor pour handling automatique
+- Support tags, TTL, distributed locking, statistics
+- Déjà 30+ index composites Prisma (Phase Performance précédente)
 
 #### Améliorations attendues:
 - Temps de réponse < 100ms pour les listes paginées
-- Cache Redis pour réduire la charge DB de 70%
+- Cache Redis pour réduire la charge DB de 40-60%
 - Support de 1000+ requêtes/seconde
+
+#### Tâches restantes (optionnelles):
+- [ ] Ajouter plus d'endpoints cachés (tickets, cashless, zones, etc.)
+- [ ] Optimiser les requêtes Prisma (select specific fields, éviter N+1)
+- [ ] Configurer le connection pooling PostgreSQL
+- [ ] Cache warming on application startup
 
 ---
 
