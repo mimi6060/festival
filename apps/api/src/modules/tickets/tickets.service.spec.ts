@@ -51,17 +51,13 @@ jest.mock('uuid', () => ({
   v4: jest.fn(() => 'mocked-uuid-ticket-123'),
 }));
 
-// Import crypto for mocking
-import * as crypto from 'crypto';
-
-// Create a mock Hmac object
-const mockHmacInstance = {
-  update: jest.fn().mockReturnThis(),
-  digest: jest.fn().mockReturnValue('mockedsignature12345678'),
-};
-
-// Spy on createHmac to return our mock
-jest.spyOn(crypto, 'createHmac').mockReturnValue(mockHmacInstance as any);
+// Mock crypto
+jest.mock('crypto', () => ({
+  createHmac: jest.fn().mockReturnValue({
+    update: jest.fn().mockReturnThis(),
+    digest: jest.fn().mockReturnValue('mockedsignature12345678'),
+  }),
+}));
 
 describe('TicketsService', () => {
   let ticketsService: TicketsService;
@@ -93,22 +89,7 @@ describe('TicketsService', () => {
   };
 
   beforeEach(async () => {
-    // Reset only specific mocks to avoid clearing the crypto mock
-    mockPrismaService.festival.findUnique.mockReset();
-    mockPrismaService.ticketCategory.findUnique.mockReset();
-    mockPrismaService.ticketCategory.update.mockReset();
-    mockPrismaService.ticket.findUnique.mockReset();
-    mockPrismaService.ticket.findMany.mockReset();
-    mockPrismaService.ticket.create.mockReset();
-    mockPrismaService.ticket.update.mockReset();
-    mockPrismaService.ticket.count.mockReset();
-    mockPrismaService.zone.findUnique.mockReset();
-    mockPrismaService.zoneAccessLog.create.mockReset();
-    mockPrismaService.$transaction.mockReset();
-
-    // Reinitialize crypto mock
-    mockHmac.update.mockReturnThis();
-    mockHmac.digest.mockReturnValue('mockedsignature12345678');
+    jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -120,21 +101,9 @@ describe('TicketsService', () => {
     ticketsService = module.get<TicketsService>(TicketsService);
     prismaService = module.get(PrismaService);
 
-    // Default transaction implementation - support both callback and array patterns
-    mockPrismaService.$transaction.mockImplementation(async (callbackOrArray) => {
-      if (typeof callbackOrArray === 'function') {
-        // Create a transaction context that includes all mocked methods
-        const txMock = {
-          festival: mockPrismaService.festival,
-          ticketCategory: mockPrismaService.ticketCategory,
-          ticket: mockPrismaService.ticket,
-          zoneAccessLog: mockPrismaService.zoneAccessLog,
-          $transaction: mockPrismaService.$transaction,
-        };
-        return callbackOrArray(txMock);
-      }
-      // If it's an array of promises, resolve them all
-      return Promise.all(callbackOrArray);
+    // Default transaction implementation
+    mockPrismaService.$transaction.mockImplementation(async (callback) => {
+      return callback(mockPrismaService);
     });
   });
 

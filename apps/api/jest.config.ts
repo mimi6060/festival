@@ -84,15 +84,38 @@ const config: Config = {
   // Coverage reporters
   coverageReporters: ['text', 'text-summary', 'lcov', 'html', 'json'],
 
-  // Coverage thresholds
-  // Global threshold relaxed - critical services should maintain 90%+ coverage
-  // See coverage report for per-file coverage statistics
+  // Coverage thresholds - 80% minimum
   coverageThreshold: {
     global: {
-      branches: 0,
-      functions: 0,
-      lines: 0,
-      statements: 0,
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+    // Stricter thresholds for critical services
+    './src/modules/auth/auth.service.ts': {
+      branches: 85,
+      functions: 90,
+      lines: 85,
+      statements: 85,
+    },
+    './src/modules/tickets/tickets.service.ts': {
+      branches: 85,
+      functions: 90,
+      lines: 85,
+      statements: 85,
+    },
+    './src/modules/cashless/cashless.service.ts': {
+      branches: 85,
+      functions: 90,
+      lines: 85,
+      statements: 85,
+    },
+    './src/modules/payments/payments.service.ts': {
+      branches: 85,
+      functions: 90,
+      lines: 85,
+      statements: 85,
     },
   },
 

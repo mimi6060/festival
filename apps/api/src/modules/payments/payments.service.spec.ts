@@ -93,13 +93,6 @@ describe('PaymentsService', () => {
     paymentsService = module.get<PaymentsService>(PaymentsService);
     prismaService = module.get(PrismaService);
     configService = module.get(ConfigService);
-
-    // Inject the mock Stripe instance into the service
-    (paymentsService as any).stripe = {
-      paymentIntents: mockStripePaymentIntents,
-      refunds: mockStripeRefunds,
-      webhooks: mockStripeWebhooks,
-    };
   });
 
   // ==========================================================================
