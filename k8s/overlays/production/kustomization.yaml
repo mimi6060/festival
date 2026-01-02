@@ -12,6 +12,8 @@ namespace: festival-prod
 # Base configuration
 resources:
   - ../../
+  - loadbalancer.yaml
+  - nginx-ingress-config.yaml
 
 # Production namespace
 nameSuffix: -prod

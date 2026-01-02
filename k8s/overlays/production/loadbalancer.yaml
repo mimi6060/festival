@@ -1,0 +1,433 @@
+# ============================================================================
+# Production Load Balancer Configuration
+# Festival Management Platform
+# ============================================================================
+# AWS Application Load Balancer (ALB) configuration for production
+# Includes: TLS termination, WAF, rate limiting, health checks
+# ============================================================================
+---
+# AWS Load Balancer Controller IngressClass
+apiVersion: networking.k8s.io/v1
+kind: IngressClass
+metadata:
+  name: alb
+  annotations:
+    ingressclass.kubernetes.io/is-default-class: "false"
+spec:
+  controller: ingress.k8s.aws/alb
+
+---
+# Main Production Ingress with AWS ALB
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: festival-alb-ingress
+  namespace: festival-prod
+  labels:
+    app.kubernetes.io/name: festival-alb-ingress
+    app.kubernetes.io/component: networking
+    app.kubernetes.io/part-of: festival-platform
+    environment: production
+  annotations:
+    # AWS ALB Configuration
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/ip-address-type: dualstack
+
+    # Load Balancer Attributes
+    alb.ingress.kubernetes.io/load-balancer-attributes: >-
+      idle_timeout.timeout_seconds=60,
+      deletion_protection.enabled=true,
+      routing.http2.enabled=true,
+      routing.http.drop_invalid_header_fields.enabled=true,
+      access_logs.s3.enabled=true,
+      access_logs.s3.bucket=festival-alb-logs-prod,
+      access_logs.s3.prefix=alb
+
+    # SSL/TLS Configuration
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: "443"
+    alb.ingress.kubernetes.io/certificate-arn: "${ACM_CERTIFICATE_ARN}"
+    alb.ingress.kubernetes.io/ssl-policy: "ELBSecurityPolicy-TLS13-1-2-2021-06"
+
+    # WAF Integration
+    alb.ingress.kubernetes.io/wafv2-acl-arn: "${WAF_ACL_ARN}"
+
+    # Shield Advanced (DDoS protection)
+    alb.ingress.kubernetes.io/shield-advanced-protection: "true"
+
+    # Health Check Configuration
+    alb.ingress.kubernetes.io/healthcheck-path: /api/health
+    alb.ingress.kubernetes.io/healthcheck-interval-seconds: "15"
+    alb.ingress.kubernetes.io/healthcheck-timeout-seconds: "5"
+    alb.ingress.kubernetes.io/healthy-threshold-count: "2"
+    alb.ingress.kubernetes.io/unhealthy-threshold-count: "3"
+    alb.ingress.kubernetes.io/success-codes: "200-299"
+
+    # Target Group Attributes
+    alb.ingress.kubernetes.io/target-group-attributes: >-
+      deregistration_delay.timeout_seconds=30,
+      stickiness.enabled=false,
+      load_balancing.algorithm.type=least_outstanding_requests
+
+    # Actions - Rate Limiting via custom header
+    alb.ingress.kubernetes.io/actions.rate-limit: >-
+      {"type":"forward","forwardConfig":{"targetGroups":[{"serviceName":"api-prod","servicePort":"3000","weight":100}]}}
+
+    # Tags
+    alb.ingress.kubernetes.io/tags: >-
+      Environment=production,
+      Project=festival,
+      ManagedBy=kubernetes
+
+    # Security Headers
+    alb.ingress.kubernetes.io/security-headers: >-
+      X-Frame-Options=SAMEORIGIN,
+      X-Content-Type-Options=nosniff,
+      X-XSS-Protection=1; mode=block,
+      Strict-Transport-Security=max-age=31536000; includeSubDomains; preload,
+      Referrer-Policy=strict-origin-when-cross-origin
+
+spec:
+  ingressClassName: alb
+  rules:
+    # API endpoint
+    - host: api.festival.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: api-prod
+                port:
+                  number: 3000
+
+    # Web application
+    - host: festival.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web-prod
+                port:
+                  number: 3000
+
+    - host: www.festival.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: web-prod
+                port:
+                  number: 3000
+
+    # Admin dashboard
+    - host: admin.festival.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: admin-prod
+                port:
+                  number: 3000
+
+---
+# Network Load Balancer for WebSocket connections
+# (for long-lived connections and better performance)
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-websocket-nlb
+  namespace: festival-prod
+  labels:
+    app.kubernetes.io/name: api-websocket-nlb
+    app.kubernetes.io/component: networking
+    app.kubernetes.io/part-of: festival-platform
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internet-facing"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "tcp"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-cert: "${ACM_CERTIFICATE_ARN}"
+    service.beta.kubernetes.io/aws-load-balancer-ssl-ports: "443"
+    service.beta.kubernetes.io/aws-load-balancer-connection-idle-timeout: "3600"
+    service.beta.kubernetes.io/aws-load-balancer-target-group-attributes: >-
+      deregistration_delay.timeout_seconds=30,
+      stickiness.enabled=true,
+      stickiness.type=source_ip
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-path: /api/health
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-interval: "30"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-healthy-threshold: "2"
+    service.beta.kubernetes.io/aws-load-balancer-healthcheck-unhealthy-threshold: "3"
+spec:
+  type: LoadBalancer
+  externalTrafficPolicy: Local
+  selector:
+    app.kubernetes.io/name: api
+    environment: production
+  ports:
+    - name: https
+      port: 443
+      targetPort: 3000
+      protocol: TCP
+    - name: http
+      port: 80
+      targetPort: 3000
+      protocol: TCP
+
+---
+# Internal Load Balancer for service-to-service communication
+apiVersion: v1
+kind: Service
+metadata:
+  name: api-internal-lb
+  namespace: festival-prod
+  labels:
+    app.kubernetes.io/name: api-internal-lb
+    app.kubernetes.io/component: networking
+    app.kubernetes.io/part-of: festival-platform
+  annotations:
+    service.beta.kubernetes.io/aws-load-balancer-type: "nlb"
+    service.beta.kubernetes.io/aws-load-balancer-scheme: "internal"
+    service.beta.kubernetes.io/aws-load-balancer-cross-zone-load-balancing-enabled: "true"
+    service.beta.kubernetes.io/aws-load-balancer-backend-protocol: "tcp"
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: api
+    environment: production
+  ports:
+    - name: http
+      port: 3000
+      targetPort: 3000
+      protocol: TCP
+
+---
+# HorizontalPodAutoscaler for API
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: api-hpa
+  namespace: festival-prod
+  labels:
+    app.kubernetes.io/name: api-hpa
+    app.kubernetes.io/component: autoscaling
+    app.kubernetes.io/part-of: festival-platform
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: api-prod
+  minReplicas: 5
+  maxReplicas: 50
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+        - type: Pods
+          value: 2
+          periodSeconds: 60
+      selectPolicy: Min
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+        - type: Pods
+          value: 10
+          periodSeconds: 15
+      selectPolicy: Max
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+    - type: Pods
+      pods:
+        metric:
+          name: http_requests_per_second
+        target:
+          type: AverageValue
+          averageValue: "1000"
+
+---
+# HorizontalPodAutoscaler for Web
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: web-hpa
+  namespace: festival-prod
+  labels:
+    app.kubernetes.io/name: web-hpa
+    app.kubernetes.io/component: autoscaling
+    app.kubernetes.io/part-of: festival-platform
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: web-prod
+  minReplicas: 3
+  maxReplicas: 30
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+
+---
+# PodDisruptionBudget for API
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: api-pdb
+  namespace: festival-prod
+  labels:
+    app.kubernetes.io/name: api-pdb
+    app.kubernetes.io/component: availability
+    app.kubernetes.io/part-of: festival-platform
+spec:
+  minAvailable: 80%
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: api
+      environment: production
+
+---
+# PodDisruptionBudget for Web
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: web-pdb
+  namespace: festival-prod
+  labels:
+    app.kubernetes.io/name: web-pdb
+    app.kubernetes.io/component: availability
+    app.kubernetes.io/part-of: festival-platform
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: web
+      environment: production
+
+---
+# NetworkPolicy - Allow only necessary traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: api-network-policy
+  namespace: festival-prod
+  labels:
+    app.kubernetes.io/name: api-network-policy
+    app.kubernetes.io/component: security
+    app.kubernetes.io/part-of: festival-platform
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: api
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow from ALB
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: TCP
+          port: 3000
+    # Allow from web and admin services
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: web
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: admin
+      ports:
+        - protocol: TCP
+          port: 3000
+    # Allow Prometheus scraping
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9090
+  egress:
+    # Allow to PostgreSQL
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
+    # Allow to Redis
+    - to:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: redis-cluster
+      ports:
+        - protocol: TCP
+          port: 6379
+    # Allow DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow external HTTPS (Stripe, etc.)
+    - to:
+        - ipBlock:
+            cidr: 0.0.0.0/0
+            except:
+              - 10.0.0.0/8
+              - 172.16.0.0/12
+              - 192.168.0.0/16
+      ports:
+        - protocol: TCP
+          port: 443
