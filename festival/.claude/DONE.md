@@ -1109,4 +1109,93 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
 - [x] Creation apps/api/src/modules/pdf/interfaces/index.ts (barrel export)
 
 ---
-Derniere mise a jour: 2026-01-02 - Phase PDF Service Enhanced
+
+## Phase DDoS Protection Documentation (2026-01-02)
+
+### Documentation Complete
+- [x] Creation docs/security/DDOS_PROTECTION.md (1500+ lignes)
+  - Executive Summary avec metriques cibles
+  - Threat Landscape (volumetric, protocol, application-layer attacks)
+  - Defense-in-Depth Architecture (5 couches de protection)
+
+### AWS Shield Configuration
+- [x] Shield Standard/Advanced configuration detaillee
+  - Protected resources (CloudFront, ALB, EIP, Route53)
+  - Protection Groups (critical-infra, web-tier, api-layer, payment-processing)
+  - DRT (DDoS Response Team) access et role IAM
+  - Proactive engagement et health checks
+  - Cost protection et billing
+
+### CloudFront Edge Protection
+- [x] Distribution configuration avec WAF integration
+  - Origin Shield pour reduction de charge
+  - Cache policies par type de contenu
+  - CloudFront Functions pour security headers
+  - Geo-restriction pour marches europeens
+
+### AWS WAF Rate Limiting
+- [x] WAF Web ACL structure complete
+  - Global rate limits (2000/10000 requests per 5 min)
+  - Endpoint-specific limits (auth, payments, tickets)
+  - Managed rule groups (IP reputation, bot control, common rules, SQLi)
+  - IP sets management (whitelist, blacklist)
+
+### API Gateway Throttling
+- [x] Usage plans avec throttle settings
+  - Burst limits et rate limits par methode
+  - Daily quotas
+  - API keys pour partners
+
+### Application-Level Throttling
+- [x] NestJS Rate Limit Service documentation
+  - Redis-based distributed rate limiting
+  - Multiple algorithms (sliding window, token bucket, fixed window, leaky bucket)
+  - Plan-based quotas (FREE, PREMIUM, ENTERPRISE, INTERNAL)
+  - Response headers standards
+
+### Bot Mitigation
+- [x] AWS WAF Bot Control configuration
+  - Bot categories et actions (verified, scraping, automation)
+  - CAPTCHA configuration (5 min immunity)
+  - JavaScript challenges
+  - Blocked user agents
+
+### Monitoring and Detection
+- [x] CloudWatch alarms complets
+  - DDoS detection, attack volume, request rate anomaly
+  - SNS alerting configuration
+  - Grafana dashboards integration
+
+### Emergency Response Procedures
+- [x] Incident severity levels (SEV-1 to SEV-4)
+  - Response flowchart
+  - Immediate actions checklist (5/15/30 minutes)
+  - Emergency commands (block IP, enable peak mode, scale pods)
+  - AWS DRT engagement process
+
+### Communication Templates
+- [x] Templates de communication
+  - Internal alert template
+  - Executive summary template
+  - Customer communication (status page)
+  - Post-incident email template
+
+### Recovery Procedures
+- [x] Service restoration checklist
+  - Immediate post-attack actions
+  - Infrastructure recovery (scale down, restore WAF)
+  - Post-mortem requirements et template
+
+### Testing and Validation
+- [x] Testing schedule et guidelines
+  - Load testing avec k6
+  - Chaos engineering scenarios
+  - Runbook validation
+
+### Compliance and Reporting
+- [x] Regulatory requirements (PCI-DSS, SOC 2, GDPR, ISO 27001)
+  - Reporting schedule
+  - KPIs (MTTD, MTTM, availability)
+
+---
+Derniere mise a jour: 2026-01-02 - Phase DDoS Protection Documentation

@@ -21,6 +21,35 @@ Voir `.claude/DONE.md` pour le détail complet.
 - [ ] Configuration EventEmitterModule dans SupportModule
 - [ ] Import paths a verifier dans services/ (analytics, payments, support)
 
+### QA Review: Festivals Module (2026-01-02) - TO FIX
+**Path:** `apps/api/src/modules/festivals/`
+
+- [ ] **CRITICAL:** Create `festivals.service.ts` with Prisma CRUD operations
+  - Service must include: create, findAll, findOne, findBySlug, update, remove, getStats, publish, cancel
+  - Inject PrismaService for database operations
+  - Add proper error handling and validation
+- [ ] **FIX:** Move `ApiResponse` import to top of `festivals.controller.ts` (currently at line 625-626)
+- [ ] **FIX:** Register FestivalsService in `festivals.module.ts` providers array
+- [ ] **FIX:** Update controller methods to inject and use FestivalsService instead of mock data
+- [ ] **FIX:** Add FestivalsService to module exports if needed by other modules
+
+### Fix Build Admin App - BLOCKING (2026-01-02)
+Build command: `NODE_ENV=production npx nx build admin`
+
+**Erreur TypeScript bloquante:**
+- [ ] **apps/admin/app/reports/page.tsx:450:62** - `'percent' is possibly 'undefined'`
+  - Fichier: `/Users/mac-m3-michel/workspace/festival/festival/apps/admin/app/reports/page.tsx`
+  - Ligne 450: `label={({ name, percent }) => \`${name} (${(percent * 100).toFixed(0)}%)\`}`
+  - Cause: Le parametre `percent` du callback Recharts Pie label peut etre undefined
+  - Solution suggérée: Ajouter une valeur par défaut ou une vérification null
+    - Option 1: `label={({ name, percent }) => \`${name} (${((percent ?? 0) * 100).toFixed(0)}%)\`}`
+    - Option 2: `label={({ name, percent = 0 }) => \`${name} (${(percent * 100).toFixed(0)}%)\`}`
+
+**Configuration tsconfig.json - Warning (non bloquant):**
+- Le pattern `../../dist/apps/admin/.next/types/**/*.ts` dans `include` cause des erreurs TS6059 (fichiers hors rootDir)
+- Ces erreurs n'affectent pas le build Nx mais polluent la sortie TypeScript standalone
+- Solution suggérée: Retirer cette ligne de l'include ou ajouter `rootDir` explicite
+
 ---
 
 ## Prochaines Phases Disponibles
@@ -62,8 +91,8 @@ Voir `.claude/DONE.md` pour le détail complet.
 - [x] Secrets management documentation
 - [ ] Pen testing documentation
 - [ ] WAF configuration
-- [ ] DDoS protection
-- [ ] Secrets rotation automation
+- [x] DDoS protection (docs/security/DDOS_PROTECTION.md - 1500+ lines)
+- [x] Secrets rotation automation (docs/security/SECRETS_ROTATION.md - 1800+ lines)
 
 ### Phase Compliance
 - [x] GDPR audit complet (docs/security/GDPR_AUDIT.md)
@@ -92,6 +121,22 @@ Voir `.claude/DONE.md` pour le détail complet.
 - [x] Correction NODE_ENV pour build via Nx
 - [x] Scripts npm build:web, build:admin avec NODE_ENV=production
 - [x] Validation Docker-compose config
+
+### QA Verification Web App (2026-01-02) - PASSED
+- [x] Build verification: `npx nx build web --skip-nx-cache` - SUCCESS
+  - Compiled successfully in 880ms
+  - All 8 pages generated (static + dynamic)
+  - TypeScript type check: PASSED (no errors)
+  - Standalone output created successfully
+- [x] Next.js configuration: Valid (standalone output enabled)
+- [x] Project.json configuration: Correct (@nx/next:build executor)
+- [x] tsconfig.json: Valid (strict mode, bundler resolution)
+- Routes verified:
+  - `/` (static) - Home page
+  - `/auth/login`, `/auth/register` (static) - Authentication
+  - `/festivals`, `/festivals/[slug]`, `/festivals/[slug]/tickets` (dynamic)
+  - `/account`, `/account/orders`, `/account/tickets` (dynamic)
+  - `/api/health`, `/api/hello` (API routes)
 
 ### Phase CI/CD Avancee (2026-01-02) - COMPLETED
 - [x] ci.yml ameliore avec matrix builds (Node 18/20, Ubuntu/macOS)
