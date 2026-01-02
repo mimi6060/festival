@@ -206,7 +206,8 @@ export class PasswordValidatorService {
     const hasUppercase = /[A-Z]/.test(password);
     const hasLowercase = /[a-z]/.test(password);
     const hasNumbers = /[0-9]/.test(password);
-    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password);
+    // eslint-disable-next-line no-useless-escape
+    const hasSpecial = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(password);
 
     const charTypes = [hasUppercase, hasLowercase, hasNumbers, hasSpecial].filter(
       Boolean,
@@ -307,8 +308,10 @@ export class PasswordValidatorService {
     if (/[a-z]/.test(password)) {poolSize += 26;}
     if (/[A-Z]/.test(password)) {poolSize += 26;}
     if (/[0-9]/.test(password)) {poolSize += 10;}
-    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password)) {poolSize += 32;}
-    if (/[^a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password)) {poolSize += 100;}
+    // eslint-disable-next-line no-useless-escape
+    if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(password)) {poolSize += 32;}
+    // eslint-disable-next-line no-useless-escape
+    if (/[^a-zA-Z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(password)) {poolSize += 100;}
 
     // Calculate entropy: E = L * log2(R) where L = length, R = pool size
     return password.length * Math.log2(poolSize || 1);
@@ -384,7 +387,8 @@ export class PasswordValidatorService {
     const hasUppercase = /[A-Z]/.test(password);
     const hasLowercase = /[a-z]/.test(password);
     const hasNumbers = /[0-9]/.test(password);
-    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password);
+    // eslint-disable-next-line no-useless-escape
+    const hasSpecial = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(password);
 
     score += [hasUppercase, hasLowercase, hasNumbers, hasSpecial].filter(Boolean)
       .length * 5;

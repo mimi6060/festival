@@ -63,7 +63,7 @@ export class AnalyticsController {
   @Roles('ADMIN', 'ORGANIZER')
   @ApiOperation({ summary: 'Get dashboard KPIs for a festival' })
   @ApiParam({ name: 'festivalId', description: 'Festival ID' })
-  async getDashboard(
+  async getFestivalDashboard(
     @Param('festivalId') festivalId: string,
     @Query() query: DashboardQueryDto,
   ) {

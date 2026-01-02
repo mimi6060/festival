@@ -19,7 +19,7 @@ const isNode = typeof process !== 'undefined' && process.versions?.node;
 /**
  * Get environment variable safely (works in both browser and Node.js)
  */
-function getEnvVar(key: string, defaultValue: string = ''): string {
+function getEnvVar(key: string, defaultValue = ''): string {
   if (isNode && process.env[key]) {
     return process.env[key] as string;
   }

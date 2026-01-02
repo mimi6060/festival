@@ -15,7 +15,7 @@ import { useState, useEffect, useRef, useCallback } from 'react';
  * @param delay - Delay in milliseconds
  * @returns The debounced value
  */
-export function useDebounce<T>(value: T, delay: number = 300): T {
+export function useDebounce<T>(value: T, delay = 300): T {
   const [debouncedValue, setDebouncedValue] = useState<T>(value);
 
   useEffect(() => {
@@ -43,7 +43,7 @@ export function useDebounce<T>(value: T, delay: number = 300): T {
  */
 export function useDebouncedCallback<T extends (...args: Parameters<T>) => ReturnType<T>>(
   callback: T,
-  delay: number = 300
+  delay = 300
 ): (...args: Parameters<T>) => void {
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const callbackRef = useRef(callback);
@@ -86,7 +86,7 @@ export function useDebouncedCallback<T extends (...args: Parameters<T>) => Retur
  */
 export function useDebouncedState<T>(
   initialValue: T,
-  delay: number = 300
+  delay = 300
 ): [T, T, React.Dispatch<React.SetStateAction<T>>] {
   const [value, setValue] = useState<T>(initialValue);
   const debouncedValue = useDebounce(value, delay);
@@ -104,7 +104,7 @@ export function useDebouncedState<T>(
  * @param interval - Minimum interval between updates in milliseconds
  * @returns The throttled value
  */
-export function useThrottle<T>(value: T, interval: number = 300): T {
+export function useThrottle<T>(value: T, interval = 300): T {
   const [throttledValue, setThrottledValue] = useState<T>(value);
   const lastUpdated = useRef<number>(Date.now());
 
@@ -139,7 +139,7 @@ export function useThrottle<T>(value: T, interval: number = 300): T {
  */
 export function useThrottledCallback<T extends (...args: Parameters<T>) => ReturnType<T>>(
   callback: T,
-  interval: number = 300
+  interval = 300
 ): (...args: Parameters<T>) => void {
   const lastCalledRef = useRef<number>(0);
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
