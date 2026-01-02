@@ -208,3 +208,18 @@ Derniere mise a jour: 2026-01-02 - Phase Monitoring Avancee (Prometheus, Grafana
 - [x] Template rapport financier complet (revenus, TVA, remboursements)
 - [x] Template recu de paiement
 - [x] Template bon de camping avec QR code
+
+### Phase Shared Libraries Enhancement (2026-01-02) - COMPLETED
+- [x] Validation Zod Schemas (libs/shared/validation/src/lib/)
+  - festival.schema.ts - 265 lines (festival CRUD, query, settings, stats)
+  - ticket.schema.ts - 512 lines (tickets, promo codes, scans, batch ops)
+  - payment.schema.ts - 488 lines (payments, refunds, invoices, disputes)
+  - cashless.schema.ts - 609 lines (NFC, topup, transfers, terminals)
+  - index.ts - 312 lines (central exports for all schemas)
+- [x] Shared Constants (libs/shared/constants/src/lib/)
+  - cashless.constants.ts - 400+ lines (NFC status, transaction types, limits)
+  - index.ts - Updated to export all 9 constant files
+- Previously completed:
+  - Types: camping.types.ts, notification.types.ts, vendor.types.ts, support.types.ts
+  - Utils: geo.utils.ts, file.utils.ts, phone.utils.ts
+  - Hooks: useDebounce.ts, useLocalStorage.ts, useMediaQuery.ts
