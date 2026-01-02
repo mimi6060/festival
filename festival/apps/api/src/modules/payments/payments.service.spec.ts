@@ -32,27 +32,24 @@ import {
 // Mock Setup
 // ============================================================================
 
-// Mock Stripe
-const mockStripePaymentIntents = {
-  create: jest.fn(),
-  cancel: jest.fn(),
+// Mock Stripe - use a shared object that persists across tests
+const mockStripeInstance = {
+  paymentIntents: {
+    create: jest.fn(),
+    cancel: jest.fn(),
+  },
+  refunds: {
+    create: jest.fn(),
+  },
+  webhooks: {
+    constructEvent: jest.fn(),
+  },
 };
 
-const mockStripeRefunds = {
-  create: jest.fn(),
-};
-
-const mockStripeWebhooks = {
-  constructEvent: jest.fn(),
-};
-
-jest.mock('stripe', () => {
-  return jest.fn().mockImplementation(() => ({
-    paymentIntents: mockStripePaymentIntents,
-    refunds: mockStripeRefunds,
-    webhooks: mockStripeWebhooks,
-  }));
-});
+// Import Stripe before mocking so we can access the mocked version
+import Stripe from 'stripe';
+jest.mock('stripe');
+const MockedStripe = Stripe as jest.MockedClass<typeof Stripe>;
 
 describe('PaymentsService', () => {
   let paymentsService: PaymentsService;
@@ -89,17 +86,20 @@ describe('PaymentsService', () => {
       return testConfig[key] ?? defaultValue;
     });
 
-    // Re-set Stripe mocks - they need default implementations
-    mockStripePaymentIntents.create.mockResolvedValue({
+    // Re-set Stripe constructor mock
+    MockedStripe.mockImplementation(() => mockStripeInstance as unknown as Stripe);
+
+    // Re-set Stripe method mocks - they need default implementations
+    mockStripeInstance.paymentIntents.create.mockResolvedValue({
       id: 'pi_default',
       client_secret: 'pi_default_secret',
       amount: 0,
       currency: 'eur',
       status: 'requires_payment_method',
     });
-    mockStripePaymentIntents.cancel.mockResolvedValue({ id: 'pi_cancelled', status: 'canceled' });
-    mockStripeRefunds.create.mockResolvedValue({ id: 're_default', status: 'succeeded' });
-    mockStripeWebhooks.constructEvent.mockReturnValue({ type: 'test', data: { object: {} } });
+    mockStripeInstance.paymentIntents.cancel.mockResolvedValue({ id: 'pi_cancelled', status: 'canceled' });
+    mockStripeInstance.refunds.create.mockResolvedValue({ id: 're_default', status: 'succeeded' });
+    mockStripeInstance.webhooks.constructEvent.mockReturnValue({ type: 'test', data: { object: {} } });
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -129,7 +129,7 @@ describe('PaymentsService', () => {
 
     it('should create payment intent successfully', async () => {
       // Arrange
-      mockStripePaymentIntents.create.mockResolvedValue({
+      mockStripeInstance.paymentIntents.create.mockResolvedValue({
         id: 'pi_test_123',
         client_secret: 'pi_test_123_secret_abc',
         amount: 14999,
@@ -159,7 +159,7 @@ describe('PaymentsService', () => {
       expect(result.clientSecret).toBe('pi_test_123_secret_abc');
       expect(result.amount).toBe(validPaymentDto.amount);
       expect(result.status).toBe(PaymentStatus.PENDING);
-      expect(mockStripePaymentIntents.create).toHaveBeenCalledWith(
+      expect(mockStripeInstance.paymentIntents.create).toHaveBeenCalledWith(
         expect.objectContaining({
           amount: 14999, // Converted to cents
           currency: 'eur',
@@ -185,7 +185,7 @@ describe('PaymentsService', () => {
 
     it('should use EUR as default currency', async () => {
       // Arrange
-      mockStripePaymentIntents.create.mockResolvedValue({
+      mockStripeInstance.paymentIntents.create.mockResolvedValue({
         id: 'pi_test_123',
         client_secret: 'pi_test_123_secret_abc',
         amount: 14999,
@@ -216,7 +216,7 @@ describe('PaymentsService', () => {
 
     it('should throw InternalServerErrorException on Stripe error', async () => {
       // Arrange
-      mockStripePaymentIntents.create.mockRejectedValue(new Error('Stripe error'));
+      mockStripeInstance.paymentIntents.create.mockRejectedValue(new Error('Stripe error'));
 
       // Act & Assert
       await expect(paymentsService.createPaymentIntent(validPaymentDto))
@@ -232,7 +232,7 @@ describe('PaymentsService', () => {
     it('should process payment_intent.succeeded event', async () => {
       // Arrange
       const event = stripeWebhookPayloads.paymentIntentSucceeded;
-      mockStripeWebhooks.constructEvent.mockReturnValue(event);
+      mockStripeInstance.webhooks.constructEvent.mockReturnValue(event);
       mockPrismaService.payment.findFirst.mockResolvedValue({
         ...completedPayment,
         providerPaymentId: stripeMockPaymentIntent.id,
@@ -259,7 +259,7 @@ describe('PaymentsService', () => {
     it('should process payment_intent.payment_failed event', async () => {
       // Arrange
       const event = stripeWebhookPayloads.paymentIntentFailed;
-      mockStripeWebhooks.constructEvent.mockReturnValue(event);
+      mockStripeInstance.webhooks.constructEvent.mockReturnValue(event);
       mockPrismaService.payment.findFirst.mockResolvedValue({
         ...pendingPayment,
         providerPaymentId: 'pi_test_failed_87654321',
@@ -285,7 +285,7 @@ describe('PaymentsService', () => {
     it('should process refund.created event', async () => {
       // Arrange
       const event = stripeWebhookPayloads.refundCreated;
-      mockStripeWebhooks.constructEvent.mockReturnValue(event);
+      mockStripeInstance.webhooks.constructEvent.mockReturnValue(event);
       mockPrismaService.payment.findFirst.mockResolvedValue({
         ...completedPayment,
         providerPaymentId: stripeMockPaymentIntent.id,
@@ -311,7 +311,7 @@ describe('PaymentsService', () => {
 
     it('should throw BadRequestException for invalid signature', async () => {
       // Arrange
-      mockStripeWebhooks.constructEvent.mockImplementation(() => {
+      mockStripeInstance.webhooks.constructEvent.mockImplementation(() => {
         throw new Error('Invalid signature');
       });
 
@@ -326,7 +326,7 @@ describe('PaymentsService', () => {
         type: 'unknown.event.type',
         data: { object: {} },
       };
-      mockStripeWebhooks.constructEvent.mockReturnValue(event);
+      mockStripeInstance.webhooks.constructEvent.mockReturnValue(event);
 
       // Act - should not throw
       await paymentsService.handleWebhook('sig_test', Buffer.from('payload'));
@@ -338,7 +338,7 @@ describe('PaymentsService', () => {
     it('should handle missing payment gracefully for succeeded event', async () => {
       // Arrange
       const event = stripeWebhookPayloads.paymentIntentSucceeded;
-      mockStripeWebhooks.constructEvent.mockReturnValue(event);
+      mockStripeInstance.webhooks.constructEvent.mockReturnValue(event);
       mockPrismaService.payment.findFirst.mockResolvedValue(null);
 
       // Act - should not throw
@@ -360,7 +360,7 @@ describe('PaymentsService', () => {
         ...completedPayment,
         providerData: {},
       });
-      mockStripeRefunds.create.mockResolvedValue({
+      mockStripeInstance.refunds.create.mockResolvedValue({
         id: 're_test_refund_123',
         status: 'succeeded',
         amount: 14999,
@@ -378,7 +378,7 @@ describe('PaymentsService', () => {
       expect(result.paymentId).toBe(completedPayment.id);
       expect(result.refundId).toBe('re_test_refund_123');
       expect(result.status).toBe('succeeded');
-      expect(mockStripeRefunds.create).toHaveBeenCalledWith(
+      expect(mockStripeInstance.refunds.create).toHaveBeenCalledWith(
         expect.objectContaining({
           payment_intent: completedPayment.providerPaymentId,
         }),
@@ -430,7 +430,7 @@ describe('PaymentsService', () => {
         ...completedPayment,
         providerData: {},
       });
-      mockStripeRefunds.create.mockRejectedValue(new Error('Stripe error'));
+      mockStripeInstance.refunds.create.mockRejectedValue(new Error('Stripe error'));
 
       // Act & Assert
       await expect(paymentsService.refundPayment(completedPayment.id))
@@ -543,7 +543,7 @@ describe('PaymentsService', () => {
     it('should cancel pending payment', async () => {
       // Arrange
       mockPrismaService.payment.findUnique.mockResolvedValue(pendingPayment);
-      mockStripePaymentIntents.cancel.mockResolvedValue({});
+      mockStripeInstance.paymentIntents.cancel.mockResolvedValue({});
       mockPrismaService.payment.update.mockResolvedValue({
         ...pendingPayment,
         status: PaymentStatus.CANCELLED,
@@ -554,7 +554,7 @@ describe('PaymentsService', () => {
 
       // Assert
       expect(result.status).toBe(PaymentStatus.CANCELLED);
-      expect(mockStripePaymentIntents.cancel).toHaveBeenCalledWith(
+      expect(mockStripeInstance.paymentIntents.cancel).toHaveBeenCalledWith(
         pendingPayment.providerPaymentId,
       );
     });
@@ -580,7 +580,7 @@ describe('PaymentsService', () => {
     it('should cancel even if Stripe call fails', async () => {
       // Arrange
       mockPrismaService.payment.findUnique.mockResolvedValue(pendingPayment);
-      mockStripePaymentIntents.cancel.mockRejectedValue(new Error('Stripe error'));
+      mockStripeInstance.paymentIntents.cancel.mockRejectedValue(new Error('Stripe error'));
       mockPrismaService.payment.update.mockResolvedValue({
         ...pendingPayment,
         status: PaymentStatus.CANCELLED,
@@ -610,7 +610,7 @@ describe('PaymentsService', () => {
 
       // Assert
       expect(result.status).toBe(PaymentStatus.CANCELLED);
-      expect(mockStripePaymentIntents.cancel).not.toHaveBeenCalled();
+      expect(mockStripeInstance.paymentIntents.cancel).not.toHaveBeenCalled();
     });
   });
 });
