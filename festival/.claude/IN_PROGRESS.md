@@ -7,6 +7,22 @@ Voir `.claude/DONE.md` pour le détail complet.
 
 ---
 
+## Corrections Build (2026-01-02)
+
+### Fix Build API - COMPLETED
+- [x] Migration de webpack vers SWC pour le build de l'API
+- [x] Configuration .swcrc avec support decorateurs NestJS
+- [x] Correction chemins imports PrismaService (users, zones)
+- [x] Correction exports types dans bulk operations
+- [x] Installation @swc/cli et @nx/esbuild
+
+### Problèmes Restants (Non Critiques)
+- [ ] Erreurs TypeScript mineures (constantes manquantes dans ErrorCodes)
+- [ ] Configuration EventEmitterModule dans SupportModule
+- [ ] Import paths a verifier dans services/ (analytics, payments, support)
+
+---
+
 ## Prochaines Phases Disponibles
 
 ### Phase Mobile Avancée (2026-01-02) - COMPLETED
