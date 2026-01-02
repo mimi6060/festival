@@ -13,6 +13,7 @@ import { TopupScreen } from '../../screens/Wallet/TopupScreen';
 import { TransactionsScreen } from '../../screens/Wallet/TransactionsScreen';
 import { MapScreen } from '../../screens/Map/MapScreen';
 import { NotificationsScreen } from '../../screens/Notifications/NotificationsScreen';
+import { SettingsScreen } from '../../screens/Settings/SettingsScreen';
 
 import { useAuthStore } from '../../store';
 import { pushService } from '../../services';
@@ -119,6 +120,22 @@ export const AppNavigator: React.FC = () => {
             <Stack.Screen
               name="Transactions"
               component={TransactionsScreen}
+              options={{
+                animation: 'slide_from_right',
+              }}
+            />
+
+            <Stack.Screen
+              name="Map"
+              component={MapScreen}
+              options={{
+                animation: 'slide_from_right',
+              }}
+            />
+
+            <Stack.Screen
+              name="Settings"
+              component={SettingsScreen}
               options={{
                 animation: 'slide_from_right',
               }}

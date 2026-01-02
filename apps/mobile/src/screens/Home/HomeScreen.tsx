@@ -13,34 +13,12 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Card, Button } from '../../components/common';
 import { TicketCard } from '../../components/tickets';
 import { BalanceCard } from '../../components/wallet';
-import { useAuthStore, useTicketStore, useWalletStore, useNotificationStore } from '../../store';
-import { offlineService } from '../../services';
+import { useAuthStore, useTicketStore, useWalletStore, useNotificationStore, useProgramStore } from '../../store';
+import { offlineService, initializeDemoData } from '../../services';
 import { colors, spacing, typography } from '../../theme';
 import type { RootStackParamList, Ticket, ProgramEvent } from '../../types';
 
 type HomeNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Main'>;
-
-// Mock data for demo
-const mockUpcomingEvents: ProgramEvent[] = [
-  {
-    id: '1',
-    artist: { id: '1', name: 'The Midnight', genre: 'Synthwave', image: '' },
-    stage: { id: '1', name: 'Main Stage', location: 'North', capacity: 10000 },
-    startTime: '21:00',
-    endTime: '22:30',
-    day: 'Vendredi',
-    isFavorite: true,
-  },
-  {
-    id: '2',
-    artist: { id: '2', name: 'Daft Punk Tribute', genre: 'Electronic', image: '' },
-    stage: { id: '2', name: 'Electric Tent', location: 'East', capacity: 5000 },
-    startTime: '23:00',
-    endTime: '00:30',
-    day: 'Vendredi',
-    isFavorite: false,
-  },
-];
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<HomeNavigationProp>();
@@ -48,14 +26,18 @@ export const HomeScreen: React.FC = () => {
   const { tickets } = useTicketStore();
   const { balance } = useWalletStore();
   const { unreadCount } = useNotificationStore();
+  const { events: programEvents, favorites, toggleFavorite } = useProgramStore();
 
   const [refreshing, setRefreshing] = useState(false);
-  const [upcomingEvents] = useState<ProgramEvent[]>(mockUpcomingEvents);
 
+  // Get upcoming events from the program store
+  const upcomingEvents = programEvents.slice(0, 4);
   const activeTickets = tickets.filter((t) => t.status === 'valid').slice(0, 2);
 
   useEffect(() => {
-    // Initial data sync
+    // Initialize demo data on first load
+    initializeDemoData();
+    // Then try to sync with API
     offlineService.syncAllData();
   }, []);
 
@@ -67,6 +49,23 @@ export const HomeScreen: React.FC = () => {
 
   const handleTicketPress = (ticket: Ticket) => {
     navigation.navigate('TicketDetail', { ticketId: ticket.id });
+  };
+
+  const handleQuickAction = (action: string) => {
+    switch (action) {
+      case 'plan':
+        navigation.navigate('Map', { filter: 'all' });
+        break;
+      case 'food':
+        navigation.navigate('Map', { filter: 'food' });
+        break;
+      case 'toilettes':
+        navigation.navigate('Map', { filter: 'services' });
+        break;
+      case 'secours':
+        navigation.navigate('Map', { filter: 'emergency' });
+        break;
+    }
   };
 
   return (
@@ -170,47 +169,53 @@ export const HomeScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          {upcomingEvents.map((event) => (
-            <Card key={event.id} style={styles.eventCard}>
-              <View style={styles.eventContent}>
-                <View style={styles.eventTime}>
-                  <Text style={styles.eventTimeText}>{event.startTime}</Text>
-                  <Text style={styles.eventDay}>{event.day}</Text>
+          {upcomingEvents.map((event) => {
+            const isFavorite = favorites.includes(event.id);
+            return (
+              <Card key={event.id} style={styles.eventCard}>
+                <View style={styles.eventContent}>
+                  <View style={styles.eventTime}>
+                    <Text style={styles.eventTimeText}>{event.startTime}</Text>
+                    <Text style={styles.eventDay}>{event.day}</Text>
+                  </View>
+                  <View style={styles.eventInfo}>
+                    <Text style={styles.eventArtist}>{event.artist.name}</Text>
+                    <Text style={styles.eventStage}>
+                      📍 {event.stage.name}
+                    </Text>
+                    <Text style={styles.eventGenre}>{event.artist.genre}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.favoriteButton}
+                    onPress={() => toggleFavorite(event.id)}
+                  >
+                    <Text style={styles.favoriteIcon}>
+                      {isFavorite ? '❤️' : '🤍'}
+                    </Text>
+                  </TouchableOpacity>
                 </View>
-                <View style={styles.eventInfo}>
-                  <Text style={styles.eventArtist}>{event.artist.name}</Text>
-                  <Text style={styles.eventStage}>
-                    📍 {event.stage.name}
-                  </Text>
-                  <Text style={styles.eventGenre}>{event.artist.genre}</Text>
-                </View>
-                <TouchableOpacity style={styles.favoriteButton}>
-                  <Text style={styles.favoriteIcon}>
-                    {event.isFavorite ? '❤️' : '🤍'}
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </Card>
-          ))}
+              </Card>
+            );
+          })}
         </View>
 
         {/* Quick Actions */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Acces rapide</Text>
           <View style={styles.quickActions}>
-            <TouchableOpacity style={styles.quickAction}>
+            <TouchableOpacity style={styles.quickAction} onPress={() => handleQuickAction('plan')}>
               <Text style={styles.quickActionIcon}>🗺️</Text>
               <Text style={styles.quickActionLabel}>Plan</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.quickAction}>
+            <TouchableOpacity style={styles.quickAction} onPress={() => handleQuickAction('food')}>
               <Text style={styles.quickActionIcon}>🍔</Text>
               <Text style={styles.quickActionLabel}>Food</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.quickAction}>
+            <TouchableOpacity style={styles.quickAction} onPress={() => handleQuickAction('toilettes')}>
               <Text style={styles.quickActionIcon}>🚻</Text>
               <Text style={styles.quickActionLabel}>Toilettes</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.quickAction}>
+            <TouchableOpacity style={styles.quickAction} onPress={() => handleQuickAction('secours')}>
               <Text style={styles.quickActionIcon}>🏥</Text>
               <Text style={styles.quickActionLabel}>Secours</Text>
             </TouchableOpacity>

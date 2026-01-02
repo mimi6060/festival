@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,12 +6,15 @@ import {
   ScrollView,
   TouchableOpacity,
   Alert,
+  Modal,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Card } from '../../components/common';
-import { useAuthStore, useTicketStore, useWalletStore, useProgramStore, useNotificationStore } from '../../store';
+import { useAuthStore, useTicketStore, useWalletStore, useProgramStore, useNotificationStore, useSettingsStore, languageLabels, themeLabels } from '../../store';
+import type { Language, Theme } from '../../store';
 import { offlineService } from '../../services';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { RootStackParamList } from '../../types';
@@ -56,6 +59,10 @@ export const ProfileScreen: React.FC = () => {
   const walletStore = useWalletStore();
   const programStore = useProgramStore();
   const notificationStore = useNotificationStore();
+  const { language, theme, setLanguage, setTheme } = useSettingsStore();
+
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [showThemeModal, setShowThemeModal] = useState(false);
 
   const handleLogout = () => {
     Alert.alert(
@@ -169,21 +176,21 @@ export const ProfileScreen: React.FC = () => {
               icon="🔔"
               label="Notifications"
               value={notificationStore.pushEnabled ? 'Actives' : 'Desactivees'}
-              onPress={() => Alert.alert('Info', 'Fonctionnalite a venir')}
+              onPress={() => navigation.navigate('Settings')}
             />
             <View style={styles.menuDivider} />
             <MenuItem
               icon="🌙"
               label="Theme"
-              value="Sombre"
-              onPress={() => Alert.alert('Info', 'Fonctionnalite a venir')}
+              value={themeLabels[theme]}
+              onPress={() => setShowThemeModal(true)}
             />
             <View style={styles.menuDivider} />
             <MenuItem
               icon="🌍"
               label="Langue"
-              value="Francais"
-              onPress={() => Alert.alert('Info', 'Fonctionnalite a venir')}
+              value={languageLabels[language]}
+              onPress={() => setShowLanguageModal(true)}
             />
           </Card>
         </View>
@@ -245,6 +252,104 @@ export const ProfileScreen: React.FC = () => {
           <Text style={styles.copyright}>2024 Festival. Tous droits reserves.</Text>
         </View>
       </ScrollView>
+
+      {/* Language Selection Modal */}
+      <Modal
+        visible={showLanguageModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLanguageModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowLanguageModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Choisir la langue</Text>
+            {(Object.keys(languageLabels) as Language[]).map((lang) => (
+              <TouchableOpacity
+                key={lang}
+                style={[
+                  styles.modalOption,
+                  language === lang && styles.modalOptionSelected,
+                ]}
+                onPress={() => {
+                  setLanguage(lang);
+                  setShowLanguageModal(false);
+                }}
+              >
+                <Text
+                  style={[
+                    styles.modalOptionText,
+                    language === lang && styles.modalOptionTextSelected,
+                  ]}
+                >
+                  {languageLabels[lang]}
+                </Text>
+                {language === lang && (
+                  <Text style={styles.checkIcon}>✓</Text>
+                )}
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={styles.modalCancel}
+              onPress={() => setShowLanguageModal(false)}
+            >
+              <Text style={styles.modalCancelText}>Annuler</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Theme Selection Modal */}
+      <Modal
+        visible={showThemeModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowThemeModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowThemeModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Choisir le theme</Text>
+            {(Object.keys(themeLabels) as Theme[]).map((t) => (
+              <TouchableOpacity
+                key={t}
+                style={[
+                  styles.modalOption,
+                  theme === t && styles.modalOptionSelected,
+                ]}
+                onPress={() => {
+                  setTheme(t);
+                  setShowThemeModal(false);
+                }}
+              >
+                <Text
+                  style={[
+                    styles.modalOptionText,
+                    theme === t && styles.modalOptionTextSelected,
+                  ]}
+                >
+                  {themeLabels[t]}
+                </Text>
+                {theme === t && (
+                  <Text style={styles.checkIcon}>✓</Text>
+                )}
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={styles.modalCancel}
+              onPress={() => setShowThemeModal(false)}
+            >
+              <Text style={styles.modalCancelText}>Annuler</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -373,6 +478,60 @@ const styles = StyleSheet.create({
   copyright: {
     ...typography.caption,
     color: colors.textMuted,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  modalContent: {
+    backgroundColor: colors.surface,
+    borderRadius: borderRadius.xl,
+    width: '100%',
+    maxWidth: 340,
+    padding: spacing.lg,
+  },
+  modalTitle: {
+    ...typography.h3,
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+  },
+  modalOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.xs,
+  },
+  modalOptionSelected: {
+    backgroundColor: colors.primary + '20',
+  },
+  modalOptionText: {
+    ...typography.body,
+    color: colors.text,
+  },
+  modalOptionTextSelected: {
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  checkIcon: {
+    fontSize: 18,
+    color: colors.primary,
+  },
+  modalCancel: {
+    marginTop: spacing.md,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    ...typography.body,
+    color: colors.textSecondary,
   },
 });
 

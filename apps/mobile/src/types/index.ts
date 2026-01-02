@@ -90,6 +90,9 @@ export type RootStackParamList = {
   TicketDetail: { ticketId: string };
   Topup: undefined;
   Transactions: undefined;
+  Map: { filter?: 'all' | 'stages' | 'food' | 'drinks' | 'services' | 'info' | 'emergency' };
+  Settings: undefined;
+  LanguageSettings: undefined;
 };
 
 export type AuthStackParamList = {

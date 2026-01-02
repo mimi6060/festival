@@ -3,6 +3,7 @@ import react from '@vitejs/plugin-react';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import * as esbuild from 'esbuild';
 import { readFileSync } from 'fs';
+import path from 'path';
 
 const extensions = [
   '.mjs',
@@ -33,6 +34,7 @@ export default defineConfig({
   cacheDir: '../../node_modules/.vite/apps/mobile',
   define: {
     global: 'window',
+    __DEV__: JSON.stringify(true),
   },
   resolve: {
     extensions,
@@ -41,6 +43,11 @@ export default defineConfig({
       'react-native-svg': 'react-native-svg-web',
       '@react-native/assets-registry/registry':
         'react-native-web/dist/modules/AssetRegistry/index',
+      '@react-native-community/netinfo': path.resolve(import.meta.dirname, 'src/mocks/netinfo.web.ts'),
+      'react-native-push-notification': path.resolve(import.meta.dirname, 'src/mocks/push-notification.web.ts'),
+      // Force single React version from root
+      'react': path.resolve(import.meta.dirname, '../../node_modules/react'),
+      'react-dom': path.resolve(import.meta.dirname, '../../node_modules/react-dom'),
     },
   },
   build: {

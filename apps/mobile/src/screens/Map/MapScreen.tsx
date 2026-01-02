@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,10 +8,17 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import type { RouteProp } from '@react-navigation/native';
 import { Card } from '../../components/common';
 import { colors, spacing, typography, borderRadius } from '../../theme';
+import type { RootStackParamList } from '../../types';
 
 const { width } = Dimensions.get('window');
+
+type MapNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Map'>;
+type MapRouteProp = RouteProp<RootStackParamList, 'Map'>;
 
 interface MapPoint {
   id: string;
@@ -27,6 +34,7 @@ const categories = [
   { key: 'food', label: 'Food', icon: '🍔' },
   { key: 'drinks', label: 'Bars', icon: '🍺' },
   { key: 'services', label: 'Services', icon: '🚻' },
+  { key: 'emergency', label: 'Urgences', icon: '🏥' },
   { key: 'info', label: 'Info', icon: 'ℹ️' },
 ];
 
@@ -50,9 +58,15 @@ const mapPoints: MapPoint[] = [
   // Services
   { id: '14', name: 'Toilettes Nord', category: 'services', icon: '🚻', description: 'Sanitaires zone nord' },
   { id: '15', name: 'Toilettes Sud', category: 'services', icon: '🚻', description: 'Sanitaires zone sud' },
-  { id: '16', name: 'Poste Medical', category: 'services', icon: '🏥', description: 'Premiers secours' },
+  { id: '16', name: 'Toilettes Est', category: 'services', icon: '🚻', description: 'Sanitaires zone est' },
   { id: '17', name: 'Consignes', category: 'services', icon: '🎒', description: 'Depot bagages' },
   { id: '18', name: 'Recharge Mobile', category: 'services', icon: '🔋', description: 'Stations de recharge' },
+  // Emergency
+  { id: '23', name: 'Poste Medical Principal', category: 'emergency', icon: '🏥', description: 'Urgences et premiers secours - 24h/24' },
+  { id: '24', name: 'Infirmerie Nord', category: 'emergency', icon: '🩹', description: 'Soins legers - zone nord' },
+  { id: '25', name: 'Infirmerie Sud', category: 'emergency', icon: '🩹', description: 'Soins legers - zone sud' },
+  { id: '26', name: 'Poste Securite', category: 'emergency', icon: '👮', description: 'Securite et assistance' },
+  { id: '27', name: 'Point de Rencontre', category: 'emergency', icon: '📍', description: 'Point de rassemblement urgences' },
   // Info
   { id: '19', name: 'Accueil', category: 'info', icon: 'ℹ️', description: 'Information generale' },
   { id: '20', name: 'Point Cashless', category: 'info', icon: '💳', description: 'Rechargement portefeuille' },
@@ -61,7 +75,16 @@ const mapPoints: MapPoint[] = [
 ];
 
 export const MapScreen: React.FC = () => {
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const navigation = useNavigation<MapNavigationProp>();
+  const route = useRoute<MapRouteProp>();
+  const initialFilter = route.params?.filter || 'all';
+  const [selectedCategory, setSelectedCategory] = useState(initialFilter);
+
+  useEffect(() => {
+    if (route.params?.filter) {
+      setSelectedCategory(route.params.filter);
+    }
+  }, [route.params?.filter]);
 
   const filteredPoints = selectedCategory === 'all'
     ? mapPoints
@@ -78,12 +101,36 @@ export const MapScreen: React.FC = () => {
     return acc;
   }, {} as Record<string, MapPoint[]>);
 
+  const getTitle = () => {
+    switch (selectedCategory) {
+      case 'food': return 'Food & Drinks';
+      case 'services': return 'Services';
+      case 'emergency': return 'Urgences & Secours';
+      case 'stages': return 'Scenes';
+      case 'drinks': return 'Bars';
+      case 'info': return 'Informations';
+      default: return 'Plan du site';
+    }
+  };
+
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>Plan du site</Text>
-        <Text style={styles.subtitle}>Trouvez votre chemin</Text>
+        <View style={styles.headerRow}>
+          {navigation.canGoBack() && (
+            <TouchableOpacity
+              style={styles.backButton}
+              onPress={() => navigation.goBack()}
+            >
+              <Text style={styles.backIcon}>←</Text>
+            </TouchableOpacity>
+          )}
+          <View style={styles.headerText}>
+            <Text style={styles.title}>{getTitle()}</Text>
+            <Text style={styles.subtitle}>Trouvez votre chemin</Text>
+          </View>
+        </View>
       </View>
 
       {/* Map Placeholder */}
@@ -186,6 +233,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingTop: spacing.md,
     paddingBottom: spacing.sm,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.md,
+  },
+  backIcon: {
+    fontSize: 24,
+    color: colors.text,
+  },
+  headerText: {
+    flex: 1,
   },
   title: {
     ...typography.h1,

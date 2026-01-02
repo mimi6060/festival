@@ -1,7 +1,18 @@
 import { useAuthStore } from '../store/authStore';
 import type { ApiResponse, User, Ticket, WalletBalance, Transaction, ProgramEvent } from '../types';
 
-const API_BASE_URL = 'https://api.festival.com/v1';
+import { Platform } from 'react-native';
+
+// Use localhost for development, can be overridden via environment variables
+const getApiBaseUrl = () => {
+  if (Platform.OS === 'web') {
+    return 'http://localhost:3000/api';
+  }
+  // For mobile simulators, use machine's IP or localhost
+  return 'http://localhost:3000/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 class ApiService {
   private getHeaders(): HeadersInit {

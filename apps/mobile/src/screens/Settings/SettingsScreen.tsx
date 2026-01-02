@@ -8,12 +8,15 @@ import {
   Switch,
   Alert,
   Linking,
+  Modal,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Card, Button } from '../../components/common';
-import { useAuthStore, useNotificationStore } from '../../store';
+import { useAuthStore, useNotificationStore, useSettingsStore, languageLabels, themeLabels } from '../../store';
+import type { Language, Theme } from '../../store';
 import { offlineService } from '../../services';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { RootStackParamList } from '../../types';
@@ -46,7 +49,7 @@ const SettingItem: React.FC<SettingItemProps> = ({
       <View style={styles.settingRight}>
         {value && <Text style={styles.settingValue}>{value}</Text>}
         {rightElement}
-        {showArrow && !rightElement && <Text style={styles.settingArrow}>></Text>}
+        {showArrow && !rightElement && <Text style={styles.settingArrow}>&gt;</Text>}
       </View>
     </View>
   );
@@ -66,22 +69,34 @@ export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<SettingsNavigationProp>();
   const { setHasSeenOnboarding } = useAuthStore();
   const { pushEnabled, setPushEnabled } = useNotificationStore();
+  const {
+    language,
+    theme,
+    biometricEnabled,
+    offlineModeEnabled,
+    setLanguage,
+    setTheme,
+    setBiometricEnabled,
+    setOfflineModeEnabled,
+  } = useSettingsStore();
 
-  const [darkMode, setDarkMode] = useState(true);
-  const [biometricEnabled, setBiometricEnabled] = useState(false);
-  const [offlineMode, setOfflineMode] = useState(false);
-  const [language, setLanguage] = useState('Francais');
+  const [showLanguageModal, setShowLanguageModal] = useState(false);
+  const [showThemeModal, setShowThemeModal] = useState(false);
 
   const handleLanguageChange = () => {
-    Alert.alert(
-      'Langue',
-      'Selectionnez votre langue',
-      [
-        { text: 'Francais', onPress: () => setLanguage('Francais') },
-        { text: 'English', onPress: () => setLanguage('English') },
-        { text: 'Annuler', style: 'cancel' },
-      ]
-    );
+    setShowLanguageModal(true);
+  };
+
+  const handleThemeChange = () => {
+    setShowThemeModal(true);
+  };
+
+  const showAlert = (title: string, message: string) => {
+    if (Platform.OS === 'web') {
+      window.alert(`${title}\n\n${message}`);
+    } else {
+      Alert.alert(title, message);
+    }
   };
 
   const handleClearCache = () => {
@@ -192,22 +207,15 @@ export const SettingsScreen: React.FC = () => {
           <Card padding="none" style={styles.settingCard}>
             <SettingItem
               icon="🌙"
-              label="Mode sombre"
-              showArrow={false}
-              rightElement={
-                <Switch
-                  value={darkMode}
-                  onValueChange={setDarkMode}
-                  trackColor={{ false: colors.border, true: colors.primary }}
-                  thumbColor={colors.white}
-                />
-              }
+              label="Theme"
+              value={themeLabels[theme]}
+              onPress={handleThemeChange}
             />
             <View style={styles.divider} />
             <SettingItem
               icon="🌍"
               label="Langue"
-              value={language}
+              value={languageLabels[language]}
               onPress={handleLanguageChange}
             />
           </Card>
@@ -224,7 +232,12 @@ export const SettingsScreen: React.FC = () => {
               rightElement={
                 <Switch
                   value={biometricEnabled}
-                  onValueChange={setBiometricEnabled}
+                  onValueChange={(value) => {
+                    setBiometricEnabled(value);
+                    if (value) {
+                      showAlert('Biometrie activee', 'Vous pouvez maintenant vous connecter avec Face ID / Touch ID');
+                    }
+                  }}
                   trackColor={{ false: colors.border, true: colors.primary }}
                   thumbColor={colors.white}
                 />
@@ -234,7 +247,7 @@ export const SettingsScreen: React.FC = () => {
             <SettingItem
               icon="🔒"
               label="Changer le mot de passe"
-              onPress={() => Alert.alert('Info', 'Changement de mot de passe a venir')}
+              onPress={() => showAlert('Mot de passe', 'Fonctionnalite de changement de mot de passe a venir')}
             />
           </Card>
         </View>
@@ -249,8 +262,16 @@ export const SettingsScreen: React.FC = () => {
               showArrow={false}
               rightElement={
                 <Switch
-                  value={offlineMode}
-                  onValueChange={setOfflineMode}
+                  value={offlineModeEnabled}
+                  onValueChange={(value) => {
+                    setOfflineModeEnabled(value);
+                    showAlert(
+                      value ? 'Mode hors-ligne active' : 'Mode hors-ligne desactive',
+                      value
+                        ? 'Les donnees seront stockees localement pour une utilisation sans connexion.'
+                        : 'Les donnees seront synchronisees en temps reel.'
+                    );
+                  }}
                   trackColor={{ false: colors.border, true: colors.primary }}
                   thumbColor={colors.white}
                 />
@@ -266,7 +287,7 @@ export const SettingsScreen: React.FC = () => {
             <SettingItem
               icon="📥"
               label="Telecharger mes donnees"
-              onPress={() => Alert.alert('Info', 'Telechargement a venir')}
+              onPress={() => showAlert('Telechargement', 'Fonctionnalite de telechargement des donnees a venir (RGPD)')}
             />
           </Card>
         </View>
@@ -339,6 +360,106 @@ export const SettingsScreen: React.FC = () => {
           </View>
         )}
       </ScrollView>
+
+      {/* Language Selection Modal */}
+      <Modal
+        visible={showLanguageModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLanguageModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowLanguageModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Choisir la langue</Text>
+            {(Object.keys(languageLabels) as Language[]).map((lang) => (
+              <TouchableOpacity
+                key={lang}
+                style={[
+                  styles.modalOption,
+                  language === lang && styles.modalOptionSelected,
+                ]}
+                onPress={() => {
+                  setLanguage(lang);
+                  setShowLanguageModal(false);
+                  showAlert('Langue modifiee', `La langue a ete changee en ${languageLabels[lang]}`);
+                }}
+              >
+                <Text
+                  style={[
+                    styles.modalOptionText,
+                    language === lang && styles.modalOptionTextSelected,
+                  ]}
+                >
+                  {languageLabels[lang]}
+                </Text>
+                {language === lang && (
+                  <Text style={styles.checkIcon}>{'✓'}</Text>
+                )}
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={styles.modalCancel}
+              onPress={() => setShowLanguageModal(false)}
+            >
+              <Text style={styles.modalCancelText}>Annuler</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
+
+      {/* Theme Selection Modal */}
+      <Modal
+        visible={showThemeModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowThemeModal(false)}
+      >
+        <TouchableOpacity
+          style={styles.modalOverlay}
+          activeOpacity={1}
+          onPress={() => setShowThemeModal(false)}
+        >
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Choisir le theme</Text>
+            {(Object.keys(themeLabels) as Theme[]).map((t) => (
+              <TouchableOpacity
+                key={t}
+                style={[
+                  styles.modalOption,
+                  theme === t && styles.modalOptionSelected,
+                ]}
+                onPress={() => {
+                  setTheme(t);
+                  setShowThemeModal(false);
+                  showAlert('Theme modifie', `Le theme a ete change en ${themeLabels[t]}`);
+                }}
+              >
+                <Text
+                  style={[
+                    styles.modalOptionText,
+                    theme === t && styles.modalOptionTextSelected,
+                  ]}
+                >
+                  {themeLabels[t]}
+                </Text>
+                {theme === t && (
+                  <Text style={styles.checkIcon}>{'✓'}</Text>
+                )}
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={styles.modalCancel}
+              onPress={() => setShowThemeModal(false)}
+            >
+              <Text style={styles.modalCancelText}>Annuler</Text>
+            </TouchableOpacity>
+          </View>
+        </TouchableOpacity>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -432,6 +553,63 @@ const styles = StyleSheet.create({
   },
   copyright: {
     ...typography.caption,
+    color: colors.textMuted,
+  },
+  // Modal styles
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: spacing.lg,
+  },
+  modalContent: {
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.lg,
+    width: '100%',
+    maxWidth: 320,
+  },
+  modalTitle: {
+    ...typography.h3,
+    color: colors.text,
+    textAlign: 'center',
+    marginBottom: spacing.lg,
+  },
+  modalOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md,
+    borderRadius: borderRadius.md,
+    marginBottom: spacing.xs,
+  },
+  modalOptionSelected: {
+    backgroundColor: colors.primaryLight,
+  },
+  modalOptionText: {
+    ...typography.body,
+    color: colors.text,
+  },
+  modalOptionTextSelected: {
+    color: colors.primary,
+    fontWeight: '600',
+  },
+  checkIcon: {
+    fontSize: 18,
+    color: colors.primary,
+    fontWeight: 'bold',
+  },
+  modalCancel: {
+    marginTop: spacing.md,
+    paddingVertical: spacing.md,
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  modalCancelText: {
+    ...typography.body,
     color: colors.textMuted,
   },
 });

@@ -2,7 +2,8 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { FestivalHero, Festival } from '@/components/festivals/FestivalCard';
+import { FestivalHero } from '@/components/festivals';
+import type { Festival } from '@/components/festivals';
 
 export const dynamic = 'force-dynamic';
 

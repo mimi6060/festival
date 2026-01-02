@@ -1,4 +1,4 @@
-import { StyleSheet } from 'react-native';
+import { StyleSheet, Platform } from 'react-native';
 
 export const colors = {
   // Primary colors
@@ -21,6 +21,7 @@ export const colors = {
   backgroundSecondary: '#1A1A2E',
   surface: '#252541',
   surfaceLight: '#3D3D5C',
+  card: '#252541',
 
   // Text colors
   text: '#FFFFFF',
@@ -97,28 +98,26 @@ export const typography = {
   },
 };
 
+// Platform-specific shadow styles
+const createShadow = (offsetY: number, blur: number, opacity: number) => {
+  if (Platform.OS === 'web') {
+    return {
+      boxShadow: `0px ${offsetY}px ${blur}px rgba(0, 0, 0, ${opacity})`,
+    };
+  }
+  return {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: offsetY },
+    shadowOpacity: opacity,
+    shadowRadius: blur,
+    elevation: blur,
+  };
+};
+
 export const shadows = {
-  sm: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.2,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  md: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    elevation: 4,
-  },
-  lg: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 8,
-  },
+  sm: createShadow(1, 2, 0.2),
+  md: createShadow(2, 4, 0.25),
+  lg: createShadow(4, 8, 0.3),
 };
 
 export const globalStyles = StyleSheet.create({
