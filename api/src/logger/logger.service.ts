@@ -1,6 +1,6 @@
 import { Injectable, LoggerService as NestLoggerService, Scope } from '@nestjs/common';
 import { createLogger, format, transports, Logger } from 'winston';
-import * as DailyRotateFile from 'winston-daily-rotate-file';
+import DailyRotateFile from 'winston-daily-rotate-file';
 import { AsyncLocalStorage } from 'async_hooks';
 
 export interface LogContext {

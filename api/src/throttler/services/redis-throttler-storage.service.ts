@@ -81,7 +81,7 @@ export class RedisThrottlerStorageService implements OnModuleInit, OnModuleDestr
       const fullKey = `${REDIS_KEY_PREFIX.RATE_LIMIT}${key}`;
       const data = await this.client.get(fullKey);
 
-      if (!data) {
+      if (!data || typeof data !== 'string') {
         return null;
       }
 
@@ -113,7 +113,7 @@ export class RedisThrottlerStorageService implements OnModuleInit, OnModuleDestr
 
       let record: ThrottleRecord;
 
-      if (existingData) {
+      if (existingData && typeof existingData === 'string') {
         record = JSON.parse(existingData);
         record.count += 1;
       } else {

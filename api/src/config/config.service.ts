@@ -6,6 +6,7 @@ import {
   JwtConfig,
   StripeConfig,
   QrCodeConfig,
+  MailConfig,
 } from './configuration';
 
 @Injectable()
@@ -30,6 +31,10 @@ export class ConfigService {
 
   get qrCode(): QrCodeConfig {
     return this.configService.get<QrCodeConfig>('qrCode')!;
+  }
+
+  get mail(): MailConfig {
+    return this.configService.get<MailConfig>('mail')!;
   }
 
   get isDevelopment(): boolean {

@@ -19,12 +19,16 @@ import {
   CashlessStatsDto,
 } from './dto/festival-response.dto';
 import { AuthenticatedUser } from '../auth/decorators/current-user.decorator';
+import { CacheService, CACHE_KEYS, CACHE_TTL, CACHE_PATTERNS } from '../cache';
 
 @Injectable()
 export class FestivalService {
   private readonly logger = new Logger(FestivalService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cacheService: CacheService,
+  ) {}
 
   /**
    * Generate a unique slug from the festival name
@@ -115,6 +119,10 @@ export class FestivalService {
       });
 
       this.logger.log(`Festival created with ID: ${festival.id}`);
+
+      // Invalidate list cache after creating a new festival
+      await this.cacheService.delPattern(`${CACHE_KEYS.FESTIVAL.LIST}:*`);
+
       return festival;
     } catch (error) {
       if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -144,8 +152,23 @@ export class FestivalService {
 
   /**
    * Find all festivals with filters and pagination
+   * Cached for 5 minutes (CACHE_TTL.FESTIVAL_LIST)
    */
   async findAll(query: FestivalQueryDto, user?: AuthenticatedUser): Promise<PaginatedFestivalsDto> {
+    // Generate cache key based on query parameters and user role
+    const cacheKey = this.generateListCacheKey(query, user);
+
+    return this.cacheService.wrap(
+      cacheKey,
+      () => this.findAllFromDb(query, user),
+      CACHE_TTL.FESTIVAL_LIST,
+    );
+  }
+
+  /**
+   * Internal method to fetch festivals from database
+   */
+  private async findAllFromDb(query: FestivalQueryDto, user?: AuthenticatedUser): Promise<PaginatedFestivalsDto> {
     const {
       page = 1,
       limit = 10,
@@ -280,21 +303,16 @@ export class FestivalService {
 
   /**
    * Find a festival by ID
+   * Cached for 1 minute (CACHE_TTL.FESTIVAL_DETAIL)
    */
   async findOne(id: string, user?: AuthenticatedUser): Promise<FestivalResponseDto> {
-    const festival = await this.prisma.festival.findUnique({
-      where: { id },
-      include: {
-        organizer: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
-        },
-      },
-    });
+    const cacheKey = CACHE_KEYS.FESTIVAL.DETAIL(id);
+
+    const festival = await this.cacheService.wrap(
+      cacheKey,
+      () => this.findOneFromDb(id),
+      CACHE_TTL.FESTIVAL_DETAIL,
+    );
 
     if (!festival) {
       throw new NotFoundException(`Festival with ID "${id}" not found`);
@@ -310,20 +328,25 @@ export class FestivalService {
       }
     }
 
+    // Create a copy to avoid mutating cached data
+    const response = this.toResponseDto(festival);
+
     // Hide organizer email for non-admins and non-owners
     if (user?.role !== UserRole.ADMIN && user?.id !== festival.organizerId) {
-      (festival.organizer as { email?: string }).email = undefined;
+      if (response.organizer) {
+        response.organizer.email = undefined;
+      }
     }
 
-    return this.toResponseDto(festival);
+    return response;
   }
 
   /**
-   * Find a festival by slug
+   * Internal method to fetch a festival from database
    */
-  async findBySlug(slug: string, user?: AuthenticatedUser): Promise<FestivalResponseDto> {
-    const festival = await this.prisma.festival.findUnique({
-      where: { slug },
+  private async findOneFromDb(id: string): Promise<(Festival & { organizer?: { id: string; firstName: string; lastName: string; email?: string } }) | null> {
+    return this.prisma.festival.findUnique({
+      where: { id },
       include: {
         organizer: {
           select: {
@@ -335,6 +358,20 @@ export class FestivalService {
         },
       },
     });
+  }
+
+  /**
+   * Find a festival by slug
+   * Cached for 1 minute (CACHE_TTL.FESTIVAL_DETAIL)
+   */
+  async findBySlug(slug: string, user?: AuthenticatedUser): Promise<FestivalResponseDto> {
+    const cacheKey = CACHE_KEYS.FESTIVAL.SLUG(slug);
+
+    const festival = await this.cacheService.wrap(
+      cacheKey,
+      () => this.findBySlugFromDb(slug),
+      CACHE_TTL.FESTIVAL_DETAIL,
+    );
 
     if (!festival) {
       throw new NotFoundException(`Festival with slug "${slug}" not found`);
@@ -350,11 +387,35 @@ export class FestivalService {
       }
     }
 
+    // Create a copy to avoid mutating cached data
+    const response = this.toResponseDto(festival);
+
     if (user?.role !== UserRole.ADMIN && user?.id !== festival.organizerId) {
-      (festival.organizer as { email?: string }).email = undefined;
+      if (response.organizer) {
+        response.organizer.email = undefined;
+      }
     }
 
-    return this.toResponseDto(festival);
+    return response;
+  }
+
+  /**
+   * Internal method to fetch a festival by slug from database
+   */
+  private async findBySlugFromDb(slug: string): Promise<(Festival & { organizer?: { id: string; firstName: string; lastName: string; email?: string } }) | null> {
+    return this.prisma.festival.findUnique({
+      where: { slug },
+      include: {
+        organizer: {
+          select: {
+            id: true,
+            firstName: true,
+            lastName: true,
+            email: true,
+          },
+        },
+      },
+    });
   }
 
   /**
@@ -434,6 +495,14 @@ export class FestivalService {
     });
 
     this.logger.log(`Festival ${id} updated by user ${user.id}`);
+
+    // Invalidate cache for this festival
+    await this.invalidateFestivalCache(id, festival.slug);
+    // Also invalidate the new slug if it changed
+    if (slug !== festival.slug) {
+      await this.cacheService.del(CACHE_KEYS.FESTIVAL.SLUG(slug));
+    }
+
     return this.toResponseDto(updatedFestival);
   }
 
@@ -463,6 +532,9 @@ export class FestivalService {
         status: FestivalStatus.CANCELLED,
       },
     });
+
+    // Invalidate cache for this festival
+    await this.invalidateFestivalCache(id, festival.slug);
 
     this.logger.log(`Festival ${id} soft-deleted by admin ${user.id}`);
   }
@@ -507,6 +579,10 @@ export class FestivalService {
     });
 
     this.logger.log(`Festival ${id} status changed to ${updateStatusDto.status} by user ${user.id}`);
+
+    // Invalidate cache for this festival
+    await this.invalidateFestivalCache(id, festival.slug);
+
     return this.toResponseDto(updatedFestival);
   }
 
@@ -555,13 +631,31 @@ export class FestivalService {
     });
 
     this.logger.log(`Festival ${id} published by user ${user.id}`);
+
+    // Invalidate cache for this festival
+    await this.invalidateFestivalCache(id, festival.slug);
+
     return this.toResponseDto(updatedFestival);
   }
 
   /**
    * Get festival statistics (owner or admin only)
+   * Cached for 30 seconds (CACHE_TTL.ANALYTICS)
    */
   async getStats(id: string, user: AuthenticatedUser): Promise<FestivalStatsDto> {
+    const cacheKey = CACHE_KEYS.FESTIVAL.STATS(id);
+
+    return this.cacheService.wrap(
+      cacheKey,
+      () => this.getStatsFromDb(id, user),
+      CACHE_TTL.ANALYTICS,
+    );
+  }
+
+  /**
+   * Internal method to fetch festival statistics from database
+   */
+  private async getStatsFromDb(id: string, user: AuthenticatedUser): Promise<FestivalStatsDto> {
     const festival = await this.prisma.festival.findUnique({
       where: { id },
       include: {
@@ -741,5 +835,81 @@ export class FestivalService {
       isOngoing,
       daysUntilStart,
     };
+  }
+
+  /**
+   * Invalidate all cache entries related to a specific festival
+   */
+  private async invalidateFestivalCache(festivalId: string, slug?: string): Promise<void> {
+    const keysToInvalidate = [
+      CACHE_KEYS.FESTIVAL.DETAIL(festivalId),
+      CACHE_KEYS.FESTIVAL.STATS(festivalId),
+    ];
+
+    if (slug) {
+      keysToInvalidate.push(CACHE_KEYS.FESTIVAL.SLUG(slug));
+    }
+
+    // Invalidate specific keys
+    await this.cacheService.delMany(keysToInvalidate);
+
+    // Invalidate list cache (pattern-based)
+    await this.cacheService.delPattern(`${CACHE_KEYS.FESTIVAL.LIST}:*`);
+
+    this.logger.debug(`Cache invalidated for festival ${festivalId}`);
+  }
+
+  /**
+   * Generate a unique cache key for festival list queries
+   */
+  private generateListCacheKey(query: FestivalQueryDto, user?: AuthenticatedUser): string {
+    const {
+      page = 1,
+      limit = 10,
+      sortBy,
+      sortOrder,
+      search,
+      status,
+      statuses,
+      startDateFrom,
+      startDateTo,
+      endDateFrom,
+      endDateTo,
+      organizerId,
+      location,
+      upcoming,
+      ongoing,
+      past,
+      includeDeleted,
+    } = query;
+
+    // Create a normalized object for consistent hashing
+    const queryParams = {
+      page,
+      limit,
+      sortBy,
+      sortOrder,
+      search,
+      status,
+      statuses: statuses?.sort(),
+      startDateFrom,
+      startDateTo,
+      endDateFrom,
+      endDateTo,
+      organizerId,
+      location,
+      upcoming,
+      ongoing,
+      past,
+      includeDeleted,
+      userRole: user?.role || 'public',
+    };
+
+    // Create a hash of the query parameters
+    const queryHash = Buffer.from(
+      JSON.stringify(queryParams, Object.keys(queryParams).sort()),
+    ).toString('base64').replace(/[+/=]/g, '').substring(0, 32);
+
+    return `${CACHE_KEYS.FESTIVAL.LIST}:${queryHash}`;
   }
 }

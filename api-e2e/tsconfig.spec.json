@@ -3,7 +3,17 @@
   "compilerOptions": {
     "outDir": "../dist/out-tsc",
     "module": "commonjs",
-    "types": ["jest", "node"]
+    "types": ["jest", "node"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "strict": true,
+    "noImplicitAny": true,
+    "strictNullChecks": true
   },
-  "include": ["jest.config.ts", "src/**/*.ts"]
+  "include": [
+    "jest.config.cts",
+    "src/**/*.ts",
+    "src/**/*.spec.ts"
+  ]
 }

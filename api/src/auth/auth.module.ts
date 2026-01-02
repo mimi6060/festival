@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule, JwtModuleOptions } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { PrismaModule } from '../prisma/prisma.module';
+import { MailModule } from '../mail/mail.module';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -17,6 +18,9 @@ import { LocalStrategy } from './strategies/local.strategy';
 
     // Import PrismaModule for database access
     PrismaModule,
+
+    // Import MailModule for sending emails
+    MailModule,
 
     // Configure PassportModule with JWT as default strategy
     PassportModule.register({

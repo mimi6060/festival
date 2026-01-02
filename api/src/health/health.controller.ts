@@ -13,9 +13,14 @@ import {
   RedisHealthIndicator,
   StripeHealthIndicator,
 } from './indicators';
+import { ThrottlePublic } from '../throttler';
 
+/**
+ * Health check controller with public rate limiting (200 req/min)
+ */
 @ApiTags('Health')
 @Controller('health')
+@ThrottlePublic()
 export class HealthController {
   constructor(
     private health: HealthCheckService,

@@ -3,11 +3,17 @@
  * NestJS backend with Prisma, JWT Auth, and Swagger documentation
  */
 
-import { Logger, ValidationPipe } from '@nestjs/common';
+// Sentry must be imported FIRST, before any other imports
+import './sentry/instrument';
+
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import helmet from 'helmet';
 import { AppModule } from './app/app.module';
 import { ConfigService } from './config/config.service';
+import { WinstonNestLogger } from './logger/winston-nest.logger';
+import { LoggerService } from './logger/logger.service';
 
 /**
  * Custom CSS theme for Swagger UI
@@ -174,11 +180,18 @@ const SWAGGER_CUSTOM_JS = `
 `;
 
 async function bootstrap() {
+  // Create Winston logger for bootstrap phase
+  const winstonLogger = new WinstonNestLogger();
+
   const app = await NestFactory.create(AppModule, {
-    logger: ['error', 'warn', 'log', 'debug', 'verbose'],
+    logger: winstonLogger,
     // Enable rawBody for Stripe webhook signature verification
     rawBody: true,
   });
+
+  // Replace NestJS logger with Winston after DI container is ready
+  const loggerService = app.get(LoggerService);
+  app.useLogger(loggerService);
 
   // Get configuration service
   const configService = app.get(ConfigService);
@@ -186,6 +199,35 @@ async function bootstrap() {
 
   // Global prefix
   app.setGlobalPrefix(apiPrefix);
+
+  // Security headers with Helmet
+  app.use(
+    helmet({
+      contentSecurityPolicy: {
+        directives: {
+          defaultSrc: ["'self'"],
+          styleSrc: ["'self'", "'unsafe-inline'"],
+          scriptSrc: ["'self'", "'unsafe-inline'", "'unsafe-eval'"], // Required for Swagger UI
+          imgSrc: ["'self'", 'data:', 'https:'],
+          connectSrc: ["'self'"],
+          fontSrc: ["'self'", 'https:', 'data:'],
+          objectSrc: ["'none'"],
+          mediaSrc: ["'self'"],
+          frameSrc: ["'none'"],
+        },
+      },
+      crossOriginEmbedderPolicy: false, // Required for Swagger UI
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      hsts: {
+        maxAge: 31536000,
+        includeSubDomains: true,
+        preload: true,
+      },
+      referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+      noSniff: true,
+      xssFilter: true,
+    }),
+  );
 
   // CORS configuration
   app.enableCors({
@@ -354,6 +396,7 @@ For API support, contact the development team or open an issue in the repository
       .addTag('Cashless', 'Cashless payment system - NFC, balance, transactions')
       .addTag('Payments', 'Payment processing with Stripe')
       .addTag('Health', 'API health and status checks')
+      .addTag('Analytics', 'Real-time analytics, KPIs, and dashboard data with WebSocket support')
       .addServer(`http://localhost:${port}`, 'Local Development')
       .addServer('https://api.festival.io', 'Production')
       .addServer('https://staging-api.festival.io', 'Staging')
@@ -404,15 +447,15 @@ For API support, contact the development team or open an issue in the repository
       res.send(yaml.stringify(document));
     });
 
-    Logger.log(
+    loggerService.log(
       `Swagger UI available at: http://localhost:${port}/docs`,
       'Bootstrap',
     );
-    Logger.log(
+    loggerService.log(
       `OpenAPI JSON available at: http://localhost:${port}/docs/json`,
       'Bootstrap',
     );
-    Logger.log(
+    loggerService.log(
       `OpenAPI YAML available at: http://localhost:${port}/docs/yaml`,
       'Bootstrap',
     );
@@ -421,11 +464,11 @@ For API support, contact the development team or open an issue in the repository
   // Start the server
   await app.listen(port);
 
-  Logger.log(
+  loggerService.log(
     `Application is running on: http://localhost:${port}/${apiPrefix}`,
     'Bootstrap',
   );
-  Logger.log(`Environment: ${configService.app.nodeEnv}`, 'Bootstrap');
+  loggerService.log(`Environment: ${configService.app.nodeEnv}`, 'Bootstrap');
 }
 
 bootstrap();

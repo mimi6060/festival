@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <title>Payment Receipt - Festival App</title>
+  <style type="text/css">
+    body, table, td, p, a, li, blockquote {
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+    table, td {
+      mso-table-lspace: 0pt;
+      mso-table-rspace: 0pt;
+    }
+    img {
+      -ms-interpolation-mode: bicubic;
+      border: 0;
+      height: auto;
+      line-height: 100%;
+      outline: none;
+      text-decoration: none;
+    }
+    body {
+      margin: 0 !important;
+      padding: 0 !important;
+      background-color: #f4f4f7;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    }
+    .email-wrapper {
+      width: 100%;
+      background-color: #f4f4f7;
+      padding: 40px 0;
+    }
+    .email-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      overflow: hidden;
+    }
+    .email-header {
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      padding: 30px 40px;
+      text-align: center;
+    }
+    .email-header h1 {
+      color: #ffffff;
+      font-size: 28px;
+      font-weight: 700;
+      margin: 0;
+      letter-spacing: -0.5px;
+    }
+    .email-header .logo {
+      font-size: 48px;
+      margin-bottom: 10px;
+    }
+    .email-body {
+      padding: 40px;
+    }
+    .email-body h2 {
+      color: #1f2937;
+      font-size: 22px;
+      font-weight: 600;
+      margin: 0 0 20px 0;
+    }
+    .email-body p {
+      color: #4b5563;
+      font-size: 16px;
+      line-height: 1.6;
+      margin: 0 0 16px 0;
+    }
+    .button-container {
+      text-align: center;
+      margin: 30px 0;
+    }
+    .button {
+      display: inline-block;
+      background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+      color: #ffffff !important;
+      text-decoration: none;
+      padding: 14px 32px;
+      border-radius: 8px;
+      font-size: 16px;
+      font-weight: 600;
+    }
+    .receipt-card {
+      background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
+      border: 2px solid #e5e7eb;
+      border-radius: 12px;
+      padding: 30px;
+      margin: 25px 0;
+    }
+    .receipt-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px dashed #d1d5db;
+      padding-bottom: 20px;
+      margin-bottom: 20px;
+    }
+    .receipt-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 5px 0;
+    }
+    .receipt-value {
+      font-size: 14px;
+      color: #374151;
+      margin: 0;
+    }
+    .amount-section {
+      text-align: center;
+      padding: 20px 0;
+    }
+    .amount-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin: 0 0 8px 0;
+    }
+    .amount-value {
+      font-size: 36px;
+      font-weight: 700;
+      color: #10b981;
+      margin: 0;
+    }
+    .receipt-details {
+      border-top: 1px dashed #d1d5db;
+      padding-top: 20px;
+    }
+    .detail-row {
+      display: table;
+      width: 100%;
+      margin-bottom: 12px;
+    }
+    .detail-label {
+      display: table-cell;
+      font-size: 13px;
+      color: #6b7280;
+      width: 40%;
+    }
+    .detail-value {
+      display: table-cell;
+      font-size: 13px;
+      color: #374151;
+      font-weight: 500;
+      text-align: right;
+    }
+    .success-badge {
+      display: inline-block;
+      background-color: #d1fae5;
+      color: #065f46;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .info-box {
+      background-color: #f3f4f6;
+      border-left: 4px solid #6366f1;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 0 8px 8px 0;
+    }
+    .info-box p {
+      margin: 0;
+      color: #4b5563;
+      font-size: 14px;
+    }
+    .email-footer {
+      background-color: #f9fafb;
+      padding: 30px 40px;
+      text-align: center;
+      border-top: 1px solid #e5e7eb;
+    }
+    .email-footer p {
+      color: #9ca3af;
+      font-size: 13px;
+      line-height: 1.5;
+      margin: 0 0 8px 0;
+    }
+    .email-footer a {
+      color: #6366f1;
+      text-decoration: none;
+    }
+    .divider {
+      height: 1px;
+      background-color: #e5e7eb;
+      margin: 30px 0;
+    }
+    @media only screen and (max-width: 600px) {
+      .email-wrapper { padding: 20px 10px; }
+      .email-header { padding: 25px 20px; }
+      .email-header h1 { font-size: 24px; }
+      .email-body { padding: 30px 20px; }
+      .email-footer { padding: 25px 20px; }
+      .button { display: block; padding: 16px 24px; }
+      .receipt-card { padding: 20px; }
+      .amount-value { font-size: 28px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
+      <tr>
+        <td align="center">
+          <div class="email-container">
+            <!-- Header -->
+            <div class="email-header">
+              <div class="logo">&#128179;</div>
+              <h1>Recu de paiement</h1>
+            </div>
+
+            <!-- Body -->
+            <div class="email-body">
+              <h2>Merci pour votre paiement, {{firstName}} !</h2>
+
+              <p>Votre paiement a ete traite avec succes. Voici les details de votre transaction :</p>
+
+              <!-- Receipt Card -->
+              <div class="receipt-card">
+                <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                  <tr>
+                    <td>
+                      <p class="receipt-title">Reference</p>
+                      <p class="receipt-value">{{payment.id}}</p>
+                    </td>
+                    <td style="text-align: right;">
+                      <span class="success-badge">Paye</span>
+                    </td>
+                  </tr>
+                </table>
+
+                <div class="amount-section">
+                  <p class="amount-label">Montant total</p>
+                  <p class="amount-value">{{payment.amount}}</p>
+                </div>
+
+                <div class="receipt-details">
+                  <div class="detail-row">
+                    <span class="detail-label">Date du paiement</span>
+                    <span class="detail-value">{{payment.createdAt}}</span>
+                  </div>
+                  {{#if payment.paymentMethod}}
+                  <div class="detail-row">
+                    <span class="detail-label">Mode de paiement</span>
+                    <span class="detail-value">{{payment.paymentMethod}}</span>
+                  </div>
+                  {{/if}}
+                  <div class="detail-row">
+                    <span class="detail-label">Statut</span>
+                    <span class="detail-value">{{payment.status}}</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="button-container">
+                <a href="{{paymentsUrl}}" class="button">Voir l'historique des paiements</a>
+              </div>
+
+              <div class="divider"></div>
+
+              <div class="info-box">
+                <p><strong>Conservez ce recu</strong></p>
+                <p style="margin-top: 8px;">Ce recu fait office de justificatif de paiement. Vous pouvez le retrouver a tout moment dans votre espace personnel.</p>
+              </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="email-footer">
+              <p>Besoin d'aide ? Contactez-nous a <a href="mailto:{{supportEmail}}">{{supportEmail}}</a></p>
+              <p>&copy; {{currentYear}} Festival App. Tous droits reserves.</p>
+            </div>
+          </div>
+        </td>
+      </tr>
+    </table>
+  </div>
+</body>
+</html>

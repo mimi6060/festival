@@ -6,6 +6,8 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { AuditService } from '../audit/audit.service';
+import { AuditActions, EntityTypes } from '../audit/decorators/audit-action.decorator';
 import {
   CreateAccountDto,
   TopupDto,
@@ -50,7 +52,10 @@ export interface RefundResult {
 
 @Injectable()
 export class CashlessService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly auditService: AuditService,
+  ) {}
 
   /**
    * Create a new cashless account for a user
@@ -355,6 +360,16 @@ export class CashlessService {
         },
       });
 
+      // Audit log for cashless payment
+      await this.auditService.log(
+        AuditActions.CASHLESS_PAYMENT,
+        EntityTypes.CASHLESS_TRANSACTION,
+        transaction.id,
+        { balance: Number(balanceBefore) },
+        { balance: Number(balanceAfter), amount: dto.amount, festivalId: dto.festivalId },
+        { userId, performedById },
+      );
+
       return {
         transactionId: transaction.id,
         newBalance: Number(balanceAfter),
@@ -559,6 +574,16 @@ export class CashlessService {
         },
       });
 
+      // Audit log for transfer
+      await this.auditService.log(
+        AuditActions.CASHLESS_TRANSFER,
+        EntityTypes.CASHLESS_TRANSACTION,
+        senderTransaction.id,
+        { balance: Number(senderBalanceBefore) },
+        { balance: Number(senderBalanceAfter), amount: dto.amount, toAccountId: dto.toAccountId },
+        { userId },
+      );
+
       return {
         transactionId: senderTransaction.id,
         newBalance: Number(senderBalanceAfter),
@@ -589,10 +614,22 @@ export class CashlessService {
       throw new NotFoundException('Cashless account not found');
     }
 
-    return this.prisma.cashlessAccount.update({
+    const updatedAccount = await this.prisma.cashlessAccount.update({
       where: { id: account.id },
       data: { nfcTagId: dto.nfcTagId },
     });
+
+    // Audit log for NFC linking
+    await this.auditService.log(
+      AuditActions.NFC_LINKED,
+      EntityTypes.CASHLESS_ACCOUNT,
+      account.id,
+      { nfcTagId: null },
+      { nfcTagId: dto.nfcTagId },
+      { userId },
+    );
+
+    return updatedAccount;
   }
 
   /**

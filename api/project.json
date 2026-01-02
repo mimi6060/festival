@@ -59,6 +59,32 @@
           "buildTarget": "api:build:production"
         }
       }
+    },
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/api"],
+      "options": {
+        "jestConfig": "api/jest.config.ts",
+        "passWithNoTests": false
+      },
+      "configurations": {
+        "ci": {
+          "ci": true,
+          "codeCoverage": true,
+          "coverageReporters": ["lcov", "text-summary"]
+        },
+        "watch": {
+          "watch": true
+        }
+      }
+    },
+    "test:cov": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/api"],
+      "options": {
+        "jestConfig": "api/jest.config.ts",
+        "codeCoverage": true
+      }
     }
   },
   "tags": []
