@@ -1,0 +1,775 @@
+# =============================================================================
+# Advanced DDoS Protection & Rate Limiting Configuration
+# Festival Management Platform
+# =============================================================================
+# This configuration provides a multi-layer defense strategy:
+# Layer 1: Edge (CloudFlare/CloudFront)
+# Layer 2: WAF (AWS WAF/ModSecurity)
+# Layer 3: Load Balancer (NGINX/ALB)
+# Layer 4: Application (NestJS Throttler)
+# Layer 5: Database (Connection pooling)
+# =============================================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: festival-ddos-config
+  namespace: festival
+  labels:
+    app: festival
+    component: security
+    layer: ddos-protection
+data:
+  # ==========================================================================
+  # Traffic Profiles
+  # ==========================================================================
+  traffic-profiles.yaml: |
+    profiles:
+      # Normal operation (no active festival)
+      normal:
+        description: "Standard traffic pattern"
+        expected_rps: 100
+        peak_rps: 500
+        rate_limits:
+          global: 2000           # per 5 min per IP
+          api: 1000              # per 5 min per IP
+          auth: 50               # per 5 min per IP (strict)
+          payment: 100           # per 5 min per IP
+          ticket_purchase: 200   # per 5 min per IP
+          websocket: 100         # connections per IP
+
+      # Festival in progress (high traffic)
+      festival_active:
+        description: "Active festival with high traffic"
+        expected_rps: 5000
+        peak_rps: 20000
+        rate_limits:
+          global: 10000          # per 5 min per IP
+          api: 5000              # per 5 min per IP
+          auth: 100              # per 5 min per IP
+          payment: 500           # per 5 min per IP
+          ticket_purchase: 1000  # per 5 min per IP
+          websocket: 200         # connections per IP
+
+      # Ticket sale launch (extreme spike)
+      ticket_launch:
+        description: "Ticket sale launch - expected traffic spike"
+        expected_rps: 10000
+        peak_rps: 50000
+        rate_limits:
+          global: 20000          # per 5 min per IP
+          api: 10000             # per 5 min per IP
+          auth: 200              # per 5 min per IP
+          payment: 1000          # per 5 min per IP
+          ticket_purchase: 500   # per 5 min per IP (queue system active)
+          websocket: 500         # connections per IP
+
+      # Attack mitigation mode
+      under_attack:
+        description: "DDoS attack detected - restrictive limits"
+        expected_rps: 1000
+        peak_rps: 5000
+        rate_limits:
+          global: 500            # per 5 min per IP
+          api: 200               # per 5 min per IP
+          auth: 10               # per 5 min per IP
+          payment: 20            # per 5 min per IP
+          ticket_purchase: 10    # per 5 min per IP
+          websocket: 10          # connections per IP
+
+  # ==========================================================================
+  # NestJS Throttler Configuration
+  # ==========================================================================
+  nestjs-throttler.yaml: |
+    # Main throttler configuration for apps/api/src/app/app.module.ts
+    throttler:
+      # Global configuration
+      global:
+        ttl: 60000              # Time window in milliseconds (1 minute)
+        limit: 100              # Requests per window
+        ignoreUserAgents: []    # User agents to ignore
+        skipIf: null            # Custom skip function
+
+      # Endpoint-specific overrides
+      endpoints:
+        # Authentication endpoints - strict limits
+        auth:
+          login:
+            ttl: 300000         # 5 minutes
+            limit: 5            # 5 attempts per 5 minutes
+            blockDuration: 900000  # Block for 15 minutes if exceeded
+
+          register:
+            ttl: 3600000        # 1 hour
+            limit: 3            # 3 registrations per hour per IP
+
+          forgot_password:
+            ttl: 3600000        # 1 hour
+            limit: 3            # 3 password resets per hour
+
+          verify_email:
+            ttl: 60000          # 1 minute
+            limit: 10           # 10 requests per minute
+
+        # Payment endpoints - strict limits
+        payments:
+          create_intent:
+            ttl: 60000          # 1 minute
+            limit: 10           # 10 payment intents per minute
+
+          confirm:
+            ttl: 60000          # 1 minute
+            limit: 20           # 20 confirmations per minute
+
+          webhook:
+            ttl: 1000           # 1 second
+            limit: 100          # High limit for webhooks (Stripe)
+
+        # Cashless endpoints
+        cashless:
+          topup:
+            ttl: 60000          # 1 minute
+            limit: 10           # 10 topups per minute
+
+          pay:
+            ttl: 10000          # 10 seconds
+            limit: 5            # 5 payments per 10 seconds
+
+          transfer:
+            ttl: 60000          # 1 minute
+            limit: 5            # 5 transfers per minute
+
+        # Ticket endpoints
+        tickets:
+          buy:
+            ttl: 60000          # 1 minute
+            limit: 5            # 5 purchase attempts per minute
+
+          validate:
+            ttl: 1000           # 1 second
+            limit: 100          # High limit for scanners
+
+        # API general
+        api:
+          list:
+            ttl: 1000           # 1 second
+            limit: 30           # 30 list requests per second
+
+          get:
+            ttl: 1000           # 1 second
+            limit: 50           # 50 get requests per second
+
+          create:
+            ttl: 60000          # 1 minute
+            limit: 30           # 30 creates per minute
+
+          update:
+            ttl: 60000          # 1 minute
+            limit: 60           # 60 updates per minute
+
+          delete:
+            ttl: 60000          # 1 minute
+            limit: 10           # 10 deletes per minute
+
+      # Rate limit response
+      response:
+        statusCode: 429
+        message: "Too many requests, please try again later"
+        headers:
+          - name: "Retry-After"
+            value: "{{ttl}}"
+          - name: "X-RateLimit-Limit"
+            value: "{{limit}}"
+          - name: "X-RateLimit-Remaining"
+            value: "{{remaining}}"
+          - name: "X-RateLimit-Reset"
+            value: "{{reset}}"
+
+  # ==========================================================================
+  # NGINX Rate Limiting Configuration
+  # ==========================================================================
+  nginx-rate-limiting.conf: |
+    # =======================================================================
+    # Rate Limiting Zones
+    # =======================================================================
+
+    # Zone definitions (shared memory)
+    # Format: limit_req_zone $key zone=name:size rate=Xr/s;
+
+    # Per-IP rate limiting (global)
+    limit_req_zone $binary_remote_addr zone=global_limit:50m rate=100r/s;
+
+    # Per-IP + URI rate limiting (API)
+    limit_req_zone $binary_remote_addr$uri zone=api_limit:50m rate=30r/s;
+
+    # Per-IP authentication rate limiting (strict)
+    limit_req_zone $binary_remote_addr zone=auth_limit:20m rate=1r/s;
+
+    # Per-IP payment rate limiting (strict)
+    limit_req_zone $binary_remote_addr zone=payment_limit:20m rate=2r/s;
+
+    # Per-IP ticket purchase rate limiting
+    limit_req_zone $binary_remote_addr zone=ticket_limit:20m rate=5r/s;
+
+    # Per-IP WebSocket connection limiting
+    limit_conn_zone $binary_remote_addr zone=ws_limit:10m;
+
+    # Per-IP general connection limiting
+    limit_conn_zone $binary_remote_addr zone=conn_limit:20m;
+
+    # =======================================================================
+    # Connection Limits
+    # =======================================================================
+
+    # Limit connections per IP
+    limit_conn conn_limit 50;
+    limit_conn_status 429;
+    limit_conn_log_level warn;
+
+    # =======================================================================
+    # Request Rate Limits - Applied in location blocks
+    # =======================================================================
+
+    # Global rate limit (all requests)
+    # limit_req zone=global_limit burst=200 nodelay;
+
+    # Status codes
+    limit_req_status 429;
+    limit_req_log_level warn;
+
+    # =======================================================================
+    # Map for dynamic rate limiting based on traffic profile
+    # =======================================================================
+
+    map $http_x_traffic_profile $rate_limit_multiplier {
+      default         1;
+      "normal"        1;
+      "festival"      5;
+      "ticket_launch" 10;
+      "under_attack"  0.25;
+    }
+
+    # =======================================================================
+    # Geo-based rate limiting (block high-risk countries)
+    # =======================================================================
+
+    geo $rate_limit_country {
+      default         1;
+      # Low-risk countries (EU, trusted)
+      10.0.0.0/8      0;  # Internal
+      192.168.0.0/16  0;  # Internal
+      # Add trusted country IPs here
+    }
+
+    # =======================================================================
+    # Bot detection
+    # =======================================================================
+
+    map $http_user_agent $is_bot {
+      default                         0;
+      "~*bot"                         1;
+      "~*spider"                      1;
+      "~*crawler"                     1;
+      "~*scraper"                     1;
+      "~*curl"                        1;
+      "~*wget"                        1;
+      "~*python"                      1;
+      "~*libwww"                      1;
+      ""                              1;  # Empty user agent
+    }
+
+    # Stricter limits for bots
+    map $is_bot $bot_limit {
+      0 "";
+      1 "10r/m";
+    }
+
+  # ==========================================================================
+  # NGINX Location Blocks with Rate Limiting
+  # ==========================================================================
+  nginx-locations.conf: |
+    # =======================================================================
+    # Authentication Endpoints - Strict Rate Limiting
+    # =======================================================================
+
+    location /api/auth/login {
+      limit_req zone=auth_limit burst=5 nodelay;
+      limit_req_status 429;
+
+      # Add security headers
+      add_header X-RateLimit-Limit "5" always;
+      add_header X-RateLimit-Window "60s" always;
+
+      proxy_pass http://api-service:3000;
+      include /etc/nginx/proxy.conf;
+    }
+
+    location /api/auth/register {
+      limit_req zone=auth_limit burst=2 nodelay;
+      limit_req_status 429;
+
+      proxy_pass http://api-service:3000;
+      include /etc/nginx/proxy.conf;
+    }
+
+    location /api/auth/forgot-password {
+      limit_req zone=auth_limit burst=2 nodelay;
+      limit_req_status 429;
+
+      proxy_pass http://api-service:3000;
+      include /etc/nginx/proxy.conf;
+    }
+
+    # =======================================================================
+    # Payment Endpoints - Strict Rate Limiting (PCI-DSS)
+    # =======================================================================
+
+    location /api/payments/ {
+      limit_req zone=payment_limit burst=10 nodelay;
+      limit_req_status 429;
+
+      # Additional security
+      add_header X-RateLimit-Limit "20" always;
+      add_header Strict-Transport-Security "max-age=31536000; includeSubDomains" always;
+
+      proxy_pass http://api-service:3000;
+      include /etc/nginx/proxy.conf;
+    }
+
+    location /api/cashless/ {
+      limit_req zone=payment_limit burst=20 nodelay;
+      limit_req_status 429;
+
+      proxy_pass http://api-service:3000;
+      include /etc/nginx/proxy.conf;
+    }
+
+    # Stripe webhooks - Higher limits but require signature
+    location /api/webhooks/stripe {
+      limit_req zone=global_limit burst=100 nodelay;
+
+      # Verify Stripe signature header is present
+      if ($http_stripe_signature = "") {
+        return 403;
+      }
+
+      proxy_pass http://api-service:3000;
+      include /etc/nginx/proxy.conf;
+    }
+
+    # =======================================================================
+    # Ticket Endpoints
+    # =======================================================================
+
+    location /api/tickets/buy {
+      limit_req zone=ticket_limit burst=10 nodelay;
+      limit_req_status 429;
+
+      # Queue system integration
+      add_header X-Queue-Enabled "true" always;
+
+      proxy_pass http://api-service:3000;
+      include /etc/nginx/proxy.conf;
+    }
+
+    location /api/tickets/validate {
+      # Higher limit for QR scanners
+      limit_req zone=api_limit burst=200 nodelay;
+
+      proxy_pass http://api-service:3000;
+      include /etc/nginx/proxy.conf;
+    }
+
+    # =======================================================================
+    # WebSocket Endpoint
+    # =======================================================================
+
+    location /socket.io/ {
+      limit_conn ws_limit 10;
+      limit_conn_status 429;
+
+      proxy_pass http://api-service:3000;
+      proxy_http_version 1.1;
+      proxy_set_header Upgrade $http_upgrade;
+      proxy_set_header Connection "upgrade";
+      proxy_set_header Host $host;
+      proxy_cache_bypass $http_upgrade;
+
+      # WebSocket timeouts
+      proxy_read_timeout 86400s;
+      proxy_send_timeout 86400s;
+    }
+
+    # =======================================================================
+    # General API Endpoints
+    # =======================================================================
+
+    location /api/ {
+      limit_req zone=api_limit burst=50 nodelay;
+      limit_req_status 429;
+
+      proxy_pass http://api-service:3000;
+      include /etc/nginx/proxy.conf;
+    }
+
+    # =======================================================================
+    # Static Assets (CDN should handle, but fallback)
+    # =======================================================================
+
+    location /static/ {
+      limit_req zone=global_limit burst=100 nodelay;
+
+      # Cache headers
+      expires 30d;
+      add_header Cache-Control "public, no-transform";
+
+      proxy_pass http://web-service:3000;
+      include /etc/nginx/proxy.conf;
+    }
+
+    # =======================================================================
+    # Health Check (No rate limiting)
+    # =======================================================================
+
+    location /api/health {
+      limit_req off;
+      limit_conn off;
+
+      proxy_pass http://api-service:3000;
+      include /etc/nginx/proxy.conf;
+    }
+
+    # =======================================================================
+    # Block Suspicious Requests
+    # =======================================================================
+
+    # Block common attack paths
+    location ~* \.(git|svn|env|htaccess|htpasswd)$ {
+      return 403;
+    }
+
+    location ~* ^/(admin|wp-admin|phpinfo|.git)/ {
+      return 403;
+    }
+
+  # ==========================================================================
+  # DDoS Detection Thresholds
+  # ==========================================================================
+  ddos-thresholds.yaml: |
+    detection:
+      # Request rate thresholds (per minute)
+      request_rate:
+        warning: 10000     # 10k req/min
+        critical: 50000    # 50k req/min
+        emergency: 100000  # 100k req/min
+
+      # Error rate thresholds
+      error_rate:
+        warning: 5         # 5% errors
+        critical: 10       # 10% errors
+        emergency: 25      # 25% errors
+
+      # Latency thresholds (milliseconds)
+      latency:
+        p95_warning: 500   # 500ms p95
+        p95_critical: 1000 # 1s p95
+        p99_warning: 1000  # 1s p99
+        p99_critical: 5000 # 5s p99
+
+      # Connection thresholds
+      connections:
+        per_ip_warning: 50
+        per_ip_critical: 100
+        total_warning: 10000
+        total_critical: 50000
+
+      # Bandwidth thresholds (Mbps)
+      bandwidth:
+        warning: 500       # 500 Mbps
+        critical: 1000     # 1 Gbps
+        emergency: 5000    # 5 Gbps
+
+    # Attack patterns to detect
+    patterns:
+      - name: "slowloris"
+        indicators:
+          - slow_headers: true
+          - incomplete_requests: high
+        action: block_ip
+
+      - name: "http_flood"
+        indicators:
+          - request_rate: abnormal
+          - same_endpoint: high
+        action: rate_limit
+
+      - name: "credential_stuffing"
+        indicators:
+          - login_failures: high
+          - different_users: many
+          - same_ip: true
+        action: challenge
+
+      - name: "api_abuse"
+        indicators:
+          - api_calls: abnormal
+          - pattern: sequential
+        action: rate_limit
+
+      - name: "bot_attack"
+        indicators:
+          - user_agent: suspicious
+          - behavior: automated
+        action: challenge
+
+    # Automatic mitigation actions
+    mitigation:
+      level_1:  # Warning
+        actions:
+          - log_increase
+          - alert_slack
+          - enable_challenge
+
+      level_2:  # Critical
+        actions:
+          - rate_limit_strict
+          - alert_pagerduty
+          - enable_captcha
+
+      level_3:  # Emergency
+        actions:
+          - block_suspicious
+          - alert_oncall
+          - enable_geo_block
+          - scale_infrastructure
+
+  # ==========================================================================
+  # Prometheus Alerting Rules
+  # ==========================================================================
+  prometheus-alerts.yaml: |
+    groups:
+      - name: ddos-alerts
+        rules:
+          # High request rate
+          - alert: HighRequestRate
+            expr: sum(rate(nginx_http_requests_total[1m])) > 10000
+            for: 1m
+            labels:
+              severity: warning
+              team: infrastructure
+            annotations:
+              summary: "High request rate detected"
+              description: "Request rate is {{ $value }} req/min"
+
+          - alert: CriticalRequestRate
+            expr: sum(rate(nginx_http_requests_total[1m])) > 50000
+            for: 30s
+            labels:
+              severity: critical
+              team: infrastructure
+            annotations:
+              summary: "Critical request rate - possible DDoS"
+              description: "Request rate is {{ $value }} req/min"
+
+          # Rate limiting triggered
+          - alert: RateLimitingActive
+            expr: sum(rate(nginx_http_requests_total{status="429"}[5m])) > 100
+            for: 2m
+            labels:
+              severity: warning
+              team: security
+            annotations:
+              summary: "Rate limiting is actively blocking requests"
+              description: "{{ $value }} requests blocked per 5 minutes"
+
+          # Authentication brute force
+          - alert: AuthBruteForce
+            expr: sum(rate(api_auth_failures_total[5m])) > 50
+            for: 1m
+            labels:
+              severity: critical
+              team: security
+            annotations:
+              summary: "Possible brute force attack on authentication"
+              description: "{{ $value }} auth failures per 5 minutes"
+
+          # Payment endpoint abuse
+          - alert: PaymentAbuseDetected
+            expr: sum(rate(api_payment_requests_total{status="429"}[5m])) > 10
+            for: 1m
+            labels:
+              severity: critical
+              team: security
+            annotations:
+              summary: "Payment endpoint rate limit exceeded"
+              description: "{{ $value }} blocked payment requests"
+
+          # WebSocket connection flood
+          - alert: WebSocketFlood
+            expr: sum(websocket_connections_total) > 10000
+            for: 1m
+            labels:
+              severity: warning
+              team: infrastructure
+            annotations:
+              summary: "High number of WebSocket connections"
+              description: "{{ $value }} active connections"
+
+          # Latency spike
+          - alert: LatencySpike
+            expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+            for: 2m
+            labels:
+              severity: warning
+              team: infrastructure
+            annotations:
+              summary: "High API latency detected"
+              description: "p95 latency is {{ $value }}s"
+
+          # Error rate spike
+          - alert: ErrorRateSpike
+            expr: sum(rate(http_requests_total{status=~"5.."}[5m])) / sum(rate(http_requests_total[5m])) > 0.05
+            for: 2m
+            labels:
+              severity: critical
+              team: infrastructure
+            annotations:
+              summary: "High error rate detected"
+              description: "Error rate is {{ $value | humanizePercentage }}"
+
+---
+# =============================================================================
+# Kubernetes Network Policies for DDoS Mitigation
+# =============================================================================
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: festival-api-ingress
+  namespace: festival
+spec:
+  podSelector:
+    matchLabels:
+      app: festival-api
+  policyTypes:
+    - Ingress
+  ingress:
+    # Allow from ingress controller only
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 3000
+
+    # Allow from internal services
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: festival
+      ports:
+        - protocol: TCP
+          port: 3000
+
+---
+# =============================================================================
+# Ingress NGINX Rate Limiting Annotations
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: festival-ingress-ratelimit
+  namespace: festival
+data:
+  ingress-annotations.yaml: |
+    # Apply these annotations to festival ingress
+
+    # Global rate limiting
+    nginx.ingress.kubernetes.io/limit-rps: "100"
+    nginx.ingress.kubernetes.io/limit-connections: "50"
+
+    # Whitelist for internal IPs
+    nginx.ingress.kubernetes.io/whitelist-source-range: "10.0.0.0/8,192.168.0.0/16"
+
+    # Custom error pages
+    nginx.ingress.kubernetes.io/custom-http-errors: "429,503"
+    nginx.ingress.kubernetes.io/default-backend: festival-error-pages
+
+    # Rate limit memory zone
+    nginx.ingress.kubernetes.io/limit-req-status-code: "429"
+
+    # Connection limits
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "10"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "60"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "60"
+
+    # Buffer sizes
+    nginx.ingress.kubernetes.io/proxy-buffer-size: "16k"
+    nginx.ingress.kubernetes.io/proxy-buffers-number: "8"
+
+    # Max body size
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+
+---
+# =============================================================================
+# HorizontalPodAutoscaler for DDoS Response
+# =============================================================================
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: festival-api-hpa
+  namespace: festival
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: festival-api
+  minReplicas: 3
+  maxReplicas: 50
+  metrics:
+    # Scale on CPU
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+
+    # Scale on memory
+    - type: Resource
+      resource:
+        name: memory
+        target:
+          type: Utilization
+          averageUtilization: 80
+
+    # Scale on request rate
+    - type: Pods
+      pods:
+        metric:
+          name: http_requests_per_second
+        target:
+          type: AverageValue
+          averageValue: "100"
+
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 30
+      policies:
+        - type: Percent
+          value: 100
+          periodSeconds: 15
+        - type: Pods
+          value: 10
+          periodSeconds: 15
+      selectPolicy: Max
+
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+        - type: Percent
+          value: 10
+          periodSeconds: 60

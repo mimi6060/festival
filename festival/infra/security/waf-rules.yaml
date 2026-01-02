@@ -1,0 +1,646 @@
+# =============================================================================
+# WAF Rules Configuration - Festival Management Platform
+# =============================================================================
+# This configuration defines WAF rules for multiple deployment scenarios:
+# - Nginx ModSecurity
+# - Kubernetes Ingress
+# - AWS WAF (reference)
+# - CloudFlare
+# =============================================================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: festival-waf-rules
+  namespace: festival
+  labels:
+    app: festival
+    component: waf
+    security: enabled
+data:
+  # ==========================================================================
+  # NGINX ModSecurity Configuration
+  # ==========================================================================
+  modsecurity.conf: |
+    # Enable ModSecurity
+    SecRuleEngine On
+
+    # Request body handling
+    SecRequestBodyAccess On
+    SecRequestBodyLimit 10485760
+    SecRequestBodyNoFilesLimit 1048576
+    SecRequestBodyLimitAction Reject
+
+    # Response body handling
+    SecResponseBodyAccess On
+    SecResponseBodyMimeType text/plain text/html text/xml application/json
+    SecResponseBodyLimit 1048576
+
+    # Audit logging
+    SecAuditEngine RelevantOnly
+    SecAuditLogRelevantStatus "^(?:5|4(?!04))"
+    SecAuditLogParts ABCDEFHZ
+    SecAuditLogType Serial
+    SecAuditLog /var/log/modsec/modsec_audit.log
+
+    # Debug logging (disable in production)
+    SecDebugLog /var/log/modsec/debug.log
+    SecDebugLogLevel 0
+
+    # Rule engine
+    SecDefaultAction "phase:1,deny,status:403,log"
+    SecDefaultAction "phase:2,deny,status:403,log"
+
+    # Temporary files
+    SecTmpDir /tmp/
+    SecDataDir /tmp/
+
+    # PCRE limits
+    SecPcreMatchLimit 1000
+    SecPcreMatchLimitRecursion 1000
+
+  # ==========================================================================
+  # Core Rule Set Configuration
+  # ==========================================================================
+  crs-setup.conf: |
+    # Paranoia Level (1-4)
+    # 1 = Low (minimal false positives)
+    # 2 = Medium (recommended for production)
+    # 3 = High
+    # 4 = Ultra paranoid
+    SecAction "id:900000,phase:1,nolog,pass,t:none,setvar:tx.paranoia_level=2"
+
+    # Anomaly scoring thresholds
+    SecAction "id:900110,phase:1,nolog,pass,t:none,\
+      setvar:tx.inbound_anomaly_score_threshold=5,\
+      setvar:tx.outbound_anomaly_score_threshold=4"
+
+    # Block on detection
+    SecAction "id:900200,phase:1,nolog,pass,t:none,setvar:tx.blocking_paranoia_level=2"
+
+    # Allowed HTTP methods
+    SecAction "id:900220,phase:1,nolog,pass,t:none,setvar:'tx.allowed_methods=GET POST PUT PATCH DELETE OPTIONS HEAD'"
+
+    # Allowed request content types
+    SecAction "id:900240,phase:1,nolog,pass,t:none,\
+      setvar:'tx.allowed_request_content_type=|application/json|application/x-www-form-urlencoded|multipart/form-data|text/plain|'"
+
+    # Allowed response content types
+    SecAction "id:900280,phase:1,nolog,pass,t:none,\
+      setvar:'tx.allowed_http_versions=HTTP/1.1 HTTP/2 HTTP/2.0 HTTP/3 HTTP/3.0'"
+
+    # Enable JSON body parsing
+    SecAction "id:900300,phase:1,nolog,pass,t:none,setvar:tx.enforce_bodyproc_urlencoded=1"
+
+    # Sampling percentage (100 = all requests)
+    SecAction "id:900400,phase:1,nolog,pass,t:none,setvar:tx.sampling_percentage=100"
+
+  # ==========================================================================
+  # Custom Festival Platform Rules
+  # ==========================================================================
+  festival-rules.conf: |
+    # ========================================================================
+    # RULE 100000-100099: IP Reputation
+    # ========================================================================
+
+    # Block known bad IPs (updated via threat intelligence)
+    SecRule REMOTE_ADDR "@ipMatchFromFile /etc/modsecurity/blocked-ips.txt" \
+      "id:100000,phase:1,deny,status:403,log,\
+      msg:'Blocked IP from threat intelligence',\
+      tag:'FESTIVAL/IP-REPUTATION'"
+
+    # ========================================================================
+    # RULE 100100-100199: Authentication Protection
+    # ========================================================================
+
+    # Protect login endpoint from brute force
+    SecRule REQUEST_URI "@streq /api/auth/login" \
+      "id:100100,phase:2,pass,nolog,\
+      setvar:ip.auth_fail_counter=+1,\
+      expirevar:ip.auth_fail_counter=300"
+
+    SecRule IP:AUTH_FAIL_COUNTER "@gt 5" \
+      "id:100101,phase:1,deny,status:429,log,\
+      msg:'Too many authentication failures',\
+      tag:'FESTIVAL/BRUTE-FORCE'"
+
+    # Block credential stuffing patterns
+    SecRule REQUEST_URI "@beginsWith /api/auth/" \
+      "id:100102,phase:2,chain,deny,status:403,log,\
+      msg:'Potential credential stuffing detected',\
+      tag:'FESTIVAL/CREDENTIAL-STUFFING'"
+      SecRule &TX:'/^ANOMALY_/' "@gt 3" ""
+
+    # Protect password reset
+    SecRule REQUEST_URI "@streq /api/auth/forgot-password" \
+      "id:100103,phase:2,pass,nolog,\
+      setvar:ip.reset_counter=+1,\
+      expirevar:ip.reset_counter=3600"
+
+    SecRule IP:RESET_COUNTER "@gt 3" \
+      "id:100104,phase:1,deny,status:429,log,\
+      msg:'Too many password reset requests',\
+      tag:'FESTIVAL/RATE-LIMIT'"
+
+    # ========================================================================
+    # RULE 100200-100299: Payment Protection (PCI-DSS)
+    # ========================================================================
+
+    # Strict rate limiting on payment endpoints
+    SecRule REQUEST_URI "@beginsWith /api/payments/" \
+      "id:100200,phase:1,pass,nolog,\
+      setvar:ip.payment_counter=+1,\
+      expirevar:ip.payment_counter=60"
+
+    SecRule IP:PAYMENT_COUNTER "@gt 10" \
+      "id:100201,phase:1,deny,status:429,log,\
+      msg:'Payment endpoint rate limit exceeded',\
+      tag:'FESTIVAL/PAYMENT/RATE-LIMIT'"
+
+    # Block suspicious payment patterns
+    SecRule REQUEST_URI "@beginsWith /api/payments/" \
+      "id:100202,phase:2,chain,deny,status:403,log,\
+      msg:'Suspicious payment request',\
+      tag:'FESTIVAL/PAYMENT/SUSPICIOUS'"
+      SecRule REQUEST_BODY "@rx (amount|price)\":\s*(-|0\.0*[1-9])" ""
+
+    # Protect webhook endpoints
+    SecRule REQUEST_URI "@beginsWith /api/webhooks/stripe" \
+      "id:100203,phase:1,chain,deny,status:403,log,\
+      msg:'Missing Stripe webhook signature',\
+      tag:'FESTIVAL/PAYMENT/WEBHOOK'"
+      SecRule &REQUEST_HEADERS:Stripe-Signature "@eq 0" ""
+
+    # ========================================================================
+    # RULE 100300-100399: Cashless Protection
+    # ========================================================================
+
+    # Rate limit cashless operations
+    SecRule REQUEST_URI "@beginsWith /api/cashless/" \
+      "id:100300,phase:1,pass,nolog,\
+      setvar:ip.cashless_counter=+1,\
+      expirevar:ip.cashless_counter=60"
+
+    SecRule IP:CASHLESS_COUNTER "@gt 30" \
+      "id:100301,phase:1,deny,status:429,log,\
+      msg:'Cashless endpoint rate limit exceeded',\
+      tag:'FESTIVAL/CASHLESS/RATE-LIMIT'"
+
+    # Block negative amounts
+    SecRule REQUEST_URI "@rx /api/cashless/(topup|pay)" \
+      "id:100302,phase:2,chain,deny,status:400,log,\
+      msg:'Invalid amount in cashless transaction',\
+      tag:'FESTIVAL/CASHLESS/VALIDATION'"
+      SecRule REQUEST_BODY "@rx \"amount\":\s*-" ""
+
+    # ========================================================================
+    # RULE 100400-100499: Ticket Protection
+    # ========================================================================
+
+    # Rate limit ticket purchases
+    SecRule REQUEST_URI "@streq /api/tickets/buy" \
+      "id:100400,phase:1,pass,nolog,\
+      setvar:ip.ticket_buy_counter=+1,\
+      expirevar:ip.ticket_buy_counter=60"
+
+    SecRule IP:TICKET_BUY_COUNTER "@gt 5" \
+      "id:100401,phase:1,deny,status:429,log,\
+      msg:'Ticket purchase rate limit exceeded',\
+      tag:'FESTIVAL/TICKETS/RATE-LIMIT'"
+
+    # Protect QR validation endpoint
+    SecRule REQUEST_URI "@streq /api/tickets/validate" \
+      "id:100402,phase:1,pass,nolog,\
+      setvar:ip.validate_counter=+1,\
+      expirevar:ip.validate_counter=10"
+
+    SecRule IP:VALIDATE_COUNTER "@gt 100" \
+      "id:100403,phase:1,deny,status:429,log,\
+      msg:'QR validation rate limit exceeded',\
+      tag:'FESTIVAL/TICKETS/RATE-LIMIT'"
+
+    # ========================================================================
+    # RULE 100500-100599: API Security
+    # ========================================================================
+
+    # Require authentication header for protected endpoints
+    SecRule REQUEST_URI "@rx ^/api/(?!auth/|health|docs)" \
+      "id:100500,phase:1,chain,deny,status:401,log,\
+      msg:'Missing authentication header',\
+      tag:'FESTIVAL/API/AUTH'"
+      SecRule &REQUEST_HEADERS:Authorization "@eq 0" ""
+
+    # Block JWT with suspicious patterns
+    SecRule REQUEST_HEADERS:Authorization "@rx Bearer\s+[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*\.?" \
+      "id:100501,phase:1,pass,nolog,setvar:tx.jwt_detected=1"
+
+    SecRule TX:JWT_DETECTED "@eq 1" \
+      "id:100502,phase:1,chain,deny,status:401,log,\
+      msg:'Malformed JWT token',\
+      tag:'FESTIVAL/API/JWT'"
+      SecRule REQUEST_HEADERS:Authorization "!@rx ^Bearer\s+[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]*$" ""
+
+    # Block sensitive data in query strings
+    SecRule ARGS_NAMES "@rx (?i)(password|token|secret|key|credit_card|cvv|ssn)" \
+      "id:100503,phase:1,deny,status:400,log,\
+      msg:'Sensitive data in query string',\
+      tag:'FESTIVAL/API/DATA-EXPOSURE'"
+
+    # ========================================================================
+    # RULE 100600-100699: Bot Protection
+    # ========================================================================
+
+    # Block requests without User-Agent
+    SecRule &REQUEST_HEADERS:User-Agent "@eq 0" \
+      "id:100600,phase:1,deny,status:403,log,\
+      msg:'Missing User-Agent header',\
+      tag:'FESTIVAL/BOT/NO-UA'"
+
+    # Block known scanner user agents
+    SecRule REQUEST_HEADERS:User-Agent "@rx (?i)(sqlmap|nikto|nmap|masscan|burp|acunetix|netsparker)" \
+      "id:100601,phase:1,deny,status:403,log,\
+      msg:'Scanner user agent detected',\
+      tag:'FESTIVAL/BOT/SCANNER'"
+
+    # Block script kiddies
+    SecRule REQUEST_HEADERS:User-Agent "@rx (?i)(python-requests|curl|wget|libwww|httpclient)$" \
+      "id:100602,phase:1,deny,status:403,log,\
+      msg:'Automated tool user agent',\
+      tag:'FESTIVAL/BOT/AUTOMATED'"
+
+    # ========================================================================
+    # RULE 100700-100799: SQL Injection Protection
+    # ========================================================================
+
+    # Enhanced SQL injection detection
+    SecRule ARGS|ARGS_NAMES|REQUEST_COOKIES|REQUEST_COOKIES_NAMES|REQUEST_BODY|REQUEST_HEADERS|XML:/* \
+      "@detectSQLi" \
+      "id:100700,phase:2,deny,status:403,log,\
+      msg:'SQL Injection Attack Detected',\
+      tag:'FESTIVAL/SQLI'"
+
+    # Block common SQL payloads
+    SecRule ARGS|REQUEST_BODY "@rx (?i)(union\s+select|select\s+.*\s+from|insert\s+into|delete\s+from|drop\s+table|truncate\s+table)" \
+      "id:100701,phase:2,deny,status:403,log,\
+      msg:'SQL Injection Pattern Detected',\
+      tag:'FESTIVAL/SQLI'"
+
+    # ========================================================================
+    # RULE 100800-100899: XSS Protection
+    # ========================================================================
+
+    # Enhanced XSS detection
+    SecRule ARGS|ARGS_NAMES|REQUEST_COOKIES|REQUEST_COOKIES_NAMES|REQUEST_BODY|REQUEST_HEADERS \
+      "@detectXSS" \
+      "id:100800,phase:2,deny,status:403,log,\
+      msg:'XSS Attack Detected',\
+      tag:'FESTIVAL/XSS'"
+
+    # Block script tags
+    SecRule ARGS|REQUEST_BODY "@rx (?i)(<script|javascript:|on\w+\s*=)" \
+      "id:100801,phase:2,deny,status:403,log,\
+      msg:'XSS Script Pattern Detected',\
+      tag:'FESTIVAL/XSS'"
+
+    # ========================================================================
+    # RULE 100900-100999: Path Traversal Protection
+    # ========================================================================
+
+    # Block path traversal attempts
+    SecRule REQUEST_URI|ARGS|REQUEST_BODY "@rx (\.\./|\.\.\\|%2e%2e%2f|%2e%2e%5c)" \
+      "id:100900,phase:2,deny,status:403,log,\
+      msg:'Path Traversal Attempt',\
+      tag:'FESTIVAL/LFI'"
+
+    # Block sensitive file access
+    SecRule REQUEST_URI "@rx (?i)(\.env|\.git|\.svn|\.htaccess|\.htpasswd|web\.config|\.ini)" \
+      "id:100901,phase:1,deny,status:403,log,\
+      msg:'Sensitive File Access Attempt',\
+      tag:'FESTIVAL/LFI'"
+
+  # ==========================================================================
+  # Blocked IPs File (updated by threat intelligence)
+  # ==========================================================================
+  blocked-ips.txt: |
+    # Known malicious IPs
+    # Format: IP or CIDR
+    # This file is updated automatically by threat intelligence feeds
+    # Last updated: 2026-01-02
+
+---
+# =============================================================================
+# Kubernetes Ingress NGINX WAF Annotations
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: festival-ingress-waf-snippets
+  namespace: festival
+data:
+  # Server snippet for rate limiting
+  server-snippet: |
+    # Rate limiting zones
+    limit_req_zone $binary_remote_addr zone=auth_limit:10m rate=10r/m;
+    limit_req_zone $binary_remote_addr zone=payment_limit:10m rate=5r/m;
+    limit_req_zone $binary_remote_addr zone=api_limit:10m rate=100r/s;
+    limit_req_zone $binary_remote_addr zone=ticket_limit:10m rate=30r/m;
+
+    # Connection limiting
+    limit_conn_zone $binary_remote_addr zone=addr_limit:10m;
+
+    # Geo blocking map
+    map $geoip2_country_code $allowed_country {
+      default no;
+      FR yes; DE yes; GB yes; ES yes; IT yes; NL yes; BE yes;
+      AT yes; CH yes; PT yes; PL yes; SE yes; NO yes; DK yes;
+      FI yes; IE yes; LU yes; CZ yes; GR yes; HU yes; RO yes;
+    }
+
+  # Location snippets for specific endpoints
+  location-auth-snippet: |
+    # Authentication endpoints rate limiting
+    limit_req zone=auth_limit burst=5 nodelay;
+    limit_req_status 429;
+
+    # Additional headers
+    add_header X-RateLimit-Limit "10" always;
+    add_header X-RateLimit-Remaining $limit_req_status always;
+
+  location-payment-snippet: |
+    # Payment endpoints - strict rate limiting
+    limit_req zone=payment_limit burst=2 nodelay;
+    limit_req_status 429;
+
+    # Require Stripe signature for webhooks
+    if ($uri ~ ^/api/webhooks/stripe) {
+      set $webhook_auth $http_stripe_signature;
+      if ($webhook_auth = "") {
+        return 403;
+      }
+    }
+
+  location-api-snippet: |
+    # General API rate limiting
+    limit_req zone=api_limit burst=50 nodelay;
+    limit_conn addr_limit 50;
+
+    # Security headers
+    add_header X-Content-Type-Options "nosniff" always;
+    add_header X-Frame-Options "DENY" always;
+    add_header X-XSS-Protection "1; mode=block" always;
+    add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+    # Block requests without User-Agent
+    if ($http_user_agent = "") {
+      return 403;
+    }
+
+    # Block known bad user agents
+    if ($http_user_agent ~* (sqlmap|nikto|nmap|masscan|burp|acunetix)) {
+      return 403;
+    }
+
+---
+# =============================================================================
+# AWS WAF Rules Summary (Reference for waf.tf)
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: festival-aws-waf-reference
+  namespace: festival
+data:
+  aws-waf-summary.yaml: |
+    # AWS WAF Rule Groups and Priorities
+    # Reference for infra/security/waf/waf.tf
+
+    managed_rule_groups:
+      - name: AWSManagedRulesCommonRuleSet
+        priority: 200
+        description: "Common Rule Set - OWASP Top 10 coverage"
+
+      - name: AWSManagedRulesSQLiRuleSet
+        priority: 201
+        description: "SQL Injection protection"
+
+      - name: AWSManagedRulesKnownBadInputsRuleSet
+        priority: 202
+        description: "Known bad inputs (Log4j, etc.)"
+
+      - name: AWSManagedRulesLinuxRuleSet
+        priority: 203
+        description: "Linux-specific vulnerabilities"
+
+      - name: AWSManagedRulesAmazonIpReputationList
+        priority: 204
+        description: "Amazon IP reputation"
+
+      - name: AWSManagedRulesAnonymousIpList
+        priority: 205
+        description: "Anonymous IP (VPN, Tor, proxies)"
+
+      - name: AWSManagedRulesBotControlRuleSet
+        priority: 206
+        description: "Bot management"
+
+    custom_rules:
+      rate_limiting:
+        - name: RateLimitAuth
+          priority: 100
+          limit: 50
+          period: "5 minutes"
+          scope: "/api/auth/*"
+
+        - name: RateLimitPayment
+          priority: 101
+          limit: 25
+          period: "5 minutes"
+          scope: "/api/payments/*, /api/cashless/*"
+
+        - name: RateLimitGlobal
+          priority: 102
+          limit: 2000
+          period: "5 minutes"
+          scope: "all"
+
+      custom_security:
+        - name: BlockSuspiciousUserAgents
+          priority: 300
+          action: block
+
+        - name: BlockAttackPatternsURI
+          priority: 301
+          action: block
+
+        - name: BlockNoUserAgent
+          priority: 302
+          action: block
+
+        - name: BlockOversizedBody
+          priority: 303
+          action: block
+          max_size: "10MB"
+
+      geo_blocking:
+        - name: GeoBlockNonAllowedCountries
+          priority: 400
+          allowed_countries:
+            - EU countries
+            - EEA countries
+            - CH, GB
+
+---
+# =============================================================================
+# CloudFlare WAF Rules (for CDN deployment)
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: festival-cloudflare-waf
+  namespace: festival
+data:
+  cloudflare-rules.json: |
+    {
+      "rules": [
+        {
+          "id": "festival-auth-ratelimit",
+          "description": "Rate limit authentication endpoints",
+          "expression": "(http.request.uri.path contains \"/api/auth/\")",
+          "action": "rate_limit",
+          "ratelimit": {
+            "characteristics": ["ip.src"],
+            "period": 60,
+            "requests_per_period": 10,
+            "mitigation_timeout": 300
+          }
+        },
+        {
+          "id": "festival-payment-ratelimit",
+          "description": "Rate limit payment endpoints",
+          "expression": "(http.request.uri.path contains \"/api/payments/\") or (http.request.uri.path contains \"/api/cashless/\")",
+          "action": "rate_limit",
+          "ratelimit": {
+            "characteristics": ["ip.src"],
+            "period": 60,
+            "requests_per_period": 5,
+            "mitigation_timeout": 600
+          }
+        },
+        {
+          "id": "festival-block-scanners",
+          "description": "Block known security scanners",
+          "expression": "(http.user_agent contains \"sqlmap\") or (http.user_agent contains \"nikto\") or (http.user_agent contains \"nmap\") or (http.user_agent contains \"burp\")",
+          "action": "block"
+        },
+        {
+          "id": "festival-block-no-ua",
+          "description": "Block requests without User-Agent",
+          "expression": "(not http.user_agent ne \"\")",
+          "action": "challenge"
+        },
+        {
+          "id": "festival-protect-admin",
+          "description": "Protect admin endpoints",
+          "expression": "(http.request.uri.path contains \"/api/admin/\") and (not ip.src in {office_ips})",
+          "action": "challenge"
+        },
+        {
+          "id": "festival-geo-block",
+          "description": "Geo-blocking for non-EU countries",
+          "expression": "(not ip.geoip.country in {\"FR\" \"DE\" \"GB\" \"ES\" \"IT\" \"NL\" \"BE\" \"AT\" \"CH\" \"PT\" \"PL\" \"SE\" \"NO\" \"DK\" \"FI\" \"IE\" \"LU\" \"CZ\" \"GR\" \"HU\" \"RO\"})",
+          "action": "block"
+        },
+        {
+          "id": "festival-webhook-validation",
+          "description": "Validate webhook requests",
+          "expression": "(http.request.uri.path contains \"/api/webhooks/stripe\") and (not http.request.headers[\"stripe-signature\"])",
+          "action": "block"
+        }
+      ],
+      "page_rules": [
+        {
+          "targets": [
+            {
+              "target": "url",
+              "constraint": {
+                "operator": "matches",
+                "value": "*festival.io/api/*"
+              }
+            }
+          ],
+          "actions": [
+            {
+              "id": "security_level",
+              "value": "high"
+            },
+            {
+              "id": "waf",
+              "value": "on"
+            },
+            {
+              "id": "cache_level",
+              "value": "bypass"
+            }
+          ]
+        }
+      ]
+    }
+
+---
+# =============================================================================
+# WAF Monitoring and Alerting Configuration
+# =============================================================================
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: festival-waf-alerting
+  namespace: festival
+data:
+  alerting-rules.yaml: |
+    groups:
+      - name: waf-alerts
+        rules:
+          - alert: WAFHighBlockRate
+            expr: rate(waf_blocked_requests_total[5m]) > 100
+            for: 2m
+            labels:
+              severity: warning
+            annotations:
+              summary: "High WAF block rate detected"
+              description: "WAF is blocking more than 100 requests per 5 minutes"
+
+          - alert: WAFCriticalBlockRate
+            expr: rate(waf_blocked_requests_total[5m]) > 500
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Critical WAF block rate - possible attack"
+              description: "WAF is blocking more than 500 requests per 5 minutes"
+
+          - alert: WAFAuthBruteForce
+            expr: rate(waf_blocked_requests_total{rule="auth_ratelimit"}[5m]) > 50
+            for: 1m
+            labels:
+              severity: critical
+            annotations:
+              summary: "Brute force attack on authentication"
+              description: "High rate of blocked authentication requests detected"
+
+          - alert: WAFSQLInjectionAttempts
+            expr: increase(waf_blocked_requests_total{rule="sqli"}[10m]) > 10
+            for: 0m
+            labels:
+              severity: critical
+            annotations:
+              summary: "SQL Injection attempts detected"
+              description: "Multiple SQL injection attempts blocked in the last 10 minutes"
+
+          - alert: WAFXSSAttempts
+            expr: increase(waf_blocked_requests_total{rule="xss"}[10m]) > 10
+            for: 0m
+            labels:
+              severity: warning
+            annotations:
+              summary: "XSS attempts detected"
+              description: "Multiple XSS attempts blocked in the last 10 minutes"

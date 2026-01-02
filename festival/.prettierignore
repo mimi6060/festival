@@ -1,0 +1,13 @@
+# Add files here to ignore them from prettier formatting
+/dist
+/coverage
+/.nx/cache
+/.nx/workspace-data
+/node_modules
+*.min.js
+*.min.css
+package-lock.json
+.next
+.expo
+android
+ios

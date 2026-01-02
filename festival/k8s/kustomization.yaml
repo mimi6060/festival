@@ -1,0 +1,84 @@
+# ============================================
+# Festival Platform - Kustomization
+# ============================================
+# Base configuration for Kubernetes deployment
+# Use: kubectl apply -k k8s/
+
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: festival-platform
+
+namespace: festival
+
+# Common labels applied to all resources
+commonLabels:
+  app.kubernetes.io/part-of: festival-platform
+  app.kubernetes.io/managed-by: kustomize
+
+# Resources to deploy
+resources:
+  # Base namespace and quotas
+  - base/namespace.yaml
+
+  # ConfigMaps
+  - configmaps/api-config.yaml
+  - configmaps/web-config.yaml
+  - configmaps/admin-config.yaml
+  - configmaps/postgresql-config.yaml
+  - configmaps/redis-config.yaml
+
+  # Secrets (use external secrets manager in production)
+  - secrets/api-secrets.yaml
+  - secrets/postgresql-secrets.yaml
+  - secrets/redis-secrets.yaml
+  - secrets/tls-secrets.yaml
+
+  # Application deployments
+  - api/deployment.yaml
+  - api/service.yaml
+  - api/hpa.yaml
+  - api/pdb.yaml
+
+  - web/deployment.yaml
+  - web/service.yaml
+  - web/hpa.yaml
+
+  - admin/deployment.yaml
+  - admin/service.yaml
+
+  # Database
+  - postgresql/statefulset.yaml
+  - postgresql/service.yaml
+  - postgresql/pdb.yaml
+
+  # Cache
+  - redis/statefulset.yaml
+  - redis/service.yaml
+
+  # Networking
+  - ingress/ingress.yaml
+  - ingress/nginx-config.yaml
+
+  # SSL/TLS
+  - cert-manager/cluster-issuer.yaml
+  - cert-manager/certificates.yaml
+
+# Image configurations (override for different environments)
+images:
+  - name: festival/api
+    newTag: latest
+  - name: festival/web
+    newTag: latest
+  - name: festival/admin
+    newTag: latest
+
+# Generate ConfigMaps from environment files
+configMapGenerator: []
+
+# Generate Secrets from files
+secretGenerator: []
+
+# Patches for environment-specific overrides
+patches: []

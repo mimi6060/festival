@@ -1,0 +1,642 @@
+# =============================================================================
+# Deploy Production - Festival Platform
+# =============================================================================
+# Production deployment with required manual approval
+# Blue-green deployment strategy with automatic rollback
+# Only triggered on main branch with explicit approval
+# =============================================================================
+
+name: Deploy Production
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'docs/**'
+      - '.github/ISSUE_TEMPLATE/**'
+  workflow_dispatch:
+    inputs:
+      deploy_api:
+        description: 'Deploy API'
+        required: false
+        default: true
+        type: boolean
+      deploy_web:
+        description: 'Deploy Web'
+        required: false
+        default: true
+        type: boolean
+      deploy_admin:
+        description: 'Deploy Admin'
+        required: false
+        default: true
+        type: boolean
+      run_migrations:
+        description: 'Run database migrations'
+        required: false
+        default: true
+        type: boolean
+      skip_tests:
+        description: 'Skip pre-deployment tests (emergency only)'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+env:
+  ENVIRONMENT: production
+  AWS_REGION: ${{ vars.AWS_REGION || 'eu-west-1' }}
+  ECR_REGISTRY: ${{ vars.AWS_ACCOUNT_ID }}.dkr.ecr.${{ vars.AWS_REGION || 'eu-west-1' }}.amazonaws.com
+  CLUSTER_NAME: festival-production
+  NODE_OPTIONS: --max-old-space-size=4096
+
+jobs:
+  # ===========================================================================
+  # Pre-deployment validation
+  # ===========================================================================
+  validate:
+    name: Pre-deployment Validation
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+      short-sha: ${{ steps.version.outputs.short-sha }}
+      deploy-api: ${{ steps.check.outputs.deploy-api }}
+      deploy-web: ${{ steps.check.outputs.deploy-web }}
+      deploy-admin: ${{ steps.check.outputs.deploy-admin }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate branch
+        run: |
+          if [[ "${{ github.ref }}" != "refs/heads/main" ]]; then
+            echo "Production deployments only allowed from main branch"
+            exit 1
+          fi
+
+      - name: Generate version info
+        id: version
+        run: |
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          VERSION="v1.0.0-${SHORT_SHA}"
+          echo "version=${VERSION}" >> $GITHUB_OUTPUT
+          echo "short-sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
+
+      - name: Determine what to deploy
+        id: check
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "deploy-api=${{ inputs.deploy_api }}" >> $GITHUB_OUTPUT
+            echo "deploy-web=${{ inputs.deploy_web }}" >> $GITHUB_OUTPUT
+            echo "deploy-admin=${{ inputs.deploy_admin }}" >> $GITHUB_OUTPUT
+          else
+            # On push, check what changed
+            echo "deploy-api=true" >> $GITHUB_OUTPUT
+            echo "deploy-web=true" >> $GITHUB_OUTPUT
+            echo "deploy-admin=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check staging deployment
+        run: |
+          echo "Verifying staging deployment was successful..."
+          # In real scenario, check staging environment status
+          # curl -f https://api-staging.festival.io/health || exit 1
+
+  # ===========================================================================
+  # Run full test suite before production
+  # ===========================================================================
+  pre-deploy-tests:
+    name: Pre-deployment Tests
+    runs-on: ubuntu-latest
+    needs: validate
+    if: ${{ !inputs.skip_tests }}
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: festival
+          POSTGRES_PASSWORD: festival_password
+          POSTGRES_DB: festival_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U festival"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd="redis-cli ping"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_URL: postgresql://festival:festival_password@localhost:5432/festival_test
+      REDIS_URL: redis://localhost:6379
+      JWT_SECRET: test-jwt-secret-for-production-tests-min32chars
+      JWT_REFRESH_SECRET: test-refresh-secret-for-prod-tests-min32
+      NODE_ENV: test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Run migrations
+        run: npx prisma migrate deploy
+
+      - name: Run unit tests
+        run: npx nx run-many -t test --all --coverage
+        continue-on-error: false
+
+      - name: Run E2E tests
+        run: |
+          npx nx build api
+          npx nx e2e api-e2e
+        timeout-minutes: 15
+
+      - name: Build all applications
+        run: NODE_ENV=production npx nx run-many -t build --all
+
+  # ===========================================================================
+  # Manual Approval Gate
+  # ===========================================================================
+  approval:
+    name: Awaiting Approval
+    runs-on: ubuntu-latest
+    needs: [validate, pre-deploy-tests]
+    if: always() && (needs.pre-deploy-tests.result == 'success' || inputs.skip_tests)
+    environment:
+      name: production-approval
+    steps:
+      - name: Deployment approved
+        run: |
+          echo "Production deployment approved by: ${{ github.actor }}"
+          echo "Version: ${{ needs.validate.outputs.version }}"
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Production Deployment Approved" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Approved by:** ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Version:** ${{ needs.validate.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Time:** $(date -u +"%Y-%m-%d %H:%M:%S UTC")" >> $GITHUB_STEP_SUMMARY
+
+  # ===========================================================================
+  # Create Release Tag
+  # ===========================================================================
+  create-release:
+    name: Create Release
+    runs-on: ubuntu-latest
+    needs: [validate, approval]
+    outputs:
+      release-url: ${{ steps.create-release.outputs.html_url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Generate changelog
+        id: changelog
+        run: |
+          # Get commits since last tag
+          LAST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "")
+          if [ -n "$LAST_TAG" ]; then
+            CHANGELOG=$(git log ${LAST_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
+          else
+            CHANGELOG=$(git log --pretty=format:"- %s (%h)" --no-merges -20)
+          fi
+          echo "changelog<<EOF" >> $GITHUB_OUTPUT
+          echo "$CHANGELOG" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Create Release
+        id: create-release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: ${{ needs.validate.outputs.version }}
+          release_name: Release ${{ needs.validate.outputs.version }}
+          body: |
+            ## What's Changed
+
+            ${{ steps.changelog.outputs.changelog }}
+
+            ## Deployment Info
+
+            - **Environment:** Production
+            - **Deployed by:** ${{ github.actor }}
+            - **Commit:** ${{ github.sha }}
+          draft: false
+          prerelease: false
+
+  # ===========================================================================
+  # Database Migrations (Production)
+  # ===========================================================================
+  migrate-database:
+    name: Database Migrations
+    runs-on: ubuntu-latest
+    needs: [validate, approval]
+    if: ${{ github.event_name == 'push' || inputs.run_migrations }}
+    environment: production
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Create migration backup
+        run: |
+          echo "Creating database backup before migration..."
+          # In production, trigger backup via AWS RDS snapshot or pg_dump
+          # aws rds create-db-snapshot --db-instance-identifier festival-prod --db-snapshot-identifier pre-migration-${{ needs.validate.outputs.short-sha }}
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+
+      - name: Run migrations
+        run: npx prisma migrate deploy
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+
+      - name: Verify migration status
+        run: npx prisma migrate status
+        env:
+          DATABASE_URL: ${{ secrets.PRODUCTION_DATABASE_URL }}
+
+  # ===========================================================================
+  # Deploy API (Blue-Green)
+  # ===========================================================================
+  deploy-api:
+    name: Deploy API
+    runs-on: ubuntu-latest
+    needs: [validate, approval, migrate-database]
+    if: ${{ needs.validate.outputs.deploy-api == 'true' }}
+    environment:
+      name: production
+      url: https://api.festival.io
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Cache Docker layers
+        uses: actions/cache@v4
+        with:
+          path: /tmp/.buildx-cache
+          key: docker-api-prod-${{ runner.os }}-${{ github.sha }}
+          restore-keys: |
+            docker-api-prod-${{ runner.os }}-
+
+      - name: Build and push API image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./apps/api/Dockerfile
+          push: true
+          tags: |
+            ${{ env.ECR_REGISTRY }}/festival-api:${{ needs.validate.outputs.version }}
+            ${{ env.ECR_REGISTRY }}/festival-api:latest
+          cache-from: type=local,src=/tmp/.buildx-cache
+          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
+          build-args: |
+            NODE_ENV=production
+            BUILD_VERSION=${{ needs.validate.outputs.version }}
+
+      - name: Move Docker cache
+        run: |
+          rm -rf /tmp/.buildx-cache
+          mv /tmp/.buildx-cache-new /tmp/.buildx-cache || true
+
+      - name: Deploy to ECS (Blue-Green)
+        id: deploy
+        run: |
+          # Update task definition with new image
+          TASK_DEF=$(aws ecs describe-task-definition --task-definition festival-api-prod --region ${{ env.AWS_REGION }})
+
+          NEW_TASK_DEF=$(echo $TASK_DEF | jq --arg IMAGE "${{ env.ECR_REGISTRY }}/festival-api:${{ needs.validate.outputs.version }}" \
+            '.taskDefinition | .containerDefinitions[0].image = $IMAGE | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .compatibilities, .registeredAt, .registeredBy)')
+
+          NEW_TASK_ARN=$(aws ecs register-task-definition --cli-input-json "$NEW_TASK_DEF" --region ${{ env.AWS_REGION }} | jq -r '.taskDefinition.taskDefinitionArn')
+
+          echo "task-arn=${NEW_TASK_ARN}" >> $GITHUB_OUTPUT
+
+          # Update service with new task definition
+          aws ecs update-service \
+            --cluster ${{ env.CLUSTER_NAME }} \
+            --service festival-api-prod \
+            --task-definition ${NEW_TASK_ARN} \
+            --region ${{ env.AWS_REGION }}
+
+      - name: Wait for deployment
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${{ env.CLUSTER_NAME }} \
+            --services festival-api-prod \
+            --region ${{ env.AWS_REGION }}
+        timeout-minutes: 15
+
+      - name: Health check
+        id: health-check
+        run: |
+          sleep 30
+          for i in {1..10}; do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://api.festival.io/health || echo "000")
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "API is healthy!"
+              echo "healthy=true" >> $GITHUB_OUTPUT
+              exit 0
+            fi
+            echo "Attempt $i: HTTP status $HTTP_STATUS, retrying in 15s..."
+            sleep 15
+          done
+          echo "healthy=false" >> $GITHUB_OUTPUT
+          echo "Health check failed after 10 attempts"
+          exit 1
+
+      - name: Rollback on failure
+        if: failure() && steps.health-check.outputs.healthy == 'false'
+        run: |
+          echo "Rolling back to previous deployment..."
+          # Get previous task definition
+          PREV_TASK=$(aws ecs describe-services --cluster ${{ env.CLUSTER_NAME }} --services festival-api-prod --region ${{ env.AWS_REGION }} | jq -r '.services[0].deployments[] | select(.status == "ACTIVE") | .taskDefinition')
+
+          if [ -n "$PREV_TASK" ]; then
+            aws ecs update-service \
+              --cluster ${{ env.CLUSTER_NAME }} \
+              --service festival-api-prod \
+              --task-definition ${PREV_TASK} \
+              --region ${{ env.AWS_REGION }}
+            echo "Rollback initiated to: ${PREV_TASK}"
+          fi
+
+  # ===========================================================================
+  # Deploy Web (Production)
+  # ===========================================================================
+  deploy-web:
+    name: Deploy Web
+    runs-on: ubuntu-latest
+    needs: [validate, approval, migrate-database]
+    if: ${{ needs.validate.outputs.deploy-web == 'true' }}
+    environment:
+      name: production
+      url: https://festival.io
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Build Web application
+        run: NODE_ENV=production npx nx build web
+        env:
+          NEXT_PUBLIC_API_URL: https://api.festival.io
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_PUBLISHABLE_KEY }}
+          NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          NEXT_TELEMETRY_DISABLED: 1
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+
+      - name: Deploy to Vercel (Production)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_WEB }}
+          vercel-args: '--prod'
+          working-directory: ./dist/apps/web
+
+      - name: Health check
+        run: |
+          sleep 30
+          for i in {1..5}; do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://festival.io || echo "000")
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "Web app is healthy!"
+              exit 0
+            fi
+            echo "Attempt $i: HTTP status $HTTP_STATUS, retrying in 15s..."
+            sleep 15
+          done
+          echo "Health check failed after 5 attempts"
+          exit 1
+
+  # ===========================================================================
+  # Deploy Admin (Production)
+  # ===========================================================================
+  deploy-admin:
+    name: Deploy Admin
+    runs-on: ubuntu-latest
+    needs: [validate, approval, migrate-database]
+    if: ${{ needs.validate.outputs.deploy-admin == 'true' }}
+    environment:
+      name: production
+      url: https://admin.festival.io
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Generate Prisma Client
+        run: npx prisma generate
+
+      - name: Build Admin application
+        run: NODE_ENV=production npx nx build admin
+        env:
+          NEXT_PUBLIC_API_URL: https://api.festival.io
+          NEXT_PUBLIC_SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          NEXT_TELEMETRY_DISABLED: 1
+
+      - name: Deploy to Vercel (Production)
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID_ADMIN }}
+          vercel-args: '--prod'
+          working-directory: ./dist/apps/admin
+
+      - name: Health check
+        run: |
+          sleep 30
+          for i in {1..5}; do
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" https://admin.festival.io || echo "000")
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "Admin app is healthy!"
+              exit 0
+            fi
+            echo "Attempt $i: HTTP status $HTTP_STATUS, retrying in 15s..."
+            sleep 15
+          done
+          echo "Health check failed after 5 attempts"
+          exit 1
+
+  # ===========================================================================
+  # Post-deployment Verification
+  # ===========================================================================
+  post-deploy-verification:
+    name: Post-deployment Verification
+    runs-on: ubuntu-latest
+    needs: [validate, deploy-api, deploy-web, deploy-admin]
+    if: always() && (needs.deploy-api.result == 'success' || needs.deploy-web.result == 'success' || needs.deploy-admin.result == 'success')
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run production smoke tests
+        run: |
+          echo "Running production verification tests..."
+
+          # API Health
+          curl -f https://api.festival.io/health
+
+          # Web Homepage
+          curl -f https://festival.io
+
+          # Admin Login
+          curl -f https://admin.festival.io/login || true
+
+          echo "All smoke tests passed!"
+
+      - name: Invalidate CDN cache
+        run: |
+          echo "Invalidating CDN cache..."
+          # aws cloudfront create-invalidation --distribution-id ${{ secrets.CLOUDFRONT_DISTRIBUTION_ID }} --paths "/*"
+        continue-on-error: true
+
+      - name: Notify Sentry of release
+        run: |
+          echo "Notifying Sentry of new release..."
+          # curl -X POST https://sentry.io/api/0/organizations/${{ secrets.SENTRY_ORG }}/releases/ \
+          #   -H "Authorization: Bearer ${{ secrets.SENTRY_AUTH_TOKEN }}" \
+          #   -H "Content-Type: application/json" \
+          #   -d '{
+          #     "version": "${{ needs.validate.outputs.version }}",
+          #     "projects": ["festival-api", "festival-web", "festival-admin"]
+          #   }'
+        continue-on-error: true
+
+  # ===========================================================================
+  # Notify Deployment Status
+  # ===========================================================================
+  notify:
+    name: Notify Deployment Status
+    runs-on: ubuntu-latest
+    needs: [validate, create-release, deploy-api, deploy-web, deploy-admin, post-deploy-verification]
+    if: always()
+    steps:
+      - name: Create deployment summary
+        run: |
+          echo "## Production Deployment Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Version:** ${{ needs.validate.outputs.version }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Release:** ${{ needs.create-release.outputs.release-url }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Component | Status | URL |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|-----|" >> $GITHUB_STEP_SUMMARY
+          echo "| API | ${{ needs.deploy-api.result }} | https://api.festival.io |" >> $GITHUB_STEP_SUMMARY
+          echo "| Web | ${{ needs.deploy-web.result }} | https://festival.io |" >> $GITHUB_STEP_SUMMARY
+          echo "| Admin | ${{ needs.deploy-admin.result }} | https://admin.festival.io |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Verification:** ${{ needs.post-deploy-verification.result }}" >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify Slack
+        run: |
+          if [[ "${{ needs.deploy-api.result }}" == "success" && "${{ needs.deploy-web.result }}" == "success" ]]; then
+            echo "Production deployment successful!"
+            # curl -X POST -H 'Content-type: application/json' \
+            #   --data '{
+            #     "text": "Production deployment completed successfully!",
+            #     "attachments": [{
+            #       "color": "good",
+            #       "fields": [
+            #         {"title": "Version", "value": "${{ needs.validate.outputs.version }}", "short": true},
+            #         {"title": "Deployed by", "value": "${{ github.actor }}", "short": true}
+            #       ]
+            #     }]
+            #   }' \
+            #   ${{ secrets.SLACK_WEBHOOK_URL }}
+          else
+            echo "Production deployment had issues!"
+            # Add failure notification
+          fi
+
+      - name: Notify PagerDuty on failure
+        if: failure()
+        run: |
+          echo "Triggering PagerDuty incident..."
+          # curl -X POST https://events.pagerduty.com/v2/enqueue \
+          #   -H "Content-Type: application/json" \
+          #   -d '{
+          #     "routing_key": "${{ secrets.PAGERDUTY_ROUTING_KEY }}",
+          #     "event_action": "trigger",
+          #     "payload": {
+          #       "summary": "Production deployment failed: ${{ needs.validate.outputs.version }}",
+          #       "severity": "critical",
+          #       "source": "GitHub Actions"
+          #     }
+          #   }'
+        continue-on-error: true

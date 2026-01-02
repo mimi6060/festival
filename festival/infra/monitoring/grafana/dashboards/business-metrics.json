@@ -1,0 +1,913 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": { "type": "grafana", "uid": "-- Grafana --" },
+        "enable": true,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "id": null,
+  "links": [
+    {
+      "asDropdown": true,
+      "icon": "external link",
+      "includeVars": true,
+      "keepTime": true,
+      "tags": ["festival"],
+      "targetBlank": false,
+      "title": "Festival Dashboards",
+      "tooltip": "",
+      "type": "dashboards",
+      "url": ""
+    }
+  ],
+  "liveNow": false,
+  "panels": [
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "id": 100,
+      "panels": [],
+      "title": "Revenue Overview",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "currencyEUR"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+      "id": 1,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "sum(increase(payments_amount_total{currency=\"EUR\"}[$__range])) / 100",
+          "legendFormat": "Total Revenue",
+          "refId": "A"
+        }
+      ],
+      "title": "Total Revenue (Period)",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+      "id": 2,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "sum(increase(tickets_sold_total[$__range]))",
+          "legendFormat": "Tickets Sold",
+          "refId": "A"
+        }
+      ],
+      "title": "Tickets Sold (Period)",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "purple", "value": null }] },
+          "unit": "currencyEUR"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "id": 3,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "sum(increase(cashless_topup_amount_total{currency=\"EUR\"}[$__range])) / 100",
+          "legendFormat": "Cashless Topups",
+          "refId": "A"
+        }
+      ],
+      "title": "Cashless Topups (Period)",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "orange", "value": null }] },
+          "unit": "currencyEUR"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "id": 4,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "sum(increase(vendor_revenue_total{currency=\"EUR\"}[$__range])) / 100",
+          "legendFormat": "Vendor Revenue",
+          "refId": "A"
+        }
+      ],
+      "title": "Vendor Revenue (Period)",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 5 },
+      "id": 101,
+      "panels": [],
+      "title": "Ticket Sales",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 30,
+            "gradientMode": "opacity",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 6 },
+      "id": 10,
+      "options": {
+        "legend": { "calcs": ["sum", "mean"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "tickets:sold:rate5m",
+          "legendFormat": "Tickets/min",
+          "refId": "A"
+        }
+      ],
+      "title": "Ticket Sales Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "normal" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 6 },
+      "id": 11,
+      "options": {
+        "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "sum(increase(tickets_sold_total[1h])) by (ticket_type)",
+          "legendFormat": "{{ticket_type}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Tickets Sold by Type",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Validated" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 14 },
+      "id": 12,
+      "options": {
+        "legend": { "calcs": ["sum", "mean"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "tickets:validated:rate5m",
+          "legendFormat": "Validated/min",
+          "refId": "A"
+        }
+      ],
+      "title": "Ticket Validation Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "yellow", "value": 90 },
+              { "color": "green", "value": 98 }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 6, "x": 12, "y": 14 },
+      "id": 13,
+      "options": {
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "showThresholdLabels": false,
+        "showThresholdMarkers": true
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "payments:success_rate:rate5m",
+          "legendFormat": "Success Rate",
+          "refId": "A"
+        }
+      ],
+      "title": "Payment Success Rate",
+      "type": "gauge"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] },
+          "unit": "currencyEUR"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 14 },
+      "id": 14,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "payments:average_amount_eur",
+          "legendFormat": "Average",
+          "refId": "A"
+        }
+      ],
+      "title": "Average Payment Amount",
+      "type": "stat"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 22 },
+      "id": 102,
+      "panels": [],
+      "title": "Cashless",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 30,
+            "gradientMode": "opacity",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "currencyEUR"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Topups" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Payments" }, "properties": [{ "id": "color", "value": { "fixedColor": "orange", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 23 },
+      "id": 20,
+      "options": {
+        "legend": { "calcs": ["sum", "mean"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "cashless:topup_volume_eur:rate5m * 60",
+          "legendFormat": "Topups",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "cashless:payment_volume_eur:rate5m * 60",
+          "legendFormat": "Payments",
+          "refId": "B"
+        }
+      ],
+      "title": "Cashless Volume (EUR/min)",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 23 },
+      "id": 21,
+      "options": {
+        "legend": { "calcs": ["sum", "mean"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "cashless:usage:rate5m * 60",
+          "legendFormat": "Transactions/min",
+          "refId": "A"
+        }
+      ],
+      "title": "Cashless Transactions Rate",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 31 },
+      "id": 103,
+      "panels": [],
+      "title": "Zones & Attendance",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "blue", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 32 },
+      "id": 30,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "festival:total_attendees",
+          "legendFormat": "Total Attendees",
+          "refId": "A"
+        }
+      ],
+      "title": "Total Current Attendees",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 75 },
+              { "color": "red", "value": 90 }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 32 },
+      "id": 31,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "festival:average_capacity_percentage",
+          "legendFormat": "Capacity",
+          "refId": "A"
+        }
+      ],
+      "title": "Average Capacity",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "thresholds" },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 32 },
+      "id": 32,
+      "options": {
+        "colorMode": "value",
+        "graphMode": "area",
+        "justifyMode": "auto",
+        "orientation": "auto",
+        "reduceOptions": { "calcs": ["sum"], "fields": "", "values": false },
+        "textMode": "auto"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "sum(increase(zone_entries_total[$__range]))",
+          "legendFormat": "Entries",
+          "refId": "A"
+        }
+      ],
+      "title": "Total Zone Entries (Period)",
+      "type": "stat"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": { "hideFrom": { "legend": false, "tooltip": false, "viz": false } },
+          "mappings": [],
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 6, "x": 18, "y": 32 },
+      "id": 33,
+      "options": {
+        "displayLabels": ["name", "percent"],
+        "legend": { "displayMode": "list", "placement": "right", "showLegend": true },
+        "pieType": "pie",
+        "reduceOptions": { "calcs": ["lastNotNull"], "fields": "", "values": false },
+        "tooltip": { "mode": "single", "sort": "none" }
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "zone_occupancy_current",
+          "legendFormat": "{{zone_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Zone Occupancy Distribution",
+      "type": "piechart"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 30,
+            "gradientMode": "opacity",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "line" }
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 80 },
+              { "color": "red", "value": 95 }
+            ]
+          },
+          "unit": "percent"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 36 },
+      "id": 34,
+      "options": {
+        "legend": { "calcs": ["mean", "max"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "zone_occupancy_percentage",
+          "legendFormat": "{{zone_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Zone Capacity Utilization",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": true,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 10,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": [
+          { "matcher": { "id": "byName", "options": "Entries" }, "properties": [{ "id": "color", "value": { "fixedColor": "green", "mode": "fixed" } }] },
+          { "matcher": { "id": "byName", "options": "Exits" }, "properties": [{ "id": "color", "value": { "fixedColor": "red", "mode": "fixed" } }] }
+        ]
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 40 },
+      "id": 35,
+      "options": {
+        "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "zones:entries:rate5m * 60",
+          "legendFormat": "Entries",
+          "refId": "A"
+        },
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "-zones:exits:rate5m * 60",
+          "legendFormat": "Exits",
+          "refId": "B"
+        }
+      ],
+      "title": "Zone Entry/Exit Flow",
+      "type": "timeseries"
+    },
+    {
+      "collapsed": false,
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 48 },
+      "id": 104,
+      "panels": [],
+      "title": "Vendors",
+      "type": "row"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "line",
+            "fillOpacity": 30,
+            "gradientMode": "opacity",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineInterpolation": "smooth",
+            "lineWidth": 2,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "none" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "short"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 49 },
+      "id": 40,
+      "options": {
+        "legend": { "calcs": ["sum", "mean"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "vendors:orders:rate5m * 60",
+          "legendFormat": "Orders/min",
+          "refId": "A"
+        }
+      ],
+      "title": "Vendor Orders Rate",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${datasource}" },
+      "fieldConfig": {
+        "defaults": {
+          "color": { "mode": "palette-classic" },
+          "custom": {
+            "axisCenteredZero": false,
+            "axisColorMode": "text",
+            "axisLabel": "",
+            "axisPlacement": "auto",
+            "barAlignment": 0,
+            "drawStyle": "bars",
+            "fillOpacity": 100,
+            "gradientMode": "none",
+            "hideFrom": { "legend": false, "tooltip": false, "viz": false },
+            "lineInterpolation": "linear",
+            "lineWidth": 1,
+            "pointSize": 5,
+            "scaleDistribution": { "type": "linear" },
+            "showPoints": "never",
+            "spanNulls": false,
+            "stacking": { "group": "A", "mode": "normal" },
+            "thresholdsStyle": { "mode": "off" }
+          },
+          "mappings": [],
+          "thresholds": { "mode": "absolute", "steps": [{ "color": "green", "value": null }] },
+          "unit": "currencyEUR"
+        },
+        "overrides": []
+      },
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 49 },
+      "id": 41,
+      "options": {
+        "legend": { "calcs": ["sum"], "displayMode": "table", "placement": "bottom", "showLegend": true },
+        "tooltip": { "mode": "multi", "sort": "desc" }
+      },
+      "targets": [
+        {
+          "datasource": { "type": "prometheus", "uid": "${datasource}" },
+          "expr": "topk(10, sum(increase(vendor_revenue_total{currency=\"EUR\"}[1h])) by (vendor_id) / 100)",
+          "legendFormat": "{{vendor_id}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Top 10 Vendors by Revenue",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "1m",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["festival", "business", "revenue"],
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": false, "text": "Prometheus", "value": "Prometheus" },
+        "hide": 0,
+        "includeAll": false,
+        "multi": false,
+        "name": "datasource",
+        "options": [],
+        "query": "prometheus",
+        "queryValue": "",
+        "refresh": 1,
+        "regex": "",
+        "skipUrlSync": false,
+        "type": "datasource"
+      },
+      {
+        "allValue": ".*",
+        "current": { "selected": true, "text": "All", "value": "$__all" },
+        "datasource": { "type": "prometheus", "uid": "${datasource}" },
+        "definition": "label_values(tickets_sold_total, festival_id)",
+        "hide": 0,
+        "includeAll": true,
+        "multi": true,
+        "name": "festival",
+        "options": [],
+        "query": { "query": "label_values(tickets_sold_total, festival_id)", "refId": "StandardVariableQuery" },
+        "refresh": 2,
+        "regex": "",
+        "skipUrlSync": false,
+        "sort": 1,
+        "type": "query"
+      }
+    ]
+  },
+  "time": { "from": "now-6h", "to": "now" },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Festival Business Metrics",
+  "uid": "festival-business-metrics",
+  "version": 1,
+  "weekStart": ""
+}

@@ -1,0 +1,490 @@
+{{!--
+  Ticket Reminder Email Template
+  Sent before the event to remind attendees
+
+  Variables:
+  - userName: User's first name
+  - userEmail: User's email address
+  - festivalName: Name of the festival
+  - festivalUrl: Festival website URL
+  - ticketUrl: Link to view/download ticket
+  - orderReference: Order reference number
+  - ticketType: Type/category of ticket
+  - ticketCount: Number of tickets
+  - eventDate: Festival date
+  - eventTime: Opening time
+  - daysUntilEvent: Number of days until the event
+  - venueName: Venue name
+  - venueAddress: Venue full address
+  - venueCity: Venue city
+  - mapUrl: Google Maps or directions URL
+  - programUrl: Link to festival program
+  - faqUrl: Link to FAQ
+  - weatherForecast: Optional weather info
+  - importantInfo: Array of important announcements
+  - cashlessBalance: Current cashless balance (if applicable)
+  - cashlessTopupUrl: Link to top up cashless
+  - qrCodeUrl: QR code image URL
+  - lang_fr: Boolean for French language
+  - primaryColor: Brand primary color
+  - secondaryColor: Brand secondary color
+--}}
+
+{{#if lang_fr}}
+<!-- French Version -->
+{{#ifEquals daysUntilEvent 1}}
+<h1 style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a2e; line-height: 36px;">
+  C'est demain !
+</h1>
+{{else}}
+<h1 style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a2e; line-height: 36px;">
+  Plus que {{daysUntilEvent}} jours !
+</h1>
+{{/ifEquals}}
+
+<p style="margin: 0 0 25px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  Bonjour <strong>{{userName}}</strong>,<br><br>
+  {{festivalName}} approche a grands pas ! Voici tout ce dont vous avez besoin pour profiter pleinement de l'evenement.
+</p>
+
+<!-- Countdown Banner -->
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 25px 0; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, {{primaryColor}} 0%, {{secondaryColor}} 100%);">
+  <tr>
+    <td align="center" style="padding: 30px;">
+      <table border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td align="center">
+            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 48px; font-weight: 800; color: #ffffff; line-height: 1;">
+              {{#ifEquals daysUntilEvent 0}}AUJOURD'HUI{{else}}J-{{daysUntilEvent}}{{/ifEquals}}
+            </p>
+            <p style="margin: 10px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: rgba(255,255,255,0.9);">
+              {{festivalName}}
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<!-- Your Ticket -->
+<h2 style="margin: 30px 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 20px; font-weight: 600; color: #1a1a2e;">
+  &#127915; Votre billet
+</h2>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 25px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid {{primaryColor}};">
+  <tr>
+    <td>
+      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+          <td style="vertical-align: top;">
+            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 18px; color: #1a1a2e; font-weight: 600;">
+              {{ticketType}}
+            </p>
+            <p style="margin: 5px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #666666;">
+              {{ticketCount}} billet{{#if multipleTickets}}s{{/if}} - Ref: {{orderReference}}
+            </p>
+          </td>
+          {{#if qrCodeUrl}}
+          <td align="right" style="width: 80px;">
+            <img src="{{qrCodeUrl}}" alt="QR Code" width="70" height="70" style="display: block; border-radius: 4px;" />
+          </td>
+          {{/if}}
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+{{> button
+  url=ticketUrl
+  text="Voir mon billet"
+  align="center"
+  paddingTop="0"
+  paddingBottom="10"
+}}
+
+<!-- Event Details -->
+<h2 style="margin: 30px 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 20px; font-weight: 600; color: #1a1a2e;">
+  &#128197; Date et lieu
+</h2>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 25px;">
+  <tr>
+    <td style="padding: 15px 0; border-bottom: 1px solid #e0e0e0;">
+      <table border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="width: 45px; vertical-align: top;">
+            <span style="font-size: 24px;">&#128197;</span>
+          </td>
+          <td>
+            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; color: #8c8c8c; text-transform: uppercase; letter-spacing: 0.5px;">
+              Date
+            </p>
+            <p style="margin: 4px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #1a1a2e; font-weight: 500;">
+              {{eventDate}}
+            </p>
+            {{#if eventTime}}
+            <p style="margin: 2px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #666666;">
+              Ouverture des portes : {{eventTime}}
+            </p>
+            {{/if}}
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding: 15px 0;">
+      <table border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="width: 45px; vertical-align: top;">
+            <span style="font-size: 24px;">&#128205;</span>
+          </td>
+          <td>
+            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; color: #8c8c8c; text-transform: uppercase; letter-spacing: 0.5px;">
+              Lieu
+            </p>
+            <p style="margin: 4px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #1a1a2e; font-weight: 500;">
+              {{venueName}}
+            </p>
+            {{#if venueAddress}}
+            <p style="margin: 2px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #666666;">
+              {{venueAddress}}{{#if venueCity}}, {{venueCity}}{{/if}}
+            </p>
+            {{/if}}
+            {{#if mapUrl}}
+            <p style="margin: 8px 0 0 0;">
+              <a href="{{mapUrl}}" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: {{primaryColor}}; text-decoration: none;">
+                Voir sur la carte &#8594;
+              </a>
+            </p>
+            {{/if}}
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<!-- Cashless Balance (if applicable) -->
+{{#if cashlessBalance}}
+<h2 style="margin: 30px 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 20px; font-weight: 600; color: #1a1a2e;">
+  &#128179; Votre compte cashless
+</h2>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px; padding: 20px; background-color: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd;">
+  <tr>
+    <td>
+      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+          <td>
+            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #0369a1;">
+              Solde actuel
+            </p>
+            <p style="margin: 5px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 32px; color: #0284c7; font-weight: 700;">
+              {{formatCurrency cashlessBalance currency}}
+            </p>
+          </td>
+          <td align="right">
+            <a href="{{cashlessTopupUrl}}" style="display: inline-block; padding: 12px 24px; background-color: #0284c7; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 6px;">
+              Recharger
+            </a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+{{/if}}
+
+<!-- Important Info -->
+{{#if importantInfo}}
+<h2 style="margin: 30px 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 20px; font-weight: 600; color: #1a1a2e;">
+  &#9888;&#65039; Informations importantes
+</h2>
+
+{{#each importantInfo}}
+{{> alert
+  type_warning=true
+  message=this
+}}
+{{/each}}
+{{/if}}
+
+<!-- Checklist -->
+{{> info-box
+  title="Checklist avant de partir"
+  icon="&#9989;"
+  content="<ul style='margin: 0; padding-left: 20px;'>
+    <li style='margin-bottom: 8px;'>Telecharger ou imprimer votre billet avec le QR code</li>
+    <li style='margin-bottom: 8px;'>Verifier votre solde cashless et recharger si necessaire</li>
+    <li style='margin-bottom: 8px;'>Consulter le programme et noter vos artistes favoris</li>
+    <li style='margin-bottom: 8px;'>Preparer une piece d'identite valide</li>
+    <li>Verifier la meteo et adapter votre tenue</li>
+  </ul>"
+}}
+
+<!-- Quick Links -->
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 25px 0;">
+  <tr>
+    <td align="center">
+      <table border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          {{#if programUrl}}
+          <td style="padding: 0 10px;">
+            <a href="{{programUrl}}" style="display: inline-block; padding: 12px 20px; background-color: #f8f9fa; color: #1a1a2e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 500; text-decoration: none; border-radius: 6px; border: 1px solid #e0e0e0;">
+              &#127926; Programme
+            </a>
+          </td>
+          {{/if}}
+          {{#if faqUrl}}
+          <td style="padding: 0 10px;">
+            <a href="{{faqUrl}}" style="display: inline-block; padding: 12px 20px; background-color: #f8f9fa; color: #1a1a2e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 500; text-decoration: none; border-radius: 6px; border: 1px solid #e0e0e0;">
+              &#10067; FAQ
+            </a>
+          </td>
+          {{/if}}
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<p style="margin: 30px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  On a hate de vous retrouver !
+</p>
+
+<p style="margin: 20px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #1a1a2e; font-weight: 600;">
+  L'equipe {{festivalName}}
+</p>
+
+{{else}}
+<!-- English Version -->
+{{#ifEquals daysUntilEvent 1}}
+<h1 style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a2e; line-height: 36px;">
+  It's tomorrow!
+</h1>
+{{else}}
+<h1 style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a2e; line-height: 36px;">
+  Only {{daysUntilEvent}} days to go!
+</h1>
+{{/ifEquals}}
+
+<p style="margin: 0 0 25px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  Hello <strong>{{userName}}</strong>,<br><br>
+  {{festivalName}} is almost here! Here's everything you need to make the most of the event.
+</p>
+
+<!-- Countdown Banner -->
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 25px 0; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, {{primaryColor}} 0%, {{secondaryColor}} 100%);">
+  <tr>
+    <td align="center" style="padding: 30px;">
+      <table border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td align="center">
+            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 48px; font-weight: 800; color: #ffffff; line-height: 1;">
+              {{#ifEquals daysUntilEvent 0}}TODAY{{else}}{{daysUntilEvent}} DAYS{{/ifEquals}}
+            </p>
+            <p style="margin: 10px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: rgba(255,255,255,0.9);">
+              {{festivalName}}
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<!-- Your Ticket -->
+<h2 style="margin: 30px 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 20px; font-weight: 600; color: #1a1a2e;">
+  &#127915; Your ticket
+</h2>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 25px; padding: 20px; background-color: #f8f9fa; border-radius: 8px; border-left: 4px solid {{primaryColor}};">
+  <tr>
+    <td>
+      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+          <td style="vertical-align: top;">
+            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 18px; color: #1a1a2e; font-weight: 600;">
+              {{ticketType}}
+            </p>
+            <p style="margin: 5px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #666666;">
+              {{ticketCount}} ticket{{#if multipleTickets}}s{{/if}} - Ref: {{orderReference}}
+            </p>
+          </td>
+          {{#if qrCodeUrl}}
+          <td align="right" style="width: 80px;">
+            <img src="{{qrCodeUrl}}" alt="QR Code" width="70" height="70" style="display: block; border-radius: 4px;" />
+          </td>
+          {{/if}}
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+{{> button
+  url=ticketUrl
+  text="View my ticket"
+  align="center"
+  paddingTop="0"
+  paddingBottom="10"
+}}
+
+<!-- Event Details -->
+<h2 style="margin: 30px 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 20px; font-weight: 600; color: #1a1a2e;">
+  &#128197; Date & Venue
+</h2>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 25px;">
+  <tr>
+    <td style="padding: 15px 0; border-bottom: 1px solid #e0e0e0;">
+      <table border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="width: 45px; vertical-align: top;">
+            <span style="font-size: 24px;">&#128197;</span>
+          </td>
+          <td>
+            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; color: #8c8c8c; text-transform: uppercase; letter-spacing: 0.5px;">
+              Date
+            </p>
+            <p style="margin: 4px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #1a1a2e; font-weight: 500;">
+              {{eventDate}}
+            </p>
+            {{#if eventTime}}
+            <p style="margin: 2px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #666666;">
+              Doors open: {{eventTime}}
+            </p>
+            {{/if}}
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding: 15px 0;">
+      <table border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="width: 45px; vertical-align: top;">
+            <span style="font-size: 24px;">&#128205;</span>
+          </td>
+          <td>
+            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; color: #8c8c8c; text-transform: uppercase; letter-spacing: 0.5px;">
+              Venue
+            </p>
+            <p style="margin: 4px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #1a1a2e; font-weight: 500;">
+              {{venueName}}
+            </p>
+            {{#if venueAddress}}
+            <p style="margin: 2px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #666666;">
+              {{venueAddress}}{{#if venueCity}}, {{venueCity}}{{/if}}
+            </p>
+            {{/if}}
+            {{#if mapUrl}}
+            <p style="margin: 8px 0 0 0;">
+              <a href="{{mapUrl}}" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: {{primaryColor}}; text-decoration: none;">
+                View on map &#8594;
+              </a>
+            </p>
+            {{/if}}
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<!-- Cashless Balance (if applicable) -->
+{{#if cashlessBalance}}
+<h2 style="margin: 30px 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 20px; font-weight: 600; color: #1a1a2e;">
+  &#128179; Your cashless account
+</h2>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 20px; padding: 20px; background-color: #f0f9ff; border-radius: 8px; border: 1px solid #bae6fd;">
+  <tr>
+    <td>
+      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+          <td>
+            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #0369a1;">
+              Current balance
+            </p>
+            <p style="margin: 5px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 32px; color: #0284c7; font-weight: 700;">
+              {{formatCurrency cashlessBalance currency}}
+            </p>
+          </td>
+          <td align="right">
+            <a href="{{cashlessTopupUrl}}" style="display: inline-block; padding: 12px 24px; background-color: #0284c7; color: #ffffff; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; text-decoration: none; border-radius: 6px;">
+              Top up
+            </a>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+{{/if}}
+
+<!-- Important Info -->
+{{#if importantInfo}}
+<h2 style="margin: 30px 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 20px; font-weight: 600; color: #1a1a2e;">
+  &#9888;&#65039; Important information
+</h2>
+
+{{#each importantInfo}}
+{{> alert
+  type_warning=true
+  message=this
+}}
+{{/each}}
+{{/if}}
+
+<!-- Checklist -->
+{{> info-box
+  title="Pre-departure checklist"
+  icon="&#9989;"
+  content="<ul style='margin: 0; padding-left: 20px;'>
+    <li style='margin-bottom: 8px;'>Download or print your ticket with QR code</li>
+    <li style='margin-bottom: 8px;'>Check your cashless balance and top up if needed</li>
+    <li style='margin-bottom: 8px;'>Check the lineup and note your favorite artists</li>
+    <li style='margin-bottom: 8px;'>Prepare a valid ID</li>
+    <li>Check the weather and dress accordingly</li>
+  </ul>"
+}}
+
+<!-- Quick Links -->
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 25px 0;">
+  <tr>
+    <td align="center">
+      <table border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          {{#if programUrl}}
+          <td style="padding: 0 10px;">
+            <a href="{{programUrl}}" style="display: inline-block; padding: 12px 20px; background-color: #f8f9fa; color: #1a1a2e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 500; text-decoration: none; border-radius: 6px; border: 1px solid #e0e0e0;">
+              &#127926; Lineup
+            </a>
+          </td>
+          {{/if}}
+          {{#if faqUrl}}
+          <td style="padding: 0 10px;">
+            <a href="{{faqUrl}}" style="display: inline-block; padding: 12px 20px; background-color: #f8f9fa; color: #1a1a2e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 500; text-decoration: none; border-radius: 6px; border: 1px solid #e0e0e0;">
+              &#10067; FAQ
+            </a>
+          </td>
+          {{/if}}
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+<p style="margin: 30px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  We can't wait to see you!
+</p>
+
+<p style="margin: 20px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #1a1a2e; font-weight: 600;">
+  The {{festivalName}} Team
+</p>
+{{/if}}

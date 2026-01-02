@@ -1,0 +1,432 @@
+# ============================================================================
+# PostgreSQL Exporter Custom Queries
+# Festival Management Platform
+# ============================================================================
+# Custom queries for Prometheus PostgreSQL Exporter
+# These queries expose application-specific metrics
+# ============================================================================
+
+# -----------------------------------------------------------------------------
+# Replication Metrics
+# -----------------------------------------------------------------------------
+pg_replication:
+  query: |
+    SELECT
+      CASE WHEN pg_is_in_recovery() THEN 1 ELSE 0 END AS is_replica,
+      CASE WHEN NOT pg_is_in_recovery() THEN 1 ELSE 0 END AS is_primary,
+      (SELECT count(*) FROM pg_stat_replication) AS replica_count,
+      EXTRACT(EPOCH FROM (now() - pg_last_xact_replay_timestamp())) AS replication_lag_seconds
+  master: true
+  metrics:
+    - is_replica:
+        usage: "GAUGE"
+        description: "Is this server a replica (1) or primary (0)"
+    - is_primary:
+        usage: "GAUGE"
+        description: "Is this server the primary (1) or replica (0)"
+    - replica_count:
+        usage: "GAUGE"
+        description: "Number of connected replicas"
+    - replication_lag_seconds:
+        usage: "GAUGE"
+        description: "Replication lag in seconds"
+
+pg_replication_slots:
+  query: |
+    SELECT
+      slot_name,
+      slot_type,
+      CASE WHEN active THEN 1 ELSE 0 END AS active,
+      pg_wal_lsn_diff(pg_current_wal_lsn(), restart_lsn) AS lag_bytes
+    FROM pg_replication_slots
+  master: true
+  metrics:
+    - slot_name:
+        usage: "LABEL"
+        description: "Replication slot name"
+    - slot_type:
+        usage: "LABEL"
+        description: "Type of replication slot"
+    - active:
+        usage: "GAUGE"
+        description: "Is the slot active"
+    - lag_bytes:
+        usage: "GAUGE"
+        description: "Lag in bytes for this slot"
+
+# -----------------------------------------------------------------------------
+# Connection Pool Metrics
+# -----------------------------------------------------------------------------
+pg_connections:
+  query: |
+    SELECT
+      datname,
+      state,
+      count(*) AS connections
+    FROM pg_stat_activity
+    WHERE datname IS NOT NULL
+    GROUP BY datname, state
+  metrics:
+    - datname:
+        usage: "LABEL"
+        description: "Database name"
+    - state:
+        usage: "LABEL"
+        description: "Connection state"
+    - connections:
+        usage: "GAUGE"
+        description: "Number of connections"
+
+pg_connection_limits:
+  query: |
+    SELECT
+      current_setting('max_connections')::int AS max_connections,
+      (SELECT count(*) FROM pg_stat_activity) AS current_connections,
+      current_setting('superuser_reserved_connections')::int AS reserved_connections
+  metrics:
+    - max_connections:
+        usage: "GAUGE"
+        description: "Maximum allowed connections"
+    - current_connections:
+        usage: "GAUGE"
+        description: "Current active connections"
+    - reserved_connections:
+        usage: "GAUGE"
+        description: "Reserved superuser connections"
+
+# -----------------------------------------------------------------------------
+# Table Statistics
+# -----------------------------------------------------------------------------
+pg_table_stats:
+  query: |
+    SELECT
+      schemaname,
+      relname,
+      seq_scan,
+      seq_tup_read,
+      idx_scan,
+      idx_tup_fetch,
+      n_tup_ins,
+      n_tup_upd,
+      n_tup_del,
+      n_live_tup,
+      n_dead_tup,
+      COALESCE(last_vacuum, '1970-01-01') AS last_vacuum,
+      COALESCE(last_autovacuum, '1970-01-01') AS last_autovacuum,
+      COALESCE(last_analyze, '1970-01-01') AS last_analyze,
+      COALESCE(last_autoanalyze, '1970-01-01') AS last_autoanalyze
+    FROM pg_stat_user_tables
+    WHERE schemaname = 'public'
+    AND relname IN ('User', 'Festival', 'Ticket', 'Payment', 'CashlessTransaction', 'CashlessAccount')
+  metrics:
+    - schemaname:
+        usage: "LABEL"
+        description: "Schema name"
+    - relname:
+        usage: "LABEL"
+        description: "Table name"
+    - seq_scan:
+        usage: "COUNTER"
+        description: "Number of sequential scans"
+    - seq_tup_read:
+        usage: "COUNTER"
+        description: "Rows fetched by sequential scans"
+    - idx_scan:
+        usage: "COUNTER"
+        description: "Number of index scans"
+    - idx_tup_fetch:
+        usage: "COUNTER"
+        description: "Rows fetched by index scans"
+    - n_tup_ins:
+        usage: "COUNTER"
+        description: "Rows inserted"
+    - n_tup_upd:
+        usage: "COUNTER"
+        description: "Rows updated"
+    - n_tup_del:
+        usage: "COUNTER"
+        description: "Rows deleted"
+    - n_live_tup:
+        usage: "GAUGE"
+        description: "Estimated live rows"
+    - n_dead_tup:
+        usage: "GAUGE"
+        description: "Estimated dead rows"
+
+# -----------------------------------------------------------------------------
+# Index Statistics
+# -----------------------------------------------------------------------------
+pg_index_stats:
+  query: |
+    SELECT
+      schemaname,
+      relname,
+      indexrelname,
+      idx_scan,
+      idx_tup_read,
+      idx_tup_fetch,
+      pg_relation_size(indexrelid) AS index_size_bytes
+    FROM pg_stat_user_indexes
+    WHERE schemaname = 'public'
+    ORDER BY idx_scan DESC
+    LIMIT 50
+  metrics:
+    - schemaname:
+        usage: "LABEL"
+        description: "Schema name"
+    - relname:
+        usage: "LABEL"
+        description: "Table name"
+    - indexrelname:
+        usage: "LABEL"
+        description: "Index name"
+    - idx_scan:
+        usage: "COUNTER"
+        description: "Number of index scans"
+    - idx_tup_read:
+        usage: "COUNTER"
+        description: "Index entries read"
+    - idx_tup_fetch:
+        usage: "COUNTER"
+        description: "Rows fetched via index"
+    - index_size_bytes:
+        usage: "GAUGE"
+        description: "Index size in bytes"
+
+# -----------------------------------------------------------------------------
+# Slow Query Metrics (pg_stat_statements)
+# -----------------------------------------------------------------------------
+pg_stat_statements:
+  query: |
+    SELECT
+      queryid::text,
+      LEFT(query, 50) AS query_short,
+      calls,
+      total_exec_time,
+      mean_exec_time,
+      rows,
+      shared_blks_hit,
+      shared_blks_read,
+      blk_read_time,
+      blk_write_time
+    FROM pg_stat_statements
+    WHERE queryid IS NOT NULL
+    ORDER BY total_exec_time DESC
+    LIMIT 20
+  metrics:
+    - queryid:
+        usage: "LABEL"
+        description: "Query ID"
+    - query_short:
+        usage: "LABEL"
+        description: "Truncated query text"
+    - calls:
+        usage: "COUNTER"
+        description: "Number of times executed"
+    - total_exec_time:
+        usage: "COUNTER"
+        description: "Total execution time in ms"
+    - mean_exec_time:
+        usage: "GAUGE"
+        description: "Mean execution time in ms"
+    - rows:
+        usage: "COUNTER"
+        description: "Total rows returned"
+    - shared_blks_hit:
+        usage: "COUNTER"
+        description: "Shared blocks hit in cache"
+    - shared_blks_read:
+        usage: "COUNTER"
+        description: "Shared blocks read from disk"
+    - blk_read_time:
+        usage: "COUNTER"
+        description: "Time spent reading blocks"
+    - blk_write_time:
+        usage: "COUNTER"
+        description: "Time spent writing blocks"
+
+# -----------------------------------------------------------------------------
+# Lock Statistics
+# -----------------------------------------------------------------------------
+pg_locks:
+  query: |
+    SELECT
+      mode,
+      locktype,
+      count(*) AS lock_count,
+      count(*) FILTER (WHERE granted = false) AS waiting_locks
+    FROM pg_locks
+    GROUP BY mode, locktype
+  metrics:
+    - mode:
+        usage: "LABEL"
+        description: "Lock mode"
+    - locktype:
+        usage: "LABEL"
+        description: "Lock type"
+    - lock_count:
+        usage: "GAUGE"
+        description: "Total locks held"
+    - waiting_locks:
+        usage: "GAUGE"
+        description: "Locks waiting to be granted"
+
+pg_deadlocks:
+  query: |
+    SELECT
+      datname,
+      deadlocks
+    FROM pg_stat_database
+    WHERE datname = 'festival'
+  metrics:
+    - datname:
+        usage: "LABEL"
+        description: "Database name"
+    - deadlocks:
+        usage: "COUNTER"
+        description: "Number of deadlocks detected"
+
+# -----------------------------------------------------------------------------
+# WAL Statistics
+# -----------------------------------------------------------------------------
+pg_wal_stats:
+  query: |
+    SELECT
+      pg_wal_lsn_diff(pg_current_wal_lsn(), '0/0') AS wal_position_bytes,
+      (SELECT count(*) FROM pg_ls_waldir()) AS wal_file_count,
+      (SELECT sum(size) FROM pg_ls_waldir()) AS wal_total_size_bytes
+  master: true
+  metrics:
+    - wal_position_bytes:
+        usage: "COUNTER"
+        description: "Current WAL position in bytes"
+    - wal_file_count:
+        usage: "GAUGE"
+        description: "Number of WAL files"
+    - wal_total_size_bytes:
+        usage: "GAUGE"
+        description: "Total WAL size in bytes"
+
+# -----------------------------------------------------------------------------
+# Database Size Metrics
+# -----------------------------------------------------------------------------
+pg_database_size:
+  query: |
+    SELECT
+      datname,
+      pg_database_size(datname) AS size_bytes
+    FROM pg_database
+    WHERE datname NOT IN ('template0', 'template1')
+  metrics:
+    - datname:
+        usage: "LABEL"
+        description: "Database name"
+    - size_bytes:
+        usage: "GAUGE"
+        description: "Database size in bytes"
+
+pg_table_size:
+  query: |
+    SELECT
+      schemaname,
+      relname,
+      pg_total_relation_size(relid) AS total_size_bytes,
+      pg_table_size(relid) AS table_size_bytes,
+      pg_indexes_size(relid) AS indexes_size_bytes
+    FROM pg_stat_user_tables
+    WHERE schemaname = 'public'
+    ORDER BY pg_total_relation_size(relid) DESC
+    LIMIT 20
+  metrics:
+    - schemaname:
+        usage: "LABEL"
+        description: "Schema name"
+    - relname:
+        usage: "LABEL"
+        description: "Table name"
+    - total_size_bytes:
+        usage: "GAUGE"
+        description: "Total relation size"
+    - table_size_bytes:
+        usage: "GAUGE"
+        description: "Table data size"
+    - indexes_size_bytes:
+        usage: "GAUGE"
+        description: "Indexes size"
+
+# -----------------------------------------------------------------------------
+# Festival-Specific Business Metrics
+# -----------------------------------------------------------------------------
+festival_tickets:
+  query: |
+    SELECT
+      status,
+      count(*) AS ticket_count
+    FROM "Ticket"
+    GROUP BY status
+  metrics:
+    - status:
+        usage: "LABEL"
+        description: "Ticket status"
+    - ticket_count:
+        usage: "GAUGE"
+        description: "Number of tickets"
+
+festival_payments:
+  query: |
+    SELECT
+      status,
+      count(*) AS payment_count,
+      COALESCE(sum(amount), 0) AS total_amount
+    FROM "Payment"
+    WHERE "createdAt" >= now() - interval '24 hours'
+    GROUP BY status
+  metrics:
+    - status:
+        usage: "LABEL"
+        description: "Payment status"
+    - payment_count:
+        usage: "GAUGE"
+        description: "Number of payments (last 24h)"
+    - total_amount:
+        usage: "GAUGE"
+        description: "Total payment amount (last 24h)"
+
+festival_cashless:
+  query: |
+    SELECT
+      type,
+      count(*) AS transaction_count,
+      COALESCE(sum(amount), 0) AS total_amount
+    FROM "CashlessTransaction"
+    WHERE "createdAt" >= now() - interval '1 hour'
+    GROUP BY type
+  metrics:
+    - type:
+        usage: "LABEL"
+        description: "Transaction type"
+    - transaction_count:
+        usage: "GAUGE"
+        description: "Number of transactions (last 1h)"
+    - total_amount:
+        usage: "GAUGE"
+        description: "Total transaction amount (last 1h)"
+
+festival_users:
+  query: |
+    SELECT
+      role,
+      status,
+      count(*) AS user_count
+    FROM "User"
+    GROUP BY role, status
+  metrics:
+    - role:
+        usage: "LABEL"
+        description: "User role"
+    - status:
+        usage: "LABEL"
+        description: "User status"
+    - user_count:
+        usage: "GAUGE"
+        description: "Number of users"

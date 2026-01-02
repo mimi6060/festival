@@ -1,0 +1,491 @@
+# =============================================================================
+# Database Migrations - Prisma
+# =============================================================================
+# Manages database migrations across environments
+# Features: Migration status, create migrations, deploy, rollback
+# =============================================================================
+
+name: Database Migrations
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'prisma/**'
+      - '.github/workflows/database-migration.yml'
+  pull_request:
+    branches: [main, develop]
+    paths:
+      - 'prisma/**'
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+      action:
+        description: 'Migration action'
+        required: true
+        default: 'status'
+        type: choice
+        options:
+          - status
+          - deploy
+          - create
+          - reset
+          - seed
+      migration_name:
+        description: 'Migration name (for create action)'
+        required: false
+        type: string
+      force:
+        description: 'Force migration (skip confirmation)'
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: db-migration-${{ inputs.environment || 'ci' }}
+  cancel-in-progress: false
+
+env:
+  NODE_OPTIONS: --max-old-space-size=4096
+
+jobs:
+  # ===========================================================================
+  # Validate Schema Changes (on PR)
+  # ===========================================================================
+  validate-schema:
+    name: Validate Schema
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: festival
+          POSTGRES_PASSWORD: festival_password
+          POSTGRES_DB: festival_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U festival"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_URL: postgresql://festival:festival_password@localhost:5432/festival_test
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Validate Prisma schema
+        run: npx prisma validate
+
+      - name: Check for breaking changes
+        run: |
+          # Get schema diff
+          git diff origin/${{ github.base_ref }}..HEAD -- prisma/schema.prisma > schema_diff.txt
+
+          # Check for dangerous operations
+          if grep -E "(@@delete|DROP|TRUNCATE)" schema_diff.txt 2>/dev/null; then
+            echo "::warning::Potential breaking changes detected in schema"
+            echo "## Schema Changes Detected" >> $GITHUB_STEP_SUMMARY
+            echo '```diff' >> $GITHUB_STEP_SUMMARY
+            cat schema_diff.txt >> $GITHUB_STEP_SUMMARY
+            echo '```' >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Create migration (dry-run)
+        run: |
+          npx prisma migrate dev --name schema_validation --create-only 2>&1 | tee migration_output.txt || true
+
+          if grep -q "Already in sync" migration_output.txt; then
+            echo "Schema is in sync with migrations"
+          elif grep -q "migration" migration_output.txt; then
+            echo "::notice::New migration would be created"
+          fi
+
+      - name: Test migrations
+        run: npx prisma migrate deploy
+
+      - name: Run seed (validation)
+        run: npx prisma db seed
+        continue-on-error: true
+
+      - name: Type check after migration
+        run: npx nx run api:typecheck
+        continue-on-error: true
+
+  # ===========================================================================
+  # Check Migration Status
+  # ===========================================================================
+  migration-status:
+    name: Migration Status (${{ inputs.environment || 'staging' }})
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.action == 'status' }}
+    environment: ${{ inputs.environment }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Check migration status
+        run: |
+          echo "## Migration Status" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          npx prisma migrate status 2>&1 | tee -a $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        env:
+          DATABASE_URL: ${{ secrets[format('{0}_DATABASE_URL', inputs.environment == 'production' && 'PRODUCTION' || inputs.environment == 'staging' && 'STAGING' || 'DEV')] }}
+
+      - name: List pending migrations
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Migrations in Repository" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          ls -la prisma/migrations/ 2>/dev/null | tail -n +2 | tee -a $GITHUB_STEP_SUMMARY || echo "No migrations found"
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+  # ===========================================================================
+  # Create New Migration
+  # ===========================================================================
+  create-migration:
+    name: Create Migration
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.action == 'create' }}
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: festival
+          POSTGRES_PASSWORD: festival_password
+          POSTGRES_DB: festival_dev
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U festival"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    env:
+      DATABASE_URL: postgresql://festival:festival_password@localhost:5432/festival_dev
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Apply existing migrations
+        run: npx prisma migrate deploy
+
+      - name: Create new migration
+        id: create
+        run: |
+          MIGRATION_NAME="${{ inputs.migration_name || 'auto_migration' }}"
+          MIGRATION_NAME=$(echo "$MIGRATION_NAME" | sed 's/[^a-zA-Z0-9_]/_/g')
+
+          echo "Creating migration: $MIGRATION_NAME"
+          npx prisma migrate dev --name "$MIGRATION_NAME" --create-only 2>&1 | tee migration_output.txt
+
+          if grep -q "Already in sync" migration_output.txt; then
+            echo "migration-created=false" >> $GITHUB_OUTPUT
+            echo "No schema changes detected"
+          else
+            echo "migration-created=true" >> $GITHUB_OUTPUT
+            MIGRATION_PATH=$(ls -td prisma/migrations/*/ 2>/dev/null | head -1)
+            echo "migration-path=${MIGRATION_PATH}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Show migration SQL
+        if: steps.create.outputs.migration-created == 'true'
+        run: |
+          echo "## New Migration Created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Path:** ${{ steps.create.outputs.migration-path }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### SQL" >> $GITHUB_STEP_SUMMARY
+          echo '```sql' >> $GITHUB_STEP_SUMMARY
+          cat ${{ steps.create.outputs.migration-path }}/migration.sql >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Commit migration
+        if: steps.create.outputs.migration-created == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add prisma/migrations/
+          git commit -m "chore(db): add migration ${{ inputs.migration_name || 'auto_migration' }}"
+          git push
+
+  # ===========================================================================
+  # Deploy Migrations
+  # ===========================================================================
+  deploy-migration:
+    name: Deploy Migration (${{ inputs.environment }})
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.action == 'deploy' }}
+    environment:
+      name: ${{ inputs.environment }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Check current status
+        run: |
+          echo "Checking migration status before deploy..."
+          npx prisma migrate status || true
+        env:
+          DATABASE_URL: ${{ secrets[format('{0}_DATABASE_URL', inputs.environment == 'production' && 'PRODUCTION' || inputs.environment == 'staging' && 'STAGING' || 'DEV')] }}
+
+      - name: Create database backup
+        if: inputs.environment == 'production'
+        run: |
+          echo "Creating backup before migration..."
+          # For AWS RDS:
+          # aws rds create-db-snapshot \
+          #   --db-instance-identifier festival-prod \
+          #   --db-snapshot-identifier pre-migration-$(date +%Y%m%d%H%M%S)
+          echo "Backup would be created here in production"
+        continue-on-error: true
+
+      - name: Deploy migrations
+        run: |
+          echo "Deploying migrations to ${{ inputs.environment }}..."
+          npx prisma migrate deploy 2>&1 | tee migration_output.txt
+
+          echo "## Migration Deployment" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** Success" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat migration_output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+        env:
+          DATABASE_URL: ${{ secrets[format('{0}_DATABASE_URL', inputs.environment == 'production' && 'PRODUCTION' || inputs.environment == 'staging' && 'STAGING' || 'DEV')] }}
+
+      - name: Verify migration
+        run: |
+          echo "Verifying migration status..."
+          npx prisma migrate status
+        env:
+          DATABASE_URL: ${{ secrets[format('{0}_DATABASE_URL', inputs.environment == 'production' && 'PRODUCTION' || inputs.environment == 'staging' && 'STAGING' || 'DEV')] }}
+
+  # ===========================================================================
+  # Reset Database (Development/Staging only)
+  # ===========================================================================
+  reset-database:
+    name: Reset Database (${{ inputs.environment }})
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.action == 'reset' && inputs.environment != 'production' }}
+    environment:
+      name: ${{ inputs.environment }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Confirm reset
+        if: ${{ !inputs.force }}
+        run: |
+          echo "::warning::Database reset requested for ${{ inputs.environment }}"
+          echo "This will DELETE ALL DATA. Use force=true to confirm."
+
+      - name: Reset database
+        if: ${{ inputs.force }}
+        run: |
+          echo "Resetting database..."
+          npx prisma migrate reset --force 2>&1 | tee reset_output.txt
+
+          echo "## Database Reset" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** Complete" >> $GITHUB_STEP_SUMMARY
+        env:
+          DATABASE_URL: ${{ secrets[format('{0}_DATABASE_URL', inputs.environment == 'staging' && 'STAGING' || 'DEV')] }}
+
+  # ===========================================================================
+  # Seed Database
+  # ===========================================================================
+  seed-database:
+    name: Seed Database (${{ inputs.environment }})
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.action == 'seed' && inputs.environment != 'production' }}
+    environment:
+      name: ${{ inputs.environment }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Seed database
+        run: |
+          echo "Seeding database..."
+          npx prisma db seed 2>&1 | tee seed_output.txt
+
+          echo "## Database Seeding" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Environment:** ${{ inputs.environment }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Status:** Complete" >> $GITHUB_STEP_SUMMARY
+        env:
+          DATABASE_URL: ${{ secrets[format('{0}_DATABASE_URL', inputs.environment == 'staging' && 'STAGING' || 'DEV')] }}
+
+  # ===========================================================================
+  # Block Production Reset
+  # ===========================================================================
+  block-production-reset:
+    name: Block Production Reset
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'workflow_dispatch' && inputs.action == 'reset' && inputs.environment == 'production' }}
+    steps:
+      - name: Block operation
+        run: |
+          echo "::error::Production database reset is BLOCKED"
+          echo "This operation is not allowed on production databases."
+          echo "Contact a database administrator for manual intervention."
+          exit 1
+
+  # ===========================================================================
+  # Auto-deploy on Merge (Staging)
+  # ===========================================================================
+  auto-deploy-staging:
+    name: Auto Deploy to Staging
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/develop' }}
+    environment: staging
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --prefer-offline --no-audit
+
+      - name: Generate Prisma client
+        run: npx prisma generate
+
+      - name: Deploy migrations to staging
+        run: |
+          echo "Auto-deploying migrations to staging..."
+          npx prisma migrate deploy
+
+          echo "## Auto Migration to Staging" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Trigger:** Push to develop" >> $GITHUB_STEP_SUMMARY
+          echo "**Commit:** ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+        env:
+          DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+
+  # ===========================================================================
+  # Notify Migration Status
+  # ===========================================================================
+  notify:
+    name: Notify
+    runs-on: ubuntu-latest
+    needs: [validate-schema, deploy-migration, reset-database, seed-database, auto-deploy-staging]
+    if: always() && (needs.deploy-migration.result == 'success' || needs.deploy-migration.result == 'failure')
+    steps:
+      - name: Notify on success
+        if: needs.deploy-migration.result == 'success'
+        run: |
+          echo "Migration completed successfully!"
+          # curl -X POST -H 'Content-type: application/json' \
+          #   --data '{"text":"Database migration completed for ${{ inputs.environment }}"}' \
+          #   ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Notify on failure
+        if: needs.deploy-migration.result == 'failure'
+        run: |
+          echo "::error::Migration failed!"
+          # curl -X POST -H 'Content-type: application/json' \
+          #   --data '{"text":"ALERT: Database migration FAILED for ${{ inputs.environment }}!"}' \
+          #   ${{ secrets.SLACK_WEBHOOK_URL }}

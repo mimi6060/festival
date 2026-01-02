@@ -1,0 +1,20 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "types": ["react", "node"]
+  },
+  "files": [],
+  "include": [],
+  "references": [
+    {
+      "path": "./tsconfig.lib.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    }
+  ]
+}

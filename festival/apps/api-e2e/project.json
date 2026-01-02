@@ -1,0 +1,23 @@
+{
+  "name": "api-e2e",
+  "$schema": "../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "apps/api-e2e/src",
+  "projectType": "application",
+  "tags": ["scope:api", "type:e2e"],
+  "targets": {
+    "e2e": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "jestConfig": "apps/api-e2e/jest.config.cts",
+        "passWithNoTests": true,
+        "runInBand": true
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint",
+      "outputs": ["{options.outputFile}"]
+    }
+  },
+  "implicitDependencies": ["api"]
+}

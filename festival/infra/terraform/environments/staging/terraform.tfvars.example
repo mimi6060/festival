@@ -1,0 +1,27 @@
+# ============================================================================
+# Festival Platform - Staging Environment Variables Example
+# ============================================================================
+# Copy this file to terraform.tfvars and fill in your values
+# DO NOT commit terraform.tfvars to version control!
+# ============================================================================
+
+# AWS Region
+aws_region = "eu-west-1"
+
+# Database
+database_username = "festival_admin"
+
+# Container images (update with your registry)
+api_image   = "123456789.dkr.ecr.eu-west-1.amazonaws.com/festival/api:staging"
+web_image   = "123456789.dkr.ecr.eu-west-1.amazonaws.com/festival/web:staging"
+admin_image = "123456789.dkr.ecr.eu-west-1.amazonaws.com/festival/admin:staging"
+
+# Domain
+domain_name = "staging.festival.example.com"
+
+# Stripe test keys (use test mode)
+stripe_secret_key     = "sk_test_..."
+stripe_webhook_secret = "whsec_..."
+
+# Alerts
+alert_email = "staging-alerts@example.com"

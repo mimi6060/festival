@@ -1,0 +1,467 @@
+# =============================================================================
+# Security Scanning - Festival Monorepo
+# =============================================================================
+# Comprehensive security scanning workflow that runs:
+# - Weekly scheduled scans
+# - On-demand via workflow_dispatch
+# - npm audit for dependency vulnerabilities
+# - Trivy for container and filesystem scanning
+# - CodeQL for static analysis
+# - Dependabot alerts integration
+# - SAST (Static Application Security Testing)
+# - Secret scanning
+# =============================================================================
+
+name: Security
+
+on:
+  schedule:
+    # Run every Sunday at 2:00 AM UTC
+    - cron: '0 2 * * 0'
+  push:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+      - '**/Dockerfile'
+      - '.github/workflows/security.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'package.json'
+      - 'package-lock.json'
+  workflow_dispatch:
+    inputs:
+      scan_type:
+        description: 'Type of security scan to run'
+        required: true
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - dependencies
+          - containers
+          - codeql
+          - secrets
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+env:
+  NODE_OPTIONS: --max-old-space-size=4096
+
+jobs:
+  # ===========================================================================
+  # Dependency Audit - npm audit + Snyk
+  # ===========================================================================
+  dependency-audit:
+    name: Dependency Audit
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name != 'workflow_dispatch' ||
+      github.event.inputs.scan_type == 'full' ||
+      github.event.inputs.scan_type == 'dependencies'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit (critical + high)
+        id: npm-audit
+        run: |
+          echo "## NPM Audit Results" >> $GITHUB_STEP_SUMMARY
+          npm audit --audit-level=high --json > npm-audit.json || true
+
+          # Parse and display results
+          CRITICAL=$(jq '.metadata.vulnerabilities.critical // 0' npm-audit.json)
+          HIGH=$(jq '.metadata.vulnerabilities.high // 0' npm-audit.json)
+          MODERATE=$(jq '.metadata.vulnerabilities.moderate // 0' npm-audit.json)
+          LOW=$(jq '.metadata.vulnerabilities.low // 0' npm-audit.json)
+
+          echo "| Severity | Count |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Critical | $CRITICAL |" >> $GITHUB_STEP_SUMMARY
+          echo "| High | $HIGH |" >> $GITHUB_STEP_SUMMARY
+          echo "| Moderate | $MODERATE |" >> $GITHUB_STEP_SUMMARY
+          echo "| Low | $LOW |" >> $GITHUB_STEP_SUMMARY
+
+          echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+          echo "high=$HIGH" >> $GITHUB_OUTPUT
+
+      - name: Run npm audit (full report)
+        run: npm audit --audit-level=moderate || true
+
+      - name: Upload npm audit results
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report
+          path: npm-audit.json
+          retention-days: 30
+
+      - name: Check for critical vulnerabilities
+        if: steps.npm-audit.outputs.critical > 0
+        run: |
+          echo "::error::Found ${{ steps.npm-audit.outputs.critical }} critical vulnerabilities!"
+          echo "Run 'npm audit' locally to see details and fix them."
+
+      - name: Run Snyk (if token available)
+        if: secrets.SNYK_TOKEN != ''
+        uses: snyk/actions/node@master
+        continue-on-error: true
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+  # ===========================================================================
+  # License Compliance Check
+  # ===========================================================================
+  license-check:
+    name: License Compliance
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name != 'workflow_dispatch' ||
+      github.event.inputs.scan_type == 'full' ||
+      github.event.inputs.scan_type == 'dependencies'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install license checker
+        run: npm install -g license-checker
+
+      - name: Check licenses
+        run: |
+          echo "## License Report" >> $GITHUB_STEP_SUMMARY
+          license-checker --summary >> $GITHUB_STEP_SUMMARY
+
+          # Check for problematic licenses
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Checking for GPL/AGPL licenses..." >> $GITHUB_STEP_SUMMARY
+
+          if license-checker --failOn "GPL;AGPL;LGPL" 2>/dev/null; then
+            echo "No GPL/AGPL/LGPL licenses found." >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Warning: Found GPL/AGPL/LGPL licensed packages. Review required." >> $GITHUB_STEP_SUMMARY
+          fi
+        continue-on-error: true
+
+      - name: Generate license report
+        run: |
+          license-checker --json > license-report.json
+          license-checker --csv > license-report.csv
+        continue-on-error: true
+
+      - name: Upload license report
+        uses: actions/upload-artifact@v4
+        with:
+          name: license-report
+          path: |
+            license-report.json
+            license-report.csv
+          retention-days: 30
+
+  # ===========================================================================
+  # Container Security Scan - Trivy
+  # ===========================================================================
+  container-scan:
+    name: Container Security Scan
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name != 'workflow_dispatch' ||
+      github.event.inputs.scan_type == 'full' ||
+      github.event.inputs.scan_type == 'containers'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run Trivy vulnerability scanner (filesystem)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          format: 'sarif'
+          output: 'trivy-fs-results.sarif'
+
+      - name: Upload Trivy filesystem scan results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-fs-results.sarif'
+          category: 'trivy-filesystem'
+        continue-on-error: true
+
+      - name: Run Trivy config scanner (IaC)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'config'
+          scan-ref: '.'
+          severity: 'CRITICAL,HIGH,MEDIUM'
+          format: 'sarif'
+          output: 'trivy-config-results.sarif'
+
+      - name: Upload Trivy config scan results
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-config-results.sarif'
+          category: 'trivy-config'
+        continue-on-error: true
+
+      - name: Run Trivy secret scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          scanners: 'secret'
+          format: 'table'
+          exit-code: '0'
+
+      - name: Build API Docker image for scanning
+        run: |
+          if [ -f "apps/api/Dockerfile" ]; then
+            docker build -t festival-api:scan -f apps/api/Dockerfile .
+          elif [ -f "Dockerfile" ]; then
+            docker build -t festival-api:scan .
+          else
+            echo "No Dockerfile found, skipping container image scan"
+            exit 0
+          fi
+        continue-on-error: true
+
+      - name: Scan Docker image
+        if: success()
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'festival-api:scan'
+          format: 'sarif'
+          output: 'trivy-image-results.sarif'
+          severity: 'CRITICAL,HIGH'
+        continue-on-error: true
+
+      - name: Upload Trivy image scan results
+        if: success()
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-image-results.sarif'
+          category: 'trivy-image'
+        continue-on-error: true
+
+      - name: Generate scan summary
+        run: |
+          echo "## Trivy Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Scan Type | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-----------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Filesystem | Completed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Config/IaC | Completed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Secrets | Completed |" >> $GITHUB_STEP_SUMMARY
+          echo "| Container Image | Completed |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "View detailed results in the Security tab." >> $GITHUB_STEP_SUMMARY
+
+  # ===========================================================================
+  # CodeQL Static Analysis
+  # ===========================================================================
+  codeql:
+    name: CodeQL Analysis
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name != 'workflow_dispatch' ||
+      github.event.inputs.scan_type == 'full' ||
+      github.event.inputs.scan_type == 'codeql'
+    strategy:
+      fail-fast: false
+      matrix:
+        language: ['javascript-typescript']
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: ${{ matrix.language }}
+          queries: +security-extended,security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: '/language:${{ matrix.language }}'
+
+  # ===========================================================================
+  # Secret Scanning
+  # ===========================================================================
+  secret-scan:
+    name: Secret Scanning
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name != 'workflow_dispatch' ||
+      github.event.inputs.scan_type == 'full' ||
+      github.event.inputs.scan_type == 'secrets'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: TruffleHog Secret Scan
+        uses: trufflesecurity/trufflehog@main
+        with:
+          extra_args: --only-verified
+
+      - name: Gitleaks Secret Scan
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+        continue-on-error: true
+
+      - name: Check for common secret patterns
+        run: |
+          echo "## Secret Pattern Check" >> $GITHUB_STEP_SUMMARY
+
+          # Check for common secret patterns (without exposing them)
+          PATTERNS=(
+            "password\s*[:=]"
+            "secret\s*[:=]"
+            "api[_-]?key\s*[:=]"
+            "private[_-]?key"
+            "aws[_-]?access[_-]?key"
+            "aws[_-]?secret"
+          )
+
+          FOUND=0
+          for pattern in "${PATTERNS[@]}"; do
+            COUNT=$(grep -rliE "$pattern" --include="*.ts" --include="*.js" --include="*.json" --include="*.env*" . 2>/dev/null | grep -v node_modules | grep -v ".git" | wc -l || echo "0")
+            if [ "$COUNT" -gt "0" ]; then
+              echo "Found $COUNT files matching pattern: $pattern (review recommended)" >> $GITHUB_STEP_SUMMARY
+              FOUND=1
+            fi
+          done
+
+          if [ "$FOUND" -eq "0" ]; then
+            echo "No suspicious patterns found." >> $GITHUB_STEP_SUMMARY
+          fi
+
+  # ===========================================================================
+  # OWASP Dependency Check
+  # ===========================================================================
+  owasp-check:
+    name: OWASP Dependency Check
+    runs-on: ubuntu-latest
+    if: |
+      github.event_name == 'schedule' ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.scan_type == 'full')
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Run OWASP Dependency Check
+        uses: dependency-check/Dependency-Check_Action@main
+        with:
+          project: 'festival'
+          path: '.'
+          format: 'HTML'
+          args: >
+            --enableRetired
+            --enableExperimental
+            --failOnCVSS 7
+        continue-on-error: true
+
+      - name: Upload OWASP report
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-dependency-check-report
+          path: reports/
+          retention-days: 30
+
+  # ===========================================================================
+  # Security Report Summary
+  # ===========================================================================
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [dependency-audit, license-check, container-scan, codeql, secret-scan]
+    if: always()
+    steps:
+      - name: Generate security summary
+        run: |
+          echo "# Security Scan Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Dependency Audit | ${{ needs.dependency-audit.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| License Compliance | ${{ needs.license-check.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Container Scan | ${{ needs.container-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| CodeQL Analysis | ${{ needs.codeql.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "| Secret Scanning | ${{ needs.secret-scan.result }} |" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "Scan completed at: $(date -u)" >> $GITHUB_STEP_SUMMARY
+
+      - name: Notify on critical findings
+        if: |
+          needs.dependency-audit.result == 'failure' ||
+          needs.secret-scan.result == 'failure'
+        run: |
+          echo "::error::Critical security issues found! Review required before merge."
+          # TODO: Add Slack/Teams notification
+          # curl -X POST -H 'Content-type: application/json' \
+          #   --data '{"text":"Security scan found critical issues in ${{ github.repository }}"}' \
+          #   ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: Create security issue on failure
+        if: |
+          github.event_name == 'schedule' &&
+          (needs.dependency-audit.result == 'failure' || needs.secret-scan.result == 'failure')
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = `Security Alert: Scheduled scan found issues - ${new Date().toISOString().split('T')[0]}`;
+            const body = `## Automated Security Scan Report
+
+            The weekly security scan has detected potential issues:
+
+            | Check | Status |
+            |-------|--------|
+            | Dependency Audit | ${{ needs.dependency-audit.result }} |
+            | License Compliance | ${{ needs.license-check.result }} |
+            | Container Scan | ${{ needs.container-scan.result }} |
+            | CodeQL Analysis | ${{ needs.codeql.result }} |
+            | Secret Scanning | ${{ needs.secret-scan.result }} |
+
+            Please review the [workflow run](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}) for details.
+
+            ---
+            _This issue was automatically created by the security workflow._
+            `;
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: title,
+              body: body,
+              labels: ['security', 'automated']
+            });

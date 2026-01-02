@@ -1,0 +1,83 @@
+# =============================================================================
+# CODEOWNERS - Festival Monorepo
+# =============================================================================
+# This file defines code ownership for automatic review requests
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+# =============================================================================
+
+# =============================================================================
+# Default Owners - Apply to all files unless overridden
+# =============================================================================
+* @festival/maintainers
+
+# =============================================================================
+# API Backend (NestJS)
+# =============================================================================
+/api/                           @festival/backend-team @festival/maintainers
+/api/src/auth/                  @festival/security-team @festival/backend-team
+/api/src/payments/              @festival/backend-team @festival/security-team
+/prisma/                        @festival/backend-team @festival/dba-team
+
+# =============================================================================
+# Web Frontend (Next.js)
+# =============================================================================
+/apps/web/                      @festival/frontend-team @festival/maintainers
+/apps/web/src/components/       @festival/frontend-team @festival/design-team
+/apps/web/src/styles/           @festival/design-team @festival/frontend-team
+
+# =============================================================================
+# Admin Dashboard
+# =============================================================================
+/apps/admin/                    @festival/frontend-team @festival/backend-team
+
+# =============================================================================
+# Mobile App (React Native / Expo)
+# =============================================================================
+/apps/mobile/                   @festival/mobile-team @festival/maintainers
+/apps/mobile/ios/               @festival/mobile-team
+/apps/mobile/android/           @festival/mobile-team
+
+# =============================================================================
+# Shared Libraries
+# =============================================================================
+/libs/                          @festival/maintainers
+/libs/shared/types/             @festival/backend-team @festival/frontend-team
+/libs/shared/utils/             @festival/backend-team @festival/frontend-team
+/libs/ui/                       @festival/frontend-team @festival/design-team
+
+# =============================================================================
+# CI/CD & DevOps
+# =============================================================================
+/.github/                       @festival/devops-team @festival/maintainers
+/.github/workflows/             @festival/devops-team
+/.github/CODEOWNERS             @festival/maintainers
+/docker-compose.yml             @festival/devops-team @festival/backend-team
+/**/Dockerfile                  @festival/devops-team
+
+# =============================================================================
+# Configuration Files
+# =============================================================================
+/nx.json                        @festival/maintainers
+/package.json                   @festival/maintainers
+/package-lock.json              @festival/maintainers
+/tsconfig.base.json             @festival/maintainers
+/.env.example                   @festival/devops-team @festival/maintainers
+/eslint.config.mjs              @festival/maintainers
+/.prettierrc                    @festival/maintainers
+
+# =============================================================================
+# Documentation
+# =============================================================================
+/README.md                      @festival/maintainers
+/docs/                          @festival/maintainers
+*.md                            @festival/maintainers
+
+# =============================================================================
+# Security-sensitive Files (Require security team review)
+# =============================================================================
+**/auth/**                      @festival/security-team
+**/security/**                  @festival/security-team
+**/*password*                   @festival/security-team
+**/*secret*                     @festival/security-team
+**/*token*                      @festival/security-team
+**/*credential*                 @festival/security-team
