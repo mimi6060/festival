@@ -867,3 +867,77 @@ festival/
 
 ---
 Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
+
+---
+
+## Phase 15 - Compliance & Legal Documentation (2026-01-02)
+
+### PCI-DSS Documentation
+- [x] Creation docs/compliance/PCI_DSS.md (1000+ lignes)
+  - PCI-DSS v4.0 requirements complets (Req 1-12)
+  - Scope definition et CDE minimization via Stripe
+  - Network security architecture
+  - Secure development guidelines
+  - Access control et authentication requirements
+  - Logging et monitoring requirements
+  - Security testing schedule (ASV, penetration tests)
+  - Implementation checklist
+  - Annual compliance calendar
+
+### SOC 2 Preparation
+- [x] Creation docs/compliance/SOC2_CHECKLIST.md (720+ lignes)
+  - Trust Service Criteria (Security, Availability, Confidentiality, Privacy)
+  - Common Criteria CC1-CC9 avec status implementation
+  - Security controls (S) checklist
+  - Availability controls (A) checklist
+  - Confidentiality controls (C) checklist
+  - Privacy controls (P) checklist
+  - Evidence collection guide et repository structure
+  - Remediation tracker pour gaps identifies
+  - Audit timeline (pre-audit, audit, post-audit)
+  - Control owner matrix
+  - Current readiness score: 62%
+
+### Privacy Policy Template
+- [x] Creation docs/legal/PRIVACY_POLICY.md (350+ lignes)
+  - Master template multi-juridiction (GDPR, CCPA, UK GDPR, LGPD)
+  - Data processing summary tables
+  - Legal bases for processing
+  - Data subject rights documentation
+  - International transfer mechanisms (SCCs)
+  - Data security measures
+  - Breach notification procedures
+  - Children's privacy provisions
+  - Jurisdiction-specific sections (EU, UK, California, Brazil)
+  - Deployment checklist
+
+### Terms of Service Template
+- [x] Creation docs/legal/TERMS_OF_SERVICE.md (600+ lignes)
+  - Complete service agreement framework
+  - Ticket purchase terms et refund policies
+  - Cashless wallet terms et conditions
+  - Camping services terms
+  - User obligations et prohibited conduct
+  - Intellectual property provisions
+  - Liability limitations et disclaimers
+  - Termination procedures
+  - Dispute resolution (mediation, arbitration)
+  - Jurisdiction-specific provisions
+
+### Cookie Policy Template
+- [x] Creation docs/legal/COOKIE_POLICY.md (500+ lignes)
+  - Complete cookie inventory par categorie
+  - Strictly necessary cookies documentation
+  - Analytics cookies (Google Analytics, Mixpanel)
+  - Functional cookies
+  - Advertising/marketing cookies
+  - Mobile app tracking et SDK documentation
+  - Local storage et IndexedDB usage
+  - Third-party cookies disclosure
+  - Consent mechanism implementation guide
+  - Opt-out links et browser settings
+  - International transfer considerations
+  - Cookie audit checklist
+
+---
+Derniere mise a jour: 2026-01-02 - Phase Compliance & Legal Documentation
