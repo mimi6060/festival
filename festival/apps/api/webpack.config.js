@@ -9,6 +9,12 @@ module.exports = {
       devtoolModuleFilenameTemplate: '[absolute-resource-path]',
     }),
   },
+  // Fix circular dependency issues with @nestjs/swagger decorators
+  // The concatenateModules optimization can cause "Cannot access 'X' before initialization"
+  // errors when there are circular references between modules (common with decorators)
+  optimization: {
+    concatenateModules: false,
+  },
   plugins: [
     new NxAppWebpackPlugin({
       target: 'node',
