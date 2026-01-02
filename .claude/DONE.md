@@ -940,4 +940,67 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - Cookie audit checklist
 
 ---
-Derniere mise a jour: 2026-01-02 - Phase Compliance & Legal Documentation
+
+## Phase 16 - API Backend Advanced (2026-01-02)
+
+### Intercepteur de Compression
+- [x] Creation apps/api/src/common/interceptors/compression.interceptor.ts
+  - Support gzip, deflate, brotli
+  - Detection automatique Accept-Encoding
+  - Seuil configurable (default 1KB)
+  - Filtrage par MIME type
+  - Decorateur @SkipCompression()
+  - EnhancedCompressionInterceptor avec metadata support
+
+### Versioning API
+- [x] Creation apps/api/src/common/versioning/
+  - api-version.decorator.ts: @V1Only, @V2Only, @AllVersions, @V1Controller, @V2Controller
+  - api-version.guard.ts: Validation version header/query/path
+  - api-version.interceptor.ts: Headers reponse et deprecation warnings
+  - Support multiple strategies (URL path, header, query parameter)
+  - Configuration deprecation avec sunset dates
+
+### Bulk Operations
+- [x] Creation apps/api/src/common/bulk/
+  - bulk-operation.dto.ts: BulkOperationDto, BulkDeleteDto, BulkUpdateDto, BulkImportDto, BulkExportDto
+  - bulk-operation.service.ts: Batch processing, concurrency, continue-on-error
+  - bulk-operation.controller.ts: Endpoints generiques
+  - bulk-operation.module.ts: Module global
+  - Support jusqu'a 1000 items par operation
+  - Progress tracking et error summary
+
+### Module Queue BullMQ
+- [x] Creation apps/api/src/modules/queue/
+  - queue.types.ts: 12 queues specialisees (email, notification, payment, ticket, pdf, analytics, cashless, webhook, report, export, import, maintenance)
+  - queue.service.ts: Service central avec workers, retry, scheduling cron
+  - queue.controller.ts: Endpoints admin (stats, pause, resume, retry, clear)
+  - processors/email.processor.ts: Traitement emails
+  - processors/notification.processor.ts: Push/in-app/SMS
+  - queue.module.ts: Module global avec auto-registration
+
+### Validateurs DTO Avances
+- [x] Creation apps/api/src/common/validators/custom.validators.ts (15+ validators)
+  - IsPhoneE164 - Format E.164 international
+  - IsSecureUrl - HTTPS uniquement
+  - IsSlug - URLs propres
+  - IsCurrencyCode - ISO 4217
+  - IsMonetaryAmount - Precision decimale, min/max
+  - IsFutureDate - Date future
+  - IsAfterDate - Date apres une autre
+  - IsLatitude, IsLongitude - Coordonnees GPS
+  - IsHexColor - Codes couleur
+  - IsNfcTagUid - UIDs NFC valides
+  - IsFileExtension - Extensions fichiers
+  - RequiredWith - Validation conditionnelle
+  - IsIBAN - Comptes bancaires
+
+### DTOs Enrichis
+- [x] Creation apps/api/src/common/dto/enhanced.dto.ts
+  - CreateFestivalEnhancedDto - 20+ champs valides
+  - CreateTicketCategoryEnhancedDto - Categories billets completes
+  - CashlessTopupEnhancedDto, CashlessPaymentEnhancedDto
+  - ZoneAccessCheckEnhancedDto avec GpsCoordinatesDto
+  - CreateStaffMemberEnhancedDto - Gestion staff complete
+
+---
+Derniere mise a jour: 2026-01-02 - Phase API Backend Advanced
