@@ -164,7 +164,14 @@ export const SettingsScreen: React.FC = () => {
       >
         {/* Header */}
         <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
           <Text style={styles.title}>Parametres</Text>
+          <View style={styles.placeholder} />
         </View>
 
         {/* Notifications */}
@@ -477,12 +484,30 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.xxl,
   },
   header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingTop: spacing.md,
     paddingBottom: spacing.lg,
   },
-  title: {
-    ...typography.h1,
+  backButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: colors.surface,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  backIcon: {
+    fontSize: 24,
     color: colors.text,
+  },
+  title: {
+    ...typography.h2,
+    color: colors.text,
+  },
+  placeholder: {
+    width: 40,
   },
   section: {
     marginBottom: spacing.lg,
