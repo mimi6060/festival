@@ -1,0 +1,368 @@
+{{!--
+  Cashless Low Balance Alert Email Template
+  Sent when user's cashless balance falls below a threshold
+
+  Variables:
+  - userName: User's first name
+  - userEmail: User's email address
+  - festivalName: Name of the festival
+  - festivalUrl: Festival website URL
+  - currentBalance: Current cashless balance
+  - currency: Currency code (EUR, USD, etc.)
+  - threshold: Balance threshold that triggered the alert
+  - lastTransaction: Last transaction details (optional)
+    - type: Transaction type (payment, purchase)
+    - amount: Transaction amount
+    - vendor: Vendor name
+    - date: Transaction date
+  - recentTransactions: Array of recent transactions (optional)
+    - type: Transaction type
+    - amount: Transaction amount
+    - vendor: Vendor name
+    - date: Transaction date
+  - topupUrl: Link to top up cashless account
+  - dashboardUrl: Link to user dashboard
+  - suggestedAmount: Suggested top-up amount
+  - topupOptions: Array of quick top-up amounts
+  - festivalEndDate: Festival end date
+  - lang_fr: Boolean for French language
+  - primaryColor: Brand primary color
+  - secondaryColor: Brand secondary color
+--}}
+
+{{#if lang_fr}}
+<!-- French Version -->
+<h1 style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a2e; line-height: 36px;">
+  Solde cashless faible
+</h1>
+
+<p style="margin: 0 0 25px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  Bonjour <strong>{{userName}}</strong>,<br><br>
+  Votre solde cashless pour <strong>{{festivalName}}</strong> est passe en dessous de {{formatCurrency threshold currency}}. Pensez a recharger pour continuer a profiter du festival sans interruption !
+</p>
+
+<!-- Warning Alert -->
+{{> alert
+  type_warning=true
+  icon="&#9888;&#65039;"
+  title="Solde bas detecte"
+  message="Votre solde actuel pourrait ne pas suffire pour vos prochains achats."
+}}
+
+<!-- Balance Card -->
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 25px 0; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+  <tr>
+    <td align="center" style="padding: 30px;">
+      <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: rgba(255,255,255,0.9); text-transform: uppercase; letter-spacing: 1px;">
+        Solde actuel
+      </p>
+      <p style="margin: 10px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 48px; font-weight: 800; color: #ffffff; line-height: 1;">
+        {{formatCurrency currentBalance currency}}
+      </p>
+      <p style="margin: 15px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: rgba(255,255,255,0.8);">
+        Seuil d'alerte : {{formatCurrency threshold currency}}
+      </p>
+    </td>
+  </tr>
+</table>
+
+<!-- Quick Top-up Options -->
+<h2 style="margin: 30px 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 20px; font-weight: 600; color: #1a1a2e;">
+  &#128179; Recharger rapidement
+</h2>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 25px;">
+  <tr>
+    {{#each topupOptions}}
+    <td align="center" style="padding: 5px;">
+      <a href="{{../topupUrl}}?amount={{this}}" style="display: block; padding: 15px 20px; background-color: #f8f9fa; color: #1a1a2e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; text-decoration: none; border-radius: 8px; border: 2px solid #e0e0e0;">
+        +{{formatCurrency this ../currency}}
+      </a>
+    </td>
+    {{/each}}
+  </tr>
+</table>
+
+<!-- Main CTA -->
+{{> button
+  url=topupUrl
+  text="Recharger mon compte"
+  align="center"
+  showFallback=true
+}}
+
+<!-- Last Transaction -->
+{{#if lastTransaction}}
+<h2 style="margin: 30px 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 20px; font-weight: 600; color: #1a1a2e;">
+  &#128230; Derniere transaction
+</h2>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 25px; padding: 20px; background-color: #f8f9fa; border-radius: 8px;">
+  <tr>
+    <td>
+      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+          <td>
+            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #1a1a2e; font-weight: 600;">
+              {{lastTransaction.vendor}}
+            </p>
+            <p style="margin: 4px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #666666;">
+              {{formatDate lastTransaction.date 'datetime'}}
+            </p>
+          </td>
+          <td align="right">
+            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 18px; color: #dc2626; font-weight: 600;">
+              -{{formatCurrency lastTransaction.amount currency}}
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+{{/if}}
+
+<!-- Recent Transactions -->
+{{#if recentTransactions}}
+<h2 style="margin: 30px 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 20px; font-weight: 600; color: #1a1a2e;">
+  &#128203; Transactions recentes
+</h2>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 25px; background-color: #f8f9fa; border-radius: 8px; overflow: hidden;">
+  {{#each recentTransactions}}
+  <tr>
+    <td style="padding: 15px 20px; {{#unless @last}}border-bottom: 1px solid #e0e0e0;{{/unless}}">
+      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+          <td style="width: 40px; vertical-align: middle;">
+            <span style="display: inline-block; width: 32px; height: 32px; background-color: {{#ifEquals type 'topup'}}#dcfce7{{else}}#fee2e2{{/ifEquals}}; border-radius: 50%; text-align: center; line-height: 32px; font-size: 16px;">
+              {{#ifEquals type 'topup'}}&#8593;{{else}}&#8595;{{/ifEquals}}
+            </span>
+          </td>
+          <td>
+            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #1a1a2e; font-weight: 500;">
+              {{vendor}}
+            </p>
+            <p style="margin: 2px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; color: #8c8c8c;">
+              {{formatDate date 'short'}}
+            </p>
+          </td>
+          <td align="right">
+            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; color: {{#ifEquals type 'topup'}}#16a34a{{else}}#dc2626{{/ifEquals}};">
+              {{#ifEquals type 'topup'}}+{{else}}-{{/ifEquals}}{{formatCurrency amount ../currency}}
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  {{/each}}
+</table>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr>
+    <td align="center">
+      <a href="{{dashboardUrl}}" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: {{primaryColor}}; text-decoration: none;">
+        Voir tout l'historique &#8594;
+      </a>
+    </td>
+  </tr>
+</table>
+{{/if}}
+
+<!-- Tips -->
+{{> info-box
+  title="Conseil"
+  icon="&#128161;"
+  content="<p style='margin: 0;'>Pour eviter les interruptions, nous vous recommandons de maintenir un solde minimum de <strong>{{formatCurrency suggestedAmount currency}}</strong> pour le reste du festival.</p>"
+}}
+
+<!-- Reminder about festival end -->
+{{#if festivalEndDate}}
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 25px 0; padding: 15px 20px; background-color: #eff6ff; border-radius: 8px; border: 1px solid #bfdbfe;">
+  <tr>
+    <td>
+      <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #1e40af;">
+        &#128712; <strong>Rappel :</strong> Le festival se termine le {{formatDate festivalEndDate 'long'}}. Tout solde non utilise pourra etre rembourse dans les 30 jours suivant la fin de l'evenement.
+      </p>
+    </td>
+  </tr>
+</table>
+{{/if}}
+
+<p style="margin: 30px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  Profitez bien du festival !
+</p>
+
+<p style="margin: 20px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #1a1a2e; font-weight: 600;">
+  L'equipe {{festivalName}}
+</p>
+
+{{else}}
+<!-- English Version -->
+<h1 style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a2e; line-height: 36px;">
+  Low cashless balance
+</h1>
+
+<p style="margin: 0 0 25px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  Hello <strong>{{userName}}</strong>,<br><br>
+  Your cashless balance for <strong>{{festivalName}}</strong> has dropped below {{formatCurrency threshold currency}}. Consider topping up to keep enjoying the festival without interruption!
+</p>
+
+<!-- Warning Alert -->
+{{> alert
+  type_warning=true
+  icon="&#9888;&#65039;"
+  title="Low balance detected"
+  message="Your current balance may not be enough for your next purchases."
+}}
+
+<!-- Balance Card -->
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 25px 0; border-radius: 12px; overflow: hidden; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+  <tr>
+    <td align="center" style="padding: 30px;">
+      <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: rgba(255,255,255,0.9); text-transform: uppercase; letter-spacing: 1px;">
+        Current balance
+      </p>
+      <p style="margin: 10px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 48px; font-weight: 800; color: #ffffff; line-height: 1;">
+        {{formatCurrency currentBalance currency}}
+      </p>
+      <p style="margin: 15px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: rgba(255,255,255,0.8);">
+        Alert threshold: {{formatCurrency threshold currency}}
+      </p>
+    </td>
+  </tr>
+</table>
+
+<!-- Quick Top-up Options -->
+<h2 style="margin: 30px 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 20px; font-weight: 600; color: #1a1a2e;">
+  &#128179; Quick top-up
+</h2>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 25px;">
+  <tr>
+    {{#each topupOptions}}
+    <td align="center" style="padding: 5px;">
+      <a href="{{../topupUrl}}?amount={{this}}" style="display: block; padding: 15px 20px; background-color: #f8f9fa; color: #1a1a2e; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; text-decoration: none; border-radius: 8px; border: 2px solid #e0e0e0;">
+        +{{formatCurrency this ../currency}}
+      </a>
+    </td>
+    {{/each}}
+  </tr>
+</table>
+
+<!-- Main CTA -->
+{{> button
+  url=topupUrl
+  text="Top up my account"
+  align="center"
+  showFallback=true
+}}
+
+<!-- Last Transaction -->
+{{#if lastTransaction}}
+<h2 style="margin: 30px 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 20px; font-weight: 600; color: #1a1a2e;">
+  &#128230; Last transaction
+</h2>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 25px; padding: 20px; background-color: #f8f9fa; border-radius: 8px;">
+  <tr>
+    <td>
+      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+          <td>
+            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #1a1a2e; font-weight: 600;">
+              {{lastTransaction.vendor}}
+            </p>
+            <p style="margin: 4px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #666666;">
+              {{formatDate lastTransaction.date 'datetime'}}
+            </p>
+          </td>
+          <td align="right">
+            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 18px; color: #dc2626; font-weight: 600;">
+              -{{formatCurrency lastTransaction.amount currency}}
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+{{/if}}
+
+<!-- Recent Transactions -->
+{{#if recentTransactions}}
+<h2 style="margin: 30px 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 20px; font-weight: 600; color: #1a1a2e;">
+  &#128203; Recent transactions
+</h2>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 25px; background-color: #f8f9fa; border-radius: 8px; overflow: hidden;">
+  {{#each recentTransactions}}
+  <tr>
+    <td style="padding: 15px 20px; {{#unless @last}}border-bottom: 1px solid #e0e0e0;{{/unless}}">
+      <table border="0" cellpadding="0" cellspacing="0" width="100%">
+        <tr>
+          <td style="width: 40px; vertical-align: middle;">
+            <span style="display: inline-block; width: 32px; height: 32px; background-color: {{#ifEquals type 'topup'}}#dcfce7{{else}}#fee2e2{{/ifEquals}}; border-radius: 50%; text-align: center; line-height: 32px; font-size: 16px;">
+              {{#ifEquals type 'topup'}}&#8593;{{else}}&#8595;{{/ifEquals}}
+            </span>
+          </td>
+          <td>
+            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #1a1a2e; font-weight: 500;">
+              {{vendor}}
+            </p>
+            <p style="margin: 2px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 12px; color: #8c8c8c;">
+              {{formatDate date 'short'}}
+            </p>
+          </td>
+          <td align="right">
+            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; font-weight: 600; color: {{#ifEquals type 'topup'}}#16a34a{{else}}#dc2626{{/ifEquals}};">
+              {{#ifEquals type 'topup'}}+{{else}}-{{/ifEquals}}{{formatCurrency amount ../currency}}
+            </p>
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  {{/each}}
+</table>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%">
+  <tr>
+    <td align="center">
+      <a href="{{dashboardUrl}}" style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: {{primaryColor}}; text-decoration: none;">
+        View full history &#8594;
+      </a>
+    </td>
+  </tr>
+</table>
+{{/if}}
+
+<!-- Tips -->
+{{> info-box
+  title="Tip"
+  icon="&#128161;"
+  content="<p style='margin: 0;'>To avoid interruptions, we recommend keeping a minimum balance of <strong>{{formatCurrency suggestedAmount currency}}</strong> for the rest of the festival.</p>"
+}}
+
+<!-- Reminder about festival end -->
+{{#if festivalEndDate}}
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 25px 0; padding: 15px 20px; background-color: #eff6ff; border-radius: 8px; border: 1px solid #bfdbfe;">
+  <tr>
+    <td>
+      <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #1e40af;">
+        &#128712; <strong>Reminder:</strong> The festival ends on {{formatDate festivalEndDate 'long'}}. Any unused balance can be refunded within 30 days after the event.
+      </p>
+    </td>
+  </tr>
+</table>
+{{/if}}
+
+<p style="margin: 30px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  Enjoy the festival!
+</p>
+
+<p style="margin: 20px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #1a1a2e; font-weight: 600;">
+  The {{festivalName}} Team
+</p>
+{{/if}}
