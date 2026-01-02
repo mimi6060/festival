@@ -83,14 +83,7 @@ describe('AuthService', () => {
   };
 
   beforeEach(async () => {
-    // Reset specific mocks without clearing ConfigService (needed for constructor)
-    mockPrismaService.user.findUnique.mockReset();
-    mockPrismaService.user.findFirst.mockReset();
-    mockPrismaService.user.create.mockReset();
-    mockPrismaService.user.update.mockReset();
-    mockPrismaService.user.count.mockReset();
-    mockJwtService.signAsync.mockReset();
-    mockJwtService.verify.mockReset();
+    jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
