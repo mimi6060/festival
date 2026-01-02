@@ -1,96 +1,376 @@
-# Festival
+# Festival Management Platform
 
-<a alt="Nx logo" href="https://nx.dev" target="_blank" rel="noreferrer"><img src="https://raw.githubusercontent.com/nrwl/nx/master/images/nx-logo.png" width="45"></a>
+A comprehensive, multi-tenant festival management platform designed to handle events from 10,000 to 500,000+ attendees. Built with modern technologies and best practices for scalability, security, and reliability.
 
-✨ Your new, shiny [Nx workspace](https://nx.dev) is ready ✨.
+## Features
 
-[Learn more about this workspace setup and its capabilities](https://nx.dev/getting-started/intro#learn-nx?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects) or run `npx nx graph` to visually explore what was created. Now, let's get you up to speed!
+- **Ticketing System**: Multiple ticket categories, QR code generation, real-time validation
+- **Payment Processing**: Secure Stripe integration, refunds, invoicing
+- **Cashless Payments**: Digital wallet, NFC wristband support, real-time balance
+- **Access Control**: Zone management, capacity tracking, staff scanning
+- **Staff Management**: Shift scheduling, check-in/out, badge generation
+- **Program Management**: Artists, stages, performances, favorites
+- **Camping/Accommodation**: Zone booking, spot assignment, vehicle management
+- **Vendor Management**: Food & merchandise, inventory, sales tracking
+- **Real-time Notifications**: Push notifications, in-app messaging, email
+- **Analytics Dashboard**: KPIs, revenue tracking, attendance metrics
+- **Multi-language Support**: French, English (extensible)
 
-## Run tasks
+## Tech Stack
 
-To run tasks with Nx use:
+| Layer | Technologies |
+|-------|-------------|
+| **Frontend Web** | Next.js 15, React 19, Tailwind CSS, next-intl |
+| **Admin Dashboard** | Next.js, React, Recharts, DataTables |
+| **Mobile App** | React Native, Expo, AsyncStorage |
+| **Backend API** | NestJS, Prisma, PostgreSQL, Redis |
+| **Authentication** | JWT, Passport.js, RBAC |
+| **Payments** | Stripe Checkout, Webhooks |
+| **Real-time** | WebSocket, Socket.io |
+| **Email** | Nodemailer, Handlebars templates |
+| **PDF Generation** | PDFKit |
+| **Monitoring** | Prometheus, Sentry |
+| **CI/CD** | GitHub Actions |
+| **Infrastructure** | Docker, Kubernetes-ready |
 
-```sh
-npx nx <target> <project-name>
+## Architecture
+
+```
+festival/
+├── apps/
+│   ├── api/                 # NestJS Backend API
+│   ├── web/                 # Next.js Public Website
+│   ├── admin/               # Next.js Admin Dashboard
+│   ├── mobile/              # React Native Mobile App
+│   └── api-e2e/             # End-to-end tests
+├── libs/
+│   └── shared/
+│       ├── types/           # TypeScript types
+│       ├── utils/           # Utility functions
+│       ├── constants/       # Shared constants
+│       ├── i18n/            # Internationalization
+│       ├── validation/      # Zod schemas
+│       ├── hooks/           # React hooks
+│       └── api-client/      # API client
+├── prisma/
+│   ├── schema.prisma        # Database schema
+│   └── seed.ts              # Seed data
+├── docs/
+│   ├── api/                 # API documentation
+│   ├── security/            # Security documentation
+│   └── compliance/          # GDPR, PCI-DSS docs
+└── docker-compose.yml       # Local development
 ```
 
-For example:
+## Quick Start
 
-```sh
-npx nx build myproject
+### Prerequisites
+
+- Node.js 20+
+- pnpm 8+ (recommended) or npm
+- Docker & Docker Compose
+- PostgreSQL 15+ (or use Docker)
+- Redis 7+ (or use Docker)
+
+### 1. Clone and Install
+
+```bash
+git clone https://github.com/your-org/festival-platform.git
+cd festival-platform/festival
+
+# Install dependencies
+pnpm install
+# or
+npm install
 ```
 
-These targets are either [inferred automatically](https://nx.dev/concepts/inferred-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) or defined in the `project.json` or `package.json` files.
+### 2. Environment Setup
 
-[More about running tasks in the docs &raquo;](https://nx.dev/features/run-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+```bash
+# Copy environment template
+cp .env.example .env.development
 
-## Add new projects
-
-While you could add new projects to your workspace manually, you might want to leverage [Nx plugins](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) and their [code generation](https://nx.dev/features/generate-code?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) feature.
-
-To install a new plugin you can use the `nx add` command. Here's an example of adding the React plugin:
-```sh
-npx nx add @nx/react
+# Edit .env.development with your values
+# Required: DATABASE_URL, JWT_SECRET, STRIPE_SECRET_KEY
 ```
 
-Use the plugin's generator to create new projects. For example, to create a new React app or library:
+### 3. Start Infrastructure
 
-```sh
-# Generate an app
-npx nx g @nx/react:app demo
+```bash
+# Start PostgreSQL, Redis, and MailDev
+docker-compose up -d
 
-# Generate a library
-npx nx g @nx/react:lib some-lib
+# Verify services are running
+docker-compose ps
 ```
 
-You can use `npx nx list` to get a list of installed plugins. Then, run `npx nx list <plugin-name>` to learn about more specific capabilities of a particular plugin. Alternatively, [install Nx Console](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) to browse plugins and generators in your IDE.
+### 4. Database Setup
 
-[Learn more about Nx plugins &raquo;](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) | [Browse the plugin registry &raquo;](https://nx.dev/plugin-registry?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+```bash
+# Generate Prisma client
+npx prisma generate
 
-## Set up CI!
+# Run migrations
+npx prisma migrate dev
 
-### Step 1
-
-To connect to Nx Cloud, run the following command:
-
-```sh
-npx nx connect
+# Seed database with sample data
+npx prisma db seed
 ```
 
-Connecting to Nx Cloud ensures a [fast and scalable CI](https://nx.dev/ci/intro/why-nx-cloud?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects) pipeline. It includes features such as:
+### 5. Start Development Servers
 
-- [Remote caching](https://nx.dev/ci/features/remote-cache?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task distribution across multiple machines](https://nx.dev/ci/features/distribute-task-execution?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Automated e2e test splitting](https://nx.dev/ci/features/split-e2e-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Task flakiness detection and rerunning](https://nx.dev/ci/features/flaky-tasks?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+```bash
+# Start API server (port 3333)
+npx nx serve api
 
-### Step 2
+# In another terminal, start web app (port 3000)
+npx nx serve web
 
-Use the following command to configure a CI workflow for your workspace:
-
-```sh
-npx nx g ci-workflow
+# In another terminal, start admin dashboard (port 4200)
+npx nx serve admin
 ```
 
-[Learn more about Nx on CI](https://nx.dev/ci/intro/ci-with-nx#ready-get-started-with-your-provider?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### 6. Access Applications
 
-## Install Nx Console
+| Application | URL | Description |
+|-------------|-----|-------------|
+| API | http://localhost:3333/api | Backend API |
+| API Docs | http://localhost:3333/api/docs | Swagger documentation |
+| Web | http://localhost:3000 | Public website |
+| Admin | http://localhost:4200 | Admin dashboard |
+| MailDev | http://localhost:1080 | Email testing UI |
 
-Nx Console is an editor extension that enriches your developer experience. It lets you run tasks, generate code, and improves code autocompletion in your IDE. It is available for VSCode and IntelliJ.
+## API Documentation
 
-[Install Nx Console &raquo;](https://nx.dev/getting-started/editor-setup?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### Interactive Documentation
 
-## Useful links
+The API is fully documented with Swagger/OpenAPI:
 
-Learn more:
+- **Swagger UI**: http://localhost:3333/api/docs
+- **OpenAPI JSON**: http://localhost:3333/api/docs-json
 
-- [Learn more about this workspace setup](https://nx.dev/getting-started/intro#learn-nx?utm_source=nx_project&amp;utm_medium=readme&amp;utm_campaign=nx_projects)
-- [Learn about Nx on CI](https://nx.dev/ci/intro/ci-with-nx?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [Releasing Packages with Nx release](https://nx.dev/features/manage-releases?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
-- [What are Nx plugins?](https://nx.dev/concepts/nx-plugins?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+### API Guide
 
-And join the Nx community:
-- [Discord](https://go.nx.dev/community)
-- [Follow us on X](https://twitter.com/nxdevtools) or [LinkedIn](https://www.linkedin.com/company/nrwl)
-- [Our Youtube channel](https://www.youtube.com/@nxdevtools)
-- [Our blog](https://nx.dev/blog?utm_source=nx_project&utm_medium=readme&utm_campaign=nx_projects)
+See [docs/api/API_GUIDE.md](docs/api/API_GUIDE.md) for:
+- Authentication flow
+- Rate limiting
+- Error codes
+- Code examples (JavaScript, Python, cURL)
+
+### Webhooks
+
+See [docs/api/WEBHOOKS.md](docs/api/WEBHOOKS.md) for:
+- Stripe webhook setup
+- Event types and payloads
+- Security and signature verification
+
+### Postman Collection
+
+Import the Postman collection for easy API testing:
+- Collection: [docs/api/festival-api.postman_collection.json](docs/api/festival-api.postman_collection.json)
+- Environment: [docs/api/festival-api.postman_environment.json](docs/api/festival-api.postman_environment.json)
+
+## Main API Endpoints
+
+### Authentication
+
+```
+POST /api/auth/register     # Register new user
+POST /api/auth/login        # Login, get JWT tokens
+POST /api/auth/refresh      # Refresh access token
+GET  /api/auth/me           # Get current user
+POST /api/auth/logout       # Logout
+```
+
+### Festivals
+
+```
+GET    /api/festivals           # List festivals
+POST   /api/festivals           # Create festival
+GET    /api/festivals/:id       # Get festival
+PUT    /api/festivals/:id       # Update festival
+DELETE /api/festivals/:id       # Delete festival
+GET    /api/festivals/:id/stats # Get statistics
+```
+
+### Tickets
+
+```
+GET  /api/tickets/categories    # List ticket types
+POST /api/tickets/purchase      # Buy tickets
+GET  /api/tickets/me            # My tickets
+POST /api/tickets/validate      # Validate QR code
+```
+
+### Cashless
+
+```
+GET  /api/cashless/account      # Get balance
+POST /api/cashless/topup        # Add funds
+POST /api/cashless/pay          # Make payment
+GET  /api/cashless/transactions # Transaction history
+```
+
+## Environment Variables
+
+Key environment variables (see `.env.example` for full list):
+
+```bash
+# Application
+NODE_ENV=development
+PORT=3333
+API_URL=http://localhost:3333
+
+# Database
+DATABASE_URL=postgresql://user:pass@localhost:5432/festival_db
+
+# Redis
+REDIS_URL=redis://localhost:6379
+
+# JWT Authentication
+JWT_SECRET=your-super-secret-key-min-32-chars
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_SECRET=your-refresh-secret-key
+JWT_REFRESH_EXPIRES_IN=7d
+
+# Stripe Payments
+STRIPE_SECRET_KEY=sk_test_...
+STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_WEBHOOK_SECRET=whsec_...
+
+# Email
+SMTP_HOST=localhost
+SMTP_PORT=1025
+
+# Security
+CORS_ORIGINS=http://localhost:3000,http://localhost:4200
+```
+
+## Scripts
+
+```bash
+# Development
+npx nx serve api          # Start API dev server
+npx nx serve web          # Start web dev server
+npx nx serve admin        # Start admin dev server
+
+# Building
+npx nx build api          # Build API for production
+npx nx build web          # Build web for production
+npx nx build admin        # Build admin for production
+npx nx build-all          # Build all apps
+
+# Testing
+npx nx test api           # Run API unit tests
+npx nx e2e api-e2e        # Run E2E tests
+npx nx test --all         # Run all tests
+
+# Database
+npx prisma generate       # Generate Prisma client
+npx prisma migrate dev    # Run migrations (dev)
+npx prisma migrate deploy # Run migrations (prod)
+npx prisma db seed        # Seed database
+npx prisma studio         # Open Prisma Studio
+
+# Code Quality
+npx nx lint --all         # Lint all projects
+npx nx format:check       # Check formatting
+npx nx format:write       # Fix formatting
+
+# Docker
+docker-compose up -d      # Start services
+docker-compose down       # Stop services
+docker-compose logs -f    # View logs
+```
+
+## User Roles
+
+| Role | Description | Permissions |
+|------|-------------|-------------|
+| `ADMIN` | Platform administrator | Full access |
+| `ORGANIZER` | Festival organizer | Manage own festivals |
+| `STAFF` | Event staff | Scan tickets, zone access |
+| `VENDOR` | Food/merch vendor | Manage products, view sales |
+| `ATTENDEE` | Festival attendee | Buy tickets, use cashless |
+
+## Security
+
+- **Authentication**: JWT with access/refresh token rotation
+- **Authorization**: Role-based access control (RBAC)
+- **Data Protection**: GDPR compliant, data encryption
+- **Payment Security**: PCI-DSS compliant via Stripe
+- **API Security**: Rate limiting, CORS, Helmet headers
+- **Audit Logging**: All sensitive operations logged
+
+See [docs/security/](docs/security/) for security documentation.
+
+## Deployment
+
+### Docker
+
+```bash
+# Build production image
+docker build -t festival-api -f Dockerfile .
+
+# Run container
+docker run -p 3333:3333 \
+  -e DATABASE_URL=... \
+  -e REDIS_URL=... \
+  festival-api
+```
+
+### Kubernetes
+
+Kubernetes manifests are available in `k8s/` directory:
+
+```bash
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/
+```
+
+### Cloud Platforms
+
+- **Vercel**: Web and Admin dashboards
+- **Railway/Render**: API server
+- **AWS/GCP**: Full infrastructure
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## Testing
+
+```bash
+# Unit tests
+npx nx test api
+
+# E2E tests
+npx nx e2e api-e2e
+
+# Test coverage
+npx nx test api --coverage
+```
+
+## Monitoring
+
+- **Health Checks**: `/api/health`, `/api/health/live`, `/api/health/ready`
+- **Metrics**: `/metrics` (Prometheus format)
+- **Error Tracking**: Sentry integration
+
+## Support
+
+- **Documentation**: [docs/](docs/)
+- **API Reference**: http://localhost:3333/api/docs
+- **Issues**: GitHub Issues
+
+## License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+Built with NestJS, Next.js, and React Native

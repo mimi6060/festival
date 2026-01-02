@@ -1,14 +1,9 @@
-/**
- * @festival/shared/types
- *
- * This library contains all shared TypeScript types used across:
- * - Frontend (React web application)
- * - Admin dashboard
- * - Mobile application (React Native)
- * - Backend API
- *
- * All types are centralized here to ensure consistency
- * across all applications in the monorepo.
- */
+// Festival Platform - Shared Types
+// Export all shared TypeScript types and interfaces
 
-export * from './lib';
+export * from './lib/user.types';
+export * from './lib/event.types';
+export * from './lib/ticket.types';
+export * from './lib/artist.types';
+export * from './lib/venue.types';
+export * from './lib/common.types';

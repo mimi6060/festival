@@ -1,0 +1,355 @@
+# ============================================================================
+# Docker Compose - Patroni High Availability PostgreSQL Cluster
+# Festival Management Platform
+# ============================================================================
+# This sets up a 3-node Patroni cluster with:
+# - 3 PostgreSQL nodes (1 primary + 2 replicas)
+# - 3 etcd nodes for consensus
+# - HAProxy for load balancing
+# - PgBouncer for connection pooling
+# ============================================================================
+
+version: '3.8'
+
+services:
+  # ---------------------------------------------------------------------------
+  # etcd Cluster (3 nodes for consensus)
+  # ---------------------------------------------------------------------------
+  etcd1:
+    image: quay.io/coreos/etcd:v3.5.11
+    container_name: etcd1
+    hostname: etcd1
+    environment:
+      ETCD_NAME: etcd1
+      ETCD_DATA_DIR: /etcd-data
+      ETCD_LISTEN_CLIENT_URLS: https://0.0.0.0:2379
+      ETCD_ADVERTISE_CLIENT_URLS: https://etcd1:2379
+      ETCD_LISTEN_PEER_URLS: https://0.0.0.0:2380
+      ETCD_INITIAL_ADVERTISE_PEER_URLS: https://etcd1:2380
+      ETCD_INITIAL_CLUSTER: etcd1=https://etcd1:2380,etcd2=https://etcd2:2380,etcd3=https://etcd3:2380
+      ETCD_INITIAL_CLUSTER_STATE: new
+      ETCD_INITIAL_CLUSTER_TOKEN: festival-etcd-cluster
+      ETCD_CLIENT_CERT_AUTH: 'true'
+      ETCD_TRUSTED_CA_FILE: /etc/etcd/ssl/ca.crt
+      ETCD_CERT_FILE: /etc/etcd/ssl/server.crt
+      ETCD_KEY_FILE: /etc/etcd/ssl/server.key
+      ETCD_PEER_CLIENT_CERT_AUTH: 'true'
+      ETCD_PEER_TRUSTED_CA_FILE: /etc/etcd/ssl/ca.crt
+      ETCD_PEER_CERT_FILE: /etc/etcd/ssl/peer.crt
+      ETCD_PEER_KEY_FILE: /etc/etcd/ssl/peer.key
+    volumes:
+      - etcd1-data:/etcd-data
+      - ./ssl/etcd:/etc/etcd/ssl:ro
+    networks:
+      patroni_network:
+        ipv4_address: 172.20.0.10
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "etcdctl", "--cacert=/etc/etcd/ssl/ca.crt", "--cert=/etc/etcd/ssl/client.crt", "--key=/etc/etcd/ssl/client.key", "--endpoints=https://localhost:2379", "endpoint", "health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  etcd2:
+    image: quay.io/coreos/etcd:v3.5.11
+    container_name: etcd2
+    hostname: etcd2
+    environment:
+      ETCD_NAME: etcd2
+      ETCD_DATA_DIR: /etcd-data
+      ETCD_LISTEN_CLIENT_URLS: https://0.0.0.0:2379
+      ETCD_ADVERTISE_CLIENT_URLS: https://etcd2:2379
+      ETCD_LISTEN_PEER_URLS: https://0.0.0.0:2380
+      ETCD_INITIAL_ADVERTISE_PEER_URLS: https://etcd2:2380
+      ETCD_INITIAL_CLUSTER: etcd1=https://etcd1:2380,etcd2=https://etcd2:2380,etcd3=https://etcd3:2380
+      ETCD_INITIAL_CLUSTER_STATE: new
+      ETCD_INITIAL_CLUSTER_TOKEN: festival-etcd-cluster
+      ETCD_CLIENT_CERT_AUTH: 'true'
+      ETCD_TRUSTED_CA_FILE: /etc/etcd/ssl/ca.crt
+      ETCD_CERT_FILE: /etc/etcd/ssl/server.crt
+      ETCD_KEY_FILE: /etc/etcd/ssl/server.key
+      ETCD_PEER_CLIENT_CERT_AUTH: 'true'
+      ETCD_PEER_TRUSTED_CA_FILE: /etc/etcd/ssl/ca.crt
+      ETCD_PEER_CERT_FILE: /etc/etcd/ssl/peer.crt
+      ETCD_PEER_KEY_FILE: /etc/etcd/ssl/peer.key
+    volumes:
+      - etcd2-data:/etcd-data
+      - ./ssl/etcd:/etc/etcd/ssl:ro
+    networks:
+      patroni_network:
+        ipv4_address: 172.20.0.11
+    restart: unless-stopped
+    depends_on:
+      - etcd1
+
+  etcd3:
+    image: quay.io/coreos/etcd:v3.5.11
+    container_name: etcd3
+    hostname: etcd3
+    environment:
+      ETCD_NAME: etcd3
+      ETCD_DATA_DIR: /etcd-data
+      ETCD_LISTEN_CLIENT_URLS: https://0.0.0.0:2379
+      ETCD_ADVERTISE_CLIENT_URLS: https://etcd3:2379
+      ETCD_LISTEN_PEER_URLS: https://0.0.0.0:2380
+      ETCD_INITIAL_ADVERTISE_PEER_URLS: https://etcd3:2380
+      ETCD_INITIAL_CLUSTER: etcd1=https://etcd1:2380,etcd2=https://etcd2:2380,etcd3=https://etcd3:2380
+      ETCD_INITIAL_CLUSTER_STATE: new
+      ETCD_INITIAL_CLUSTER_TOKEN: festival-etcd-cluster
+      ETCD_CLIENT_CERT_AUTH: 'true'
+      ETCD_TRUSTED_CA_FILE: /etc/etcd/ssl/ca.crt
+      ETCD_CERT_FILE: /etc/etcd/ssl/server.crt
+      ETCD_KEY_FILE: /etc/etcd/ssl/server.key
+      ETCD_PEER_CLIENT_CERT_AUTH: 'true'
+      ETCD_PEER_TRUSTED_CA_FILE: /etc/etcd/ssl/ca.crt
+      ETCD_PEER_CERT_FILE: /etc/etcd/ssl/peer.crt
+      ETCD_PEER_KEY_FILE: /etc/etcd/ssl/peer.key
+    volumes:
+      - etcd3-data:/etcd-data
+      - ./ssl/etcd:/etc/etcd/ssl:ro
+    networks:
+      patroni_network:
+        ipv4_address: 172.20.0.12
+    restart: unless-stopped
+    depends_on:
+      - etcd1
+      - etcd2
+
+  # ---------------------------------------------------------------------------
+  # Patroni PostgreSQL Nodes (3 nodes)
+  # ---------------------------------------------------------------------------
+  patroni1:
+    image: patroni/patroni:latest
+    container_name: patroni1
+    hostname: patroni1
+    environment:
+      PATRONI_NAME: patroni1
+      PATRONI_SCOPE: festival-cluster
+      PATRONI_RESTAPI_LISTEN: 0.0.0.0:8008
+      PATRONI_RESTAPI_CONNECT_ADDRESS: patroni1:8008
+      PATRONI_POSTGRESQL_LISTEN: 0.0.0.0:5432
+      PATRONI_POSTGRESQL_CONNECT_ADDRESS: patroni1:5432
+      PATRONI_POSTGRESQL_DATA_DIR: /var/lib/postgresql/data
+      PATRONI_REPLICATION_USERNAME: replicator
+      PATRONI_REPLICATION_PASSWORD: ${REPLICATOR_PASSWORD}
+      PATRONI_SUPERUSER_USERNAME: postgres
+      PATRONI_SUPERUSER_PASSWORD: ${POSTGRES_PASSWORD}
+      PATRONI_ETCD3_HOSTS: etcd1:2379,etcd2:2379,etcd3:2379
+      PATRONI_ETCD3_PROTOCOL: https
+      PATRONI_ETCD3_CACERT: /etc/etcd/ssl/ca.crt
+      PATRONI_ETCD3_CERT: /etc/etcd/ssl/client.crt
+      PATRONI_ETCD3_KEY: /etc/etcd/ssl/client.key
+      PATRONI_LOG_LEVEL: INFO
+      PATRONI_TAGS_NOFAILOVER: 'false'
+      PATRONI_TAGS_NOLOADBALANCE: 'false'
+      PATRONI_TAGS_CLONEFROM: 'false'
+      TZ: UTC
+    volumes:
+      - patroni1-data:/var/lib/postgresql/data
+      - ./patroni.yml:/etc/patroni/patroni.yml:ro
+      - ./ssl/postgresql:/etc/postgresql/ssl:ro
+      - ./ssl/etcd:/etc/etcd/ssl:ro
+      - ./scripts:/usr/local/bin:ro
+      - ./callbacks:/etc/patroni/callbacks:ro
+    networks:
+      patroni_network:
+        ipv4_address: 172.20.0.20
+    ports:
+      - "5432:5432"
+      - "8008:8008"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    depends_on:
+      - etcd1
+      - etcd2
+      - etcd3
+
+  patroni2:
+    image: patroni/patroni:latest
+    container_name: patroni2
+    hostname: patroni2
+    environment:
+      PATRONI_NAME: patroni2
+      PATRONI_SCOPE: festival-cluster
+      PATRONI_RESTAPI_LISTEN: 0.0.0.0:8008
+      PATRONI_RESTAPI_CONNECT_ADDRESS: patroni2:8008
+      PATRONI_POSTGRESQL_LISTEN: 0.0.0.0:5432
+      PATRONI_POSTGRESQL_CONNECT_ADDRESS: patroni2:5432
+      PATRONI_POSTGRESQL_DATA_DIR: /var/lib/postgresql/data
+      PATRONI_REPLICATION_USERNAME: replicator
+      PATRONI_REPLICATION_PASSWORD: ${REPLICATOR_PASSWORD}
+      PATRONI_SUPERUSER_USERNAME: postgres
+      PATRONI_SUPERUSER_PASSWORD: ${POSTGRES_PASSWORD}
+      PATRONI_ETCD3_HOSTS: etcd1:2379,etcd2:2379,etcd3:2379
+      PATRONI_ETCD3_PROTOCOL: https
+      PATRONI_ETCD3_CACERT: /etc/etcd/ssl/ca.crt
+      PATRONI_ETCD3_CERT: /etc/etcd/ssl/client.crt
+      PATRONI_ETCD3_KEY: /etc/etcd/ssl/client.key
+      PATRONI_LOG_LEVEL: INFO
+      PATRONI_TAGS_NOFAILOVER: 'false'
+      PATRONI_TAGS_NOLOADBALANCE: 'false'
+      PATRONI_TAGS_CLONEFROM: 'true'
+      TZ: UTC
+    volumes:
+      - patroni2-data:/var/lib/postgresql/data
+      - ./patroni.yml:/etc/patroni/patroni.yml:ro
+      - ./ssl/postgresql:/etc/postgresql/ssl:ro
+      - ./ssl/etcd:/etc/etcd/ssl:ro
+      - ./scripts:/usr/local/bin:ro
+      - ./callbacks:/etc/patroni/callbacks:ro
+    networks:
+      patroni_network:
+        ipv4_address: 172.20.0.21
+    ports:
+      - "5433:5432"
+      - "8009:8008"
+    restart: unless-stopped
+    depends_on:
+      - patroni1
+
+  patroni3:
+    image: patroni/patroni:latest
+    container_name: patroni3
+    hostname: patroni3
+    environment:
+      PATRONI_NAME: patroni3
+      PATRONI_SCOPE: festival-cluster
+      PATRONI_RESTAPI_LISTEN: 0.0.0.0:8008
+      PATRONI_RESTAPI_CONNECT_ADDRESS: patroni3:8008
+      PATRONI_POSTGRESQL_LISTEN: 0.0.0.0:5432
+      PATRONI_POSTGRESQL_CONNECT_ADDRESS: patroni3:5432
+      PATRONI_POSTGRESQL_DATA_DIR: /var/lib/postgresql/data
+      PATRONI_REPLICATION_USERNAME: replicator
+      PATRONI_REPLICATION_PASSWORD: ${REPLICATOR_PASSWORD}
+      PATRONI_SUPERUSER_USERNAME: postgres
+      PATRONI_SUPERUSER_PASSWORD: ${POSTGRES_PASSWORD}
+      PATRONI_ETCD3_HOSTS: etcd1:2379,etcd2:2379,etcd3:2379
+      PATRONI_ETCD3_PROTOCOL: https
+      PATRONI_ETCD3_CACERT: /etc/etcd/ssl/ca.crt
+      PATRONI_ETCD3_CERT: /etc/etcd/ssl/client.crt
+      PATRONI_ETCD3_KEY: /etc/etcd/ssl/client.key
+      PATRONI_LOG_LEVEL: INFO
+      PATRONI_TAGS_NOFAILOVER: 'false'
+      PATRONI_TAGS_NOLOADBALANCE: 'false'
+      PATRONI_TAGS_CLONEFROM: 'true'
+      PATRONI_TAGS_NOSYNC: 'true'
+      TZ: UTC
+    volumes:
+      - patroni3-data:/var/lib/postgresql/data
+      - ./patroni.yml:/etc/patroni/patroni.yml:ro
+      - ./ssl/postgresql:/etc/postgresql/ssl:ro
+      - ./ssl/etcd:/etc/etcd/ssl:ro
+      - ./scripts:/usr/local/bin:ro
+      - ./callbacks:/etc/patroni/callbacks:ro
+    networks:
+      patroni_network:
+        ipv4_address: 172.20.0.22
+    ports:
+      - "5434:5432"
+      - "8010:8008"
+    restart: unless-stopped
+    depends_on:
+      - patroni1
+      - patroni2
+
+  # ---------------------------------------------------------------------------
+  # HAProxy - Load Balancer
+  # ---------------------------------------------------------------------------
+  haproxy:
+    image: haproxy:2.9-alpine
+    container_name: haproxy
+    hostname: haproxy
+    volumes:
+      - ./haproxy/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
+      - ./ssl/haproxy:/etc/haproxy/ssl:ro
+    networks:
+      patroni_network:
+        ipv4_address: 172.20.0.5
+    ports:
+      - "5000:5000"    # Primary (read-write)
+      - "5001:5001"    # Replicas (read-only)
+      - "7000:7000"    # HAProxy stats
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "haproxy", "-c", "-f", "/usr/local/etc/haproxy/haproxy.cfg"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - patroni1
+      - patroni2
+      - patroni3
+
+  # ---------------------------------------------------------------------------
+  # PgBouncer - Connection Pooling
+  # ---------------------------------------------------------------------------
+  pgbouncer:
+    image: edoburu/pgbouncer:1.21.0
+    container_name: pgbouncer
+    hostname: pgbouncer
+    environment:
+      DATABASE_URL: postgres://festival_app:${FESTIVAL_APP_PASSWORD}@haproxy:5000/festival
+      POOL_MODE: transaction
+      MAX_CLIENT_CONN: 10000
+      DEFAULT_POOL_SIZE: 100
+      MIN_POOL_SIZE: 10
+      RESERVE_POOL_SIZE: 25
+      RESERVE_POOL_TIMEOUT: 5
+      MAX_DB_CONNECTIONS: 500
+      SERVER_TLS_SSLMODE: require
+      CLIENT_TLS_SSLMODE: require
+      AUTH_TYPE: scram-sha-256
+    volumes:
+      - ./pgbouncer/pgbouncer.ini:/etc/pgbouncer/pgbouncer.ini:ro
+      - ./pgbouncer/userlist.txt:/etc/pgbouncer/userlist.txt:ro
+      - ./ssl/pgbouncer:/etc/pgbouncer/ssl:ro
+    networks:
+      patroni_network:
+        ipv4_address: 172.20.0.6
+    ports:
+      - "6432:6432"
+    restart: unless-stopped
+    depends_on:
+      - haproxy
+
+  # ---------------------------------------------------------------------------
+  # PostgreSQL Exporter (Prometheus Metrics)
+  # ---------------------------------------------------------------------------
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter:v0.15.0
+    container_name: postgres-exporter
+    hostname: postgres-exporter
+    environment:
+      DATA_SOURCE_NAME: postgresql://monitoring:${MONITORING_PASSWORD}@haproxy:5000/postgres?sslmode=require
+    volumes:
+      - ./monitoring/queries.yaml:/etc/postgres_exporter/queries.yaml:ro
+    command:
+      - '--extend.query-path=/etc/postgres_exporter/queries.yaml'
+    networks:
+      patroni_network:
+        ipv4_address: 172.20.0.30
+    ports:
+      - "9187:9187"
+    restart: unless-stopped
+    depends_on:
+      - haproxy
+
+networks:
+  patroni_network:
+    driver: bridge
+    ipam:
+      driver: default
+      config:
+        - subnet: 172.20.0.0/24
+
+volumes:
+  etcd1-data:
+  etcd2-data:
+  etcd3-data:
+  patroni1-data:
+  patroni2-data:
+  patroni3-data:

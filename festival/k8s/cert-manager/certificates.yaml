@@ -1,0 +1,137 @@
+---
+# Web Certificate
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: web-certificate
+  namespace: festival
+  labels:
+    app.kubernetes.io/name: web
+    app.kubernetes.io/component: tls
+    app.kubernetes.io/part-of: festival-platform
+spec:
+  secretName: web-tls-secret
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: festival.example.com
+  dnsNames:
+    - festival.example.com
+    - www.festival.example.com
+  duration: 2160h  # 90 days
+  renewBefore: 360h  # 15 days before expiry
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 4096
+  usages:
+    - server auth
+    - client auth
+---
+# API Certificate
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: api-certificate
+  namespace: festival
+  labels:
+    app.kubernetes.io/name: api
+    app.kubernetes.io/component: tls
+    app.kubernetes.io/part-of: festival-platform
+spec:
+  secretName: api-tls-secret
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: api.festival.example.com
+  dnsNames:
+    - api.festival.example.com
+  duration: 2160h
+  renewBefore: 360h
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 4096
+  usages:
+    - server auth
+    - client auth
+---
+# Admin Certificate
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: admin-certificate
+  namespace: festival
+  labels:
+    app.kubernetes.io/name: admin
+    app.kubernetes.io/component: tls
+    app.kubernetes.io/part-of: festival-platform
+spec:
+  secretName: admin-tls-secret
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: admin.festival.example.com
+  dnsNames:
+    - admin.festival.example.com
+  duration: 2160h
+  renewBefore: 360h
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 4096
+  usages:
+    - server auth
+    - client auth
+---
+# WebSocket Certificate
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: websocket-certificate
+  namespace: festival
+  labels:
+    app.kubernetes.io/name: websocket
+    app.kubernetes.io/component: tls
+    app.kubernetes.io/part-of: festival-platform
+spec:
+  secretName: ws-tls-secret
+  issuerRef:
+    name: letsencrypt-prod
+    kind: ClusterIssuer
+  commonName: ws.festival.example.com
+  dnsNames:
+    - ws.festival.example.com
+  duration: 2160h
+  renewBefore: 360h
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 4096
+  usages:
+    - server auth
+    - client auth
+---
+# Internal CA Certificate
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: festival-ca
+  namespace: festival
+  labels:
+    app.kubernetes.io/name: festival-ca
+    app.kubernetes.io/component: tls
+    app.kubernetes.io/part-of: festival-platform
+spec:
+  isCA: true
+  commonName: festival-ca
+  secretName: festival-ca-secret
+  issuerRef:
+    name: selfsigned-issuer
+    kind: ClusterIssuer
+  duration: 87600h  # 10 years
+  renewBefore: 8760h  # 1 year before expiry
+  privateKey:
+    algorithm: RSA
+    encoding: PKCS1
+    size: 4096

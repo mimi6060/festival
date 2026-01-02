@@ -1,14 +1,49 @@
 # See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
-# compiled output
+# =============================================================================
+# COMPILED OUTPUT
+# =============================================================================
 dist
 tmp
 out-tsc
+build
+.next
+.nuxt
 
-# dependencies
+# =============================================================================
+# DEPENDENCIES
+# =============================================================================
 node_modules
+.pnp
+.pnp.js
 
-# IDEs and editors
+# =============================================================================
+# ENVIRONMENT FILES
+# =============================================================================
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.local
+!.env.example
+
+# =============================================================================
+# NX CACHE
+# =============================================================================
+.nx/cache
+.nx/workspace-data
+
+# =============================================================================
+# TESTING
+# =============================================================================
+coverage
+*.lcov
+.nyc_output
+
+# =============================================================================
+# IDES AND EDITORS
+# =============================================================================
 /.idea
 .project
 .classpath
@@ -16,6 +51,9 @@ node_modules
 *.launch
 .settings/
 *.sublime-workspace
+*.swp
+*.swo
+*~
 
 # IDE - VSCode
 .vscode/*
@@ -23,102 +61,92 @@ node_modules
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
+!.vscode/recommendations.json
 
-# misc
+# =============================================================================
+# LOGS
+# =============================================================================
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+pnpm-debug.log*
+
+# =============================================================================
+# RUNTIME DATA
+# =============================================================================
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# =============================================================================
+# MISC
+# =============================================================================
 /.sass-cache
 /connect.lock
-/coverage
 /libpeerconnection.log
-npm-debug.log
-yarn-error.log
 testem.log
 /typings
+*.tsbuildinfo
 
-# System Files
+# =============================================================================
+# SYSTEM FILES
+# =============================================================================
 .DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
 Thumbs.db
+desktop.ini
 
-# Environment files
-.env
-.env.local
-.env.*.local
+# =============================================================================
+# REACT NATIVE / MOBILE
+# =============================================================================
+.expo/
+expo-env.d.ts
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
 
-.nx/cache
-.nx/workspace-data
+# Android
+android/.gradle
+android/app/build
+android/build
+android/local.properties
 
-/generated/prisma
+# iOS
+ios/Pods/
+ios/build/
+ios/*.xcworkspace
+!ios/*.xcworkspace/contents.xcworkspacedata
+ios/DerivedData/
 
-# Uploads (local development)
-/uploads
+# =============================================================================
+# DOCKER
+# =============================================================================
+.docker-volumes/
 
-# React Native
+# =============================================================================
+# SECRETS & CREDENTIALS
+# =============================================================================
+*.pem
+*.key
+credentials.json
+service-account.json
+google-credentials.json
+firebase-adminsdk*.json
 
-# OSX
-#
-.DS_Store
-
-# Xcode
-#
-build/
-*.pbxuser
-!default.pbxuser
-*.mode1v3
-!default.mode1v3
-*.mode2v3
-!default.mode2v3
-*.perspectivev3
-!default.perspectivev3
-xcuserdata
-*.xccheckout
-*.moved-aside
-DerivedData
-*.hmap
-*.ipa
-*.xcuserstate
-**/.xcode.env.local
-
-# Android/IntelliJ
-#
-build/
-.idea
-.gradle
-local.properties
-*.iml
-*.hprof
-.cxx/
-*.keystore
-!debug.keystore
-
-# node.js
-#
-node_modules/
-npm-debug.log
-yarn-error.log
-
-# fastlane
-#
-# It is recommended to not store the screenshots in the git repo. Instead, use fastlane to re-generate the
-# screenshots whenever they are needed.
-# For more information about the recommended setup visit:
-# https://docs.fastlane.tools/best-practices/source-control/
-
-**/fastlane/report.xml
-**/fastlane/Preview.html
-**/fastlane/screenshots
-**/fastlane/test_output
-
-# Bundle artifact
-*.jsbundle
-
-# Ruby / CocoaPods
-**/Pods/
-**/vendor/bundle/
-
-# Temporary files created by Metro to check the health of the file watcher
-.metro-health-check*
-
-# testing
-/coverage
-
-
-vite.config.*.timestamp*
+# =============================================================================
+# UPLOADS & MEDIA (local development)
+# =============================================================================
+uploads/
+tmp-uploads/

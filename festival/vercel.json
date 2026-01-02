@@ -1,18 +1,22 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npx nx build api --prod && npx nx build web --prod",
-  "outputDirectory": "dist",
-  "framework": null,
-  "installCommand": "npm ci",
-  "rewrites": [
-    { "source": "/api/(.*)", "destination": "/api/$1" }
+  "version": 2,
+  "framework": "nextjs",
+  "buildCommand": "cd apps/web && npm run build",
+  "outputDirectory": "apps/web/.next",
+  "installCommand": "npm install",
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Credentials", "value": "true" },
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
+        { "key": "Access-Control-Allow-Headers", "value": "Content-Type, Authorization" }
+      ]
+    }
   ],
   "env": {
-    "NX_CLOUD_ACCESS_TOKEN": "@nx_cloud_access_token"
-  },
-  "build": {
-    "env": {
-      "NODE_ENV": "production"
-    }
+    "NEXT_PUBLIC_API_URL": "@api_url"
   }
 }

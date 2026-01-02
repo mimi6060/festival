@@ -120,14 +120,73 @@
 
 ---
 
+## Phase 4 - Corrections & Stabilisation
+
+### Dépendances Frontend
+- [x] Installation @stripe/react-stripe-js, @stripe/stripe-js
+- [x] Installation next-intl, @tanstack/react-query
+- [x] Installation recharts, clsx, tailwind-merge
+- [x] Installation zustand, immer
+
+### Corrections TypeScript
+- [x] Correction erreurs compilation web app (stores, hooks, components)
+- [x] Correction erreurs compilation admin app (charts, utils)
+- [x] Typage explicite Zustand stores (auth.store.ts, cart.store.ts)
+- [x] Typage Recharts Tooltip components
+- [x] Suppression imports inutilisés
+- [x] Fix propriétés dupliquées dans utils.ts
+
+---
+
+## Phase 5 - Complétion Modules Backend
+
+### Modules NestJS Créés
+- [x] Module Users (users.module.ts, index.ts)
+- [x] Module Zones (zones.module.ts, index.ts)
+- [x] Module Festivals (festivals.module.ts, index.ts)
+- [x] Module Staff (module, controller, service complet avec shifts et check-in/out)
+- [x] Module Camping (module, controller, service complet avec spots, bookings, stats)
+- [x] Module Notifications (notifications.module.ts, services/index.ts)
+- [x] Module Support (support.module.ts, index.ts)
+- [x] Module Analytics (analytics.module.ts, services/index.ts)
+- [x] Module PDF (pdf.module.ts, index.ts)
+- [x] Module Email (module, service complet avec Handlebars templates)
+- [x] Module GDPR (module, controller, service complet - conformité RGPD)
+- [x] Module Cache (cache.module.ts, cache.service.ts)
+
+### Auth Guards & Decorators
+- [x] JwtAuthGuard (guards/jwt-auth.guard.ts)
+- [x] RolesGuard (guards/roles.guard.ts)
+- [x] @Roles decorator (decorators/roles.decorator.ts)
+- [x] @CurrentUser decorator (decorators/current-user.decorator.ts)
+- [x] @Public decorator (decorators/public.decorator.ts)
+
+### Intégration AppModule
+- [x] Import de tous les 16 modules dans app.module.ts
+- [x] Configuration ConfigModule globale
+
+### Dépendances Backend Ajoutées
+- [x] @nestjs/passport, passport, passport-jwt
+- [x] nodemailer, handlebars
+- [x] @nestjs/event-emitter
+- [x] pdfkit
+- [x] firebase-admin
+- [x] joi (validation schema)
+
+### Corrections Prisma
+- [x] Ajout url dans datasource db
+- [x] Fix relation FavoriteArtist ↔ Artist
+
+---
+
 ## Stats du Projet
 
 | Métrique | Valeur |
 |----------|--------|
-| Fichiers créés | 320+ |
-| Lignes de code | 55,732+ |
-| Modules backend | 15+ |
-| Agents utilisés | 30 |
+| Fichiers créés | 360+ |
+| Lignes de code | 65,000+ |
+| Modules backend | 17 |
+| Agents utilisés | 33 |
 
 ---
 Dernière mise à jour: 2026-01-02
