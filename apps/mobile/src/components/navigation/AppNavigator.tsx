@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
-import { StatusBar, View, ActivityIndicator, StyleSheet } from 'react-native';
-import { NavigationContainer } from '@react-navigation/native';
+import { StatusBar, View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
+import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -12,13 +12,44 @@ import { TicketDetailScreen } from '../../screens/Tickets/TicketDetailScreen';
 import { TopupScreen } from '../../screens/Wallet/TopupScreen';
 import { TransactionsScreen } from '../../screens/Wallet/TransactionsScreen';
 import { MapScreen } from '../../screens/Map/MapScreen';
-import { NotificationsScreen } from '../../screens/Notifications/NotificationsScreen';
 import { SettingsScreen } from '../../screens/Settings/SettingsScreen';
 
 import { useAuthStore } from '../../store';
 import { pushService } from '../../services';
 import { colors } from '../../theme';
 import type { RootStackParamList } from '../../types';
+
+// URL Linking configuration for web
+const linking: LinkingOptions<RootStackParamList> = {
+  prefixes: ['http://localhost:4101', 'https://festival.com', 'festival://'],
+  config: {
+    screens: {
+      Onboarding: 'onboarding',
+      Auth: {
+        path: 'auth',
+        screens: {
+          Login: 'login',
+          Register: 'register',
+        },
+      },
+      Main: {
+        path: '',
+        screens: {
+          Home: 'home',
+          Tickets: 'tickets',
+          Wallet: 'wallet',
+          Program: 'program',
+          Profile: 'profile',
+        },
+      },
+      TicketDetail: 'ticket/:ticketId',
+      Topup: 'wallet/topup',
+      Transactions: 'wallet/transactions',
+      Map: 'map',
+      Settings: 'settings',
+    },
+  },
+};
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
@@ -51,6 +82,7 @@ export const AppNavigator: React.FC = () => {
       <SafeAreaProvider>
         <StatusBar barStyle="light-content" backgroundColor={colors.background} />
         <NavigationContainer
+          linking={Platform.OS === 'web' ? linking : undefined}
           theme={{
             dark: true,
             colors: {

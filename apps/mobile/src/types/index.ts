@@ -92,7 +92,6 @@ export type RootStackParamList = {
   Transactions: undefined;
   Map: { filter?: 'all' | 'stages' | 'food' | 'drinks' | 'services' | 'info' | 'emergency' };
   Settings: undefined;
-  LanguageSettings: undefined;
 };
 
 export type AuthStackParamList = {
