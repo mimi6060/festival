@@ -99,8 +99,17 @@ Voir `.claude/DONE.md` pour le détail complet.
 | Traductions | 1000+ |
 | Workflows CI/CD | 10+ |
 
+### Phase Frontend UX Avancee (2026-01-02) - COMPLETED
+- [x] Animations et transitions CSS avancees (animations.css - 50+ keyframes)
+- [x] Composants animes React (AnimatedComponents.tsx - 15+ composants)
+- [x] Recherche avancee festivals (FestivalSearch.tsx - suggestions, filtres, keyboard nav)
+- [x] Systeme de filtres complet (FestivalFilters.tsx - genres, prix, dates, location)
+- [x] Calendrier evenements (EventCalendar.tsx - vues mois/semaine/jour/liste)
+- [x] Composants accessibles (AccessibleComponents.tsx - ARIA, focus trap, screen reader)
+- [x] Hooks debounce/throttle (useDebounce.ts)
+
 ---
-Derniere mise a jour: 2026-01-02 - Phase CI/CD Avancee (workflows GitHub Actions ameliores)
+Derniere mise a jour: 2026-01-02 - Phase Frontend UX Avancee (animations, recherche, filtres, calendrier, accessibilite)
 
 ### Phase Error Handling & Logging (2026-01-02) - COMPLETED
 - [x] HttpExceptionFilter - Filtre global pour HttpException
