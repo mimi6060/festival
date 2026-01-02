@@ -86,22 +86,34 @@ export default function StatsPage({ params }: StatsPageProps) {
       </div>
 
       {/* Navigation Tabs */}
-      <div className="flex gap-4 border-b border-gray-200">
+      <div className="flex gap-4 border-b border-gray-200 overflow-x-auto">
         <Link
           href={`/festivals/${id}`}
-          className="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700"
+          className="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap"
         >
           Vue d&apos;ensemble
         </Link>
         <Link
           href={`/festivals/${id}/tickets`}
-          className="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700"
+          className="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap"
         >
           Billets
         </Link>
         <Link
+          href={`/festivals/${id}/lineup`}
+          className="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap"
+        >
+          Lineup
+        </Link>
+        <Link
+          href={`/festivals/${id}/stages`}
+          className="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap"
+        >
+          Scenes
+        </Link>
+        <Link
           href={`/festivals/${id}/stats`}
-          className="px-4 py-3 text-sm font-medium text-primary-600 border-b-2 border-primary-600"
+          className="px-4 py-3 text-sm font-medium text-primary-600 border-b-2 border-primary-600 whitespace-nowrap"
         >
           Statistiques
         </Link>
