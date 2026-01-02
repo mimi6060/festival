@@ -1,7 +1,7 @@
 import { useAuthStore } from '../store/authStore';
 import type { ApiResponse, User, Ticket, WalletBalance, Transaction, ProgramEvent } from '../types';
 
-const API_BASE_URL = 'https://api.festival.com/v1';
+const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
 
 class ApiService {
   private getHeaders(): HeadersInit {
@@ -40,7 +40,7 @@ class ApiService {
 
   // Auth endpoints
   async login(email: string, password: string): Promise<ApiResponse<{ user: User; token: string }>> {
-    return this.request('/auth/login', {
+    return this.request('/api/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
     });
@@ -52,18 +52,18 @@ class ApiService {
     firstName: string;
     lastName: string;
   }): Promise<ApiResponse<{ user: User; token: string }>> {
-    return this.request('/auth/register', {
+    return this.request('/api/auth/register', {
       method: 'POST',
       body: JSON.stringify(data),
     });
   }
 
   async getProfile(): Promise<ApiResponse<User>> {
-    return this.request('/auth/profile');
+    return this.request('/api/auth/me');
   }
 
   async updateProfile(data: Partial<User>): Promise<ApiResponse<User>> {
-    return this.request('/auth/profile', {
+    return this.request('/api/auth/me', {
       method: 'PUT',
       body: JSON.stringify(data),
     });
@@ -71,30 +71,30 @@ class ApiService {
 
   // Ticket endpoints
   async getTickets(): Promise<ApiResponse<Ticket[]>> {
-    return this.request('/tickets');
+    return this.request('/api/tickets/me');
   }
 
   async getTicketById(ticketId: string): Promise<ApiResponse<Ticket>> {
-    return this.request(`/tickets/${ticketId}`);
+    return this.request(`/api/tickets/${ticketId}`);
   }
 
   async validateTicket(ticketId: string): Promise<ApiResponse<{ valid: boolean }>> {
-    return this.request(`/tickets/${ticketId}/validate`, {
+    return this.request(`/api/tickets/${ticketId}/validate`, {
       method: 'POST',
     });
   }
 
   // Wallet endpoints
   async getWalletBalance(): Promise<ApiResponse<WalletBalance>> {
-    return this.request('/wallet/balance');
+    return this.request('/api/cashless/balance');
   }
 
   async getTransactions(): Promise<ApiResponse<Transaction[]>> {
-    return this.request('/wallet/transactions');
+    return this.request('/api/cashless/transactions');
   }
 
   async topupWallet(amount: number, paymentMethodId: string): Promise<ApiResponse<Transaction>> {
-    return this.request('/wallet/topup', {
+    return this.request('/api/cashless/topup', {
       method: 'POST',
       body: JSON.stringify({ amount, paymentMethodId }),
     });
@@ -102,26 +102,26 @@ class ApiService {
 
   // Program endpoints
   async getProgram(): Promise<ApiResponse<ProgramEvent[]>> {
-    return this.request('/program');
+    return this.request('/api/program');
   }
 
   async getProgramByDay(day: string): Promise<ApiResponse<ProgramEvent[]>> {
-    return this.request(`/program?day=${day}`);
+    return this.request(`/api/program?day=${day}`);
   }
 
   // Notification endpoints
   async getNotifications(): Promise<ApiResponse<Notification[]>> {
-    return this.request('/notifications');
+    return this.request('/api/notifications');
   }
 
   async markNotificationRead(notificationId: string): Promise<ApiResponse<void>> {
-    return this.request(`/notifications/${notificationId}/read`, {
+    return this.request(`/api/notifications/${notificationId}/read`, {
       method: 'POST',
     });
   }
 
   async registerPushToken(token: string): Promise<ApiResponse<void>> {
-    return this.request('/notifications/push-token', {
+    return this.request('/api/notifications/push-token', {
       method: 'POST',
       body: JSON.stringify({ token }),
     });

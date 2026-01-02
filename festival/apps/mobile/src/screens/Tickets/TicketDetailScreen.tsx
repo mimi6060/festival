@@ -23,37 +23,31 @@ const { width } = Dimensions.get('window');
 type TicketDetailNavigationProp = NativeStackNavigationProp<RootStackParamList, 'TicketDetail'>;
 type TicketDetailRouteProp = RouteProp<RootStackParamList, 'TicketDetail'>;
 
-// Mock ticket for demo
-const mockTicket: Ticket = {
-  id: '1',
-  eventId: 'e1',
-  eventName: 'Festival Pass - Weekend Complet',
-  eventDate: '2024-07-15',
-  eventTime: '12:00',
-  venue: 'Parc des Expositions, Paris',
-  ticketType: 'vip',
-  price: 250,
-  qrCode: 'FEST-VIP-2024-001-ABCD1234-XYZ789',
-  status: 'valid',
-  purchasedAt: '2024-06-01T10:00:00Z',
-  seatInfo: 'Zone VIP - Acces prioritaire',
-};
-
 export const TicketDetailScreen: React.FC = () => {
   const navigation = useNavigation<TicketDetailNavigationProp>();
   const route = useRoute<TicketDetailRouteProp>();
-  const { tickets, selectTicket, selectedTicket } = useTicketStore();
+  const { tickets, selectTicket } = useTicketStore();
   const [brightness, setBrightness] = useState(100);
 
   const ticketId = route.params?.ticketId;
-  const ticket = tickets.find((t) => t.id === ticketId) || mockTicket;
+  const ticket = tickets.find((t) => t.id === ticketId);
 
   useEffect(() => {
-    selectTicket(ticket);
+    if (ticket) {
+      selectTicket(ticket);
+    }
     return () => selectTicket(null);
-  }, [ticket]);
+  }, [ticket, selectTicket]);
+
+  // If ticket not found, navigate back
+  useEffect(() => {
+    if (!ticket) {
+      navigation.goBack();
+    }
+  }, [ticket, navigation]);
 
   const getStatusColor = () => {
+    if (!ticket) return colors.textMuted;
     switch (ticket.status) {
       case 'valid':
         return colors.success;
@@ -67,6 +61,7 @@ export const TicketDetailScreen: React.FC = () => {
   };
 
   const getTicketTypeLabel = () => {
+    if (!ticket) return 'STANDARD';
     switch (ticket.ticketType) {
       case 'vip':
         return 'VIP';
@@ -99,6 +94,7 @@ export const TicketDetailScreen: React.FC = () => {
   };
 
   const handleShare = async () => {
+    if (!ticket) return;
     try {
       await Share.share({
         message: `Mon billet pour ${ticket.eventName}\n${formatDate(ticket.eventDate)} a ${ticket.eventTime}\n${ticket.venue}`,
@@ -113,6 +109,27 @@ export const TicketDetailScreen: React.FC = () => {
     // In a real app, this would adjust screen brightness
     setBrightness(100);
   };
+
+  // Show loading or empty state if no ticket
+  if (!ticket) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Detail du billet</Text>
+          <View style={styles.shareButton} />
+        </View>
+        <View style={styles.emptyContainer}>
+          <Text style={styles.emptyText}>Billet non trouve</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -424,6 +441,17 @@ const styles = StyleSheet.create({
   helpArrow: {
     fontSize: 18,
     color: colors.textMuted,
+  },
+  emptyContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: spacing.xl,
+  },
+  emptyText: {
+    ...typography.h3,
+    color: colors.textMuted,
+    textAlign: 'center',
   },
 });
 

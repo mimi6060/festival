@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -27,71 +27,23 @@ const filters: { key: FilterType; label: string }[] = [
   { key: 'expired', label: 'Expires' },
 ];
 
-// Mock tickets for demo
-const mockTickets: Ticket[] = [
-  {
-    id: '1',
-    eventId: 'e1',
-    eventName: 'Festival Pass - Weekend Complet',
-    eventDate: '2024-07-15',
-    eventTime: '12:00',
-    venue: 'Parc des Expositions',
-    ticketType: 'vip',
-    price: 250,
-    qrCode: 'FEST-VIP-2024-001-ABCD1234',
-    status: 'valid',
-    purchasedAt: '2024-06-01T10:00:00Z',
-    seatInfo: 'Zone VIP - Acces prioritaire',
-  },
-  {
-    id: '2',
-    eventId: 'e2',
-    eventName: 'Concert The Midnight',
-    eventDate: '2024-07-15',
-    eventTime: '21:00',
-    venue: 'Main Stage',
-    ticketType: 'standard',
-    price: 45,
-    qrCode: 'FEST-STD-2024-002-EFGH5678',
-    status: 'valid',
-    purchasedAt: '2024-06-15T14:30:00Z',
-  },
-  {
-    id: '3',
-    eventId: 'e3',
-    eventName: 'After Party - Saturday Night',
-    eventDate: '2024-07-13',
-    eventTime: '23:00',
-    venue: 'Club Tent',
-    ticketType: 'backstage',
-    price: 80,
-    qrCode: 'FEST-BST-2024-003-IJKL9012',
-    status: 'used',
-    purchasedAt: '2024-06-10T09:00:00Z',
-  },
-  {
-    id: '4',
-    eventId: 'e4',
-    eventName: 'Workshop DJ Set',
-    eventDate: '2024-07-12',
-    eventTime: '14:00',
-    venue: 'Workshop Area',
-    ticketType: 'standard',
-    price: 25,
-    qrCode: 'FEST-STD-2024-004-MNOP3456',
-    status: 'expired',
-    purchasedAt: '2024-06-05T16:00:00Z',
-  },
-];
-
 export const MyTicketsScreen: React.FC = () => {
   const navigation = useNavigation<TicketsNavigationProp>();
-  const { tickets: storeTickets } = useTicketStore();
+  const { tickets } = useTicketStore();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [refreshing, setRefreshing] = useState(false);
 
-  // Use mock data if store is empty
-  const tickets = storeTickets.length > 0 ? storeTickets : mockTickets;
+  // Initial sync on mount
+  useEffect(() => {
+    const syncTickets = async () => {
+      try {
+        await offlineService.syncAllData();
+      } catch (error) {
+        console.error('Failed to sync tickets:', error);
+      }
+    };
+    syncTickets();
+  }, []);
 
   const filteredTickets = useMemo(() => {
     if (activeFilter === 'all') return tickets;
