@@ -8,9 +8,11 @@ import { CustomReportsService } from './services/custom-reports.service';
 import { DashboardConfigService } from './services/dashboard-config.service';
 import { ExportService } from './services/export.service';
 import { RealtimeAggregationService } from './services/realtime-aggregation.service';
+import { AnalyticsController } from './controllers/analytics.controller';
 
 @Module({
   imports: [ConfigModule, PrismaModule, CacheModule],
+  controllers: [AnalyticsController],
   providers: [
     AnalyticsService,
     AdvancedMetricsService,
