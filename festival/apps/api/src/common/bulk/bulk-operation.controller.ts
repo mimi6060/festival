@@ -2,7 +2,6 @@ import {
   Controller,
   Post,
   Body,
-  UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -19,6 +18,8 @@ import {
   BulkOperationResponseDto,
   BulkImportDto,
   BulkExportDto,
+  BulkOperationStatus,
+  OperationResultStatus,
 } from './bulk-operation.dto';
 
 /**
@@ -128,13 +129,13 @@ export class GenericBulkController {
       for (let i = 0; i < data.length; i++) {
         results.push({
           index: i,
-          status: 'SUCCESS' as const,
+          status: OperationResultStatus.SUCCESS,
           data: data[i] as Record<string, unknown>,
         });
       }
 
       return {
-        status: 'COMPLETED' as const,
+        status: BulkOperationStatus.COMPLETED,
         total: data.length,
         successful: data.length,
         failed: 0,
@@ -144,7 +145,7 @@ export class GenericBulkController {
       };
     } catch (error) {
       return {
-        status: 'FAILED' as const,
+        status: BulkOperationStatus.FAILED,
         total: 0,
         successful: 0,
         failed: 1,
@@ -153,7 +154,7 @@ export class GenericBulkController {
         results: [
           {
             index: 0,
-            status: 'FAILED' as const,
+            status: OperationResultStatus.FAILED,
             error: error instanceof Error ? error.message : 'Parse error',
           },
         ],

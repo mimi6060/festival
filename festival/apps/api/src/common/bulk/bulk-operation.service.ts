@@ -1,6 +1,5 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import {
-  BulkOperationType,
   BulkOperationStatus,
   OperationResultStatus,
   OperationResult,
@@ -61,7 +60,6 @@ export type ValidateCallback<T> = (item: T, index: number) => Promise<{ valid: b
  */
 @Injectable()
 export class BulkOperationService {
-  private readonly logger = new Logger(BulkOperationService.name);
   private readonly config: BulkOperationConfig;
 
   constructor(config: Partial<BulkOperationConfig> = {}) {

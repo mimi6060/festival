@@ -142,7 +142,6 @@ export class BulkUpdateItemDto {
 
   @ApiProperty({
     description: 'Fields to update',
-    type: 'object',
   })
   @IsNotEmpty()
   data!: Record<string, unknown>;
@@ -210,7 +209,6 @@ export class OperationResult {
 
   @ApiPropertyOptional({
     description: 'Created or updated data',
-    type: 'object',
   })
   data?: Record<string, unknown>;
 }
@@ -264,7 +262,6 @@ export class BulkOperationResponseDto {
 
   @ApiPropertyOptional({
     description: 'Summary of errors encountered',
-    type: 'object',
   })
   errorSummary?: Record<string, number>;
 }
@@ -293,7 +290,6 @@ export class BulkImportDto {
 
   @ApiPropertyOptional({
     description: 'Field mapping (for CSV imports)',
-    type: 'object',
     example: { email: 0, firstName: 1, lastName: 2 },
   })
   @IsOptional()
@@ -341,7 +337,6 @@ export class BulkExportDto {
 
   @ApiPropertyOptional({
     description: 'Filter conditions',
-    type: 'object',
   })
   @IsOptional()
   filters?: Record<string, unknown>;

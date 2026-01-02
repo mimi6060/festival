@@ -47,8 +47,8 @@ export {
 } from './bulk-operation.dto';
 
 // Service
-export {
-  BulkOperationService,
+export { BulkOperationService } from './bulk-operation.service';
+export type {
   BulkOperationConfig,
   CreateCallback,
   UpdateCallback,

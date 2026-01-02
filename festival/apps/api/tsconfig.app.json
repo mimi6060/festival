@@ -7,8 +7,13 @@
     "tsBuildInfoFile": "dist/tsconfig.app.tsbuildinfo",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "target": "es2021"
+    "target": "es2021",
+    "declaration": true,
+    "skipLibCheck": true,
+    "noEmit": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false
   },
   "include": ["src/**/*.ts"],
-  "exclude": []
+  "exclude": ["src/**/*.spec.ts", "src/test/**/*"]
 }

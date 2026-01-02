@@ -6,25 +6,19 @@
   "tags": ["scope:api", "type:app"],
   "targets": {
     "build": {
-      "executor": "@nx/webpack:webpack",
+      "executor": "@nx/js:swc",
       "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "production",
       "options": {
         "outputPath": "dist/apps/api",
         "main": "apps/api/src/main.ts",
         "tsConfig": "apps/api/tsconfig.app.json",
-        "webpackConfig": "apps/api/webpack.config.js",
-        "generatePackageJson": true
+        "generatePackageJson": true,
+        "skipTypeCheck": true
       },
       "configurations": {
-        "development": {
-          "optimization": false,
-          "sourceMap": true
-        },
-        "production": {
-          "optimization": true,
-          "sourceMap": false
-        }
+        "development": {},
+        "production": {}
       }
     },
     "serve": {
