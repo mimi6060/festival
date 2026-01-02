@@ -72,8 +72,8 @@ class IndoorLocationManager {
   private config: IndoorLocationManagerConfig | null = null;
   private callbacks: IndoorLocationManagerCallbacks = {};
   private appStateSubscription: any = null;
-  private isInitialized: boolean = false;
-  private isTracking: boolean = false;
+  private isInitialized = false;
+  private isTracking = false;
 
   // Data
   private beaconConfigs: BeaconConfig[] = [];
@@ -85,6 +85,7 @@ class IndoorLocationManager {
   private activeGeofences: Set<string> = new Set();
   private currentLocation: IndoorCoordinate | null = null;
 
+  // eslint-disable-next-line @typescript-eslint/no-empty-function
   private constructor() {}
 
   static getInstance(): IndoorLocationManager {

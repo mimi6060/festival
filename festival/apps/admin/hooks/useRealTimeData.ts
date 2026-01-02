@@ -270,6 +270,7 @@ export function useRealtimeData(
         }
       };
     }
+    return;
   }, [pollingFallback, pollingInterval]);
 
   // Connect on mount if autoConnect

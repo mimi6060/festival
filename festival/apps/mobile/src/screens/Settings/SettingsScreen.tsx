@@ -46,7 +46,7 @@ const SettingItem: React.FC<SettingItemProps> = ({
       <View style={styles.settingRight}>
         {value && <Text style={styles.settingValue}>{value}</Text>}
         {rightElement}
-        {showArrow && !rightElement && <Text style={styles.settingArrow}>></Text>}
+        {showArrow && !rightElement && <Text style={styles.settingArrow}>{'>'}</Text>}
       </View>
     </View>
   );

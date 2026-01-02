@@ -113,8 +113,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('admin_user', JSON.stringify(data.user));
       setUser(data.user);
       router.push('/');
-    } catch (error) {
-      throw error;
     } finally {
       setIsLoading(false);
     }

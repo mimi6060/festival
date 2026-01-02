@@ -152,7 +152,7 @@ export const HomeScreen: React.FC = () => {
               </Text>
               <Button
                 title="Acheter des billets"
-                onPress={() => {}}
+                onPress={() => { /* Navigate to tickets */ }}
                 variant="outline"
                 size="sm"
                 style={styles.emptyButton}

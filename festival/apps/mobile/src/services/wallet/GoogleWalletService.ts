@@ -319,7 +319,7 @@ const GoogleWalletModule = NativeModules.GoogleWallet as GoogleWalletNativeModul
 
 export class GoogleWalletService {
   private config: GoogleWalletConfig | null = null;
-  private initialized: boolean = false;
+  private initialized = false;
   private savedPasses: Set<string> = new Set();
 
   /**
@@ -690,7 +690,7 @@ export class GoogleWalletService {
   private extractTicketIdFromUrl(url: string): string | null {
     try {
       // Try to extract from JWT payload or URL parameter
-      const match = url.match(/\/([^\/]+)$/);
+      const match = url.match(/\/([^/]+)$/);
       return match ? match[1] : null;
     } catch {
       return null;

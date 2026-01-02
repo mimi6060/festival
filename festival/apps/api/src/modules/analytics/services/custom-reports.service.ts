@@ -320,7 +320,7 @@ export class CustomReportsService {
     timeRange: TimeRange,
   ): Promise<number> {
     switch (metric) {
-      case 'totalSales':
+      case 'totalSales': {
         const sales = await this.prisma.ticket.count({
           where: {
             festivalId,
@@ -329,8 +329,9 @@ export class CustomReportsService {
           },
         });
         return sales;
+      }
 
-      case 'totalRevenue':
+      case 'totalRevenue': {
         const revenue = await this.prisma.ticket.aggregate({
           where: {
             festivalId,
@@ -340,8 +341,9 @@ export class CustomReportsService {
           _sum: { purchasePrice: true },
         });
         return Number(revenue._sum.purchasePrice) || 0;
+      }
 
-      case 'totalAttendees':
+      case 'totalAttendees': {
         const attendance = await this.prisma.zoneAccessLog.findMany({
           where: {
             zone: { festivalId },
@@ -352,8 +354,9 @@ export class CustomReportsService {
           distinct: ['ticketId'],
         });
         return attendance.length;
+      }
 
-      case 'cashlessTransactions':
+      case 'cashlessTransactions': {
         const transactions = await this.prisma.cashlessTransaction.count({
           where: {
             festivalId,
@@ -361,8 +364,9 @@ export class CustomReportsService {
           },
         });
         return transactions;
+      }
 
-      case 'vendorOrders':
+      case 'vendorOrders': {
         const orders = await this.prisma.vendorOrder.count({
           where: {
             vendor: { festivalId },
@@ -370,8 +374,9 @@ export class CustomReportsService {
           },
         });
         return orders;
+      }
 
-      case 'supportTickets':
+      case 'supportTickets': {
         const tickets = await this.prisma.supportTicket.count({
           where: {
             festivalId,
@@ -379,6 +384,7 @@ export class CustomReportsService {
           },
         });
         return tickets;
+      }
 
       default:
         return 0;
@@ -402,23 +408,26 @@ export class CustomReportsService {
     let periods: string[] = [];
 
     switch (cohortType) {
-      case 'acquisition_date':
+      case 'acquisition_date': {
         const result = await this.getAcquisitionDateCohorts(festivalId, timeRange);
         cohorts = result.cohorts;
         periods = result.periods;
         break;
+      }
 
-      case 'ticket_type':
+      case 'ticket_type': {
         const ticketResult = await this.getTicketTypeCohorts(festivalId, timeRange);
         cohorts = ticketResult.cohorts;
         periods = ticketResult.periods;
         break;
+      }
 
-      case 'first_purchase':
+      case 'first_purchase': {
         const purchaseResult = await this.getFirstPurchaseCohorts(festivalId, timeRange);
         cohorts = purchaseResult.cohorts;
         periods = purchaseResult.periods;
         break;
+      }
     }
 
     const analysis: CohortAnalysis = {
