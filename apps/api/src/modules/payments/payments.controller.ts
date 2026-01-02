@@ -22,7 +22,6 @@ import {
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
-  RawBodyRequest,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -33,7 +32,6 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { Request } from 'express';
 import { PaymentsService } from './payments.service';
 import { CheckoutService } from './services/checkout.service';
 import { StripeConnectService } from './services/stripe-connect.service';
@@ -460,9 +458,10 @@ export class PaymentsController {
   @ApiResponse({ status: 400, description: 'Invalid signature' })
   async handleWebhook(
     @Headers('stripe-signature') signature: string,
-    @Req() req: RawBodyRequest<Request>,
-  ) {
-    const payload = req.rawBody;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    @Req() req: any,
+  ): Promise<void> {
+    const payload = req.rawBody as Buffer | undefined;
     if (!payload) {
       throw new Error('Raw body not available');
     }

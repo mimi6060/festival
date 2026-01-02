@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import DataTable from '../../components/tables/DataTable';
 import { mockFestivals } from '../../lib/mock-data';
 import { formatCurrency, formatDate, formatNumber, getStatusColor, getStatusLabel } from '../../lib/utils';
 import type { Festival, TableColumn } from '../../types';
 
 export default function FestivalsPage() {
+  const router = useRouter();
   const [statusFilter, setStatusFilter] = useState<string>('all');
 
   const filteredFestivals = statusFilter === 'all'
@@ -132,12 +134,12 @@ export default function FestivalsPage() {
           </select>
         </div>
         <div className="flex-1" />
-        <button className="btn-secondary flex items-center gap-2">
+        <Link href="/exports" className="btn-secondary flex items-center gap-2">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
           </svg>
           Exporter
-        </button>
+        </Link>
       </div>
 
       {/* Table */}
@@ -146,7 +148,7 @@ export default function FestivalsPage() {
         columns={columns}
         searchPlaceholder="Rechercher un festival..."
         onRowClick={(festival) => {
-          window.location.href = `/festivals/${festival.id}`;
+          router.push(`/festivals/${festival.id}`);
         }}
         actions={(festival) => (
           <div className="flex items-center gap-1">

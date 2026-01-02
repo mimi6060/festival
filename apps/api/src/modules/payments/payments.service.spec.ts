@@ -22,7 +22,6 @@ import {
   regularUser,
   pendingPayment,
   completedPayment,
-  failedPayment,
   refundedPayment,
   stripeMockPaymentIntent,
   stripeWebhookPayloads,
@@ -56,8 +55,6 @@ jest.mock('stripe', () => {
 
 describe('PaymentsService', () => {
   let paymentsService: PaymentsService;
-  let prismaService: jest.Mocked<PrismaService>;
-  let configService: jest.Mocked<ConfigService>;
 
   const mockPrismaService = {
     payment: {
@@ -91,8 +88,6 @@ describe('PaymentsService', () => {
     }).compile();
 
     paymentsService = module.get<PaymentsService>(PaymentsService);
-    prismaService = module.get(PrismaService);
-    configService = module.get(ConfigService);
   });
 
   // ==========================================================================

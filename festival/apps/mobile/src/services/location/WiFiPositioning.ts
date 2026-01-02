@@ -65,7 +65,7 @@ const getWiFiScannerModule = (): WiFiScannerModule => {
 
 export class WiFiPositioning {
   private config: WiFiPositioningConfig;
-  private isScanning: boolean = false;
+  private isScanning = false;
   private scanInterval: NodeJS.Timeout | null = null;
   private wifiModule: WiFiScannerModule;
   private lastPosition: IndoorCoordinate | null = null;

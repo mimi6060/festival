@@ -9,6 +9,7 @@ const nextConfig = {
   nx: {
     svgr: false,
   },
+  output: 'standalone',
   reactStrictMode: true,
   experimental: {
     serverActions: {

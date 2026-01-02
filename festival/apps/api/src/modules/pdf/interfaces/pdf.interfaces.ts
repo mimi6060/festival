@@ -319,3 +319,100 @@ export const DEFAULT_PDF_COLORS: PdfColors = {
   warning: '#f59e0b',
   error: '#ef4444',
 };
+
+/**
+ * Enhanced ticket data interface with additional security features
+ */
+export interface EnhancedTicketPdfData extends TicketPdfData {
+  securityHash?: string;
+  validationCode?: string;
+  hologramData?: string;
+}
+
+/**
+ * Enhanced staff badge data interface with additional features
+ */
+export interface EnhancedStaffBadgePdfData extends StaffBadgePdfData {
+  accessLevel: 'LOW' | 'MEDIUM' | 'HIGH' | 'FULL';
+  securityClearance?: string;
+  emergencyContact?: string;
+}
+
+/**
+ * Financial report data interface for financial report PDF generation
+ */
+export interface FinancialReportPdfData {
+  festivalId: string;
+  festivalName: string;
+  generatedAt: Date;
+  generatedBy: string;
+  period: {
+    startDate: Date;
+    endDate: Date;
+  };
+  summary: {
+    totalRevenue: number;
+    totalExpenses: number;
+    netProfit: number;
+    profitMargin: number;
+    currency: string;
+  };
+  revenueBreakdown: {
+    ticketSales: {
+      total: number;
+      byCategory: {
+        name: string;
+        quantity: number;
+        revenue: number;
+        avgPrice: number;
+      }[];
+    };
+    cashless: {
+      totalTopups: number;
+      totalPayments: number;
+      commission: number;
+      netRevenue: number;
+    };
+    vendors: {
+      totalSales: number;
+      commission: number;
+      byVendor: {
+        name: string;
+        sales: number;
+        commission: number;
+      }[];
+    };
+    camping: {
+      totalBookings: number;
+      revenue: number;
+      byType: {
+        type: string;
+        bookings: number;
+        revenue: number;
+      }[];
+    };
+  };
+  taxSummary: {
+    totalTaxCollected: number;
+    byRate: {
+      rate: number;
+      taxableBase: number;
+      taxAmount: number;
+    }[];
+  };
+  paymentMethods: {
+    method: string;
+    count: number;
+    total: number;
+    percentage: number;
+  }[];
+  refunds: {
+    count: number;
+    totalAmount: number;
+    byReason: {
+      reason: string;
+      count: number;
+      amount: number;
+    }[];
+  };
+}

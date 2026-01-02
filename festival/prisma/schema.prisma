@@ -172,36 +172,36 @@ enum BookingStatus {
 
 // Models
 model User {
-  id                String      @id @default(uuid())
-  email             String      @unique
-  passwordHash      String
-  firstName         String
-  lastName          String
-  phone             String?
-  role              UserRole    @default(USER)
-  status            UserStatus  @default(PENDING_VERIFICATION)
-  emailVerified     Boolean     @default(false)
-  refreshToken      String?
-  lastLoginAt       DateTime?
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  id            String     @id @default(uuid())
+  email         String     @unique
+  passwordHash  String
+  firstName     String
+  lastName      String
+  phone         String?
+  role          UserRole   @default(USER)
+  status        UserStatus @default(PENDING_VERIFICATION)
+  emailVerified Boolean    @default(false)
+  refreshToken  String?
+  lastLoginAt   DateTime?
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
   // Relations
-  tickets           Ticket[]
-  payments          Payment[]
-  cashlessAccount   CashlessAccount?
-  staffAssignments  StaffAssignment[]
-  organizedFestivals Festival[]       // Festivals organized by this user
-  vendorOrders      VendorOrder[]
-  notifications     Notification[]
-  pushTokens        PushToken[]
+  tickets                Ticket[]
+  payments               Payment[]
+  cashlessAccount        CashlessAccount?
+  staffAssignments       StaffAssignment[]
+  organizedFestivals     Festival[] // Festivals organized by this user
+  vendorOrders           VendorOrder[]
+  notifications          Notification[]
+  pushTokens             PushToken[]
   notificationPreference NotificationPreference?
-  campingBookings   CampingBooking[]
-  supportTickets    SupportTicket[]
-  staffMembers      StaffMember[]
-  userConsents      UserConsent[]          // GDPR consent records
-  gdprRequests      GdprRequest[]          // GDPR data requests
-  sessions          Session[]              // Active sessions
+  campingBookings        CampingBooking[]
+  supportTickets         SupportTicket[]
+  staffMembers           StaffMember[]
+  userConsents           UserConsent[] // GDPR consent records
+  gdprRequests           GdprRequest[] // GDPR data requests
+  sessions               Session[] // Active sessions
 
   // Performance indexes
   @@index([email])
@@ -213,41 +213,41 @@ model User {
 }
 
 model Festival {
-  id              String          @id @default(uuid())
-  organizerId     String          // Multi-tenant: festival belongs to an organizer
-  name            String
-  slug            String          @unique
-  description     String?
-  location        String
-  address         String?
-  startDate       DateTime
-  endDate         DateTime
-  status          FestivalStatus  @default(DRAFT)
-  maxCapacity     Int
+  id               String         @id @default(uuid())
+  organizerId      String // Multi-tenant: festival belongs to an organizer
+  name             String
+  slug             String         @unique
+  description      String?
+  location         String
+  address          String?
+  startDate        DateTime
+  endDate          DateTime
+  status           FestivalStatus @default(DRAFT)
+  maxCapacity      Int
   currentAttendees Int            @default(0)
-  logoUrl         String?
-  bannerUrl       String?
-  websiteUrl      String?
-  contactEmail    String?
-  timezone        String          @default("Europe/Paris")
-  currency        String          @default("EUR")
-  isDeleted       Boolean         @default(false)  // Soft delete
-  deletedAt       DateTime?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  logoUrl          String?
+  bannerUrl        String?
+  websiteUrl       String?
+  contactEmail     String?
+  timezone         String         @default("Europe/Paris")
+  currency         String         @default("EUR")
+  isDeleted        Boolean        @default(false) // Soft delete
+  deletedAt        DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
 
   // Relations
-  organizer        User            @relation(fields: [organizerId], references: [id])
-  ticketCategories TicketCategory[]
-  tickets          Ticket[]
-  zones            Zone[]
-  staffAssignments StaffAssignment[]
+  organizer            User                  @relation(fields: [organizerId], references: [id])
+  ticketCategories     TicketCategory[]
+  tickets              Ticket[]
+  zones                Zone[]
+  staffAssignments     StaffAssignment[]
   cashlessTransactions CashlessTransaction[]
-  vendors          Vendor[]
-  stages           Stage[]
-  campingZones     CampingZone[]
-  mapPois          MapPoi[]
-  staffMembers     StaffMember[]
+  vendors              Vendor[]
+  stages               Stage[]
+  campingZones         CampingZone[]
+  mapPois              MapPoi[]
+  staffMembers         StaffMember[]
 
   @@index([organizerId])
   @@index([slug])
@@ -257,161 +257,171 @@ model Festival {
 }
 
 model TicketCategory {
-  id            String      @id @default(uuid())
+  id            String     @id @default(uuid())
   festivalId    String
   name          String
   description   String?
   type          TicketType
-  price         Decimal     @db.Decimal(10, 2)
+  price         Decimal    @db.Decimal(10, 2)
   quota         Int
-  soldCount     Int         @default(0)
-  maxPerUser    Int         @default(4)
+  soldCount     Int        @default(0)
+  maxPerUser    Int        @default(4)
   saleStartDate DateTime
   saleEndDate   DateTime
-  isActive      Boolean     @default(true)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  isActive      Boolean    @default(true)
+  createdAt     DateTime   @default(now())
+  updatedAt     DateTime   @updatedAt
 
   // Relations
-  festival      Festival    @relation(fields: [festivalId], references: [id], onDelete: Cascade)
-  tickets       Ticket[]
+  festival Festival @relation(fields: [festivalId], references: [id], onDelete: Cascade)
+  tickets  Ticket[]
 
   @@index([festivalId])
   @@index([type])
 }
 
+enum TicketDeliveryMethod {
+  DIGITAL
+  PRINT
+  WILL_CALL
+}
+
 model Ticket {
-  id              String        @id @default(uuid())
-  festivalId      String
-  categoryId      String
-  userId          String
-  qrCode          String        @unique
-  qrCodeData      String
-  status          TicketStatus  @default(SOLD)
-  purchasePrice   Decimal       @db.Decimal(10, 2)
-  usedAt          DateTime?
-  usedByStaffId   String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id             String               @id @default(uuid())
+  festivalId     String
+  categoryId     String
+  userId         String
+  qrCode         String               @unique
+  qrCodeData     String
+  status         TicketStatus         @default(SOLD)
+  purchasePrice  Decimal              @db.Decimal(10, 2)
+  deliveryMethod TicketDeliveryMethod @default(DIGITAL)
+  usedAt         DateTime?
+  usedByStaffId  String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
 
   // Relations
-  festival        Festival      @relation(fields: [festivalId], references: [id], onDelete: Cascade)
-  category        TicketCategory @relation(fields: [categoryId], references: [id])
-  user            User          @relation(fields: [userId], references: [id])
-  payment         Payment?      @relation(fields: [paymentId], references: [id])
-  paymentId       String?
-  zoneAccessLogs  ZoneAccessLog[]
+  festival       Festival        @relation(fields: [festivalId], references: [id], onDelete: Cascade)
+  category       TicketCategory  @relation(fields: [categoryId], references: [id])
+  user           User            @relation(fields: [userId], references: [id])
+  payment        Payment?        @relation(fields: [paymentId], references: [id])
+  paymentId      String?
+  zoneAccessLogs ZoneAccessLog[]
 
   // Performance indexes - optimized for common queries
   @@index([festivalId])
   @@index([userId])
   @@index([qrCode])
   @@index([status])
-  @@index([festivalId, status])           // Analytics: tickets by festival and status
-  @@index([festivalId, categoryId])       // Reports: tickets by festival and category
-  @@index([festivalId, createdAt])        // Time-based queries
-  @@index([userId, status])               // User's tickets by status
-  @@index([categoryId, status])           // Category sales
-  @@index([createdAt])                    // Time-based analytics
-  @@index([paymentId])                    // Payment lookup
+  @@index([festivalId, status]) // Analytics: tickets by festival and status
+  @@index([festivalId, categoryId]) // Reports: tickets by festival and category
+  @@index([festivalId, createdAt]) // Time-based queries
+  @@index([userId, status]) // User's tickets by status
+  @@index([categoryId, status]) // Category sales
+  @@index([createdAt]) // Time-based analytics
+  @@index([paymentId]) // Payment lookup
+  @@index([deliveryMethod]) // Delivery method analytics
 }
 
 model Payment {
-  id              String          @id @default(uuid())
-  userId          String
-  amount          Decimal         @db.Decimal(10, 2)
-  currency        String          @default("EUR")
-  status          PaymentStatus   @default(PENDING)
-  provider        PaymentProvider
+  id                String          @id @default(uuid())
+  userId            String
+  festivalId        String? // Optional festival reference for analytics
+  amount            Decimal         @db.Decimal(10, 2)
+  currency          String          @default("EUR")
+  status            PaymentStatus   @default(PENDING)
+  provider          PaymentProvider
   providerPaymentId String?
-  providerData    Json?
-  description     String?
-  metadata        Json?
-  paidAt          DateTime?
-  refundedAt      DateTime?
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime        @updatedAt
+  providerData      Json?
+  description       String?
+  metadata          Json?
+  paidAt            DateTime?
+  refundedAt        DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
   // Relations
-  user            User            @relation(fields: [userId], references: [id])
-  tickets         Ticket[]
-  cashlessTopup   CashlessTransaction?
+  user          User                 @relation(fields: [userId], references: [id])
+  tickets       Ticket[]
+  cashlessTopup CashlessTransaction?
 
   // Performance indexes
   @@index([userId])
   @@index([status])
   @@index([providerPaymentId])
-  @@index([userId, status])               // User payments by status
-  @@index([createdAt])                    // Time-based queries
-  @@index([status, createdAt])            // Payment analytics
-  @@index([provider, status])             // Provider analysis
-  @@index([paidAt])                       // Completed payments timeline
+  @@index([userId, status]) // User payments by status
+  @@index([createdAt]) // Time-based queries
+  @@index([status, createdAt]) // Payment analytics
+  @@index([provider, status]) // Provider analysis
+  @@index([paidAt]) // Completed payments timeline
+  @@index([festivalId]) // Festival-scoped queries
 }
 
 model CashlessAccount {
-  id            String      @id @default(uuid())
-  userId        String      @unique
-  balance       Decimal     @db.Decimal(10, 2) @default(0)
-  nfcTagId      String?     @unique
-  isActive      Boolean     @default(true)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  balance   Decimal  @default(0) @db.Decimal(10, 2)
+  nfcTagId  String?  @unique
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  user          User        @relation(fields: [userId], references: [id])
-  transactions  CashlessTransaction[]
+  user         User                  @relation(fields: [userId], references: [id])
+  transactions CashlessTransaction[]
 
   @@index([nfcTagId])
 }
 
 model CashlessTransaction {
-  id              String          @id @default(uuid())
-  accountId       String
-  festivalId      String
-  type            TransactionType
-  amount          Decimal         @db.Decimal(10, 2)
-  balanceBefore   Decimal         @db.Decimal(10, 2)
-  balanceAfter    Decimal         @db.Decimal(10, 2)
-  description     String?
-  metadata        Json?
-  paymentId       String?         @unique
-  performedById   String?
-  createdAt       DateTime        @default(now())
+  id            String          @id @default(uuid())
+  accountId     String
+  festivalId    String
+  type          TransactionType
+  amount        Decimal         @db.Decimal(10, 2)
+  balanceBefore Decimal         @db.Decimal(10, 2)
+  balanceAfter  Decimal         @db.Decimal(10, 2)
+  description   String?
+  metadata      Json?
+  paymentId     String?         @unique
+  performedById String?
+  createdAt     DateTime        @default(now())
 
   // Relations
-  account         CashlessAccount @relation(fields: [accountId], references: [id])
-  festival        Festival        @relation(fields: [festivalId], references: [id])
-  payment         Payment?        @relation(fields: [paymentId], references: [id])
+  account  CashlessAccount @relation(fields: [accountId], references: [id])
+  festival Festival        @relation(fields: [festivalId], references: [id])
+  payment  Payment?        @relation(fields: [paymentId], references: [id])
 
   // Performance indexes - critical for high-volume transactions
   @@index([accountId])
   @@index([festivalId])
   @@index([type])
   @@index([createdAt])
-  @@index([festivalId, type])             // Festival cashless analytics
-  @@index([festivalId, createdAt])        // Time-based festival reports
-  @@index([festivalId, type, createdAt])  // Full analytics queries
-  @@index([accountId, createdAt])         // User transaction history
-  @@index([performedById])                // Staff activity tracking
+  @@index([festivalId, type]) // Festival cashless analytics
+  @@index([festivalId, createdAt]) // Time-based festival reports
+  @@index([festivalId, type, createdAt]) // Full analytics queries
+  @@index([accountId, createdAt]) // User transaction history
+  @@index([performedById]) // Staff activity tracking
 }
 
 model Zone {
-  id            String      @id @default(uuid())
-  festivalId    String
-  name          String
-  description   String?
-  capacity      Int?
-  currentOccupancy Int      @default(0)
+  id                 String       @id @default(uuid())
+  festivalId         String
+  name               String
+  description        String?
+  capacity           Int?
+  currentOccupancy   Int          @default(0)
   requiresTicketType TicketType[]
-  isActive      Boolean     @default(true)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  isActive           Boolean      @default(true)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
 
   // Relations
-  festival      Festival    @relation(fields: [festivalId], references: [id], onDelete: Cascade)
+  festival         Festival          @relation(fields: [festivalId], references: [id], onDelete: Cascade)
   staffAssignments StaffAssignment[]
-  accessLogs    ZoneAccessLog[]
-  staffShifts   StaffShift[]
+  accessLogs       ZoneAccessLog[]
+  staffShifts      StaffShift[]
 
   @@index([festivalId])
 }
@@ -422,16 +432,16 @@ enum ZoneAccessAction {
 }
 
 model ZoneAccessLog {
-  id          String           @id @default(uuid())
-  zoneId      String
-  ticketId    String
-  action      ZoneAccessAction
+  id            String           @id @default(uuid())
+  zoneId        String
+  ticketId      String
+  action        ZoneAccessAction
   performedById String?
-  timestamp   DateTime         @default(now())
+  timestamp     DateTime         @default(now())
 
   // Relations
-  zone        Zone             @relation(fields: [zoneId], references: [id], onDelete: Cascade)
-  ticket      Ticket           @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  zone   Zone   @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  ticket Ticket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
   @@index([zoneId])
   @@index([ticketId])
@@ -440,21 +450,21 @@ model ZoneAccessLog {
 }
 
 model StaffAssignment {
-  id            String      @id @default(uuid())
-  userId        String
-  festivalId    String
-  zoneId        String?
-  role          UserRole
-  startTime     DateTime
-  endTime       DateTime
-  isActive      Boolean     @default(true)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id         String   @id @default(uuid())
+  userId     String
+  festivalId String
+  zoneId     String?
+  role       UserRole
+  startTime  DateTime
+  endTime    DateTime
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Relations
-  user          User        @relation(fields: [userId], references: [id])
-  festival      Festival    @relation(fields: [festivalId], references: [id], onDelete: Cascade)
-  zone          Zone?       @relation(fields: [zoneId], references: [id])
+  user     User     @relation(fields: [userId], references: [id])
+  festival Festival @relation(fields: [festivalId], references: [id], onDelete: Cascade)
+  zone     Zone?    @relation(fields: [zoneId], references: [id])
 
   @@index([userId])
   @@index([festivalId])
@@ -462,16 +472,16 @@ model StaffAssignment {
 }
 
 model Artist {
-  id            String        @id @default(uuid())
-  name          String
-  genre         String?
-  bio           String?
-  imageUrl      String?
-  spotifyUrl    String?
-  instagramUrl  String?
-  websiteUrl    String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id           String   @id @default(uuid())
+  name         String
+  genre        String?
+  bio          String?
+  imageUrl     String?
+  spotifyUrl   String?
+  instagramUrl String?
+  websiteUrl   String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   // Relations
   performances    Performance[]
@@ -482,37 +492,37 @@ model Artist {
 }
 
 model Stage {
-  id            String        @id @default(uuid())
-  festivalId    String
-  name          String
-  description   String?
-  capacity      Int?
-  location      String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id          String   @id @default(uuid())
+  festivalId  String
+  name        String
+  description String?
+  capacity    Int?
+  location    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
-  festival      Festival      @relation(fields: [festivalId], references: [id], onDelete: Cascade)
-  performances  Performance[]
+  festival     Festival      @relation(fields: [festivalId], references: [id], onDelete: Cascade)
+  performances Performance[]
 
   @@unique([festivalId, name])
   @@index([festivalId])
 }
 
 model Performance {
-  id            String        @id @default(uuid())
-  artistId      String
-  stageId       String
-  startTime     DateTime
-  endTime       DateTime
-  description   String?
-  isCancelled   Boolean       @default(false)
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id          String   @id @default(uuid())
+  artistId    String
+  stageId     String
+  startTime   DateTime
+  endTime     DateTime
+  description String?
+  isCancelled Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
-  artist        Artist        @relation(fields: [artistId], references: [id], onDelete: Cascade)
-  stage         Stage         @relation(fields: [stageId], references: [id], onDelete: Cascade)
+  artist Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  stage  Stage  @relation(fields: [stageId], references: [id], onDelete: Cascade)
 
   @@index([artistId])
   @@index([stageId])
@@ -521,16 +531,16 @@ model Performance {
 }
 
 model AuditLog {
-  id          String   @id @default(uuid())
-  userId      String?
-  action      String
-  entityType  String
-  entityId    String?
-  oldValue    Json?
-  newValue    Json?
-  ipAddress   String?
-  userAgent   String?
-  createdAt   DateTime @default(now())
+  id         String   @id @default(uuid())
+  userId     String?
+  action     String
+  entityType String
+  entityId   String?
+  oldValue   Json?
+  newValue   Json?
+  ipAddress  String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
 
   @@index([userId])
   @@index([action])
@@ -557,7 +567,7 @@ enum PoiType {
 }
 
 model MapPoi {
-  id          String    @id @default(uuid())
+  id          String   @id @default(uuid())
   festivalId  String
   name        String
   type        PoiType
@@ -566,12 +576,12 @@ model MapPoi {
   longitude   Float
   iconUrl     String?
   metadata    Json?
-  isActive    Boolean   @default(true)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   // Relations
-  festival    Festival  @relation(fields: [festivalId], references: [id], onDelete: Cascade)
+  festival Festival @relation(fields: [festivalId], references: [id], onDelete: Cascade)
 
   @@index([festivalId])
   @@index([type])
@@ -579,22 +589,22 @@ model MapPoi {
 }
 
 model Notification {
-  id          String           @id @default(uuid())
-  userId      String
-  festivalId  String?          // Optional - for festival-specific notifications
-  title       String
-  body        String
-  type        NotificationType
-  data        Json?            // Additional payload data
-  imageUrl    String?          // Optional image for rich notifications
-  actionUrl   String?          // Deep link or action URL
-  isRead      Boolean          @default(false)
-  readAt      DateTime?        // When the notification was read
-  sentAt      DateTime?        // When push was sent (null if in-app only)
-  createdAt   DateTime         @default(now())
+  id         String           @id @default(uuid())
+  userId     String
+  festivalId String? // Optional - for festival-specific notifications
+  title      String
+  body       String
+  type       NotificationType
+  data       Json? // Additional payload data
+  imageUrl   String? // Optional image for rich notifications
+  actionUrl  String? // Deep link or action URL
+  isRead     Boolean          @default(false)
+  readAt     DateTime? // When the notification was read
+  sentAt     DateTime? // When push was sent (null if in-app only)
+  createdAt  DateTime         @default(now())
 
   // Relations
-  user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([festivalId])
@@ -604,18 +614,18 @@ model Notification {
 }
 
 model PushToken {
-  id          String               @id @default(uuid())
-  userId      String
-  token       String               @unique
-  platform    NotificationPlatform
-  deviceName  String?              // e.g., "iPhone 15 Pro", "Chrome on Windows"
-  isActive    Boolean              @default(true)
-  lastUsedAt  DateTime?
-  createdAt   DateTime             @default(now())
-  updatedAt   DateTime             @updatedAt
+  id         String               @id @default(uuid())
+  userId     String
+  token      String               @unique
+  platform   NotificationPlatform
+  deviceName String? // e.g., "iPhone 15 Pro", "Chrome on Windows"
+  isActive   Boolean              @default(true)
+  lastUsedAt DateTime?
+  createdAt  DateTime             @default(now())
+  updatedAt  DateTime             @updatedAt
 
   // Relations
-  user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, token])
   @@index([userId])
@@ -631,38 +641,38 @@ model NotificationPreference {
   pushEnabled       Boolean                @default(true)
   smsEnabled        Boolean                @default(false)
   enabledCategories NotificationCategory[] @default([TICKETS, PAYMENTS, CASHLESS, PROGRAM, SECURITY, SYSTEM])
-  quietHoursStart   String?                // e.g., "22:00"
-  quietHoursEnd     String?                // e.g., "08:00"
+  quietHoursStart   String? // e.g., "22:00"
+  quietHoursEnd     String? // e.g., "08:00"
   timezone          String                 @default("Europe/Paris")
   createdAt         DateTime               @default(now())
   updatedAt         DateTime               @updatedAt
 
   // Relations
-  user              User                   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
 
 model ScheduledNotification {
-  id              String                      @id @default(uuid())
-  festivalId      String?
-  title           String
-  body            String
-  type            NotificationType            @default(SYSTEM)
-  data            Json?
-  imageUrl        String?
-  actionUrl       String?
-  scheduledFor    DateTime
-  status          ScheduledNotificationStatus @default(PENDING)
-  sentAt          DateTime?
-  sentCount       Int                         @default(0)
-  failedCount     Int                         @default(0)
+  id                String                      @id @default(uuid())
+  festivalId        String?
+  title             String
+  body              String
+  type              NotificationType            @default(SYSTEM)
+  data              Json?
+  imageUrl          String?
+  actionUrl         String?
+  scheduledFor      DateTime
+  status            ScheduledNotificationStatus @default(PENDING)
+  sentAt            DateTime?
+  sentCount         Int                         @default(0)
+  failedCount       Int                         @default(0)
   // Targeting
-  targetAll       Boolean                     @default(false)
-  targetUserIds   String[]                    // Specific user IDs
-  targetRoles     UserRole[]                  // Target by role
-  targetTicketTypes TicketType[]              // Target ticket holders
-  createdById     String
-  createdAt       DateTime                    @default(now())
-  updatedAt       DateTime                    @updatedAt
+  targetAll         Boolean                     @default(false)
+  targetUserIds     String[] // Specific user IDs
+  targetRoles       UserRole[] // Target by role
+  targetTicketTypes TicketType[] // Target ticket holders
+  createdById       String
+  createdAt         DateTime                    @default(now())
+  updatedAt         DateTime                    @updatedAt
 
   @@index([festivalId])
   @@index([status])
@@ -671,46 +681,46 @@ model ScheduledNotification {
 }
 
 model NotificationTemplate {
-  id          String           @id @default(uuid())
-  name        String           @unique
-  type        NotificationType
-  titleTemplate   String       // Handlebars template
-  bodyTemplate    String       // Handlebars template
-  defaultImageUrl String?
+  id               String           @id @default(uuid())
+  name             String           @unique
+  type             NotificationType
+  titleTemplate    String // Handlebars template
+  bodyTemplate     String // Handlebars template
+  defaultImageUrl  String?
   defaultActionUrl String?
-  isActive    Boolean          @default(true)
-  createdAt   DateTime         @default(now())
-  updatedAt   DateTime         @updatedAt
+  isActive         Boolean          @default(true)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
   @@index([type])
   @@index([isActive])
 }
 
 model Vendor {
-  id              String      @id @default(uuid())
-  festivalId      String
-  ownerId         String
-  name            String
-  type            VendorType
-  description     String?
-  logoUrl         String?
-  location        String?
-  latitude        Float?
-  longitude       Float?
-  commissionRate  Decimal     @db.Decimal(5, 2) @default(10.00) // Platform commission %
-  isOpen          Boolean     @default(true)
-  isActive        Boolean     @default(true)
-  openingHours    Json?       // {"monday": {"open": "09:00", "close": "22:00"}, ...}
-  qrMenuCode      String?     @unique // Unique QR code for digital menu
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  id             String     @id @default(uuid())
+  festivalId     String
+  ownerId        String
+  name           String
+  type           VendorType
+  description    String?
+  logoUrl        String?
+  location       String?
+  latitude       Float?
+  longitude      Float?
+  commissionRate Decimal    @default(10.00) @db.Decimal(5, 2) // Platform commission %
+  isOpen         Boolean    @default(true)
+  isActive       Boolean    @default(true)
+  openingHours   Json? // {"monday": {"open": "09:00", "close": "22:00"}, ...}
+  qrMenuCode     String?    @unique // Unique QR code for digital menu
+  createdAt      DateTime   @default(now())
+  updatedAt      DateTime   @updatedAt
 
   // Relations
-  festival        Festival    @relation(fields: [festivalId], references: [id], onDelete: Cascade)
-  products        VendorProduct[]
-  orders          VendorOrder[]
-  payouts         VendorPayout[]
-  menuItems       MenuItem[]  // Legacy support
+  festival  Festival        @relation(fields: [festivalId], references: [id], onDelete: Cascade)
+  products  VendorProduct[]
+  orders    VendorOrder[]
+  payouts   VendorPayout[]
+  menuItems MenuItem[] // Legacy support
 
   @@unique([festivalId, name])
   @@index([festivalId])
@@ -728,18 +738,18 @@ model VendorProduct {
   price       Decimal  @db.Decimal(10, 2)
   category    String?
   imageUrl    String?
-  stock       Int?     // null = unlimited stock
+  stock       Int? // null = unlimited stock
   soldCount   Int      @default(0)
   isAvailable Boolean  @default(true)
   sortOrder   Int      @default(0)
   allergens   String[] // ["gluten", "nuts", "dairy", etc.]
-  options     Json?    // {"size": ["S", "M", "L"], "extras": ["cheese", "bacon"]}
+  options     Json? // {"size": ["S", "M", "L"], "extras": ["cheese", "bacon"]}
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   // Relations
-  vendor      Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
-  orderItems  VendorOrderItem[]
+  vendor     Vendor            @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  orderItems VendorOrderItem[]
 
   @@unique([vendorId, name])
   @@index([vendorId])
@@ -762,7 +772,7 @@ model MenuItem {
   updatedAt   DateTime @updatedAt
 
   // Relations
-  vendor      Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
   @@index([vendorId])
   @@index([category])
@@ -770,29 +780,29 @@ model MenuItem {
 }
 
 model VendorOrder {
-  id              String              @id @default(uuid())
-  orderNumber     String              @unique // Human-readable order number
-  vendorId        String
-  userId          String
-  subtotal        Decimal             @db.Decimal(10, 2)
-  commission      Decimal             @db.Decimal(10, 2) @default(0) // Platform commission
-  totalAmount     Decimal             @db.Decimal(10, 2)
-  status          OrderStatus         @default(PENDING)
-  paymentMethod   VendorPaymentMethod @default(CASHLESS)
-  cashlessTransactionId String?       @unique
-  notes           String?
-  estimatedReadyAt DateTime?
-  readyAt         DateTime?
-  deliveredAt     DateTime?
-  cancelledAt     DateTime?
-  cancelReason    String?
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  id                    String              @id @default(uuid())
+  orderNumber           String              @unique // Human-readable order number
+  vendorId              String
+  userId                String
+  subtotal              Decimal             @db.Decimal(10, 2)
+  commission            Decimal             @default(0) @db.Decimal(10, 2) // Platform commission
+  totalAmount           Decimal             @db.Decimal(10, 2)
+  status                OrderStatus         @default(PENDING)
+  paymentMethod         VendorPaymentMethod @default(CASHLESS)
+  cashlessTransactionId String?             @unique
+  notes                 String?
+  estimatedReadyAt      DateTime?
+  readyAt               DateTime?
+  deliveredAt           DateTime?
+  cancelledAt           DateTime?
+  cancelReason          String?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
 
   // Relations
-  vendor          Vendor              @relation(fields: [vendorId], references: [id], onDelete: Cascade)
-  user            User                @relation(fields: [userId], references: [id])
-  items           VendorOrderItem[]
+  vendor Vendor            @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  user   User              @relation(fields: [userId], references: [id])
+  items  VendorOrderItem[]
 
   // Performance indexes - optimized for vendor dashboard and analytics
   @@index([vendorId])
@@ -801,54 +811,54 @@ model VendorOrder {
   @@index([createdAt])
   @@index([orderNumber])
   @@index([paymentMethod])
-  @@index([vendorId, status])             // Vendor order management
-  @@index([vendorId, createdAt])          // Vendor sales history
-  @@index([vendorId, status, createdAt])  // Vendor analytics
-  @@index([userId, createdAt])            // User order history
-  @@index([status, createdAt])            // Global order analytics
+  @@index([vendorId, status]) // Vendor order management
+  @@index([vendorId, createdAt]) // Vendor sales history
+  @@index([vendorId, status, createdAt]) // Vendor analytics
+  @@index([userId, createdAt]) // User order history
+  @@index([status, createdAt]) // Global order analytics
 }
 
 model VendorOrderItem {
-  id          String        @id @default(uuid())
+  id          String   @id @default(uuid())
   orderId     String
   productId   String
-  productName String        // Snapshot at order time
+  productName String // Snapshot at order time
   quantity    Int
-  unitPrice   Decimal       @db.Decimal(10, 2) // Snapshot at order time
-  totalPrice  Decimal       @db.Decimal(10, 2)
-  options     Json?         // Selected options like {"size": "M", "extras": ["cheese"]}
+  unitPrice   Decimal  @db.Decimal(10, 2) // Snapshot at order time
+  totalPrice  Decimal  @db.Decimal(10, 2)
+  options     Json? // Selected options like {"size": "M", "extras": ["cheese"]}
   notes       String?
-  createdAt   DateTime      @default(now())
+  createdAt   DateTime @default(now())
 
   // Relations
-  order       VendorOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  product     VendorProduct @relation(fields: [productId], references: [id])
+  order   VendorOrder   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product VendorProduct @relation(fields: [productId], references: [id])
 
   @@index([orderId])
   @@index([productId])
 }
 
 model VendorPayout {
-  id              String        @id @default(uuid())
-  vendorId        String
-  amount          Decimal       @db.Decimal(10, 2)
-  commission      Decimal       @db.Decimal(10, 2) @default(0) // Total commission deducted
-  netAmount       Decimal       @db.Decimal(10, 2) // Amount after commission
-  status          PayoutStatus  @default(PENDING)
-  periodStart     DateTime      // Start of the payout period
-  periodEnd       DateTime      // End of the payout period
-  orderCount      Int           @default(0)
-  bankAccount     String?       // IBAN or account reference
-  bankName        String?
-  reference       String?       @unique // Payment reference
-  processedAt     DateTime?
-  processedById   String?
-  notes           String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id            String       @id @default(uuid())
+  vendorId      String
+  amount        Decimal      @db.Decimal(10, 2)
+  commission    Decimal      @default(0) @db.Decimal(10, 2) // Total commission deducted
+  netAmount     Decimal      @db.Decimal(10, 2) // Amount after commission
+  status        PayoutStatus @default(PENDING)
+  periodStart   DateTime // Start of the payout period
+  periodEnd     DateTime // End of the payout period
+  orderCount    Int          @default(0)
+  bankAccount   String? // IBAN or account reference
+  bankName      String?
+  reference     String?      @unique // Payment reference
+  processedAt   DateTime?
+  processedById String?
+  notes         String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   // Relations
-  vendor          Vendor        @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  vendor Vendor @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
   @@index([vendorId])
   @@index([status])
@@ -881,69 +891,82 @@ enum LostItemStatus {
 
 // Support & FAQ Models
 model FaqCategory {
-  id        String    @id @default(uuid())
+  id        String   @id @default(uuid())
   name      String
-  order     Int       @default(0)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Relations
-  items     FaqItem[]
+  items FaqItem[]
 
   @@index([order])
 }
 
 model FaqItem {
-  id          String      @id @default(uuid())
-  categoryId  String
-  question    String
-  answer      String      @db.Text
-  order       Int         @default(0)
-  isActive    Boolean     @default(true)
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id         String   @id @default(uuid())
+  categoryId String
+  question   String
+  answer     String   @db.Text
+  order      Int      @default(0)
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   // Relations
-  category    FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  category FaqCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
 
   @@index([categoryId])
   @@index([order])
   @@index([isActive])
 }
 
+enum SupportTicketCategory {
+  GENERAL
+  TICKETS
+  PAYMENTS
+  CASHLESS
+  SECURITY
+  TECHNICAL
+  LOST_FOUND
+  OTHER
+}
+
 model SupportTicket {
-  id          String              @id @default(uuid())
+  id          String                @id @default(uuid())
   userId      String
   festivalId  String?
   subject     String
-  description String              @db.Text
-  status      SupportTicketStatus @default(OPEN)
-  priority    Priority            @default(MEDIUM)
+  description String                @db.Text
+  category    SupportTicketCategory @default(GENERAL)
+  status      SupportTicketStatus   @default(OPEN)
+  priority    Priority              @default(MEDIUM)
   assignedTo  String?
-  createdAt   DateTime            @default(now())
-  updatedAt   DateTime            @updatedAt
+  createdAt   DateTime              @default(now())
+  updatedAt   DateTime              @updatedAt
 
   // Relations
-  user        User                @relation(fields: [userId], references: [id])
-  messages    SupportMessage[]
+  user     User             @relation(fields: [userId], references: [id])
+  messages SupportMessage[]
 
   @@index([userId])
   @@index([festivalId])
   @@index([status])
   @@index([priority])
   @@index([createdAt])
+  @@index([category])
 }
 
 model SupportMessage {
-  id        String        @id @default(uuid())
+  id        String   @id @default(uuid())
   ticketId  String
   senderId  String
-  message   String        @db.Text
-  isStaff   Boolean       @default(false)
-  createdAt DateTime      @default(now())
+  message   String   @db.Text
+  isStaff   Boolean  @default(false)
+  createdAt DateTime @default(now())
 
   // Relations
-  ticket    SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  ticket SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
   @@index([ticketId])
   @@index([senderId])
@@ -974,26 +997,26 @@ model LostItem {
 
 // CampingZone: Represents a camping area within a festival
 model CampingZone {
-  id              String            @id @default(uuid())
-  festivalId      String
-  name            String
-  description     String?
-  type            AccommodationType
-  capacity        Int               // Total number of spots in this zone
-  pricePerNight   Decimal           @db.Decimal(10, 2)
-  amenities       String[]          // ["electricity", "water", "wifi", "showers", "toilets"]
-  rules           String?           @db.Text // Zone-specific rules
-  latitude        Float?            // For map display
-  longitude       Float?
-  imageUrl        String?
-  isActive        Boolean           @default(true)
-  sortOrder       Int               @default(0)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  id            String            @id @default(uuid())
+  festivalId    String
+  name          String
+  description   String?
+  type          AccommodationType
+  capacity      Int // Total number of spots in this zone
+  pricePerNight Decimal           @db.Decimal(10, 2)
+  amenities     String[] // ["electricity", "water", "wifi", "showers", "toilets"]
+  rules         String?           @db.Text // Zone-specific rules
+  latitude      Float? // For map display
+  longitude     Float?
+  imageUrl      String?
+  isActive      Boolean           @default(true)
+  sortOrder     Int               @default(0)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
 
   // Relations
-  festival        Festival          @relation(fields: [festivalId], references: [id], onDelete: Cascade)
-  spots           CampingSpot[]
+  festival Festival      @relation(fields: [festivalId], references: [id], onDelete: Cascade)
+  spots    CampingSpot[]
 
   @@unique([festivalId, name])
   @@index([festivalId])
@@ -1004,24 +1027,24 @@ model CampingZone {
 
 // CampingSpot: Individual camping spot within a zone
 model CampingSpot {
-  id              String            @id @default(uuid())
-  zoneId          String
-  number          String            // Spot identifier (e.g., "A1", "B23")
-  status          CampingSpotStatus @default(AVAILABLE)
-  latitude        Float?            // Precise location for map
-  longitude       Float?
-  size            String?           // "small", "medium", "large"
-  electricityHook Boolean           @default(false)
-  waterHook       Boolean           @default(false)
-  maxVehicleLength Float?           // For caravans/campervans (in meters)
-  notes           String?           // Staff notes about this spot
-  isActive        Boolean           @default(true)
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  id               String            @id @default(uuid())
+  zoneId           String
+  number           String // Spot identifier (e.g., "A1", "B23")
+  status           CampingSpotStatus @default(AVAILABLE)
+  latitude         Float? // Precise location for map
+  longitude        Float?
+  size             String? // "small", "medium", "large"
+  electricityHook  Boolean           @default(false)
+  waterHook        Boolean           @default(false)
+  maxVehicleLength Float? // For caravans/campervans (in meters)
+  notes            String? // Staff notes about this spot
+  isActive         Boolean           @default(true)
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
   // Relations
-  zone            CampingZone       @relation(fields: [zoneId], references: [id], onDelete: Cascade)
-  bookings        CampingBooking[]
+  zone     CampingZone      @relation(fields: [zoneId], references: [id], onDelete: Cascade)
+  bookings CampingBooking[]
 
   @@unique([zoneId, number])
   @@index([zoneId])
@@ -1031,35 +1054,35 @@ model CampingSpot {
 
 // CampingBooking: Reservation of a camping spot
 model CampingBooking {
-  id              String        @id @default(uuid())
-  bookingNumber   String        @unique // Human-readable booking reference
-  spotId          String
-  userId          String
-  checkIn         DateTime
-  checkOut        DateTime
-  guestCount      Int
-  status          BookingStatus @default(PENDING)
-  totalPrice      Decimal       @db.Decimal(10, 2)
-  paidAmount      Decimal       @db.Decimal(10, 2) @default(0)
-  vehiclePlate    String?       // License plate for vehicle
-  vehicleType     String?       // "car", "caravan", "campervan", "motorcycle"
-  qrCode          String?       @unique // QR code for access
-  qrCodeData      String?       // Signed QR payload
-  notes           String?       // Guest notes
-  staffNotes      String?       // Staff-only notes
-  paymentId       String?       // Reference to payment
-  checkedInAt     DateTime?
-  checkedInBy     String?       // Staff ID who checked in
-  checkedOutAt    DateTime?
-  checkedOutBy    String?       // Staff ID who checked out
-  cancelledAt     DateTime?
-  cancelReason    String?
-  createdAt       DateTime      @default(now())
-  updatedAt       DateTime      @updatedAt
+  id            String        @id @default(uuid())
+  bookingNumber String        @unique // Human-readable booking reference
+  spotId        String
+  userId        String
+  checkIn       DateTime
+  checkOut      DateTime
+  guestCount    Int
+  status        BookingStatus @default(PENDING)
+  totalPrice    Decimal       @db.Decimal(10, 2)
+  paidAmount    Decimal       @default(0) @db.Decimal(10, 2)
+  vehiclePlate  String? // License plate for vehicle
+  vehicleType   String? // "car", "caravan", "campervan", "motorcycle"
+  qrCode        String?       @unique // QR code for access
+  qrCodeData    String? // Signed QR payload
+  notes         String? // Guest notes
+  staffNotes    String? // Staff-only notes
+  paymentId     String? // Reference to payment
+  checkedInAt   DateTime?
+  checkedInBy   String? // Staff ID who checked in
+  checkedOutAt  DateTime?
+  checkedOutBy  String? // Staff ID who checked out
+  cancelledAt   DateTime?
+  cancelReason  String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
 
   // Relations
-  spot            CampingSpot   @relation(fields: [spotId], references: [id], onDelete: Cascade)
-  user            User          @relation(fields: [userId], references: [id])
+  spot CampingSpot @relation(fields: [spotId], references: [id], onDelete: Cascade)
+  user User        @relation(fields: [userId], references: [id])
 
   @@index([spotId])
   @@index([userId])
@@ -1099,25 +1122,25 @@ enum ShiftStatus {
 }
 
 enum StaffAccessLevel {
-  BASIC         // Access to general areas only
-  STANDARD      // Access to staff areas
-  ELEVATED      // Access to restricted areas
-  FULL          // Full access including backstage
-  ADMIN         // Administrative access
+  BASIC // Access to general areas only
+  STANDARD // Access to staff areas
+  ELEVATED // Access to restricted areas
+  FULL // Full access including backstage
+  ADMIN // Administrative access
 }
 
 model StaffRole {
-  id            String           @id @default(uuid())
-  name          String           @unique
-  description   String?
-  permissions   String[]         // Array of permission keys
-  accessLevel   StaffAccessLevel @default(STANDARD)
-  isActive      Boolean          @default(true)
-  createdAt     DateTime         @default(now())
-  updatedAt     DateTime         @updatedAt
+  id          String           @id @default(uuid())
+  name        String           @unique
+  description String?
+  permissions String[] // Array of permission keys
+  accessLevel StaffAccessLevel @default(STANDARD)
+  isActive    Boolean          @default(true)
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
 
   // Relations
-  staffMembers  StaffMember[]
+  staffMembers StaffMember[]
 
   @@index([name])
   @@index([accessLevel])
@@ -1129,9 +1152,9 @@ model StaffMember {
   festivalId       String
   roleId           String
   department       StaffDepartment @default(GENERAL)
-  employeeCode     String?         // Internal staff code
+  employeeCode     String? // Internal staff code
   phone            String?
-  emergencyContact Json?           // {name, phone, relation}
+  emergencyContact Json? // {name, phone, relation}
   badgeNumber      String?         @unique
   notes            String?
   isActive         Boolean         @default(true)
@@ -1141,11 +1164,11 @@ model StaffMember {
   updatedAt        DateTime        @updatedAt
 
   // Relations
-  user             User            @relation(fields: [userId], references: [id])
-  festival         Festival        @relation(fields: [festivalId], references: [id], onDelete: Cascade)
-  role             StaffRole       @relation(fields: [roleId], references: [id])
-  shifts           StaffShift[]
-  checkIns         StaffCheckIn[]
+  user     User           @relation(fields: [userId], references: [id])
+  festival Festival       @relation(fields: [festivalId], references: [id], onDelete: Cascade)
+  role     StaffRole      @relation(fields: [roleId], references: [id])
+  shifts   StaffShift[]
+  checkIns StaffCheckIn[]
 
   @@unique([userId, festivalId])
   @@index([userId])
@@ -1157,22 +1180,24 @@ model StaffMember {
 }
 
 model StaffShift {
-  id            String      @id @default(uuid())
-  staffMemberId String
-  zoneId        String?     // Optional zone assignment
-  title         String?     // Shift description/title
-  startTime     DateTime
-  endTime       DateTime
-  breakDuration Int         @default(0) // Break time in minutes
-  status        ShiftStatus @default(SCHEDULED)
-  notes         String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id              String      @id @default(uuid())
+  staffMemberId   String
+  zoneId          String? // Optional zone assignment
+  title           String? // Shift description/title
+  startTime       DateTime
+  endTime         DateTime
+  actualStartTime DateTime? // Actual clock-in time
+  actualEndTime   DateTime? // Actual clock-out time
+  breakDuration   Int         @default(0) // Break time in minutes
+  status          ShiftStatus @default(SCHEDULED)
+  notes           String?
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
 
   // Relations
-  staffMember   StaffMember @relation(fields: [staffMemberId], references: [id], onDelete: Cascade)
-  zone          Zone?       @relation(fields: [zoneId], references: [id])
-  checkIns      StaffCheckIn[]
+  staffMember StaffMember    @relation(fields: [staffMemberId], references: [id], onDelete: Cascade)
+  zone        Zone?          @relation(fields: [zoneId], references: [id])
+  checkIns    StaffCheckIn[]
 
   @@index([staffMemberId])
   @@index([zoneId])
@@ -1180,22 +1205,23 @@ model StaffShift {
   @@index([endTime])
   @@index([status])
   @@index([staffMemberId, startTime])
+  @@index([actualStartTime])
 }
 
 model StaffCheckIn {
-  id            String      @id @default(uuid())
+  id            String    @id @default(uuid())
   staffMemberId String
   shiftId       String?
-  checkInTime   DateTime    @default(now())
+  checkInTime   DateTime  @default(now())
   checkOutTime  DateTime?
-  location      String?     // GPS coordinates or zone name
-  checkInMethod String?     // QR, NFC, MANUAL
+  location      String? // GPS coordinates or zone name
+  checkInMethod String? // QR, NFC, MANUAL
   notes         String?
-  createdAt     DateTime    @default(now())
+  createdAt     DateTime  @default(now())
 
   // Relations
-  staffMember   StaffMember @relation(fields: [staffMemberId], references: [id], onDelete: Cascade)
-  shift         StaffShift? @relation(fields: [shiftId], references: [id])
+  staffMember StaffMember @relation(fields: [staffMemberId], references: [id], onDelete: Cascade)
+  shift       StaffShift? @relation(fields: [shiftId], references: [id])
 
   @@index([staffMemberId])
   @@index([shiftId])
@@ -1217,15 +1243,15 @@ enum PerformanceStatus {
 
 // User's favorite artists for notifications
 model FavoriteArtist {
-  id          String   @id @default(uuid())
-  userId      String
-  artistId    String
-  festivalId  String?  // Optional: favorite for a specific festival
-  notifyMe    Boolean  @default(true) // Receive notifications about this artist
-  createdAt   DateTime @default(now())
+  id         String   @id @default(uuid())
+  userId     String
+  artistId   String
+  festivalId String? // Optional: favorite for a specific festival
+  notifyMe   Boolean  @default(true) // Receive notifications about this artist
+  createdAt  DateTime @default(now())
 
   // Relations
-  artist      Artist   @relation(fields: [artistId], references: [id], onDelete: Cascade)
+  artist Artist @relation(fields: [artistId], references: [id], onDelete: Cascade)
 
   @@unique([userId, artistId, festivalId])
   @@index([userId])
@@ -1262,20 +1288,20 @@ enum GdprRequestStatus {
 
 // User consent tracking for GDPR compliance
 model UserConsent {
-  id          String      @id @default(uuid())
-  userId      String
-  type        ConsentType
-  granted     Boolean     @default(false)
-  grantedAt   DateTime?
-  revokedAt   DateTime?
-  ipAddress   String?
-  userAgent   String?
-  version     Int         @default(1) // Consent version
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
+  id        String      @id @default(uuid())
+  userId    String
+  type      ConsentType
+  granted   Boolean     @default(false)
+  grantedAt DateTime?
+  revokedAt DateTime?
+  ipAddress String?
+  userAgent String?
+  version   Int         @default(1) // Consent version
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
 
   // Relations
-  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, type])
   @@index([userId])
@@ -1290,7 +1316,7 @@ model GdprRequest {
   type            GdprRequestType
   status          GdprRequestStatus @default(PENDING)
   details         String?           @db.Text
-  format          String?           // Export format (JSON, CSV, PDF)
+  format          String? // Export format (JSON, CSV, PDF)
   downloadUrl     String?
   expiresAt       DateTime?
   processedAt     DateTime?
@@ -1300,7 +1326,7 @@ model GdprRequest {
   updatedAt       DateTime          @updatedAt
 
   // Relations
-  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([type])
@@ -1310,19 +1336,19 @@ model GdprRequest {
 
 // User sessions for security and GDPR audit
 model Session {
-  id          String    @id @default(uuid())
-  userId      String
-  token       String    @unique
-  ipAddress   String?
-  userAgent   String?
-  deviceInfo  Json?
-  isActive    Boolean   @default(true)
+  id           String   @id @default(uuid())
+  userId       String
+  token        String   @unique
+  ipAddress    String?
+  userAgent    String?
+  deviceInfo   Json?
+  isActive     Boolean  @default(true)
   lastActiveAt DateTime @default(now())
-  expiresAt   DateTime
-  createdAt   DateTime  @default(now())
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
 
   // Relations
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([token])

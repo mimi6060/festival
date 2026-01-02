@@ -7,12 +7,11 @@
 
 import {
   TicketStatus,
-  TicketType,
   PaymentStatus,
   PaymentProvider,
   TransactionType,
 } from '@prisma/client';
-import { regularUser, staffUser } from './users.fixture';
+import { regularUser, staffUser, cashierUser, adminUser } from './users.fixture';
 import { publishedFestival, standardCategory, vipCategory } from './festivals.fixture';
 
 // ============================================================================
@@ -565,8 +564,6 @@ export const stripeWebhookPayloads = {
 // ============================================================================
 // Factory Functions
 // ============================================================================
-
-import { cashierUser, adminUser } from './users.fixture';
 
 let ticketCounter = 0;
 let paymentCounter = 0;

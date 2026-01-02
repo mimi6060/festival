@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 export default function Home() {
   return (
     <main className="flex min-h-screen flex-col items-center justify-center p-24">
@@ -10,35 +12,35 @@ export default function Home() {
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-          <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 hover:bg-white/20 transition">
+          <Link href="/festivals" className="bg-white/10 backdrop-blur-lg rounded-xl p-6 hover:bg-white/20 transition cursor-pointer">
             <h2 className="text-2xl font-semibold mb-3 text-festival-accent">🎫 Billetterie</h2>
             <p className="text-gray-300">Vente de billets en ligne avec QR codes sécurisés</p>
-          </div>
+          </Link>
 
-          <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 hover:bg-white/20 transition">
+          <Link href="/account" className="bg-white/10 backdrop-blur-lg rounded-xl p-6 hover:bg-white/20 transition cursor-pointer">
             <h2 className="text-2xl font-semibold mb-3 text-festival-accent">💳 Cashless</h2>
             <p className="text-gray-300">Paiements NFC rapides et sans contact</p>
-          </div>
+          </Link>
 
-          <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6 hover:bg-white/20 transition">
+          <Link href="/festivals" className="bg-white/10 backdrop-blur-lg rounded-xl p-6 hover:bg-white/20 transition cursor-pointer">
             <h2 className="text-2xl font-semibold mb-3 text-festival-accent">📅 Programme</h2>
             <p className="text-gray-300">Gestion des artistes et des scènes</p>
-          </div>
+          </Link>
         </div>
 
         <div className="mt-16 flex gap-4 justify-center">
-          <a
-            href="/login"
+          <Link
+            href="/auth/login"
             className="px-8 py-3 bg-festival-accent hover:bg-pink-600 rounded-full font-semibold transition"
           >
             Se connecter
-          </a>
-          <a
-            href="/register"
+          </Link>
+          <Link
+            href="/auth/register"
             className="px-8 py-3 bg-white/10 hover:bg-white/20 rounded-full font-semibold transition"
           >
             Créer un compte
-          </a>
+          </Link>
         </div>
       </div>
     </main>

@@ -1,6 +1,6 @@
-export type Locale = 'fr' | 'en';
+export type Locale = 'fr' | 'en' | 'de' | 'es';
 
-export const locales: Locale[] = ['fr', 'en'];
+export const locales: Locale[] = ['fr', 'en', 'de', 'es'];
 export const defaultLocale: Locale = 'fr';
 
 export interface LocaleConfig {
@@ -21,6 +21,18 @@ export const localeConfigs: Record<Locale, LocaleConfig> = {
     locale: 'en',
     name: 'English',
     flag: 'GB',
+    direction: 'ltr',
+  },
+  de: {
+    locale: 'de',
+    name: 'Deutsch',
+    flag: 'DE',
+    direction: 'ltr',
+  },
+  es: {
+    locale: 'es',
+    name: 'Espanol',
+    flag: 'ES',
     direction: 'ltr',
   },
 };

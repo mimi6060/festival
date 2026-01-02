@@ -87,7 +87,7 @@ export class NFCFormatter {
   /**
    * Encode tag data for writing to NFC tag
    */
-  encodeTagData(data: NFCTagData, encrypt: boolean = true): NFCPayload {
+  encodeTagData(data: NFCTagData, encrypt = true): NFCPayload {
     // Prepare data for encoding
     const dataToEncode = {
       ...data,
@@ -117,7 +117,7 @@ export class NFCFormatter {
   /**
    * Decode tag data from NFC tag
    */
-  decodeTagData(payload: NFCPayload, decrypt: boolean = true): NFCTagData {
+  decodeTagData(payload: NFCPayload, decrypt = true): NFCTagData {
     try {
       // Decrypt or decode data
       const jsonData = decrypt
@@ -228,7 +228,7 @@ export class NFCFormatter {
   createCashlessData(
     accountId: string,
     userId: string,
-    initialBalance: number = 0
+    initialBalance = 0
   ): CashlessData {
     return {
       accountId,
@@ -245,7 +245,7 @@ export class NFCFormatter {
   createTransferData(
     fromUserId: string,
     amount: number,
-    expiryMinutes: number = 5
+    expiryMinutes = 5
   ): TransferData {
     const now = Date.now();
     return {
@@ -264,7 +264,7 @@ export class NFCFormatter {
     staffId: string,
     role: string,
     zones: string[],
-    validDays: number = 7
+    validDays = 7
   ): StaffData {
     const now = Date.now();
     return {

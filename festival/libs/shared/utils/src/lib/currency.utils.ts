@@ -30,8 +30,8 @@ export const CURRENCIES: Record<
  */
 export function formatPrice(
   amount: number,
-  currency: string = 'EUR',
-  locale: string = 'fr-FR',
+  currency = 'EUR',
+  locale = 'fr-FR',
   options?: Intl.NumberFormatOptions
 ): string {
   return new Intl.NumberFormat(locale, {
@@ -46,8 +46,8 @@ export function formatPrice(
  */
 export function formatPriceCustom(
   amount: number,
-  currency: string = 'EUR',
-  locale: string = 'fr-FR',
+  currency = 'EUR',
+  locale = 'fr-FR',
   minimumFractionDigits?: number,
   maximumFractionDigits?: number
 ): string {
@@ -94,7 +94,7 @@ export function convertCurrency(
  */
 export function parseCurrencyString(
   currencyString: string,
-  locale: string = 'fr-FR'
+  locale = 'fr-FR'
 ): number {
   // Get the decimal and thousand separators for the locale
   const parts = new Intl.NumberFormat(locale).formatToParts(1234.56);
@@ -119,7 +119,7 @@ export function parseCurrencyString(
 /**
  * Convert cents to euros/dollars (smallest unit to main unit)
  */
-export function fromCents(cents: number, currency: string = 'EUR'): number {
+export function fromCents(cents: number, currency = 'EUR'): number {
   const currencyInfo = CURRENCIES[currency];
   const decimals = currencyInfo?.decimals ?? 2;
   return cents / Math.pow(10, decimals);
@@ -128,7 +128,7 @@ export function fromCents(cents: number, currency: string = 'EUR'): number {
 /**
  * Convert euros/dollars to cents (main unit to smallest unit)
  */
-export function toCents(amount: number, currency: string = 'EUR'): number {
+export function toCents(amount: number, currency = 'EUR'): number {
   const currencyInfo = CURRENCIES[currency];
   const decimals = currencyInfo?.decimals ?? 2;
   return Math.round(amount * Math.pow(10, decimals));
@@ -139,7 +139,7 @@ export function toCents(amount: number, currency: string = 'EUR'): number {
  */
 export function roundToCurrencyPrecision(
   amount: number,
-  currency: string = 'EUR'
+  currency = 'EUR'
 ): number {
   const currencyInfo = CURRENCIES[currency];
   const decimals = currencyInfo?.decimals ?? 2;
@@ -153,7 +153,7 @@ export function roundToCurrencyPrecision(
 export function calculateWithTax(
   amount: number,
   taxRate: number,
-  currency: string = 'EUR'
+  currency = 'EUR'
 ): { subtotal: number; tax: number; total: number } {
   const subtotal = roundToCurrencyPrecision(amount, currency);
   const tax = roundToCurrencyPrecision(amount * (taxRate / 100), currency);
@@ -168,7 +168,7 @@ export function calculateWithTax(
 export function calculateDiscount(
   amount: number,
   discountPercent: number,
-  currency: string = 'EUR'
+  currency = 'EUR'
 ): { original: number; discount: number; final: number } {
   const original = roundToCurrencyPrecision(amount, currency);
   const discount = roundToCurrencyPrecision(
@@ -208,8 +208,8 @@ export function getSupportedCurrencies(): string[] {
 export function formatPriceRange(
   minPrice: number,
   maxPrice: number,
-  currency: string = 'EUR',
-  locale: string = 'fr-FR'
+  currency = 'EUR',
+  locale = 'fr-FR'
 ): string {
   if (minPrice === maxPrice) {
     return formatPrice(minPrice, currency, locale);
@@ -238,7 +238,7 @@ export function calculatePercentage(
 export function splitAmount(
   amount: number,
   participants: number,
-  currency: string = 'EUR'
+  currency = 'EUR'
 ): number[] {
   if (participants <= 0) return [];
 

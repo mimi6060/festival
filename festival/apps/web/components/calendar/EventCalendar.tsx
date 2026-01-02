@@ -761,7 +761,7 @@ export function EventCalendar({
     switch (view) {
       case 'month':
         return `${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
-      case 'week':
+      case 'week': {
         const weekDays = getWeekDays(currentDate);
         const start = weekDays[0];
         const end = weekDays[6];
@@ -769,6 +769,7 @@ export function EventCalendar({
           return `${MONTHS[start.getMonth()]} ${start.getDate()} - ${end.getDate()}, ${start.getFullYear()}`;
         }
         return `${MONTHS[start.getMonth()]} ${start.getDate()} - ${MONTHS[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`;
+      }
       case 'day':
         return currentDate.toLocaleDateString('en-US', {
           weekday: 'long',

@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -8,6 +9,8 @@ import { PrismaModule } from '../modules/prisma';
 import { AuthModule } from '../modules/auth';
 import { HealthModule } from '../modules/health';
 import { CacheModule } from '../modules/cache';
+import { MonitoringModule } from '../modules/monitoring';
+import { QueueModule } from '../modules/queue';
 
 // Feature modules
 import { UsersModule } from '../modules/users';
@@ -16,6 +19,8 @@ import { VendorsModule } from '../modules/vendors';
 import { ZonesModule } from '../modules/zones';
 import { StaffModule } from '../modules/staff';
 import { CampingModule } from '../modules/camping';
+import { TicketsModule } from '../modules/tickets';
+import { CashlessModule } from '../modules/cashless';
 
 // Service modules
 import { EmailModule } from '../modules/email';
@@ -24,6 +29,7 @@ import { PdfModule } from '../modules/pdf';
 import { AnalyticsModule } from '../modules/analytics';
 import { SupportModule } from '../modules/support';
 import { GdprModule } from '../modules/gdpr';
+import { PaymentsModule } from '../modules/payments';
 
 @Module({
   imports: [
@@ -32,12 +38,15 @@ import { GdprModule } from '../modules/gdpr';
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
     }),
+    EventEmitterModule.forRoot(),
 
     // Core modules
     PrismaModule,
     AuthModule,
     HealthModule,
     CacheModule,
+    MonitoringModule,
+    QueueModule,
 
     // Feature modules
     UsersModule,
@@ -46,6 +55,8 @@ import { GdprModule } from '../modules/gdpr';
     ZonesModule,
     StaffModule,
     CampingModule,
+    TicketsModule,
+    CashlessModule,
 
     // Service modules
     EmailModule,
@@ -54,6 +65,7 @@ import { GdprModule } from '../modules/gdpr';
     AnalyticsModule,
     SupportModule,
     GdprModule,
+    PaymentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

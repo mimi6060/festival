@@ -104,7 +104,7 @@ class DataSyncService {
   private static instance: DataSyncService;
   private config: DataSyncConfig;
   private deltaMeta: Record<SyncDataType, DeltaSyncMeta>;
-  private isSyncing: boolean = false;
+  private isSyncing = false;
   private syncListeners: Set<(result: SyncResult) => void> = new Set();
   private abortController: AbortController | null = null;
 
@@ -186,7 +186,7 @@ class DataSyncService {
   /**
    * Perform a full sync of all data types
    */
-  public async syncAll(force: boolean = false): Promise<FullSyncResult> {
+  public async syncAll(force = false): Promise<FullSyncResult> {
     if (this.isSyncing && !force) {
       console.log('[DataSyncService] Sync already in progress');
       return {
@@ -451,7 +451,7 @@ class DataSyncService {
   private async fetchWithRetry(
     url: string,
     options: RequestInit,
-    attempt: number = 1
+    attempt = 1
   ): Promise<Response> {
     try {
       const response = await fetch(url, options);

@@ -23,7 +23,6 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
-  Treemap,
   Scatter,
   ScatterChart,
   ZAxis,
@@ -448,14 +447,14 @@ export default function ReportsPage() {
                   paddingAngle={2}
                   dataKey="value"
                   nameKey="name"
-                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  label={({ name, percent }) => `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`}
                   labelLine={{ stroke: '#6b7280', strokeWidth: 1 }}
                 >
                   {revenueByCategoryData.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                <Tooltip formatter={(value) => formatCurrency(Number(value) || 0)} />
               </PieChart>
             </ResponsiveContainer>
           </div>

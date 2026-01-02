@@ -76,10 +76,10 @@ export class AdvancedMetricsService {
           status: { in: ['DELIVERED', 'CONFIRMED', 'READY'] },
           createdAt: { gte: startDate, lte: endDate },
         },
-        _sum: { totalAmount: true, commissionAmount: true },
+        _sum: { totalAmount: true, commission: true },
       }),
       // Camping revenue
-      this.prisma.campingReservation.aggregate({
+      this.prisma.campingBooking.aggregate({
         where: {
           spot: { zone: { festivalId } },
           status: 'CONFIRMED',
@@ -104,7 +104,7 @@ export class AdvancedMetricsService {
           status: { in: ['DELIVERED', 'CONFIRMED', 'READY'] },
           createdAt: { gte: startDate, lte: endDate },
         },
-        _sum: { commissionAmount: true },
+        _sum: { commission: true },
       }),
     ]);
 
@@ -113,7 +113,7 @@ export class AdvancedMetricsService {
     const vendorRev = this.decimalToNumber(vendorRevenue._sum.totalAmount);
     const campingRev = this.decimalToNumber(campingRevenue._sum.totalPrice);
     const refundAmount = this.decimalToNumber(refunds._sum.amount);
-    const feesAmount = this.decimalToNumber(platformFees._sum.commissionAmount);
+    const feesAmount = this.decimalToNumber(platformFees._sum.commission);
 
     const grossRevenue = ticketRev + cashlessRev + vendorRev + campingRev;
     const netRevenue = grossRevenue - refundAmount;
@@ -137,7 +137,7 @@ export class AdvancedMetricsService {
         vendors: {
           amount: vendorRev,
           percentage: grossRevenue > 0 ? (vendorRev / grossRevenue) * 100 : 0,
-          commission: this.decimalToNumber(vendorRevenue._sum.commissionAmount),
+          commission: this.decimalToNumber(vendorRevenue._sum.commission),
         },
         camping: {
           amount: campingRev,
@@ -558,14 +558,14 @@ export class AdvancedMetricsService {
       }),
       this.prisma.staffShift.findMany({
         where: {
-          member: { festivalId },
+          staffMember: { festivalId },
           startTime: { gte: startDate },
           endTime: { lte: endDate },
         },
       }),
       this.prisma.staffShift.findMany({
         where: {
-          member: { festivalId },
+          staffMember: { festivalId },
           actualStartTime: { not: null },
           startTime: { gte: startDate },
           endTime: { lte: endDate },
@@ -712,7 +712,7 @@ export class AdvancedMetricsService {
       this.prisma.staffMember.count({
         where: {
           festivalId,
-          role: 'SECURITY',
+          department: 'SECURITY',
           isActive: true,
         },
       }),
@@ -1222,13 +1222,13 @@ export class AdvancedMetricsService {
 
   private async getStaffByRole(festivalId: string): Promise<{ role: string; count: number }[]> {
     const staff = await this.prisma.staffMember.groupBy({
-      by: ['role'],
+      by: ['department'],
       where: { festivalId, isActive: true },
       _count: true,
     });
 
     return staff.map(s => ({
-      role: s.role,
+      role: s.department,
       count: s._count,
     }));
   }
@@ -1246,13 +1246,13 @@ export class AdvancedMetricsService {
             startTime: { gte: startDate },
             endTime: { lte: endDate },
           },
-          include: { member: true },
+          include: { staffMember: true },
         },
       },
     });
 
     return zones.map(z => {
-      const uniqueStaff = new Set(z.staffShifts.map(s => s.memberId));
+      const uniqueStaff = new Set(z.staffShifts.map(s => s.staffMemberId));
       const totalHours = z.staffShifts.reduce((sum, s) =>
         sum + (s.endTime.getTime() - s.startTime.getTime()) / 3600000, 0
       );

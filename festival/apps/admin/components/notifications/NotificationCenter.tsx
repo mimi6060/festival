@@ -78,15 +78,7 @@ const mockNotifications: AdminNotification[] = [
   },
 ];
 
-// Notification type icons and colors
-const typeIcons: Record<AdminNotification['type'], string> = {
-  info: 'i',
-  success: 'v',
-  warning: '!',
-  error: 'x',
-  alert: 'b',
-};
-
+// Notification type colors
 const typeColors: Record<AdminNotification['type'], string> = {
   info: 'bg-blue-50 border-blue-200',
   success: 'bg-green-50 border-green-200',

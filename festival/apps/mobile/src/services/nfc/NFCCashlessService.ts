@@ -134,7 +134,7 @@ class NFCCashlessService {
   private reader: NFCReader;
   private writer: NFCWriter;
   private formatter: NFCFormatter;
-  private isInitialized: boolean = false;
+  private isInitialized = false;
   private offlineTransactions: CashlessTransaction[] = [];
   private transactionListeners: Set<(tx: CashlessTransaction) => void> = new Set();
   private currentBraceletId: string | null = null;
@@ -738,7 +738,7 @@ class NFCCashlessService {
    */
   public async getTransactionHistory(
     braceletId?: string,
-    limit: number = 50
+    limit = 50
   ): Promise<CashlessTransaction[]> {
     try {
       if (!networkDetector.isOnline()) {

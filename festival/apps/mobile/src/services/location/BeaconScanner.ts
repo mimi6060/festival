@@ -42,7 +42,7 @@ interface TrackedBeacon extends Beacon {
 export class BeaconScanner {
   private bleManager: BleManager;
   private config: BeaconScannerConfig;
-  private isScanning: boolean = false;
+  private isScanning = false;
   private scanInterval: NodeJS.Timeout | null = null;
   private trackedBeacons: Map<string, TrackedBeacon> = new Map();
   private beaconConfigMap: Map<string, BeaconConfig> = new Map();
@@ -440,7 +440,7 @@ export class BeaconScanner {
     let totalWeight = 0;
     let weightedX = 0;
     let weightedY = 0;
-    let floorVotes: Map<number, number> = new Map();
+    const floorVotes: Map<number, number> = new Map();
 
     beaconsWithConfig.forEach(({ beacon, config }) => {
       if (!config) return;

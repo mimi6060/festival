@@ -1,6 +1,8 @@
 'use client';
 
 import { useMemo } from 'react';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import StatCard from '../components/dashboard/StatCard';
 import RevenueChart from '../components/dashboard/RevenueChart';
 import TicketSalesChart from '../components/dashboard/TicketSalesChart';
@@ -14,6 +16,7 @@ import {
 } from '../lib/mock-data';
 
 export default function DashboardPage() {
+  const router = useRouter();
   const stats = mockDashboardStats;
   const festivals = mockFestivals.filter((f) => f.status === 'published');
   const revenueData = useMemo(() => generateRevenueChartData(90), []);
@@ -30,18 +33,18 @@ export default function DashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <button className="btn-secondary flex items-center gap-2">
+          <Link href="/exports" className="btn-secondary flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
             </svg>
             Exporter
-          </button>
-          <button className="btn-primary flex items-center gap-2">
+          </Link>
+          <Link href="/festivals/new" className="btn-primary flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg>
             Nouveau festival
-          </button>
+          </Link>
         </div>
       </div>
 

@@ -18,7 +18,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { PrismaService } from '../../prisma/prisma.service';
-import { PaymentStatus, PaymentProvider } from '@prisma/client';
+import { PaymentStatus, PaymentProvider, Prisma } from '@prisma/client';
 import {
   CreateCheckoutSessionDto,
   CheckoutSessionResponseDto,
@@ -48,7 +48,7 @@ export class CheckoutService {
 
     if (stripeSecretKey) {
       this.stripe = new Stripe(stripeSecretKey, {
-        apiVersion: '2024-12-18.acacia',
+        apiVersion: '2025-02-24.acacia',
       });
     } else {
       this.logger.warn('STRIPE_SECRET_KEY not configured - Checkout features disabled');
@@ -455,10 +455,10 @@ export class CheckoutService {
           ...(payment.providerData as Record<string, unknown>),
           sessionId: session.id,
           paymentIntentId,
-          customerId: session.customer,
+          customerId: typeof session.customer === 'string' ? session.customer : session.customer?.id,
           subscriptionId,
           amountTotal: session.amount_total,
-        },
+        } as unknown as Prisma.InputJsonValue,
       },
     });
 

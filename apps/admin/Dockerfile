@@ -83,7 +83,7 @@ WORKDIR /app
 # Set environment to production
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV PORT=3000
+ENV PORT=3002
 ENV HOSTNAME="0.0.0.0"
 
 # Create non-root user for security
@@ -109,11 +109,11 @@ RUN mkdir -p /app/tmp \
 USER nextjs
 
 # Expose the admin port
-EXPOSE 3000
+EXPOSE 3002
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=10s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/api/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:3002/api/health || exit 1
 
 # Use dumb-init to handle signals properly
 ENTRYPOINT ["dumb-init", "--"]

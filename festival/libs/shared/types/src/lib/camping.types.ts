@@ -656,13 +656,13 @@ export function calculateNights(checkIn: string, checkOut: string): number {
 export function calculateCampingPrice(
   nightlyRate: number,
   nights: number,
-  spotSurcharge: number = 0,
-  amenitiesCost: number = 0,
-  vehiclesFee: number = 0,
-  petsFee: number = 0,
-  extraGuestsFee: number = 0,
-  discount: number = 0,
-  taxRate: number = 0
+  spotSurcharge = 0,
+  amenitiesCost = 0,
+  vehiclesFee = 0,
+  petsFee = 0,
+  extraGuestsFee = 0,
+  discount = 0,
+  taxRate = 0
 ): CampingPricing {
   const basePrice = nightlyRate * nights;
   const subtotal = basePrice + spotSurcharge + amenitiesCost + vehiclesFee + petsFee + extraGuestsFee - discount;

@@ -6,7 +6,7 @@ import * as crypto from 'crypto';
 /**
  * Generate a secure random token
  */
-export function generateSecureToken(length: number = 32): string {
+export function generateSecureToken(length = 32): string {
   return crypto.randomBytes(length).toString('hex');
 }
 
@@ -27,7 +27,7 @@ export function hashSHA256(input: string): string {
 /**
  * Generate a short unique ID (for URLs, etc.)
  */
-export function generateShortId(length: number = 8): string {
+export function generateShortId(length = 8): string {
   const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
   const bytes = crypto.randomBytes(length);
   let result = '';
@@ -165,7 +165,7 @@ export function decryptAES(
  * Generate a random password
  */
 export function generateRandomPassword(
-  length: number = 16,
+  length = 16,
   options: {
     lowercase?: boolean;
     uppercase?: boolean;
@@ -202,7 +202,7 @@ export function generateRandomPassword(
 /**
  * Generate a numeric OTP (One-Time Password)
  */
-export function generateOTP(length: number = 6): string {
+export function generateOTP(length = 6): string {
   const bytes = crypto.randomBytes(length);
   let otp = '';
   for (let i = 0; i < length; i++) {
@@ -224,7 +224,7 @@ export function constantTimeCompare(a: string, b: string): boolean {
 /**
  * Generate a URL-safe base64 token
  */
-export function generateUrlSafeToken(length: number = 32): string {
+export function generateUrlSafeToken(length = 32): string {
   return crypto
     .randomBytes(length)
     .toString('base64')
@@ -246,8 +246,8 @@ export function calculateChecksum(data: string): string {
 export function deriveKey(
   password: string,
   salt: string,
-  iterations: number = 100000,
-  keyLength: number = 32
+  iterations = 100000,
+  keyLength = 32
 ): string {
   return crypto
     .pbkdf2Sync(password, salt, iterations, keyLength, 'sha256')
@@ -257,6 +257,6 @@ export function deriveKey(
 /**
  * Generate a random salt
  */
-export function generateSalt(length: number = 16): string {
+export function generateSalt(length = 16): string {
   return crypto.randomBytes(length).toString('hex');
 }

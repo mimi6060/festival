@@ -16,7 +16,7 @@ interface SyncQueueItem {
 }
 
 class OfflineService {
-  private isOnline: boolean = true;
+  private isOnline = true;
   private syncQueue: SyncQueueItem[] = [];
 
   constructor() {

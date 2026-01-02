@@ -447,7 +447,7 @@ export function useZoneAlerts(
 /**
  * Hook for finding nearby points of interest
  */
-export function useNearbyPOIs(festivalId: string, maxDistance: number = 100) {
+export function useNearbyPOIs(festivalId: string, maxDistance = 100) {
   const { location, pois, isInitialized, formatDistance } = useIndoorLocation({
     festivalId,
     autoStart: true,

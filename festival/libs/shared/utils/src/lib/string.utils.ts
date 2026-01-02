@@ -145,21 +145,21 @@ export function toKebabCase(text: string): string {
 /**
  * Pad a string on the left
  */
-export function padLeft(text: string, length: number, char: string = ' '): string {
+export function padLeft(text: string, length: number, char = ' '): string {
   return text.padStart(length, char);
 }
 
 /**
  * Pad a string on the right
  */
-export function padRight(text: string, length: number, char: string = ' '): string {
+export function padRight(text: string, length: number, char = ' '): string {
   return text.padEnd(length, char);
 }
 
 /**
  * Extract initials from a name
  */
-export function getInitials(name: string, maxLength: number = 2): string {
+export function getInitials(name: string, maxLength = 2): string {
   return name
     .split(' ')
     .map((word) => word.charAt(0).toUpperCase())
@@ -257,7 +257,7 @@ export function hashCode(text: string): number {
 export function highlightSearchTerm(
   text: string,
   searchTerm: string,
-  highlightTag: string = 'mark'
+  highlightTag = 'mark'
 ): string {
   if (!searchTerm) return text;
   const regex = new RegExp(`(${escapeRegex(searchTerm)})`, 'gi');

@@ -164,6 +164,14 @@ export function pluralize(
   if (locale === 'fr') {
     return count <= 1 ? singular : plural;
   }
+  // Spanish uses singular for 1 only
+  if (locale === 'es') {
+    return count === 1 ? singular : plural;
+  }
+  // German uses singular for 1 only
+  if (locale === 'de') {
+    return count === 1 ? singular : plural;
+  }
   // English uses singular only for 1
   return count === 1 ? singular : plural;
 }

@@ -85,7 +85,7 @@ export class PaymentsService {
       this.stripe = null as any;
     } else {
       this.stripe = new Stripe(stripeSecretKey, {
-        apiVersion: '2024-12-18.acacia',
+        apiVersion: '2025-02-24.acacia',
       });
     }
   }
@@ -207,12 +207,12 @@ export class PaymentsService {
       throw new NotFoundException('Payment not found');
     }
 
-    if (payment.status !== PaymentStatus.COMPLETED) {
-      throw new BadRequestException('Only completed payments can be refunded');
-    }
-
     if (payment.status === PaymentStatus.REFUNDED) {
       throw new BadRequestException('Payment has already been refunded');
+    }
+
+    if (payment.status !== PaymentStatus.COMPLETED) {
+      throw new BadRequestException('Only completed payments can be refunded');
     }
 
     if (!payment.providerPaymentId) {
@@ -254,7 +254,7 @@ export class PaymentsService {
         paymentId,
         refundId: refund.id,
         amount: Number(payment.amount),
-        status: refund.status,
+        status: refund.status || 'pending',
       };
     } catch (error) {
       this.logger.error(`Failed to process refund: ${error}`);

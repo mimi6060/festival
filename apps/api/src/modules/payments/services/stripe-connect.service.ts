@@ -44,7 +44,7 @@ export class StripeConnectService {
 
     if (stripeSecretKey) {
       this.stripe = new Stripe(stripeSecretKey, {
-        apiVersion: '2024-12-18.acacia',
+        apiVersion: '2025-02-24.acacia',
       });
     } else {
       this.logger.warn('STRIPE_SECRET_KEY not configured - Connect features disabled');
@@ -512,7 +512,7 @@ export class StripeConnectService {
             url: account.business_profile.url || undefined,
           }
         : undefined,
-      createdAt: new Date(account.created * 1000),
+      createdAt: new Date((account.created ?? Date.now() / 1000) * 1000),
     };
   }
 }

@@ -148,7 +148,7 @@ const PassKitModule = NativeModules.PassKit as PassKitNativeModule | undefined;
 
 export class AppleWalletService {
   private config: AppleWalletConfig | null = null;
-  private initialized: boolean = false;
+  private initialized = false;
 
   /**
    * Initialize the Apple Wallet service

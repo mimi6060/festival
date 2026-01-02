@@ -1,7 +1,8 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
-import PDFDocument from 'pdfkit';
+ 
+const PDFDocument = require('pdfkit');
 import * as QRCode from 'qrcode';
 import * as crypto from 'crypto';
 import {
@@ -332,25 +333,41 @@ export class PdfService {
   async generateFinancialReportPdf(festivalId: string, userId: string): Promise<Buffer> {
     const festival = await this.prisma.festival.findUnique({
       where: { id: festivalId },
-      include: { ticketCategories: true, tickets: { include: { category: true } }, cashlessTransactions: true, vendorOrders: { include: { vendor: true } }, campingBookings: { include: { spot: { include: { zone: true } } } } },
+      include: {
+        ticketCategories: true,
+        tickets: { include: { category: true } },
+        cashlessTransactions: true,
+        vendors: { include: { orders: true } },
+        campingZones: { include: { spots: { include: { bookings: true } } } },
+      },
     });
     if (!festival) {throw new NotFoundException('Festival not found');}
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { role: true, firstName: true, lastName: true } });
     if (user?.role !== 'ADMIN' && festival.organizerId !== userId) {throw new NotFoundException('Festival not found');}
 
-    const soldTickets = festival.tickets.filter(t => t.status === 'SOLD' || t.status === 'USED');
-    const ticketRevenue = soldTickets.reduce((sum, t) => sum + Number(t.purchasePrice), 0);
-    const topups = festival.cashlessTransactions.filter(t => t.type === 'TOPUP');
-    const payments = festival.cashlessTransactions.filter(t => t.type === 'PAYMENT');
-    const totalTopups = topups.reduce((sum, t) => sum + Number(t.amount), 0);
-    const totalPayments = payments.reduce((sum, t) => sum + Math.abs(Number(t.amount)), 0);
+    const soldTickets = festival.tickets.filter((t: { status: string }) => t.status === 'SOLD' || t.status === 'USED');
+    const ticketRevenue = soldTickets.reduce((sum: number, t: { purchasePrice: unknown }) => sum + Number(t.purchasePrice), 0);
+    const topups = festival.cashlessTransactions.filter((t: { type: string }) => t.type === 'TOPUP');
+    const payments = festival.cashlessTransactions.filter((t: { type: string }) => t.type === 'PAYMENT');
+    const totalTopups = topups.reduce((sum: number, t: { amount: unknown }) => sum + Number(t.amount), 0);
+    const totalPayments = payments.reduce((sum: number, t: { amount: unknown }) => sum + Math.abs(Number(t.amount)), 0);
     const cashlessCommission = totalPayments * 0.02;
-    const vendorSales = festival.vendorOrders.reduce((sum, o) => sum + Number(o.total), 0);
+
+    // Aggregate vendor orders from all vendors in this festival
+    const allVendorOrders = festival.vendors.flatMap((v: { orders: Array<{ totalAmount: unknown }> }) => v.orders);
+    const vendorSales = allVendorOrders.reduce((sum: number, o: { totalAmount: unknown }) => sum + Number(o.totalAmount), 0);
     const vendorCommission = vendorSales * 0.10;
-    const campingRevenue = festival.campingBookings.filter(b => b.status === 'CONFIRMED' || b.status === 'CHECKED_IN').reduce((sum, b) => sum + Number(b.totalPrice), 0);
+
+    // Aggregate camping bookings from all camping zones and spots
+    const allCampingBookings = festival.campingZones.flatMap((z: { spots: Array<{ bookings: Array<{ status: string; totalPrice: unknown }> }> }) =>
+      z.spots.flatMap((s: { bookings: Array<{ status: string; totalPrice: unknown }> }) => s.bookings)
+    );
+    const confirmedBookings = allCampingBookings.filter((b: { status: string }) => b.status === 'CONFIRMED' || b.status === 'CHECKED_IN');
+    const campingRevenue = confirmedBookings.reduce((sum: number, b: { totalPrice: unknown }) => sum + Number(b.totalPrice), 0);
+
     const totalRevenue = ticketRevenue + cashlessCommission + vendorCommission + campingRevenue;
-    const refundedTickets = festival.tickets.filter(t => t.status === 'REFUNDED');
-    const refundAmount = refundedTickets.reduce((sum, t) => sum + Number(t.purchasePrice), 0);
+    const refundedTickets = festival.tickets.filter((t: { status: string }) => t.status === 'REFUNDED');
+    const refundAmount = refundedTickets.reduce((sum: number, t: { purchasePrice: unknown }) => sum + Number(t.purchasePrice), 0);
 
     return this.createFinancialReportPdf({
       festivalId: festival.id,
@@ -360,10 +377,18 @@ export class PdfService {
       period: { startDate: festival.startDate, endDate: festival.endDate },
       summary: { totalRevenue, totalExpenses: 0, netProfit: totalRevenue, profitMargin: 100, currency: 'EUR' },
       revenueBreakdown: {
-        ticketSales: { total: ticketRevenue, byCategory: festival.ticketCategories.map(c => ({ name: c.name, quantity: soldTickets.filter(t => t.categoryId === c.id).length, revenue: soldTickets.filter(t => t.categoryId === c.id).reduce((s, t) => s + Number(t.purchasePrice), 0), avgPrice: 0 })) },
+        ticketSales: {
+          total: ticketRevenue,
+          byCategory: festival.ticketCategories.map((c: { id: string; name: string }) => ({
+            name: c.name,
+            quantity: soldTickets.filter((t: { categoryId: string }) => t.categoryId === c.id).length,
+            revenue: soldTickets.filter((t: { categoryId: string }) => t.categoryId === c.id).reduce((s: number, t: { purchasePrice: unknown }) => s + Number(t.purchasePrice), 0),
+            avgPrice: 0
+          }))
+        },
         cashless: { totalTopups, totalPayments, commission: cashlessCommission, netRevenue: cashlessCommission },
         vendors: { totalSales: vendorSales, commission: vendorCommission, byVendor: [] },
-        camping: { totalBookings: festival.campingBookings.length, revenue: campingRevenue, byType: [] },
+        camping: { totalBookings: allCampingBookings.length, revenue: campingRevenue, byType: [] },
       },
       taxSummary: { totalTaxCollected: totalRevenue - totalRevenue / 1.2, byRate: [{ rate: 20, taxableBase: totalRevenue / 1.2, taxAmount: totalRevenue - totalRevenue / 1.2 }] },
       paymentMethods: [{ method: 'STRIPE', count: soldTickets.length, total: ticketRevenue, percentage: 100 }],
@@ -425,7 +450,8 @@ export class PdfService {
     });
   }
 
-  private addMetricBox(doc: PDFKit.PDFDocument, label: string, value: string, x: number, y: number, width: number, color: string): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private addMetricBox(doc: any, label: string, value: string, x: number, y: number, width: number, color: string): void {
     doc.roundedRect(x, y, width, 70, 5).fillAndStroke('#f8f8f8', this.colors.border);
     doc.rect(x, y, width, 5).fill(color);
     doc.fontSize(9).font('Helvetica').fillColor(this.colors.textLight).text(label, x + 15, y + 20, { width: width - 30, align: 'center' });

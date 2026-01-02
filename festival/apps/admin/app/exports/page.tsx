@@ -15,7 +15,7 @@ import {
   mockOrders,
   mockStaff,
 } from '../../lib/mock-data';
-import { formatCurrency, formatDateTime, cn } from '../../lib/utils';
+import { formatDateTime, cn } from '../../lib/utils';
 
 // Types for export configurations
 interface ExportConfig {
@@ -24,7 +24,7 @@ interface ExportConfig {
   description: string;
   icon: string;
   category: 'sales' | 'users' | 'operations' | 'finance';
-  columns: ReturnType<typeof userExportColumns>;
+  columns: typeof userExportColumns;
   getData: () => Record<string, unknown>[];
   recordCount: number;
 }

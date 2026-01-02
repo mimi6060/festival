@@ -19,7 +19,7 @@ import {
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { PrismaService } from '../../prisma/prisma.service';
-import { PaymentStatus } from '@prisma/client';
+import { PaymentStatus, Prisma } from '@prisma/client';
 import {
   CreateRefundDto,
   PartialRefundDto,
@@ -36,6 +36,7 @@ import {
 interface RefundablePayment {
   id: string;
   amount: number;
+  currency: string;
   status: PaymentStatus;
   providerPaymentId: string | null;
   refundedAmount: number;
@@ -67,7 +68,7 @@ export class RefundService {
 
     if (stripeSecretKey) {
       this.stripe = new Stripe(stripeSecretKey, {
-        apiVersion: '2024-12-18.acacia',
+        apiVersion: '2025-02-24.acacia',
       });
     } else {
       this.logger.warn('STRIPE_SECRET_KEY not configured - Refund features disabled');
@@ -489,6 +490,7 @@ export class RefundService {
     return {
       id: payment.id,
       amount: Number(payment.amount),
+      currency: payment.currency,
       status: payment.status,
       providerPaymentId: payment.providerPaymentId,
       refundedAmount,
@@ -550,7 +552,7 @@ export class RefundService {
           ],
           totalRefunded:
             ((providerData.totalRefunded as number) || 0) + refundAmount,
-        },
+        } as unknown as Prisma.InputJsonValue,
       },
     });
 

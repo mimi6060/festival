@@ -5,8 +5,8 @@
  */
 export function formatPrice(
   amount: number,
-  currency: string = 'EUR',
-  locale: string = 'fr-FR'
+  currency = 'EUR',
+  locale = 'fr-FR'
 ): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
@@ -19,7 +19,7 @@ export function formatPrice(
  */
 export function formatNumber(
   value: number,
-  locale: string = 'fr-FR'
+  locale = 'fr-FR'
 ): string {
   return new Intl.NumberFormat(locale).format(value);
 }
@@ -29,8 +29,8 @@ export function formatNumber(
  */
 export function formatPercentage(
   value: number,
-  decimals: number = 1,
-  locale: string = 'fr-FR'
+  decimals = 1,
+  locale = 'fr-FR'
 ): string {
   return new Intl.NumberFormat(locale, {
     style: 'percent',
@@ -116,7 +116,7 @@ export function formatFullName(firstName: string, lastName: string): string {
 /**
  * Format coordinates for display
  */
-export function formatCoordinates(lat: number, lng: number, precision: number = 6): string {
+export function formatCoordinates(lat: number, lng: number, precision = 6): string {
   return `${lat.toFixed(precision)}, ${lng.toFixed(precision)}`;
 }
 
@@ -126,7 +126,7 @@ export function formatCoordinates(lat: number, lng: number, precision: number = 
 export function formatDateRange(
   startDate: Date,
   endDate: Date,
-  locale: string = 'fr-FR'
+  locale = 'fr-FR'
 ): string {
   const options: Intl.DateTimeFormatOptions = {
     day: 'numeric',
@@ -157,7 +157,7 @@ export function formatDateRange(
 /**
  * Format bytes as a readable string with appropriate unit
  */
-export function formatBytes(bytes: number, decimals: number = 2): string {
+export function formatBytes(bytes: number, decimals = 2): string {
   if (bytes === 0) return '0 Bytes';
 
   const k = 1024;
@@ -181,7 +181,7 @@ export function formatCount(
 /**
  * Format an ordinal number (1st, 2nd, 3rd, etc.)
  */
-export function formatOrdinal(n: number, locale: string = 'fr-FR'): string {
+export function formatOrdinal(n: number, locale = 'fr-FR'): string {
   if (locale.startsWith('fr')) {
     return n === 1 ? '1er' : `${n}e`;
   }
@@ -197,8 +197,8 @@ export function formatOrdinal(n: number, locale: string = 'fr-FR'): string {
  */
 export function formatList(
   items: string[],
-  conjunction: string = 'et',
-  locale: string = 'fr-FR'
+  conjunction = 'et',
+  _locale = 'fr-FR'
 ): string {
   if (items.length === 0) return '';
   if (items.length === 1) return items[0];
@@ -219,7 +219,7 @@ export function formatTimeRange(startTime: string, endTime: string): string {
 /**
  * Format distance in meters to human-readable format
  */
-export function formatDistance(meters: number, locale: string = 'fr-FR'): string {
+export function formatDistance(meters: number, _locale = 'fr-FR'): string {
   if (meters < 1000) {
     return `${Math.round(meters)} m`;
   }
@@ -233,8 +233,8 @@ export function formatDistance(meters: number, locale: string = 'fr-FR'): string
  */
 export function formatRating(
   rating: number,
-  maxRating: number = 5,
-  decimals: number = 1
+  maxRating = 5,
+  decimals = 1
 ): string {
   return `${rating.toFixed(decimals)}/${maxRating}`;
 }
@@ -260,7 +260,7 @@ export function formatIBAN(iban: string): string {
 /**
  * Format a compact number (e.g., 1.5K, 2.3M)
  */
-export function formatCompactNumber(value: number, locale: string = 'fr-FR'): string {
+export function formatCompactNumber(value: number, locale = 'fr-FR'): string {
   return new Intl.NumberFormat(locale, {
     notation: 'compact',
     compactDisplay: 'short',
@@ -272,8 +272,8 @@ export function formatCompactNumber(value: number, locale: string = 'fr-FR'): st
  */
 export function formatDecimal(
   value: number,
-  decimals: number = 2,
-  locale: string = 'fr-FR'
+  decimals = 2,
+  locale = 'fr-FR'
 ): string {
   return new Intl.NumberFormat(locale, {
     minimumFractionDigits: decimals,

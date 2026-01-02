@@ -10,6 +10,21 @@ const nextConfig = {
     svgr: false,
   },
   reactStrictMode: true,
+  output: 'standalone',
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.unsplash.com',
+        pathname: '/**',
+      },
+    ],
+  },
 };
 
 const plugins = [withNx];

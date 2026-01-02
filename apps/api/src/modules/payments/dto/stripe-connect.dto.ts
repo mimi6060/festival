@@ -10,7 +10,6 @@ import {
   IsUUID,
   IsEnum,
   IsUrl,
-  IsBoolean,
   IsObject,
   IsEmail,
   IsNumber,

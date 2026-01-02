@@ -7,8 +7,8 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatCurrency(
   amount: number,
-  currency: string = 'EUR',
-  locale: string = 'fr-FR'
+  currency = 'EUR',
+  locale = 'fr-FR'
 ): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
@@ -23,14 +23,14 @@ export function formatDate(
     month: 'long',
     day: 'numeric',
   },
-  locale: string = 'fr-FR'
+  locale = 'fr-FR'
 ): string {
   return new Intl.DateTimeFormat(locale, options).format(new Date(date));
 }
 
 export function formatDateTime(
   date: string | Date,
-  locale: string = 'fr-FR'
+  locale = 'fr-FR'
 ): string {
   return new Intl.DateTimeFormat(locale, {
     year: 'numeric',
@@ -43,14 +43,14 @@ export function formatDateTime(
 
 export function formatNumber(
   value: number,
-  locale: string = 'fr-FR'
+  locale = 'fr-FR'
 ): string {
   return new Intl.NumberFormat(locale).format(value);
 }
 
 export function formatPercentage(
   value: number,
-  decimals: number = 1
+  decimals = 1
 ): string {
   return `${value.toFixed(decimals)}%`;
 }

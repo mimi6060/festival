@@ -645,7 +645,6 @@ export function AccessibleTabs({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, currentIndex: number) => {
-    const enabledTabs = tabs.filter((t) => !t.disabled);
     const enabledIndexes = tabs.map((t, i) => (!t.disabled ? i : -1)).filter((i) => i >= 0);
     const currentEnabledIndex = enabledIndexes.indexOf(currentIndex);
 

@@ -29,8 +29,28 @@ export * from './lib/auth.constants';
 // Festival, tickets, events, zones
 export * from './lib/festival.constants';
 
-// Payment processing
-export * from './lib/payment.constants';
+// Payment processing - exclude duplicates defined in cashless.constants
+export {
+  CURRENCIES,
+  type Currency,
+  // DEFAULT_CURRENCY is exported from app.constants
+  CURRENCY_CONFIG,
+  PAYMENT_METHODS,
+  type PaymentMethod,
+  PAYMENT_STATUS,
+  type PaymentStatus,
+  STRIPE_CONFIG,
+  REFUND_POLICY,
+  REFUND_STATUS,
+  type RefundStatus,
+  CASHLESS_CONFIG,
+  // CASHLESS_TRANSACTION_TYPE and CashlessTransactionType are exported from cashless.constants
+  PAYMENT_LIMITS,
+  INVOICE_CONFIG,
+  PROMO_CONFIG,
+  DISCOUNT_TYPES,
+  type DiscountType,
+} from './lib/payment.constants';
 
 // Cashless and NFC operations
 export * from './lib/cashless.constants';

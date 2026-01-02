@@ -942,7 +942,7 @@ export function formatFileSize(bytes: number): string {
 /**
  * Get message preview
  */
-export function getMessagePreview(content: string, maxLength: number = 100): string {
+export function getMessagePreview(content: string, maxLength = 100): string {
   if (content.length <= maxLength) return content;
   return content.substring(0, maxLength).trim() + '...';
 }

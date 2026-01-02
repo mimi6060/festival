@@ -145,7 +145,7 @@ export function calculateTake(limit: number, maxLimit: number = MAX_LIMIT): numb
 export function getPageNumbers(
   currentPage: number,
   totalPages: number,
-  maxButtons: number = 7
+  maxButtons = 7
 ): (number | 'ellipsis')[] {
   if (totalPages <= maxButtons) {
     return Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -301,7 +301,7 @@ export function parseCursor(
 export function buildTimeRangeWhere(
   startDate?: string | Date,
   endDate?: string | Date,
-  fieldName: string = 'createdAt'
+  fieldName = 'createdAt'
 ): Record<string, any> {
   const where: Record<string, any> = {};
 
@@ -394,8 +394,8 @@ export function buildSelectFields(
  */
 export function buildLimitedInclude(
   include: Record<string, any>,
-  maxDepth: number = 2,
-  currentDepth: number = 0
+  maxDepth = 2,
+  currentDepth = 0
 ): Record<string, any> | undefined {
   if (currentDepth >= maxDepth) {
     return undefined;
@@ -472,7 +472,7 @@ export async function getOptimizedCount(
  */
 export function buildKeysetWhere(
   cursor: string | undefined,
-  sortField: string = 'createdAt',
+  sortField = 'createdAt',
   sortOrder: 'asc' | 'desc' = 'desc'
 ): Record<string, any> {
   if (!cursor) {

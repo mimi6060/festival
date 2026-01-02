@@ -1,4 +1,4 @@
 export * from './analytics.module';
-export * from './services/analytics.service';
+export * from './services';
 export * from './dto';
 export * from './interfaces';

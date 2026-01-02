@@ -80,7 +80,7 @@ export class WalletManager {
   private googleWalletService: GoogleWalletService;
   private passGenerator: PassGenerator;
   private config: WalletConfig;
-  private initialized: boolean = false;
+  private initialized = false;
 
   private constructor() {
     this.appleWalletService = new AppleWalletService();

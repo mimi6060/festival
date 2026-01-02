@@ -35,7 +35,7 @@ export const formatRelativeTime = (dateString: string): string => {
 };
 
 // Currency formatting
-export const formatCurrency = (amount: number, currency: string = 'EUR'): string => {
+export const formatCurrency = (amount: number, currency = 'EUR'): string => {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency,

@@ -41,7 +41,6 @@ export type DistanceUnit = 'km' | 'mi' | 'm' | 'ft';
 // ============================================================================
 
 const EARTH_RADIUS_KM = 6371;
-const EARTH_RADIUS_MI = 3959;
 const KM_TO_MI = 0.621371;
 const MI_TO_KM = 1.60934;
 const M_TO_FT = 3.28084;
@@ -381,7 +380,7 @@ export function formatCoordinatesAsDMS(
 /**
  * Format coordinates as decimal string
  */
-export function formatCoordinatesAsDecimal(lat: number, lng: number, precision: number = 6): string {
+export function formatCoordinatesAsDecimal(lat: number, lng: number, precision = 6): string {
   return `${lat.toFixed(precision)}, ${lng.toFixed(precision)}`;
 }
 
@@ -566,7 +565,7 @@ export function formatDistance(distanceKm: number, unit: DistanceUnit = 'km'): s
 export function estimateWalkingTime(
   from: Coordinates,
   to: Coordinates,
-  walkingSpeedKmh: number = 5
+  walkingSpeedKmh = 5
 ): number {
   const distanceKm = calculateDistance(from, to);
   const timeHours = distanceKm / walkingSpeedKmh;

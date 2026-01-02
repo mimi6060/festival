@@ -62,9 +62,9 @@ const DEFAULT_CONFIG: NFCManagerConfig = {
 
 class NFCManagerService {
   private static instance: NFCManagerService;
-  private isInitialized: boolean = false;
-  private isSupported: boolean = false;
-  private isEnabled: boolean = false;
+  private isInitialized = false;
+  private isSupported = false;
+  private isEnabled = false;
   private currentStatus: NFCStatus = 'unavailable';
   private config: NFCManagerConfig = DEFAULT_CONFIG;
   private listeners: Set<NFCEventListener> = new Set();

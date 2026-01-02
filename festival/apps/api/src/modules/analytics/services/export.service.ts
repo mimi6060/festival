@@ -4,12 +4,12 @@ import { CacheService } from '../../cache/cache.service';
 import { AnalyticsService } from './analytics.service';
 import { AdvancedMetricsService } from './advanced-metrics.service';
 import {
-  ExportConfig,
   ExportResult,
   TimeRange,
 } from '../interfaces/analytics.interfaces';
-import { ComprehensiveAnalytics } from '../interfaces/advanced-metrics.interfaces';
-import * as PDFDocument from 'pdfkit';
+import { ExportConfig, ComprehensiveAnalytics } from '../interfaces/advanced-metrics.interfaces';
+ 
+const PDFDocument = require('pdfkit');
 import { Decimal } from '@prisma/client/runtime/library';
 
 interface ExportData {
@@ -321,7 +321,7 @@ export class ExportService {
           vendor: o.vendor.name,
           vendorType: o.vendor.type,
           amount: Number(o.totalAmount),
-          commission: Number(o.commissionAmount),
+          commission: Number(o.commission),
           status: o.status,
           email: o.user?.email || 'N/A',
         })),
@@ -596,7 +596,8 @@ export class ExportService {
     });
   }
 
-  private drawPdfTable(doc: PDFKit.PDFDocument, section: ExportSection): void {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  private drawPdfTable(doc: any, section: ExportSection): void {
     const startX = 50;
     const startY = doc.y;
     const colWidth = (doc.page.width - 100) / section.columns.length;

@@ -100,7 +100,7 @@ class OfflineManager {
   private syncStatus: SyncStatus;
   private syncTimer: NodeJS.Timeout | null = null;
   private listeners: Map<string, Set<(data: unknown) => void>> = new Map();
-  private isInitialized: boolean = false;
+  private isInitialized = false;
 
   private constructor(config: Partial<OfflineManagerConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -371,7 +371,7 @@ class OfflineManager {
   /**
    * Sync all data from server
    */
-  public async syncAll(force: boolean = false): Promise<SyncStatus> {
+  public async syncAll(force = false): Promise<SyncStatus> {
     if (this.syncStatus.isRunning && !force) {
       Logger.debug('[OfflineManager] Sync already in progress');
       return this.syncStatus;

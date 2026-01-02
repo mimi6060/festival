@@ -53,8 +53,8 @@ class SyncQueue {
   private static instance: SyncQueue;
   private queue: SyncQueueItem[] = [];
   private metadata: QueueMetadata;
-  private isLoaded: boolean = false;
-  private processingLock: boolean = false;
+  private isLoaded = false;
+  private processingLock = false;
 
   private constructor() {
     this.metadata = this.getInitialMetadata();

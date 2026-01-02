@@ -148,7 +148,7 @@ export class NFCWriter {
     userId: string,
     accountId: string,
     festivalId: string,
-    initialBalance: number = 0,
+    initialBalance = 0,
     options: NFCWriteOptions = {}
   ): Promise<NFCWriteResult> {
     const cashlessData: CashlessData = {

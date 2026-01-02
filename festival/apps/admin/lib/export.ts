@@ -93,7 +93,7 @@ export function formatDateForExport(date: string | Date): string {
  */
 export function formatCurrencyForExport(
   amount: number,
-  currency: string = 'EUR'
+  currency = 'EUR'
 ): string {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',

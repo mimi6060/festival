@@ -258,7 +258,7 @@ export const mockDashboardStats: DashboardStats = {
 };
 
 // Generate revenue chart data
-export function generateRevenueChartData(days: number = 30): ChartDataPoint[] {
+export function generateRevenueChartData(days = 30): ChartDataPoint[] {
   const data: ChartDataPoint[] = [];
   const now = new Date();
 
@@ -282,7 +282,7 @@ export function generateRevenueChartData(days: number = 30): ChartDataPoint[] {
 }
 
 // Generate ticket sales chart data
-export function generateTicketSalesChartData(days: number = 30): ChartDataPoint[] {
+export function generateTicketSalesChartData(days = 30): ChartDataPoint[] {
   const data: ChartDataPoint[] = [];
   const now = new Date();
 
