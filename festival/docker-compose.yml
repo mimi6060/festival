@@ -22,10 +22,10 @@ services:
     container_name: festival-api
     restart: unless-stopped
     ports:
-      - '3000:3000'
+      - '3333:3333'
     environment:
       NODE_ENV: production
-      PORT: 3000
+      PORT: 3333
       DATABASE_URL: postgresql://festival_user:festival_password@postgres:5432/festival_db?schema=public
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
@@ -53,7 +53,7 @@ services:
     networks:
       - festival-network
     healthcheck:
-      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000/api/health']
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3333/api/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -73,7 +73,7 @@ services:
       context: .
       dockerfile: apps/web/Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=http://api:3000
+        - NEXT_PUBLIC_API_URL=http://api:3333
         - NEXT_PUBLIC_APP_URL=http://localhost:4200
     image: festival/web:latest
     container_name: festival-web
@@ -82,7 +82,7 @@ services:
       - '4200:3000'
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: http://api:3000
+      NEXT_PUBLIC_API_URL: http://api:3333
       NEXT_PUBLIC_APP_URL: http://localhost:4200
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
     depends_on:
@@ -111,7 +111,7 @@ services:
       context: .
       dockerfile: apps/admin/Dockerfile
       args:
-        - NEXT_PUBLIC_API_URL=http://api:3000
+        - NEXT_PUBLIC_API_URL=http://api:3333
         - NEXT_PUBLIC_APP_URL=http://localhost:4300
     image: festival/admin:latest
     container_name: festival-admin
@@ -120,7 +120,7 @@ services:
       - '4300:3000'
     environment:
       NODE_ENV: production
-      NEXT_PUBLIC_API_URL: http://api:3000
+      NEXT_PUBLIC_API_URL: http://api:3333
       NEXT_PUBLIC_APP_URL: http://localhost:4300
     depends_on:
       api:
