@@ -48,6 +48,156 @@ const festivals: Record<string, Festival & { lineup: { name: string; genre: stri
       },
     ],
   },
+  'tropical-bass-2025': {
+    id: '2',
+    slug: 'tropical-bass-2025',
+    name: 'Tropical Bass Festival',
+    description: 'The ultimate tropical bass experience on the beaches of Cancun. Three days of sun, sand, and the hottest bass music from around the world. Featuring reggaeton, dancehall, and tropical house.',
+    location: 'Cancun, Mexico',
+    startDate: '2025-03-20',
+    endDate: '2025-03-22',
+    imageUrl: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=1920&h=1080&fit=crop',
+    price: { from: 149, currency: 'USD' },
+    genres: ['Reggaeton', 'Dancehall', 'Tropical House', 'Bass'],
+    isFeatured: false,
+    lineup: [
+      { name: 'Major Lazer', genre: 'Dancehall', time: 'Saturday 23:00', stage: 'Beach Stage' },
+      { name: 'J Balvin', genre: 'Reggaeton', time: 'Friday 22:00', stage: 'Main Stage' },
+      { name: 'Diplo', genre: 'Bass', time: 'Saturday 21:00', stage: 'Beach Stage' },
+      { name: 'Bad Bunny', genre: 'Reggaeton', time: 'Sunday 00:00', stage: 'Main Stage' },
+    ],
+    schedule: [
+      {
+        date: '2025-03-20',
+        events: [
+          { time: '14:00', title: 'Beach Party Opens', stage: 'Beach Stage' },
+          { time: '18:00', title: 'Sunset Session', stage: 'Rooftop' },
+          { time: '22:00', title: 'J Balvin', stage: 'Main Stage' },
+        ],
+      },
+    ],
+  },
+  'summer-sounds-2025': {
+    id: '3',
+    slug: 'summer-sounds-2025',
+    name: 'Summer Sounds Festival',
+    description: 'A celebration of indie and alternative music in the heart of London. Discover emerging artists alongside established acts in an intimate urban setting.',
+    location: 'London, UK',
+    startDate: '2025-08-01',
+    endDate: '2025-08-03',
+    imageUrl: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=1920&h=1080&fit=crop',
+    price: { from: 89, currency: 'GBP' },
+    genres: ['Indie', 'Alternative', 'Rock', 'Folk'],
+    isFeatured: false,
+    lineup: [
+      { name: 'Arctic Monkeys', genre: 'Indie Rock', time: 'Saturday 22:00', stage: 'Main Stage' },
+      { name: 'Florence + The Machine', genre: 'Alternative', time: 'Friday 21:00', stage: 'Main Stage' },
+      { name: 'Tame Impala', genre: 'Psychedelic', time: 'Sunday 21:00', stage: 'Main Stage' },
+    ],
+    schedule: [
+      {
+        date: '2025-08-01',
+        events: [
+          { time: '12:00', title: 'Gates Open', stage: 'All Stages' },
+          { time: '14:00', title: 'Local Bands', stage: 'Discovery Stage' },
+          { time: '21:00', title: 'Florence + The Machine', stage: 'Main Stage' },
+        ],
+      },
+    ],
+  },
+  'neon-nights-2025': {
+    id: '4',
+    slug: 'neon-nights-2025',
+    name: 'Neon Nights',
+    description: 'An immersive nighttime festival experience in the Nevada desert. Spectacular light shows, art installations, and the best electronic music under the stars.',
+    location: 'Nevada, USA',
+    startDate: '2025-09-12',
+    endDate: '2025-09-14',
+    imageUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1920&h=1080&fit=crop',
+    price: { from: 299, currency: 'USD' },
+    genres: ['Electronic', 'Trance', 'Progressive', 'Ambient'],
+    isFeatured: true,
+    lineup: [
+      { name: 'Deadmau5', genre: 'Progressive House', time: 'Saturday 01:00', stage: 'Neon Stage' },
+      { name: 'Above & Beyond', genre: 'Trance', time: 'Friday 23:00', stage: 'Main Stage' },
+      { name: 'Eric Prydz', genre: 'Progressive', time: 'Saturday 23:00', stage: 'Main Stage' },
+    ],
+    schedule: [
+      {
+        date: '2025-09-12',
+        events: [
+          { time: '18:00', title: 'Sunset Ceremony', stage: 'Desert Stage' },
+          { time: '21:00', title: 'Light Show Begins', stage: 'All Stages' },
+          { time: '23:00', title: 'Above & Beyond', stage: 'Main Stage' },
+        ],
+      },
+    ],
+  },
+  'indie-vibes-2025': {
+    id: '5',
+    slug: 'indie-vibes-2025',
+    name: 'Indie Vibes Festival',
+    description: 'A boutique indie music festival in the picturesque French countryside. Intimate performances, artisanal food, and a laid-back atmosphere perfect for music lovers seeking authentic experiences.',
+    location: 'Provence, France',
+    startDate: '2025-06-05',
+    endDate: '2025-06-07',
+    imageUrl: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=1920&h=1080&fit=crop',
+    price: { from: 120, currency: 'EUR' },
+    genres: ['Indie', 'Folk', 'Singer-Songwriter', 'Acoustic'],
+    isFeatured: false,
+    lineup: [
+      { name: 'Bon Iver', genre: 'Indie Folk', time: 'Saturday 21:00', stage: 'Main Stage' },
+      { name: 'Phoebe Bridgers', genre: 'Indie', time: 'Friday 20:00', stage: 'Main Stage' },
+      { name: 'Fleet Foxes', genre: 'Folk', time: 'Sunday 20:00', stage: 'Main Stage' },
+      { name: 'Big Thief', genre: 'Indie Rock', time: 'Saturday 18:00', stage: 'Garden Stage' },
+    ],
+    schedule: [
+      {
+        date: '2025-06-05',
+        events: [
+          { time: '14:00', title: 'Gates Open', stage: 'All Stages' },
+          { time: '16:00', title: 'Acoustic Sessions', stage: 'Garden Stage' },
+          { time: '20:00', title: 'Phoebe Bridgers', stage: 'Main Stage' },
+        ],
+      },
+      {
+        date: '2025-06-06',
+        events: [
+          { time: '12:00', title: 'Brunch Concert', stage: 'Garden Stage' },
+          { time: '18:00', title: 'Big Thief', stage: 'Garden Stage' },
+          { time: '21:00', title: 'Bon Iver', stage: 'Main Stage' },
+        ],
+      },
+    ],
+  },
+  'bass-canyon-2025': {
+    id: '6',
+    slug: 'bass-canyon-2025',
+    name: 'Bass Canyon',
+    description: 'Heavy bass music festival set in the stunning Gorge Amphitheatre. Experience dubstep, drum and bass, and bass house with breathtaking canyon views.',
+    location: 'Washington, USA',
+    startDate: '2025-08-22',
+    endDate: '2025-08-24',
+    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&h=1080&fit=crop',
+    price: { from: 249, currency: 'USD' },
+    genres: ['Dubstep', 'Drum & Bass', 'Bass House', 'EDM'],
+    isFeatured: false,
+    lineup: [
+      { name: 'Excision', genre: 'Dubstep', time: 'Saturday 23:00', stage: 'Main Stage' },
+      { name: 'Subtronics', genre: 'Dubstep', time: 'Friday 22:00', stage: 'Main Stage' },
+      { name: 'Illenium', genre: 'Melodic Bass', time: 'Sunday 22:00', stage: 'Main Stage' },
+    ],
+    schedule: [
+      {
+        date: '2025-08-22',
+        events: [
+          { time: '16:00', title: 'Camping Opens', stage: 'Campgrounds' },
+          { time: '18:00', title: 'Pre-Party', stage: 'Canyon Stage' },
+          { time: '22:00', title: 'Subtronics', stage: 'Main Stage' },
+        ],
+      },
+    ],
+  },
 };
 
 interface PageProps {
