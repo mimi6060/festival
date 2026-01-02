@@ -92,6 +92,58 @@
 - [x] Helmet (headers sécurité)
 - [x] Intégration Sentry
 
+---
+
+## Phase 15 - Rate Limiting Avancé (2026-01-02)
+
+### Module Rate Limiting
+- [x] RateLimitGuard avec algorithme sliding window
+- [x] Support Redis backend avec Lua scripts pour atomicité
+- [x] Fallback in-memory pour développement
+- [x] Decorators: @RateLimit, @SkipRateLimit, @StrictRateLimit, @BurstRateLimit, @PlanBasedRateLimit
+
+### Service Rate Limiting
+- [x] Algorithmes multiples: sliding window, token bucket, fixed window, leaky bucket
+- [x] Métriques et analytics (totalRequests, blockedRequests, topConsumers)
+- [x] Nettoyage automatique des entrées expirées
+- [x] Support pour requêtes pondérées (cost parameter)
+
+### Module et Configuration
+- [x] RateLimitModule avec forRoot, forRootAsync, forRootWithConfig
+- [x] RateLimitInterceptor pour headers dans les réponses
+- [x] Configuration centralisée dans rate-limit.config.ts
+
+### Quotas par Plan
+- [x] FREE: 60 req/min, 1000 req/h, 10000 req/day
+- [x] PREMIUM: 300 req/min, 10000 req/h, 100000 req/day
+- [x] ENTERPRISE: 1000 req/min, 50000 req/h, 500000 req/day
+- [x] INTERNAL: limites très élevées pour services internes
+
+### Limites par Endpoint
+- [x] Auth: login (5/5min), register (3/h), forgot-password (3/h)
+- [x] Payments: checkout (10/min), refund (5/5min)
+- [x] Tickets: buy (10/min), validate (120/min)
+- [x] Cashless: topup (10/min), pay (60/min)
+- [x] Exports: analytics/tickets/users (5/5min, cost=20)
+
+### Headers de Réponse
+- [x] X-RateLimit-Limit, X-RateLimit-Remaining, X-RateLimit-Reset
+- [x] X-RateLimit-Window, X-RateLimit-Policy, X-RateLimit-Plan
+- [x] RateLimit-Limit, RateLimit-Remaining, RateLimit-Reset (IETF draft)
+- [x] Retry-After (quand limite dépassée)
+
+### Fichiers Créés
+- apps/api/src/common/guards/rate-limit.guard.ts (728 lignes)
+- apps/api/src/common/services/rate-limit.service.ts (725 lignes)
+- apps/api/src/common/rate-limit/rate-limit.module.ts
+- apps/api/src/common/rate-limit/rate-limit.interceptor.ts
+- apps/api/src/common/rate-limit/index.ts
+- apps/api/src/common/config/rate-limit.config.ts (553 lignes)
+- apps/api/src/common/config/index.ts
+- apps/api/src/common/guards/index.ts
+- apps/api/src/common/services/index.ts
+- apps/api/src/common/index.ts
+
 ### Email & PDF
 - [x] Service Email (Handlebars templates)
 - [x] Templates verification, password-reset
@@ -183,10 +235,10 @@
 
 | Métrique | Valeur |
 |----------|--------|
-| Fichiers créés | 360+ |
-| Lignes de code | 65,000+ |
-| Modules backend | 17 |
-| Agents utilisés | 33 |
+| Fichiers créés | 370+ |
+| Lignes de code | 67,000+ |
+| Modules backend | 18 |
+| Agents utilisés | 34 |
 
 ---
-Dernière mise à jour: 2026-01-02
+Dernière mise à jour: 2026-01-02 - Phase Rate Limiting Avancé
