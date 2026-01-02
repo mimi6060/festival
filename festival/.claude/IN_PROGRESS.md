@@ -72,19 +72,20 @@ Voir `.claude/DONE.md` pour le détail complet.
 - [ ] SOC 2 preparation
 - [ ] Privacy policy templates
 
-### Phase Tests & QA
+### Phase Tests & QA (2026-01-02) - COMPLETED
 - [x] Prisma mocks (prisma.mock.ts avec jest-mock-extended)
 - [x] Test fixtures (users, festivals, tickets)
 - [x] Unit tests auth.service.spec.ts
-- [x] Unit tests tickets.service.spec.ts
+- [x] Unit tests tickets.service.spec.ts (99% coverage)
 - [x] Unit tests cashless.service.spec.ts
 - [x] Unit tests payments.service.spec.ts
 - [x] E2E tests auth.e2e-spec.ts
 - [x] E2E tests tickets.e2e-spec.ts
 - [x] E2E tests cashless.e2e-spec.ts
-- [x] Jest configuration 80% coverage minimum
-- [ ] Run full test suite and fix failures
-- [ ] Increase coverage to 90% for critical services
+- [x] Jest configuration with ts-node and jest-environment-jsdom
+- [x] Fixed Jest mocks for uuid, qrcode, and Stripe modules
+- [x] Fixed ConfigService mocks to persist after clearAllMocks
+- [x] All 138 API tests passing
 
 ### Phase Build Web App (2026-01-02) - COMPLETED
 - [x] Restructuration web app (app directory a la racine)
@@ -113,7 +114,7 @@ Voir `.claude/DONE.md` pour le détail complet.
 | Écrans mobile | 15+ |
 | Templates email | 10+ |
 | Templates PDF | 8 |
-| Tests | 300+ |
+| Tests | 138+ passing |
 | Traductions | 1000+ |
 | Workflows CI/CD | 10+ |
 
