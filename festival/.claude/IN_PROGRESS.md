@@ -312,3 +312,141 @@ Derniere mise a jour: 2026-01-02 - Phase Monitoring Avancee (Prometheus, Grafana
 
 **TypeScript Errors in payments.controller.ts**:
 - [ ] Line 463: Need to use `import type` for RawBodyRequest (isolatedModules)
+
+---
+
+## QA Verification Report - Tickets Module (2026-01-02)
+
+### Audit Results
+
+**tickets.service.ts** - VERIFIED OK
+- [x] Compiles correctly (no module-specific errors)
+- [x] All 9 required methods present:
+  - `purchaseTickets()` - Purchase tickets for a festival
+  - `validateTicket()` - Validate a ticket QR code
+  - `scanTicket()` - Scan ticket at entry point (marks as used)
+  - `getUserTickets()` - Get user's tickets
+  - `getTicketById()` - Get ticket by ID
+  - `cancelTicket()` - Cancel a ticket
+  - `getTicketQrCodeImage()` - Get ticket QR code image
+  - `generateQrCode()` (private) - Generate unique QR code
+  - `mapToEntity()` (private) - Map Prisma ticket to entity
+- [x] DTOs defined inline (PurchaseTicketDto, ValidateTicketDto, TicketEntity, ValidationResult)
+- [x] Proper error handling (BadRequestException, NotFoundException, ConflictException, ForbiddenException)
+- [x] Transaction support for atomic operations
+- [x] QR code security with HMAC-SHA256 signatures
+
+**tickets.service.spec.ts** - VERIFIED OK
+- [x] All 40 unit tests passing
+- [x] Coverage requirements met (85%+ branches, 90%+ functions, 85%+ lines)
+- [x] Test fixtures properly imported from test/fixtures/
+- [x] Mocking correctly implemented for PrismaService, QRCode, uuid
+
+**tickets.module.ts** - VERIFIED OK
+- [x] Imports PrismaModule
+- [x] Provides TicketsService
+- [x] Exports TicketsService
+
+**index.ts** - VERIFIED OK
+- [x] Exports TicketsModule and TicketsService
+
+**app.module.ts** - VERIFIED OK
+- [x] TicketsModule is imported and registered
+
+### Issues Found - TO FIX
+
+**Missing Controller (MEDIUM PRIORITY)**
+- [ ] `tickets.controller.ts` - NOT FOUND
+  - The tickets module has no REST controller
+  - Service is complete but no HTTP endpoints exposed
+  - Required endpoints per CLAUDE.md:
+    - `POST /tickets/buy` - Purchase tickets
+    - `GET /tickets/me` - Get user's tickets
+    - `POST /tickets/:id/validate` - Validate ticket QR code
+    - `POST /tickets/:id/scan` - Scan ticket at entry
+    - `GET /tickets/:id` - Get ticket by ID
+    - `DELETE /tickets/:id` - Cancel ticket
+    - `GET /tickets/:id/qr` - Get QR code image
+  - Needs: Guards (JwtAuthGuard, RolesGuard), Decorators (@ApiTags, @ApiBearerAuth)
+
+**Missing Separate DTOs (LOW PRIORITY)**
+- [ ] DTOs are defined inline in tickets.service.ts
+  - Consider moving to `tickets/dto/` folder for consistency with other modules
+  - Suggested files:
+    - `purchase-ticket.dto.ts`
+    - `validate-ticket.dto.ts`
+    - `ticket-response.dto.ts`
+
+### Recommendation
+
+The tickets module service is fully functional with comprehensive test coverage.
+However, a REST controller needs to be created to expose the API endpoints.
+This is blocking for production use but the core business logic is complete.
+
+### QA: Shared Libraries TypeScript Check (2026-01-02) - TO FIX
+
+**libs/shared/validation - BROKEN (tsc exit 2):**
+- [ ] **Dependance 'zod' manquante** - Le module zod n'est pas installe dans package.json
+  - Fichiers affectes: auth.schema.ts, cashless.schema.ts, common.schema.ts, festival.schema.ts, payment.schema.ts, ticket.schema.ts, user.schema.ts
+  - Erreur: `error TS2307: Cannot find module 'zod' or its corresponding type declarations`
+  - Solution: `npm install zod` ou `pnpm add zod`
+- [ ] **Types implicites 'any'** - 40+ erreurs TS7006 pour parametres sans type explicite
+  - Cause: Les callbacks dans les schemas Zod (refine, superRefine) n'ont pas de types explicites
+  - Solution: Ajouter types explicites aux parametres des callbacks ou desactiver noImplicitAny
+
+**libs/shared/utils - BROKEN (tsc exit 2):**
+- [ ] **file.utils.ts:567-574** - References DOM non disponibles en contexte Node.js
+  - Erreurs: `Cannot find name 'window'`, `Cannot find name 'HTMLImageElement'`
+  - Fichier: `libs/shared/utils/src/lib/file.utils.ts`
+  - Fonction: `getImageDimensionsFromBase64()` - browser-only function
+  - Solution: Ajouter `"dom"` aux types dans tsconfig.lib.json ou `/// <reference lib="dom" />`
+
+**libs/shared/constants - OK (tsc exit 0)**
+**libs/shared/i18n - OK (tsc exit 0)**
+
+### QA Review: Cashless Module (2026-01-02) - TO FIX
+**Path:** `apps/api/src/modules/cashless/`
+
+**Status:** Module partially complete - MISSING `transfer()` method
+
+**Implemented methods (OK):**
+- [x] `topup()` - Recharge de compte cashless (lines 171-245)
+- [x] `pay()` - Paiement cashless (lines 250-322)
+- [x] `refund()` - Remboursement de transaction (lines 327-411)
+- [x] `getOrCreateAccount()` - Creation/recuperation compte
+- [x] `getAccount()` / `getBalance()` - Consultation compte
+- [x] `getTransactionHistory()` - Historique transactions
+- [x] `linkNfcTag()` / `findAccountByNfcTag()` - Gestion NFC
+- [x] `deactivateAccount()` / `reactivateAccount()` - Gestion statut compte
+
+**MISSING: `transfer()` method:**
+- [ ] **MEDIUM PRIORITY:** Implement `transfer()` method in `cashless.service.ts`
+  - `TransferDto` is defined (lines 56-61) but method is NOT implemented
+  - Zod schema `cashlessTransferSchema` exists in `libs/shared/validation/src/lib/cashless.schema.ts` (lines 264-300)
+  - Mobile app `NFCCashlessService.processTransfer()` calls the API expecting this endpoint
+  - **Impact:** Transfers between cashless accounts will fail at runtime
+  - **Solution:** Add transfer method with the following logic:
+    1. Validate festival exists and is active
+    2. Get source account (userId) and verify sufficient balance
+    3. Get destination account (dto.toUserId)
+    4. Verify both accounts are active
+    5. Create TRANSFER_OUT transaction for source (debit)
+    6. Create TRANSFER_IN transaction for destination (credit)
+    7. Update both balances atomically in Prisma transaction
+
+**DTOs (OK):**
+- [x] `CreateAccountDto` - Valid
+- [x] `TopupDto` - Valid
+- [x] `CashlessPaymentDto` - Valid
+- [x] `RefundDto` - Valid
+- [x] `TransferDto` - Defined but unused
+
+**NFC Integration (OK):**
+- [x] Mobile: `NFCCashlessService` complete (850+ lines) with offline support
+- [x] Mobile: `NFCReader`, `NFCWriter`, `NFCFormatter`, `NFCManager` implemented
+- [x] Backend: `linkNfcTag()` and `findAccountByNfcTag()` implemented
+- [x] Validation: `nfcIdSchema` in common.schema.ts (pattern: `/^[A-Fa-f0-9]{8,16}$/`)
+
+**Tests:**
+- [x] `cashless.service.spec.ts` - 732 lines, all existing methods covered
+- [ ] Add tests for `transfer()` once implemented
