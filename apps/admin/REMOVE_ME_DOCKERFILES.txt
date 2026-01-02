@@ -1,0 +1,1 @@
+Ce dossier ne doit plus contenir de Dockerfile. Utilisez ceux de festival/festival/apps/admin/ uniquement.

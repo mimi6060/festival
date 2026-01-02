@@ -109,7 +109,7 @@ services:
   admin:
     build:
       context: .
-      dockerfile: apps/admin/Dockerfile
+      dockerfile: festival/apps/admin/Dockerfile
       args:
         - NEXT_PUBLIC_API_URL=http://api:3000
         - NEXT_PUBLIC_APP_URL=http://localhost:4300

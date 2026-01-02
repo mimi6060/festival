@@ -1,5 +1,5 @@
 {
-  "name": "@festival/web",
+  "name": "@festival/festival-web",
   "version": "0.0.1",
   "private": true,
   "scripts": {

@@ -3,25 +3,21 @@
 # ============================================
 # Optimized for development with hot-reload
 
+
 FROM node:20-alpine AS development
 
 # Install required system dependencies
 RUN apk add --no-cache libc6-compat
 
+# Copie toute la structure du monorepo festival dans /app/festival
 WORKDIR /app
+COPY . ./festival
 
-# Copy package files
-COPY package.json package-lock.json* ./
-COPY apps/admin/package.json ./apps/admin/
-COPY libs/shared/types/package.json ./libs/shared/types/
-COPY libs/shared/utils/package.json ./libs/shared/utils/
+# Place le contexte de travail à la racine du monorepo
+WORKDIR /app/festival
 
-# Install all dependencies
+# Installation des dépendances workspaces
 RUN npm ci
-
-# Copy configuration files
-COPY tsconfig.base.json ./
-COPY nx.json ./
 
 # Set development environment
 ENV NODE_ENV=development
@@ -35,5 +31,5 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:3000 || exit 1
 
-# Default command for development with hot-reload
+# Default command for development avec hot-reload
 CMD ["npm", "run", "dev", "--", "-p", "3000"]

@@ -67,7 +67,7 @@ services:
   admin:
     build:
       context: .
-      dockerfile: apps/admin/Dockerfile.dev
+      dockerfile: festival/apps/admin/Dockerfile.dev
       target: development
     environment:
       NODE_ENV: development

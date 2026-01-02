@@ -1,5 +1,5 @@
 {
-  "name": "@festival/api",
+  "name": "@festival/festival-api",
   "version": "0.0.1",
   "private": true,
   "nx": {

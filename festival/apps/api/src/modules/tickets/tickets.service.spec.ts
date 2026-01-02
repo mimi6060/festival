@@ -42,22 +42,17 @@ import {
 // ============================================================================
 
 // Mock QRCode
-jest.mock('qrcode', () => ({
-  toDataURL: jest.fn().mockResolvedValue('data:image/png;base64,mockQRCode'),
-}));
+import * as QRCode from 'qrcode';
+jest.mock('qrcode');
+const mockedQRCode = QRCode as jest.Mocked<typeof QRCode>;
 
 // Mock uuid
-jest.mock('uuid', () => ({
-  v4: jest.fn(() => 'mocked-uuid-ticket-123'),
-}));
+import * as uuid from 'uuid';
+jest.mock('uuid');
+const mockedUuid = uuid as jest.Mocked<typeof uuid>;
 
-// Mock crypto
-jest.mock('crypto', () => ({
-  createHmac: jest.fn().mockReturnValue({
-    update: jest.fn().mockReturnThis(),
-    digest: jest.fn().mockReturnValue('mockedsignature12345678'),
-  }),
-}));
+// Note: We don't mock crypto here because native Node.js modules
+// are not easily mockable with Jest. Instead, the service has a fallback secret.
 
 describe('TicketsService', () => {
   let ticketsService: TicketsService;
@@ -90,6 +85,12 @@ describe('TicketsService', () => {
 
   beforeEach(async () => {
     jest.clearAllMocks();
+
+    // Setup uuid mock to return consistent values
+    mockedUuid.v4.mockReturnValue('mocked-uuid-ticket-123');
+
+    // Setup QRCode mock
+    mockedQRCode.toDataURL.mockResolvedValue('data:image/png;base64,mockQRCode');
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

@@ -10,14 +10,19 @@ RUN apk add --no-cache libc6-compat
 
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json* ./
-COPY apps/admin/package.json ./apps/admin/
+# Copy package files from monorepo root
+COPY ../../package.json ../../package-lock.json ./
+COPY ./festival/apps/admin/package.json ./apps/admin/
 COPY libs/shared/types/package.json ./libs/shared/types/
 COPY libs/shared/utils/package.json ./libs/shared/utils/
 
+# Diagnostic : afficher le contenu du contexte et des fichiers importants
+RUN echo 'CONTENU /app :' && ls -l /app && echo 'CONTENU /app/apps/admin :' && ls -l /app/apps/admin && echo 'CONTENU /app/libs/shared/types :' && ls -l /app/libs/shared/types && echo 'CONTENU /app/libs/shared/utils :' && ls -l /app/libs/shared/utils && echo 'LOCKFILE :' && cat /app/package-lock.json
 # Install all dependencies
 RUN npm ci
+
+# Diagnostic : afficher le contenu du contexte et des fichiers importants
+RUN echo 'CONTENU /app :' && ls -l /app && echo 'CONTENU /app/apps/admin :' && ls -l /app/apps/admin && echo 'CONTENU /app/libs/shared/types :' && ls -l /app/libs/shared/types && echo 'CONTENU /app/libs/shared/utils :' && ls -l /app/libs/shared/utils
 
 # Copy configuration files
 COPY tsconfig.base.json ./
