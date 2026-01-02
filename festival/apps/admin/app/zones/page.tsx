@@ -484,7 +484,7 @@ export default function ZonesPage() {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
           <p className="text-sm text-gray-500">Total checkpoints</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
-            {mockZones.reduce((sum, z) => sum + z.checkpoints, 0)}
+            {localZones.reduce((sum, z) => sum + z.checkpoints, 0)}
           </p>
         </div>
       </div>
