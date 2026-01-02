@@ -96,7 +96,7 @@ Voir `.claude/DONE.md` pour le détail complet.
 | Composants frontend | 50+ |
 | Écrans mobile | 15+ |
 | Templates email | 10+ |
-| Templates PDF | 6 |
+| Templates PDF | 8 |
 | Tests | 300+ |
 | Traductions | 1000+ |
 | Workflows CI/CD | 10+ |
@@ -198,3 +198,13 @@ Derniere mise a jour: 2026-01-02 - Phase Payments Avancee (Stripe Checkout, Conn
 
 ---
 Derniere mise a jour: 2026-01-02 - Phase Monitoring Avancee (Prometheus, Grafana, Health Check, Alerts)
+
+### Phase PDF Service Enhanced (2026-01-02) - COMPLETED
+- [x] Service PDF ameliore avec QR codes securises (HMAC-SHA256 hash)
+- [x] Template ticket avec QR code et hash de verification
+- [x] Template facture detaillee avec TVA (20%)
+- [x] Template badge staff avec photo et niveaux d'acces (LOW/MEDIUM/HIGH/FULL)
+- [x] Template programme festival multi-pages (couverture, TOC, pages jour)
+- [x] Template rapport financier complet (revenus, TVA, remboursements)
+- [x] Template recu de paiement
+- [x] Template bon de camping avec QR code
