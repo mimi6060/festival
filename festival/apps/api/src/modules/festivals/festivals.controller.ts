@@ -39,6 +39,7 @@ import {
   ForbiddenResponseDto,
   NotFoundResponseDto,
 } from '../../common/dto';
+import { Cacheable, CacheEvict, CacheTag } from '../cache';
 
 /**
  * Paginated festivals response
@@ -66,6 +67,7 @@ export class FestivalsController {
    * Create a new festival
    */
   @Post()
+  @CacheEvict({ tags: [CacheTag.FESTIVAL] })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create a new festival',
@@ -147,6 +149,11 @@ New festivals are created with DRAFT status. Use the status update endpoint to p
    * Get all festivals with filtering and pagination
    */
   @Get()
+  @Cacheable({
+    key: { prefix: 'festivals:list', paramIndices: [0] },
+    ttl: 60,
+    tags: [CacheTag.FESTIVAL]
+  })
   @ApiOperation({
     summary: 'List festivals',
     description: `
@@ -208,6 +215,11 @@ Default sorting is by start date (ascending). Use \`sortBy\` and \`sortOrder\` t
    * Get festival by ID
    */
   @Get(':id')
+  @Cacheable({
+    key: { prefix: 'festivals:id', paramIndices: [0] },
+    ttl: 30,
+    tags: [CacheTag.FESTIVAL]
+  })
   @ApiOperation({
     summary: 'Get festival by ID',
     description: `
@@ -271,6 +283,11 @@ Returns detailed information about a specific festival.
    * Get festival by slug
    */
   @Get('by-slug/:slug')
+  @Cacheable({
+    key: { prefix: 'festivals:slug', paramIndices: [0] },
+    ttl: 30,
+    tags: [CacheTag.FESTIVAL]
+  })
   @ApiOperation({
     summary: 'Get festival by slug',
     description: `
@@ -320,6 +337,7 @@ This is useful for SEO-friendly URLs like \`/festivals/summer-vibes-2025\`.
    * Update festival
    */
   @Put(':id')
+  @CacheEvict({ tags: [CacheTag.FESTIVAL] })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Update festival',
@@ -389,6 +407,7 @@ Updates an existing festival. Only the organizer or an admin can update a festiv
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @CacheEvict({ tags: [CacheTag.FESTIVAL] })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Delete festival',
@@ -487,6 +506,7 @@ Returns comprehensive statistics for a festival.
    * Publish festival
    */
   @Post(':id/publish')
+  @CacheEvict({ tags: [CacheTag.FESTIVAL] })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Publish festival',
@@ -557,6 +577,7 @@ Changes the festival status from DRAFT to PUBLISHED, making it visible to the pu
    * Cancel festival
    */
   @Post(':id/cancel')
+  @CacheEvict({ tags: [CacheTag.FESTIVAL] })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Cancel festival',

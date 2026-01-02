@@ -210,10 +210,175 @@ export type PoiType =
 
 export interface Poi {
   id: string;
+  festivalId?: string;
   name: string;
   type: PoiType;
   description?: string;
   latitude: number;
   longitude: number;
   isActive: boolean;
+}
+
+export interface CreatePoiDto {
+  name: string;
+  type: PoiType;
+  description?: string;
+  latitude: number;
+  longitude: number;
+  isActive?: boolean;
+}
+
+export interface UpdatePoiDto {
+  name?: string;
+  type?: PoiType;
+  description?: string;
+  latitude?: number;
+  longitude?: number;
+  isActive?: boolean;
+}
+
+// Stage Types
+export interface Stage {
+  id: string;
+  festivalId: string;
+  name: string;
+  description?: string;
+  capacity: number;
+  location?: string;
+  imageUrl?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  _count?: {
+    performances: number;
+  };
+}
+
+// Artist Types
+export interface Artist {
+  id: string;
+  name: string;
+  bio?: string;
+  genre?: string;
+  imageUrl?: string;
+  spotifyUrl?: string;
+  instagramUrl?: string;
+  websiteUrl?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  _count?: {
+    performances: number;
+    favoriteArtists?: number;
+  };
+}
+
+// Performance Types
+export interface Performance {
+  id: string;
+  artistId: string;
+  stageId: string;
+  startTime: string;
+  endTime: string;
+  description?: string;
+  isCancelled: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  artist: {
+    id: string;
+    name: string;
+    genre?: string;
+    imageUrl?: string;
+    spotifyUrl?: string;
+    instagramUrl?: string;
+  };
+  stage: {
+    id: string;
+    name: string;
+    festivalId?: string;
+    location?: string;
+    capacity?: number;
+  };
+}
+
+export interface CreatePerformanceDto {
+  artistId: string;
+  stageId: string;
+  startTime: string;
+  endTime: string;
+  description?: string;
+}
+
+export interface UpdatePerformanceDto {
+  artistId?: string;
+  stageId?: string;
+  startTime?: string;
+  endTime?: string;
+  description?: string;
+  isCancelled?: boolean;
+}
+
+// Vendor Types
+export type VendorType = 'FOOD' | 'DRINK' | 'BAR' | 'MERCHANDISE';
+
+export interface Vendor {
+  id: string;
+  festivalId: string;
+  name: string;
+  type: VendorType;
+  description?: string;
+  location?: string;
+  isOpen: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateVendorDto {
+  name: string;
+  type: VendorType;
+  description?: string;
+  location?: string;
+  isOpen?: boolean;
+}
+
+export interface UpdateVendorDto {
+  name?: string;
+  type?: VendorType;
+  description?: string;
+  location?: string;
+  isOpen?: boolean;
+}
+
+// Camping Types
+export interface CampingZone {
+  id: string;
+  festivalId: string;
+  name: string;
+  description?: string;
+  type: 'TENT' | 'CARAVAN' | 'GLAMPING' | 'CABIN' | 'CAMPERVAN';
+  capacity: number;
+  pricePerNight: number;
+  amenities: string[];
+  isActive: boolean;
+  spotsAvailable?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface CreateCampingZoneDto {
+  name: string;
+  description?: string;
+  type: 'TENT' | 'CARAVAN' | 'GLAMPING' | 'CABIN' | 'CAMPERVAN';
+  capacity: number;
+  pricePerNight: number;
+  amenities: string[];
+  isActive: boolean;
+}
+
+export interface UpdateCampingZoneDto {
+  name?: string;
+  description?: string;
+  type?: 'TENT' | 'CARAVAN' | 'GLAMPING' | 'CABIN' | 'CAMPERVAN';
+  capacity?: number;
+  pricePerNight?: number;
+  amenities?: string[];
+  isActive?: boolean;
 }

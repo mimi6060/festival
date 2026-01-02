@@ -5,19 +5,13 @@ import Link from 'next/link';
 import { mockFestivals } from '../../../../lib/mock-data';
 import { formatCurrency, formatNumber, cn } from '../../../../lib/utils';
 import ConfirmModal from '../../../../components/modals/ConfirmModal';
-
-interface CampingZone {
-  id: string;
-  festivalId: string;
-  name: string;
-  description: string;
-  type: 'TENT' | 'CARAVAN' | 'GLAMPING' | 'CABIN' | 'CAMPERVAN';
-  capacity: number;
-  pricePerNight: number;
-  amenities: string[];
-  isActive: boolean;
-  spotsAvailable?: number;
-}
+import {
+  useCampingZones,
+  useCreateCampingZone,
+  useUpdateCampingZone,
+  useDeleteCampingZone,
+} from '../../../../hooks';
+import type { CampingZone, CreateCampingZoneDto, UpdateCampingZoneDto } from '../../../../types';
 
 interface CampingPageProps {
   params: Promise<{ id: string }>;
@@ -32,45 +26,6 @@ interface ZoneFormData {
   amenities: string[];
   isActive: boolean;
 }
-
-const initialZones: CampingZone[] = [
-  {
-    id: '1',
-    festivalId: '1',
-    name: 'Zone Tentes Standard',
-    type: 'TENT',
-    description: 'Zone de camping classique',
-    capacity: 500,
-    pricePerNight: 15,
-    amenities: ['toilets', 'showers'],
-    isActive: true,
-    spotsAvailable: 320,
-  },
-  {
-    id: '2',
-    festivalId: '1',
-    name: 'Zone Caravanes',
-    type: 'CARAVAN',
-    description: 'Emplacements pour caravanes et camping-cars',
-    capacity: 100,
-    pricePerNight: 35,
-    amenities: ['electricity', 'water', 'toilets', 'showers'],
-    isActive: true,
-    spotsAvailable: 45,
-  },
-  {
-    id: '3',
-    festivalId: '1',
-    name: 'Glamping VIP',
-    type: 'GLAMPING',
-    description: 'Tentes de luxe pre-installees',
-    capacity: 50,
-    pricePerNight: 150,
-    amenities: ['electricity', 'wifi', 'beds', 'private_toilet'],
-    isActive: true,
-    spotsAvailable: 12,
-  },
-];
 
 const typeLabels: Record<CampingZone['type'], string> = {
   TENT: 'Tente',
@@ -135,9 +90,14 @@ const allAmenities = Object.keys(amenityLabels);
 export default function CampingPage({ params }: CampingPageProps) {
   const { id } = use(params);
   const festival = mockFestivals.find((f) => f.id === id);
-  const [localZones, setLocalZones] = useState<CampingZone[]>(
-    initialZones.filter((z) => z.festivalId === id || id === '1')
-  );
+
+  // API Hooks
+  const { data: zones = [], isLoading, error } = useCampingZones(id);
+  const createZoneMutation = useCreateCampingZone();
+  const updateZoneMutation = useUpdateCampingZone();
+  const deleteZoneMutation = useDeleteCampingZone();
+
+  // Local state
   const [showModal, setShowModal] = useState(false);
   const [editingZone, setEditingZone] = useState<CampingZone | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -191,40 +151,41 @@ export default function CampingPage({ params }: CampingPageProps) {
     setShowModal(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (editingZone) {
-      // Update existing zone
-      setLocalZones((prev) =>
-        prev.map((z) =>
-          z.id === editingZone.id
-            ? {
-                ...z,
-                ...formData,
-                spotsAvailable: z.spotsAvailable,
-              }
-            : z
-        )
-      );
-    } else {
-      // Create new zone
-      const newZone: CampingZone = {
-        id: `zone-${Date.now()}`,
-        festivalId: id,
-        name: formData.name,
-        description: formData.description,
-        type: formData.type,
-        capacity: formData.capacity,
-        pricePerNight: formData.pricePerNight,
-        amenities: formData.amenities,
-        isActive: formData.isActive,
-        spotsAvailable: formData.capacity,
-      };
-      setLocalZones((prev) => [...prev, newZone]);
-    }
+    try {
+      if (editingZone) {
+        // Update existing zone
+        const updateData: UpdateCampingZoneDto = {
+          name: formData.name,
+          description: formData.description,
+          type: formData.type,
+          capacity: formData.capacity,
+          pricePerNight: formData.pricePerNight,
+          amenities: formData.amenities,
+          isActive: formData.isActive,
+        };
+        await updateZoneMutation.mutateAsync({ id: editingZone.id, data: updateData });
+      } else {
+        // Create new zone
+        const createData: CreateCampingZoneDto = {
+          name: formData.name,
+          description: formData.description,
+          type: formData.type,
+          capacity: formData.capacity,
+          pricePerNight: formData.pricePerNight,
+          amenities: formData.amenities,
+          isActive: formData.isActive,
+        };
+        await createZoneMutation.mutateAsync({ festivalId: id, data: createData });
+      }
 
-    closeModal();
+      closeModal();
+    } catch (error) {
+      console.error('Error saving camping zone:', error);
+      // You could add error toast notification here
+    }
   };
 
   const handleDeleteZone = (zone: CampingZone) => {
@@ -232,12 +193,17 @@ export default function CampingPage({ params }: CampingPageProps) {
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     if (zoneToDelete) {
-      setLocalZones((prev) => prev.filter((z) => z.id !== zoneToDelete.id));
+      try {
+        await deleteZoneMutation.mutateAsync({ id: zoneToDelete.id, festivalId: id });
+        setShowDeleteModal(false);
+        setZoneToDelete(null);
+      } catch (error) {
+        console.error('Error deleting camping zone:', error);
+        // You could add error toast notification here
+      }
     }
-    setShowDeleteModal(false);
-    setZoneToDelete(null);
   };
 
   const handleAmenityToggle = (amenity: string) => {
@@ -262,17 +228,41 @@ export default function CampingPage({ params }: CampingPageProps) {
     );
   }
 
-  const filteredZones =
-    typeFilter === 'all' ? localZones : localZones.filter((z) => z.type === typeFilter);
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Chargement des zones de camping...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-red-600">Erreur de chargement</h2>
+          <p className="mt-2 text-gray-600">Impossible de charger les zones de camping.</p>
+          <Link href="/festivals" className="btn-primary mt-4 inline-block">
+            Retour aux festivals
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  const filteredZones = typeFilter === 'all' ? zones : zones.filter((z) => z.type === typeFilter);
 
   // Stats
-  const totalCapacity = localZones.reduce((sum, z) => sum + z.capacity, 0);
-  const totalAvailable = localZones.reduce((sum, z) => sum + (z.spotsAvailable ?? z.capacity), 0);
-  const activeZones = localZones.filter((z) => z.isActive).length;
+  const totalCapacity = zones.reduce((sum, z) => sum + z.capacity, 0);
+  const totalAvailable = zones.reduce((sum, z) => sum + (z.spotsAvailable ?? z.capacity), 0);
+  const activeZones = zones.filter((z) => z.isActive).length;
   const avgPricePerNight =
-    localZones.length > 0
-      ? localZones.reduce((sum, z) => sum + z.pricePerNight, 0) / localZones.length
-      : 0;
+    zones.length > 0 ? zones.reduce((sum, z) => sum + z.pricePerNight, 0) / zones.length : 0;
 
   return (
     <div className="space-y-6">
@@ -358,7 +348,7 @@ export default function CampingPage({ params }: CampingPageProps) {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <p className="text-sm text-gray-500">Zones actives</p>
           <p className="text-2xl font-bold text-blue-600 mt-1">
-            {activeZones} / {localZones.length}
+            {activeZones} / {zones.length}
           </p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -685,8 +675,17 @@ export default function CampingPage({ params }: CampingPageProps) {
               <button type="button" onClick={closeModal} className="btn-secondary">
                 Annuler
               </button>
-              <button type="submit" form="zone-form" className="btn-primary">
-                {editingZone ? 'Enregistrer' : 'Creer'}
+              <button
+                type="submit"
+                form="zone-form"
+                className="btn-primary"
+                disabled={createZoneMutation.isPending || updateZoneMutation.isPending}
+              >
+                {createZoneMutation.isPending || updateZoneMutation.isPending
+                  ? 'Enregistrement...'
+                  : editingZone
+                  ? 'Enregistrer'
+                  : 'Creer'}
               </button>
             </div>
           </div>

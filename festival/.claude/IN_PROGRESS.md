@@ -7,6 +7,25 @@ Voir `.claude/DONE.md` pour le détail complet.
 
 ---
 
+## Phase Performance Backend - EN COURS (2026-01-03)
+
+### Objectif: Optimiser les performances de l'API pour l'admin dashboard
+
+**Problème:** L'admin (localhost:4300) est lent lors du chargement des users, staff, festivals.
+
+#### Tâches en cours (4 agents Sonnet):
+- [ ] Ajouter des index composites dans le schema Prisma (User, Festival, Ticket, Payment, etc.)
+- [ ] Implémenter le caching Redis pour les endpoints fréquents (GET /festivals, GET /users)
+- [ ] Optimiser les requêtes Prisma (select, pagination, éviter N+1)
+- [ ] Configurer le connection pooling PostgreSQL
+
+#### Améliorations attendues:
+- Temps de réponse < 100ms pour les listes paginées
+- Cache Redis pour réduire la charge DB de 70%
+- Support de 1000+ requêtes/seconde
+
+---
+
 # ROADMAP FONCTIONNALITES PROFESSIONNELLES
 
 ## Analyse CTO/PO - Festival Platform (2026-01-02)
@@ -127,7 +146,7 @@ Voir `.claude/DONE.md` pour le détail complet.
 
 ---
 
-## Phase 2 - HAUTE: Integration API dans Admin (Supprimer Mock Data)
+## Phase 2 - HAUTE: Integration API dans Admin (COMPLETED 2026-01-02)
 
 ### 2.1 Client API et Hooks React Query
 **Objectif:** Connecter l'admin a l'API backend
@@ -158,51 +177,60 @@ Voir `.claude/DONE.md` pour le détail complet.
   - getArtists(params), createArtist(data), updateArtist(id, data), deleteArtist(id)
   - getStages(festivalId), createStage(festivalId, data), updateStage(id, data), deleteStage(id)
   - getLineup(festivalId), createPerformance(festivalId, data)
+- [x] Creer `apps/admin/lib/api/camping.ts` - API Camping Zones
+- [x] Creer `apps/admin/lib/api/vendors.ts` - API Vendors
+- [x] Creer `apps/admin/lib/api/pois.ts` - API Points of Interest
 - [x] Creer `apps/admin/lib/api/index.ts` - Export toutes les fonctions API
-- [ ] Installer React Query: `npm install @tanstack/react-query`
-- [ ] Creer `apps/admin/providers/QueryProvider.tsx`
-- [ ] Ajouter QueryProvider dans `app/layout.tsx`
+- [x] Installer React Query: `npm install @tanstack/react-query` (deja installe)
+- [x] Creer `apps/admin/providers/QueryProvider.tsx` - QueryClient avec staleTime: 5 min, retry: 1
+- [x] Ajouter QueryProvider dans `app/layout.tsx`
 
-#### Frontend Admin - Hooks par Module
-- [ ] `hooks/api/useFestivals.ts`:
+#### Frontend Admin - Hooks par Module (COMPLETED 2026-01-02)
+- [x] `hooks/api/useFestivals.ts`:
   - `useFestivals()` - Liste avec pagination/filtres
   - `useFestival(id)` - Detail festival
+  - `useFestivalStats(id)` - Stats festival
   - `useCreateFestival()` - Mutation creation
   - `useUpdateFestival()` - Mutation modification
   - `useDeleteFestival()` - Mutation suppression
-- [ ] `hooks/api/useTickets.ts`:
+- [x] `hooks/api/useTicketCategories.ts`:
   - `useTicketCategories(festivalId)` - Categories du festival
   - `useCreateCategory()`, `useUpdateCategory()`, `useDeleteCategory()`
-  - `useTickets(festivalId)` - Billets vendus
-  - `useTicketStats(festivalId)` - Statistiques ventes
-- [ ] `hooks/api/useUsers.ts`:
+- [x] `hooks/api/useUsers.ts`:
   - `useUsers()` - Liste utilisateurs
   - `useUser(id)` - Detail utilisateur
-  - `useUpdateUser()`, `useBanUser()`, `useUnbanUser()`
-- [ ] `hooks/api/useStaff.ts`:
-  - `useStaffMembers(festivalId)` - Staff du festival
-  - `useCreateStaff()`, `useUpdateStaff()`, `useDeleteStaff()`
-- [ ] `hooks/api/useZones.ts`:
-  - `useZones(festivalId)` - Zones du festival
-  - `useZoneStats(festivalId)` - Stats entrees/sorties
-- [ ] `hooks/api/useCashless.ts`:
-  - `useCashlessStats(festivalId)` - Stats globales
-  - `useCashlessTransactions(festivalId)` - Transactions
-- [ ] `hooks/api/useAnalytics.ts`:
-  - `useDashboardStats(festivalId)` - KPIs dashboard
-  - `useRevenueChart(festivalId, period)` - Graphique revenus
+  - `useCreateUser()` - Creation avec CreateUserData
+  - `useUpdateUser()` - Modification avec UpdateUserData
+  - `useBanUser()`, `useUnbanUser()` - Gestion statut utilisateur
+  - `useDeleteUser()` - Suppression utilisateur
+- [x] `hooks/api/useProgram.ts`:
+  - Artists: `useArtists()`, `useArtist(id)`, `useArtistsByFestival(id)`, `useArtistGenres()`
+  - Artists mutations: `useCreateArtist()`, `useUpdateArtist()`, `useDeleteArtist()`
+  - Stages: `useStages(festivalId)`, `useStage(id)`
+  - Stages mutations: `useCreateStage()`, `useUpdateStage()`, `useDeleteStage()`
+  - Lineup: `useLineup(festivalId)`, `usePerformance(id)`
+  - Lineup mutations: `useCreatePerformance(festivalId)`, `useUpdatePerformance()`, `useDeletePerformance()`, `useCancelPerformance()`
+- [x] `hooks/api/useCamping.ts`:
+  - `useCampingZones(festivalId)` - Zones camping du festival
+  - `useCreateCampingZone()`, `useUpdateCampingZone()`, `useDeleteCampingZone()`
+- [x] `hooks/api/useVendors.ts`:
+  - `useVendors(festivalId)` - Vendeurs du festival
+  - `useCreateVendor()`, `useUpdateVendor()`, `useDeleteVendor()`, `useToggleVendorOpen()`
+- [x] `hooks/api/usePois.ts`:
+  - `usePois(festivalId)` - Points d'interet du festival
+  - `useCreatePoi()`, `useUpdatePoi()`, `useDeletePoi()`, `useTogglePoiActive()`
+- [x] `hooks/api/index.ts` - Export centralisé de tous les hooks API
 
-#### Frontend Admin - Refactoring Pages
-- [ ] `app/festivals/page.tsx` - Remplacer `mockFestivals` par `useFestivals()`
-- [ ] `app/festivals/[id]/page.tsx` - Remplacer mock par `useFestival(id)`
-- [ ] `app/festivals/[id]/tickets/page.tsx` - Utiliser `useTicketCategories()`
-- [ ] `app/festivals/[id]/lineup/page.tsx` - Creer hook `useArtists()` + API
-- [ ] `app/users/page.tsx` - Remplacer `mockUsers` par `useUsers()`
-- [ ] `app/staff/page.tsx` - Utiliser `useStaffMembers()`
-- [ ] `app/zones/page.tsx` - Utiliser `useZones()`
-- [ ] `app/cashless/page.tsx` - Utiliser `useCashlessStats()`
-- [ ] `app/payments/page.tsx` - Creer `usePayments()` hook
-- [ ] `app/reports/page.tsx` - Utiliser `useAnalytics()`
+#### Frontend Admin - Refactoring Pages (COMPLETED 2026-01-02)
+- [x] `app/festivals/page.tsx` - Connected to `useFestivals()`
+- [x] `app/festivals/[id]/page.tsx` - Connected to `useFestival(id)`
+- [x] `app/festivals/[id]/tickets/page.tsx` - Connected to `useTicketCategories()`
+- [x] `app/festivals/[id]/lineup/page.tsx` - Connected to `useArtists()`, `useLineup()`
+- [x] `app/festivals/[id]/stages/page.tsx` - Connected to `useStages()`
+- [x] `app/festivals/[id]/vendors/page.tsx` - Connected to `useVendors()`
+- [x] `app/festivals/[id]/camping/page.tsx` - Connected to `useCampingZones()`
+- [x] `app/festivals/[id]/pois/page.tsx` - Connected to `usePois()`
+- [x] `app/users/page.tsx` - Connected to `useUsers()`
 
 ---
 
@@ -1168,6 +1196,51 @@ This is blocking for production use but the core business logic is complete.
 
 **libs/shared/constants - OK (tsc exit 0)**
 **libs/shared/i18n - OK (tsc exit 0)**
+
+---
+
+## Database Connection Pooling Optimization (2026-01-03) - COMPLETED
+
+**Objectif:** Optimize database connection pooling for NestJS API to handle concurrent requests efficiently
+
+**Completed:**
+- [x] Updated `.env.example` with connection pool parameters
+  - Added `connection_limit=10` to DATABASE_URL
+  - Added `pool_timeout=20` (seconds)
+  - Added `connect_timeout=5` (seconds)
+  - Documented all pool parameters with descriptions
+- [x] Enhanced `apps/api/src/modules/prisma/prisma.service.ts`
+  - Implemented `onModuleDestroy` for graceful disconnection
+  - Added `checkConnectionHealth()` method with response time tracking
+  - Added `getConnectionPoolMetrics()` for pool status monitoring
+  - Added `executeWithRetry()` method for automatic query retries
+  - Added connection retry logic with exponential backoff (max 5 retries)
+  - Added error event listening for connection tracking
+  - Enhanced logging for connection lifecycle
+- [x] Updated `docker-compose.yml` PostgreSQL configuration
+  - Set `max_connections=100` (down from 200 for better resource management)
+  - Added `superuser_reserved_connections=3`
+  - Kept `shared_buffers=256MB` appropriately sized
+  - Added connection logging: `log_connections`, `log_disconnections`, `log_lock_waits`
+  - Added `statement_timeout=30000` (30s) to prevent blocking queries
+  - Updated DATABASE_URL with pool parameters
+- [x] Created connection pool monitoring endpoint in health controller
+  - New endpoint: `GET /api/health/db-pool`
+  - Returns pool status (ok/degraded/error)
+  - Monitors connection health with response time
+  - Tracks connection retries
+  - Full Swagger documentation
+  - Imported PrismaModule in HealthModule
+
+**Benefits:**
+- Prevents connection pool exhaustion under high load
+- Automatic connection recovery on failures
+- Real-time monitoring of pool health
+- Better resource utilization with optimized max_connections
+- Graceful shutdown prevents connection leaks
+- Query retry logic handles transient failures
+
+---
 
 ### QA Review: Cashless Module (2026-01-02) - TO FIX
 **Path:** `apps/api/src/modules/cashless/`

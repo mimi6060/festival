@@ -62,7 +62,7 @@ export default function StaffPage() {
       // Update existing staff
       setLocalStaff(prev => prev.map(s =>
         s.id === selectedStaff.id
-          ? { ...s, ...formData }
+          ? { ...s, ...formData, role: formData.role as Staff['role'] }
           : s
       ));
     } else {

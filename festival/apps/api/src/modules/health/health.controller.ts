@@ -5,6 +5,7 @@ import {
   ApiOkResponse,
   ApiServiceUnavailableResponse,
 } from '@nestjs/swagger';
+import { PrismaService } from '../prisma/prisma.service';
 
 /**
  * Health check response DTO
@@ -35,6 +36,20 @@ class ReadinessResponseDto {
   };
 }
 
+class ConnectionPoolResponseDto {
+  status!: 'ok' | 'degraded' | 'error';
+  timestamp!: string;
+  pool!: {
+    isConnected: boolean;
+    connectionRetries: number;
+    healthCheck: {
+      isHealthy: boolean;
+      responseTimeMs: number;
+      error?: string;
+    };
+  };
+}
+
 /**
  * Health Controller
  *
@@ -48,6 +63,8 @@ class ReadinessResponseDto {
 @Controller('health')
 export class HealthController {
   private readonly startTime = Date.now();
+
+  constructor(private readonly prismaService: PrismaService) {}
 
   /**
    * Full health check
@@ -225,6 +242,99 @@ If this endpoint returns 503, the pod will be removed from the load balancer.
       status: isReady ? 'ready' : 'not_ready',
       timestamp: new Date().toISOString(),
       dependencies,
+    };
+  }
+
+  /**
+   * Database connection pool monitoring
+   *
+   * Returns detailed information about the database connection pool status.
+   * Use this endpoint to monitor connection health and pool utilization.
+   */
+  @Get('db-pool')
+  @ApiOperation({
+    summary: 'Database connection pool status',
+    description: `
+Returns detailed information about the database connection pool including:
+- Connection status
+- Connection retry count
+- Health check with response time
+- Connection errors (if any)
+
+**Use Cases:**
+- Monitoring connection pool health
+- Detecting connection issues
+- Performance optimization
+- Debugging database connectivity problems
+
+**Response Status:**
+- \`ok\`: Pool is healthy and connected
+- \`degraded\`: Pool is connected but experiencing issues (e.g., retries)
+- \`error\`: Pool is unhealthy or disconnected
+    `,
+  })
+  @ApiOkResponse({
+    description: 'Connection pool status retrieved successfully',
+    type: ConnectionPoolResponseDto,
+    example: {
+      status: 'ok',
+      timestamp: '2025-01-02T12:00:00.000Z',
+      pool: {
+        isConnected: true,
+        connectionRetries: 0,
+        healthCheck: {
+          isHealthy: true,
+          responseTimeMs: 5,
+        },
+      },
+    },
+  })
+  @ApiServiceUnavailableResponse({
+    description: 'Connection pool is unhealthy',
+    example: {
+      status: 'error',
+      timestamp: '2025-01-02T12:00:00.000Z',
+      pool: {
+        isConnected: false,
+        connectionRetries: 3,
+        healthCheck: {
+          isHealthy: false,
+          responseTimeMs: 5000,
+          error: 'Connection timeout',
+        },
+      },
+    },
+  })
+  async checkConnectionPool(): Promise<ConnectionPoolResponseDto> {
+    const timestamp = new Date().toISOString();
+
+    // Get pool metrics
+    const poolMetrics = this.prismaService.getConnectionPoolMetrics();
+
+    // Perform health check
+    const healthCheck = await this.prismaService.checkConnectionHealth();
+
+    // Determine overall status
+    let status: 'ok' | 'degraded' | 'error' = 'ok';
+
+    if (!healthCheck.isHealthy || !poolMetrics.isConnected) {
+      status = 'error';
+    } else if (poolMetrics.connectionRetries > 0) {
+      status = 'degraded';
+    }
+
+    return {
+      status,
+      timestamp,
+      pool: {
+        isConnected: poolMetrics.isConnected,
+        connectionRetries: poolMetrics.connectionRetries,
+        healthCheck: {
+          isHealthy: healthCheck.isHealthy,
+          responseTimeMs: healthCheck.responseTimeMs,
+          error: healthCheck.error,
+        },
+      },
     };
   }
 }

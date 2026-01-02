@@ -33,8 +33,8 @@ services:
     environment:
       NODE_ENV: production
       PORT: 3333
-      # Database Configuration
-      DATABASE_URL: postgresql://${POSTGRES_USER:-festival_user}:${POSTGRES_PASSWORD:-festival_password}@postgres:5432/${POSTGRES_DB:-festival_db}?schema=public&connection_limit=10&pool_timeout=30
+      # Database Configuration with connection pooling
+      DATABASE_URL: postgresql://${POSTGRES_USER:-festival_user}:${POSTGRES_PASSWORD:-festival_password}@postgres:5432/${POSTGRES_DB:-festival_db}?schema=public&connection_limit=10&pool_timeout=20&connect_timeout=5
       # Redis Configuration
       REDIS_URL: redis://redis:6379
       REDIS_HOST: redis
@@ -257,8 +257,12 @@ services:
       - 'com.festival.description=PostgreSQL Database'
     command:
       - 'postgres'
+      # Connection settings
       - '-c'
-      - 'max_connections=200'
+      - 'max_connections=100'
+      - '-c'
+      - 'superuser_reserved_connections=3'
+      # Memory settings
       - '-c'
       - 'shared_buffers=256MB'
       - '-c'
@@ -266,25 +270,37 @@ services:
       - '-c'
       - 'maintenance_work_mem=128MB'
       - '-c'
+      - 'work_mem=4MB'
+      # WAL settings
+      - '-c'
       - 'checkpoint_completion_target=0.9'
       - '-c'
       - 'wal_buffers=16MB'
+      - '-c'
+      - 'min_wal_size=1GB'
+      - '-c'
+      - 'max_wal_size=4GB'
+      # Query planner
       - '-c'
       - 'default_statistics_target=100'
       - '-c'
       - 'random_page_cost=1.1'
       - '-c'
       - 'effective_io_concurrency=200'
-      - '-c'
-      - 'work_mem=4MB'
-      - '-c'
-      - 'min_wal_size=1GB'
-      - '-c'
-      - 'max_wal_size=4GB'
+      # Logging
       - '-c'
       - 'log_statement=mod'
       - '-c'
       - 'log_min_duration_statement=1000'
+      - '-c'
+      - 'log_connections=on'
+      - '-c'
+      - 'log_disconnections=on'
+      - '-c'
+      - 'log_lock_waits=on'
+      # Statement timeout to prevent long-running queries from blocking connections
+      - '-c'
+      - 'statement_timeout=30000'
     deploy:
       resources:
         limits:

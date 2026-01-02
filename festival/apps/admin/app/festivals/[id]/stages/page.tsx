@@ -3,34 +3,23 @@
 import { use, useState } from 'react';
 import Link from 'next/link';
 import { mockFestivals } from '../../../../lib/mock-data';
-
-interface Stage {
-  id: string;
-  festivalId: string;
-  name: string;
-  description: string;
-  capacity: number;
-  location: string;
-}
+import { useStages, useCreateStage, useUpdateStage, useDeleteStage } from '../../../../hooks/api/useProgram';
+import type { Stage } from '../../../../types';
 
 interface FestivalStagesPageProps {
   params: Promise<{ id: string }>;
 }
 
-// Mock stages data
-const initialStages: Stage[] = [
-  { id: '1', festivalId: '1', name: 'Main Stage', description: 'La scene principale avec le plus grand ecran LED de France', capacity: 25000, location: 'Zone A - Entree principale' },
-  { id: '2', festivalId: '1', name: 'Techno Arena', description: 'Scene couverte dediee a la techno et aux sets de nuit', capacity: 8000, location: 'Zone B - Hangar Est' },
-  { id: '3', festivalId: '1', name: 'Beach Stage', description: 'Scene en plein air avec ambiance tropicale', capacity: 5000, location: 'Zone C - Plage artificielle' },
-  { id: '4', festivalId: '1', name: 'Secret Garden', description: 'Scene intimiste cachee dans la foret', capacity: 2000, location: 'Zone D - Espace vert nord' },
-  { id: '5', festivalId: '1', name: 'Chill Zone', description: 'Espace detente avec DJ sets acoustiques', capacity: 1000, location: 'Zone E - Jardin zen' },
-];
-
 export default function FestivalStagesPage({ params }: FestivalStagesPageProps) {
   const { id } = use(params);
   const festival = mockFestivals.find((f) => f.id === id);
 
-  const [stages, setStages] = useState<Stage[]>(initialStages.filter(s => s.festivalId === id || id === '1'));
+  // API hooks
+  const { data: stages = [], isLoading, error } = useStages(id);
+  const createMutation = useCreateStage();
+  const updateMutation = useUpdateStage();
+  const deleteMutation = useDeleteStage();
+
   const [showModal, setShowModal] = useState(false);
   const [editingStage, setEditingStage] = useState<Stage | null>(null);
   const [formData, setFormData] = useState({
@@ -70,40 +59,47 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
     setEditingStage(stage);
     setFormData({
       name: stage.name,
-      description: stage.description,
+      description: stage.description || '',
       capacity: stage.capacity,
-      location: stage.location,
+      location: stage.location || '',
     });
     setShowModal(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (editingStage) {
-      // Update existing stage
-      setStages(prev => prev.map(s =>
-        s.id === editingStage.id
-          ? { ...s, ...formData }
-          : s
-      ));
-    } else {
-      // Create new stage
-      const newStage: Stage = {
-        id: Date.now().toString(),
-        festivalId: id,
-        ...formData,
-      };
-      setStages(prev => [...prev, newStage]);
-    }
+    try {
+      if (editingStage) {
+        // Update existing stage
+        await updateMutation.mutateAsync({
+          id: editingStage.id,
+          data: formData,
+        });
+      } else {
+        // Create new stage
+        await createMutation.mutateAsync({
+          festivalId: id,
+          data: formData,
+        });
+      }
 
-    setShowModal(false);
-    setEditingStage(null);
+      setShowModal(false);
+      setEditingStage(null);
+    } catch (error) {
+      console.error('Error saving stage:', error);
+      // Error handling can be expanded here (e.g., show toast notification)
+    }
   };
 
-  const handleDelete = (stageId: string) => {
+  const handleDelete = async (stageId: string) => {
     if (confirm('Etes-vous sur de vouloir supprimer cette scene?')) {
-      setStages(prev => prev.filter(s => s.id !== stageId));
+      try {
+        await deleteMutation.mutateAsync(stageId);
+      } catch (error) {
+        console.error('Error deleting stage:', error);
+        // Error handling can be expanded here (e.g., show toast notification)
+      }
     }
   };
 
@@ -178,7 +174,20 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
           <p className="text-white/80 text-sm">Gerez les differentes scenes du festival</p>
         </div>
 
-        {stages.length === 0 ? (
+        {isLoading ? (
+          <div className="p-8 text-center">
+            <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mb-4"></div>
+            <p className="text-gray-500">Chargement des scenes...</p>
+          </div>
+        ) : error ? (
+          <div className="p-8 text-center">
+            <svg className="w-12 h-12 mx-auto mb-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p className="text-red-600 font-medium">Erreur lors du chargement des scenes</p>
+            <p className="text-gray-500 text-sm mt-2">{error instanceof Error ? error.message : 'Une erreur est survenue'}</p>
+          </div>
+        ) : stages.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
             <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
@@ -213,6 +222,7 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
                       onClick={() => openEditModal(stage)}
                       className="p-2 hover:bg-gray-100 rounded-lg"
                       title="Modifier"
+                      disabled={deleteMutation.isPending}
                     >
                       <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -220,12 +230,17 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
                     </button>
                     <button
                       onClick={() => handleDelete(stage.id)}
-                      className="p-2 hover:bg-red-50 rounded-lg"
+                      className="p-2 hover:bg-red-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Supprimer"
+                      disabled={deleteMutation.isPending}
                     >
-                      <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
+                      {deleteMutation.isPending ? (
+                        <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-red-500"></div>
+                      ) : (
+                        <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        </svg>
+                      )}
                     </button>
                   </div>
                 </div>
@@ -348,11 +363,23 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
                   type="button"
                   onClick={() => setShowModal(false)}
                   className="flex-1 btn-secondary"
+                  disabled={createMutation.isPending || updateMutation.isPending}
                 >
                   Annuler
                 </button>
-                <button type="submit" className="flex-1 btn-primary">
-                  {editingStage ? 'Enregistrer' : 'Ajouter'}
+                <button
+                  type="submit"
+                  className="flex-1 btn-primary"
+                  disabled={createMutation.isPending || updateMutation.isPending}
+                >
+                  {createMutation.isPending || updateMutation.isPending ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                      Enregistrement...
+                    </span>
+                  ) : (
+                    editingStage ? 'Enregistrer' : 'Ajouter'
+                  )}
                 </button>
               </div>
             </form>

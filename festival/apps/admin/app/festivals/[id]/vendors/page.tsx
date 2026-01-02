@@ -3,30 +3,18 @@
 import { use, useState } from 'react';
 import Link from 'next/link';
 import { mockFestivals } from '../../../../lib/mock-data';
-
-type VendorType = 'FOOD' | 'DRINK' | 'BAR' | 'MERCHANDISE';
-
-interface Vendor {
-  id: string;
-  name: string;
-  type: VendorType;
-  description: string;
-  location: string;
-  isOpen: boolean;
-}
+import {
+  useVendors,
+  useCreateVendor,
+  useUpdateVendor,
+  useDeleteVendor,
+  useToggleVendorOpen,
+} from '../../../../hooks';
+import type { VendorType } from '../../../../types';
 
 interface VendorsPageProps {
   params: Promise<{ id: string }>;
 }
-
-// Mock vendors data
-const initialVendors: Vendor[] = [
-  { id: '1', name: 'Food Truck BBQ', type: 'FOOD', description: 'Burgers et grillades', location: 'Zone A', isOpen: true },
-  { id: '2', name: 'Bar Central', type: 'BAR', description: 'Cocktails et bieres', location: 'Zone B', isOpen: true },
-  { id: '3', name: 'Fresh Drinks', type: 'DRINK', description: 'Jus et smoothies', location: 'Zone C', isOpen: false },
-  { id: '4', name: 'Festival Merch', type: 'MERCHANDISE', description: 'T-shirts et accessoires officiels', location: 'Zone A', isOpen: true },
-  { id: '5', name: 'Pizza Corner', type: 'FOOD', description: 'Pizzas artisanales', location: 'Zone D', isOpen: true },
-];
 
 const vendorTypeLabels: Record<VendorType, string> = {
   FOOD: 'Nourriture',
@@ -69,9 +57,16 @@ export default function VendorsPage({ params }: VendorsPageProps) {
   const { id } = use(params);
   const festival = mockFestivals.find((f) => f.id === id);
 
-  const [vendors, setVendors] = useState<Vendor[]>(initialVendors);
+  // API hooks
+  const { data: vendors = [], isLoading, error } = useVendors(id);
+  const createVendorMutation = useCreateVendor();
+  const updateVendorMutation = useUpdateVendor();
+  const deleteVendorMutation = useDeleteVendor();
+  const toggleVendorOpenMutation = useToggleVendorOpen();
+
+  // Local state
   const [showModal, setShowModal] = useState(false);
-  const [editingVendor, setEditingVendor] = useState<Vendor | null>(null);
+  const [editingVendor, setEditingVendor] = useState<{ id: string; name: string; type: VendorType; description?: string; location?: string; isOpen: boolean } | null>(null);
   const [formData, setFormData] = useState({
     name: '',
     type: 'FOOD' as VendorType,
@@ -94,6 +89,31 @@ export default function VendorsPage({ params }: VendorsPageProps) {
     );
   }
 
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <p className="mt-4 text-gray-500">Chargement des vendeurs...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-red-600">Erreur</h2>
+          <p className="mt-2 text-gray-500">Impossible de charger les vendeurs</p>
+          <button onClick={() => window.location.reload()} className="btn-primary mt-4">
+            Reessayer
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   const openCreateModal = () => {
     setEditingVendor(null);
     setFormData({
@@ -106,53 +126,65 @@ export default function VendorsPage({ params }: VendorsPageProps) {
     setShowModal(true);
   };
 
-  const openEditModal = (vendor: Vendor) => {
+  const openEditModal = (vendor: { id: string; name: string; type: VendorType; description?: string; location?: string; isOpen: boolean }) => {
     setEditingVendor(vendor);
     setFormData({
       name: vendor.name,
       type: vendor.type,
-      description: vendor.description,
-      location: vendor.location,
+      description: vendor.description || '',
+      location: vendor.location || '',
       isOpen: vendor.isOpen,
     });
     setShowModal(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (editingVendor) {
-      // Update existing vendor
-      setVendors(prev => prev.map(v =>
-        v.id === editingVendor.id
-          ? { ...v, ...formData }
-          : v
-      ));
-    } else {
-      // Create new vendor
-      const newVendor: Vendor = {
-        id: Date.now().toString(),
-        ...formData,
-      };
-      setVendors(prev => [...prev, newVendor]);
-    }
+    try {
+      if (editingVendor) {
+        // Update existing vendor
+        await updateVendorMutation.mutateAsync({
+          id: editingVendor.id,
+          data: formData,
+        });
+      } else {
+        // Create new vendor
+        await createVendorMutation.mutateAsync({
+          festivalId: id,
+          data: formData,
+        });
+      }
 
-    setShowModal(false);
-    setEditingVendor(null);
+      setShowModal(false);
+      setEditingVendor(null);
+    } catch (error) {
+      console.error('Error saving vendor:', error);
+      alert('Erreur lors de l\'enregistrement du vendeur');
+    }
   };
 
-  const handleDelete = (vendorId: string) => {
+  const handleDelete = async (vendorId: string) => {
     if (confirm('Etes-vous sur de vouloir supprimer ce vendeur ?')) {
-      setVendors(prev => prev.filter(v => v.id !== vendorId));
+      try {
+        await deleteVendorMutation.mutateAsync(vendorId);
+      } catch (error) {
+        console.error('Error deleting vendor:', error);
+        alert('Erreur lors de la suppression du vendeur');
+      }
     }
   };
 
-  const toggleVendorStatus = (vendorId: string) => {
-    setVendors(prev => prev.map(v =>
-      v.id === vendorId
-        ? { ...v, isOpen: !v.isOpen }
-        : v
-    ));
+  const toggleVendorStatus = async (vendorId: string, currentStatus: boolean) => {
+    try {
+      await toggleVendorOpenMutation.mutateAsync({
+        id: vendorId,
+        isOpen: !currentStatus,
+      });
+    } catch (error) {
+      console.error('Error toggling vendor status:', error);
+      alert('Erreur lors de la modification du statut');
+    }
   };
 
   const filteredVendors = filterType === 'ALL'
@@ -345,13 +377,14 @@ export default function VendorsPage({ params }: VendorsPageProps) {
                   {vendorTypeIcons[vendor.type]}
                 </div>
                 <button
-                  onClick={() => toggleVendorStatus(vendor.id)}
+                  onClick={() => toggleVendorStatus(vendor.id, vendor.isOpen)}
                   className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 ${
                     vendor.isOpen ? 'bg-green-500' : 'bg-gray-200'
                   }`}
                   role="switch"
                   aria-checked={vendor.isOpen}
                   title={vendor.isOpen ? 'Marquer comme ferme' : 'Marquer comme ouvert'}
+                  disabled={toggleVendorOpenMutation.isPending}
                 >
                   <span
                     className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
@@ -508,11 +541,20 @@ export default function VendorsPage({ params }: VendorsPageProps) {
                   type="button"
                   onClick={() => setShowModal(false)}
                   className="flex-1 btn-secondary"
+                  disabled={createVendorMutation.isPending || updateVendorMutation.isPending}
                 >
                   Annuler
                 </button>
-                <button type="submit" className="flex-1 btn-primary">
-                  {editingVendor ? 'Enregistrer' : 'Ajouter'}
+                <button
+                  type="submit"
+                  className="flex-1 btn-primary"
+                  disabled={createVendorMutation.isPending || updateVendorMutation.isPending}
+                >
+                  {createVendorMutation.isPending || updateVendorMutation.isPending
+                    ? 'Enregistrement...'
+                    : editingVendor
+                    ? 'Enregistrer'
+                    : 'Ajouter'}
                 </button>
               </div>
             </form>

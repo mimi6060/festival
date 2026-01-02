@@ -3,7 +3,8 @@
 import { use, useState } from 'react';
 import Link from 'next/link';
 import { mockFestivals } from '../../../../lib/mock-data';
-import type { Poi, PoiType } from '../../../../types';
+import { usePois, useCreatePoi, useUpdatePoi, useDeletePoi, useTogglePoiActive } from '../../../../hooks';
+import type { Poi, PoiType, CreatePoiDto, UpdatePoiDto } from '../../../../types';
 
 interface PoisPageProps {
   params: Promise<{ id: string }>;
@@ -26,22 +27,6 @@ const POI_TYPES: { type: PoiType; label: string; icon: string; color: string }[]
   { type: 'LOCKER', label: 'Consigne', icon: 'M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z', color: 'text-amber-600 bg-amber-50' },
 ];
 
-// Mock POIs data
-const initialPois: Poi[] = [
-  { id: '1', name: 'Parking Principal', type: 'PARKING', description: '2000 places', latitude: 48.8566, longitude: 2.3522, isActive: true },
-  { id: '2', name: 'Toilettes Zone A', type: 'TOILET', description: '20 cabines', latitude: 48.8570, longitude: 2.3525, isActive: true },
-  { id: '3', name: 'Poste Medical', type: 'MEDICAL', description: 'Urgences et premiers soins', latitude: 48.8572, longitude: 2.3530, isActive: true },
-  { id: '4', name: 'Entree Principale', type: 'ENTRANCE', description: 'Entree VIP et Standard', latitude: 48.8560, longitude: 2.3520, isActive: true },
-  { id: '5', name: 'Scene Principale', type: 'STAGE', description: 'Capacite 5000 personnes', latitude: 48.8568, longitude: 2.3528, isActive: true },
-  { id: '6', name: 'Food Court', type: 'FOOD', description: '15 stands de restauration', latitude: 48.8565, longitude: 2.3535, isActive: true },
-  { id: '7', name: 'Bar Central', type: 'DRINK', description: 'Boissons et cocktails', latitude: 48.8567, longitude: 2.3532, isActive: true },
-  { id: '8', name: 'Point Info', type: 'INFO', description: 'Accueil et renseignements', latitude: 48.8562, longitude: 2.3518, isActive: true },
-  { id: '9', name: 'DAB BNP', type: 'ATM', description: 'Distributeur automatique', latitude: 48.8564, longitude: 2.3516, isActive: false },
-  { id: '10', name: 'Zone Camping', type: 'CAMPING', description: '500 emplacements', latitude: 48.8580, longitude: 2.3550, isActive: true },
-  { id: '11', name: 'Station Recharge', type: 'CHARGING', description: 'Bornes pour telephones', latitude: 48.8569, longitude: 2.3527, isActive: true },
-  { id: '12', name: 'Consignes', type: 'LOCKER', description: '200 casiers securises', latitude: 48.8561, longitude: 2.3521, isActive: true },
-];
-
 interface PoiFormData {
   name: string;
   type: PoiType;
@@ -58,7 +43,16 @@ function getPoiTypeConfig(type: PoiType) {
 export default function PoisPage({ params }: PoisPageProps) {
   const { id } = use(params);
   const festival = mockFestivals.find((f) => f.id === id);
-  const [localPois, setLocalPois] = useState<Poi[]>(initialPois);
+
+  // Fetch POIs using the hook
+  const { data: pois = [], isLoading, error } = usePois(id);
+
+  // Mutations
+  const createPoiMutation = useCreatePoi();
+  const updatePoiMutation = useUpdatePoi();
+  const deletePoiMutation = useDeletePoi();
+  const toggleActiveMutation = useTogglePoiActive();
+
   const [showModal, setShowModal] = useState(false);
   const [editingPoi, setEditingPoi] = useState<Poi | null>(null);
   const [filterType, setFilterType] = useState<PoiType | 'all'>('all');
@@ -107,45 +101,66 @@ export default function PoisPage({ params }: PoisPageProps) {
     setShowModal(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (editingPoi) {
-      // Update existing POI
-      setLocalPois(prev => prev.map(poi =>
-        poi.id === editingPoi.id
-          ? { ...poi, ...formData }
-          : poi
-      ));
-    } else {
-      // Create new POI
-      const newPoi: Poi = {
-        id: `poi-${Date.now()}`,
-        name: formData.name,
-        type: formData.type,
-        description: formData.description,
-        latitude: formData.latitude,
-        longitude: formData.longitude,
-        isActive: formData.isActive,
-      };
-      setLocalPois(prev => [...prev, newPoi]);
-    }
+    try {
+      if (editingPoi) {
+        // Update existing POI
+        const updateData: UpdatePoiDto = {
+          name: formData.name,
+          type: formData.type,
+          description: formData.description || undefined,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
+          isActive: formData.isActive,
+        };
+        await updatePoiMutation.mutateAsync({ id: editingPoi.id, data: updateData });
+      } else {
+        // Create new POI
+        const createData: CreatePoiDto = {
+          name: formData.name,
+          type: formData.type,
+          description: formData.description || undefined,
+          latitude: formData.latitude,
+          longitude: formData.longitude,
+          isActive: formData.isActive,
+        };
+        await createPoiMutation.mutateAsync({ festivalId: id, data: createData });
+      }
 
-    closeModal();
+      closeModal();
+    } catch (error) {
+      console.error('Error saving POI:', error);
+      alert('Une erreur est survenue lors de l\'enregistrement du point d\'interet.');
+    }
   };
 
-  const handleDelete = (poiId: string) => {
+  const handleDelete = async (poiId: string) => {
     if (confirm('Etes-vous sur de vouloir supprimer ce point d\'interet ?')) {
-      setLocalPois(prev => prev.filter(poi => poi.id !== poiId));
+      try {
+        await deletePoiMutation.mutateAsync({ id: poiId, festivalId: id });
+      } catch (error) {
+        console.error('Error deleting POI:', error);
+        alert('Une erreur est survenue lors de la suppression du point d\'interet.');
+      }
     }
   };
 
-  const toggleActive = (poiId: string) => {
-    setLocalPois(prev => prev.map(poi =>
-      poi.id === poiId
-        ? { ...poi, isActive: !poi.isActive }
-        : poi
-    ));
+  const toggleActive = async (poiId: string) => {
+    const poi = pois.find(p => p.id === poiId);
+    if (!poi) return;
+
+    try {
+      await toggleActiveMutation.mutateAsync({
+        id: poiId,
+        isActive: !poi.isActive,
+        festivalId: id,
+      });
+    } catch (error) {
+      console.error('Error toggling POI active status:', error);
+      alert('Une erreur est survenue lors de la modification du statut du point d\'interet.');
+    }
   };
 
   if (!festival) {
@@ -161,10 +176,35 @@ export default function PoisPage({ params }: PoisPageProps) {
     );
   }
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">Chargement des points d&apos;interet...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <h2 className="text-xl font-semibold text-red-600">Erreur</h2>
+          <p className="text-gray-500 mt-2">Impossible de charger les points d&apos;interet.</p>
+          <p className="text-sm text-gray-400 mt-1">{error instanceof Error ? error.message : 'Erreur inconnue'}</p>
+        </div>
+      </div>
+    );
+  }
+
   // Filter POIs by type
   const filteredPois = filterType === 'all'
-    ? localPois
-    : localPois.filter(poi => poi.type === filterType);
+    ? pois
+    : pois.filter(poi => poi.type === filterType);
 
   // Group POIs by type
   const groupedPois = POI_TYPES.reduce((acc, { type }) => {
@@ -175,9 +215,9 @@ export default function PoisPage({ params }: PoisPageProps) {
     return acc;
   }, {} as Record<PoiType, Poi[]>);
 
-  const totalActive = localPois.filter(p => p.isActive).length;
-  const totalPois = localPois.length;
-  const typesUsed = new Set(localPois.map(p => p.type)).size;
+  const totalActive = pois.filter(p => p.isActive).length;
+  const totalPois = pois.length;
+  const typesUsed = new Set(pois.map(p => p.type)).size;
 
   return (
     <div className="space-y-6">
@@ -281,7 +321,7 @@ export default function PoisPage({ params }: PoisPageProps) {
             Tous
           </button>
           {POI_TYPES.map(({ type, label }) => {
-            const count = localPois.filter(p => p.type === type).length;
+            const count = pois.filter(p => p.type === type).length;
             if (count === 0) return null;
             return (
               <button
@@ -493,6 +533,7 @@ export default function PoisPage({ params }: PoisPageProps) {
                 type="button"
                 onClick={closeModal}
                 className="btn-secondary"
+                disabled={createPoiMutation.isPending || updatePoiMutation.isPending}
               >
                 Annuler
               </button>
@@ -500,8 +541,16 @@ export default function PoisPage({ params }: PoisPageProps) {
                 type="submit"
                 form="poi-form"
                 className="btn-primary"
+                disabled={createPoiMutation.isPending || updatePoiMutation.isPending}
               >
-                {editingPoi ? 'Enregistrer' : 'Creer'}
+                {createPoiMutation.isPending || updatePoiMutation.isPending ? (
+                  <span className="flex items-center gap-2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Enregistrement...
+                  </span>
+                ) : (
+                  editingPoi ? 'Enregistrer' : 'Creer'
+                )}
               </button>
             </div>
           </div>

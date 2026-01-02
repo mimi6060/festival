@@ -2,8 +2,9 @@
 
 import { use, useState } from 'react';
 import Link from 'next/link';
-import { mockFestivals, mockTicketCategories } from '../../../../lib/mock-data';
+import { mockFestivals } from '../../../../lib/mock-data';
 import { formatCurrency, formatDate, formatNumber, formatPercentage } from '../../../../lib/utils';
+import { useTicketCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '../../../../hooks';
 import type { TicketCategory } from '../../../../types';
 
 interface TicketsPageProps {
@@ -24,7 +25,13 @@ interface CategoryFormData {
 export default function TicketsPage({ params }: TicketsPageProps) {
   const { id } = use(params);
   const festival = mockFestivals.find((f) => f.id === id);
-  const [localCategories, setLocalCategories] = useState(mockTicketCategories.filter((c) => c.festivalId === id));
+
+  // API hooks
+  const { data: categories = [], isLoading, error } = useTicketCategories(id);
+  const createMutation = useCreateCategory();
+  const updateMutation = useUpdateCategory();
+  const deleteMutation = useDeleteCategory();
+
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<TicketCategory | null>(null);
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -79,56 +86,98 @@ export default function TicketsPage({ params }: TicketsPageProps) {
     setShowModal(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (editingCategory) {
-      // Update existing category
-      setLocalCategories(prev => prev.map(cat =>
-        cat.id === editingCategory.id
-          ? { ...cat, ...formData, salesStart: formData.salesStart + 'T00:00:00Z', salesEnd: formData.salesEnd + 'T23:59:59Z' }
-          : cat
-      ));
-    } else {
-      // Create new category
-      const newCategory: TicketCategory = {
-        id: `cat-${Date.now()}`,
-        festivalId: id,
-        name: formData.name,
-        description: formData.description,
-        price: formData.price,
-        quantity: formData.quantity,
-        sold: 0,
-        maxPerOrder: formData.maxPerOrder,
-        salesStart: formData.salesStart + 'T00:00:00Z',
-        salesEnd: formData.salesEnd + 'T23:59:59Z',
-        isActive: formData.isActive,
-        benefits: [],
-      };
-      setLocalCategories(prev => [...prev, newCategory]);
-    }
+    const categoryData = {
+      name: formData.name,
+      description: formData.description,
+      price: formData.price,
+      quantity: formData.quantity,
+      maxPerOrder: formData.maxPerOrder,
+      salesStart: formData.salesStart + 'T00:00:00Z',
+      salesEnd: formData.salesEnd + 'T23:59:59Z',
+      isActive: formData.isActive,
+    };
 
-    closeModal();
+    try {
+      if (editingCategory) {
+        // Update existing category
+        await updateMutation.mutateAsync({
+          festivalId: id,
+          categoryId: editingCategory.id,
+          data: categoryData,
+        });
+      } else {
+        // Create new category
+        await createMutation.mutateAsync({
+          festivalId: id,
+          data: categoryData,
+        });
+      }
+      closeModal();
+    } catch (err) {
+      console.error('Failed to save category:', err);
+      // Error handling - could show a toast notification here
+    }
   };
 
-  const handleDelete = (categoryId: string) => {
+  const handleDelete = async (categoryId: string) => {
     if (confirm('Etes-vous sur de vouloir supprimer cette categorie ?')) {
-      setLocalCategories(prev => prev.filter(cat => cat.id !== categoryId));
+      try {
+        await deleteMutation.mutateAsync({
+          festivalId: id,
+          categoryId,
+        });
+      } catch (err) {
+        console.error('Failed to delete category:', err);
+        // Error handling - could show a toast notification here
+      }
     }
   };
 
   // Filter categories by status
-  const categories = statusFilter === 'all'
-    ? localCategories
+  const filteredCategories = statusFilter === 'all'
+    ? categories
     : statusFilter === 'active'
-    ? localCategories.filter((c) => c.isActive)
-    : localCategories.filter((c) => !c.isActive);
+    ? categories.filter((c) => c.isActive)
+    : categories.filter((c) => !c.isActive);
 
   const statusOptions = [
     { value: 'all', label: 'Toutes les categories' },
     { value: 'active', label: 'Actives' },
     { value: 'inactive', label: 'Inactives' },
   ];
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+          <p className="text-gray-500">Chargement des categories...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="text-center">
+          <svg className="w-12 h-12 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <h2 className="text-xl font-semibold text-gray-900 mb-2">Erreur de chargement</h2>
+          <p className="text-gray-500 mb-4">{error.message || 'Une erreur est survenue'}</p>
+          <Link href="/festivals" className="btn-primary inline-block">
+            Retour aux festivals
+          </Link>
+        </div>
+      </div>
+    );
+  }
 
   if (!festival) {
     return (
@@ -143,9 +192,11 @@ export default function TicketsPage({ params }: TicketsPageProps) {
     );
   }
 
-  const totalSold = localCategories.reduce((sum, c) => sum + c.sold, 0);
-  const totalCapacity = localCategories.reduce((sum, c) => sum + c.quantity, 0);
-  const totalRevenue = localCategories.reduce((sum, c) => sum + c.sold * c.price, 0);
+  const totalSold = categories.reduce((sum, c) => sum + c.sold, 0);
+  const totalCapacity = categories.reduce((sum, c) => sum + c.quantity, 0);
+  const totalRevenue = categories.reduce((sum, c) => sum + c.sold * c.price, 0);
+
+  const isMutating = createMutation.isPending || updateMutation.isPending || deleteMutation.isPending;
 
   return (
     <div className="space-y-6">
@@ -174,7 +225,8 @@ export default function TicketsPage({ params }: TicketsPageProps) {
         </div>
         <button
           onClick={openCreateModal}
-          className="btn-primary flex items-center gap-2 w-fit"
+          disabled={isMutating}
+          className="btn-primary flex items-center gap-2 w-fit disabled:opacity-50"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
@@ -243,7 +295,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
             {formatNumber(totalSold)} / {formatNumber(totalCapacity)}
           </p>
           <p className="text-sm text-gray-500 mt-1">
-            {formatPercentage((totalSold / totalCapacity) * 100)} de remplissage
+            {totalCapacity > 0 ? formatPercentage((totalSold / totalCapacity) * 100) : '0%'} de remplissage
           </p>
         </div>
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
@@ -253,7 +305,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
           <p className="text-sm text-gray-500">Categories actives</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
-            {localCategories.filter((c) => c.isActive).length} / {localCategories.length}
+            {categories.filter((c) => c.isActive).length} / {categories.length}
           </p>
         </div>
       </div>
@@ -281,7 +333,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
         <div className="px-6 py-4 border-b border-gray-100">
           <h2 className="font-semibold text-gray-900">Categories de billets</h2>
         </div>
-        {categories.length === 0 ? (
+        {filteredCategories.length === 0 ? (
           <div className="p-12 text-center">
             <svg className="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
@@ -290,14 +342,15 @@ export default function TicketsPage({ params }: TicketsPageProps) {
             <p className="text-gray-500 mb-4">Commencez par creer une categorie de billets.</p>
             <button
               onClick={openCreateModal}
-              className="btn-primary"
+              disabled={isMutating}
+              className="btn-primary disabled:opacity-50"
             >
               Creer une categorie
             </button>
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {categories.map((category) => {
+            {filteredCategories.map((category) => {
               const soldPercent = category.quantity > 0 ? (category.sold / category.quantity) * 100 : 0;
               const revenue = category.sold * category.price;
 
@@ -361,7 +414,8 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => openEditModal(category)}
-                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                          disabled={isMutating}
+                          className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
                           title="Modifier"
                         >
                           <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -370,7 +424,8 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                         </button>
                         <button
                           onClick={() => handleDelete(category.id)}
-                          className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                          disabled={isMutating}
+                          className="p-2 hover:bg-red-50 rounded-lg transition-colors disabled:opacity-50"
                           title="Supprimer"
                         >
                           <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -397,7 +452,8 @@ export default function TicketsPage({ params }: TicketsPageProps) {
               </h2>
               <button
                 onClick={closeModal}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
               >
                 <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -414,6 +470,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
+                  disabled={createMutation.isPending || updateMutation.isPending}
                 />
               </div>
               <div>
@@ -424,6 +481,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                   placeholder="Description de la categorie..."
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  disabled={createMutation.isPending || updateMutation.isPending}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -438,6 +496,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                     value={formData.price}
                     onChange={(e) => setFormData({ ...formData, price: parseFloat(e.target.value) || 0 })}
                     required
+                    disabled={createMutation.isPending || updateMutation.isPending}
                   />
                 </div>
                 <div>
@@ -450,6 +509,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                     value={formData.quantity}
                     onChange={(e) => setFormData({ ...formData, quantity: parseInt(e.target.value) || 1 })}
                     required
+                    disabled={createMutation.isPending || updateMutation.isPending}
                   />
                 </div>
               </div>
@@ -463,6 +523,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                   value={formData.maxPerOrder}
                   onChange={(e) => setFormData({ ...formData, maxPerOrder: parseInt(e.target.value) || 1 })}
                   required
+                  disabled={createMutation.isPending || updateMutation.isPending}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -474,6 +535,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                     value={formData.salesStart}
                     onChange={(e) => setFormData({ ...formData, salesStart: e.target.value })}
                     required
+                    disabled={createMutation.isPending || updateMutation.isPending}
                   />
                 </div>
                 <div>
@@ -484,6 +546,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                     value={formData.salesEnd}
                     onChange={(e) => setFormData({ ...formData, salesEnd: e.target.value })}
                     required
+                    disabled={createMutation.isPending || updateMutation.isPending}
                   />
                 </div>
               </div>
@@ -494,25 +557,38 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                   className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                   checked={formData.isActive}
                   onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                  disabled={createMutation.isPending || updateMutation.isPending}
                 />
                 <label htmlFor="isActive" className="text-sm text-gray-700">
                   Categorie active (visible et achetable)
                 </label>
               </div>
+
+              {/* Error message */}
+              {(createMutation.error || updateMutation.error) && (
+                <div className="bg-red-50 text-red-600 p-3 rounded-lg text-sm">
+                  {(createMutation.error as Error)?.message || (updateMutation.error as Error)?.message || 'Une erreur est survenue'}
+                </div>
+              )}
             </form>
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
               <button
                 type="button"
                 onClick={closeModal}
-                className="btn-secondary"
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="btn-secondary disabled:opacity-50"
               >
                 Annuler
               </button>
               <button
                 type="submit"
                 form="category-form"
-                className="btn-primary"
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="btn-primary disabled:opacity-50 flex items-center gap-2"
               >
+                {(createMutation.isPending || updateMutation.isPending) && (
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                )}
                 {editingCategory ? 'Enregistrer' : 'Creer'}
               </button>
             </div>

@@ -1,47 +1,88 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { mockFestivals } from '../../../../lib/mock-data';
-
-interface Artist {
-  id: string;
-  name: string;
-  genre: string;
-  day: string;
-  time: string;
-  stage: string;
-  imageUrl?: string;
-  isHeadliner: boolean;
-}
+import {
+  useLineup,
+  useStages,
+  useArtists,
+  useCreatePerformance,
+  useUpdatePerformance,
+  useDeletePerformance,
+} from '../../../../hooks';
+import type { Performance, CreatePerformanceDto } from '../../../../types';
 
 interface FestivalLineupPageProps {
   params: Promise<{ id: string }>;
 }
 
-// Mock artists data
-const initialArtists: Artist[] = [
-  { id: '1', name: 'David Guetta', genre: 'House', day: 'Samedi', time: '23:00', stage: 'Main Stage', isHeadliner: true },
-  { id: '2', name: 'Charlotte de Witte', genre: 'Techno', day: 'Vendredi', time: '22:00', stage: 'Techno Arena', isHeadliner: true },
-  { id: '3', name: 'Fisher', genre: 'House', day: 'Samedi', time: '21:00', stage: 'Main Stage', isHeadliner: false },
-  { id: '4', name: 'Amelie Lens', genre: 'Techno', day: 'Dimanche', time: '00:00', stage: 'Techno Arena', isHeadliner: false },
-];
-
 export default function FestivalLineupPage({ params }: FestivalLineupPageProps) {
   const { id } = use(params);
   const festival = mockFestivals.find((f) => f.id === id);
 
-  const [artists, setArtists] = useState<Artist[]>(initialArtists);
+  // Fetch lineup and stages from API
+  const { data: lineupData, isLoading: lineupLoading } = useLineup(id, { limit: 100 });
+  const { data: stagesData = [], isLoading: stagesLoading } = useStages(id);
+  const { data: artistsData, isLoading: artistsLoading } = useArtists({ limit: 100 });
+
+  // Mutations
+  const createPerformanceMutation = useCreatePerformance();
+  const updatePerformanceMutation = useUpdatePerformance();
+  const deletePerformanceMutation = useDeletePerformance();
+
   const [showModal, setShowModal] = useState(false);
-  const [editingArtist, setEditingArtist] = useState<Artist | null>(null);
+  const [editingPerformance, setEditingPerformance] = useState<Performance | null>(null);
   const [formData, setFormData] = useState({
-    name: '',
-    genre: '',
-    day: 'Vendredi',
-    time: '',
-    stage: 'Main Stage',
-    isHeadliner: false,
+    artistId: '',
+    stageId: '',
+    date: '',
+    startTime: '',
+    endTime: '',
+    description: '',
   });
+
+  const performances = lineupData?.data || [];
+  const stages = stagesData;
+  const artists = artistsData?.data || [];
+
+  // Group performances by day
+  const groupedByDay = useMemo(() => {
+    const groups: { [key: string]: Performance[] } = {};
+
+    performances.forEach((performance) => {
+      const date = new Date(performance.startTime);
+      const dayKey = date.toLocaleDateString('fr-FR', {
+        weekday: 'long',
+        day: 'numeric',
+        month: 'long'
+      });
+
+      if (!groups[dayKey]) {
+        groups[dayKey] = [];
+      }
+      groups[dayKey].push(performance);
+    });
+
+    // Sort performances within each day by start time
+    Object.keys(groups).forEach((day) => {
+      groups[day].sort((a, b) =>
+        new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
+      );
+    });
+
+    // Sort days chronologically
+    const sortedEntries = Object.entries(groups).sort(([, a], [, b]) => {
+      const dateA = new Date(a[0]?.startTime || 0);
+      const dateB = new Date(b[0]?.startTime || 0);
+      return dateA.getTime() - dateB.getTime();
+    });
+
+    return sortedEntries.map(([day, dayPerformances]) => ({
+      day,
+      performances: dayPerformances,
+    }));
+  }, [performances]);
 
   if (!festival) {
     return (
@@ -56,68 +97,84 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
     );
   }
 
-  const stages = ['Main Stage', 'Techno Arena', 'Beach Stage', 'Secret Garden', 'Chill Zone'];
-  const days = ['Vendredi', 'Samedi', 'Dimanche'];
+  const isLoading = lineupLoading || stagesLoading || artistsLoading;
 
   const openCreateModal = () => {
-    setEditingArtist(null);
+    setEditingPerformance(null);
     setFormData({
-      name: '',
-      genre: '',
-      day: 'Vendredi',
-      time: '',
-      stage: 'Main Stage',
-      isHeadliner: false,
+      artistId: artists[0]?.id || '',
+      stageId: stages[0]?.id || '',
+      date: '',
+      startTime: '',
+      endTime: '',
+      description: '',
     });
     setShowModal(true);
   };
 
-  const openEditModal = (artist: Artist) => {
-    setEditingArtist(artist);
+  const openEditModal = (performance: Performance) => {
+    setEditingPerformance(performance);
+    const startDate = new Date(performance.startTime);
+    const endDate = new Date(performance.endTime);
+
     setFormData({
-      name: artist.name,
-      genre: artist.genre,
-      day: artist.day,
-      time: artist.time,
-      stage: artist.stage,
-      isHeadliner: artist.isHeadliner,
+      artistId: performance.artistId,
+      stageId: performance.stageId,
+      date: startDate.toISOString().split('T')[0] || '',
+      startTime: startDate.toTimeString().slice(0, 5),
+      endTime: endDate.toTimeString().slice(0, 5),
+      description: performance.description || '',
     });
     setShowModal(true);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (editingArtist) {
-      // Update existing artist
-      setArtists(prev => prev.map(a =>
-        a.id === editingArtist.id
-          ? { ...a, ...formData }
-          : a
-      ));
+    // Construct ISO datetime strings
+    const startDateTime = new Date(`${formData.date}T${formData.startTime}:00`).toISOString();
+    const endDateTime = new Date(`${formData.date}T${formData.endTime}:00`).toISOString();
+
+    if (editingPerformance) {
+      // Update existing performance
+      await updatePerformanceMutation.mutateAsync({
+        id: editingPerformance.id,
+        data: {
+          artistId: formData.artistId,
+          stageId: formData.stageId,
+          startTime: startDateTime,
+          endTime: endDateTime,
+          description: formData.description || undefined,
+        },
+      });
     } else {
-      // Create new artist
-      const newArtist: Artist = {
-        id: Date.now().toString(),
-        ...formData,
+      // Create new performance
+      const newPerformance: CreatePerformanceDto = {
+        artistId: formData.artistId,
+        stageId: formData.stageId,
+        startTime: startDateTime,
+        endTime: endDateTime,
+        description: formData.description || undefined,
       };
-      setArtists(prev => [...prev, newArtist]);
+      await createPerformanceMutation.mutateAsync({ festivalId: id, data: newPerformance });
     }
 
     setShowModal(false);
-    setEditingArtist(null);
+    setEditingPerformance(null);
   };
 
-  const handleDelete = (artistId: string) => {
-    if (confirm('Etes-vous sur de vouloir supprimer cet artiste?')) {
-      setArtists(prev => prev.filter(a => a.id !== artistId));
+  const handleDelete = async (performanceId: string) => {
+    if (confirm('Etes-vous sur de vouloir supprimer cette performance?')) {
+      await deletePerformanceMutation.mutateAsync(performanceId);
     }
   };
 
-  const groupedByDay = days.map(day => ({
-    day,
-    artists: artists.filter(a => a.day === day).sort((a, b) => a.time.localeCompare(b.time)),
-  }));
+  const formatTime = (dateString: string) => {
+    return new Date(dateString).toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
   return (
     <div className="space-y-6">
@@ -142,10 +199,14 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Lineup - {festival.name}</h1>
-          <p className="text-gray-500 mt-1">{artists.length} artistes programmes</p>
+          <p className="text-gray-500 mt-1">{performances.length} performances programmees</p>
         </div>
-        <button onClick={openCreateModal} className="btn-primary">
-          + Ajouter un artiste
+        <button
+          onClick={openCreateModal}
+          className="btn-primary"
+          disabled={stages.length === 0 || artists.length === 0}
+        >
+          + Ajouter une performance
         </button>
       </div>
 
@@ -195,72 +256,115 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
         </Link>
       </div>
 
-      {/* Lineup by Day */}
-      <div className="space-y-8">
-        {groupedByDay.map(({ day, artists: dayArtists }) => (
-          <div key={day} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="bg-gradient-to-r from-primary-500 to-pink-500 px-6 py-4">
-              <h2 className="text-xl font-bold text-white">{day}</h2>
-              <p className="text-white/80 text-sm">{dayArtists.length} artistes</p>
-            </div>
-
-            {dayArtists.length === 0 ? (
-              <div className="p-8 text-center text-gray-500">
-                Aucun artiste programme pour ce jour
-              </div>
-            ) : (
-              <div className="divide-y divide-gray-100">
-                {dayArtists.map((artist) => (
-                  <div key={artist.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-400 to-pink-400 flex items-center justify-center text-white font-bold">
-                        {artist.name.charAt(0)}
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <h3 className="font-semibold text-gray-900">{artist.name}</h3>
-                          {artist.isHeadliner && (
-                            <span className="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-                              Headliner
-                            </span>
-                          )}
-                        </div>
-                        <p className="text-sm text-gray-500">{artist.genre}</p>
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-6">
-                      <div className="text-right">
-                        <p className="font-medium text-gray-900">{artist.time}</p>
-                        <p className="text-sm text-gray-500">{artist.stage}</p>
-                      </div>
-                      <div className="flex gap-2">
-                        <button
-                          onClick={() => openEditModal(artist)}
-                          className="p-2 hover:bg-gray-100 rounded-lg"
-                          title="Modifier"
-                        >
-                          <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => handleDelete(artist.id)}
-                          className="p-2 hover:bg-red-50 rounded-lg"
-                          title="Supprimer"
-                        >
-                          <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+      {/* Loading state */}
+      {isLoading && (
+        <div className="flex items-center justify-center h-64">
+          <div className="flex flex-col items-center gap-4">
+            <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-gray-500">Chargement du lineup...</p>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
+
+      {/* Warning if no stages or artists */}
+      {!isLoading && (stages.length === 0 || artists.length === 0) && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center">
+          <svg className="w-12 h-12 mx-auto mb-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+          <h3 className="text-lg font-semibold text-yellow-800 mb-2">Configuration requise</h3>
+          {stages.length === 0 && (
+            <p className="text-yellow-700 mb-2">
+              Veuillez d&apos;abord <Link href={`/festivals/${id}/stages`} className="underline font-medium">creer des scenes</Link> avant d&apos;ajouter des performances.
+            </p>
+          )}
+          {artists.length === 0 && (
+            <p className="text-yellow-700">
+              Aucun artiste disponible. Veuillez d&apos;abord creer des artistes dans le systeme.
+            </p>
+          )}
+        </div>
+      )}
+
+      {/* Lineup by Day */}
+      {!isLoading && (
+        <div className="space-y-8">
+          {groupedByDay.length === 0 ? (
+            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+              <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              </svg>
+              <p className="text-gray-500 mb-4">Aucune performance programmee pour ce festival</p>
+              {stages.length > 0 && artists.length > 0 && (
+                <button onClick={openCreateModal} className="btn-primary">
+                  Ajouter votre premiere performance
+                </button>
+              )}
+            </div>
+          ) : (
+            groupedByDay.map(({ day, performances: dayPerformances }) => (
+              <div key={day} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                <div className="bg-gradient-to-r from-primary-500 to-pink-500 px-6 py-4">
+                  <h2 className="text-xl font-bold text-white capitalize">{day}</h2>
+                  <p className="text-white/80 text-sm">{dayPerformances.length} performances</p>
+                </div>
+
+                <div className="divide-y divide-gray-100">
+                  {dayPerformances.map((performance) => (
+                    <div key={performance.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-400 to-pink-400 flex items-center justify-center text-white font-bold">
+                          {performance.artist.name.charAt(0)}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <h3 className="font-semibold text-gray-900">{performance.artist.name}</h3>
+                            {performance.isCancelled && (
+                              <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 rounded-full">
+                                Annule
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-gray-500">{performance.artist.genre || 'Genre non specifie'}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-6">
+                        <div className="text-right">
+                          <p className="font-medium text-gray-900">
+                            {formatTime(performance.startTime)} - {formatTime(performance.endTime)}
+                          </p>
+                          <p className="text-sm text-gray-500">{performance.stage.name}</p>
+                        </div>
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => openEditModal(performance)}
+                            className="p-2 hover:bg-gray-100 rounded-lg"
+                            title="Modifier"
+                          >
+                            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => handleDelete(performance.id)}
+                            className="p-2 hover:bg-red-50 rounded-lg"
+                            title="Supprimer"
+                            disabled={deletePerformanceMutation.isPending}
+                          >
+                            <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))
+          )}
+        </div>
+      )}
 
       {/* Modal */}
       {showModal && (
@@ -269,7 +373,7 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
             <div className="p-6 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-gray-900">
-                  {editingArtist ? 'Modifier l\'artiste' : 'Ajouter un artiste'}
+                  {editingPerformance ? 'Modifier la performance' : 'Ajouter une performance'}
                 </h2>
                 <button
                   onClick={() => setShowModal(false)}
@@ -285,28 +389,49 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nom de l&apos;artiste *
+                  Artiste *
                 </label>
-                <input
-                  type="text"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                <select
+                  value={formData.artistId}
+                  onChange={(e) => setFormData({ ...formData, artistId: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder="Ex: David Guetta"
                   required
-                />
+                >
+                  <option value="">Selectionner un artiste</option>
+                  {artists.map(artist => (
+                    <option key={artist.id} value={artist.id}>
+                      {artist.name} {artist.genre ? `(${artist.genre})` : ''}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Genre musical *
+                  Scene *
+                </label>
+                <select
+                  value={formData.stageId}
+                  onChange={(e) => setFormData({ ...formData, stageId: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  required
+                >
+                  <option value="">Selectionner une scene</option>
+                  {stages.map(stage => (
+                    <option key={stage.id} value={stage.id}>{stage.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Date *
                 </label>
                 <input
-                  type="text"
-                  value={formData.genre}
-                  onChange={(e) => setFormData({ ...formData, genre: e.target.value })}
+                  type="date"
+                  value={formData.date}
+                  onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  placeholder="Ex: House, Techno, EDM..."
                   required
                 />
               </div>
@@ -314,27 +439,25 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Jour *
+                    Heure de debut *
                   </label>
-                  <select
-                    value={formData.day}
-                    onChange={(e) => setFormData({ ...formData, day: e.target.value })}
+                  <input
+                    type="time"
+                    value={formData.startTime}
+                    onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  >
-                    {days.map(day => (
-                      <option key={day} value={day}>{day}</option>
-                    ))}
-                  </select>
+                    required
+                  />
                 </div>
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Heure *
+                    Heure de fin *
                   </label>
                   <input
                     type="time"
-                    value={formData.time}
-                    onChange={(e) => setFormData({ ...formData, time: e.target.value })}
+                    value={formData.endTime}
+                    onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
                     required
                   />
@@ -343,30 +466,15 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Scene *
+                  Description (optionnel)
                 </label>
-                <select
-                  value={formData.stage}
-                  onChange={(e) => setFormData({ ...formData, stage: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-                >
-                  {stages.map(stage => (
-                    <option key={stage} value={stage}>{stage}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex items-center gap-2">
-                <input
-                  type="checkbox"
-                  id="isHeadliner"
-                  checked={formData.isHeadliner}
-                  onChange={(e) => setFormData({ ...formData, isHeadliner: e.target.checked })}
-                  className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                <textarea
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                  placeholder="Notes sur la performance..."
+                  rows={3}
                 />
-                <label htmlFor="isHeadliner" className="text-sm text-gray-700">
-                  Headliner (tete d&apos;affiche)
-                </label>
               </div>
 
               <div className="flex gap-3 pt-4">
@@ -377,8 +485,16 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
                 >
                   Annuler
                 </button>
-                <button type="submit" className="flex-1 btn-primary">
-                  {editingArtist ? 'Enregistrer' : 'Ajouter'}
+                <button
+                  type="submit"
+                  className="flex-1 btn-primary"
+                  disabled={createPerformanceMutation.isPending || updatePerformanceMutation.isPending}
+                >
+                  {createPerformanceMutation.isPending || updatePerformanceMutation.isPending
+                    ? 'Enregistrement...'
+                    : editingPerformance
+                      ? 'Enregistrer'
+                      : 'Ajouter'}
                 </button>
               </div>
             </form>

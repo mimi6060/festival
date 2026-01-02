@@ -33,7 +33,7 @@ const DEMO_ADMIN: User = {
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [isInitialized, setIsInitialized] = useState(false);
+  const [_isInitialized, setIsInitialized] = useState(false);
   const router = useRouter();
 
   const checkAuth = useCallback(async () => {

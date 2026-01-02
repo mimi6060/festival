@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import StatCard from '../components/dashboard/StatCard';
 import RevenueChart from '../components/dashboard/RevenueChart';
 import TicketSalesChart from '../components/dashboard/TicketSalesChart';
@@ -16,7 +15,6 @@ import {
 } from '../lib/mock-data';
 
 export default function DashboardPage() {
-  const router = useRouter();
   const stats = mockDashboardStats;
   const festivals = mockFestivals.filter((f) => f.status === 'published');
   const revenueData = useMemo(() => generateRevenueChartData(90), []);

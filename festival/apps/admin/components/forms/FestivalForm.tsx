@@ -155,7 +155,9 @@ export default function FestivalForm({
               name="startDate"
               value={formData.startDate}
               onChange={handleChange}
-              className={`input-field ${errors.startDate ? 'border-red-500' : ''}`}
+              min={new Date().toISOString().split('T')[0]}
+              className={`input-field appearance-none cursor-pointer outline-none ${errors.startDate ? 'border-red-500' : ''}`}
+              style={{ outline: 'none' }}
             />
             {errors.startDate && <p className="text-red-500 text-sm mt-1">{errors.startDate}</p>}
           </div>
@@ -166,7 +168,9 @@ export default function FestivalForm({
               name="endDate"
               value={formData.endDate}
               onChange={handleChange}
-              className={`input-field ${errors.endDate ? 'border-red-500' : ''}`}
+              min={formData.startDate || new Date().toISOString().split('T')[0]}
+              className={`input-field appearance-none cursor-pointer outline-none ${errors.endDate ? 'border-red-500' : ''}`}
+              style={{ outline: 'none' }}
             />
             {errors.endDate && <p className="text-red-500 text-sm mt-1">{errors.endDate}</p>}
           </div>
@@ -219,16 +223,65 @@ export default function FestivalForm({
                 name="locationCountry"
                 value={formData.locationCountry}
                 onChange={handleChange}
-                className="input-field"
+                className="input-field cursor-pointer"
               >
-                <option value="France">France</option>
+                <option value="Algeria">Algerie</option>
+                <option value="Argentina">Argentine</option>
+                <option value="Australia">Australie</option>
+                <option value="Austria">Autriche</option>
                 <option value="Belgium">Belgique</option>
-                <option value="Switzerland">Suisse</option>
-                <option value="Luxembourg">Luxembourg</option>
+                <option value="Brazil">Bresil</option>
+                <option value="Canada">Canada</option>
+                <option value="Chile">Chili</option>
+                <option value="China">Chine</option>
+                <option value="Colombia">Colombie</option>
+                <option value="Croatia">Croatie</option>
+                <option value="Czech Republic">Republique Tcheque</option>
+                <option value="Denmark">Danemark</option>
+                <option value="Egypt">Egypte</option>
+                <option value="Finland">Finlande</option>
+                <option value="France">France</option>
                 <option value="Germany">Allemagne</option>
-                <option value="Spain">Espagne</option>
+                <option value="Greece">Grece</option>
+                <option value="Hungary">Hongrie</option>
+                <option value="Iceland">Islande</option>
+                <option value="India">Inde</option>
+                <option value="Indonesia">Indonesie</option>
+                <option value="Ireland">Irlande</option>
+                <option value="Israel">Israel</option>
                 <option value="Italy">Italie</option>
+                <option value="Japan">Japon</option>
+                <option value="Luxembourg">Luxembourg</option>
+                <option value="Malaysia">Malaisie</option>
+                <option value="Mexico">Mexique</option>
+                <option value="Monaco">Monaco</option>
+                <option value="Morocco">Maroc</option>
+                <option value="Netherlands">Pays-Bas</option>
+                <option value="New Zealand">Nouvelle-Zelande</option>
+                <option value="Norway">Norvege</option>
+                <option value="Peru">Perou</option>
+                <option value="Poland">Pologne</option>
+                <option value="Portugal">Portugal</option>
+                <option value="Romania">Roumanie</option>
+                <option value="Russia">Russie</option>
+                <option value="Saudi Arabia">Arabie Saoudite</option>
+                <option value="Serbia">Serbie</option>
+                <option value="Singapore">Singapour</option>
+                <option value="Slovakia">Slovaquie</option>
+                <option value="Slovenia">Slovenie</option>
+                <option value="South Africa">Afrique du Sud</option>
+                <option value="South Korea">Coree du Sud</option>
+                <option value="Spain">Espagne</option>
+                <option value="Sweden">Suede</option>
+                <option value="Switzerland">Suisse</option>
+                <option value="Thailand">Thailande</option>
+                <option value="Tunisia">Tunisie</option>
+                <option value="Turkey">Turquie</option>
+                <option value="Ukraine">Ukraine</option>
+                <option value="United Arab Emirates">Emirats Arabes Unis</option>
                 <option value="United Kingdom">Royaume-Uni</option>
+                <option value="United States">Etats-Unis</option>
+                <option value="Vietnam">Vietnam</option>
               </select>
             </div>
           </div>
@@ -258,7 +311,7 @@ export default function FestivalForm({
               name="status"
               value={formData.status}
               onChange={handleChange}
-              className="input-field"
+              className="input-field cursor-pointer"
             >
               <option value="draft">Brouillon</option>
               <option value="published">Publie</option>

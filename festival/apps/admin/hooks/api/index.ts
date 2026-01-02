@@ -1,15 +1,8 @@
-// Utility hooks
-export { useAuth } from './useAuth';
-export { usePagination } from './usePagination';
-export { useDebounce, useDebouncedCallback } from './useDebounce';
-export { useWebSocket } from './useWebSocket';
-export type { WebSocketMessage, UseWebSocketOptions, UseWebSocketReturn } from './useWebSocket';
-export { useRealtimeData } from './useRealTimeData';
-export type { RealtimeStats, RealtimeTransaction, RealtimeAlert, UseRealtimeDataOptions, UseRealtimeDataReturn } from './useRealTimeData';
+// API Hooks - React Query based data fetching hooks
+// This is the central export file for all API hooks
 
-// API Hooks - Re-export from api directory
+// Festival hooks
 export {
-  // Festival hooks
   useFestivals,
   useFestival,
   useFestivalStats,
@@ -17,13 +10,19 @@ export {
   useUpdateFestival,
   useDeleteFestival,
   festivalQueryKeys,
-  // Ticket category hooks
+} from './useFestivals';
+
+// Ticket category hooks
+export {
   useTicketCategories,
   useCreateCategory,
   useUpdateCategory,
   useDeleteCategory,
   ticketCategoryQueryKeys,
-  // User hooks
+} from './useTicketCategories';
+
+// User hooks
+export {
   useUsers,
   useUser,
   useCreateUser,
@@ -32,7 +31,12 @@ export {
   useUnbanUser,
   useDeleteUser,
   userQueryKeys,
-  // Artist hooks
+} from './useUsers';
+export type { UserListParams, CreateUserData, UpdateUserData } from './useUsers';
+
+// Program hooks (Artists, Stages, Lineup)
+export {
+  // Artists
   useArtists,
   useArtistsByFestival,
   useArtist,
@@ -41,14 +45,14 @@ export {
   useUpdateArtist,
   useDeleteArtist,
   artistQueryKeys,
-  // Stage hooks
+  // Stages
   useStages,
   useStage,
   useCreateStage,
   useUpdateStage,
   useDeleteStage,
   stageQueryKeys,
-  // Lineup / Performance hooks
+  // Lineup / Performances
   useLineup,
   usePerformance,
   useCreatePerformance,
@@ -56,7 +60,11 @@ export {
   useDeletePerformance,
   useCancelPerformance,
   lineupQueryKeys,
-  // Vendor hooks
+} from './useProgram';
+export type { ArtistListParams, LineupParams } from './useProgram';
+
+// Vendor hooks
+export {
   useVendors,
   useVendor,
   useCreateVendor,
@@ -64,7 +72,10 @@ export {
   useDeleteVendor,
   useToggleVendorOpen,
   vendorQueryKeys,
-  // POI hooks
+} from './useVendors';
+
+// POI hooks
+export {
   usePois,
   usePoi,
   useCreatePoi,
@@ -72,12 +83,14 @@ export {
   useDeletePoi,
   useTogglePoiActive,
   poiQueryKeys,
-  // Camping hooks
+} from './usePois';
+
+// Camping hooks
+export {
   useCampingZones,
   useCampingZone,
   useCreateCampingZone,
   useUpdateCampingZone,
   useDeleteCampingZone,
   campingQueryKeys,
-} from './api';
-export type { UserListParams, CreateUserData, UpdateUserData, ArtistListParams, LineupParams } from './api';
+} from './useCamping';

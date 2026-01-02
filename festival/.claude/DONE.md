@@ -1312,3 +1312,215 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
 
 ---
 Derniere mise a jour: 2026-01-02 - Phase Program Module
+
+---
+
+## Phase API Integration Admin (2026-01-02)
+
+### API Client Infrastructure
+- [x] Creation apps/admin/lib/api-client.ts (450+ lignes)
+  - Axios client avec configuration baseURL (NEXT_PUBLIC_API_URL)
+  - Intercepteur requete: Authorization header automatique (Bearer token)
+  - Intercepteur reponse: Gestion erreurs 401/403 avec refresh token
+  - Queue des requetes pendant refresh pour eviter race conditions
+  - Token manager pour localStorage (access_token, refresh_token, expires_at)
+  - Error handling global avec messages detailles et retry logic
+  - Request/response logging en developpement
+
+### API Service Functions
+- [x] Creation apps/admin/lib/api/festivals.ts (350+ lignes)
+  - getFestivals(params): Liste avec pagination, tri, filtres (status, search)
+  - getFestival(id): Detail festival avec relations
+  - getFestivalBySlug(slug): Fetch par slug unique
+  - createFestival(data): Creation nouveau festival
+  - updateFestival(id, data): Modification festival
+  - deleteFestival(id): Suppression avec confirmation
+  - publishFestival(id): Publication festival
+  - cancelFestival(id): Annulation festival
+  - getFestivalStats(id): Statistiques KPI
+
+- [x] Creation apps/admin/lib/api/tickets.ts (280+ lignes)
+  - getTicketCategories(festivalId): Categories du festival
+  - createCategory(festivalId, data): Creation categorie
+  - updateCategory(id, data): Modification categorie
+  - deleteCategory(id): Suppression categorie
+  - getTickets(festivalId, params): Liste billets avec filtres
+  - validateTicket(id): Validation QR code
+  - cancelTicket(id): Annulation billet avec remboursement
+
+- [x] Creation apps/admin/lib/api/users.ts (320+ lignes)
+  - getUsers(params): Liste avec pagination, role, status filters
+  - getUser(id): Detail utilisateur avec tickets/cashless
+  - createUser(data): Creation utilisateur avec validation
+  - updateUser(id, data): Modification profil/role
+  - deleteUser(id): Suppression compte
+  - banUser(id): Bannissement utilisateur
+  - unbanUser(id): Debannissement utilisateur
+  - changeUserRole(id, role): Changement role
+
+- [x] Creation apps/admin/lib/api/program.ts (550+ lignes)
+  - Artists: getArtists(params), createArtist(data), updateArtist(id, data), deleteArtist(id)
+  - Stages: getStages(festivalId), createStage(festivalId, data), updateStage(id, data), deleteStage(id)
+  - Lineup: getLineup(festivalId, filters), createPerformance(festivalId, data), updatePerformance(id, data), deletePerformance(id)
+  - Utilities: getArtistGenres(), getArtistsByFestival(festivalId)
+
+- [x] Creation apps/admin/lib/api/camping.ts (250+ lignes)
+  - getCampingZones(festivalId): Liste zones camping
+  - createCampingZone(festivalId, data): Creation zone
+  - updateCampingZone(id, data): Modification zone
+  - deleteCampingZone(id): Suppression zone
+
+- [x] Creation apps/admin/lib/api/vendors.ts (280+ lignes)
+  - getVendors(festivalId): Liste vendeurs
+  - createVendor(festivalId, data): Creation vendeur
+  - updateVendor(id, data): Modification vendeur
+  - deleteVendor(id): Suppression vendeur
+  - toggleVendorOpen(id, isOpen): Toggle statut ouvert/ferme
+
+- [x] Creation apps/admin/lib/api/pois.ts (260+ lignes)
+  - getPois(festivalId): Liste points d'interet
+  - createPoi(festivalId, data): Creation POI
+  - updatePoi(id, data): Modification POI
+  - deletePoi(id): Suppression POI
+  - togglePoiActive(id, isActive): Toggle statut actif/inactif
+
+- [x] Creation apps/admin/lib/api/index.ts - Barrel exports
+
+### React Query Hooks
+- [x] Creation apps/admin/hooks/api/useFestivals.ts (400+ lignes)
+  - useFestivals(params): Query liste avec pagination
+  - useFestival(id): Query detail festival
+  - useFestivalStats(id): Query statistiques
+  - useCreateFestival(): Mutation creation avec invalidation cache
+  - useUpdateFestival(): Mutation modification
+  - useDeleteFestival(): Mutation suppression
+  - usePublishFestival(): Mutation publication
+  - useCancelFestival(): Mutation annulation
+
+- [x] Creation apps/admin/hooks/api/useTicketCategories.ts (280+ lignes)
+  - useTicketCategories(festivalId): Query categories
+  - useCreateCategory(): Mutation creation
+  - useUpdateCategory(): Mutation modification
+  - deleteCategory(): Mutation suppression
+
+- [x] Creation apps/admin/hooks/api/useUsers.ts (350+ lignes)
+  - useUsers(params): Query liste utilisateurs
+  - useUser(id): Query detail utilisateur
+  - useCreateUser(): Mutation creation
+  - useUpdateUser(): Mutation modification
+  - useDeleteUser(): Mutation suppression
+  - useBanUser(): Mutation bannissement
+  - useUnbanUser(): Mutation debannissement
+
+- [x] Creation apps/admin/hooks/api/useProgram.ts (600+ lignes)
+  - Artists queries: useArtists(), useArtist(id), useArtistsByFestival(festivalId), useArtistGenres()
+  - Artists mutations: useCreateArtist(), useUpdateArtist(), useDeleteArtist()
+  - Stages queries: useStages(festivalId), useStage(id)
+  - Stages mutations: useCreateStage(), useUpdateStage(), useDeleteStage()
+  - Lineup queries: useLineup(festivalId), usePerformance(id)
+  - Lineup mutations: useCreatePerformance(), useUpdatePerformance(), useDeletePerformance(), useCancelPerformance()
+
+- [x] Creation apps/admin/hooks/api/useCamping.ts (220+ lignes)
+  - useCampingZones(festivalId): Query zones camping
+  - useCreateCampingZone(): Mutation creation
+  - useUpdateCampingZone(): Mutation modification
+  - useDeleteCampingZone(): Mutation suppression
+
+- [x] Creation apps/admin/hooks/api/useVendors.ts (250+ lignes)
+  - useVendors(festivalId): Query vendeurs
+  - useCreateVendor(): Mutation creation
+  - useUpdateVendor(): Mutation modification
+  - useDeleteVendor(): Mutation suppression
+  - useToggleVendorOpen(): Mutation toggle statut
+
+- [x] Creation apps/admin/hooks/api/usePois.ts (240+ lignes)
+  - usePois(festivalId): Query POIs
+  - useCreatePoi(): Mutation creation
+  - useUpdatePoi(): Mutation modification
+  - useDeletePoi(): Mutation suppression
+  - useTogglePoiActive(): Mutation toggle statut
+
+- [x] Creation apps/admin/hooks/api/index.ts - Barrel exports de tous les hooks
+
+### React Query Provider
+- [x] Creation apps/admin/providers/QueryProvider.tsx
+  - QueryClient configuration: staleTime 5min, cacheTime 10min, retry 1
+  - Error handling global avec toast notifications
+  - Devtools React Query activees en developpement
+  - Integration avec layout.tsx
+
+### Pages Admin Connectees a l'API
+- [x] app/festivals/page.tsx - Remplace mockFestivals par useFestivals()
+  - Loading states avec spinners
+  - Error handling avec messages utilisateur
+  - CRUD complet avec mutations
+  - Pagination et filtres fonctionnels
+
+- [x] app/festivals/[id]/page.tsx - Utilise useFestival(id)
+  - Fetch festival par ID
+  - Stats temps reel avec useFestivalStats()
+  - Actions publish/cancel avec mutations
+
+- [x] app/festivals/[id]/tickets/page.tsx - Utilise useTicketCategories()
+  - Liste categories avec loading/error states
+  - Creation/modification/suppression categories
+  - Invalidation cache automatique apres mutations
+
+- [x] app/festivals/[id]/lineup/page.tsx - Utilise useArtists() et useLineup()
+  - Liste artistes avec useArtists()
+  - Programme complet avec useLineup()
+  - Gestion performances avec mutations
+
+- [x] app/festivals/[id]/stages/page.tsx - Utilise useStages()
+  - CRUD scenes complet
+  - Calcul capacite totale
+  - Repartition par scene
+
+- [x] app/festivals/[id]/vendors/page.tsx - Utilise useVendors()
+  - Liste vendeurs avec filtres par type
+  - CRUD complet avec mutations
+  - Toggle statut ouvert/ferme
+
+- [x] app/festivals/[id]/camping/page.tsx - Utilise useCampingZones()
+  - Liste zones camping avec stats
+  - CRUD zones avec amenities
+  - Calcul disponibilite
+
+- [x] app/festivals/[id]/pois/page.tsx - Utilise usePois()
+  - Liste POIs groupes par type
+  - CRUD POIs avec coordonnees GPS
+  - Toggle statut actif/inactif
+
+- [x] app/users/page.tsx - Utilise useUsers()
+  - Liste utilisateurs avec pagination
+  - Filtres par role et statut
+  - CRUD complet avec mutations
+  - Ban/unban fonctionnel
+
+### TypeScript Types
+- [x] Creation apps/admin/types/index.ts - Types complets pour toutes les entites
+  - Festival, FestivalStatus, CreateFestivalData, UpdateFestivalData
+  - TicketCategory, CreateTicketCategoryData, UpdateTicketCategoryData
+  - User, UserRole, UserStatus, CreateUserData, UpdateUserData
+  - Artist, Stage, Performance, CreateArtistData, CreateStageData, CreatePerformanceData
+  - CampingZone, CreateCampingZoneDto, UpdateCampingZoneDto
+  - Vendor, VendorType, CreateVendorData, UpdateVendorData
+  - Poi, PoiType, CreatePoiDto, UpdatePoiDto
+  - ApiResponse<T>, PaginatedResponse<T>, ApiError
+
+### Configuration
+- [x] Mise a jour next.config.js avec variables d'environnement
+- [x] Ajout NEXT_PUBLIC_API_URL dans .env.local
+- [x] Configuration CORS pour autoriser admin app (localhost:3001)
+
+### Stats Phase API Integration
+- API services crees: 8 modules (festivals, tickets, users, program, camping, vendors, pois, index)
+- React Query hooks: 8 fichiers de hooks
+- Pages connectees: 9 pages admin
+- Lignes de code: 4500+
+- Types TypeScript: 50+ interfaces/types
+- Mutations configurees: 30+ avec cache invalidation
+- Queries configurees: 25+ avec states loading/error
+
+---
+Derniere mise a jour: 2026-01-02 - Phase API Integration Admin complete

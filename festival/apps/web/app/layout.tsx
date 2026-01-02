@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
+import { QueryProvider } from '@/providers/QueryProvider';
 
 export const metadata: Metadata = {
   title: 'Festival Platform',
@@ -20,7 +21,9 @@ export default function RootLayout({
         />
       </head>
       <body style={{ fontFamily: 'Inter, system-ui, sans-serif' }}>
-        {children}
+        <QueryProvider>
+          {children}
+        </QueryProvider>
       </body>
     </html>
   );
