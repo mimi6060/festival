@@ -7,6 +7,7 @@ import Sidebar from '../components/layout/Sidebar';
 import AdminHeader from '../components/layout/AdminHeader';
 import { AuthProvider } from '../lib/auth-context';
 import { LanguageProvider } from '../lib/i18n';
+import { QueryProvider } from '../providers/QueryProvider';
 
 function LayoutContent({ children }: { children: React.ReactNode }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -46,11 +47,13 @@ export default function RootLayout({
         <link rel="icon" href="/favicon.ico" />
       </head>
       <body className="bg-gray-50">
-        <LanguageProvider defaultLanguage="fr">
-          <AuthProvider>
-            <LayoutContent>{children}</LayoutContent>
-          </AuthProvider>
-        </LanguageProvider>
+        <QueryProvider>
+          <LanguageProvider defaultLanguage="fr">
+            <AuthProvider>
+              <LayoutContent>{children}</LayoutContent>
+            </AuthProvider>
+          </LanguageProvider>
+        </QueryProvider>
       </body>
     </html>
   );
