@@ -51,6 +51,12 @@ export default function TicketsPage({ params }: TicketsPageProps) {
     });
   };
 
+  const closeModal = () => {
+    setShowModal(false);
+    setEditingCategory(null);
+    resetForm();
+  };
+
   const openCreateModal = () => {
     setEditingCategory(null);
     resetForm();
@@ -101,8 +107,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
       setLocalCategories(prev => [...prev, newCategory]);
     }
 
-    setShowModal(false);
-    resetForm();
+    closeModal();
   };
 
   const handleDelete = (categoryId: string) => {
@@ -224,7 +229,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
             <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune categorie</h3>
             <p className="text-gray-500 mb-4">Commencez par creer une categorie de billets.</p>
             <button
-              onClick={() => setShowModal(true)}
+              onClick={openCreateModal}
               className="btn-primary"
             >
               Creer une categorie
@@ -331,7 +336,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                 {editingCategory ? 'Modifier la categorie' : 'Nouvelle categorie'}
               </h2>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={closeModal}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -339,7 +344,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                 </svg>
               </button>
             </div>
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form id="category-form" onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
                 <label className="form-label">Nom de la categorie *</label>
                 <input
@@ -438,7 +443,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
               <button
                 type="button"
-                onClick={() => setShowModal(false)}
+                onClick={closeModal}
                 className="btn-secondary"
               >
                 Annuler
@@ -446,7 +451,6 @@ export default function TicketsPage({ params }: TicketsPageProps) {
               <button
                 type="submit"
                 form="category-form"
-                onClick={handleSubmit}
                 className="btn-primary"
               >
                 {editingCategory ? 'Enregistrer' : 'Creer'}

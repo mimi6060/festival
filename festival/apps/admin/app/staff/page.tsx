@@ -438,23 +438,22 @@ export default function StaffPage() {
                   Assignation active
                 </label>
               </div>
+              <div className="flex items-center justify-end gap-3 pt-6 mt-6 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="btn-secondary"
+                >
+                  Annuler
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary"
+                >
+                  {selectedStaff ? 'Enregistrer' : 'Assigner'}
+                </button>
+              </div>
             </form>
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
-              <button
-                type="button"
-                onClick={() => setShowModal(false)}
-                className="btn-secondary"
-              >
-                Annuler
-              </button>
-              <button
-                type="submit"
-                onClick={handleSubmit}
-                className="btn-primary"
-              >
-                {selectedStaff ? 'Enregistrer' : 'Assigner'}
-              </button>
-            </div>
           </div>
         </div>
       )}
