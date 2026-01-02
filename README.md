@@ -1,276 +1,318 @@
 # Festival Management Platform
 
-Une plateforme complete et multi-tenant de gestion de festivals, concue pour gerer des evenements de 10 000 a 500 000+ participants. Solution professionnelle couvrant la billetterie, les paiements cashless, le controle d'acces, la gestion du staff et bien plus.
+A comprehensive, multi-tenant festival management platform designed to handle events from 10,000 to 500,000+ attendees. Built with modern technologies and best practices for scalability, security, and reliability.
 
-## Fonctionnalites
+## Features
 
-### Billetterie
-- Categories de billets multiples (Standard, VIP, Backstage, Camping)
-- Generation de QR codes signes cryptographiquement
-- Validation en temps reel aux points d'entree
-- Gestion des quotas et limites par utilisateur
+- **Ticketing System**: Multiple ticket categories, QR code generation, real-time validation
+- **Payment Processing**: Secure Stripe integration, refunds, invoicing
+- **Cashless Payments**: Digital wallet, NFC wristband support, real-time balance
+- **Access Control**: Zone management, capacity tracking, staff scanning
+- **Staff Management**: Shift scheduling, check-in/out, badge generation
+- **Program Management**: Artists, stages, performances, favorites
+- **Camping/Accommodation**: Zone booking, spot assignment, vehicle management
+- **Vendor Management**: Food & merchandise, inventory, sales tracking
+- **Real-time Notifications**: Push notifications, in-app messaging, email
+- **Analytics Dashboard**: KPIs, revenue tracking, attendance metrics
+- **Multi-language Support**: French, English (extensible)
 
-### Paiements Cashless
-- Portefeuille numerique pour chaque participant
-- Support des bracelets NFC
-- Recharge via Stripe
-- Historique des transactions en temps reel
+## Tech Stack
 
-### Controle d'Acces
-- Gestion des zones par niveau d'acces
-- Suivi de la capacite en temps reel
-- Scan QR par le staff de securite
-- Alertes de depassement de capacite
-
-### Gestion du Staff
-- Planification des shifts par zone
-- Pointage arrivee/depart
-- Generation de badges PDF avec QR
-- Statistiques des heures travaillees
-
-### Programme
-- Gestion des artistes avec biographies
-- Scenes avec specifications techniques
-- Calendrier des performances
-- Detection des conflits horaires
-- Systeme de favoris pour les utilisateurs
-
-### Camping & Hebergement
-- Zones de camping par type (tente, caravane, glamping)
-- Reservation d'emplacements avec paiement
-- Check-in/Check-out
-- Gestion des vehicules
-
-### Vendeurs (Food & Merchandising)
-- Gestion des stands par festival
-- Catalogue produits avec stock
-- Commandes via paiement cashless
-- Commission plateforme configurable
-- Demande de versement
-
-### Notifications
-- Push notifications (Firebase FCM)
-- Notifications in-app en temps reel (WebSocket)
-- Segmentation par festival, billet, role
-- Preferences utilisateur
-
-### Analytics
-- Dashboard KPIs en temps reel
-- Ventes de billets et revenus
-- Transactions cashless
-- Affluence par zone
-- Export CSV/PDF
-
-## Stack Technique
-
-| Couche | Technologies |
-|--------|--------------|
+| Layer | Technologies |
+|-------|-------------|
 | **Frontend Web** | Next.js 15, React 19, Tailwind CSS, next-intl |
-| **Dashboard Admin** | Next.js, React, Recharts, DataTables |
-| **Application Mobile** | React Native, Expo, AsyncStorage |
+| **Admin Dashboard** | Next.js, React, Recharts, DataTables |
+| **Mobile App** | React Native, Expo, AsyncStorage |
 | **Backend API** | NestJS, Prisma, PostgreSQL, Redis |
-| **Authentification** | JWT, Passport.js, RBAC |
-| **Paiements** | Stripe Checkout, Webhooks |
-| **Temps Reel** | WebSocket, Socket.io |
+| **Authentication** | JWT, Passport.js, RBAC |
+| **Payments** | Stripe Checkout, Webhooks |
+| **Real-time** | WebSocket, Socket.io |
 | **Email** | Nodemailer, Handlebars templates |
-| **PDF** | PDFKit |
-| **Monitoring** | Prometheus, Sentry, Grafana |
+| **PDF Generation** | PDFKit |
+| **Monitoring** | Prometheus, Sentry |
 | **CI/CD** | GitHub Actions |
-| **Infrastructure** | Docker, Kubernetes |
+| **Infrastructure** | Docker, Kubernetes-ready |
 
 ## Architecture
 
 ```
 festival/
-|-- apps/
-|   |-- api/                 # Backend NestJS
-|   |-- web/                 # Site public Next.js
-|   |-- admin/               # Dashboard admin Next.js
-|   |-- mobile/              # App React Native
-|   |-- api-e2e/             # Tests end-to-end
-|
-|-- libs/
-|   |-- shared/
-|       |-- types/           # Types TypeScript partages
-|       |-- utils/           # Fonctions utilitaires
-|       |-- constants/       # Constantes
-|       |-- validation/      # Schemas Zod
-|       |-- hooks/           # Hooks React partages
-|       |-- i18n/            # Internationalisation
-|
-|-- prisma/
-|   |-- schema.prisma        # Schema base de donnees
-|   |-- seed.ts              # Donnees de test
-|
-|-- k8s/                     # Manifests Kubernetes
-|-- docs/                    # Documentation
-|-- docker-compose.yml       # Environnement local
+├── apps/
+│   ├── api/                 # NestJS Backend API
+│   ├── web/                 # Next.js Public Website
+│   ├── admin/               # Next.js Admin Dashboard
+│   ├── mobile/              # React Native Mobile App
+│   └── api-e2e/             # End-to-end tests
+├── libs/
+│   └── shared/
+│       ├── types/           # TypeScript types
+│       ├── utils/           # Utility functions
+│       ├── constants/       # Shared constants
+│       ├── i18n/            # Internationalization
+│       ├── validation/      # Zod schemas
+│       ├── hooks/           # React hooks
+│       └── api-client/      # API client
+├── prisma/
+│   ├── schema.prisma        # Database schema
+│   └── seed.ts              # Seed data
+├── docs/
+│   ├── api/                 # API documentation
+│   ├── security/            # Security documentation
+│   └── compliance/          # GDPR, PCI-DSS docs
+└── docker-compose.yml       # Local development
 ```
 
-## Demarrage Rapide
+## Quick Start
 
 ### Prerequisites
 
 - Node.js 20+
-- pnpm 8+ (recommande) ou npm
+- pnpm 8+ (recommended) or npm
 - Docker & Docker Compose
-- PostgreSQL 16+ (ou via Docker)
-- Redis 7+ (ou via Docker)
+- PostgreSQL 15+ (or use Docker)
+- Redis 7+ (or use Docker)
 
-### Installation
+### 1. Clone and Install
 
 ```bash
-# Cloner le repository
 git clone https://github.com/your-org/festival-platform.git
 cd festival-platform/festival
 
-# Installer les dependances
+# Install dependencies
 pnpm install
-# ou
+# or
 npm install
+```
 
-# Copier la configuration
+### 2. Environment Setup
+
+```bash
+# Copy environment template
 cp .env.example .env.development
 
-# Demarrer les services d'infrastructure
-docker-compose up -d postgres redis minio
+# Edit .env.development with your values
+# Required: DATABASE_URL, JWT_SECRET, STRIPE_SECRET_KEY
+```
 
-# Generer le client Prisma
+### 3. Start Infrastructure
+
+```bash
+# Start PostgreSQL, Redis, and MailDev
+docker-compose up -d
+
+# Verify services are running
+docker-compose ps
+```
+
+### 4. Database Setup
+
+```bash
+# Generate Prisma client
 npx prisma generate
 
-# Executer les migrations
+# Run migrations
 npx prisma migrate dev
 
-# Seed la base de donnees (optionnel)
+# Seed database with sample data
 npx prisma db seed
 ```
 
-### Demarrer les Serveurs
+### 5. Start Development Servers
 
 ```bash
-# API (port 3333)
+# Start API server (port 3333)
 npx nx serve api
 
-# Site web (port 3000) - dans un autre terminal
+# In another terminal, start web app (port 3000)
 npx nx serve web
 
-# Admin (port 4200) - dans un autre terminal
+# In another terminal, start admin dashboard (port 4200)
 npx nx serve admin
 ```
 
-### Acces aux Applications
+### 6. Access Applications
 
 | Application | URL | Description |
 |-------------|-----|-------------|
-| API | http://localhost:3333/api | Backend API REST |
-| API Docs | http://localhost:3333/api/docs | Documentation Swagger |
-| Web | http://localhost:3000 | Site public |
-| Admin | http://localhost:4200 | Dashboard admin |
-| MailDev | http://localhost:8025 | Interface email de test |
+| API | http://localhost:3333/api | Backend API |
+| API Docs | http://localhost:3333/api/docs | Swagger documentation |
+| Web | http://localhost:3000 | Public website |
+| Admin | http://localhost:4200 | Admin dashboard |
+| MailDev | http://localhost:1080 | Email testing UI |
 
-## Documentation
+## API Documentation
 
-| Document | Description |
-|----------|-------------|
-| [ARCHITECTURE.md](docs/ARCHITECTURE.md) | Architecture technique complete |
-| [DEPLOYMENT.md](docs/DEPLOYMENT.md) | Guide de deploiement |
-| [CONTRIBUTING.md](docs/CONTRIBUTING.md) | Guide de contribution |
-| [TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md) | Guide de depannage |
-| [API_GUIDE.md](docs/api/API_GUIDE.md) | Documentation API |
-| [WEBHOOKS.md](docs/api/WEBHOOKS.md) | Documentation webhooks |
+### Interactive Documentation
 
-## Scripts Disponibles
+The API is fully documented with Swagger/OpenAPI:
 
-```bash
-# Developpement
-npx nx serve api           # API en mode dev
-npx nx serve web           # Web en mode dev
-npx nx serve admin         # Admin en mode dev
+- **Swagger UI**: http://localhost:3333/api/docs
+- **OpenAPI JSON**: http://localhost:3333/api/docs-json
 
-# Build
-npx nx build api           # Build API
-npx nx build web           # Build Web
-npx nx build admin         # Build Admin
+### API Guide
 
-# Tests
-npx nx test api            # Tests unitaires API
-npx nx e2e api-e2e         # Tests E2E
-npx nx test api --coverage # Tests avec couverture
+See [docs/api/API_GUIDE.md](docs/api/API_GUIDE.md) for:
+- Authentication flow
+- Rate limiting
+- Error codes
+- Code examples (JavaScript, Python, cURL)
 
-# Base de donnees
-npx prisma generate        # Generer client Prisma
-npx prisma migrate dev     # Creer migration
-npx prisma db seed         # Seed donnees
-npx prisma studio          # Interface visuelle BDD
+### Webhooks
 
-# Qualite de code
-npx nx lint --all          # Linting
-npx nx format:check        # Verification formatage
-npx nx format:write        # Correction formatage
+See [docs/api/WEBHOOKS.md](docs/api/WEBHOOKS.md) for:
+- Stripe webhook setup
+- Event types and payloads
+- Security and signature verification
 
-# Docker
-docker-compose up -d       # Demarrer services
-docker-compose down        # Arreter services
-docker-compose logs -f     # Voir les logs
+### Postman Collection
+
+Import the Postman collection for easy API testing:
+- Collection: [docs/api/festival-api.postman_collection.json](docs/api/festival-api.postman_collection.json)
+- Environment: [docs/api/festival-api.postman_environment.json](docs/api/festival-api.postman_environment.json)
+
+## Main API Endpoints
+
+### Authentication
+
+```
+POST /api/auth/register     # Register new user
+POST /api/auth/login        # Login, get JWT tokens
+POST /api/auth/refresh      # Refresh access token
+GET  /api/auth/me           # Get current user
+POST /api/auth/logout       # Logout
 ```
 
-## Variables d'Environnement
+### Festivals
 
-Variables principales (voir `.env.example` pour la liste complete):
+```
+GET    /api/festivals           # List festivals
+POST   /api/festivals           # Create festival
+GET    /api/festivals/:id       # Get festival
+PUT    /api/festivals/:id       # Update festival
+DELETE /api/festivals/:id       # Delete festival
+GET    /api/festivals/:id/stats # Get statistics
+```
+
+### Tickets
+
+```
+GET  /api/tickets/categories    # List ticket types
+POST /api/tickets/purchase      # Buy tickets
+GET  /api/tickets/me            # My tickets
+POST /api/tickets/validate      # Validate QR code
+```
+
+### Cashless
+
+```
+GET  /api/cashless/account      # Get balance
+POST /api/cashless/topup        # Add funds
+POST /api/cashless/pay          # Make payment
+GET  /api/cashless/transactions # Transaction history
+```
+
+## Environment Variables
+
+Key environment variables (see `.env.example` for full list):
 
 ```bash
 # Application
 NODE_ENV=development
+PORT=3333
 API_URL=http://localhost:3333
 
-# Base de donnees
+# Database
 DATABASE_URL=postgresql://user:pass@localhost:5432/festival_db
 
 # Redis
 REDIS_URL=redis://localhost:6379
 
-# JWT
-JWT_SECRET=votre-secret-jwt-64-caracteres-minimum
-JWT_ACCESS_TOKEN_EXPIRY=15m
-JWT_REFRESH_TOKEN_EXPIRY=7d
+# JWT Authentication
+JWT_SECRET=your-super-secret-key-min-32-chars
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_SECRET=your-refresh-secret-key
+JWT_REFRESH_EXPIRES_IN=7d
 
-# Stripe
+# Stripe Payments
 STRIPE_SECRET_KEY=sk_test_...
 STRIPE_PUBLISHABLE_KEY=pk_test_...
 STRIPE_WEBHOOK_SECRET=whsec_...
+
+# Email
+SMTP_HOST=localhost
+SMTP_PORT=1025
+
+# Security
+CORS_ORIGINS=http://localhost:3000,http://localhost:4200
 ```
 
-## Roles Utilisateur
+## Scripts
+
+```bash
+# Development
+npx nx serve api          # Start API dev server
+npx nx serve web          # Start web dev server
+npx nx serve admin        # Start admin dev server
+
+# Building
+npx nx build api          # Build API for production
+npx nx build web          # Build web for production
+npx nx build admin        # Build admin for production
+npx nx build-all          # Build all apps
+
+# Testing
+npx nx test api           # Run API unit tests
+npx nx e2e api-e2e        # Run E2E tests
+npx nx test --all         # Run all tests
+
+# Database
+npx prisma generate       # Generate Prisma client
+npx prisma migrate dev    # Run migrations (dev)
+npx prisma migrate deploy # Run migrations (prod)
+npx prisma db seed        # Seed database
+npx prisma studio         # Open Prisma Studio
+
+# Code Quality
+npx nx lint --all         # Lint all projects
+npx nx format:check       # Check formatting
+npx nx format:write       # Fix formatting
+
+# Docker
+docker-compose up -d      # Start services
+docker-compose down       # Stop services
+docker-compose logs -f    # View logs
+```
+
+## User Roles
 
 | Role | Description | Permissions |
 |------|-------------|-------------|
-| `ADMIN` | Administrateur plateforme | Acces complet |
-| `ORGANIZER` | Organisateur de festival | Gestion de ses festivals |
-| `STAFF` | Personnel | Scan billets, acces zones |
-| `CASHIER` | Caissier | Operations cashless |
-| `SECURITY` | Securite | Controle d'acces |
-| `USER` | Participant | Achat billets, cashless |
+| `ADMIN` | Platform administrator | Full access |
+| `ORGANIZER` | Festival organizer | Manage own festivals |
+| `STAFF` | Event staff | Scan tickets, zone access |
+| `VENDOR` | Food/merch vendor | Manage products, view sales |
+| `ATTENDEE` | Festival attendee | Buy tickets, use cashless |
 
-## Securite
+## Security
 
-- **Authentification**: JWT avec rotation access/refresh tokens
-- **Autorisation**: Controle d'acces base sur les roles (RBAC)
-- **Protection des donnees**: Conformite RGPD, chiffrement des donnees
-- **Paiements**: Conformite PCI-DSS via Stripe
-- **API**: Rate limiting, CORS, headers Helmet
-- **Audit**: Journalisation de toutes les operations sensibles
+- **Authentication**: JWT with access/refresh token rotation
+- **Authorization**: Role-based access control (RBAC)
+- **Data Protection**: GDPR compliant, data encryption
+- **Payment Security**: PCI-DSS compliant via Stripe
+- **API Security**: Rate limiting, CORS, Helmet headers
+- **Audit Logging**: All sensitive operations logged
 
-Voir [docs/security/](docs/security/) pour la documentation securite complete.
+See [docs/security/](docs/security/) for security documentation.
 
-## Deploiement
+## Deployment
 
 ### Docker
 
 ```bash
-# Build image production
-docker build -t festival-api -f apps/api/Dockerfile .
+# Build production image
+docker build -t festival-api -f Dockerfile .
 
-# Lancer container
+# Run container
 docker run -p 3333:3333 \
   -e DATABASE_URL=... \
   -e REDIS_URL=... \
@@ -279,49 +321,56 @@ docker run -p 3333:3333 \
 
 ### Kubernetes
 
+Kubernetes manifests are available in `k8s/` directory:
+
 ```bash
-# Appliquer les manifests
-kubectl apply -k k8s/overlays/production
+kubectl apply -f k8s/namespace.yaml
+kubectl apply -f k8s/
 ```
 
-### Cloud
+### Cloud Platforms
 
-- **Vercel**: Dashboards Web et Admin
-- **Railway/Render**: Serveur API
-- **AWS/GCP**: Infrastructure complete
+- **Vercel**: Web and Admin dashboards
+- **Railway/Render**: API server
+- **AWS/GCP**: Full infrastructure
 
-Voir [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md) pour le guide complet.
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## Testing
+
+```bash
+# Unit tests
+npx nx test api
+
+# E2E tests
+npx nx e2e api-e2e
+
+# Test coverage
+npx nx test api --coverage
+```
 
 ## Monitoring
 
-| Endpoint | Description |
-|----------|-------------|
-| `/api/health` | Health check global |
-| `/api/health/live` | Liveness probe |
-| `/api/health/ready` | Readiness probe |
-| `/monitoring/metrics` | Metriques Prometheus |
-
-## Contribution
-
-Les contributions sont les bienvenues! Voir [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md) pour les guidelines.
-
-1. Fork le repository
-2. Creer une branche (`git checkout -b feature/amazing-feature`)
-3. Commiter les changements (`git commit -m 'feat: add amazing feature'`)
-4. Pousser la branche (`git push origin feature/amazing-feature`)
-5. Ouvrir une Pull Request
+- **Health Checks**: `/api/health`, `/api/health/live`, `/api/health/ready`
+- **Metrics**: `/metrics` (Prometheus format)
+- **Error Tracking**: Sentry integration
 
 ## Support
 
 - **Documentation**: [docs/](docs/)
 - **API Reference**: http://localhost:3333/api/docs
 - **Issues**: GitHub Issues
-- **Depannage**: [docs/TROUBLESHOOTING.md](docs/TROUBLESHOOTING.md)
 
-## Licence
+## License
 
-Ce projet est sous licence MIT - voir le fichier [LICENSE](LICENSE) pour plus de details.
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-Construit avec NestJS, Next.js et React Native.
+Built with NestJS, Next.js, and React Native

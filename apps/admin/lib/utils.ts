@@ -91,7 +91,6 @@ export function getStatusColor(status: string): string {
     completed: 'badge-info',
     // Order/Payment status
     pending: 'badge-warning',
-    completed: 'badge-success',
     succeeded: 'badge-success',
     failed: 'badge-danger',
     refunded: 'badge-info',

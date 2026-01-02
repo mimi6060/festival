@@ -8,6 +8,30 @@
     },
     {
       "path": "./apps/api"
+    },
+    {
+      "path": "./libs/shared/api-client"
+    },
+    {
+      "path": "./libs/shared/constants"
+    },
+    {
+      "path": "./libs/shared/hooks"
+    },
+    {
+      "path": "./libs/shared/types"
+    },
+    {
+      "path": "./libs/shared/utils"
+    },
+    {
+      "path": "./libs/shared/i18n"
+    },
+    {
+      "path": "./apps/mobile"
+    },
+    {
+      "path": "./apps/admin"
     }
   ]
 }

@@ -154,19 +154,20 @@ export default function StatsPage({ params }: StatsPageProps) {
                     paddingAngle={2}
                     dataKey="value"
                   >
-                    {categoryData.map((entry, index) => (
+                    {categoryData.map((_entry: { name: string; value: number; revenue: number }, index: number) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip
-                    content={({ active, payload }) => {
+                    content={(props) => {
+                      const { active, payload } = props;
                       if (active && payload && payload.length) {
-                        const data = payload[0]?.payload;
+                        const data = payload[0]?.payload as { name: string; value: number; revenue: number } | undefined;
                         return (
                           <div className="bg-white px-4 py-3 rounded-lg shadow-lg border border-gray-200">
-                            <p className="font-medium text-gray-900">{data.name}</p>
-                            <p className="text-sm text-gray-600">{formatNumber(data.value)} billets</p>
-                            <p className="text-sm text-gray-600">{formatCurrency(data.revenue)}</p>
+                            <p className="font-medium text-gray-900">{data?.name}</p>
+                            <p className="text-sm text-gray-600">{formatNumber(data?.value ?? 0)} billets</p>
+                            <p className="text-sm text-gray-600">{formatCurrency(data?.revenue ?? 0)}</p>
                           </div>
                         );
                       }

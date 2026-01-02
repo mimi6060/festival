@@ -1,17 +1,17 @@
-/** @type {import('next').NextConfig} */
+//@ts-check
+
+const { composePlugins, withNx } = require('@nx/next');
+
+/**
+ * @type {import('@nx/next/plugins/with-nx').WithNxOptions}
+ **/
 const nextConfig = {
-  output: 'standalone',
-  transpilePackages: ['@festival/shared'],
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: process.env.NEXT_PUBLIC_API_URL
-          ? `${process.env.NEXT_PUBLIC_API_URL}/:path*`
-          : 'http://localhost:3000/:path*',
-      },
-    ];
+  nx: {
+    svgr: false,
   },
+  reactStrictMode: true,
 };
 
-module.exports = nextConfig;
+const plugins = [withNx];
+
+module.exports = composePlugins(...plugins)(nextConfig);

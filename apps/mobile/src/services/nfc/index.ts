@@ -22,16 +22,3 @@ export type {
   StaffData,
   TicketData,
 } from './NFCFormatter';
-
-export { default as NFCCashlessService, nfcCashlessService } from './NFCCashlessService';
-export type {
-  CashlessTransaction,
-  CashlessTransactionType,
-  TransactionStatus,
-  CashlessBalance,
-  PaymentRequest,
-  TopupRequest,
-  TransferRequest,
-  CashlessResult,
-  NFCCashlessConfig,
-} from './NFCCashlessService';

@@ -1,8 +1,8 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
-
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 @layer base {
   :root {
@@ -53,20 +53,27 @@
 
 @layer base {
   * {
-    @apply border-border;
+    border-color: hsl(var(--border));
   }
   body {
-    @apply bg-gray-50 text-foreground font-sans antialiased;
+    @apply bg-gray-50 font-sans antialiased;
+    color: hsl(var(--foreground));
   }
 }
 
 @layer components {
   .sidebar-link {
-    @apply flex items-center gap-3 px-4 py-3 text-gray-600 rounded-lg transition-all duration-200 hover:bg-primary-50 hover:text-primary-700;
+    @apply flex items-center gap-3 px-4 py-3 text-gray-600 rounded-lg transition-all duration-200;
+  }
+  .sidebar-link:hover {
+    background-color: #f0f9ff;
+    color: #0369a1;
   }
 
   .sidebar-link.active {
-    @apply bg-primary-100 text-primary-700 font-medium;
+    background-color: #e0f2fe;
+    color: #0369a1;
+    @apply font-medium;
   }
 
   .stat-card {
@@ -78,7 +85,15 @@
   }
 
   .btn-primary {
-    @apply bg-primary-600 text-white px-4 py-2 rounded-lg font-medium transition-all duration-200 hover:bg-primary-700 focus:ring-2 focus:ring-primary-500 focus:ring-offset-2;
+    @apply text-white px-4 py-2 rounded-lg font-medium transition-all duration-200;
+    background-color: #0284c7;
+  }
+  .btn-primary:hover {
+    background-color: #0369a1;
+  }
+  .btn-primary:focus {
+    @apply ring-2 ring-offset-2;
+    --tw-ring-color: #0ea5e9;
   }
 
   .btn-secondary {
@@ -90,7 +105,12 @@
   }
 
   .input-field {
-    @apply w-full px-4 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition-all duration-200;
+    @apply w-full px-4 py-2.5 border border-gray-300 rounded-lg transition-all duration-200;
+  }
+  .input-field:focus {
+    @apply ring-2;
+    --tw-ring-color: #0ea5e9;
+    border-color: #0ea5e9;
   }
 
   .form-label {

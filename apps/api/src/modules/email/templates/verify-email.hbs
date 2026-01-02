@@ -4,54 +4,28 @@
 
   Variables:
   - userName: User's first name or full name
-  - userEmail: User's email address
   - verificationUrl: URL to verify email
   - verificationCode: Optional verification code
   - expiresIn: Expiration time (e.g., "24 heures" / "24 hours")
-  - festivalName: Name of the festival
-  - festivalUrl: Festival website URL
-  - dashboardUrl: Link to user dashboard after verification
   - lang_fr: Boolean for French language
   - primaryColor: Brand primary color
-  - secondaryColor: Brand secondary color
+  - All common variables from layout
 --}}
 
 {{#if lang_fr}}
 <!-- French Version -->
-
-<!-- Hero Section -->
-<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px;">
-  <tr>
-    <td align="center">
-      <table border="0" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, {{primaryColor}} 0%, {{secondaryColor}} 100%); border-radius: 12px; padding: 30px 40px;">
-        <tr>
-          <td align="center">
-            <span style="display: inline-block; width: 70px; height: 70px; background-color: rgba(255,255,255,0.2); border-radius: 50%; line-height: 70px; font-size: 32px;">
-              &#9993;
-            </span>
-          </td>
-        </tr>
-        <tr>
-          <td align="center" style="padding-top: 15px;">
-            <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 24px; font-weight: 700; color: #ffffff;">
-              Verifiez votre email
-            </h1>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
+<h1 style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a2e; line-height: 36px;">
+  Verifiez votre adresse email
+</h1>
 
 <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
-  Bonjour <strong>{{userName}}</strong>,
+  Bonjour {{userName}},
 </p>
 
 <p style="margin: 0 0 25px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
-  Merci de vous etre inscrit sur <strong>{{festivalName}}</strong> ! Pour finaliser la creation de votre compte et debloquer toutes les fonctionnalites, veuillez verifier votre adresse email.
+  Merci de vous etre inscrit sur <strong>{{festivalName}}</strong>. Pour finaliser la creation de votre compte et acceder a toutes les fonctionnalites, veuillez verifier votre adresse email en cliquant sur le bouton ci-dessous.
 </p>
 
-<!-- Main CTA Button -->
 {{> button
   url=verificationUrl
   text="Verifier mon email"
@@ -59,130 +33,45 @@
   showFallback=true
 }}
 
-<!-- Verification Code (if applicable) -->
 {{#if verificationCode}}
 <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 30px 0;">
   <tr>
     <td align="center">
-      <table border="0" cellpadding="0" cellspacing="0" style="background-color: #f8f9fa; border-radius: 12px; padding: 25px 40px;">
-        <tr>
-          <td align="center">
-            <p style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #8c8c8c;">
-              Ou entrez ce code de verification :
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td align="center">
-            <table border="0" cellpadding="0" cellspacing="4">
-              <tr>
-                {{#each (split verificationCode '')}}
-                <td style="width: 45px; height: 55px; background-color: #ffffff; border: 2px solid #e0e0e0; border-radius: 8px; text-align: center; vertical-align: middle;">
-                  <span style="font-family: 'Courier New', monospace; font-size: 28px; font-weight: 700; color: {{../primaryColor}};">
-                    {{this}}
-                  </span>
-                </td>
-                {{/each}}
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
+      <p style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #8c8c8c;">
+        Ou entrez ce code de verification :
+      </p>
+      <p style="margin: 0; font-family: 'Courier New', monospace; font-size: 32px; font-weight: 700; color: {{primaryColor}}; letter-spacing: 8px; background-color: #f8f9fa; padding: 20px 30px; border-radius: 8px; display: inline-block;">
+        {{verificationCode}}
+      </p>
     </td>
   </tr>
 </table>
 {{/if}}
 
-<!-- Expiration Warning -->
-<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 25px 0;">
-  <tr>
-    <td style="padding: 16px 20px; background-color: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
-      <table border="0" cellpadding="0" cellspacing="0" width="100%">
-        <tr>
-          <td style="width: 35px; vertical-align: top;">
-            <span style="font-size: 20px;">&#9200;</span>
-          </td>
-          <td>
-            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #92400e; line-height: 22px;">
-              <strong>Ce lien expire dans {{expiresIn}}.</strong><br>
-              Si vous ne verifiez pas votre email dans ce delai, vous devrez demander un nouveau lien.
-            </p>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-
-<!-- What's Next Section -->
-{{> info-box
-  title="Apres verification, vous pourrez :"
-  icon="&#128640;"
-  content="<ul style='margin: 0; padding-left: 20px;'>
-    <li style='margin-bottom: 6px;'>Acheter vos billets pour le festival</li>
-    <li style='margin-bottom: 6px;'>Activer votre compte cashless</li>
-    <li style='margin-bottom: 6px;'>Consulter le programme et creer votre planning</li>
-    <li>Acceder a la carte interactive</li>
-  </ul>"
+{{> alert
+  type_warning=true
+  icon="&#9888;"
+  message="Ce lien expire dans <strong>" expiresIn "</strong>. Si vous ne verifiez pas votre email dans ce delai, vous devrez demander un nouveau lien."
 }}
 
-<!-- Security Notice -->
-<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 25px; padding: 15px 20px; background-color: #f8f9fa; border-radius: 8px;">
-  <tr>
-    <td>
-      <table border="0" cellpadding="0" cellspacing="0" width="100%">
-        <tr>
-          <td style="width: 30px; vertical-align: top;">
-            <span style="font-size: 16px;">&#128274;</span>
-          </td>
-          <td>
-            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; color: #8c8c8c; line-height: 20px;">
-              <strong>Vous n'avez pas cree ce compte ?</strong><br>
-              Ignorez simplement cet email. Votre adresse ne sera pas utilisee sans verification.
-            </p>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
+<p style="margin: 25px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #8c8c8c; line-height: 22px;">
+  Si vous n'avez pas cree de compte sur {{festivalName}}, vous pouvez ignorer cet email en toute securite. Quelqu'un a peut-etre entre votre adresse email par erreur.
+</p>
 
 {{else}}
 <!-- English Version -->
-
-<!-- Hero Section -->
-<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 30px;">
-  <tr>
-    <td align="center">
-      <table border="0" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, {{primaryColor}} 0%, {{secondaryColor}} 100%); border-radius: 12px; padding: 30px 40px;">
-        <tr>
-          <td align="center">
-            <span style="display: inline-block; width: 70px; height: 70px; background-color: rgba(255,255,255,0.2); border-radius: 50%; line-height: 70px; font-size: 32px;">
-              &#9993;
-            </span>
-          </td>
-        </tr>
-        <tr>
-          <td align="center" style="padding-top: 15px;">
-            <h1 style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 24px; font-weight: 700; color: #ffffff;">
-              Verify your email
-            </h1>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
+<h1 style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a2e; line-height: 36px;">
+  Verify your email address
+</h1>
 
 <p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
-  Hi <strong>{{userName}}</strong>,
+  Hi {{userName}},
 </p>
 
 <p style="margin: 0 0 25px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
-  Thank you for signing up for <strong>{{festivalName}}</strong>! To complete your account setup and unlock all features, please verify your email address.
+  Thank you for signing up for <strong>{{festivalName}}</strong>. To complete your account setup and access all features, please verify your email address by clicking the button below.
 </p>
 
-<!-- Main CTA Button -->
 {{> button
   url=verificationUrl
   text="Verify my email"
@@ -190,91 +79,28 @@
   showFallback=true
 }}
 
-<!-- Verification Code (if applicable) -->
 {{#if verificationCode}}
 <table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 30px 0;">
   <tr>
     <td align="center">
-      <table border="0" cellpadding="0" cellspacing="0" style="background-color: #f8f9fa; border-radius: 12px; padding: 25px 40px;">
-        <tr>
-          <td align="center">
-            <p style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #8c8c8c;">
-              Or enter this verification code:
-            </p>
-          </td>
-        </tr>
-        <tr>
-          <td align="center">
-            <table border="0" cellpadding="0" cellspacing="4">
-              <tr>
-                {{#each (split verificationCode '')}}
-                <td style="width: 45px; height: 55px; background-color: #ffffff; border: 2px solid #e0e0e0; border-radius: 8px; text-align: center; vertical-align: middle;">
-                  <span style="font-family: 'Courier New', monospace; font-size: 28px; font-weight: 700; color: {{../primaryColor}};">
-                    {{this}}
-                  </span>
-                </td>
-                {{/each}}
-              </tr>
-            </table>
-          </td>
-        </tr>
-      </table>
+      <p style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #8c8c8c;">
+        Or enter this verification code:
+      </p>
+      <p style="margin: 0; font-family: 'Courier New', monospace; font-size: 32px; font-weight: 700; color: {{primaryColor}}; letter-spacing: 8px; background-color: #f8f9fa; padding: 20px 30px; border-radius: 8px; display: inline-block;">
+        {{verificationCode}}
+      </p>
     </td>
   </tr>
 </table>
 {{/if}}
 
-<!-- Expiration Warning -->
-<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 25px 0;">
-  <tr>
-    <td style="padding: 16px 20px; background-color: #fef3c7; border-radius: 8px; border-left: 4px solid #f59e0b;">
-      <table border="0" cellpadding="0" cellspacing="0" width="100%">
-        <tr>
-          <td style="width: 35px; vertical-align: top;">
-            <span style="font-size: 20px;">&#9200;</span>
-          </td>
-          <td>
-            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #92400e; line-height: 22px;">
-              <strong>This link expires in {{expiresIn}}.</strong><br>
-              If you don't verify your email within this time, you'll need to request a new link.
-            </p>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
-
-<!-- What's Next Section -->
-{{> info-box
-  title="After verification, you can:"
-  icon="&#128640;"
-  content="<ul style='margin: 0; padding-left: 20px;'>
-    <li style='margin-bottom: 6px;'>Purchase tickets for the festival</li>
-    <li style='margin-bottom: 6px;'>Activate your cashless account</li>
-    <li style='margin-bottom: 6px;'>Browse the lineup and create your schedule</li>
-    <li>Access the interactive map</li>
-  </ul>"
+{{> alert
+  type_warning=true
+  icon="&#9888;"
+  message="This link expires in <strong>" expiresIn "</strong>. If you don't verify your email within this time, you'll need to request a new link."
 }}
 
-<!-- Security Notice -->
-<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 25px; padding: 15px 20px; background-color: #f8f9fa; border-radius: 8px;">
-  <tr>
-    <td>
-      <table border="0" cellpadding="0" cellspacing="0" width="100%">
-        <tr>
-          <td style="width: 30px; vertical-align: top;">
-            <span style="font-size: 16px;">&#128274;</span>
-          </td>
-          <td>
-            <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 13px; color: #8c8c8c; line-height: 20px;">
-              <strong>Didn't create this account?</strong><br>
-              Simply ignore this email. Your address won't be used without verification.
-            </p>
-          </td>
-        </tr>
-      </table>
-    </td>
-  </tr>
-</table>
+<p style="margin: 25px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #8c8c8c; line-height: 22px;">
+  If you didn't create an account on {{festivalName}}, you can safely ignore this email. Someone may have entered your email address by mistake.
+</p>
 {{/if}}

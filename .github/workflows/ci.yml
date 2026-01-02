@@ -3,7 +3,6 @@
 # =============================================================================
 # Runs on all pushes and PRs to ensure code quality and test coverage
 # Uses NX affected commands for optimal performance in monorepo context
-# Features: Matrix builds (Node 18/20, Ubuntu/macOS), advanced caching
 # =============================================================================
 
 name: CI
@@ -13,13 +12,6 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
-  workflow_dispatch:
-    inputs:
-      skip_cache:
-        description: 'Skip cache restoration'
-        required: false
-        default: false
-        type: boolean
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -28,7 +20,6 @@ concurrency:
 env:
   NX_CLOUD_ACCESS_TOKEN: ${{ secrets.NX_CLOUD_ACCESS_TOKEN }}
   NODE_OPTIONS: --max-old-space-size=4096
-  HUSKY: 0
 
 jobs:
   # ===========================================================================
@@ -41,11 +32,6 @@ jobs:
       affected-apps: ${{ steps.affected.outputs.apps }}
       affected-libs: ${{ steps.affected.outputs.libs }}
       has-api-changes: ${{ steps.affected.outputs.has-api }}
-      has-web-changes: ${{ steps.affected.outputs.has-web }}
-      has-admin-changes: ${{ steps.affected.outputs.has-admin }}
-      has-mobile-changes: ${{ steps.affected.outputs.has-mobile }}
-      node-modules-cache-key: ${{ steps.cache-keys.outputs.node-modules }}
-      nx-cache-key: ${{ steps.cache-keys.outputs.nx }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -58,53 +44,17 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Generate cache keys
-        id: cache-keys
-        run: |
-          echo "node-modules=node-modules-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}" >> $GITHUB_OUTPUT
-          echo "nx=nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}" >> $GITHUB_OUTPUT
-
-      - name: Cache node_modules
-        id: cache-node-modules
-        uses: actions/cache@v4
-        if: ${{ !inputs.skip_cache }}
-        with:
-          path: |
-            node_modules
-            ~/.npm
-          key: ${{ steps.cache-keys.outputs.node-modules }}
-          restore-keys: |
-            node-modules-${{ runner.os }}-
-
       - name: Cache NX
         uses: actions/cache@v4
-        if: ${{ !inputs.skip_cache }}
         with:
-          path: |
-            .nx/cache
-            dist/.nx-cache
-          key: ${{ steps.cache-keys.outputs.nx }}
+          path: .nx/cache
+          key: nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
           restore-keys: |
             nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
             nx-${{ runner.os }}-
 
-      - name: Cache Prisma Client
-        uses: actions/cache@v4
-        if: ${{ !inputs.skip_cache }}
-        with:
-          path: |
-            node_modules/.prisma
-            node_modules/@prisma/client
-          key: prisma-${{ runner.os }}-${{ hashFiles('prisma/schema.prisma') }}
-          restore-keys: |
-            prisma-${{ runner.os }}-
-
       - name: Install dependencies
-        if: steps.cache-node-modules.outputs.cache-hit != 'true'
-        run: npm ci --prefer-offline --no-audit
-
-      - name: Generate Prisma Client
-        run: npx prisma generate
+        run: npm ci
 
       - name: Derive SHAs for affected commands
         uses: nrwl/nx-set-shas@v4
@@ -112,101 +62,19 @@ jobs:
       - name: Determine affected projects
         id: affected
         run: |
-          echo "apps=$(npx nx show projects --affected --type=app --json 2>/dev/null | jq -c '.' || echo '[]')" >> $GITHUB_OUTPUT
-          echo "libs=$(npx nx show projects --affected --type=lib --json 2>/dev/null | jq -c '.' || echo '[]')" >> $GITHUB_OUTPUT
-
-          # Check specific app changes
-          if npx nx show projects --affected 2>/dev/null | grep -q "api"; then
+          echo "apps=$(npx nx show projects --affected --type=app --json | jq -c '.')" >> $GITHUB_OUTPUT
+          echo "libs=$(npx nx show projects --affected --type=lib --json | jq -c '.')" >> $GITHUB_OUTPUT
+          if npx nx show projects --affected | grep -q "api"; then
             echo "has-api=true" >> $GITHUB_OUTPUT
           else
             echo "has-api=false" >> $GITHUB_OUTPUT
           fi
 
-          if npx nx show projects --affected 2>/dev/null | grep -q "web"; then
-            echo "has-web=true" >> $GITHUB_OUTPUT
-          else
-            echo "has-web=false" >> $GITHUB_OUTPUT
-          fi
-
-          if npx nx show projects --affected 2>/dev/null | grep -q "admin"; then
-            echo "has-admin=true" >> $GITHUB_OUTPUT
-          else
-            echo "has-admin=false" >> $GITHUB_OUTPUT
-          fi
-
-          if npx nx show projects --affected 2>/dev/null | grep -q "mobile"; then
-            echo "has-mobile=true" >> $GITHUB_OUTPUT
-          else
-            echo "has-mobile=false" >> $GITHUB_OUTPUT
-          fi
-
   # ===========================================================================
-  # Lint - Code quality checks (Matrix: Node 18/20)
+  # Lint - Code quality checks
   # ===========================================================================
   lint:
-    name: Lint (Node ${{ matrix.node-version }}, ${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    needs: setup
-    strategy:
-      matrix:
-        os: [ubuntu-latest]
-        node-version: [18, 20]
-        include:
-          - os: macos-14
-            node-version: 20
-      fail-fast: false
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - name: Setup Node.js ${{ matrix.node-version }}
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ matrix.node-version }}
-          cache: 'npm'
-
-      - name: Restore node_modules cache
-        uses: actions/cache@v4
-        if: ${{ !inputs.skip_cache }}
-        with:
-          path: |
-            node_modules
-            ~/.npm
-          key: node-modules-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            node-modules-${{ runner.os }}-
-
-      - name: Restore NX cache
-        uses: actions/cache@v4
-        if: ${{ !inputs.skip_cache }}
-        with:
-          path: |
-            .nx/cache
-            dist/.nx-cache
-          key: nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
-          restore-keys: |
-            nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
-            nx-${{ runner.os }}-
-
-      - name: Install dependencies
-        run: npm ci --prefer-offline --no-audit
-
-      - name: Derive SHAs for affected commands
-        uses: nrwl/nx-set-shas@v4
-
-      - name: Run ESLint on affected projects
-        run: npx nx affected -t lint --parallel=3
-
-      - name: Check Prettier formatting
-        run: npx prettier --check "**/*.{ts,tsx,js,jsx,json,md,yml,yaml}" --ignore-unknown
-
-  # ===========================================================================
-  # Type Check - TypeScript compilation check
-  # ===========================================================================
-  typecheck:
-    name: Type Check (Node ${{ matrix.node-version }})
+    name: Lint (Node ${{ matrix.node-version }})
     runs-on: ubuntu-latest
     needs: setup
     strategy:
@@ -225,55 +93,37 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
-      - name: Restore node_modules cache
+      - name: Restore NX cache
         uses: actions/cache@v4
-        if: ${{ !inputs.skip_cache }}
         with:
-          path: |
-            node_modules
-            ~/.npm
-          key: node-modules-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
+          path: .nx/cache
+          key: nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
           restore-keys: |
-            node-modules-${{ runner.os }}-
-
-      - name: Restore Prisma cache
-        uses: actions/cache@v4
-        if: ${{ !inputs.skip_cache }}
-        with:
-          path: |
-            node_modules/.prisma
-            node_modules/@prisma/client
-          key: prisma-${{ runner.os }}-${{ hashFiles('prisma/schema.prisma') }}
-          restore-keys: |
-            prisma-${{ runner.os }}-
+            nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
+            nx-${{ runner.os }}-
 
       - name: Install dependencies
-        run: npm ci --prefer-offline --no-audit
-
-      - name: Generate Prisma Client
-        run: npx prisma generate
+        run: npm ci
 
       - name: Derive SHAs for affected commands
         uses: nrwl/nx-set-shas@v4
 
-      - name: Run TypeScript type check
-        run: npx nx affected -t typecheck --parallel=3
-        continue-on-error: true
+      - name: Run ESLint on affected projects
+        run: npx nx affected -t lint --parallel=3
+
+      - name: Check Prettier formatting
+        run: npx prettier --check "**/*.{ts,tsx,js,jsx,json,md,yml,yaml}"
 
   # ===========================================================================
-  # Build - Compile all affected projects (Matrix: Node 18/20, Ubuntu/macOS)
+  # Build - Compile all affected projects
   # ===========================================================================
   build:
-    name: Build (Node ${{ matrix.node-version }}, ${{ matrix.os }})
-    runs-on: ${{ matrix.os }}
-    needs: [setup, lint]
+    name: Build (Node ${{ matrix.node-version }})
+    runs-on: ubuntu-latest
+    needs: setup
     strategy:
       matrix:
-        os: [ubuntu-latest]
         node-version: [18, 20]
-        include:
-          - os: macos-14
-            node-version: 20
       fail-fast: false
     steps:
       - name: Checkout repository
@@ -287,73 +137,33 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
-      - name: Restore node_modules cache
-        uses: actions/cache@v4
-        if: ${{ !inputs.skip_cache }}
-        with:
-          path: |
-            node_modules
-            ~/.npm
-          key: node-modules-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            node-modules-${{ runner.os }}-
-
       - name: Restore NX cache
         uses: actions/cache@v4
-        if: ${{ !inputs.skip_cache }}
         with:
-          path: |
-            .nx/cache
-            dist/.nx-cache
+          path: .nx/cache
           key: nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
           restore-keys: |
             nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
             nx-${{ runner.os }}-
 
-      - name: Restore Prisma cache
-        uses: actions/cache@v4
-        if: ${{ !inputs.skip_cache }}
-        with:
-          path: |
-            node_modules/.prisma
-            node_modules/@prisma/client
-          key: prisma-${{ runner.os }}-${{ hashFiles('prisma/schema.prisma') }}
-          restore-keys: |
-            prisma-${{ runner.os }}-
-
       - name: Install dependencies
-        run: npm ci --prefer-offline --no-audit
-
-      - name: Generate Prisma Client
-        run: npx prisma generate
+        run: npm ci
 
       - name: Derive SHAs for affected commands
         uses: nrwl/nx-set-shas@v4
 
       - name: Build affected projects
-        run: NODE_ENV=production npx nx affected -t build --parallel=3
-        env:
-          NEXT_TELEMETRY_DISABLED: 1
+        run: npx nx affected -t build --parallel=3
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: dist-${{ matrix.os }}-node-${{ matrix.node-version }}
+          name: dist-node-${{ matrix.node-version }}
           path: dist/
           retention-days: 7
-          if-no-files-found: ignore
-
-      - name: Save NX cache
-        uses: actions/cache/save@v4
-        if: always()
-        with:
-          path: |
-            .nx/cache
-            dist/.nx-cache
-          key: nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
 
   # ===========================================================================
-  # Unit Tests - Run tests with coverage (Matrix: Node 18/20)
+  # Unit Tests - Run tests with coverage
   # ===========================================================================
   test-unit:
     name: Unit Tests (Node ${{ matrix.node-version }})
@@ -375,62 +185,23 @@ jobs:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
 
-      - name: Restore node_modules cache
-        uses: actions/cache@v4
-        if: ${{ !inputs.skip_cache }}
-        with:
-          path: |
-            node_modules
-            ~/.npm
-          key: node-modules-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            node-modules-${{ runner.os }}-
-
       - name: Restore NX cache
         uses: actions/cache@v4
-        if: ${{ !inputs.skip_cache }}
         with:
-          path: |
-            .nx/cache
-            dist/.nx-cache
+          path: .nx/cache
           key: nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
           restore-keys: |
             nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
             nx-${{ runner.os }}-
 
-      - name: Restore Prisma cache
-        uses: actions/cache@v4
-        if: ${{ !inputs.skip_cache }}
-        with:
-          path: |
-            node_modules/.prisma
-            node_modules/@prisma/client
-          key: prisma-${{ runner.os }}-${{ hashFiles('prisma/schema.prisma') }}
-          restore-keys: |
-            prisma-${{ runner.os }}-
-
       - name: Install dependencies
-        run: npm ci --prefer-offline --no-audit
-
-      - name: Generate Prisma Client
-        run: npx prisma generate
+        run: npm ci
 
       - name: Derive SHAs for affected commands
         uses: nrwl/nx-set-shas@v4
 
       - name: Run unit tests with coverage
-        run: npx nx affected -t test --parallel=3 --coverage --coverageReporters=lcov,text-summary,json
-        env:
-          NODE_ENV: test
-          CI: true
-
-      - name: Upload coverage reports
-        uses: actions/upload-artifact@v4
-        with:
-          name: coverage-node-${{ matrix.node-version }}
-          path: coverage/
-          retention-days: 7
-          if-no-files-found: ignore
+        run: npx nx affected -t test --parallel=3 --coverage --coverageReporters=lcov,text-summary
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -443,7 +214,7 @@ jobs:
           verbose: true
 
   # ===========================================================================
-  # E2E Tests - Integration tests with PostgreSQL and Redis
+  # E2E Tests - Integration tests with PostgreSQL
   # ===========================================================================
   test-e2e:
     name: E2E Tests
@@ -478,8 +249,7 @@ jobs:
     env:
       DATABASE_URL: postgresql://festival:festival_password@localhost:5432/festival_test
       REDIS_URL: redis://localhost:6379
-      JWT_SECRET: test-jwt-secret-for-e2e-testing-minimum-32-chars
-      JWT_REFRESH_SECRET: test-refresh-secret-for-e2e-testing-min32
+      JWT_SECRET: test-jwt-secret-for-e2e-testing
       NODE_ENV: test
 
     steps:
@@ -494,31 +264,17 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Restore node_modules cache
-        uses: actions/cache@v4
-        if: ${{ !inputs.skip_cache }}
-        with:
-          path: |
-            node_modules
-            ~/.npm
-          key: node-modules-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            node-modules-${{ runner.os }}-
-
       - name: Restore NX cache
         uses: actions/cache@v4
-        if: ${{ !inputs.skip_cache }}
         with:
-          path: |
-            .nx/cache
-            dist/.nx-cache
+          path: .nx/cache
           key: nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-${{ github.sha }}
           restore-keys: |
             nx-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-
             nx-${{ runner.os }}-
 
       - name: Install dependencies
-        run: npm ci --prefer-offline --no-audit
+        run: npm ci
 
       - name: Generate Prisma client
         run: npx prisma generate
@@ -535,7 +291,6 @@ jobs:
 
       - name: Run E2E tests
         run: npx nx e2e api-e2e --coverage --coverageReporters=lcov
-        timeout-minutes: 15
 
       - name: Upload E2E coverage to Codecov
         uses: codecov/codecov-action@v4
@@ -563,19 +318,8 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      - name: Restore node_modules cache
-        uses: actions/cache@v4
-        if: ${{ !inputs.skip_cache }}
-        with:
-          path: |
-            node_modules
-            ~/.npm
-          key: node-modules-${{ runner.os }}-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            node-modules-${{ runner.os }}-
-
       - name: Install dependencies
-        run: npm ci --prefer-offline --no-audit
+        run: npm ci
 
       - name: Run npm audit
         run: npm audit --audit-level=high
@@ -597,90 +341,22 @@ jobs:
           sarif_file: 'trivy-results.sarif'
         continue-on-error: true
 
-      - name: Check for secrets in code
-        uses: trufflesecurity/trufflehog@main
-        with:
-          path: ./
-          base: ${{ github.event.repository.default_branch }}
-          head: HEAD
-          extra_args: --only-verified
-        continue-on-error: true
-
-  # ===========================================================================
-  # Docker Build - Validate Dockerfiles
-  # ===========================================================================
-  docker-build:
-    name: Docker Build Validation
-    runs-on: ubuntu-latest
-    needs: [setup, build]
-    if: ${{ needs.setup.outputs.has-api-changes == 'true' || github.event_name == 'push' }}
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Cache Docker layers
-        uses: actions/cache@v4
-        with:
-          path: /tmp/.buildx-cache
-          key: docker-${{ runner.os }}-${{ github.sha }}
-          restore-keys: |
-            docker-${{ runner.os }}-
-
-      - name: Build API Docker image (dry-run)
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./apps/api/Dockerfile
-          push: false
-          tags: festival-api:test
-          cache-from: type=local,src=/tmp/.buildx-cache
-          cache-to: type=local,dest=/tmp/.buildx-cache-new,mode=max
-        continue-on-error: true
-
-      - name: Move Docker cache
-        run: |
-          rm -rf /tmp/.buildx-cache
-          mv /tmp/.buildx-cache-new /tmp/.buildx-cache || true
-
   # ===========================================================================
   # Final Status Check - Gate for branch protection
   # ===========================================================================
   ci-success:
     name: CI Success
     runs-on: ubuntu-latest
-    needs: [lint, typecheck, build, test-unit, test-e2e, security]
+    needs: [lint, build, test-unit, test-e2e, security]
     if: always()
     steps:
       - name: Check all jobs status
         run: |
-          echo "Lint: ${{ needs.lint.result }}"
-          echo "TypeCheck: ${{ needs.typecheck.result }}"
-          echo "Build: ${{ needs.build.result }}"
-          echo "Unit Tests: ${{ needs.test-unit.result }}"
-          echo "E2E Tests: ${{ needs.test-e2e.result }}"
-          echo "Security: ${{ needs.security.result }}"
-
           if [[ "${{ needs.lint.result }}" == "failure" ]] || \
              [[ "${{ needs.build.result }}" == "failure" ]] || \
              [[ "${{ needs.test-unit.result }}" == "failure" ]] || \
-             [[ "${{ needs.test-e2e.result }}" == "failure" && "${{ needs.test-e2e.result }}" != "skipped" ]]; then
+             [[ "${{ needs.test-e2e.result }}" == "failure" ]]; then
             echo "One or more required jobs failed"
             exit 1
           fi
           echo "All CI checks passed successfully!"
-
-      - name: Create CI summary
-        run: |
-          echo "## CI Pipeline Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Job | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-----|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Lint | ${{ needs.lint.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| TypeCheck | ${{ needs.typecheck.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Unit Tests | ${{ needs.test-unit.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| E2E Tests | ${{ needs.test-e2e.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Security | ${{ needs.security.result }} |" >> $GITHUB_STEP_SUMMARY

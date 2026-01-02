@@ -36,11 +36,3 @@ export type {
   ConnectionQuality,
   ConnectionMetrics,
 } from './NetworkDetector';
-
-export { default as DataSyncService, dataSyncService } from './DataSyncService';
-export type {
-  DataSyncConfig,
-  SyncResult,
-  FullSyncResult,
-  SyncDataType,
-} from './DataSyncService';

@@ -13,6 +13,21 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 2. Quand une tâche est terminée, la déplacer de `IN_PROGRESS.md` vers `DONE.md`
 3. Ajouter de nouvelles tâches découvertes dans `IN_PROGRESS.md`
 
+**Après chaque fonctionnalité ajoutée ou tâche terminée:**
+1. Ajouter les fichiers modifiés/créés avec `git add`
+2. Faire un commit avec un message descriptif expliquant ce qui a été fait
+3. **INTERDIT: Ne JAMAIS inclure "Claude", "AI", "assistant" ou toute référence à l'IA dans les messages de commit**
+4. Pousser immédiatement les changements avec `git push`
+5. Ne pas accumuler plusieurs fonctionnalités avant de commit - **1 fonctionnalité = 1 commit + 1 push**
+
+**Convention de messages de commit:**
+- `feat(module): description` - nouvelle fonctionnalité
+- `fix(module): description` - correction de bug
+- `refactor(module): description` - refactoring
+- `docs: description` - documentation
+- `test: description` - ajout/modification de tests
+- `chore: description` - maintenance, dépendances
+
 **Objectif:** Créer la "Ferrari" des applications de gestion de festival - une plateforme complète couvrant tous les besoins d'un festival (billetterie, paiements, cashless, hébergement, programme, food & drinks, etc.)
 
 ## Project Overview

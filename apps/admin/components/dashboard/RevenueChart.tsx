@@ -101,25 +101,26 @@ export default function RevenueChart({ data, loading = false }: RevenueChartProp
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
             <XAxis
               dataKey="date"
-              tickFormatter={(value) => formatDate(value, { day: 'numeric', month: 'short' })}
+              tickFormatter={(value: string) => formatDate(value, { day: 'numeric', month: 'short' })}
               tick={{ fill: '#6b7280', fontSize: 12 }}
               tickLine={false}
               axisLine={{ stroke: '#e5e7eb' }}
             />
             <YAxis
-              tickFormatter={(value) => `${(value / 1000).toFixed(0)}k`}
+              tickFormatter={(value: number) => `${(value / 1000).toFixed(0)}k`}
               tick={{ fill: '#6b7280', fontSize: 12 }}
               tickLine={false}
               axisLine={false}
               width={50}
             />
             <Tooltip
-              content={({ active, payload, label }) => {
+              content={(props) => {
+                const { active, payload, label } = props;
                 if (active && payload && payload.length) {
                   return (
                     <div className="bg-white px-4 py-3 rounded-lg shadow-lg border border-gray-200">
                       <p className="text-sm text-gray-500 mb-1">
-                        {formatDate(label, { weekday: 'long', day: 'numeric', month: 'long' })}
+                        {formatDate(String(label ?? ''), { weekday: 'long', day: 'numeric', month: 'long' })}
                       </p>
                       <p className="text-lg font-semibold text-gray-900">
                         {formatCurrency(payload[0]?.value as number)}
