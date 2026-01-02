@@ -110,10 +110,11 @@ export class FestivalsService {
 
   /**
    * Get all festivals with pagination and filters
+   * Optimized: Uses select to fetch only needed fields, proper pagination
    */
   async findAll(query: FestivalQueryDto): Promise<PaginatedFestivalsResponse> {
     const page = query.page || 1;
-    const limit = query.limit || 20;
+    const limit = Math.min(query.limit || 20, 100); // Max 100 items per page
     const skip = (page - 1) * limit;
 
     // Build where clause
@@ -164,16 +165,40 @@ export class FestivalsService {
       orderBy.startDate = 'asc';
     }
 
-    // Execute query
+    // Execute query with optimized select
     const [festivals, total] = await Promise.all([
       this.prisma.festival.findMany({
         where,
         skip,
         take: limit,
         orderBy,
-        include: {
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          description: true,
+          location: true,
+          address: true,
+          startDate: true,
+          endDate: true,
+          status: true,
+          maxCapacity: true,
+          logoUrl: true,
+          bannerUrl: true,
+          websiteUrl: true,
+          contactEmail: true,
+          timezone: true,
+          currency: true,
+          organizerId: true,
+          createdAt: true,
+          updatedAt: true,
           organizer: {
-            select: { id: true, email: true, firstName: true, lastName: true },
+            select: {
+              id: true,
+              email: true,
+              firstName: true,
+              lastName: true
+            },
           },
         },
       }),
@@ -195,22 +220,46 @@ export class FestivalsService {
 
   /**
    * Get a festival by ID
+   * Optimized: Uses select instead of include to fetch only needed fields
    */
   async findOne(id: string): Promise<FestivalResponseDto> {
-    const festival = await this.prisma.festival.findUnique({
-      where: { id },
-      include: {
+    const festival = await this.prisma.festival.findFirst({
+      where: {
+        id,
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        location: true,
+        address: true,
+        startDate: true,
+        endDate: true,
+        status: true,
+        maxCapacity: true,
+        logoUrl: true,
+        bannerUrl: true,
+        websiteUrl: true,
+        contactEmail: true,
+        timezone: true,
+        currency: true,
+        organizerId: true,
+        createdAt: true,
+        updatedAt: true,
         organizer: {
-          select: { id: true, email: true, firstName: true, lastName: true },
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true
+          },
         },
       },
     });
 
     if (!festival) {
-      throw new NotFoundException('Festival not found');
-    }
-
-    if (festival.isDeleted) {
       throw new NotFoundException('Festival not found');
     }
 
@@ -219,13 +268,41 @@ export class FestivalsService {
 
   /**
    * Get a festival by slug
+   * Optimized: Uses findFirst with where clause to combine slug and isDeleted checks
    */
   async findBySlug(slug: string): Promise<FestivalResponseDto> {
-    const festival = await this.prisma.festival.findUnique({
-      where: { slug },
-      include: {
+    const festival = await this.prisma.festival.findFirst({
+      where: {
+        slug,
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        description: true,
+        location: true,
+        address: true,
+        startDate: true,
+        endDate: true,
+        status: true,
+        maxCapacity: true,
+        logoUrl: true,
+        bannerUrl: true,
+        websiteUrl: true,
+        contactEmail: true,
+        timezone: true,
+        currency: true,
+        organizerId: true,
+        createdAt: true,
+        updatedAt: true,
         organizer: {
-          select: { id: true, email: true, firstName: true, lastName: true },
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true
+          },
         },
       },
     });
@@ -234,29 +311,30 @@ export class FestivalsService {
       throw new NotFoundException('Festival not found');
     }
 
-    if (festival.isDeleted) {
-      throw new NotFoundException('Festival not found');
-    }
-
     return this.mapToResponse(festival);
   }
 
   /**
    * Update a festival
+   * Optimized: Uses findFirst to check existence and isDeleted in one query
    */
   async update(
     id: string,
     dto: UpdateFestivalDto,
   ): Promise<FestivalResponseDto> {
-    const festival = await this.prisma.festival.findUnique({
-      where: { id },
+    const festival = await this.prisma.festival.findFirst({
+      where: {
+        id,
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        status: true,
+        startDate: true,
+      },
     });
 
     if (!festival) {
-      throw new NotFoundException('Festival not found');
-    }
-
-    if (festival.isDeleted) {
       throw new NotFoundException('Festival not found');
     }
 
@@ -317,16 +395,17 @@ export class FestivalsService {
 
   /**
    * Delete a festival (soft delete)
+   * Optimized: Uses count instead of fetching all tickets
    */
   async remove(id: string): Promise<void> {
-    const festival = await this.prisma.festival.findUnique({
-      where: { id },
-      include: {
-        tickets: {
-          where: {
-            status: { in: ['SOLD', 'RESERVED'] },
-          },
-        },
+    const festival = await this.prisma.festival.findFirst({
+      where: {
+        id,
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        status: true,
       },
     });
 
@@ -334,12 +413,15 @@ export class FestivalsService {
       throw new NotFoundException('Festival not found');
     }
 
-    if (festival.isDeleted) {
-      throw new NotFoundException('Festival not found');
-    }
+    // Check if tickets have been sold using count instead of fetching all
+    const soldTicketsCount = await this.prisma.ticket.count({
+      where: {
+        festivalId: id,
+        status: { in: ['SOLD', 'RESERVED'] },
+      },
+    });
 
-    // Cannot delete if tickets have been sold
-    if (festival.tickets.length > 0) {
+    if (soldTicketsCount > 0) {
       throw new BadRequestException(
         'Cannot delete a festival that has sold tickets. Consider cancelling instead.',
       );
@@ -366,17 +448,21 @@ export class FestivalsService {
 
   /**
    * Get festival statistics
+   * Optimized: Only fetch needed fields for validation
    */
   async getStats(id: string): Promise<FestivalStatsDto> {
-    const festival = await this.prisma.festival.findUnique({
-      where: { id },
+    const festival = await this.prisma.festival.findFirst({
+      where: {
+        id,
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        maxCapacity: true,
+      },
     });
 
     if (!festival) {
-      throw new NotFoundException('Festival not found');
-    }
-
-    if (festival.isDeleted) {
       throw new NotFoundException('Festival not found');
     }
 
@@ -433,20 +519,24 @@ export class FestivalsService {
 
   /**
    * Publish a festival
+   * Optimized: Use count instead of fetching all ticket categories
    */
   async publish(id: string): Promise<FestivalResponseDto> {
-    const festival = await this.prisma.festival.findUnique({
-      where: { id },
-      include: {
-        ticketCategories: true,
+    const festival = await this.prisma.festival.findFirst({
+      where: {
+        id,
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        status: true,
+        name: true,
+        startDate: true,
+        endDate: true,
       },
     });
 
     if (!festival) {
-      throw new NotFoundException('Festival not found');
-    }
-
-    if (festival.isDeleted) {
       throw new NotFoundException('Festival not found');
     }
 
@@ -463,8 +553,12 @@ export class FestivalsService {
       );
     }
 
-    // Check if at least one ticket category exists
-    if (festival.ticketCategories.length === 0) {
+    // Check if at least one ticket category exists using count
+    const categoryCount = await this.prisma.ticketCategory.count({
+      where: { festivalId: id },
+    });
+
+    if (categoryCount === 0) {
       throw new BadRequestException(
         'Festival must have at least one ticket category before publishing',
       );
@@ -487,17 +581,21 @@ export class FestivalsService {
 
   /**
    * Cancel a festival
+   * Optimized: Only fetch needed fields
    */
   async cancel(id: string): Promise<FestivalResponseDto> {
-    const festival = await this.prisma.festival.findUnique({
-      where: { id },
+    const festival = await this.prisma.festival.findFirst({
+      where: {
+        id,
+        isDeleted: false,
+      },
+      select: {
+        id: true,
+        status: true,
+      },
     });
 
     if (!festival) {
-      throw new NotFoundException('Festival not found');
-    }
-
-    if (festival.isDeleted) {
       throw new NotFoundException('Festival not found');
     }
 

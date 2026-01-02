@@ -212,11 +212,16 @@ export class UsersService {
   /**
    * Get paginated list of users with filters.
    * Admin only.
+   * Optimized: Proper pagination with skip/take, max limit enforced
    */
   async findAll(
     query: UserQueryDto,
     currentUser: AuthenticatedUser,
   ): Promise<PaginatedResponse<UserEntity>> {
+    const page = query.page || 1;
+    const limit = Math.min(query.limit || 10, 100); // Max 100 items per page
+    const skip = (page - 1) * limit;
+
     // Build where clause for filters
     const where: Prisma.UserWhereInput = {};
 
@@ -262,8 +267,8 @@ export class UsersService {
       this.prisma.user.findMany({
         where,
         select: this.userSelect,
-        skip: query.skip,
-        take: query.take,
+        skip,
+        take: limit,
         orderBy,
       }),
       this.prisma.user.count({ where }),
@@ -277,15 +282,16 @@ export class UsersService {
     return {
       items: users.map((user) => new UserEntity(user)),
       total,
-      page: query.page || 1,
-      limit: query.limit || 10,
-      totalPages: Math.ceil(total / (query.limit || 10)),
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit),
     };
   }
 
   /**
    * Search users by email or name (autocomplete).
    * Admin only.
+   * Optimized: Limited result set with max limit enforced
    */
   async search(
     query: UserSearchDto,
@@ -296,6 +302,7 @@ export class UsersService {
     }
 
     const searchTerm = query.q.trim();
+    const limit = Math.min(query.limit || 10, 50); // Max 50 for autocomplete
 
     const users = await this.prisma.user.findMany({
       where: {
@@ -306,7 +313,7 @@ export class UsersService {
         ],
       },
       select: this.userSelect,
-      take: query.limit || 10,
+      take: limit,
       orderBy: { email: 'asc' },
     });
 
@@ -350,6 +357,7 @@ export class UsersService {
   /**
    * Update user profile.
    * Admin can update any user, users can only update themselves.
+   * Optimized: Only fetch fields needed for validation
    */
   async update(
     id: string,
@@ -360,8 +368,13 @@ export class UsersService {
       throw new ForbiddenException('You can only update your own profile');
     }
 
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findFirst({
       where: { id },
+      select: {
+        id: true,
+        email: true,
+        passwordHash: true,
+      },
     });
 
     if (!user) {
@@ -460,12 +473,13 @@ export class UsersService {
   /**
    * Soft delete (deactivate) a user.
    * Admin only.
+   * Optimized: Only fetch needed fields
    */
   async deactivate(
     id: string,
     currentUser: AuthenticatedUser,
   ): Promise<{ message: string }> {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findFirst({
       where: { id },
       select: { id: true, email: true, role: true, status: true },
     });
@@ -505,13 +519,14 @@ export class UsersService {
   /**
    * Change user role.
    * Admin only.
+   * Optimized: Only fetch needed fields for validation
    */
   async changeRole(
     id: string,
     dto: ChangeRoleDto,
     currentUser: AuthenticatedUser,
   ): Promise<UserEntity> {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findFirst({
       where: { id },
       select: { id: true, email: true, role: true },
     });
@@ -555,13 +570,14 @@ export class UsersService {
   /**
    * Ban a user.
    * Admin only.
+   * Optimized: Only fetch needed fields
    */
   async ban(
     id: string,
     dto: BanUserDto,
     currentUser: AuthenticatedUser,
   ): Promise<{ message: string }> {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findFirst({
       where: { id },
       select: { id: true, email: true, role: true, status: true },
     });
@@ -608,13 +624,14 @@ export class UsersService {
   /**
    * Unban a user.
    * Admin only.
+   * Optimized: Only fetch needed fields
    */
   async unban(
     id: string,
     dto: UnbanUserDto,
     currentUser: AuthenticatedUser,
   ): Promise<{ message: string }> {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prisma.user.findFirst({
       where: { id },
       select: { id: true, email: true, status: true },
     });
@@ -647,6 +664,7 @@ export class UsersService {
   /**
    * Get user activity history.
    * Admin only.
+   * Optimized: Limit audit logs, use count for tickets/payments
    */
   async getActivity(
     id: string,
@@ -667,9 +685,18 @@ export class UsersService {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    // Get audit logs for this user
+    // Get audit logs for this user (limited to most recent 50)
     const auditLogs = await this.prisma.auditLog.findMany({
       where: { entityId: id, entityType: 'User' },
+      select: {
+        id: true,
+        action: true,
+        newValue: true,
+        userId: true,
+        createdAt: true,
+        ipAddress: true,
+        userAgent: true,
+      },
       orderBy: { createdAt: 'desc' },
       take: 50,
     });

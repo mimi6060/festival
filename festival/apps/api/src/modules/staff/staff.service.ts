@@ -115,6 +115,7 @@ export class StaffService {
 
   /**
    * Get all staff members for a festival
+   * Optimized: Uses select instead of include, enforces max limit
    */
   async getStaffMembers(
     festivalId: string,
@@ -127,6 +128,8 @@ export class StaffService {
     },
   ) {
     const { department, role, isActive, page = 1, limit = 50 } = options || {};
+    const maxLimit = Math.min(limit, 100); // Max 100 items per page
+    const skip = (page - 1) * maxLimit;
 
     const where: Prisma.StaffMemberWhereInput = {
       festivalId,
@@ -138,7 +141,20 @@ export class StaffService {
     const [staffMembers, total] = await Promise.all([
       this.prisma.staffMember.findMany({
         where,
-        include: {
+        select: {
+          id: true,
+          userId: true,
+          festivalId: true,
+          roleId: true,
+          department: true,
+          employeeCode: true,
+          phone: true,
+          emergencyContact: true,
+          badgeNumber: true,
+          notes: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
           user: {
             select: {
               id: true,
@@ -148,10 +164,16 @@ export class StaffService {
               phone: true,
             },
           },
-          role: true,
+          role: {
+            select: {
+              id: true,
+              name: true,
+              permissions: true,
+            },
+          },
         },
-        skip: (page - 1) * limit,
-        take: limit,
+        skip,
+        take: maxLimit,
         orderBy: { createdAt: 'desc' },
       }),
       this.prisma.staffMember.count({ where }),
@@ -161,18 +183,32 @@ export class StaffService {
       items: staffMembers,
       total,
       page,
-      limit,
-      totalPages: Math.ceil(total / limit),
+      limit: maxLimit,
+      totalPages: Math.ceil(total / maxLimit),
     };
   }
 
   /**
    * Get a staff member by ID
+   * Optimized: Uses select instead of include, limits related data
    */
   async getStaffMember(id: string) {
     const staffMember = await this.prisma.staffMember.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        userId: true,
+        festivalId: true,
+        roleId: true,
+        department: true,
+        employeeCode: true,
+        phone: true,
+        emergencyContact: true,
+        badgeNumber: true,
+        notes: true,
+        isActive: true,
+        createdAt: true,
+        updatedAt: true,
         user: {
           select: {
             id: true,
@@ -191,11 +227,36 @@ export class StaffService {
             endDate: true,
           },
         },
-        role: true,
+        role: {
+          select: {
+            id: true,
+            name: true,
+            permissions: true,
+          },
+        },
         shifts: {
+          select: {
+            id: true,
+            startTime: true,
+            endTime: true,
+            zoneId: true,
+            title: true,
+            breakDuration: true,
+            status: true,
+            notes: true,
+          },
           orderBy: { startTime: 'asc' },
+          take: 50, // Limit shifts to most recent/upcoming 50
         },
         checkIns: {
+          select: {
+            id: true,
+            checkInTime: true,
+            checkOutTime: true,
+            location: true,
+            checkInMethod: true,
+            notes: true,
+          },
           orderBy: { checkInTime: 'desc' },
           take: 10,
         },
@@ -211,17 +272,29 @@ export class StaffService {
 
   /**
    * Update a staff member
+   * Optimized: Only fetch needed fields for permission check
    */
   async updateStaffMember(
     id: string,
     dto: UpdateStaffMemberDto,
     currentUser: AuthenticatedUser,
   ) {
-    const staffMember = await this.getStaffMember(id);
+    const staffMember = await this.prisma.staffMember.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        festivalId: true,
+      },
+    });
 
-    // Check permissions
+    if (!staffMember) {
+      throw new NotFoundException(`Staff member with ID ${id} not found`);
+    }
+
+    // Check permissions - only fetch organizerId
     const festival = await this.prisma.festival.findUnique({
       where: { id: staffMember.festivalId },
+      select: { organizerId: true },
     });
 
     if (
@@ -262,12 +335,24 @@ export class StaffService {
 
   /**
    * Delete a staff member assignment
+   * Optimized: Only fetch needed fields for permission check
    */
   async deleteStaffMember(id: string, currentUser: AuthenticatedUser) {
-    const staffMember = await this.getStaffMember(id);
+    const staffMember = await this.prisma.staffMember.findUnique({
+      where: { id },
+      select: {
+        id: true,
+        festivalId: true,
+      },
+    });
+
+    if (!staffMember) {
+      throw new NotFoundException(`Staff member with ID ${id} not found`);
+    }
 
     const festival = await this.prisma.festival.findUnique({
       where: { id: staffMember.festivalId },
+      select: { organizerId: true },
     });
 
     if (
@@ -290,13 +375,25 @@ export class StaffService {
 
   /**
    * Create a shift for a staff member
+   * Optimized: Only fetch needed fields for permission check
    */
   async createShift(dto: CreateShiftDto & { staffMemberId: string }, currentUser: AuthenticatedUser) {
-    const staffMember = await this.getStaffMember(dto.staffMemberId);
+    const staffMember = await this.prisma.staffMember.findUnique({
+      where: { id: dto.staffMemberId },
+      select: {
+        id: true,
+        festivalId: true,
+      },
+    });
 
-    // Check permissions
+    if (!staffMember) {
+      throw new NotFoundException(`Staff member with ID ${dto.staffMemberId} not found`);
+    }
+
+    // Check permissions - only fetch organizerId
     const festival = await this.prisma.festival.findUnique({
       where: { id: staffMember.festivalId },
+      select: { organizerId: true },
     });
 
     if (
@@ -350,6 +447,7 @@ export class StaffService {
 
   /**
    * Get shifts for a staff member
+   * Optimized: Uses select instead of include, limits check-ins
    */
   async getShifts(
     staffMemberId: string,
@@ -367,7 +465,18 @@ export class StaffService {
 
     return this.prisma.staffShift.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        staffMemberId: true,
+        startTime: true,
+        endTime: true,
+        zoneId: true,
+        title: true,
+        breakDuration: true,
+        status: true,
+        notes: true,
+        createdAt: true,
+        updatedAt: true,
         zone: {
           select: {
             id: true,
@@ -375,7 +484,16 @@ export class StaffService {
           },
         },
         checkIns: {
+          select: {
+            id: true,
+            checkInTime: true,
+            checkOutTime: true,
+            location: true,
+            checkInMethod: true,
+            notes: true,
+          },
           orderBy: { checkInTime: 'desc' },
+          take: 10, // Limit to most recent 10 check-ins per shift
         },
       },
       orderBy: { startTime: 'asc' },
@@ -384,6 +502,7 @@ export class StaffService {
 
   /**
    * Update a shift
+   * Optimized: Only fetch needed fields for permission check
    */
   async updateShift(
     id: string,
@@ -392,10 +511,16 @@ export class StaffService {
   ) {
     const shift = await this.prisma.staffShift.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
         staffMember: {
-          include: {
-            festival: true,
+          select: {
+            festivalId: true,
+            festival: {
+              select: {
+                organizerId: true,
+              },
+            },
           },
         },
       },
@@ -446,14 +571,20 @@ export class StaffService {
 
   /**
    * Delete a shift
+   * Optimized: Only fetch needed fields for permission check
    */
   async deleteShift(id: string, currentUser: AuthenticatedUser) {
     const shift = await this.prisma.staffShift.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
         staffMember: {
-          include: {
-            festival: true,
+          select: {
+            festival: {
+              select: {
+                organizerId: true,
+              },
+            },
           },
         },
       },
@@ -481,16 +612,18 @@ export class StaffService {
 
   /**
    * Staff check-in for a shift
+   * Optimized: Use count instead of fetching all check-ins
    */
   async checkIn(shiftId: string, dto: CheckInDto, userId: string) {
     const shift = await this.prisma.staffShift.findUnique({
       where: { id: shiftId },
-      include: {
-        staffMember: true,
-        checkIns: {
-          where: { checkOutTime: null },
-          orderBy: { checkInTime: 'desc' },
-          take: 1,
+      select: {
+        id: true,
+        staffMember: {
+          select: {
+            id: true,
+            userId: true,
+          },
         },
       },
     });
@@ -511,8 +644,15 @@ export class StaffService {
       }
     }
 
-    // Check if there's already an active check-in (no checkout) for this shift
-    if (shift.checkIns.length > 0) {
+    // Check if there's already an active check-in (no checkout) for this shift using count
+    const activeCheckInCount = await this.prisma.staffCheckIn.count({
+      where: {
+        shiftId,
+        checkOutTime: null,
+      },
+    });
+
+    if (activeCheckInCount > 0) {
       throw new BadRequestException('Already checked in for this shift');
     }
 
@@ -547,16 +687,18 @@ export class StaffService {
 
   /**
    * Staff check-out for a shift
+   * Optimized: Use findFirst to get active check-in directly
    */
   async checkOut(shiftId: string, dto: CheckInDto, userId: string) {
     const shift = await this.prisma.staffShift.findUnique({
       where: { id: shiftId },
-      include: {
-        staffMember: true,
-        checkIns: {
-          where: { checkOutTime: null },
-          orderBy: { checkInTime: 'desc' },
-          take: 1,
+      select: {
+        id: true,
+        staffMember: {
+          select: {
+            id: true,
+            userId: true,
+          },
         },
       },
     });
@@ -577,8 +719,19 @@ export class StaffService {
       }
     }
 
-    // Find the active check-in record
-    const activeCheckIn = shift.checkIns[0];
+    // Find the active check-in record using findFirst
+    const activeCheckIn = await this.prisma.staffCheckIn.findFirst({
+      where: {
+        shiftId,
+        checkOutTime: null,
+      },
+      orderBy: { checkInTime: 'desc' },
+      select: {
+        id: true,
+        notes: true,
+      },
+    });
+
     if (!activeCheckIn) {
       throw new BadRequestException('Must check in before checking out');
     }
