@@ -155,6 +155,12 @@ export default function FestivalDetailPage({ params }: FestivalDetailPageProps) 
           Lineup
         </Link>
         <Link
+          href={`/festivals/${id}/vendors`}
+          className="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap"
+        >
+          Vendeurs
+        </Link>
+        <Link
           href={`/festivals/${id}/stages`}
           className="px-4 py-3 text-sm font-medium text-gray-500 hover:text-gray-700 whitespace-nowrap"
         >
