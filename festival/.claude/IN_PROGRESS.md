@@ -50,34 +50,35 @@ Build command: `NODE_ENV=production npx nx build admin`
 
 ## Tests UI/UX - Boutons et Formulaires (2026-01-02)
 
-### Admin App (localhost:4300) - TO TEST
+### Admin App CRUD Fixes - COMPLETED (2026-01-02)
 
-**Page Festivals:**
-- [ ] Bouton "Nouveau festival" - creation fonctionne
-- [ ] Bouton "Modifier" sur chaque festival - edition fonctionne
-- [ ] Bouton "Supprimer" - suppression avec confirmation
-- [ ] Filtres de recherche fonctionnels
+**Page Festivals:** - FIXED
+- [x] Bouton "Nouveau festival" - creation fonctionne (local state management)
+- [x] Bouton "Modifier" sur chaque festival - edition fonctionne
+- [x] Bouton "Supprimer" - suppression avec confirmation
+- [x] Filtres de recherche fonctionnels
 
-**Page Tickets:**
-- [ ] Bouton "Nouvelle categorie" - creation de categorie
-- [ ] Bouton "Modifier categorie" - edition
-- [ ] Bouton "Supprimer categorie" - suppression
+**Page Tickets:** - FIXED
+- [x] Bouton "Nouvelle categorie" - creation de categorie (fixed form ID, closeModal helper)
+- [x] Bouton "Modifier categorie" - edition
+- [x] Bouton "Supprimer categorie" - suppression
 
-**Page Utilisateurs:**
-- [ ] Bouton "Nouvel utilisateur" - creation
-- [ ] Bouton "Modifier" - edition
-- [ ] Bouton "Activer/Desactiver" - toggle status
-- [ ] Filtres de role fonctionnels
+**Page Utilisateurs:** - FIXED
+- [x] Bouton "Nouvel utilisateur" - creation
+- [x] Bouton "Modifier" - edition
+- [x] Bouton "Supprimer" - suppression avec confirmation (deleteUser function ajoutee)
+- [x] Filtres de role fonctionnels
 
-**Page Staff:**
-- [ ] Bouton "Nouveau staff" - creation
-- [ ] Bouton "Modifier permissions" - edition
-- [ ] Bouton "Supprimer" - suppression
+**Page Staff:** - FIXED
+- [x] Bouton "Nouveau staff" - creation (submit button moved inside form)
+- [x] Bouton "Modifier permissions" - edition
+- [x] Bouton "Supprimer" - suppression
 
-**Page Zones:**
-- [ ] Bouton "Nouvelle zone" - creation
-- [ ] Bouton "Modifier" - edition
-- [ ] Bouton "Supprimer" - suppression
+**Page Zones:** - FIXED
+- [x] Bouton "Nouvelle zone" - creation
+- [x] Bouton "Modifier" - edition
+- [x] Bouton "Supprimer" - suppression
+- [x] Stats using localZones instead of mockZones
 
 **Page Cashless:**
 - [ ] Bouton "Recharger" - topup compte
