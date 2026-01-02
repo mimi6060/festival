@@ -177,5 +177,24 @@ Derniere mise a jour: 2026-01-02 - Phase Payments Avancee (Stripe Checkout, Conn
 - [x] Systeme de logs d'activite (activity logs page)
 - [x] Filtres avances et export pour audit
 
+### Phase Monitoring Avancee (2026-01-02) - COMPLETED
+- [x] Regles d'alertes Prometheus (alerts.yml - 40+ alertes)
+  - Infrastructure (memory, uptime, instance health)
+  - HTTP/API (error rates, latency, traffic anomalies)
+  - Database (errors, slow queries, load)
+  - Cache (hit rate, keys)
+  - Business (tickets, payments, cashless, zones, vendors)
+  - SLA (availability, response time, payment success)
+- [x] Recording rules Prometheus (recording_rules.yml - metriques pre-calculees)
+- [x] Configuration Prometheus (prometheus.yml - scrape configs K8s)
+- [x] Dashboards Grafana JSON:
+  - api-overview.json (HTTP, latency, cache, system)
+  - business-metrics.json (revenue, tickets, cashless, zones)
+  - alerts-overview.json (active alerts, SLA, history)
+- [x] Provisioning Grafana (datasources, dashboards)
+- [x] Script health-check.sh (multi-env, JSON output, services checks)
+- [x] AlertsService (in-app alerting, notifications webhook/slack)
+- [x] HealthIndicatorsService (DB, Redis, memory, disk, event loop)
+
 ---
-Derniere mise a jour: 2026-01-02 - Phase Admin Dashboard Avancee (Rapports, Export, WebSocket, Notifications, Activity Logs)
+Derniere mise a jour: 2026-01-02 - Phase Monitoring Avancee (Prometheus, Grafana, Health Check, Alerts)
