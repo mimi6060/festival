@@ -1,0 +1,37 @@
+# ============================================================================
+# Festival Platform - Production Environment Variables Example
+# ============================================================================
+# Copy this file to terraform.tfvars and fill in your values
+# DO NOT commit terraform.tfvars to version control!
+# Use AWS Secrets Manager or environment variables for sensitive values
+# ============================================================================
+
+# AWS Region
+aws_region = "eu-west-1"
+
+# Database
+database_username = "festival_admin"
+
+# Container images (use your ECR registry)
+api_image   = "123456789.dkr.ecr.eu-west-1.amazonaws.com/festival/api:v1.0.0"
+web_image   = "123456789.dkr.ecr.eu-west-1.amazonaws.com/festival/web:v1.0.0"
+admin_image = "123456789.dkr.ecr.eu-west-1.amazonaws.com/festival/admin:v1.0.0"
+
+# Domain
+domain_name = "festival.example.com"
+
+# Stripe LIVE keys (be very careful!)
+stripe_secret_key     = "sk_live_..."
+stripe_webhook_secret = "whsec_..."
+
+# Alerting
+alert_email        = "ops-team@example.com"
+pagerduty_endpoint = "https://events.pagerduty.com/integration/xxxxx/enqueue"
+
+# Infrastructure options
+enable_vpn          = false
+use_eks             = false
+eks_cluster_version = "1.28"
+
+# Budget
+monthly_budget_limit = "5000"
