@@ -1,0 +1,218 @@
+{{!--
+  Welcome Email Template
+  Sent after successful user registration
+
+  Variables:
+  - userName: User's first name or full name
+  - userEmail: User's email address
+  - festivalName: Name of the festival
+  - festivalUrl: Festival website URL
+  - dashboardUrl: Link to user dashboard
+  - lang_fr: Boolean for French language
+  - primaryColor: Brand primary color
+  - secondaryColor: Brand secondary color
+  - All common variables from layout
+--}}
+
+{{#if lang_fr}}
+<!-- French Version -->
+<h1 style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a2e; line-height: 36px;">
+  Bienvenue {{userName}} !
+</h1>
+
+<p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  Nous sommes ravis de vous accueillir sur <strong>{{festivalName}}</strong> ! Votre compte a ete cree avec succes.
+</p>
+
+<p style="margin: 0 0 25px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  Vous pouvez maintenant :
+</p>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 25px;">
+  <tr>
+    <td style="padding: 12px 0;">
+      <table border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="width: 30px; vertical-align: top;">
+            <span style="font-size: 18px; color: {{primaryColor}};">&#10003;</span>
+          </td>
+          <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; color: #4a4a4a; line-height: 24px;">
+            <strong>Acheter vos billets</strong> pour le festival
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding: 12px 0;">
+      <table border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="width: 30px; vertical-align: top;">
+            <span style="font-size: 18px; color: {{primaryColor}};">&#10003;</span>
+          </td>
+          <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; color: #4a4a4a; line-height: 24px;">
+            <strong>Recharger votre compte cashless</strong> pour des paiements rapides sur place
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding: 12px 0;">
+      <table border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="width: 30px; vertical-align: top;">
+            <span style="font-size: 18px; color: {{primaryColor}};">&#10003;</span>
+          </td>
+          <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; color: #4a4a4a; line-height: 24px;">
+            <strong>Consulter le programme</strong> et creer votre planning personnalise
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding: 12px 0;">
+      <table border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="width: 30px; vertical-align: top;">
+            <span style="font-size: 18px; color: {{primaryColor}};">&#10003;</span>
+          </td>
+          <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; color: #4a4a4a; line-height: 24px;">
+            <strong>Acceder a la carte interactive</strong> du site
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+{{> button
+  url=dashboardUrl
+  text="Acceder a mon espace"
+  align="center"
+  showFallback=true
+}}
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 8px;">
+  <tr>
+    <td>
+      <h3 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; color: #1a1a2e;">
+        Vos informations de connexion
+      </h3>
+      <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #4a4a4a; line-height: 22px;">
+        <strong>Email :</strong> {{userEmail}}
+      </p>
+    </td>
+  </tr>
+</table>
+
+<p style="margin: 30px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  A tres bientot au festival !
+</p>
+
+<p style="margin: 20px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #1a1a2e; font-weight: 600;">
+  L'equipe {{festivalName}}
+</p>
+
+{{else}}
+<!-- English Version -->
+<h1 style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a2e; line-height: 36px;">
+  Welcome {{userName}}!
+</h1>
+
+<p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  We're thrilled to have you on <strong>{{festivalName}}</strong>! Your account has been successfully created.
+</p>
+
+<p style="margin: 0 0 25px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  You can now:
+</p>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-bottom: 25px;">
+  <tr>
+    <td style="padding: 12px 0;">
+      <table border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="width: 30px; vertical-align: top;">
+            <span style="font-size: 18px; color: {{primaryColor}};">&#10003;</span>
+          </td>
+          <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; color: #4a4a4a; line-height: 24px;">
+            <strong>Purchase tickets</strong> for the festival
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding: 12px 0;">
+      <table border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="width: 30px; vertical-align: top;">
+            <span style="font-size: 18px; color: {{primaryColor}};">&#10003;</span>
+          </td>
+          <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; color: #4a4a4a; line-height: 24px;">
+            <strong>Top up your cashless account</strong> for fast on-site payments
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding: 12px 0;">
+      <table border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="width: 30px; vertical-align: top;">
+            <span style="font-size: 18px; color: {{primaryColor}};">&#10003;</span>
+          </td>
+          <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; color: #4a4a4a; line-height: 24px;">
+            <strong>Browse the lineup</strong> and create your personalized schedule
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+  <tr>
+    <td style="padding: 12px 0;">
+      <table border="0" cellpadding="0" cellspacing="0">
+        <tr>
+          <td style="width: 30px; vertical-align: top;">
+            <span style="font-size: 18px; color: {{primaryColor}};">&#10003;</span>
+          </td>
+          <td style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 15px; color: #4a4a4a; line-height: 24px;">
+            <strong>Access the interactive map</strong> of the venue
+          </td>
+        </tr>
+      </table>
+    </td>
+  </tr>
+</table>
+
+{{> button
+  url=dashboardUrl
+  text="Go to my dashboard"
+  align="center"
+  showFallback=true
+}}
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin-top: 30px; padding: 20px; background-color: #f8f9fa; border-radius: 8px;">
+  <tr>
+    <td>
+      <h3 style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; color: #1a1a2e;">
+        Your login information
+      </h3>
+      <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #4a4a4a; line-height: 22px;">
+        <strong>Email:</strong> {{userEmail}}
+      </p>
+    </td>
+  </tr>
+</table>
+
+<p style="margin: 30px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  See you at the festival!
+</p>
+
+<p style="margin: 20px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #1a1a2e; font-weight: 600;">
+  The {{festivalName}} Team
+</p>
+{{/if}}

@@ -1,0 +1,115 @@
+# =============================================================================
+# PR Checks - Festival Monorepo
+# =============================================================================
+# Lightweight checks that run on every PR to provide fast feedback
+# =============================================================================
+
+name: PR Checks
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: pr-checks-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  # ===========================================================================
+  # PR Metadata Validation
+  # ===========================================================================
+  pr-validation:
+    name: PR Validation
+    runs-on: ubuntu-latest
+    if: github.event.pull_request.draft == false
+    steps:
+      - name: Check PR title format
+        uses: amannn/action-semantic-pull-request@v5
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          types: |
+            feat
+            fix
+            docs
+            style
+            refactor
+            perf
+            test
+            build
+            ci
+            chore
+            revert
+          requireScope: false
+          subjectPattern: ^.{1,80}$
+          subjectPatternError: |
+            The subject "{subject}" found in the PR title must be 80 characters or less.
+
+      - name: Check PR description
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const body = pr.body || '';
+
+            if (body.length < 50) {
+              core.setFailed('PR description is too short. Please provide more context about your changes.');
+            }
+
+            const requiredSections = ['## Summary', '## Test'];
+            const missingSections = requiredSections.filter(section =>
+              !body.toLowerCase().includes(section.toLowerCase())
+            );
+
+            if (missingSections.length > 0 && !body.includes('dependabot')) {
+              core.warning(`Consider adding these sections: ${missingSections.join(', ')}`);
+            }
+
+  # ===========================================================================
+  # Size Check
+  # ===========================================================================
+  size-check:
+    name: PR Size Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check PR size
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            const additions = pr.additions;
+            const deletions = pr.deletions;
+            const total = additions + deletions;
+
+            let label = 'size/S';
+            if (total > 1000) {
+              label = 'size/XL';
+              core.warning('This PR is very large. Consider breaking it into smaller PRs.');
+            } else if (total > 500) {
+              label = 'size/L';
+            } else if (total > 100) {
+              label = 'size/M';
+            }
+
+            await github.rest.issues.addLabels({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: pr.number,
+              labels: [label]
+            });
+
+  # ===========================================================================
+  # Conflict Check
+  # ===========================================================================
+  conflict-check:
+    name: Conflict Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check for merge conflicts
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request;
+            if (pr.mergeable === false) {
+              core.setFailed('This PR has merge conflicts that must be resolved.');
+            }
