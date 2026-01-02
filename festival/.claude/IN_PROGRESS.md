@@ -17,7 +17,7 @@ Voir `.claude/DONE.md` pour le détail complet.
 - [x] Installation @swc/cli et @nx/esbuild
 
 ### Problèmes Restants (Non Critiques)
-- [ ] Erreurs TypeScript mineures (constantes manquantes dans ErrorCodes)
+- [x] Erreurs TypeScript mineures (constantes manquantes dans ErrorCodes) - FIXED 2026-01-02
 - [ ] Configuration EventEmitterModule dans SupportModule
 - [ ] Import paths a verifier dans services/ (analytics, payments, support)
 

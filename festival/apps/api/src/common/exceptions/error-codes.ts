@@ -128,6 +128,76 @@ export const ErrorCodes = {
   FILE_TOO_LARGE: 'ERR_11001',
   FILE_TYPE_NOT_ALLOWED: 'ERR_11002',
   FILE_UPLOAD_FAILED: 'ERR_11003',
+
+  // ============================================
+  // STAFF ERRORS (12xxx)
+  // ============================================
+  STAFF_SHIFT_NOT_FOUND: 'ERR_12000',
+  STAFF_SHIFT_OVERLAP: 'ERR_12001',
+  STAFF_SHIFT_ALREADY_STARTED: 'ERR_12002',
+  STAFF_SHIFT_NOT_STARTED: 'ERR_12003',
+  STAFF_SHIFT_ALREADY_ENDED: 'ERR_12004',
+  STAFF_MAX_HOURS_EXCEEDED: 'ERR_12005',
+  STAFF_NOT_FOUND: 'ERR_12006',
+  STAFF_ALREADY_EXISTS: 'ERR_12007',
+  STAFF_NOT_ASSIGNED_TO_ZONE: 'ERR_12008',
+  STAFF_ACCOUNT_INACTIVE: 'ERR_12009',
+  STAFF_BADGE_EXPIRED: 'ERR_12010',
+  STAFF_INSUFFICIENT_PERMISSION: 'ERR_12011',
+  STAFF_ROLE_NOT_ALLOWED: 'ERR_12012',
+
+  // ============================================
+  // CAMPING ERRORS (13xxx)
+  // ============================================
+  CAMPING_SPOT_NOT_FOUND: 'ERR_13000',
+  CAMPING_SPOT_UNAVAILABLE: 'ERR_13001',
+  CAMPING_SPOT_ALREADY_BOOKED: 'ERR_13002',
+  CAMPING_ZONE_NOT_FOUND: 'ERR_13003',
+  CAMPING_ZONE_FULL: 'ERR_13004',
+  CAMPING_ZONE_CLOSED: 'ERR_13005',
+  CAMPING_BOOKING_NOT_FOUND: 'ERR_13006',
+  CAMPING_BOOKING_ALREADY_CANCELLED: 'ERR_13007',
+  CAMPING_BOOKING_INVALID_DATES: 'ERR_13008',
+  CAMPING_BOOKING_MAX_NIGHTS_EXCEEDED: 'ERR_13009',
+  CAMPING_CHECKIN_TOO_EARLY: 'ERR_13010',
+  CAMPING_CHECKOUT_LATE: 'ERR_13011',
+  CAMPING_ALREADY_CHECKED_IN: 'ERR_13012',
+  CAMPING_NOT_CHECKED_IN: 'ERR_13013',
+  CAMPING_VEHICLE_NOT_ALLOWED: 'ERR_13014',
+  CAMPING_VEHICLE_SIZE_EXCEEDED: 'ERR_13015',
+
+  // ============================================
+  // ARTIST ERRORS (14xxx)
+  // ============================================
+  ARTIST_NOT_FOUND: 'ERR_14000',
+  ARTIST_ALREADY_BOOKED: 'ERR_14001',
+  ARTIST_CONTRACT_NOT_SIGNED: 'ERR_14002',
+  ARTIST_CANCELLED: 'ERR_14003',
+
+  // ============================================
+  // STAGE ERRORS (15xxx)
+  // ============================================
+  STAGE_NOT_FOUND: 'ERR_15000',
+  STAGE_CLOSED: 'ERR_15001',
+  STAGE_TECHNICAL_ISSUE: 'ERR_15002',
+  STAGE_CAPACITY_EXCEEDED: 'ERR_15003',
+
+  // ============================================
+  // PERFORMANCE ERRORS (16xxx)
+  // ============================================
+  PERFORMANCE_NOT_FOUND: 'ERR_16000',
+  PERFORMANCE_TIME_CONFLICT: 'ERR_16001',
+  PERFORMANCE_CANCELLED: 'ERR_16002',
+  PERFORMANCE_DELAYED: 'ERR_16003',
+  PERFORMANCE_NOT_STARTED: 'ERR_16004',
+  PERFORMANCE_ALREADY_ENDED: 'ERR_16005',
+
+  // ============================================
+  // SCHEDULE ERRORS (17xxx)
+  // ============================================
+  SCHEDULE_CONFLICT: 'ERR_17000',
+  SCHEDULE_LOCKED: 'ERR_17001',
+  SETLIST_NOT_FOUND: 'ERR_17002',
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
@@ -464,6 +534,202 @@ export const ErrorMessages: Record<ErrorCode, { fr: string; en: string }> = {
   [ErrorCodes.FILE_UPLOAD_FAILED]: {
     fr: 'Echec de l\'envoi du fichier.',
     en: 'File upload failed.',
+  },
+
+  // Staff
+  [ErrorCodes.STAFF_SHIFT_NOT_FOUND]: {
+    fr: 'Shift non trouve.',
+    en: 'Shift not found.',
+  },
+  [ErrorCodes.STAFF_SHIFT_OVERLAP]: {
+    fr: 'Ce shift chevauche un shift existant.',
+    en: 'This shift overlaps with an existing shift.',
+  },
+  [ErrorCodes.STAFF_SHIFT_ALREADY_STARTED]: {
+    fr: 'Ce shift a deja commence.',
+    en: 'This shift has already started.',
+  },
+  [ErrorCodes.STAFF_SHIFT_NOT_STARTED]: {
+    fr: 'Ce shift n\'a pas encore commence.',
+    en: 'This shift has not started yet.',
+  },
+  [ErrorCodes.STAFF_SHIFT_ALREADY_ENDED]: {
+    fr: 'Ce shift est deja termine.',
+    en: 'This shift has already ended.',
+  },
+  [ErrorCodes.STAFF_MAX_HOURS_EXCEEDED]: {
+    fr: 'Nombre maximum d\'heures depasse.',
+    en: 'Maximum hours exceeded.',
+  },
+  [ErrorCodes.STAFF_NOT_FOUND]: {
+    fr: 'Membre du staff non trouve.',
+    en: 'Staff member not found.',
+  },
+  [ErrorCodes.STAFF_ALREADY_EXISTS]: {
+    fr: 'Ce membre du staff existe deja pour ce festival.',
+    en: 'This staff member already exists for this festival.',
+  },
+  [ErrorCodes.STAFF_NOT_ASSIGNED_TO_ZONE]: {
+    fr: 'Membre du staff non assigne a cette zone.',
+    en: 'Staff member not assigned to this zone.',
+  },
+  [ErrorCodes.STAFF_ACCOUNT_INACTIVE]: {
+    fr: 'Compte staff inactif.',
+    en: 'Staff account is inactive.',
+  },
+  [ErrorCodes.STAFF_BADGE_EXPIRED]: {
+    fr: 'Badge staff expire.',
+    en: 'Staff badge has expired.',
+  },
+  [ErrorCodes.STAFF_INSUFFICIENT_PERMISSION]: {
+    fr: 'Permissions insuffisantes.',
+    en: 'Insufficient permissions.',
+  },
+  [ErrorCodes.STAFF_ROLE_NOT_ALLOWED]: {
+    fr: 'Role non autorise pour cette action.',
+    en: 'Role not allowed for this action.',
+  },
+
+  // Camping
+  [ErrorCodes.CAMPING_SPOT_NOT_FOUND]: {
+    fr: 'Emplacement camping non trouve.',
+    en: 'Camping spot not found.',
+  },
+  [ErrorCodes.CAMPING_SPOT_UNAVAILABLE]: {
+    fr: 'Emplacement camping indisponible.',
+    en: 'Camping spot unavailable.',
+  },
+  [ErrorCodes.CAMPING_SPOT_ALREADY_BOOKED]: {
+    fr: 'Emplacement deja reserve pour ces dates.',
+    en: 'Spot already booked for these dates.',
+  },
+  [ErrorCodes.CAMPING_ZONE_NOT_FOUND]: {
+    fr: 'Zone camping non trouvee.',
+    en: 'Camping zone not found.',
+  },
+  [ErrorCodes.CAMPING_ZONE_FULL]: {
+    fr: 'Zone camping complete.',
+    en: 'Camping zone is full.',
+  },
+  [ErrorCodes.CAMPING_ZONE_CLOSED]: {
+    fr: 'Zone camping fermee.',
+    en: 'Camping zone is closed.',
+  },
+  [ErrorCodes.CAMPING_BOOKING_NOT_FOUND]: {
+    fr: 'Reservation camping non trouvee.',
+    en: 'Camping booking not found.',
+  },
+  [ErrorCodes.CAMPING_BOOKING_ALREADY_CANCELLED]: {
+    fr: 'Cette reservation a deja ete annulee.',
+    en: 'This booking has already been cancelled.',
+  },
+  [ErrorCodes.CAMPING_BOOKING_INVALID_DATES]: {
+    fr: 'Dates de reservation invalides.',
+    en: 'Invalid booking dates.',
+  },
+  [ErrorCodes.CAMPING_BOOKING_MAX_NIGHTS_EXCEEDED]: {
+    fr: 'Nombre maximum de nuits depasse.',
+    en: 'Maximum number of nights exceeded.',
+  },
+  [ErrorCodes.CAMPING_CHECKIN_TOO_EARLY]: {
+    fr: 'Check-in trop tot.',
+    en: 'Check-in too early.',
+  },
+  [ErrorCodes.CAMPING_CHECKOUT_LATE]: {
+    fr: 'Check-out en retard.',
+    en: 'Late check-out.',
+  },
+  [ErrorCodes.CAMPING_ALREADY_CHECKED_IN]: {
+    fr: 'Deja enregistre.',
+    en: 'Already checked in.',
+  },
+  [ErrorCodes.CAMPING_NOT_CHECKED_IN]: {
+    fr: 'Non enregistre, impossible de faire le check-out.',
+    en: 'Not checked in, cannot check out.',
+  },
+  [ErrorCodes.CAMPING_VEHICLE_NOT_ALLOWED]: {
+    fr: 'Type de vehicule non autorise dans cette zone.',
+    en: 'Vehicle type not allowed in this zone.',
+  },
+  [ErrorCodes.CAMPING_VEHICLE_SIZE_EXCEEDED]: {
+    fr: 'Taille du vehicule depasse les limites de l\'emplacement.',
+    en: 'Vehicle size exceeds spot limits.',
+  },
+
+  // Artist
+  [ErrorCodes.ARTIST_NOT_FOUND]: {
+    fr: 'Artiste non trouve.',
+    en: 'Artist not found.',
+  },
+  [ErrorCodes.ARTIST_ALREADY_BOOKED]: {
+    fr: 'Artiste deja reserve pour cette date.',
+    en: 'Artist already booked for this date.',
+  },
+  [ErrorCodes.ARTIST_CONTRACT_NOT_SIGNED]: {
+    fr: 'Contrat non signe pour cet artiste.',
+    en: 'Contract not signed for this artist.',
+  },
+  [ErrorCodes.ARTIST_CANCELLED]: {
+    fr: 'Artiste annule.',
+    en: 'Artist cancelled.',
+  },
+
+  // Stage
+  [ErrorCodes.STAGE_NOT_FOUND]: {
+    fr: 'Scene non trouvee.',
+    en: 'Stage not found.',
+  },
+  [ErrorCodes.STAGE_CLOSED]: {
+    fr: 'Scene fermee.',
+    en: 'Stage is closed.',
+  },
+  [ErrorCodes.STAGE_TECHNICAL_ISSUE]: {
+    fr: 'Probleme technique sur la scene.',
+    en: 'Technical issue at stage.',
+  },
+  [ErrorCodes.STAGE_CAPACITY_EXCEEDED]: {
+    fr: 'Capacite de la scene depassee.',
+    en: 'Stage capacity exceeded.',
+  },
+
+  // Performance
+  [ErrorCodes.PERFORMANCE_NOT_FOUND]: {
+    fr: 'Performance non trouvee.',
+    en: 'Performance not found.',
+  },
+  [ErrorCodes.PERFORMANCE_TIME_CONFLICT]: {
+    fr: 'Conflit d\'horaire avec une autre performance.',
+    en: 'Time conflict with another performance.',
+  },
+  [ErrorCodes.PERFORMANCE_CANCELLED]: {
+    fr: 'Performance annulee.',
+    en: 'Performance cancelled.',
+  },
+  [ErrorCodes.PERFORMANCE_DELAYED]: {
+    fr: 'Performance retardee.',
+    en: 'Performance delayed.',
+  },
+  [ErrorCodes.PERFORMANCE_NOT_STARTED]: {
+    fr: 'Performance pas encore commencee.',
+    en: 'Performance has not started yet.',
+  },
+  [ErrorCodes.PERFORMANCE_ALREADY_ENDED]: {
+    fr: 'Performance deja terminee.',
+    en: 'Performance has already ended.',
+  },
+
+  // Schedule
+  [ErrorCodes.SCHEDULE_CONFLICT]: {
+    fr: 'Conflit dans le planning.',
+    en: 'Schedule conflict.',
+  },
+  [ErrorCodes.SCHEDULE_LOCKED]: {
+    fr: 'Planning verrouille, modifications impossibles.',
+    en: 'Schedule is locked and cannot be modified.',
+  },
+  [ErrorCodes.SETLIST_NOT_FOUND]: {
+    fr: 'Setlist non trouvee.',
+    en: 'Setlist not found.',
   },
 };
 
