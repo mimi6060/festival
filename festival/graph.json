@@ -1,0 +1,1609 @@
+{
+  "graph": {
+    "nodes": {
+      "shared-api-client": {
+        "name": "shared-api-client",
+        "type": "lib",
+        "data": {
+          "root": "libs/shared/api-client",
+          "targets": {
+            "typecheck": {
+              "dependsOn": [
+                "build",
+                "^typecheck"
+              ],
+              "options": {
+                "cwd": "libs/shared/api-client",
+                "command": "tsc --build --emitDeclarationOnly"
+              },
+              "cache": true,
+              "inputs": [
+                "{workspaceRoot}/tsconfig.base.json",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/tsconfig.lib.json",
+                "{projectRoot}/tsconfig.spec.json",
+                "{projectRoot}/src/**/*.ts",
+                "{projectRoot}/jest.config.ts",
+                "{projectRoot}/src/**/*.test.ts",
+                "{projectRoot}/src/**/*.spec.ts",
+                "{projectRoot}/src/**/*.d.ts",
+                "^production"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts",
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts.map",
+                "{workspaceRoot}/dist/out-tsc/tsconfig.tsbuildinfo"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Runs type-checking for the project.",
+                "help": {
+                  "command": "npx tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:tsc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "options": {
+                "outputPath": "dist/libs/shared/api-client",
+                "main": "libs/shared/api-client/src/index.ts",
+                "tsConfig": "libs/shared/api-client/tsconfig.lib.json",
+                "assets": []
+              },
+              "configurations": {},
+              "parallelism": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true
+            },
+            "build-deps": {
+              "dependsOn": [
+                "^build"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "continuous": true,
+              "dependsOn": [
+                "build-deps"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "npx nx watch --projects shared-api-client --includeDependentProjects -- npx nx build-deps shared-api-client"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{workspaceRoot}/eslint.config.js"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "options": {
+                "jestConfig": "libs/shared/api-client/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^production"
+              ],
+              "cache": true
+            }
+          },
+          "name": "shared-api-client",
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/shared/api-client/src",
+          "projectType": "library",
+          "tags": [
+            "scope:shared",
+            "type:util"
+          ],
+          "implicitDependencies": []
+        }
+      },
+      "shared-constants": {
+        "name": "shared-constants",
+        "type": "lib",
+        "data": {
+          "root": "libs/shared/constants",
+          "targets": {
+            "typecheck": {
+              "dependsOn": [
+                "build",
+                "^typecheck"
+              ],
+              "options": {
+                "cwd": "libs/shared/constants",
+                "command": "tsc --build --emitDeclarationOnly"
+              },
+              "cache": true,
+              "inputs": [
+                "{workspaceRoot}/tsconfig.base.json",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/tsconfig.lib.json",
+                "{projectRoot}/src/**/*.ts",
+                "!{projectRoot}/src/**/*.spec.ts",
+                "!{projectRoot}/src/**/*.test.ts",
+                "^production"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts",
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts.map",
+                "{workspaceRoot}/dist/out-tsc/tsconfig.tsbuildinfo"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Runs type-checking for the project.",
+                "help": {
+                  "command": "npx tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "dependsOn": [
+                "^build"
+              ],
+              "options": {
+                "cwd": "libs/shared/constants",
+                "command": "tsc --build tsconfig.lib.json"
+              },
+              "cache": true,
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts",
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts.map",
+                "{workspaceRoot}/dist/out-tsc/tsconfig.lib.tsbuildinfo"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Builds the project with `tsc`.",
+                "help": {
+                  "command": "npx tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": [
+                "^build"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "continuous": true,
+              "dependsOn": [
+                "build-deps"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "npx nx watch --projects shared-constants --includeDependentProjects -- npx nx build-deps shared-constants"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "options": {},
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{workspaceRoot}/eslint.config.js"
+              ],
+              "cache": true
+            }
+          },
+          "name": "shared-constants",
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/shared/constants/src",
+          "projectType": "library",
+          "tags": [
+            "type:lib",
+            "scope:shared"
+          ],
+          "implicitDependencies": []
+        }
+      },
+      "shared-hooks": {
+        "name": "shared-hooks",
+        "type": "lib",
+        "data": {
+          "root": "libs/shared/hooks",
+          "targets": {
+            "typecheck": {
+              "dependsOn": [
+                "build",
+                "^typecheck"
+              ],
+              "options": {
+                "cwd": "libs/shared/hooks",
+                "command": "tsc --build --emitDeclarationOnly"
+              },
+              "cache": true,
+              "inputs": [
+                "{workspaceRoot}/tsconfig.base.json",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/tsconfig.lib.json",
+                "{projectRoot}/tsconfig.spec.json",
+                "{projectRoot}/src/**/*.ts",
+                "{projectRoot}/src/**/*.tsx",
+                "{projectRoot}/src/**/*.test.ts",
+                "{projectRoot}/src/**/*.spec.ts",
+                "{projectRoot}/src/**/*.test.tsx",
+                "{projectRoot}/src/**/*.spec.tsx",
+                "{projectRoot}/src/**/*.d.ts",
+                {
+                  "dependentTasksOutputFiles": "**/*.d.ts"
+                }
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts",
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts.map",
+                "{workspaceRoot}/dist/out-tsc/tsconfig.tsbuildinfo"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Runs type-checking for the project.",
+                "help": {
+                  "command": "npx tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "dependsOn": [
+                "^build"
+              ],
+              "options": {
+                "cwd": "libs/shared/hooks",
+                "command": "tsc --build tsconfig.lib.json"
+              },
+              "cache": true,
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts",
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts.map",
+                "{workspaceRoot}/dist/out-tsc/tsconfig.lib.tsbuildinfo"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Builds the project with `tsc`.",
+                "help": {
+                  "command": "npx tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": [
+                "^build"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "continuous": true,
+              "dependsOn": [
+                "build-deps"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "npx nx watch --projects shared-hooks --includeDependentProjects -- npx nx build-deps shared-hooks"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "options": {},
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{workspaceRoot}/eslint.config.js"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "options": {
+                "jestConfig": "libs/shared/hooks/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^production"
+              ],
+              "cache": true
+            }
+          },
+          "name": "shared-hooks",
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/shared/hooks/src",
+          "projectType": "library",
+          "tags": [
+            "scope:shared",
+            "type:hooks"
+          ],
+          "implicitDependencies": []
+        }
+      },
+      "shared-types": {
+        "name": "shared-types",
+        "type": "lib",
+        "data": {
+          "root": "libs/shared/types",
+          "targets": {
+            "typecheck": {
+              "dependsOn": [
+                "build",
+                "^typecheck"
+              ],
+              "options": {
+                "cwd": "libs/shared/types",
+                "command": "tsc --build --emitDeclarationOnly"
+              },
+              "cache": true,
+              "inputs": [
+                "{projectRoot}/package.json",
+                "{workspaceRoot}/tsconfig.base.json",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/tsconfig.lib.json",
+                "{projectRoot}/src/**/*.ts",
+                "!{projectRoot}/src/**/*.spec.ts",
+                "!{projectRoot}/src/**/*.test.ts",
+                "^production"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts",
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts.map",
+                "{workspaceRoot}/dist/out-tsc/tsconfig.tsbuildinfo"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Runs type-checking for the project.",
+                "help": {
+                  "command": "npx tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "dependsOn": [
+                "^build"
+              ],
+              "options": {
+                "cwd": "libs/shared/types",
+                "command": "tsc --build tsconfig.lib.json"
+              },
+              "cache": true,
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts",
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts.map",
+                "{workspaceRoot}/dist/out-tsc/tsconfig.lib.tsbuildinfo"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Builds the project with `tsc`.",
+                "help": {
+                  "command": "npx tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": [
+                "^build"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "continuous": true,
+              "dependsOn": [
+                "build-deps"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "npx nx watch --projects shared-types --includeDependentProjects -- npx nx build-deps shared-types"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "options": {},
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{workspaceRoot}/eslint.config.js"
+              ],
+              "cache": true
+            }
+          },
+          "name": "shared-types",
+          "tags": [
+            "npm:private",
+            "type:lib",
+            "scope:shared"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@festival/types",
+              "packageVersion": "0.0.1",
+              "packageMain": "./src/index.js",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/shared/types/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "shared-utils": {
+        "name": "shared-utils",
+        "type": "lib",
+        "data": {
+          "root": "libs/shared/utils",
+          "targets": {
+            "typecheck": {
+              "dependsOn": [
+                "build",
+                "^typecheck"
+              ],
+              "options": {
+                "cwd": "libs/shared/utils",
+                "command": "tsc --build --emitDeclarationOnly"
+              },
+              "cache": true,
+              "inputs": [
+                "{projectRoot}/package.json",
+                "{workspaceRoot}/tsconfig.base.json",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/tsconfig.lib.json",
+                "{projectRoot}/tsconfig.spec.json",
+                "{projectRoot}/src/**/*.ts",
+                "{projectRoot}/src/**/*.test.ts",
+                "{projectRoot}/src/**/*.spec.ts",
+                "{projectRoot}/src/**/*.d.ts",
+                "^production"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts",
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts.map",
+                "{workspaceRoot}/dist/out-tsc/tsconfig.tsbuildinfo"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Runs type-checking for the project.",
+                "help": {
+                  "command": "npx tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "dependsOn": [
+                "^build"
+              ],
+              "options": {
+                "cwd": "libs/shared/utils",
+                "command": "tsc --build tsconfig.lib.json"
+              },
+              "cache": true,
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts",
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts.map",
+                "{workspaceRoot}/dist/out-tsc/tsconfig.lib.tsbuildinfo"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Builds the project with `tsc`.",
+                "help": {
+                  "command": "npx tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": [
+                "^build"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "continuous": true,
+              "dependsOn": [
+                "build-deps"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "npx nx watch --projects shared-utils --includeDependentProjects -- npx nx build-deps shared-utils"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "options": {},
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{workspaceRoot}/eslint.config.js"
+              ],
+              "cache": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "options": {
+                "jestConfig": "libs/shared/utils/jest.config.ts"
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^production"
+              ],
+              "cache": true
+            }
+          },
+          "name": "shared-utils",
+          "tags": [
+            "npm:private",
+            "type:lib",
+            "scope:shared"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@festival/utils",
+              "packageVersion": "0.0.1",
+              "packageMain": "./src/index.js",
+              "isInPackageManagerWorkspaces": false
+            }
+          },
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/shared/utils/src",
+          "projectType": "library",
+          "implicitDependencies": []
+        }
+      },
+      "shared-i18n": {
+        "name": "shared-i18n",
+        "type": "lib",
+        "data": {
+          "root": "libs/shared/i18n",
+          "targets": {
+            "typecheck": {
+              "dependsOn": [
+                "build",
+                "^typecheck"
+              ],
+              "options": {
+                "cwd": "libs/shared/i18n",
+                "command": "tsc --build --emitDeclarationOnly"
+              },
+              "cache": true,
+              "inputs": [
+                "{workspaceRoot}/tsconfig.base.json",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/tsconfig.lib.json",
+                "{projectRoot}/src/**/*.ts",
+                "{projectRoot}/src/**/*.json",
+                "!{projectRoot}/jest.config.ts",
+                "!{projectRoot}/src/**/*.spec.ts",
+                "!{projectRoot}/src/**/*.test.ts",
+                "^production"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts",
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts.map",
+                "{workspaceRoot}/dist/out-tsc/tsconfig.tsbuildinfo"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Runs type-checking for the project.",
+                "help": {
+                  "command": "npx tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "dependsOn": [
+                "^build"
+              ],
+              "options": {
+                "cwd": "libs/shared/i18n",
+                "command": "tsc --build tsconfig.lib.json"
+              },
+              "cache": true,
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "outputs": [
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts",
+                "{workspaceRoot}/dist/out-tsc/**/*.d.ts.map",
+                "{workspaceRoot}/dist/out-tsc/tsconfig.lib.tsbuildinfo"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Builds the project with `tsc`.",
+                "help": {
+                  "command": "npx tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": [
+                "^build"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "continuous": true,
+              "dependsOn": [
+                "build-deps"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "npx nx watch --projects shared-i18n --includeDependentProjects -- npx nx build-deps shared-i18n"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "options": {},
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{workspaceRoot}/eslint.config.js"
+              ],
+              "cache": true
+            }
+          },
+          "name": "shared-i18n",
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/shared/i18n/src",
+          "projectType": "library",
+          "tags": [
+            "type:lib",
+            "scope:shared"
+          ],
+          "implicitDependencies": []
+        }
+      },
+      "api-e2e": {
+        "name": "api-e2e",
+        "type": "e2e",
+        "data": {
+          "root": "apps/api-e2e",
+          "targets": {
+            "typecheck": {
+              "dependsOn": [
+                "^typecheck"
+              ],
+              "options": {
+                "cwd": "apps/api-e2e",
+                "command": "tsc --build --emitDeclarationOnly"
+              },
+              "cache": true,
+              "inputs": [
+                "{projectRoot}/package.json",
+                "{workspaceRoot}/tsconfig.base.json",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/jest.config.ts",
+                "{projectRoot}/src/**/*.ts",
+                "^production"
+              ],
+              "outputs": [
+                "{projectRoot}/out-tsc/api-e2e/**/*.d.ts",
+                "{projectRoot}/out-tsc/api-e2e/**/*.d.ts.map",
+                "{projectRoot}/out-tsc/api-e2e/tsconfig.tsbuildinfo"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Runs type-checking for the project.",
+                "help": {
+                  "command": "npx tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{workspaceRoot}/eslint.config.js"
+              ],
+              "cache": true
+            },
+            "e2e": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "dependsOn": [
+                "api:build"
+              ],
+              "options": {
+                "jestConfig": "apps/api-e2e/jest.config.cts",
+                "passWithNoTests": true,
+                "runInBand": true
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "e2e:watch": {
+              "executor": "@nx/jest:jest",
+              "options": {
+                "jestConfig": "apps/api-e2e/jest.config.cts",
+                "watch": true
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "e2e:coverage": {
+              "executor": "@nx/jest:jest",
+              "options": {
+                "jestConfig": "apps/api-e2e/jest.config.cts",
+                "coverage": true
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "api-e2e",
+          "tags": [
+            "npm:private",
+            "scope:api",
+            "type:e2e"
+          ],
+          "implicitDependencies": [
+            "api"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@festival/api-e2e",
+              "packageVersion": "0.0.1",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/api-e2e/src",
+          "projectType": "application"
+        }
+      },
+      "mobile": {
+        "name": "mobile",
+        "type": "app",
+        "data": {
+          "root": "apps/mobile",
+          "targets": {
+            "typecheck": {
+              "dependsOn": [
+                "^typecheck"
+              ],
+              "options": {
+                "cwd": "apps/mobile",
+                "command": "tsc --build --emitDeclarationOnly"
+              },
+              "cache": true,
+              "inputs": [
+                "{projectRoot}/package.json",
+                "{workspaceRoot}/tsconfig.base.json",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/src/**/*",
+                "!{projectRoot}/node_modules",
+                "^production"
+              ],
+              "outputs": [
+                "{projectRoot}/**/*.js",
+                "{projectRoot}/**/*.cjs",
+                "{projectRoot}/**/*.mjs",
+                "{projectRoot}/**/*.jsx",
+                "{projectRoot}/**/*.js.map",
+                "{projectRoot}/**/*.jsx.map",
+                "{projectRoot}/**/*.d.ts",
+                "{projectRoot}/**/*.d.cts",
+                "{projectRoot}/**/*.d.mts",
+                "{projectRoot}/**/*.d.ts.map",
+                "{projectRoot}/**/*.d.cts.map",
+                "{projectRoot}/**/*.d.mts.map",
+                "{projectRoot}/tsconfig.tsbuildinfo"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Runs type-checking for the project.",
+                "help": {
+                  "command": "npx tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "cache": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{workspaceRoot}/eslint.config.js"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint",
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "apps/mobile",
+                "command": "eslint ."
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "name": "mobile",
+          "tags": [
+            "npm:private",
+            "type:app",
+            "scope:mobile"
+          ],
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "mobile",
+              "packageVersion": "0.0.1",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/mobile/src",
+          "projectType": "application",
+          "implicitDependencies": []
+        }
+      },
+      "admin": {
+        "name": "admin",
+        "type": "app",
+        "data": {
+          "root": "apps/admin",
+          "targets": {
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "options": {},
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{workspaceRoot}/eslint.config.js"
+              ],
+              "cache": true
+            },
+            "build": {
+              "executor": "@nx/next:build",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "defaultConfiguration": "production",
+              "options": {
+                "outputPath": "dist/apps/admin"
+              },
+              "configurations": {
+                "development": {
+                  "outputPath": "apps/admin"
+                },
+                "production": {}
+              },
+              "parallelism": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true
+            },
+            "serve": {
+              "executor": "@nx/next:server",
+              "defaultConfiguration": "development",
+              "options": {
+                "buildTarget": "admin:build",
+                "dev": true,
+                "port": 4200
+              },
+              "configurations": {
+                "development": {
+                  "buildTarget": "admin:build:development",
+                  "dev": true
+                },
+                "production": {
+                  "buildTarget": "admin:build:production",
+                  "dev": false
+                }
+              },
+              "parallelism": true,
+              "continuous": true
+            }
+          },
+          "name": "admin",
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/admin",
+          "projectType": "application",
+          "tags": [
+            "type:app",
+            "scope:admin"
+          ],
+          "implicitDependencies": []
+        }
+      },
+      "api": {
+        "name": "api",
+        "type": "app",
+        "data": {
+          "root": "apps/api",
+          "targets": {
+            "typecheck": {
+              "dependsOn": [
+                "^typecheck"
+              ],
+              "options": {
+                "cwd": "apps/api",
+                "command": "tsc --build --emitDeclarationOnly"
+              },
+              "cache": true,
+              "inputs": [
+                "{projectRoot}/package.json",
+                "{workspaceRoot}/tsconfig.base.json",
+                "{projectRoot}/tsconfig.json",
+                "{projectRoot}/tsconfig.app.json",
+                "{projectRoot}/src/**/*.ts",
+                "!{projectRoot}/src/**/*.spec.ts",
+                "!{projectRoot}/src/test/**/*",
+                "^production"
+              ],
+              "outputs": [
+                "{projectRoot}/dist/**/*.d.ts",
+                "{projectRoot}/dist/**/*.d.ts.map",
+                "{projectRoot}/dist/tsconfig.app.tsbuildinfo"
+              ],
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "metadata": {
+                "technologies": [
+                  "typescript"
+                ],
+                "description": "Runs type-checking for the project.",
+                "help": {
+                  "command": "npx tsc --build --help",
+                  "example": {
+                    "args": [
+                      "--force"
+                    ]
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/js:swc",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "defaultConfiguration": "production",
+              "options": {
+                "outputPath": "dist/apps/api",
+                "main": "apps/api/src/main.ts",
+                "tsConfig": "apps/api/tsconfig.app.json",
+                "generatePackageJson": true,
+                "skipTypeCheck": true
+              },
+              "configurations": {
+                "development": {},
+                "production": {}
+              },
+              "parallelism": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true
+            },
+            "serve": {
+              "continuous": true,
+              "executor": "@nx/js:node",
+              "defaultConfiguration": "development",
+              "dependsOn": [
+                "build"
+              ],
+              "options": {
+                "buildTarget": "api:build",
+                "runBuildTargetDependencies": false
+              },
+              "configurations": {
+                "development": {
+                  "buildTarget": "api:build:development"
+                },
+                "production": {
+                  "buildTarget": "api:build:production"
+                }
+              },
+              "parallelism": true
+            },
+            "preview": {
+              "continuous": true,
+              "options": {
+                "cwd": "apps/api",
+                "args": [
+                  "--node-env=production"
+                ],
+                "command": "webpack-cli serve"
+              },
+              "metadata": {
+                "technologies": [
+                  "webpack"
+                ],
+                "description": "Starts Webpack dev server in production mode",
+                "help": {
+                  "command": "npx webpack-cli serve --help",
+                  "example": {
+                    "options": {
+                      "args": [
+                        "--client-progress",
+                        "--history-api-fallback "
+                      ]
+                    }
+                  }
+                }
+              },
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "serve-static": {
+              "continuous": true,
+              "dependsOn": [
+                "build"
+              ],
+              "executor": "@nx/web:file-server",
+              "options": {
+                "buildTarget": "build",
+                "spa": true
+              },
+              "syncGenerators": [
+                "@nx/js:typescript-sync"
+              ],
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": [
+                "^build"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "continuous": true,
+              "dependsOn": [
+                "build-deps"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "npx nx watch --projects api --includeDependentProjects -- npx nx build-deps api"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "options": {},
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{workspaceRoot}/eslint.config.js"
+              ],
+              "cache": true
+            },
+            "prune-lockfile": {
+              "dependsOn": [
+                "build"
+              ],
+              "cache": true,
+              "executor": "@nx/js:prune-lockfile",
+              "outputs": [
+                "{workspaceRoot}/apps/api/dist/package.json",
+                "{workspaceRoot}/apps/api/dist/package-lock.json"
+              ],
+              "options": {
+                "buildTarget": "build"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "copy-workspace-modules": {
+              "dependsOn": [
+                "build"
+              ],
+              "cache": true,
+              "outputs": [
+                "{workspaceRoot}/apps/api/dist/workspace_modules"
+              ],
+              "executor": "@nx/js:copy-workspace-modules",
+              "options": {
+                "buildTarget": "build"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "prune": {
+              "dependsOn": [
+                "prune-lockfile",
+                "copy-workspace-modules"
+              ],
+              "executor": "nx:noop",
+              "configurations": {},
+              "options": {},
+              "parallelism": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
+              "options": {
+                "jestConfig": "apps/api/jest.config.ts",
+                "passWithNoTests": false
+              },
+              "configurations": {},
+              "parallelism": true,
+              "inputs": [
+                "default",
+                "^production"
+              ],
+              "cache": true
+            }
+          },
+          "projectType": "application",
+          "metadata": {
+            "targetGroups": {},
+            "js": {
+              "packageName": "@festival/api",
+              "packageVersion": "0.0.1",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "name": "api",
+          "tags": [
+            "npm:private",
+            "scope:api",
+            "type:app"
+          ],
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/api/src",
+          "implicitDependencies": []
+        }
+      },
+      "web": {
+        "name": "web",
+        "type": "app",
+        "data": {
+          "root": "apps/web",
+          "targets": {
+            "lint": {
+              "cache": true,
+              "inputs": [
+                "default",
+                "{workspaceRoot}/.eslintrc.json",
+                "{workspaceRoot}/eslint.config.js"
+              ],
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "metadata": {
+                "technologies": [
+                  "eslint",
+                  "eslint"
+                ],
+                "description": "Runs ESLint on project",
+                "help": {
+                  "command": "npx eslint --help",
+                  "example": {
+                    "options": {
+                      "max-warnings": 0
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "apps/web",
+                "command": "eslint ."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "start": {
+              "executor": "nx:run-script",
+              "options": {
+                "script": "start"
+              },
+              "metadata": {
+                "scriptContent": "next start",
+                "runCommand": "npm run start"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "build": {
+              "executor": "@nx/next:build",
+              "outputs": [
+                "{options.outputPath}"
+              ],
+              "defaultConfiguration": "production",
+              "options": {
+                "outputPath": "apps/web"
+              },
+              "configurations": {
+                "development": {
+                  "outputPath": "apps/web"
+                },
+                "production": {
+                  "outputPath": "apps/web"
+                }
+              },
+              "parallelism": true,
+              "dependsOn": [
+                "^build"
+              ],
+              "inputs": [
+                "production",
+                "^production"
+              ],
+              "cache": true
+            },
+            "serve": {
+              "executor": "@nx/next:server",
+              "defaultConfiguration": "development",
+              "options": {
+                "buildTarget": "web:build",
+                "dev": true
+              },
+              "configurations": {
+                "development": {
+                  "buildTarget": "web:build:development",
+                  "dev": true
+                },
+                "production": {
+                  "buildTarget": "web:build:production",
+                  "dev": false
+                }
+              },
+              "parallelism": true,
+              "continuous": true
+            }
+          },
+          "name": "web",
+          "tags": [
+            "npm:private",
+            "type:app",
+            "scope:web"
+          ],
+          "metadata": {
+            "targetGroups": {
+              "NPM Scripts": [
+                "start"
+              ]
+            },
+            "js": {
+              "packageName": "@festival/web",
+              "packageVersion": "0.0.1",
+              "isInPackageManagerWorkspaces": true
+            }
+          },
+          "$schema": "../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "apps/web",
+          "projectType": "application",
+          "implicitDependencies": []
+        }
+      }
+    },
+    "dependencies": {
+      "shared-api-client": [],
+      "shared-constants": [],
+      "shared-hooks": [
+        {
+          "source": "shared-hooks",
+          "target": "shared-types",
+          "type": "static"
+        }
+      ],
+      "shared-types": [],
+      "shared-utils": [],
+      "shared-i18n": [],
+      "api-e2e": [
+        {
+          "source": "api-e2e",
+          "target": "api",
+          "type": "implicit"
+        }
+      ],
+      "mobile": [],
+      "admin": [],
+      "api": [],
+      "web": []
+    }
+  }
+}
