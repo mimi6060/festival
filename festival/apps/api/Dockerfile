@@ -16,9 +16,9 @@ WORKDIR /app
 
 # Copy package files for dependency installation
 COPY package.json package-lock.json* ./
-COPY apps/api/package.json ./apps/api/
-COPY libs/shared/types/package.json ./libs/shared/types/
-COPY libs/shared/utils/package.json ./libs/shared/utils/
+COPY ./festival/apps/api/package.json ./apps/api/
+COPY festival/libs/shared/types/package.json ./libs/shared/types/
+COPY festival/libs/shared/utils/package.json ./libs/shared/utils/
 
 # Install dependencies
 RUN npm ci --only=production && npm cache clean --force
@@ -45,7 +45,7 @@ RUN npm ci
 # Copy source code
 COPY tsconfig.base.json ./
 COPY nx.json ./
-COPY apps/api ./apps/api
+COPY ./festival/apps/api ./apps/api
 COPY libs ./libs
 COPY prisma ./prisma
 

@@ -13,7 +13,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: apps/api/Dockerfile.dev
+      dockerfile: festival/apps/api/Dockerfile
       target: development
     environment:
       NODE_ENV: development
@@ -42,7 +42,7 @@ services:
   web:
     build:
       context: .
-      dockerfile: apps/web/Dockerfile.dev
+      dockerfile: festival/apps/web/Dockerfile
       target: development
     environment:
       NODE_ENV: development
@@ -67,7 +67,7 @@ services:
   admin:
     build:
       context: .
-      dockerfile: apps/admin/Dockerfile.dev
+      dockerfile: festival/apps/admin/Dockerfile
       target: development
     environment:
       NODE_ENV: development
@@ -117,7 +117,7 @@ services:
   # Mailhog (Always enabled in dev)
   # ============================================
   mailhog:
-    profiles: []  # Override to always run in dev
+    profiles: [] # Override to always run in dev
     ports:
       - '1025:1025'
       - '8025:8025'

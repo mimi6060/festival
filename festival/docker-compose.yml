@@ -15,7 +15,7 @@ services:
   api:
     build:
       context: .
-      dockerfile: apps/api/Dockerfile
+      dockerfile: festival/apps/api/Dockerfile
       args:
         - NODE_ENV=production
     image: festival/api:latest
@@ -53,7 +53,8 @@ services:
     networks:
       - festival-network
     healthcheck:
-      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3333/api/health']
+      test:
+        ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3333/api/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -71,7 +72,7 @@ services:
   web:
     build:
       context: .
-      dockerfile: apps/web/Dockerfile
+      dockerfile: festival/apps/web/Dockerfile
       args:
         - NEXT_PUBLIC_API_URL=http://api:3333
         - NEXT_PUBLIC_APP_URL=http://localhost:4200
@@ -91,7 +92,8 @@ services:
     networks:
       - festival-network
     healthcheck:
-      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000/api/health']
+      test:
+        ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000/api/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -109,7 +111,7 @@ services:
   admin:
     build:
       context: .
-      dockerfile: apps/admin/Dockerfile
+      dockerfile: festival/apps/admin/Dockerfile
       args:
         - NEXT_PUBLIC_API_URL=http://api:3333
         - NEXT_PUBLIC_APP_URL=http://localhost:4300
@@ -128,7 +130,8 @@ services:
     networks:
       - festival-network
     healthcheck:
-      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000/api/health']
+      test:
+        ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://localhost:3000/api/health']
       interval: 30s
       timeout: 10s
       retries: 3

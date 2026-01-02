@@ -13,8 +13,8 @@ services:
   api:
     build:
       context: .
-      dockerfile: apps/api/Dockerfile.dev
-      target: development
+      dockerfile: festival/apps/api/Dockerfile
+      # target: development
     environment:
       NODE_ENV: development
       DEBUG: '*'
@@ -26,9 +26,9 @@ services:
       CORS_ORIGINS: http://localhost:4200,http://localhost:4300,http://localhost:3000
     volumes:
       # Mount source code for hot-reload
-      - ./apps/api/src:/app/apps/api/src:delegated
-      - ./libs:/app/libs:delegated
-      - ./prisma:/app/prisma:delegated
+      - ./festival/apps/api/src:/app/apps/api/src:delegated
+      - ./festival/libs:/app/libs:delegated
+      - ./festival/prisma:/app/prisma:delegated
       # Exclude node_modules to use container's version
       - api_node_modules:/app/node_modules
       - api_dist:/app/dist
@@ -42,8 +42,8 @@ services:
   web:
     build:
       context: .
-      dockerfile: apps/web/Dockerfile.dev
-      target: development
+      dockerfile: festival/apps/web/Dockerfile
+      # target: development
     environment:
       NODE_ENV: development
       NEXT_PUBLIC_API_URL: http://localhost:3000
@@ -67,8 +67,8 @@ services:
   admin:
     build:
       context: .
-      dockerfile: apps/admin/Dockerfile.dev
-      target: development
+      dockerfile: festival/apps/admin/Dockerfile
+      # target: development
     environment:
       NODE_ENV: development
       NEXT_PUBLIC_API_URL: http://localhost:3000
@@ -117,7 +117,7 @@ services:
   # Mailhog (Always enabled in dev)
   # ============================================
   mailhog:
-    profiles: []  # Override to always run in dev
+    profiles: [] # Override to always run in dev
     ports:
       - '1025:1025'
       - '8025:8025'

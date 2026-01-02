@@ -12,9 +12,9 @@ WORKDIR /app
 
 # Copy package files
 COPY package.json package-lock.json* ./
-COPY apps/admin/package.json ./apps/admin/
-COPY libs/shared/types/package.json ./libs/shared/types/
-COPY libs/shared/utils/package.json ./libs/shared/utils/
+COPY ./festival/apps/admin/package.json ./apps/admin/
+COPY festival/libs/shared/types/package.json ./libs/shared/types/
+COPY festival/libs/shared/utils/package.json ./libs/shared/utils/
 
 # Install all dependencies
 RUN npm ci

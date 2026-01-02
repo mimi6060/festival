@@ -16,9 +16,9 @@ WORKDIR /app
 
 # Copy package files for dependency installation
 COPY package.json package-lock.json* ./
-COPY apps/admin/package.json ./apps/admin/
-COPY libs/shared/types/package.json ./libs/shared/types/
-COPY libs/shared/utils/package.json ./libs/shared/utils/
+COPY ./festival/apps/admin/package.json ./apps/admin/
+COPY festival/libs/shared/types/package.json ./libs/shared/types/
+COPY festival/libs/shared/utils/package.json ./libs/shared/utils/
 
 # Install dependencies
 RUN npm ci && npm cache clean --force
@@ -38,12 +38,12 @@ COPY --from=deps /app/node_modules ./node_modules
 
 # Copy package files
 COPY package.json package-lock.json* ./
-COPY apps/admin/package.json ./apps/admin/
+COPY ./festival/apps/admin/package.json ./apps/admin/
 
 # Copy source code
 COPY tsconfig.base.json ./
 COPY nx.json ./
-COPY apps/admin ./apps/admin
+COPY ./festival/apps/admin ./apps/admin
 COPY libs ./libs
 
 # Set Next.js telemetry disable
