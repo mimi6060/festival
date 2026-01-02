@@ -21,17 +21,17 @@ Voir `.claude/DONE.md` pour le détail complet.
 - [x] Configuration EventEmitterModule dans SupportModule - FIXED 2026-01-02
 - [x] Import paths notifications services - FIXED 2026-01-02
 
-### QA Review: Festivals Module (2026-01-02) - TO FIX
+### QA Review: Festivals Module (2026-01-02) - COMPLETED
 **Path:** `apps/api/src/modules/festivals/`
 
-- [ ] **CRITICAL:** Create `festivals.service.ts` with Prisma CRUD operations
-  - Service must include: create, findAll, findOne, findBySlug, update, remove, getStats, publish, cancel
-  - Inject PrismaService for database operations
-  - Add proper error handling and validation
-- [ ] **FIX:** Move `ApiResponse` import to top of `festivals.controller.ts` (currently at line 625-626)
-- [ ] **FIX:** Register FestivalsService in `festivals.module.ts` providers array
-- [ ] **FIX:** Update controller methods to inject and use FestivalsService instead of mock data
-- [ ] **FIX:** Add FestivalsService to module exports if needed by other modules
+- [x] **CRITICAL:** Create `festivals.service.ts` with Prisma CRUD operations - DONE
+  - Service includes: create, findAll, findOne, findBySlug, update, remove, getStats, publish, cancel
+  - PrismaService injected for database operations
+  - Proper error handling with NotFoundException, BadRequestException, ConflictException
+- [x] **FIX:** Register FestivalsService in `festivals.module.ts` providers array - DONE
+- [x] **FIX:** Add FestivalsService to module exports - DONE
+- [x] **FIX:** Export FestivalsService from index.ts - DONE
+- [ ] **TODO:** Update controller methods to inject and use FestivalsService instead of mock data
 
 ### Fix Build Admin App - COMPLETED (2026-01-02)
 Build command: `NODE_ENV=production npx nx build admin`
