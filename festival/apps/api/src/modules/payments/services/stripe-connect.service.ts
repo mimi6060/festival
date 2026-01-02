@@ -512,7 +512,7 @@ export class StripeConnectService {
             url: account.business_profile.url || undefined,
           }
         : undefined,
-      createdAt: new Date(account.created * 1000),
+      createdAt: account.created ? new Date(account.created * 1000) : new Date(),
     };
   }
 }

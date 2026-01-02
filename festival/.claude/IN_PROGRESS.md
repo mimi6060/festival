@@ -106,19 +106,18 @@ Voir `.claude/DONE.md` pour le détail complet.
 **Fichier service existant:** `apps/api/src/modules/cashless/cashless.service.ts`
 
 #### Backend (API NestJS)
-- [ ] **IMPLEMENTER** methode `transfer()` dans `cashless.service.ts`:
-  ```typescript
-  async transfer(userId: string, dto: TransferDto): Promise<TransferResult> {
-    // 1. Valider festival actif
-    // 2. Verifier compte source (userId) avec solde suffisant
-    // 3. Verifier compte destination (dto.toUserId) existe et actif
-    // 4. Transaction Prisma atomique:
-    //    - Creer transaction TRANSFER_OUT (source, debit)
-    //    - Creer transaction TRANSFER_IN (destination, credit)
-    //    - Mettre a jour soldes des 2 comptes
-    // 5. Retourner nouveau solde source
-  }
-  ```
+- [x] **IMPLEMENTER** methode `transfer()` dans `cashless.service.ts` - COMPLETED (2026-01-03):
+  - Validation festival actif
+  - Verification compte source (userId) avec solde suffisant
+  - Verification compte destination (dto.toUserId) existe et actif
+  - Prevention self-transfer
+  - Verification max balance destination
+  - Transaction Prisma atomique:
+    - Create TRANSFER transaction pour source (debit, montant negatif)
+    - Create TRANSFER transaction pour destination (credit, montant positif)
+    - Mise a jour soldes des 2 comptes
+  - Retourne nouveau solde source
+  - Metadata avec transferType (OUTGOING/INCOMING) et userId references
 - [ ] Creer `apps/api/src/modules/cashless/cashless.controller.ts`:
   ```
   POST   /api/cashless/account      - Creer/obtenir compte
@@ -142,13 +141,13 @@ Voir `.claude/DONE.md` pour le détail complet.
 
 ---
 
-### 1.3 Notifications Controller
+### 1.3 Notifications Controller - COMPLETED (2026-01-03)
 **Objectif:** Exposer endpoints REST notifications
 **Priorite:** CRITIQUE
 **Fichiers service existants:** `apps/api/src/modules/notifications/services/`
 
 #### Backend (API NestJS)
-- [ ] Creer `apps/api/src/modules/notifications/notifications.controller.ts`:
+- [x] Creer `apps/api/src/modules/notifications/notifications.controller.ts`:
   ```
   GET    /api/notifications           - Liste mes notifications
   GET    /api/notifications/unread    - Nombre non lues
@@ -160,7 +159,11 @@ Voir `.claude/DONE.md` pour le détail complet.
   POST   /api/notifications/push-token     - Enregistrer token FCM/APNs
   DELETE /api/notifications/push-token/:token - Supprimer token
   ```
-- [ ] Enregistrer controller dans `notifications.module.ts`
+- [x] Enregistrer controller dans `notifications.module.ts`
+- [x] Utilise JwtAuthGuard pour tous les endpoints
+- [x] Utilise CurrentUser decorator pour extraire userId
+- [x] Documentation Swagger complete (@ApiTags, @ApiBearerAuth, @ApiOperation, @ApiResponse)
+- [x] DTOs existants reutilises (GetNotificationsQueryDto, UpdateNotificationPreferencesDto, RegisterPushTokenDto)
 
 ---
 

@@ -480,6 +480,131 @@ export class CashlessService {
   }
 
   /**
+   * Transfer funds between cashless accounts
+   */
+  async transfer(
+    userId: string,
+    dto: TransferDto,
+  ): Promise<{ newBalance: number }> {
+    const { toUserId, amount, festivalId, description } = dto;
+
+    // Validate amount
+    if (amount <= 0) {
+      throw new BadRequestException('Transfer amount must be positive');
+    }
+
+    // Validate festival
+    const festival = await this.prisma.festival.findUnique({
+      where: { id: festivalId },
+    });
+
+    if (!festival) {
+      throw new NotFoundException('Festival not found');
+    }
+
+    if (festival.status === FestivalStatus.CANCELLED) {
+      throw new BadRequestException('Festival has been cancelled');
+    }
+
+    // Get source account
+    const sourceAccount = await this.getAccount(userId);
+
+    if (!sourceAccount.isActive) {
+      throw new ForbiddenException('Source cashless account is deactivated');
+    }
+
+    // Check sufficient balance
+    if (sourceAccount.balance < amount) {
+      throw new BadRequestException(
+        `Insufficient balance. Available: ${sourceAccount.balance}, Required: ${amount}`,
+      );
+    }
+
+    // Get destination account
+    const destinationAccount = await this.prisma.cashlessAccount.findUnique({
+      where: { userId: toUserId },
+    });
+
+    if (!destinationAccount) {
+      throw new NotFoundException('Destination cashless account not found');
+    }
+
+    if (!destinationAccount.isActive) {
+      throw new BadRequestException('Destination cashless account is deactivated');
+    }
+
+    // Prevent self-transfer
+    if (userId === toUserId) {
+      throw new BadRequestException('Cannot transfer to yourself');
+    }
+
+    // Check max balance for destination
+    const newDestinationBalance = Number(destinationAccount.balance) + amount;
+    if (newDestinationBalance > CASHLESS_CONFIG.MAX_BALANCE) {
+      throw new BadRequestException(
+        `Transfer would exceed maximum account balance for destination. Max: ${CASHLESS_CONFIG.MAX_BALANCE}`,
+      );
+    }
+
+    // Execute transfer in atomic transaction
+    const result = await this.prisma.$transaction(async (tx) => {
+      // Update source account (deduct amount)
+      const updatedSourceAccount = await tx.cashlessAccount.update({
+        where: { id: sourceAccount.id },
+        data: { balance: { decrement: amount } },
+      });
+
+      // Update destination account (add amount)
+      await tx.cashlessAccount.update({
+        where: { id: destinationAccount.id },
+        data: { balance: { increment: amount } },
+      });
+
+      // Create TRANSFER transaction for source (debit - negative amount in description)
+      await tx.cashlessTransaction.create({
+        data: {
+          accountId: sourceAccount.id,
+          festivalId,
+          type: TransactionType.TRANSFER,
+          amount: -amount, // Negative for outgoing transfer
+          balanceBefore: sourceAccount.balance,
+          balanceAfter: Number(updatedSourceAccount.balance),
+          description: description || `Transfer to user ${toUserId}`,
+          metadata: {
+            transferType: 'OUTGOING',
+            toUserId,
+          },
+        },
+      });
+
+      // Create TRANSFER transaction for destination (credit - positive amount)
+      await tx.cashlessTransaction.create({
+        data: {
+          accountId: destinationAccount.id,
+          festivalId,
+          type: TransactionType.TRANSFER,
+          amount, // Positive for incoming transfer
+          balanceBefore: Number(destinationAccount.balance),
+          balanceAfter: newDestinationBalance,
+          description: description || `Transfer from user ${userId}`,
+          metadata: {
+            transferType: 'INCOMING',
+            fromUserId: userId,
+          },
+        },
+      });
+
+      return updatedSourceAccount;
+    });
+
+    this.logger.log(
+      `Transfer of ${amount} from user ${userId} to ${toUserId} in festival ${festivalId}`,
+    );
+
+    return { newBalance: Number(result.balance) };
+  }
+
+  /**
    * Deactivate account
    */
   async deactivateAccount(userId: string): Promise<void> {

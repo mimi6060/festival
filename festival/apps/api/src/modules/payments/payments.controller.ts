@@ -22,8 +22,8 @@ import {
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
-  RawBodyRequest,
 } from '@nestjs/common';
+import type { RawBodyRequest } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,

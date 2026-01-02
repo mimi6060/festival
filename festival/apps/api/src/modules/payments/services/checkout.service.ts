@@ -458,7 +458,7 @@ export class CheckoutService {
           customerId: session.customer,
           subscriptionId,
           amountTotal: session.amount_total,
-        },
+        } as any,
       },
     });
 

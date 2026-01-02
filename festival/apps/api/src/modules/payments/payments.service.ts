@@ -207,12 +207,12 @@ export class PaymentsService {
       throw new NotFoundException('Payment not found');
     }
 
-    if (payment.status !== PaymentStatus.COMPLETED) {
-      throw new BadRequestException('Only completed payments can be refunded');
-    }
-
     if (payment.status === PaymentStatus.REFUNDED) {
       throw new BadRequestException('Payment has already been refunded');
+    }
+
+    if (payment.status !== PaymentStatus.COMPLETED) {
+      throw new BadRequestException('Only completed payments can be refunded');
     }
 
     if (!payment.providerPaymentId) {
@@ -254,7 +254,7 @@ export class PaymentsService {
         paymentId,
         refundId: refund.id,
         amount: Number(payment.amount),
-        status: refund.status,
+        status: refund.status || 'pending',
       };
     } catch (error) {
       this.logger.error(`Failed to process refund: ${error}`);
@@ -298,12 +298,16 @@ export class PaymentsService {
   /**
    * Get payment by provider payment ID
    */
-  async getPaymentByProviderId(providerPaymentId: string): Promise<PaymentEntity | null> {
+  async getPaymentByProviderId(providerPaymentId: string): Promise<string> {
     const payment = await this.prisma.payment.findFirst({
       where: { providerPaymentId },
     });
 
-    return payment ? this.mapToEntity(payment) : null;
+    if (!payment) {
+      throw new NotFoundException('Payment not found');
+    }
+
+    return payment.id;
   }
 
   /**

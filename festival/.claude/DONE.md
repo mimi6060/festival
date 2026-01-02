@@ -1,5 +1,28 @@
 # Tâches Terminées
 
+## 2026-01-03: Cashless Transfer Method Implementation
+
+### Cashless Module - transfer() Method
+- [x] Implemented `transfer()` method in `apps/api/src/modules/cashless/cashless.service.ts`:
+  - Festival validation (exists and is active)
+  - Source account validation (exists, active, sufficient balance)
+  - Destination account validation (exists, active)
+  - Self-transfer prevention
+  - Destination max balance check
+  - Atomic Prisma transaction:
+    - Creates TRANSFER transaction for source (negative amount for debit)
+    - Creates TRANSFER transaction for destination (positive amount for credit)
+    - Updates both account balances
+  - Returns new source balance
+  - Comprehensive logging
+  - Metadata tracking (transferType: OUTGOING/INCOMING, userId references)
+- [x] Implementation follows existing patterns from `topup()` and `pay()` methods
+- [x] Uses `TransactionType.TRANSFER` enum value
+- [x] Full error handling with BadRequestException, NotFoundException, ForbiddenException
+- [x] Build verification: API builds successfully
+
+---
+
 ## Phase 0 - Infrastructure
 
 ### Monorepo & Configuration

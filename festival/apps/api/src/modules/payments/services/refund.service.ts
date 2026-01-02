@@ -36,6 +36,7 @@ import {
 interface RefundablePayment {
   id: string;
   amount: number;
+  currency: string;
   status: PaymentStatus;
   providerPaymentId: string | null;
   refundedAmount: number;
@@ -489,6 +490,7 @@ export class RefundService {
     return {
       id: payment.id,
       amount: Number(payment.amount),
+      currency: payment.currency,
       status: payment.status,
       providerPaymentId: payment.providerPaymentId,
       refundedAmount,
@@ -550,7 +552,7 @@ export class RefundService {
           ],
           totalRefunded:
             ((providerData.totalRefunded as number) || 0) + refundAmount,
-        },
+        } as any,
       },
     });
 
