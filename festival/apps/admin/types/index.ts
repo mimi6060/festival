@@ -191,3 +191,29 @@ export interface FilterConfig {
   value: string;
   operator: 'eq' | 'contains' | 'gt' | 'lt' | 'gte' | 'lte';
 }
+
+// POI Types
+export type PoiType =
+  | 'STAGE'
+  | 'FOOD'
+  | 'DRINK'
+  | 'TOILET'
+  | 'MEDICAL'
+  | 'INFO'
+  | 'ATM'
+  | 'PARKING'
+  | 'CAMPING'
+  | 'ENTRANCE'
+  | 'EXIT'
+  | 'CHARGING'
+  | 'LOCKER';
+
+export interface Poi {
+  id: string;
+  name: string;
+  type: PoiType;
+  description?: string;
+  latitude: number;
+  longitude: number;
+  isActive: boolean;
+}
