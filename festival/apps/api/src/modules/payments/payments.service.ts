@@ -1,11 +1,13 @@
 /**
  * Payments Service
  *
- * Handles payment processing with Stripe including:
+ * Comprehensive payment processing with Stripe including:
  * - Payment intent creation
- * - Webhook handling
+ * - Checkout Sessions (hosted payment pages)
+ * - Webhook handling for all Stripe events
  * - Refund processing
  * - Payment status management
+ * - Support for Stripe Connect (vendor payments)
  */
 
 import {
@@ -19,6 +21,11 @@ import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { PrismaService } from '../prisma/prisma.service';
 import { PaymentStatus, PaymentProvider } from '@prisma/client';
+import {
+  CreateCheckoutSessionDto,
+  CheckoutSessionResponseDto,
+  CheckoutMode,
+} from './dto/create-checkout-session.dto';
 
 // ============================================================================
 // Types
@@ -30,6 +37,9 @@ export interface CreatePaymentDto {
   currency?: string;
   description?: string;
   metadata?: Record<string, string>;
+  festivalId?: string;
+  connectedAccountId?: string;
+  applicationFeeAmount?: number;
 }
 
 export interface PaymentIntentResult {
@@ -60,6 +70,17 @@ export interface PaymentEntity {
   refundedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface PaymentStatistics {
+  totalRevenue: number;
+  totalTransactions: number;
+  successfulPayments: number;
+  failedPayments: number;
+  refundedAmount: number;
+  averageOrderValue: number;
+  paymentsByStatus: Record<PaymentStatus, number>;
+  revenueByDay: Array<{ date: string; amount: number }>;
 }
 
 // ============================================================================

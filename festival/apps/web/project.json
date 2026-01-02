@@ -1,7 +1,7 @@
 {
   "name": "web",
   "$schema": "../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "apps/web",
+  "sourceRoot": "apps/web/src",
   "projectType": "application",
   "tags": ["type:app", "scope:web"],
   "targets": {
@@ -10,15 +10,13 @@
       "outputs": ["{options.outputPath}"],
       "defaultConfiguration": "production",
       "options": {
-        "outputPath": "apps/web"
+        "outputPath": "dist/apps/web"
       },
       "configurations": {
         "development": {
-          "outputPath": "apps/web"
+          "outputPath": "apps/web/.next"
         },
-        "production": {
-          "outputPath": "apps/web"
-        }
+        "production": {}
       }
     },
     "serve": {

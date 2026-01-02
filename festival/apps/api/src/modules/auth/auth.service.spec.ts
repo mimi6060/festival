@@ -83,7 +83,14 @@ describe('AuthService', () => {
   };
 
   beforeEach(async () => {
-    jest.clearAllMocks();
+    // Reset mocks for Prisma and JWT only, ConfigService must maintain its values
+    mockPrismaService.user.findUnique.mockReset();
+    mockPrismaService.user.findFirst.mockReset();
+    mockPrismaService.user.create.mockReset();
+    mockPrismaService.user.update.mockReset();
+    mockPrismaService.user.count.mockReset();
+    mockJwtService.signAsync.mockReset();
+    mockJwtService.verify.mockReset();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

@@ -4,6 +4,7 @@ import type {
   User,
   Festival,
   TicketCategory,
+  Ticket,
   Order,
   Payment,
   Staff,
