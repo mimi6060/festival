@@ -33,17 +33,97 @@ Voir `.claude/DONE.md` pour le détail complet.
 - [ ] **FIX:** Update controller methods to inject and use FestivalsService instead of mock data
 - [ ] **FIX:** Add FestivalsService to module exports if needed by other modules
 
-### Fix Build Admin App - BLOCKING (2026-01-02)
+### Fix Build Admin App - COMPLETED (2026-01-02)
 Build command: `NODE_ENV=production npx nx build admin`
 
-**Erreur #1 - FIXED:** reports/page.tsx:450 corrige avec `(percent ?? 0)`
+- [x] **Erreur #1 - FIXED:** reports/page.tsx:450 corrige avec `(percent ?? 0)`
+- [x] **Erreur #2 - FIXED:** hooks/useRealTimeData.ts:245 - Corrige avec `return;` au lieu de `return undefined;`
 
-**Erreur #2 - TO FIX:**
-- [ ] **hooks/useRealTimeData.ts:245** - `Not all code paths return a value`
-  - useEffect retourne cleanup function OU undefined selon la condition
-  - Solution: Remplacer `return undefined;` ligne 273 par `return;`
+### Fix ESLint CI - COMPLETED (2026-01-02)
+- [x] Configuration ESLint projet-specifique pour admin, api, mobile, shared libs
+- [x] Ignores pour .next, node_modules, fichiers generes
+- [x] Fix erreurs mobile (JSX syntax, fonctions vides, case declarations)
+- [x] Fix admin auth-context catch inutile
+- [x] Fix API custom-reports case block declarations
 
-**tsconfig.json Warning:** Retirer `../../dist/apps/admin/.next/types/**/*.ts` de include
+---
+
+## Tests UI/UX - Boutons et Formulaires (2026-01-02)
+
+### Admin App (localhost:4300) - TO TEST
+
+**Page Festivals:**
+- [ ] Bouton "Nouveau festival" - creation fonctionne
+- [ ] Bouton "Modifier" sur chaque festival - edition fonctionne
+- [ ] Bouton "Supprimer" - suppression avec confirmation
+- [ ] Filtres de recherche fonctionnels
+
+**Page Tickets:**
+- [ ] Bouton "Nouvelle categorie" - creation de categorie
+- [ ] Bouton "Modifier categorie" - edition
+- [ ] Bouton "Supprimer categorie" - suppression
+
+**Page Utilisateurs:**
+- [ ] Bouton "Nouvel utilisateur" - creation
+- [ ] Bouton "Modifier" - edition
+- [ ] Bouton "Activer/Desactiver" - toggle status
+- [ ] Filtres de role fonctionnels
+
+**Page Staff:**
+- [ ] Bouton "Nouveau staff" - creation
+- [ ] Bouton "Modifier permissions" - edition
+- [ ] Bouton "Supprimer" - suppression
+
+**Page Zones:**
+- [ ] Bouton "Nouvelle zone" - creation
+- [ ] Bouton "Modifier" - edition
+- [ ] Bouton "Supprimer" - suppression
+
+**Page Cashless:**
+- [ ] Bouton "Recharger" - topup compte
+- [ ] Bouton "Transferer" - transfert entre comptes
+- [ ] Bouton "Historique" - affichage transactions
+
+**Page Parametres:**
+- [ ] Bouton "Copier" API keys
+- [ ] Bouton "Regenerer" API keys
+- [ ] Bouton "2FA" configuration
+- [ ] Bouton "Deconnexion sessions"
+- [ ] Bouton "Changer logo"
+- [ ] Formulaire changement mot de passe
+
+**Page Rapports:**
+- [ ] Bouton "Exporter CSV"
+- [ ] Bouton "Exporter Excel"
+- [ ] Bouton "Exporter PDF"
+- [ ] Filtres de date fonctionnels
+
+### Web App (localhost:4200) - TO TEST
+
+**Page Auth:**
+- [ ] Formulaire connexion - validation + soumission
+- [ ] Formulaire inscription - validation + soumission
+- [ ] Boutons OAuth (Google, GitHub) - affiche message "coming soon"
+- [ ] Lien "Mot de passe oublie"
+
+**Page Festivals:**
+- [ ] Filtres de recherche
+- [ ] Bouton "Acheter billets"
+- [ ] Bouton "Voir details"
+- [ ] Bouton "Programme"
+
+**Page Compte:**
+- [ ] Formulaire modification profil
+- [ ] Bouton "Modifier mot de passe"
+- [ ] Bouton "Deconnexion"
+
+**Page Billets:**
+- [ ] Bouton "Telecharger QR code"
+- [ ] Bouton "Annuler billet" (si applicable)
+
+**Page Cashless:**
+- [ ] Bouton "Recharger"
+- [ ] Bouton "Historique"
 
 ---
 
