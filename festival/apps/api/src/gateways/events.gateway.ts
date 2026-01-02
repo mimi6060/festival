@@ -69,10 +69,10 @@ export class EventsGateway
   private readonly logger = new Logger(EventsGateway.name);
 
   // Track connected clients with their user info
-  private connectedClients: Map<string, { socket: Socket; user: WsUser | null }> = new Map();
+  private connectedClients = new Map<string, { socket: Socket; user: WsUser | null }>();
 
   // Track users in rooms
-  private roomUsers: Map<string, Set<string>> = new Map();
+  private roomUsers = new Map<string, Set<string>>();
 
   constructor(
     private readonly jwtService: JwtService,

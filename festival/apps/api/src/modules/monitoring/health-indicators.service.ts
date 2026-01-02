@@ -400,9 +400,9 @@ export class HealthIndicatorsService {
     const secs = Math.floor(seconds % 60);
 
     const parts: string[] = [];
-    if (days > 0) parts.push(`${days}d`);
-    if (hours > 0) parts.push(`${hours}h`);
-    if (minutes > 0) parts.push(`${minutes}m`);
+    if (days > 0) {parts.push(`${days}d`);}
+    if (hours > 0) {parts.push(`${hours}h`);}
+    if (minutes > 0) {parts.push(`${minutes}m`);}
     parts.push(`${secs}s`);
 
     return parts.join(' ');

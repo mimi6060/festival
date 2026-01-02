@@ -364,7 +364,7 @@ export class RefundService {
       where: { id: paymentId },
     });
 
-    if (!payment || !payment.providerPaymentId) {
+    if (!payment?.providerPaymentId) {
       throw new NotFoundException('Payment not found');
     }
 
@@ -502,7 +502,7 @@ export class RefundService {
       where: { id: paymentId },
     });
 
-    if (!payment || !payment.providerPaymentId || !this.stripe) {
+    if (!payment?.providerPaymentId || !this.stripe) {
       return 0;
     }
 
@@ -529,7 +529,7 @@ export class RefundService {
       where: { id: paymentId },
     });
 
-    if (!payment) return;
+    if (!payment) {return;}
 
     const providerData = (payment.providerData as Record<string, unknown>) || {};
 

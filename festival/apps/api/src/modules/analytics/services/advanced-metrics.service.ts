@@ -40,7 +40,7 @@ export class AdvancedMetricsService {
     const cacheKey = `analytics:revenue:${festivalId}:${startDate.toISOString()}:${endDate.toISOString()}`;
 
     const cached = await this.cacheService.get<RevenueMetrics>(cacheKey);
-    if (cached) return cached;
+    if (cached) {return cached;}
 
     const [
       ticketRevenue,
@@ -163,7 +163,7 @@ export class AdvancedMetricsService {
     const cacheKey = `analytics:customers:${festivalId}:${startDate.toISOString()}:${endDate.toISOString()}`;
 
     const cached = await this.cacheService.get<CustomerMetrics>(cacheKey);
-    if (cached) return cached;
+    if (cached) {return cached;}
 
     const [
       uniqueCustomers,
@@ -264,7 +264,7 @@ export class AdvancedMetricsService {
     const cacheKey = `analytics:performance:${festivalId}:${startDate.toISOString()}:${endDate.toISOString()}`;
 
     const cached = await this.cacheService.get<PerformanceMetrics>(cacheKey);
-    if (cached) return cached;
+    if (cached) {return cached;}
 
     const [
       ticketScans,
@@ -364,7 +364,7 @@ export class AdvancedMetricsService {
     const cacheKey = `analytics:fraud:${festivalId}:${startDate.toISOString()}:${endDate.toISOString()}`;
 
     const cached = await this.cacheService.get<FraudMetrics>(cacheKey);
-    if (cached) return cached;
+    if (cached) {return cached;}
 
     const [
       duplicateScans,
@@ -439,7 +439,7 @@ export class AdvancedMetricsService {
     const cacheKey = `analytics:growth:${festivalId}:${startDate.toISOString()}:${endDate.toISOString()}`;
 
     const cached = await this.cacheService.get<GrowthMetrics>(cacheKey);
-    if (cached) return cached;
+    if (cached) {return cached;}
 
     const periodDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24));
     const previousStart = new Date(startDate.getTime() - periodDays * 24 * 60 * 60 * 1000);
@@ -500,12 +500,12 @@ export class AdvancedMetricsService {
    */
   async getForecastMetrics(
     festivalId: string,
-    daysAhead: number = 7,
+    daysAhead = 7,
   ): Promise<ForecastMetrics> {
     const cacheKey = `analytics:forecast:${festivalId}:${daysAhead}`;
 
     const cached = await this.cacheService.get<ForecastMetrics>(cacheKey);
-    if (cached) return cached;
+    if (cached) {return cached;}
 
     const now = new Date();
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -542,7 +542,7 @@ export class AdvancedMetricsService {
     const cacheKey = `analytics:staff:${festivalId}:${startDate.toISOString()}:${endDate.toISOString()}`;
 
     const cached = await this.cacheService.get<StaffMetrics>(cacheKey);
-    if (cached) return cached;
+    if (cached) {return cached;}
 
     const [staffMembers, shifts, attendanceLogs] = await Promise.all([
       this.prisma.staffMember.findMany({
@@ -611,7 +611,7 @@ export class AdvancedMetricsService {
     const cacheKey = `analytics:environmental:${festivalId}:${startDate.toISOString()}:${endDate.toISOString()}`;
 
     const cached = await this.cacheService.get<EnvironmentalMetrics>(cacheKey);
-    if (cached) return cached;
+    if (cached) {return cached;}
 
     const [
       attendeeCount,
@@ -682,7 +682,7 @@ export class AdvancedMetricsService {
     const cacheKey = `analytics:security:${festivalId}:${startDate.toISOString()}:${endDate.toISOString()}`;
 
     const cached = await this.cacheService.get<SecurityMetrics>(cacheKey);
-    if (cached) return cached;
+    if (cached) {return cached;}
 
     const [
       accessDenials,
@@ -845,7 +845,7 @@ export class AdvancedMetricsService {
   }
 
   private calculateCLV(totalRevenue: number, totalCustomers: number, repeatCustomers: number): number {
-    if (totalCustomers === 0) return 0;
+    if (totalCustomers === 0) {return 0;}
     const avgRevenue = totalRevenue / totalCustomers;
     const repeatRate = repeatCustomers / totalCustomers;
     // Simple CLV = Average Revenue * (1 + Repeat Rate) * 2 (assumed lifespan multiplier)
@@ -1136,7 +1136,7 @@ export class AdvancedMetricsService {
   }
 
   private linearRegression(data: number[], daysAhead: number): number[] {
-    if (data.length < 2) return Array(daysAhead).fill(data[0] || 0);
+    if (data.length < 2) {return Array(daysAhead).fill(data[0] || 0);}
 
     const n = data.length;
     let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
@@ -1160,7 +1160,7 @@ export class AdvancedMetricsService {
   }
 
   private calculateConfidenceLevel(data: number[]): number {
-    if (data.length < 3) return 50;
+    if (data.length < 3) {return 50;}
 
     // Calculate variance
     const mean = data.reduce((a, b) => a + b, 0) / data.length;
@@ -1282,7 +1282,7 @@ export class AdvancedMetricsService {
     score += 15;
 
     // Scale for attendee count (larger events have more impact potential)
-    if (attendees > 10000) score += 5;
+    if (attendees > 10000) {score += 5;}
 
     return Math.min(100, Math.round(score));
   }

@@ -195,7 +195,7 @@ export class RateLimitService implements OnModuleInit, OnModuleDestroy {
   /**
    * Consume tokens without checking (for batch operations)
    */
-  async consume(key: string, tokens: number = 1): Promise<boolean> {
+  async consume(key: string, tokens = 1): Promise<boolean> {
     return this.checkRateLimit({
       key,
       limit: tokens,

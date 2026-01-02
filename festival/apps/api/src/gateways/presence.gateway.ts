@@ -83,20 +83,20 @@ export class PresenceGateway
   private readonly logger = new Logger(PresenceGateway.name);
 
   // Store user presence data
-  private userPresence: Map<string, UserPresence> = new Map();
+  private userPresence = new Map<string, UserPresence>();
 
   // Map socket IDs to user IDs
-  private socketToUser: Map<string, string> = new Map();
+  private socketToUser = new Map<string, string>();
 
   // Map user IDs to socket IDs (a user can have multiple connections)
-  private userToSockets: Map<string, Set<string>> = new Map();
+  private userToSockets = new Map<string, Set<string>>();
 
   // Track typing indicators by channel
-  private typingUsers: Map<string, Set<string>> = new Map();
+  private typingUsers = new Map<string, Set<string>>();
 
   // Away timeout (5 minutes of inactivity)
   private readonly AWAY_TIMEOUT_MS = 5 * 60 * 1000;
-  private activityTimeouts: Map<string, NodeJS.Timeout> = new Map();
+  private activityTimeouts = new Map<string, NodeJS.Timeout>();
 
   constructor(
     private readonly jwtService: JwtService,
@@ -540,7 +540,7 @@ export class PresenceGateway
 
     const timeout = setTimeout(() => {
       const presence = this.userPresence.get(userId);
-      if (presence && presence.status === 'online') {
+      if (presence?.status === 'online') {
         presence.status = 'away';
         this.userPresence.set(userId, presence);
         this.broadcastPresenceChange(userId, presence);

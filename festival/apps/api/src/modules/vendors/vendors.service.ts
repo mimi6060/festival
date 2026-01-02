@@ -638,20 +638,20 @@ export class VendorsService {
     cashlessTransactionId: string | null;
     vendorId: string;
   }) {
-    if (!order.cashlessTransactionId) return;
+    if (!order.cashlessTransactionId) {return;}
 
     const cashlessAccount = await this.prisma.cashlessAccount.findUnique({
       where: { userId: order.userId },
     });
 
-    if (!cashlessAccount) return;
+    if (!cashlessAccount) {return;}
 
     const vendor = await this.prisma.vendor.findUnique({
       where: { id: order.vendorId },
       select: { festivalId: true, name: true },
     });
 
-    if (!vendor) return;
+    if (!vendor) {return;}
 
     const refundAmount = Number(order.totalAmount);
     const balanceBefore = Number(cashlessAccount.balance);

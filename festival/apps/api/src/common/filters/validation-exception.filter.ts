@@ -60,7 +60,7 @@ export class ValidationExceptionFilter implements ExceptionFilter {
   }
 
   private isValidationError(response: unknown): boolean {
-    if (typeof response !== 'object' || response === null) return false;
+    if (typeof response !== 'object' || response === null) {return false;}
 
     const resp = response as Record<string, unknown>;
 
@@ -203,7 +203,7 @@ export class ValidationExceptionFilter implements ExceptionFilter {
   }
 
   private translateValidationMessage(message: string, lang: 'fr' | 'en'): string {
-    if (lang === 'en') return message;
+    if (lang === 'en') {return message;}
 
     // Common validation message translations
     const translations: Record<string, string> = {

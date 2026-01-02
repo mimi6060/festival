@@ -152,7 +152,7 @@ export class FcmService implements OnModuleInit {
   }
 
   async subscribeToTopic(tokens: string[], topic: string): Promise<void> {
-    if (!this.isInitialized) return;
+    if (!this.isInitialized) {return;}
 
     try {
       await admin.messaging().subscribeToTopic(tokens, topic);
@@ -163,7 +163,7 @@ export class FcmService implements OnModuleInit {
   }
 
   async unsubscribeFromTopic(tokens: string[], topic: string): Promise<void> {
-    if (!this.isInitialized) return;
+    if (!this.isInitialized) {return;}
 
     try {
       await admin.messaging().unsubscribeFromTopic(tokens, topic);
@@ -285,7 +285,7 @@ export class FcmService implements OnModuleInit {
   private stringifyData(
     data?: Record<string, unknown>,
   ): Record<string, string> | undefined {
-    if (!data) return undefined;
+    if (!data) {return undefined;}
 
     const result: Record<string, string> = {};
     for (const [key, value] of Object.entries(data)) {

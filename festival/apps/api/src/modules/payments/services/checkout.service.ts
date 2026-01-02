@@ -194,12 +194,12 @@ export class CheckoutService {
   async createTicketCheckout(params: {
     userId: string;
     festivalId: string;
-    tickets: Array<{
+    tickets: {
       categoryId: string;
       name: string;
       price: number;
       quantity: number;
-    }>;
+    }[];
     successUrl: string;
     cancelUrl: string;
     customerEmail?: string;
@@ -270,12 +270,12 @@ export class CheckoutService {
     userId: string;
     vendorId: string;
     connectedAccountId: string;
-    items: Array<{
+    items: {
       productId: string;
       name: string;
       price: number;
       quantity: number;
-    }>;
+    }[];
     applicationFeePercent: number;
     successUrl: string;
     cancelUrl: string;
@@ -386,7 +386,7 @@ export class CheckoutService {
    */
   async listUserCheckoutSessions(
     userId: string,
-    limit: number = 10,
+    limit = 10,
   ): Promise<CheckoutSessionStatus[]> {
     this.ensureStripeConfigured();
 

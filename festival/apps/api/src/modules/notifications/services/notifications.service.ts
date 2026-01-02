@@ -416,7 +416,7 @@ export class NotificationsService {
         where,
         _count: { id: true },
       }),
-      this.prisma.$queryRaw<Array<{ date: string; sent: number; read: number }>>`
+      this.prisma.$queryRaw<{ date: string; sent: number; read: number }[]>`
         SELECT
           DATE("createdAt") as date,
           COUNT(*)::int as sent,

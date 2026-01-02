@@ -282,8 +282,8 @@ export class PaymentsService {
    */
   async getUserPayments(
     userId: string,
-    limit: number = 50,
-    offset: number = 0,
+    limit = 50,
+    offset = 0,
   ): Promise<PaymentEntity[]> {
     const payments = await this.prisma.payment.findMany({
       where: { userId },

@@ -118,12 +118,12 @@ export class PaymentsController {
     dto: {
       userId: string;
       festivalId: string;
-      tickets: Array<{
+      tickets: {
         categoryId: string;
         name: string;
         price: number;
         quantity: number;
-      }>;
+      }[];
       successUrl: string;
       cancelUrl: string;
     },

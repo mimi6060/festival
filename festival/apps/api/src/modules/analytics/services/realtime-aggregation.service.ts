@@ -27,8 +27,8 @@ export class RealtimeAggregationService implements OnModuleInit, OnModuleDestroy
   private readonly logger = new Logger(RealtimeAggregationService.name);
 
   // In-memory buffers for streaming metrics
-  private metricBuffers: Map<string, MetricBuffer> = new Map();
-  private aggregatedMetrics: Map<string, AggregatedMetric> = new Map();
+  private metricBuffers = new Map<string, MetricBuffer>();
+  private aggregatedMetrics = new Map<string, AggregatedMetric>();
   private intervalHandles: NodeJS.Timeout[] = [];
 
   // Window sizes in seconds
@@ -128,7 +128,7 @@ export class RealtimeAggregationService implements OnModuleInit, OnModuleDestroy
     const now = new Date();
 
     for (const [key, buffer] of this.metricBuffers.entries()) {
-      if (buffer.values.length === 0) continue;
+      if (buffer.values.length === 0) {continue;}
 
       try {
         // Calculate window aggregations
@@ -224,7 +224,7 @@ export class RealtimeAggregationService implements OnModuleInit, OnModuleDestroy
       timestamp: Date;
     }>(cacheKey);
 
-    if (!cached) return null;
+    if (!cached) {return null;}
 
     return {
       metric: metricName,
@@ -464,7 +464,7 @@ export class RealtimeAggregationService implements OnModuleInit, OnModuleDestroy
   async getMetricTrend(
     metricName: string,
     tags: Record<string, string>,
-    minutes: number = 60,
+    minutes = 60,
   ): Promise<{ timestamp: Date; value: number }[]> {
     const key = this.getMetricKey(metricName, tags);
     const points: { timestamp: Date; value: number }[] = [];
@@ -505,7 +505,7 @@ export class RealtimeAggregationService implements OnModuleInit, OnModuleDestroy
   async getMetricRateOfChange(
     metricName: string,
     tags: Record<string, string>,
-    periodMinutes: number = 5,
+    periodMinutes = 5,
   ): Promise<{
     current: number;
     previous: number;

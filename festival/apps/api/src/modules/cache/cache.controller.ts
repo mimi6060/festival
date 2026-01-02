@@ -73,7 +73,7 @@ class CacheDashboardDto {
     keysInvalidated: number;
     avgDuration: number;
   };
-  topKeys!: Array<{ key: string; accessCount: number }>;
+  topKeys!: { key: string; accessCount: number }[];
   tagDistribution!: Record<string, number>;
   memoryBreakdown!: {
     total: string;
@@ -403,9 +403,9 @@ export class CacheController {
     status: 200,
     description: 'Dependencies retrieved successfully',
   })
-  getDependencies(): Array<{ source: string; targets: string[] }> {
+  getDependencies(): { source: string; targets: string[] }[] {
     const deps = this.invalidationService.getDependencies();
-    const result: Array<{ source: string; targets: string[] }> = [];
+    const result: { source: string; targets: string[] }[] = [];
 
     for (const [source, depList] of deps) {
       for (const dep of depList) {
@@ -474,7 +474,7 @@ export class CacheController {
     }
   }
 
-  private getTopKeys(limit: number): Array<{ key: string; accessCount: number }> {
+  private getTopKeys(limit: number): { key: string; accessCount: number }[] {
     const entries = this.hotKeysCache.entries();
     return entries
       .sort((a, b) => b.metadata.accessCount - a.metadata.accessCount)

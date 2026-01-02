@@ -416,8 +416,8 @@ export class CashlessService {
   async getTransactionHistory(
     userId: string,
     festivalId?: string,
-    limit: number = 50,
-    offset: number = 0,
+    limit = 50,
+    offset = 0,
   ): Promise<CashlessTransactionEntity[]> {
     const account = await this.getAccount(userId);
 

@@ -803,7 +803,7 @@ export class ExportService {
     value: unknown,
     format?: 'number' | 'currency' | 'percentage' | 'date',
   ): string {
-    if (value === null || value === undefined) return '';
+    if (value === null || value === undefined) {return '';}
 
     switch (format) {
       case 'currency':
@@ -831,7 +831,7 @@ export class ExportService {
     value: unknown,
     format?: 'number' | 'currency' | 'percentage' | 'date',
   ): string {
-    if (value === null || value === undefined) return '-';
+    if (value === null || value === undefined) {return '-';}
 
     switch (format) {
       case 'currency':

@@ -110,19 +110,19 @@ export class SupportChatGateway
   private readonly logger = new Logger(SupportChatGateway.name);
 
   // Track ticket rooms
-  private ticketRooms: Map<string, TicketRoom> = new Map();
+  private ticketRooms = new Map<string, TicketRoom>();
 
   // Map socket to user
-  private socketToUser: Map<string, WsUser> = new Map();
+  private socketToUser = new Map<string, WsUser>();
 
   // Map user to sockets
-  private userToSockets: Map<string, Set<string>> = new Map();
+  private userToSockets = new Map<string, Set<string>>();
 
   // Message queue for offline delivery
-  private messageQueue: Map<string, ChatMessage[]> = new Map();
+  private messageQueue = new Map<string, ChatMessage[]>();
 
   // Typing indicators per ticket
-  private typingInTicket: Map<string, Map<string, NodeJS.Timeout>> = new Map();
+  private typingInTicket = new Map<string, Map<string, NodeJS.Timeout>>();
 
   constructor(
     private readonly jwtService: JwtService,

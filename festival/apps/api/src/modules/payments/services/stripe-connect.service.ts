@@ -396,7 +396,7 @@ export class StripeConnectService {
    */
   async listTransfers(
     destinationAccountId?: string,
-    limit: number = 10,
+    limit = 10,
     startingAfter?: string,
   ): Promise<{ transfers: TransferResponseDto[]; hasMore: boolean }> {
     this.ensureStripeConfigured();
@@ -440,7 +440,7 @@ export class StripeConnectService {
    */
   async listPayouts(
     accountId: string,
-    limit: number = 10,
+    limit = 10,
     startingAfter?: string,
   ): Promise<{ payouts: PayoutResponseDto[]; hasMore: boolean }> {
     this.ensureStripeConfigured();

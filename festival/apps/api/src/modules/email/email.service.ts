@@ -21,11 +21,11 @@ export interface SendEmailOptions {
   subject: string;
   template: string;
   context: Record<string, unknown>;
-  attachments?: Array<{
+  attachments?: {
     filename: string;
     content: Buffer | string;
     contentType?: string;
-  }>;
+  }[];
   cc?: string | string[];
   bcc?: string | string[];
   replyTo?: string;
@@ -46,7 +46,7 @@ export interface SendEmailOptions {
 export class EmailService implements OnModuleInit {
   private readonly logger = new Logger(EmailService.name);
   private transporter: nodemailer.Transporter | null = null;
-  private templates: Map<string, HandlebarsTemplateDelegate> = new Map();
+  private templates = new Map<string, HandlebarsTemplateDelegate>();
   private readonly templateDir: string;
   private readonly config: EmailConfig;
   private isEnabled = false;
@@ -167,7 +167,7 @@ export class EmailService implements OnModuleInit {
   private registerHelpers(): void {
     // Format date helper
     handlebars.registerHelper('formatDate', (date: Date, format: string) => {
-      if (!date) return '';
+      if (!date) {return '';}
       const d = new Date(date);
 
       switch (format) {
@@ -193,8 +193,8 @@ export class EmailService implements OnModuleInit {
     });
 
     // Format currency helper
-    handlebars.registerHelper('formatCurrency', (amount: number, currency: string = 'EUR') => {
-      if (amount === undefined || amount === null) return '';
+    handlebars.registerHelper('formatCurrency', (amount: number, currency = 'EUR') => {
+      if (amount === undefined || amount === null) {return '';}
       return new Intl.NumberFormat('fr-FR', {
         style: 'currency',
         currency,
@@ -223,8 +223,8 @@ export class EmailService implements OnModuleInit {
 
     // Truncate helper
     handlebars.registerHelper('truncate', (str: string, length: number) => {
-      if (!str) return '';
-      if (str.length <= length) return str;
+      if (!str) {return '';}
+      if (str.length <= length) {return str;}
       return str.substring(0, length) + '...';
     });
 
@@ -381,7 +381,7 @@ export class EmailService implements OnModuleInit {
       amount: number;
       currency: string;
       paymentMethod: string;
-      items: Array<{ name: string; quantity: number; price: number }>;
+      items: { name: string; quantity: number; price: number }[];
       festivalName?: string;
     },
     invoicePdf?: Buffer,

@@ -166,7 +166,7 @@ export class CacheInterceptor implements NestInterceptor {
             }
 
             // Check unless condition
-            if (options.unless && options.unless(result, ...args)) {
+            if (options.unless?.(result, ...args)) {
               return;
             }
 
@@ -203,7 +203,7 @@ export class CacheInterceptor implements NestInterceptor {
         }
 
         // Check unless condition
-        if (options.unless && options.unless(result, ...args)) {
+        if (options.unless?.(result, ...args)) {
           return;
         }
 
@@ -513,7 +513,7 @@ export class BatchCacheInterceptor implements NestInterceptor {
     options: any,
     next: CallHandler,
   ): Promise<any[]> {
-    const cached: Map<string, any> = new Map();
+    const cached = new Map<string, any>();
     const missing: string[] = [];
 
     // Check cache for each ID

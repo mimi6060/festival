@@ -304,7 +304,7 @@ export class SanitizationService {
    * Sanitize an email address
    */
   sanitizeEmail(email: string): string {
-    if (!email) return '';
+    if (!email) {return '';}
 
     let sanitized = email.toLowerCase().trim();
 
@@ -330,7 +330,7 @@ export class SanitizationService {
    * Sanitize a phone number (keep only digits and +)
    */
   sanitizePhone(phone: string): string {
-    if (!phone) return '';
+    if (!phone) {return '';}
 
     let sanitized = phone.trim();
 
@@ -353,7 +353,7 @@ export class SanitizationService {
    * Sanitize a URL
    */
   sanitizeUrl(url: string): string {
-    if (!url) return '';
+    if (!url) {return '';}
 
     let sanitized = url.trim();
 
@@ -376,7 +376,7 @@ export class SanitizationService {
    * Sanitize a filename
    */
   sanitizeFilename(filename: string): string {
-    if (!filename) return '';
+    if (!filename) {return '';}
 
     let sanitized = filename.trim();
 

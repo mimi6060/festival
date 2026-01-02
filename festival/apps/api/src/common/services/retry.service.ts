@@ -148,7 +148,7 @@ export class RetryService {
    * Execute multiple operations with retry, failing fast on first error
    */
   async executeAll<T>(
-    operations: Array<() => Promise<T>>,
+    operations: (() => Promise<T>)[],
     options: RetryOptions,
   ): Promise<RetryResult<T[]>> {
     const startTime = Date.now();
@@ -184,9 +184,9 @@ export class RetryService {
    * Execute multiple operations with retry, collecting all results/errors
    */
   async executeAllSettled<T>(
-    operations: Array<() => Promise<T>>,
+    operations: (() => Promise<T>)[],
     options: RetryOptions,
-  ): Promise<Array<RetryResult<T>>> {
+  ): Promise<RetryResult<T>[]> {
     return Promise.all(
       operations.map((op, i) =>
         this.execute(op, {

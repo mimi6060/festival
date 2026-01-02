@@ -164,19 +164,19 @@ export class BroadcastGateway
   private readonly logger = new Logger(BroadcastGateway.name);
 
   // Store active broadcasts
-  private activeBroadcasts: Map<string, Broadcast> = new Map();
+  private activeBroadcasts = new Map<string, Broadcast>();
 
   // Store active emergency alerts
-  private activeEmergencies: Map<string, EmergencyAlert> = new Map();
+  private activeEmergencies = new Map<string, EmergencyAlert>();
 
   // Store schedule changes
-  private scheduleChanges: Map<string, ScheduleChange[]> = new Map();
+  private scheduleChanges = new Map<string, ScheduleChange[]>();
 
   // Map socket to user
-  private socketToUser: Map<string, WsUser> = new Map();
+  private socketToUser = new Map<string, WsUser>();
 
   // Track read/dismiss counts
-  private broadcastStats: Map<string, { reads: Set<string>; dismisses: Set<string> }> = new Map();
+  private broadcastStats = new Map<string, { reads: Set<string>; dismisses: Set<string> }>();
 
   constructor(
     private readonly jwtService: JwtService,
@@ -709,7 +709,7 @@ export class BroadcastGateway
     return broadcasts.sort((a, b) => {
       const priorityOrder = { emergency: 0, urgent: 1, high: 2, normal: 3, low: 4 };
       const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
-      if (priorityDiff !== 0) return priorityDiff;
+      if (priorityDiff !== 0) {return priorityDiff;}
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
   }
@@ -778,7 +778,7 @@ export class BroadcastGateway
   }
 
   private formatTime(date?: Date): string {
-    if (!date) return 'TBA';
+    if (!date) {return 'TBA';}
     return new Date(date).toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',

@@ -187,16 +187,16 @@ export class MonitoringController {
     const secs = Math.floor(seconds % 60);
 
     const parts: string[] = [];
-    if (days > 0) parts.push(`${days}d`);
-    if (hours > 0) parts.push(`${hours}h`);
-    if (minutes > 0) parts.push(`${minutes}m`);
+    if (days > 0) {parts.push(`${days}d`);}
+    if (hours > 0) {parts.push(`${hours}h`);}
+    if (minutes > 0) {parts.push(`${minutes}m`);}
     parts.push(`${secs}s`);
 
     return parts.join(' ');
   }
 
   private sumMetricValues(metric: any): number {
-    if (!metric || !metric.values) return 0;
+    if (!metric?.values) {return 0;}
     return metric.values.reduce((sum: number, v: any) => sum + (v.value || 0), 0);
   }
 
@@ -205,7 +205,7 @@ export class MonitoringController {
     const misses = this.sumMetricValues(metrics['cache_misses_total']);
     const total = hits + misses;
 
-    if (total === 0) return '0%';
+    if (total === 0) {return '0%';}
     return `${((hits / total) * 100).toFixed(2)}%`;
   }
 }

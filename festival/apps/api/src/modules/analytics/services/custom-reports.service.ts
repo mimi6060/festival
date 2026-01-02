@@ -20,7 +20,7 @@ export class CustomReportsService {
   private readonly CACHE_TTL = 300; // 5 minutes
 
   // In-memory store for report configs (would be in database in production)
-  private reportConfigs: Map<string, CustomReportConfig> = new Map();
+  private reportConfigs = new Map<string, CustomReportConfig>();
 
   constructor(
     private readonly prisma: PrismaService,
@@ -113,7 +113,7 @@ export class CustomReportsService {
 
     const cacheKey = `report:${reportId}:${JSON.stringify(timeRange)}`;
     const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
-    if (cached) return cached;
+    if (cached) {return cached;}
 
     const effectiveTimeRange = timeRange || this.getDefaultTimeRange();
     const results: Record<string, unknown> = {
@@ -274,7 +274,7 @@ export class CustomReportsService {
     const cacheKey = `comparison:${festivalId}:${JSON.stringify({ currentPeriod, comparisonPeriod, metrics })}`;
 
     const cached = await this.cacheService.get<ComparisonAnalytics>(cacheKey);
-    if (cached) return cached;
+    if (cached) {return cached;}
 
     const comparisonMetrics: ComparisonAnalytics['metrics'] = [];
 
@@ -396,7 +396,7 @@ export class CustomReportsService {
     const cacheKey = `cohort:${festivalId}:${cohortType}:${JSON.stringify(timeRange)}`;
 
     const cached = await this.cacheService.get<CohortAnalysis>(cacheKey);
-    if (cached) return cached;
+    if (cached) {return cached;}
 
     let cohorts: CohortAnalysis['cohorts'] = [];
     let periods: string[] = [];
@@ -566,7 +566,7 @@ export class CustomReportsService {
     const cacheKey = `funnel:${festivalId}:${funnelName}`;
 
     const cached = await this.cacheService.get<FunnelAnalysis>(cacheKey);
-    if (cached) return cached;
+    if (cached) {return cached;}
 
     let analysis: FunnelAnalysis;
 
@@ -720,7 +720,7 @@ export class CustomReportsService {
     const cacheKey = `anomalies:${festivalId}:${metric}:${JSON.stringify(timeRange)}`;
 
     const cached = await this.cacheService.get<AnomalyDetection[]>(cacheKey);
-    if (cached) return cached;
+    if (cached) {return cached;}
 
     // Get historical data
     const historicalData = await this.getMetricTimeSeries(festivalId, metric, timeRange);
@@ -742,9 +742,9 @@ export class CustomReportsService {
       const zScore = Math.abs((dataPoint.value - mean) / stdDev);
       if (zScore > threshold) {
         let severity: AnomalyDetection['severity'] = 'low';
-        if (zScore > 3) severity = 'critical';
-        else if (zScore > 2.5) severity = 'high';
-        else if (zScore > 2) severity = 'medium';
+        if (zScore > 3) {severity = 'critical';}
+        else if (zScore > 2.5) {severity = 'high';}
+        else if (zScore > 2) {severity = 'medium';}
 
         anomalies.push({
           metric,
@@ -834,7 +834,7 @@ export class CustomReportsService {
     const cacheKey = `benchmarks:${festivalId}`;
 
     const cached = await this.cacheService.get<BenchmarkData[]>(cacheKey);
-    if (cached) return cached;
+    if (cached) {return cached;}
 
     const festival = await this.prisma.festival.findUnique({
       where: { id: festivalId },

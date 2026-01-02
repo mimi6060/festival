@@ -121,19 +121,19 @@ export class ZonesGateway
   private readonly logger = new Logger(ZonesGateway.name);
 
   // Store zone occupancy data
-  private zoneOccupancy: Map<string, ZoneOccupancy> = new Map();
+  private zoneOccupancy = new Map<string, ZoneOccupancy>();
 
   // Track active alerts
-  private activeAlerts: Map<string, ZoneAlert> = new Map();
+  private activeAlerts = new Map<string, ZoneAlert>();
 
   // Track staff positions
-  private staffPositions: Map<string, StaffPosition> = new Map();
+  private staffPositions = new Map<string, StaffPosition>();
 
   // Map socket to user
-  private socketToUser: Map<string, WsUser> = new Map();
+  private socketToUser = new Map<string, WsUser>();
 
   // Track entry/exit counts per hour
-  private hourlyStats: Map<string, { entries: number; exits: number; hour: number }> = new Map();
+  private hourlyStats = new Map<string, { entries: number; exits: number; hour: number }>();
 
   constructor(
     private readonly jwtService: JwtService,
@@ -665,7 +665,7 @@ export class ZonesGateway
     const currentHour = new Date().getHours();
     let stats = this.hourlyStats.get(key);
 
-    if (!stats || stats.hour !== currentHour) {
+    if (stats?.hour !== currentHour) {
       stats = { entries: 0, exits: 0, hour: currentHour };
       this.hourlyStats.set(key, stats);
     }

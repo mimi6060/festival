@@ -237,8 +237,8 @@ export function generateCacheKey(
  */
 function hashArgs(args: any[]): string {
   const str = args.map((arg) => {
-    if (arg === null) return 'null';
-    if (arg === undefined) return 'undefined';
+    if (arg === null) {return 'null';}
+    if (arg === undefined) {return 'undefined';}
     if (typeof arg === 'object') {
       try {
         return JSON.stringify(arg);

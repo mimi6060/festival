@@ -142,7 +142,7 @@ export class UsersService {
   private canAccessUser(
     requestingUser: AuthenticatedUser,
     targetUserId: string,
-    requireAdmin: boolean = false,
+    requireAdmin = false,
   ): boolean {
     // Admin can access everything
     if (requestingUser.role === UserRole.ADMIN) {

@@ -557,10 +557,10 @@ export class CampingStatisticsDto {
     description: 'Daily occupancy for the last 7 days',
     type: 'array',
   })
-  dailyOccupancy!: Array<{
+  dailyOccupancy!: {
     date: string;
     occupied: number;
     total: number;
     rate: number;
-  }>;
+  }[];
 }

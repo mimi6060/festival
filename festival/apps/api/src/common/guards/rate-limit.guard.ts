@@ -250,10 +250,10 @@ export const ENDPOINT_RATE_LIMITS: Record<string, RateLimitConfig> = {
  * Simple in-memory rate limiter for development/fallback
  */
 class InMemoryRateLimiter {
-  private store: Map<string, { count: number; resetAt: number }> = new Map();
+  private store = new Map<string, { count: number; resetAt: number }>();
   private readonly logger = new Logger('InMemoryRateLimiter');
 
-  async increment(key: string, windowSeconds: number, cost: number = 1): Promise<RateLimitState> {
+  async increment(key: string, windowSeconds: number, cost = 1): Promise<RateLimitState> {
     const now = Math.floor(Date.now() / 1000);
     const entry = this.store.get(key);
 
@@ -329,7 +329,7 @@ class RedisRateLimiter {
     key: string,
     windowSeconds: number,
     limit: number,
-    cost: number = 1,
+    cost = 1,
   ): Promise<RateLimitState> {
     const now = Math.floor(Date.now() / 1000);
     const windowStart = now - windowSeconds;

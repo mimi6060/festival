@@ -28,7 +28,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
     }
 
     const tablenames = await this.$queryRaw<
-      Array<{ tablename: string }>
+      { tablename: string }[]
     >`SELECT tablename FROM pg_tables WHERE schemaname='public'`;
 
     for (const { tablename } of tablenames) {

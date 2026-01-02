@@ -126,11 +126,11 @@ export class AlertsService implements OnModuleInit {
       condition: async () => {
         const metrics = this.metricsService.getMetricsJson();
         const histogram = metrics['http_request_duration_ms'];
-        if (!histogram?.data?.length) return false;
+        if (!histogram?.data?.length) {return false;}
 
         // Calculate approximate P95
         const data = histogram.data[0];
-        if (!data) return false;
+        if (!data) {return false;}
         const avgLatency = data.count > 0 ? data.sum / data.count : 0;
         return avgLatency > 500;
       },
@@ -187,7 +187,7 @@ export class AlertsService implements OnModuleInit {
       condition: async () => {
         const metrics = this.metricsService.getMetricsJson();
         const payments = metrics['payments_total'];
-        if (!payments?.values) return false;
+        if (!payments?.values) {return false;}
 
         let total = 0;
         let failed = 0;
@@ -316,7 +316,7 @@ export class AlertsService implements OnModuleInit {
    */
   private async resolveAlert(alertName: string): Promise<void> {
     const alert = this.activeAlerts.get(alertName);
-    if (!alert) return;
+    if (!alert) {return;}
 
     alert.status = AlertStatus.RESOLVED;
     alert.endsAt = new Date();
@@ -485,7 +485,7 @@ export class AlertsService implements OnModuleInit {
    * Helper: sum metric values
    */
   private sumMetricValues(metric: { values?: { value: number }[] } | undefined): number {
-    if (!metric?.values) return 0;
+    if (!metric?.values) {return 0;}
     return metric.values.reduce((sum: number, v: { value: number }) => sum + (v.value || 0), 0);
   }
 }

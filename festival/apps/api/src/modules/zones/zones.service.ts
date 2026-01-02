@@ -659,7 +659,7 @@ export class ZonesService {
    * Get all zones capacity status for a festival (dashboard view)
    */
   async getAllZonesCapacityStatus(festivalId: string): Promise<
-    Array<{
+    {
       zoneId: string;
       zoneName: string;
       currentOccupancy: number;
@@ -667,7 +667,7 @@ export class ZonesService {
       occupancyPercentage: number | null;
       status: 'GREEN' | 'YELLOW' | 'ORANGE' | 'RED';
       isActive: boolean;
-    }>
+    }[]
   > {
     const zones = await this.prisma.zone.findMany({
       where: { festivalId },
@@ -806,11 +806,11 @@ export class ZonesService {
       peakOccupancy: number;
       averageStayDurationMinutes: number | null;
     };
-    hourlyDistribution: Array<{
+    hourlyDistribution: {
       hour: number;
       entries: number;
       exits: number;
-    }>;
+    }[];
   }> {
     // Verify zone exists
     const zone = await this.prisma.zone.findUnique({
@@ -877,7 +877,7 @@ export class ZonesService {
 
     // Calculate average stay duration
     const stayDurations: number[] = [];
-    const entryTimes: Map<string, Date> = new Map();
+    const entryTimes = new Map<string, Date>();
 
     for (const log of allLogs) {
       if (log.action === ZoneAccessAction.ENTRY) {

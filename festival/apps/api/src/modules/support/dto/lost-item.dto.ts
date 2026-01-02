@@ -235,11 +235,11 @@ export class LostItemStatisticsDto {
   returnRate!: number; // percentage
 
   @ApiProperty({ type: Object })
-  byFestival!: Array<{
+  byFestival!: {
     festivalId: string;
     festivalName: string;
     reported: number;
     found: number;
     returned: number;
-  }>;
+  }[];
 }

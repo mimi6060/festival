@@ -138,7 +138,7 @@ export class LRUCache<T = any> {
    */
   has(key: string): boolean {
     const entry = this.cache.get(key);
-    if (!entry) return false;
+    if (!entry) {return false;}
 
     // Check expiry
     if (entry.expiry !== null && Date.now() > entry.expiry) {
@@ -155,7 +155,7 @@ export class LRUCache<T = any> {
   peek(key: string): T | undefined {
     const entry = this.cache.get(key);
 
-    if (!entry) return undefined;
+    if (!entry) {return undefined;}
 
     // Check expiry
     if (entry.expiry !== null && Date.now() > entry.expiry) {
@@ -172,7 +172,7 @@ export class LRUCache<T = any> {
   delete(key: string, reason: EvictionReason = EvictionReason.MANUAL): boolean {
     const entry = this.cache.get(key);
 
-    if (!entry) return false;
+    if (!entry) {return false;}
 
     this.cache.delete(key);
 
@@ -228,8 +228,8 @@ export class LRUCache<T = any> {
   /**
    * Get entries with metadata
    */
-  entries(): Array<{ key: string; value: T; metadata: Omit<CacheEntry<T>, 'value'> }> {
-    const result: Array<{ key: string; value: T; metadata: Omit<CacheEntry<T>, 'value'> }> = [];
+  entries(): { key: string; value: T; metadata: Omit<CacheEntry<T>, 'value'> }[] {
+    const result: { key: string; value: T; metadata: Omit<CacheEntry<T>, 'value'> }[] = [];
     const now = Date.now();
 
     for (const [key, entry] of this.cache.entries()) {
@@ -329,7 +329,7 @@ export class LRUCache<T = any> {
    */
   getTtl(key: string): number | null {
     const entry = this.cache.get(key);
-    if (!entry || entry.expiry === null) return null;
+    if (!entry || entry.expiry === null) {return null;}
 
     const remaining = entry.expiry - Date.now();
     return remaining > 0 ? remaining : 0;
@@ -340,7 +340,7 @@ export class LRUCache<T = any> {
    */
   touch(key: string, ttl?: number): boolean {
     const entry = this.cache.get(key);
-    if (!entry) return false;
+    if (!entry) {return false;}
 
     if (ttl !== undefined) {
       entry.expiry = Date.now() + ttl;
