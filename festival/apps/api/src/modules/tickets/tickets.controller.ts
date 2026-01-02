@@ -73,7 +73,7 @@ export class TicketsController {
   /**
    * Purchase tickets for a festival
    */
-  @Post('purchase')
+  @Post('buy')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
@@ -124,7 +124,7 @@ Purchase one or more tickets for a festival.
   /**
    * Get current user's tickets
    */
-  @Get()
+  @Get('me')
   @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
