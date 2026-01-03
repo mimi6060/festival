@@ -44,10 +44,10 @@
 ### 🧪 3) CI/CD & Coverage (PRIORITÉ HAUTE)
 
 - [x] GitHub Actions CI workflow
-- [ ] Coverage minimal obligatoire sur chaque PR
+- [x] Coverage minimal obligatoire sur chaque PR (Codecov)
 - [ ] Preview apps déploiement (Vercel/Netlify)
-- [ ] Sentry error reporting intégré
-- [ ] Badge coverage dans README
+- [x] Sentry error reporting intégré
+- [x] Badge coverage dans README
 
 ### 🔐 4) Sécurité & Conformité (PRIORITÉ MOYENNE)
 
