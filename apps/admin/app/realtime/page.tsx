@@ -254,7 +254,7 @@ export default function RealtimeDashboardPage() {
     }));
   }, [lastUpdate]);
 
-  const unacknowledgedAlerts = stats.alerts.filter((a) => !a.acknowledged);
+  const unacknowledgedAlerts = stats.alerts.filter((a: RealtimeAlert) => !a.acknowledged);
 
   return (
     <div className="space-y-6">
@@ -285,7 +285,7 @@ export default function RealtimeDashboardPage() {
       {/* Alerts */}
       {unacknowledgedAlerts.length > 0 && (
         <div className="space-y-2">
-          {unacknowledgedAlerts.map((alert) => (
+          {unacknowledgedAlerts.map((alert: RealtimeAlert) => (
             <AlertItem
               key={alert.id}
               alert={alert}
