@@ -9,11 +9,90 @@
 - [x] Remove nested duplicate `festival/` folder causing nx project graph errors
 - [x] Add ts-node for Jest TypeScript config support
 - [x] Fix tickets service tests - uuid and crypto mock chain issues
+- [x] Fix auth.service and payments.service test mocks
 
 ### Tests En Cours
 - [x] Run test suite - reduced failures from 14 to 12
-- [ ] Fix remaining test failures (auth.service login, payments.service Stripe mock, tickets QR image)
+- [ ] Fix remaining test failures (tickets QR image)
 - [ ] Increase coverage to 90% for critical services
+
+---
+
+## 🚀 ROADMAP PRO - Rendre le projet Production-Ready
+
+### 🛠️ 1) Documentation & Onboarding (PRIORITÉ HAUTE)
+- [ ] README complet avec objectifs, architecture, cas d'usage
+- [ ] Screenshots et démos vidéo
+- [ ] Arborescence du projet documentée
+- [ ] Guide d'installation pas à pas (dev + prod)
+- [ ] Guide de contribution (CONTRIBUTING.md)
+- [ ] Roadmap publique (GitHub Projects ou README)
+- [ ] Exemples de commandes courantes
+
+### ⚙️ 2) Qualité du Code (PRIORITÉ HAUTE)
+- [x] ESLint + Prettier configurés
+- [ ] Husky pre-commit hooks
+- [x] Tests unitaires partiels
+- [ ] Tests unitaires complets (90% coverage)
+- [ ] Tests E2E complets
+- [x] OpenAPI/Swagger pour API
+
+### 🧪 3) CI/CD & Coverage (PRIORITÉ HAUTE)
+- [x] GitHub Actions CI workflow
+- [ ] Coverage minimal obligatoire sur chaque PR
+- [ ] Preview apps déploiement (Vercel/Netlify)
+- [ ] Sentry error reporting intégré
+- [ ] Badge coverage dans README
+
+### 🔐 4) Sécurité & Conformité (PRIORITÉ MOYENNE)
+- [x] Rate limiting implémenté
+- [ ] npm audit automatique dans CI
+- [ ] Dependabot ou Renovate pour deps
+- [ ] 2FA optionnel pour admin
+- [x] GDPR ready (audit trails, suppression)
+- [x] Protection XSS/CSRF
+
+### 🧑‍💻 5) Interface Utilisateur (PRIORITÉ HAUTE)
+- [x] Tailwind CSS configuré
+- [ ] Design system documenté (Storybook)
+- [ ] Mode dark/light toggle
+- [ ] Accessibilité WCAG 2.1 AA
+- [ ] Responsive testé sur tous breakpoints
+- [ ] Skeleton loaders partout
+
+### 📊 6) Analytics & KPI (PRIORITÉ HAUTE)
+- [x] Dashboard KPI admin
+- [ ] Heatmaps zones temps réel
+- [x] Export CSV/PDF
+- [ ] Engagement utilisateurs métriques
+- [ ] A/B testing framework
+
+### 📱 7) App Mobile Événementielle (PRIORITÉ MOYENNE)
+- [x] Cartes interactives
+- [ ] Mode offline complet avec maps
+- [x] Notifications push
+- [ ] Fil d'actualité/messages internes
+- [ ] Réservation d'ateliers/workshops
+- [ ] Gamification (badges, points)
+
+### 💳 8) Paiement Optimisé (PRIORITÉ MOYENNE)
+- [ ] Support multi-devise (EUR, USD, GBP)
+- [x] Cashless on-site
+- [ ] Auto-reconciliation Stripe/compta
+- [x] Remboursements automatisés
+- [ ] Rapports financiers comptables
+
+### 🌍 9) Internationalisation (PRIORITÉ MOYENNE)
+- [x] i18n front + mobile (FR/EN)
+- [ ] Traductions ES, DE, IT, PT
+- [ ] Format monétaire/date local
+- [ ] Crowdsourcing traductions
+
+### 💡 10) Support & Communauté (PRIORITÉ BASSE)
+- [ ] GitHub Discussions activé
+- [ ] Discord/Slack communauté
+- [ ] Modèle SaaS/pricing
+- [ ] Plugin marketplace (maps, analytics)
 
 ---
 
