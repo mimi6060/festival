@@ -17,19 +17,6 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
-// Demo admin user for development
-const DEMO_ADMIN: User = {
-  id: '1',
-  email: 'admin@festival.com',
-  firstName: 'Jean',
-  lastName: 'Dupont',
-  role: 'admin',
-  avatar: 'https://api.dicebear.com/7.x/avataaars/svg?seed=jean',
-  createdAt: '2024-01-15T10:00:00Z',
-  lastLogin: new Date().toISOString(),
-  isActive: true,
-};
-
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -44,12 +31,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
-      // In production, validate token with API
-      // For now, use demo mode
-      const storedUser = localStorage.getItem('admin_user');
-      if (storedUser) {
-        setUser(JSON.parse(storedUser));
+      // Validate token with API
+      const response = await fetch(`${API_BASE_URL}/admin/auth/me`, {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Invalid or expired token');
       }
+
+      const data = await response.json();
+
+      // Verify user has admin/organizer role
+      if (!['admin', 'organizer'].includes(data.user.role)) {
+        throw new Error('Unauthorized access');
+      }
+
+      setUser(data.user);
+      localStorage.setItem('admin_user', JSON.stringify(data.user));
     } catch (error) {
       console.error('Auth check failed:', error);
       setUser(null);
@@ -67,21 +70,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Demo mode: accept specific credentials
-      if (email === 'admin@festival.com' && password === 'admin123') {
-        const token = 'demo_token_' + Date.now();
-        localStorage.setItem('admin_token', token);
-        localStorage.setItem('admin_user', JSON.stringify(DEMO_ADMIN));
-        setUser(DEMO_ADMIN);
-        router.push('/');
-        return;
-      }
-
-      // Production API call
+      // API call for authentication
       const response = await fetch(`${API_BASE_URL}/admin/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
+        credentials: 'include',
       });
 
       if (!response.ok) {
@@ -100,8 +94,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.setItem('admin_user', JSON.stringify(data.user));
       setUser(data.user);
       router.push('/');
-    } catch (error) {
-      throw error;
     } finally {
       setIsLoading(false);
     }

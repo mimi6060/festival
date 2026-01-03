@@ -90,39 +90,54 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
           socket.handshake.auth?.token ||
           socket.handshake.headers?.authorization?.replace('Bearer ', '');
 
-        if (token) {
-          const payload = await this.verifyToken(token);
-          (socket as Socket & { user?: WsUser }).user = payload;
+        if (!token) {
+          this.logger.warn(
+            `WebSocket connection rejected: No token provided - Client: ${socket.id}`
+          );
+          return next(new Error('Authentication required'));
         }
+
+        const payload = await this.verifyToken(token);
+        (socket as Socket & { user?: WsUser }).user = payload;
 
         next();
       } catch (error) {
-        this.logger.warn(`WebSocket auth failed: ${(error as Error).message}`);
-        next(); // Allow connection but without user context
+        this.logger.warn(
+          `WebSocket connection rejected: Authentication failed - ${(error as Error).message} - Client: ${socket.id}`
+        );
+        next(new Error('Authentication required'));
       }
     });
   }
 
   async handleConnection(client: Socket): Promise<void> {
-    const user = (client as Socket & { user?: WsUser }).user || null;
+    const user = (client as Socket & { user?: WsUser }).user;
+
+    // This should never happen due to middleware, but added as safety check
+    if (!user) {
+      this.logger.error(`Client connected without authentication: ${client.id} - Disconnecting`);
+      client.disconnect(true);
+      return;
+    }
 
     this.connectedClients.set(client.id, { socket: client, user });
 
-    // Auto-join user's personal room if authenticated
-    if (user) {
-      const userRoom = `user:${user.id}`;
-      await client.join(userRoom);
-      this.addToRoom(userRoom, client.id);
+    // Auto-join user's personal room
+    const userRoom = `user:${user.id}`;
+    await client.join(userRoom);
+    this.addToRoom(userRoom, client.id);
 
-      this.logger.log(`Client connected: ${client.id} (user: ${user.email})`);
-    } else {
-      this.logger.log(`Anonymous client connected: ${client.id}`);
-    }
+    this.logger.log(`Client connected: ${client.id} (user: ${user.email})`);
 
     // Emit connection success
     client.emit('connected', {
       clientId: client.id,
-      authenticated: !!user,
+      authenticated: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
       timestamp: new Date(),
     });
   }
@@ -235,8 +250,8 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
    * Get list of rooms client is in
    */
   @SubscribeMessage('get_rooms')
-  handleGetRooms(@ConnectedSocket() client: Socket): { rooms: string[] } {
-    const rooms = Array.from(client.rooms).filter((room) => room !== client.id);
+  handleGetRooms(@ConnectedSocket() _client: Socket): { rooms: string[] } {
+    const rooms = Array.from(_client.rooms).filter((room) => room !== _client.id);
     return { rooms };
   }
 
