@@ -261,16 +261,23 @@ const user = await this.prisma.user.findFirst({
   **Action:** ✅ Loading states créés avec skeletons et spinners
   **Commit:** f6d61b2
 
-### C6: Auth Token dans localStorage (XSS Risk)
+### ✅ C6: Auth Token dans localStorage (XSS Risk) - RÉSOLU
 
 **Fichier:** `apps/web/lib/api.ts`
 
-```typescript
+~~```typescript
 const token = localStorage.getItem('auth_token');
-```
+
+````~~
 
 **Action:** Migrer vers httpOnly cookies
 **Impact:** Tokens accessibles via XSS
+**Résolution:**
+- Supprimé localStorage.getItem('auth_token') de api.ts
+- Ajouté credentials: 'include' à toutes les requêtes fetch
+- Modifié auth.store.ts pour ne plus stocker les tokens
+- Créé middleware.ts pour gérer les redirections auth
+- Les tokens sont maintenant gérés uniquement par le serveur via cookies httpOnly
 
 ---
 
@@ -288,7 +295,7 @@ return {
   },
   message: 'Registration successful...',
 };
-```
+````
 
 **Action:** Connecter register, login, logout, refresh, me au AuthService
 **Impact:** L'API auth ne fonctionne pas réellement
