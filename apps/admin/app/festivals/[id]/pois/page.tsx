@@ -148,7 +148,7 @@ export default function PoisPage({ params }: PoisPageProps) {
   };
 
   const toggleActive = async (poiId: string) => {
-    const poi = pois.find(p => p.id === poiId);
+    const poi = pois.find((p: Poi) => p.id === poiId);
     if (!poi) return;
 
     try {
@@ -204,20 +204,20 @@ export default function PoisPage({ params }: PoisPageProps) {
   // Filter POIs by type
   const filteredPois = filterType === 'all'
     ? pois
-    : pois.filter(poi => poi.type === filterType);
+    : pois.filter((poi: Poi) => poi.type === filterType);
 
   // Group POIs by type
   const groupedPois = POI_TYPES.reduce((acc, { type }) => {
-    const poisOfType = filteredPois.filter(poi => poi.type === type);
+    const poisOfType = filteredPois.filter((poi: Poi) => poi.type === type);
     if (poisOfType.length > 0) {
       acc[type] = poisOfType;
     }
     return acc;
   }, {} as Record<PoiType, Poi[]>);
 
-  const totalActive = pois.filter(p => p.isActive).length;
+  const totalActive = pois.filter((p: Poi) => p.isActive).length;
   const totalPois = pois.length;
-  const typesUsed = new Set(pois.map(p => p.type)).size;
+  const typesUsed = new Set(pois.map((p: Poi) => p.type)).size;
 
   return (
     <div className="space-y-6">
@@ -321,7 +321,7 @@ export default function PoisPage({ params }: PoisPageProps) {
             Tous
           </button>
           {POI_TYPES.map(({ type, label }) => {
-            const count = pois.filter(p => p.type === type).length;
+            const count = pois.filter((p: Poi) => p.type === type).length;
             if (count === 0) return null;
             return (
               <button

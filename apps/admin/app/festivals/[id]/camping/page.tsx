@@ -141,7 +141,7 @@ export default function CampingPage({ params }: CampingPageProps) {
     setEditingZone(zone);
     setFormData({
       name: zone.name,
-      description: zone.description,
+      description: zone.description || '',
       type: zone.type,
       capacity: zone.capacity,
       pricePerNight: zone.pricePerNight,
@@ -255,14 +255,14 @@ export default function CampingPage({ params }: CampingPageProps) {
     );
   }
 
-  const filteredZones = typeFilter === 'all' ? zones : zones.filter((z) => z.type === typeFilter);
+  const filteredZones = typeFilter === 'all' ? zones : zones.filter((z: CampingZone) => z.type === typeFilter);
 
   // Stats
-  const totalCapacity = zones.reduce((sum, z) => sum + z.capacity, 0);
-  const totalAvailable = zones.reduce((sum, z) => sum + (z.spotsAvailable ?? z.capacity), 0);
-  const activeZones = zones.filter((z) => z.isActive).length;
+  const totalCapacity = zones.reduce((sum: number, z: CampingZone) => sum + z.capacity, 0);
+  const totalAvailable = zones.reduce((sum: number, z: CampingZone) => sum + (z.spotsAvailable ?? z.capacity), 0);
+  const activeZones = zones.filter((z: CampingZone) => z.isActive).length;
   const avgPricePerNight =
-    zones.length > 0 ? zones.reduce((sum, z) => sum + z.pricePerNight, 0) / zones.length : 0;
+    zones.length > 0 ? zones.reduce((sum: number, z: CampingZone) => sum + z.pricePerNight, 0) / zones.length : 0;
 
   return (
     <div className="space-y-6">
@@ -400,7 +400,7 @@ export default function CampingPage({ params }: CampingPageProps) {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredZones.map((zone) => {
+          {filteredZones.map((zone: CampingZone) => {
             const occupancyPercent =
               zone.capacity > 0
                 ? ((zone.capacity - (zone.spotsAvailable ?? zone.capacity)) / zone.capacity) * 100
@@ -479,7 +479,7 @@ export default function CampingPage({ params }: CampingPageProps) {
 
                   {/* Amenities */}
                   <div className="flex flex-wrap gap-1">
-                    {zone.amenities.slice(0, 4).map((amenity) => (
+                    {zone.amenities.slice(0, 4).map((amenity: string) => (
                       <span
                         key={amenity}
                         className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600"

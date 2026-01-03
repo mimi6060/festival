@@ -11,7 +11,7 @@ import {
   useUpdatePerformance,
   useDeletePerformance,
 } from '../../../../hooks';
-import type { Performance, CreatePerformanceDto } from '../../../../types';
+import type { Performance, CreatePerformanceDto, Artist, Stage } from '../../../../types';
 
 interface FestivalLineupPageProps {
   params: Promise<{ id: string }>;
@@ -50,7 +50,7 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
   const groupedByDay = useMemo(() => {
     const groups: { [key: string]: Performance[] } = {};
 
-    performances.forEach((performance) => {
+    performances.forEach((performance: Performance) => {
       const date = new Date(performance.startTime);
       const dayKey = date.toLocaleDateString('fr-FR', {
         weekday: 'long',
@@ -398,7 +398,7 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
                   required
                 >
                   <option value="">Selectionner un artiste</option>
-                  {artists.map(artist => (
+                  {artists.map((artist: Artist) => (
                     <option key={artist.id} value={artist.id}>
                       {artist.name} {artist.genre ? `(${artist.genre})` : ''}
                     </option>
@@ -417,7 +417,7 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
                   required
                 >
                   <option value="">Selectionner une scene</option>
-                  {stages.map(stage => (
+                  {stages.map((stage: Stage) => (
                     <option key={stage.id} value={stage.id}>{stage.name}</option>
                   ))}
                 </select>

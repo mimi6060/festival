@@ -180,6 +180,23 @@ export function InvalidateTags(tags: CacheTag[]): MethodDecorator {
 }
 
 /**
+ * Check if an object is a request-like object with circular references
+ */
+function isRequestObject(obj: any): boolean {
+  if (!obj || typeof obj !== 'object') return false;
+  // Check for common request object properties
+  return !!(
+    obj.socket ||
+    obj.connection ||
+    obj.httpVersion ||
+    obj.headers ||
+    obj.rawHeaders ||
+    (obj.constructor?.name === 'IncomingMessage') ||
+    (obj.constructor?.name === 'Socket')
+  );
+}
+
+/**
  * Utility function to generate cache key from options and arguments
  */
 export function generateCacheKey(
@@ -222,11 +239,20 @@ export function generateCacheKey(
   } else if (keyOptions.paramIndices && keyOptions.paramIndices.length > 0) {
     const paramValues = keyOptions.paramIndices
       .map((i) => args[i])
-      .filter((v) => v !== undefined)
-      .map((v) => (typeof v === 'object' ? JSON.stringify(v) : String(v)));
+      .filter((v) => v !== undefined && !isRequestObject(v))
+      .map((v) => {
+        if (typeof v === 'object') {
+          try {
+            return JSON.stringify(v);
+          } catch {
+            return String(v?.id || v?.toString() || 'obj');
+          }
+        }
+        return String(v);
+      });
     parts.push(...paramValues);
   } else if (args.length > 0) {
-    parts.push(hashArgs(args));
+    parts.push(hashArgs(args.filter((a) => !isRequestObject(a))));
   }
 
   return parts.join(':');

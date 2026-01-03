@@ -10,7 +10,7 @@ import {
   useDeleteVendor,
   useToggleVendorOpen,
 } from '../../../../hooks';
-import type { VendorType } from '../../../../types';
+import type { VendorType, Vendor } from '../../../../types';
 
 interface VendorsPageProps {
   params: Promise<{ id: string }>;
@@ -189,14 +189,14 @@ export default function VendorsPage({ params }: VendorsPageProps) {
 
   const filteredVendors = filterType === 'ALL'
     ? vendors
-    : vendors.filter(v => v.type === filterType);
+    : vendors.filter((v: Vendor) => v.type === filterType);
 
-  const openVendorsCount = vendors.filter(v => v.isOpen).length;
+  const openVendorsCount = vendors.filter((v: Vendor) => v.isOpen).length;
   const vendorsByType = {
-    FOOD: vendors.filter(v => v.type === 'FOOD').length,
-    DRINK: vendors.filter(v => v.type === 'DRINK').length,
-    BAR: vendors.filter(v => v.type === 'BAR').length,
-    MERCHANDISE: vendors.filter(v => v.type === 'MERCHANDISE').length,
+    FOOD: vendors.filter((v: Vendor) => v.type === 'FOOD').length,
+    DRINK: vendors.filter((v: Vendor) => v.type === 'DRINK').length,
+    BAR: vendors.filter((v: Vendor) => v.type === 'BAR').length,
+    MERCHANDISE: vendors.filter((v: Vendor) => v.type === 'MERCHANDISE').length,
   };
 
   return (
@@ -362,7 +362,7 @@ export default function VendorsPage({ params }: VendorsPageProps) {
             </button>
           </div>
         ) : (
-          filteredVendors.map(vendor => (
+          filteredVendors.map((vendor: Vendor) => (
             <div
               key={vendor.id}
               className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow"

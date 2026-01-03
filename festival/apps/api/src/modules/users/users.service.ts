@@ -104,9 +104,15 @@ export class UsersService {
   private async logAudit(
     action: AuditAction,
     targetUserId: string,
-    performedBy: AuthenticatedUser,
+    performedBy: AuthenticatedUser | undefined,
     details: Record<string, unknown>,
   ): Promise<void> {
+    // Skip audit logging if no user is provided
+    if (!performedBy) {
+      this.logger.debug(`[AUDIT] Skipped: ${action} - no authenticated user`);
+      return;
+    }
+
     const logEntry = {
       action,
       targetUserId,

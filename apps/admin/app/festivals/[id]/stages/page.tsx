@@ -42,7 +42,7 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
     );
   }
 
-  const totalCapacity = stages.reduce((acc, stage) => acc + stage.capacity, 0);
+  const totalCapacity = stages.reduce((acc: number, stage: Stage) => acc + stage.capacity, 0);
 
   const openCreateModal = () => {
     setEditingStage(null);
@@ -199,7 +199,7 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
-            {stages.map((stage) => (
+            {stages.map((stage: Stage) => (
               <div key={stage.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-400 to-pink-400 flex items-center justify-center text-white font-bold">
@@ -254,7 +254,7 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Repartition de la capacite</h3>
         <div className="space-y-3">
-          {stages.map((stage) => {
+          {stages.map((stage: Stage) => {
             const percentage = totalCapacity > 0 ? (stage.capacity / totalCapacity) * 100 : 0;
             return (
               <div key={stage.id}>
