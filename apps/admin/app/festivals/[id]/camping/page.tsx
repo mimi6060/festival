@@ -89,7 +89,7 @@ const allAmenities = Object.keys(amenityLabels);
 
 export default function CampingPage({ params }: CampingPageProps) {
   const { id } = use(params);
-  const festival = mockFestivals.find((f) => f.id === id);
+  const festival = mockFestivals.find((f) => f.id === id || f.slug === id);
 
   // API Hooks
   const { data: zones = [], isLoading, error } = useCampingZones(id);

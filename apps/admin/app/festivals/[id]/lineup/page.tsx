@@ -19,7 +19,7 @@ interface FestivalLineupPageProps {
 
 export default function FestivalLineupPage({ params }: FestivalLineupPageProps) {
   const { id } = use(params);
-  const festival = mockFestivals.find((f) => f.id === id);
+  const festival = mockFestivals.find((f) => f.id === id || f.slug === id);
 
   // Fetch lineup and stages from API
   const { data: lineupData, isLoading: lineupLoading } = useLineup(id, { limit: 100 });

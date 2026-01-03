@@ -42,7 +42,7 @@ function getPoiTypeConfig(type: PoiType) {
 
 export default function PoisPage({ params }: PoisPageProps) {
   const { id } = use(params);
-  const festival = mockFestivals.find((f) => f.id === id);
+  const festival = mockFestivals.find((f) => f.id === id || f.slug === id);
 
   // Fetch POIs using the hook
   const { data: pois = [], isLoading, error } = usePois(id);

@@ -23,8 +23,10 @@ const COLORS = ['#0ea5e9', '#8b5cf6', '#f59e0b', '#10b981', '#ef4444'];
 
 export default function StatsPage({ params }: StatsPageProps) {
   const { id } = use(params);
-  const festival = mockFestivals.find((f) => f.id === id);
-  const categories = mockTicketCategories.filter((c) => c.festivalId === id);
+  // Support both ID and slug lookups
+  const festival = mockFestivals.find((f) => f.id === id || f.slug === id);
+  const festivalId = festival?.id || id;
+  const categories = mockTicketCategories.filter((c) => c.festivalId === festivalId);
 
   const revenueData = useMemo(() => generateRevenueChartData(30), []);
   const ticketSalesData = useMemo(() => generateTicketSalesChartData(30), []);

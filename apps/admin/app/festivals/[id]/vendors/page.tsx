@@ -55,7 +55,7 @@ const vendorTypeIcons: Record<VendorType, JSX.Element> = {
 
 export default function VendorsPage({ params }: VendorsPageProps) {
   const { id } = use(params);
-  const festival = mockFestivals.find((f) => f.id === id);
+  const festival = mockFestivals.find((f) => f.id === id || f.slug === id);
 
   // API hooks
   const { data: vendors = [], isLoading, error } = useVendors(id);

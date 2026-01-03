@@ -12,7 +12,7 @@ interface FestivalStagesPageProps {
 
 export default function FestivalStagesPage({ params }: FestivalStagesPageProps) {
   const { id } = use(params);
-  const festival = mockFestivals.find((f) => f.id === id);
+  const festival = mockFestivals.find((f) => f.id === id || f.slug === id);
 
   // API hooks
   const { data: stages = [], isLoading, error } = useStages(id);
