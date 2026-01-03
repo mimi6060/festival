@@ -1,5 +1,24 @@
 # Tâches Terminées
 
+## 2026-01-03 - Phase Admin Cashless Management
+- [x] Page admin cashless améliorée (apps/admin/app/cashless/page.tsx - 666 lines)
+  - Barre de recherche pour trouver utilisateurs par email/nom/tag NFC
+  - Cartes utilisateur avec: solde actuel, total rechargé, total dépensé, dernière transaction
+  - Boutons d'action: Recharger, Transférer, Historique, Suspendre/Réactiver
+  - Modal de recharge avec input montant et prévisualisation du nouveau solde
+  - Modal de transfert avec recherche de destinataire et validation du montant
+  - Modal d'historique avec table complète des transactions
+  - Toggle statut compte (ACTIVE/SUSPENDED)
+  - Integration React Query pour toutes les API calls avec mutations
+  - Debounced search pour meilleure UX
+  - Design Tailwind responsive avec état de chargement
+- [x] Types cashless (apps/admin/types/index.ts)
+  - CashlessAccount, CashlessTransaction
+  - CashlessTopUpDto, CashlessTransferDto, CashlessSearchResult
+- [x] API cashless (apps/admin/lib/api.ts)
+  - search, getAccount, getAccounts, topUp, transfer
+  - getTransactions, updateAccountStatus, refund
+
 ## 2026-01-03 - Phase Frontend Web App - Program Page
 - [x] Page programme publique pour festivals (apps/web/app/festivals/[slug]/program/page.tsx)
   - Sélecteur d'onglets pour les jours du festival
