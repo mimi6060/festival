@@ -47,7 +47,19 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, onPress }) => {
   };
 
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+    if (!dateString) return 'Date inconnue';
+
+    // Handle YYYY-MM-DD format explicitly
+    let date: Date;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      const [year, month, day] = dateString.split('-').map(Number);
+      date = new Date(year, month - 1, day);
+    } else {
+      date = new Date(dateString);
+    }
+
+    if (isNaN(date.getTime())) return 'Date inconnue';
+
     return date.toLocaleDateString('fr-FR', {
       weekday: 'short',
       day: 'numeric',
