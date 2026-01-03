@@ -189,6 +189,18 @@ function randomPhoneNumber(): string {
 
 const FESTIVAL_DATA = [
   {
+    name: 'Electric Dreams 2025',
+    slug: 'electric-dreams-2025',
+    description: 'Le festival electro le plus innovant de l\'annee ! Experience immersive avec mapping 3D, installations artistiques interactives et les meilleurs artistes de la scene electronique mondiale.',
+    location: 'Chambord',
+    address: 'Domaine National de Chambord, 41250 Chambord',
+    city: { name: 'Chambord', lat: 47.616, lng: 1.517 },
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 230, // About 7.5 months from now
+    duration: 4,
+    maxCapacity: 40000,
+  },
+  {
     name: 'Les Nuits Electriques',
     slug: 'nuits-electriques-2024',
     description: 'Le plus grand festival electro de France ! 3 jours de musique non-stop avec les meilleurs DJs internationaux. Ambiance exceptionnelle garantie sur la plage de Palavas-les-Flots.',
