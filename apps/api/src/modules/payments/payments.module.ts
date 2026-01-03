@@ -19,9 +19,10 @@ import { CheckoutService } from './services/checkout.service';
 import { StripeConnectService } from './services/stripe-connect.service';
 import { SubscriptionService } from './services/subscription.service';
 import { RefundService } from './services/refund.service';
+import { PromoCodesModule } from '../promo-codes';
 
 @Module({
-  imports: [ConfigModule, PrismaModule],
+  imports: [ConfigModule, PrismaModule, PromoCodesModule],
   controllers: [PaymentsController],
   providers: [
     PaymentsService,

@@ -23,6 +23,7 @@ import { CampingModule } from '../modules/camping';
 import { TicketsModule } from '../modules/tickets';
 import { CashlessModule } from '../modules/cashless';
 import { ProgramModule } from '../modules/program';
+import { PromoCodesModule } from '../modules/promo-codes';
 
 // Service modules
 import { EmailModule } from '../modules/email';
@@ -59,6 +60,7 @@ import { GdprModule } from '../modules/gdpr';
     TicketsModule,
     CashlessModule,
     ProgramModule,
+    PromoCodesModule,
 
     // Service modules
     EmailModule,

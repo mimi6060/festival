@@ -22,6 +22,8 @@ import { TicketStatus, TicketType, FestivalStatus, Prisma } from '@prisma/client
 import * as QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
+import { PaginationDto } from '../../common/dto/pagination.dto';
+import { paginate } from '@festival/shared/utils';
 
 // ============================================================================
 // Types
@@ -33,6 +35,16 @@ export interface PurchaseTicketDto {
   quantity: number;
 }
 
+export interface GuestPurchaseTicketDto {
+  festivalId: string;
+  categoryId: string;
+  quantity: number;
+  email: string;
+  firstName: string;
+  lastName: string;
+  phone?: string;
+}
+
 export interface ValidateTicketDto {
   qrCode: string;
   zoneId?: string;
@@ -42,11 +54,16 @@ export interface TicketEntity {
   id: string;
   festivalId: string;
   categoryId: string;
-  userId: string;
+  userId: string | null;
   qrCode: string;
   status: TicketStatus;
   purchasePrice: number;
   usedAt: Date | null;
+  isGuest?: boolean;
+  guestEmail?: string | null;
+  guestFirstName?: string | null;
+  guestLastName?: string | null;
+  guestPhone?: string | null;
   createdAt: Date;
   updatedAt: Date;
   festival?: {
@@ -231,6 +248,140 @@ export class TicketsService {
   }
 
   /**
+   * Purchase tickets as a guest (without account)
+   */
+  async guestPurchaseTickets(dto: GuestPurchaseTicketDto): Promise<TicketEntity[]> {
+    const { festivalId, categoryId, quantity, email, firstName, lastName, phone } = dto;
+
+    // Validate quantity
+    if (quantity < 1) {
+      throw new BadRequestException('Quantity must be at least 1');
+    }
+
+    // Get festival and category
+    const [festival, category] = await Promise.all([
+      this.prisma.festival.findUnique({
+        where: { id: festivalId },
+      }),
+      this.prisma.ticketCategory.findUnique({
+        where: { id: categoryId },
+      }),
+    ]);
+
+    if (!festival) {
+      throw new NotFoundException('Festival not found');
+    }
+
+    if (festival.isDeleted) {
+      throw new BadRequestException('Festival is no longer available');
+    }
+
+    if (festival.status === FestivalStatus.CANCELLED) {
+      throw new BadRequestException('Festival has been cancelled');
+    }
+
+    if (festival.status === FestivalStatus.COMPLETED) {
+      throw new BadRequestException('Festival has already ended');
+    }
+
+    if (!category) {
+      throw new NotFoundException('Ticket category not found');
+    }
+
+    if (category.festivalId !== festivalId) {
+      throw new BadRequestException('Category does not belong to this festival');
+    }
+
+    if (!category.isActive) {
+      throw new BadRequestException('Ticket category is not available');
+    }
+
+    // Check sale dates
+    const now = new Date();
+    if (now < category.saleStartDate) {
+      throw new BadRequestException('Ticket sales have not started yet');
+    }
+
+    if (now > category.saleEndDate) {
+      throw new BadRequestException('Ticket sales have ended');
+    }
+
+    // Check availability
+    const availableTickets = category.quota - category.soldCount;
+    if (availableTickets < quantity) {
+      if (availableTickets === 0) {
+        throw new ConflictException('Tickets are sold out');
+      }
+      throw new ConflictException(`Only ${availableTickets} tickets available`);
+    }
+
+    // For guest purchases, we skip the max per user check since we can't track it reliably
+    // However, we could implement rate limiting by email in the future
+
+    // Create tickets in a transaction
+    const tickets = await this.prisma.$transaction(async (tx) => {
+      // Update sold count
+      await tx.ticketCategory.update({
+        where: { id: categoryId },
+        data: { soldCount: { increment: quantity } },
+      });
+
+      // Pre-generate ticket data for batch insert
+      const ticketDataArray = [];
+      for (let i = 0; i < quantity; i++) {
+        const ticketId = uuidv4();
+        const qrCode = this.generateQrCode(ticketId, festivalId, category.type);
+
+        ticketDataArray.push({
+          id: ticketId,
+          festivalId,
+          categoryId,
+          userId: null,
+          qrCode: qrCode.code,
+          qrCodeData: qrCode.signedData,
+          status: TicketStatus.SOLD,
+          purchasePrice: category.price,
+          isGuest: true,
+          guestEmail: email,
+          guestFirstName: firstName,
+          guestLastName: lastName,
+          guestPhone: phone || null,
+        });
+      }
+
+      // Batch insert tickets
+      await tx.ticket.createMany({
+        data: ticketDataArray,
+      });
+
+      // Retrieve created tickets with relations
+      const createdTickets = await tx.ticket.findMany({
+        where: {
+          id: { in: ticketDataArray.map((t) => t.id) },
+        },
+        include: {
+          festival: {
+            select: { id: true, name: true, startDate: true, endDate: true },
+          },
+          category: {
+            select: { id: true, name: true, type: true },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      return createdTickets.map(this.mapToEntity);
+    });
+
+    this.logger.log(`Guest ${email} purchased ${quantity} ticket(s) for festival ${festivalId}`);
+
+    // TODO: Send email with ticket QR codes to guest email
+    // This should be implemented in a separate email service
+
+    return tickets;
+  }
+
+  /**
    * Validate a ticket QR code
    */
   async validateTicket(dto: ValidateTicketDto, _staffId?: string): Promise<ValidationResult> {
@@ -407,13 +558,39 @@ export class TicketsService {
   /**
    * Get user's tickets
    */
-  async getUserTickets(userId: string, festivalId?: string): Promise<TicketEntity[]> {
+  async getUserTickets(userId: string, festivalId?: string, pagination?: PaginationDto) {
     const where: Prisma.TicketWhereInput = { userId };
 
     if (festivalId) {
       where.festivalId = festivalId;
     }
 
+    // If pagination is provided, use it
+    if (pagination) {
+      const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' } = pagination;
+
+      const [data, total] = await Promise.all([
+        this.prisma.ticket.findMany({
+          where,
+          skip: (page - 1) * limit,
+          take: limit,
+          orderBy: { [sortBy]: sortOrder },
+          include: {
+            festival: {
+              select: { id: true, name: true, startDate: true, endDate: true },
+            },
+            category: {
+              select: { id: true, name: true, type: true },
+            },
+          },
+        }),
+        this.prisma.ticket.count({ where }),
+      ]);
+
+      return paginate(data.map(this.mapToEntity), total, page, limit);
+    }
+
+    // Fallback to non-paginated response for backward compatibility
     const tickets = await this.prisma.ticket.findMany({
       where,
       include: {
@@ -591,11 +768,16 @@ export class TicketsService {
     id: string;
     festivalId: string;
     categoryId: string;
-    userId: string;
+    userId: string | null;
     qrCode: string;
     status: TicketStatus;
     purchasePrice: number | Prisma.Decimal;
     usedAt: Date | null;
+    isGuest?: boolean;
+    guestEmail?: string | null;
+    guestFirstName?: string | null;
+    guestLastName?: string | null;
+    guestPhone?: string | null;
     createdAt: Date;
     updatedAt: Date;
     festival?: { id: string; name: string; startDate: Date; endDate: Date };
@@ -610,6 +792,11 @@ export class TicketsService {
       status: ticket.status,
       purchasePrice: Number(ticket.purchasePrice),
       usedAt: ticket.usedAt,
+      isGuest: ticket.isGuest,
+      guestEmail: ticket.guestEmail,
+      guestFirstName: ticket.guestFirstName,
+      guestLastName: ticket.guestLastName,
+      guestPhone: ticket.guestPhone,
       createdAt: ticket.createdAt,
       updatedAt: ticket.updatedAt,
       festival: ticket.festival
