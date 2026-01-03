@@ -3,100 +3,54 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { Card } from '@/components/ui/Card';
 
+interface RegisterFormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  confirmPassword: string;
+  acceptTerms: boolean;
+  newsletter: boolean;
+}
+
 export default function RegisterPage() {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
-    acceptTerms: false,
-    newsletter: false,
+  const [apiError, setApiError] = useState<string>('');
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<RegisterFormData>({
+    defaultValues: {
+      firstName: '',
+      lastName: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      acceptTerms: false,
+      newsletter: false,
+    },
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
+  const password = watch('password');
 
-    if (errors[name]) {
-      setErrors((prev) => ({ ...prev, [name]: '' }));
-    }
-  };
-
-  const validate = () => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = 'First name is required';
-    }
-
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = 'Last name is required';
-    }
-
-    if (!formData.email) {
-      newErrors.email = 'Email is required';
-    } else if (!/\S+@\S+\.\S+/.test(formData.email)) {
-      newErrors.email = 'Invalid email address';
-    }
-
-    if (!formData.password) {
-      newErrors.password = 'Password is required';
-    } else if (formData.password.length < 8) {
-      newErrors.password = 'Password must be at least 8 characters';
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
-    }
-
-    if (!formData.acceptTerms) {
-      newErrors.acceptTerms = 'You must accept the terms and conditions';
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!validate()) {return;}
-
-    setIsLoading(true);
-
-    try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-
-      // Redirect to account page on success
-      router.push('/account');
-    } catch {
-      setErrors({ general: 'Something went wrong. Please try again.' });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const getPasswordStrength = (password: string) => {
-    if (!password) {return { strength: 0, label: '' };}
+  const getPasswordStrength = (pwd: string) => {
+    if (!pwd) return { strength: 0, label: '', color: '' };
 
     let strength = 0;
-    if (password.length >= 8) {strength++;}
-    if (/[A-Z]/.test(password)) {strength++;}
-    if (/[a-z]/.test(password)) {strength++;}
-    if (/[0-9]/.test(password)) {strength++;}
-    if (/[^A-Za-z0-9]/.test(password)) {strength++;}
+    if (pwd.length >= 8) strength++;
+    if (/[A-Z]/.test(pwd)) strength++;
+    if (/[a-z]/.test(pwd)) strength++;
+    if (/[0-9]/.test(pwd)) strength++;
+    if (/[^A-Za-z0-9]/.test(pwd)) strength++;
 
     const labels = ['', 'Weak', 'Fair', 'Good', 'Strong', 'Very Strong'];
     const colors = ['', 'bg-red-500', 'bg-orange-500', 'bg-yellow-500', 'bg-green-500', 'bg-green-400'];
@@ -104,7 +58,56 @@ export default function RegisterPage() {
     return { strength, label: labels[strength], color: colors[strength] };
   };
 
-  const passwordStrength = getPasswordStrength(formData.password);
+  const passwordStrength = getPasswordStrength(password);
+
+  const onSubmit = async (data: RegisterFormData) => {
+    setIsLoading(true);
+    setApiError('');
+
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+      const response = await fetch(`${apiUrl}/auth/register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          password: data.password,
+          newsletter: data.newsletter,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Registration failed');
+      }
+
+      const result = await response.json();
+
+      // Store tokens in localStorage (or use a more secure method)
+      if (result.accessToken) {
+        localStorage.setItem('accessToken', result.accessToken);
+      }
+      if (result.refreshToken) {
+        localStorage.setItem('refreshToken', result.refreshToken);
+      }
+
+      // Redirect to account page on success
+      router.push('/account');
+    } catch (error) {
+      setApiError(error instanceof Error ? error.message : 'An error occurred. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSocialLogin = (provider: 'google' | 'facebook') => {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+    window.location.href = `${apiUrl}/auth/${provider}`;
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center pt-24 pb-16 px-4">
@@ -136,63 +139,83 @@ export default function RegisterPage() {
             <p className="text-white/60">Join FestivalHub and start your adventure</p>
           </div>
 
-          {errors.general && (
+          {apiError && (
             <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
-              {errors.general}
+              {apiError}
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
             <div className="grid grid-cols-2 gap-4">
               <Input
                 label="First Name"
-                name="firstName"
                 placeholder="John"
-                value={formData.firstName}
-                onChange={handleChange}
-                error={errors.firstName}
+                error={errors.firstName?.message}
+                {...register('firstName', {
+                  required: 'First name is required',
+                  minLength: {
+                    value: 2,
+                    message: 'First name must be at least 2 characters',
+                  },
+                })}
               />
               <Input
                 label="Last Name"
-                name="lastName"
                 placeholder="Doe"
-                value={formData.lastName}
-                onChange={handleChange}
-                error={errors.lastName}
+                error={errors.lastName?.message}
+                {...register('lastName', {
+                  required: 'Last name is required',
+                  minLength: {
+                    value: 2,
+                    message: 'Last name must be at least 2 characters',
+                  },
+                })}
               />
             </div>
 
             <Input
               label="Email Address"
-              name="email"
               type="email"
               placeholder="you@example.com"
-              value={formData.email}
-              onChange={handleChange}
-              error={errors.email}
+              error={errors.email?.message}
               leftIcon={
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
                 </svg>
               }
+              {...register('email', {
+                required: 'Email is required',
+                pattern: {
+                  value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                  message: 'Invalid email address',
+                },
+              })}
             />
 
             <div>
               <Input
                 label="Password"
-                name="password"
                 type="password"
                 placeholder="Create a strong password"
-                value={formData.password}
-                onChange={handleChange}
-                error={errors.password}
+                error={errors.password?.message}
                 leftIcon={
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                   </svg>
                 }
+                {...register('password', {
+                  required: 'Password is required',
+                  minLength: {
+                    value: 8,
+                    message: 'Password must be at least 8 characters',
+                  },
+                  pattern: {
+                    value: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
+                    message: 'Password must contain uppercase, lowercase, and number',
+                  },
+                })}
               />
-              {formData.password && (
+              {password && (
                 <div className="mt-2">
                   <div className="flex gap-1 mb-1">
                     {[1, 2, 3, 4, 5].map((level) => (
@@ -215,50 +238,51 @@ export default function RegisterPage() {
 
             <Input
               label="Confirm Password"
-              name="confirmPassword"
               type="password"
               placeholder="Confirm your password"
-              value={formData.confirmPassword}
-              onChange={handleChange}
-              error={errors.confirmPassword}
+              error={errors.confirmPassword?.message}
               leftIcon={
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
                 </svg>
               }
+              {...register('confirmPassword', {
+                required: 'Please confirm your password',
+                validate: (value) => value === password || 'Passwords do not match',
+              })}
             />
 
             <div className="space-y-3 pt-2">
-              <label className="flex items-start gap-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  name="acceptTerms"
-                  checked={formData.acceptTerms}
-                  onChange={handleChange}
-                  className="w-4 h-4 mt-1 rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500/50"
-                />
-                <span className="text-sm text-white/70">
-                  I agree to the{' '}
-                  <Link href="/terms" className="text-primary-400 hover:underline">
-                    Terms of Service
-                  </Link>{' '}
-                  and{' '}
-                  <Link href="/privacy" className="text-primary-400 hover:underline">
-                    Privacy Policy
-                  </Link>
-                </span>
-              </label>
-              {errors.acceptTerms && (
-                <p className="text-sm text-red-400">{errors.acceptTerms}</p>
-              )}
+              <div>
+                <label className="flex items-start gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    className="w-4 h-4 mt-1 rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500/50"
+                    {...register('acceptTerms', {
+                      required: 'You must accept the terms and conditions',
+                    })}
+                  />
+                  <span className="text-sm text-white/70">
+                    I agree to the{' '}
+                    <Link href="/terms" className="text-primary-400 hover:underline">
+                      Terms of Service
+                    </Link>{' '}
+                    and{' '}
+                    <Link href="/privacy" className="text-primary-400 hover:underline">
+                      Privacy Policy
+                    </Link>
+                  </span>
+                </label>
+                {errors.acceptTerms && (
+                  <p className="mt-1 text-sm text-red-400">{errors.acceptTerms.message}</p>
+                )}
+              </div>
 
               <label className="flex items-start gap-3 cursor-pointer">
                 <input
                   type="checkbox"
-                  name="newsletter"
-                  checked={formData.newsletter}
-                  onChange={handleChange}
                   className="w-4 h-4 mt-1 rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500/50"
+                  {...register('newsletter')}
                 />
                 <span className="text-sm text-white/70">
                   Send me festival news and exclusive offers (optional)
@@ -285,7 +309,7 @@ export default function RegisterPage() {
           <div className="grid grid-cols-2 gap-4">
             <button
               type="button"
-              onClick={() => alert('Google authentication coming soon')}
+              onClick={() => handleSocialLogin('google')}
               className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -310,13 +334,13 @@ export default function RegisterPage() {
             </button>
             <button
               type="button"
-              onClick={() => alert('GitHub authentication coming soon')}
+              onClick={() => handleSocialLogin('facebook')}
               className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
+                <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
               </svg>
-              <span className="text-sm font-medium">GitHub</span>
+              <span className="text-sm font-medium">Facebook</span>
             </button>
           </div>
 
