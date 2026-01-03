@@ -1759,4 +1759,43 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
 
 ---
 
-Derniere mise a jour: 2026-01-03 - Security Scanning CI/CD Complete
+## Phase 20 - Password Reset Security (2026-01-03)
+
+### Resolution Issue C3: Reset Password Security
+
+- [x] Ajout champs resetToken et resetTokenExpiry au modele User
+  - resetToken: stockage hash SHA-256 du token
+  - resetTokenExpiry: timestamp expiration (1 heure)
+  - Migration schema Prisma complete
+
+- [x] Implementation securisee de forgotPassword
+  - Generation token aleatoire 32 bytes (crypto.randomBytes)
+  - Hash SHA-256 avant stockage en BDD
+  - Token expire apres 1 heure
+  - Prevention enumeration email (toujours success)
+
+- [x] Implementation verification dans resetPassword
+  - Hash du token recu pour comparaison
+  - Verification token ET expiration en une query
+  - Invalidation token apres utilisation
+  - Invalidation toutes sessions (refreshToken)
+  - UnauthorizedException pour token invalide/expire
+
+### Fichiers Modifies
+
+- `prisma/schema.prisma`: Ajout champs resetToken/resetTokenExpiry
+- `apps/api/src/modules/auth/auth.service.ts`:
+  - Import crypto module
+  - forgotPassword: generation et stockage token hash
+  - resetPassword: verification token avec expiration
+
+### Impact Securite
+
+- Avant: N'importe qui pouvait reset n'importe quel password
+- Apres: Verification cryptographique du token avec expiration
+- Amelioration: Backend Production Ready 70% -> 75%
+- Metriques: Security Issues CRITICAL: 4 -> 3
+
+---
+
+Derniere mise a jour: 2026-01-03 - Password Reset Security Complete

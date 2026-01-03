@@ -513,13 +513,13 @@ if (email === 'admin@festival.com' && password === 'admin123')
 
 | Métrique                  | Valeur | Cible  | Note                   |
 | ------------------------- | ------ | ------ | ---------------------- |
-| Backend Production Ready  | 70%    | 95%    |                        |
+| Backend Production Ready  | 75%    | 95%    | ⬆️ +5% (C3 résolu)     |
 | Frontend TypeScript Score | 8.4/10 | 9.5/10 |                        |
 | Test Coverage API         | ~80%   | 90%    |                        |
 | Test Coverage Libs        | <10%   | 80%    |                        |
-| Security Issues CRITICAL  | 4      | 0      | ⬇️ -2 (C4, C5 résolus) |
+| Security Issues CRITICAL  | 3      | 0      | ⬇️ -3 (C1, C3, C4, C5) |
 | Security Issues HIGH      | 10     | 0      |                        |
-| CI Security Scanning      | Non    | Oui    |                        |
+| CI Security Scanning      | Oui    | Oui    | ✅ (Trivy ajouté)      |
 
 ---
 
@@ -527,9 +527,9 @@ if (email === 'admin@festival.com' && password === 'admin123')
 
 ### Semaine 1 - Sécurité Critique
 
-- [ ] C1: Supprimer JWT secrets par défaut
+- [x] C1: Supprimer JWT secrets par défaut ✅
 - [ ] C2: Valider QR secret
-- [ ] C3: Implémenter reset password correctement
+- [x] C3: Implémenter reset password correctement ✅
 - [ ] H1: Connecter AuthController au service
 - [x] H8: Ajouter Trivy scanning CI ✅
 
