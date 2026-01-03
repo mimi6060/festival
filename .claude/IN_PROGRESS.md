@@ -181,23 +181,19 @@ return {
 **Action:** Adopter react-hook-form + zod
 **Impact:** Validation manuelle, mauvaise UX, code dupliqué
 
-### H8: Pas de Scanning Images Container en CI
+### ✅ H8: Pas de Scanning Images Container en CI - RÉSOLU
 
 **Fichier:** `.github/workflows/ci.yml`
 **Action:** Ajouter Trivy/Grype scanning
-
-```yaml
-- name: Run Trivy vulnerability scanner
-  uses: aquasecurity/trivy-action@master
-```
-
 **Impact:** Images vulnérables déployées
+**Résolution:** Job `security-scan` ajouté avec Trivy scanner (CRITICAL,HIGH) et upload SARIF
 
-### H9: Pas de SAST/DAST en CI
+### ✅ H9: Pas de SAST/DAST en CI - RÉSOLU
 
 **Fichier:** `.github/workflows/ci.yml`
 **Action:** Ajouter CodeQL, Snyk, ou Semgrep
 **Impact:** Vulnérabilités code non détectées
+**Résolution:** Job `codeql` ajouté avec analyse statique TypeScript
 
 ### H10: N+1 Query en Création de Tickets
 
