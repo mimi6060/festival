@@ -286,20 +286,26 @@ model Ticket {
   id              String        @id @default(uuid())
   festivalId      String
   categoryId      String
-  userId          String
+  userId          String?       // Optional for guest purchases
   qrCode          String        @unique
   qrCodeData      String
   status          TicketStatus  @default(SOLD)
   purchasePrice   Decimal       @db.Decimal(10, 2)
   usedAt          DateTime?
   usedByStaffId   String?
+  // Guest purchase fields
+  isGuest         Boolean       @default(false)
+  guestEmail      String?
+  guestFirstName  String?
+  guestLastName   String?
+  guestPhone      String?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
   // Relations
   festival        Festival      @relation(fields: [festivalId], references: [id], onDelete: Cascade)
   category        TicketCategory @relation(fields: [categoryId], references: [id])
-  user            User          @relation(fields: [userId], references: [id])
+  user            User?         @relation(fields: [userId], references: [id])
   payment         Payment?      @relation(fields: [paymentId], references: [id])
   paymentId       String?
   zoneAccessLogs  ZoneAccessLog[]
@@ -316,11 +322,13 @@ model Ticket {
   @@index([categoryId, status])           // Category sales
   @@index([createdAt])                    // Time-based analytics
   @@index([paymentId])                    // Payment lookup
+  @@index([guestEmail])                   // Guest ticket lookup by email
+  @@index([isGuest])                      // Guest analytics
 }
 
 model Payment {
   id              String          @id @default(uuid())
-  userId          String
+  userId          String?         // Optional for guest purchases
   amount          Decimal         @db.Decimal(10, 2)
   currency        String          @default("EUR")
   status          PaymentStatus   @default(PENDING)
@@ -335,7 +343,7 @@ model Payment {
   updatedAt       DateTime        @updatedAt
 
   // Relations
-  user            User            @relation(fields: [userId], references: [id])
+  user            User?           @relation(fields: [userId], references: [id])
   tickets         Ticket[]
   cashlessTopup   CashlessTransaction?
 

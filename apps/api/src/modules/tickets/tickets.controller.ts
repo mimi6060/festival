@@ -12,19 +12,12 @@ import {
   HttpStatus,
 } from '@nestjs/common';
 import { TicketsService } from './tickets.service';
-import { PaginationDto } from '../../common/dto/pagination.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-
-class PurchaseTicketsDto {
-  festivalId: string;
-  categoryId: string;
-  quantity: number;
-}
-
-class ValidateTicketDto {
-  qrCode: string;
-  zoneId?: string;
-}
+import {
+  PurchaseTicketsDto,
+  GuestPurchaseDto,
+  ValidateTicketDto,
+} from './dto/tickets.dto';
 
 @Controller('api/tickets')
 export class TicketsController {
@@ -59,6 +52,12 @@ export class TicketsController {
   @Post('purchase')
   async purchaseTickets(@Request() req, @Body() dto: PurchaseTicketsDto) {
     return this.ticketsService.purchaseTickets(req.user.id, dto);
+  }
+
+  @Post('guest-purchase')
+  @HttpCode(HttpStatus.CREATED)
+  async guestPurchaseTickets(@Body() dto: GuestPurchaseDto) {
+    return this.ticketsService.guestPurchaseTickets(dto);
   }
 
   @Post('validate')

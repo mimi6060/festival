@@ -398,3 +398,58 @@ export interface UpdateCampingZoneDto {
   amenities?: string[];
   isActive?: boolean;
 }
+
+// Promo Codes
+export interface PromoCode {
+  id: string;
+  code: string;
+  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  discountValue: number;
+  maxUses: number | null;
+  currentUses: number;
+  minAmount: number | null;
+  expiresAt: string | null;
+  isActive: boolean;
+  festivalId: string | null;
+  festival?: {
+    id: string;
+    name: string;
+    slug: string;
+  };
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePromoCodeDto {
+  code: string;
+  discountType: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  discountValue: number;
+  maxUses?: number;
+  minAmount?: number;
+  expiresAt?: string;
+  isActive?: boolean;
+  festivalId?: string;
+}
+
+export interface UpdatePromoCodeDto {
+  code?: string;
+  discountType?: 'PERCENTAGE' | 'FIXED_AMOUNT';
+  discountValue?: number;
+  maxUses?: number;
+  minAmount?: number;
+  expiresAt?: string;
+  isActive?: boolean;
+  festivalId?: string;
+}
+
+export interface PromoCodeStats {
+  id: string;
+  code: string;
+  currentUses: number;
+  maxUses: number | null;
+  usageRate: number;
+  isActive: boolean;
+  isExpired: boolean;
+  isExhausted: boolean;
+  remainingUses: number | null;
+}
