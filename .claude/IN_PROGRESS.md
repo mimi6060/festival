@@ -1,5 +1,22 @@
 # Tâches En Cours & À Faire
 
+## Session 2026-01-03 - Fixes & Maintenance
+
+### Corrections Effectuées
+- [x] Fix `/festivals` admin page - TypeScript errors fixed
+- [x] Export useRealtimeData, RealtimeTransaction, RealtimeAlert from hooks
+- [x] Fix TypeScript type annotations in festival subpages (stages, lineup, vendors, pois, camping)
+- [x] Remove nested duplicate `festival/` folder causing nx project graph errors
+- [x] Add ts-node for Jest TypeScript config support
+- [x] Fix tickets service tests - uuid and crypto mock chain issues
+
+### Tests En Cours
+- [x] Run test suite - reduced failures from 14 to 12
+- [ ] Fix remaining test failures (auth.service login, payments.service Stripe mock, tickets QR image)
+- [ ] Increase coverage to 90% for critical services
+
+---
+
 ## Phases Complétées (34 agents - 2026-01-02)
 
 Toutes les tâches des phases 0-7 ont été complétées avec succès.
