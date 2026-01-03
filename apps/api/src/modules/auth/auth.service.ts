@@ -21,16 +21,9 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
-import { v4 as uuidv4 } from 'uuid';
 import { PrismaService } from '../../prisma/prisma.service';
-import { UserRole, UserStatus } from '@prisma/client';
-import {
-  RegisterDto,
-  LoginDto,
-  RefreshTokenDto,
-  ResetPasswordDto,
-  ChangePasswordDto,
-} from './dto';
+import { UserRole, UserStatus, User } from '@prisma/client';
+import { RegisterDto, LoginDto, RefreshTokenDto, ResetPasswordDto, ChangePasswordDto } from './dto';
 
 // ============================================================================
 // Types
@@ -88,7 +81,7 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {
     // Token expiration in seconds - fail fast if not configured
     this.accessTokenExpiresIn = this.configService.getOrThrow<number>('JWT_ACCESS_EXPIRES_IN');
@@ -258,7 +251,7 @@ export class AuthService {
   /**
    * Verify email with token
    */
-  async verifyEmail(token: string): Promise<void> {
+  async verifyEmail(_token: string): Promise<void> {
     // In a real implementation, this would:
     // 1. Verify the token from a verification_tokens table
     // 2. Update the user's emailVerified status
@@ -304,10 +297,10 @@ export class AuthService {
     }
 
     // Generate a random reset token (32 bytes = 64 hex chars)
-    const resetToken = crypto.randomBytes(32).toString(\'hex\');
+    const resetToken = crypto.randomBytes(32).toString('hex');
 
     // Hash the token before storing in database
-    const hashedToken = crypto.createHash(\'sha256\').update(resetToken).digest(\'hex\');
+    const hashedToken = crypto.createHash('sha256').update(resetToken).digest('hex');
 
     // Token expires in 1 hour
     const resetTokenExpiry = new Date(Date.now() + 60 * 60 * 1000);
@@ -437,11 +430,7 @@ export class AuthService {
   /**
    * Generate access and refresh tokens
    */
-  private async generateTokens(
-    userId: string,
-    email: string,
-    role: UserRole,
-  ): Promise<AuthTokens> {
+  private async generateTokens(userId: string, email: string, role: UserRole): Promise<AuthTokens> {
     const payload: JwtPayload = {
       sub: userId,
       email,
