@@ -1798,4 +1798,54 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
 
 ---
 
-Derniere mise a jour: 2026-01-03 - Password Reset Security Complete
+## Phase 21 - Build Fixes TypeScript & Webpack (2026-01-03)
+
+### Resolution probleme @nestjs/terminus webpack
+
+- [x] Suppression dependance @nestjs/terminus causant erreurs bundling
+  - Probleme: optionalDependencies (@mikro-orm, @nestjs/mongoose, boxen, etc.)
+  - Solution: Module health custom sans terminus
+- [x] Refactoring health module
+  - PrismaHealthIndicator custom (sans HealthIndicator de terminus)
+  - HealthController simplifie avec checks manuels
+  - Memory check avec process.memoryUsage()
+  - Endpoints /health, /health/live, /health/ready fonctionnels
+
+### Corrections TypeScript admin app
+
+- [x] Fix useEffect return value (useRealTimeData.ts)
+  - Ajout `return undefined;` pour chemins sans cleanup
+- [x] Fix non-null assertion (useRealTimeData.ts)
+  - Remplacement `types[...]!` par `types[...] ?? 'ticket_sale'`
+- [x] Fix types Performance/LineupSlot (api.ts)
+  - Alignement sur type Performance existant
+- [x] Ajout DTOs manquants (types/index.ts)
+  - CreateStageDto, UpdateStageDto
+- [x] Fix imports unused (useProgram.ts, useVendors.ts)
+  - Suppression Stage, Vendor des imports
+- [x] Creation error.tsx et loading.tsx
+  - apps/web/app/error.tsx, loading.tsx
+  - apps/admin/app/error.tsx, loading.tsx
+- [x] Creation repertoire public (apps/admin/public)
+- [x] Ajout next-env.d.ts aux ignores ESLint
+
+### Fichiers modifies
+
+- `apps/api/src/modules/health/*` - Refactoring sans terminus
+- `apps/api/package.json` - Suppression @nestjs/terminus
+- `apps/admin/hooks/useRealTimeData.ts` - Fix useEffect returns
+- `apps/admin/hooks/api/useProgram.ts` - Fix imports/types
+- `apps/admin/hooks/api/useVendors.ts` - Fix imports
+- `apps/admin/lib/api.ts` - Alignement types Performance
+- `apps/admin/types/index.ts` - Ajout Stage DTOs
+- `eslint.config.mjs` - Ignore next-env.d.ts
+
+### Impact
+
+- Build API: SUCCESS (main.js 561 KiB)
+- Build Admin: SUCCESS (18 routes statiques)
+- Commit: 4cf689f
+
+---
+
+Derniere mise a jour: 2026-01-03 - Build Fixes Complete
