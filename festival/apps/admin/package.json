@@ -1,7 +1,0 @@
-{
-  "name": "@festival/festival-admin",
-  "version": "0.0.1",
-  "private": true
-  ,"main": "index.js"
-  ,"scripts": { "build": "echo ok" }
-}

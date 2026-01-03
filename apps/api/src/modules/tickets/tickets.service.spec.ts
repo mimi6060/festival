@@ -46,18 +46,17 @@ jest.mock('qrcode', () => ({
   toDataURL: jest.fn().mockResolvedValue('data:image/png;base64,mockQRCode'),
 }));
 
-// Mock uuid
-jest.mock('uuid', () => ({
-  v4: jest.fn(() => 'mocked-uuid-ticket-123'),
-}));
+// Mock uuid - use spyOn to properly mock v4
+const uuid = require('uuid');
+jest.spyOn(uuid, 'v4').mockReturnValue('mocked-uuid-ticket-123');
 
-// Mock crypto
-jest.mock('crypto', () => ({
-  createHmac: jest.fn().mockReturnValue({
-    update: jest.fn().mockReturnThis(),
-    digest: jest.fn().mockReturnValue('mockedsignature12345678'),
-  }),
-}));
+// Mock crypto - use actual module with spied methods
+const crypto = require('crypto');
+const mockHmac = {
+  update: jest.fn().mockReturnThis(),
+  digest: jest.fn().mockReturnValue('mockedsignature12345678'),
+};
+jest.spyOn(crypto, 'createHmac').mockReturnValue(mockHmac);
 
 describe('TicketsService', () => {
   let ticketsService: TicketsService;
