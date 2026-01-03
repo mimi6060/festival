@@ -61,11 +61,35 @@ export interface GetFestivalsParams {
   startDateTo?: string;
 }
 
+export interface PaginatedResponse<T> {
+  data: T[];
+  meta: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  };
+}
+
 /**
  * Get all festivals with optional filters
  */
-export const getFestivals = async (params?: GetFestivalsParams) => {
+export const getFestivals = async (params?: GetFestivalsParams): Promise<PaginatedResponse<Festival>> => {
   const response = await apiClient.get('/festivals', { params });
+
+  // Handle both paginated and non-paginated responses
+  if (Array.isArray(response.data)) {
+    return {
+      data: response.data,
+      meta: {
+        total: response.data.length,
+        page: params?.page || 1,
+        limit: params?.limit || 10,
+        totalPages: 1,
+      },
+    };
+  }
+
   return response.data;
 };
 
