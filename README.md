@@ -1,6 +1,23 @@
 # Festival Management Platform
 
-A comprehensive, multi-tenant festival management platform designed to handle events from 10,000 to 500,000+ attendees. Built with modern technologies and best practices for scalability, security, and reliability.
+[![CI](https://github.com/mimi6060/festival/actions/workflows/ci.yml/badge.svg)](https://github.com/mimi6060/festival/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
+
+> A comprehensive, multi-tenant festival management platform designed to handle events from 10,000 to 500,000+ attendees. Built with modern technologies and best practices for scalability, security, and reliability.
+
+## Table of Contents
+
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [Architecture](#architecture)
+- [Quick Start](#quick-start)
+- [API Documentation](#api-documentation)
+- [Deployment](#deployment)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [License](#license)
 
 ## Features
 
@@ -334,13 +351,59 @@ kubectl apply -f k8s/
 - **Railway/Render**: API server
 - **AWS/GCP**: Full infrastructure
 
+## Roadmap
+
+### Q1 2026
+- [x] Multi-tenant festival management
+- [x] Complete ticketing system with QR codes
+- [x] Cashless payment integration
+- [x] Admin dashboard with analytics
+- [x] Mobile app (iOS/Android)
+
+### Q2 2026
+- [ ] Dark/light mode toggle
+- [ ] Enhanced offline mode for mobile
+- [ ] Multi-currency support
+- [ ] Additional language translations (ES, DE, IT)
+- [ ] Storybook design system
+
+### Q3 2026
+- [ ] AI-powered crowd forecasting
+- [ ] Fraud detection system
+- [ ] NLP chatbot support
+- [ ] Real-time zone heatmaps
+- [ ] Artist recommendation engine
+
+### Q4 2026
+- [ ] SaaS model with pricing tiers
+- [ ] Plugin marketplace
+- [ ] White-label customization
+- [ ] Advanced reporting and BI
+
 ## Contributing
+
+We welcome contributions! Please see our [Contributing Guide](CONTRIBUTING.md) for details.
+
+### Quick Contribution Guide
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+3. Make your changes and write tests
+4. Run linting and tests (`npm run lint && npm test`)
+5. Commit your changes (`git commit -m 'feat: add amazing feature'`)
+6. Push to the branch (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+### Commit Convention
+
+We use [Conventional Commits](https://www.conventionalcommits.org/):
+
+- `feat:` - New feature
+- `fix:` - Bug fix
+- `docs:` - Documentation
+- `test:` - Tests
+- `refactor:` - Code refactoring
+- `chore:` - Maintenance
 
 ## Testing
 
