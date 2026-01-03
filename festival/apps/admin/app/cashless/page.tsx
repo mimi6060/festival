@@ -1,733 +1,664 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-} from 'recharts';
-import DataTable from '../../components/tables/DataTable';
-import { formatCurrency, formatDateTime, cn } from '../../lib/utils';
-import type { TableColumn } from '../../types';
-
-interface CashlessAccount {
-  id: string;
-  userId: string;
-  userName: string;
-  userEmail: string;
-  balance: number;
-  totalTopUp: number;
-  totalSpent: number;
-  nfcTagId?: string;
-  festivalId: string;
-  festivalName: string;
-  status: 'active' | 'suspended' | 'closed';
-  createdAt: string;
-  lastTransaction?: string;
-}
-
-interface CashlessTransaction {
-  id: string;
-  accountId: string;
-  userName: string;
-  type: 'topup' | 'payment' | 'refund' | 'transfer';
-  amount: number;
-  vendorName?: string;
-  vendorId?: string;
-  description: string;
-  timestamp: string;
-  status: 'completed' | 'pending' | 'failed';
-}
-
-// Mock data
-const mockAccounts: CashlessAccount[] = [
-  {
-    id: '1',
-    userId: '1',
-    userName: 'Sophie Petit',
-    userEmail: 'sophie@email.com',
-    balance: 85.50,
-    totalTopUp: 200,
-    totalSpent: 114.50,
-    nfcTagId: 'NFC-001234',
-    festivalId: '1',
-    festivalName: 'Summer Beats Festival',
-    status: 'active',
-    createdAt: '2025-01-01T10:00:00Z',
-    lastTransaction: '2025-01-02T15:30:00Z',
-  },
-  {
-    id: '2',
-    userId: '2',
-    userName: 'Lucas Moreau',
-    userEmail: 'lucas@email.com',
-    balance: 150.00,
-    totalTopUp: 300,
-    totalSpent: 150.00,
-    nfcTagId: 'NFC-001235',
-    festivalId: '1',
-    festivalName: 'Summer Beats Festival',
-    status: 'active',
-    createdAt: '2025-01-01T11:00:00Z',
-    lastTransaction: '2025-01-02T16:00:00Z',
-  },
-  {
-    id: '3',
-    userId: '3',
-    userName: 'Emma Durand',
-    userEmail: 'emma@email.com',
-    balance: 0,
-    totalTopUp: 100,
-    totalSpent: 100,
-    nfcTagId: 'NFC-001236',
-    festivalId: '1',
-    festivalName: 'Summer Beats Festival',
-    status: 'active',
-    createdAt: '2025-01-01T12:00:00Z',
-    lastTransaction: '2025-01-02T14:00:00Z',
-  },
-  {
-    id: '4',
-    userId: '4',
-    userName: 'Thomas Bernard',
-    userEmail: 'thomas@email.com',
-    balance: 45.00,
-    totalTopUp: 50,
-    totalSpent: 5.00,
-    festivalId: '1',
-    festivalName: 'Summer Beats Festival',
-    status: 'suspended',
-    createdAt: '2025-01-01T13:00:00Z',
-    lastTransaction: '2025-01-02T10:00:00Z',
-  },
-];
-
-const mockTransactions: CashlessTransaction[] = [
-  {
-    id: '1',
-    accountId: '1',
-    userName: 'Sophie Petit',
-    type: 'payment',
-    amount: -12.50,
-    vendorName: 'Bar Central',
-    vendorId: 'V001',
-    description: '2x Bieres + 1x Cocktail',
-    timestamp: '2025-01-02T15:30:00Z',
-    status: 'completed',
-  },
-  {
-    id: '2',
-    accountId: '2',
-    userName: 'Lucas Moreau',
-    type: 'topup',
-    amount: 50.00,
-    description: 'Recharge par carte bancaire',
-    timestamp: '2025-01-02T16:00:00Z',
-    status: 'completed',
-  },
-  {
-    id: '3',
-    accountId: '1',
-    userName: 'Sophie Petit',
-    type: 'payment',
-    amount: -8.00,
-    vendorName: 'Food Truck Pizza',
-    vendorId: 'V002',
-    description: '1x Pizza Margherita',
-    timestamp: '2025-01-02T14:45:00Z',
-    status: 'completed',
-  },
-  {
-    id: '4',
-    accountId: '3',
-    userName: 'Emma Durand',
-    type: 'refund',
-    amount: 15.00,
-    description: 'Remboursement solde cloture',
-    timestamp: '2025-01-02T18:00:00Z',
-    status: 'pending',
-  },
-  {
-    id: '5',
-    accountId: '2',
-    userName: 'Lucas Moreau',
-    type: 'payment',
-    amount: -25.00,
-    vendorName: 'Merchandise Official',
-    vendorId: 'V003',
-    description: '1x T-shirt Festival',
-    timestamp: '2025-01-02T12:30:00Z',
-    status: 'completed',
-  },
-];
-
-// Generate hourly transaction data for chart
-function generateHourlyData() {
-  const data = [];
-  for (let i = 10; i <= 23; i++) {
-    data.push({
-      hour: `${i}h`,
-      transactions: Math.floor(Math.random() * 200) + 50,
-      amount: Math.floor(Math.random() * 5000) + 1000,
-    });
-  }
-  return data;
-}
-
-const hourlyData = generateHourlyData();
-
-// Vendor breakdown data
-const vendorData = [
-  { name: 'Bar Central', value: 12500, color: '#3b82f6' },
-  { name: 'Food Truck Pizza', value: 8200, color: '#10b981' },
-  { name: 'Merchandise', value: 6800, color: '#f59e0b' },
-  { name: 'Bar Scene 2', value: 5400, color: '#6366f1' },
-  { name: 'Ice Cream', value: 3200, color: '#ec4899' },
-];
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { cashlessApi } from '../../lib/api';
+import { formatCurrency, formatDateTime, cn, debounce } from '../../lib/utils';
+import type { CashlessSearchResult, CashlessTransaction } from '../../types';
 
 export default function CashlessPage() {
-  const [activeTab, setActiveTab] = useState<'overview' | 'accounts' | 'transactions'>('overview');
-  const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [typeFilter, setTypeFilter] = useState<string>('all');
+  const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedAccount, setSelectedAccount] = useState<CashlessSearchResult | null>(null);
+  const [showTopUpModal, setShowTopUpModal] = useState(false);
+  const [showTransferModal, setShowTransferModal] = useState(false);
+  const [showHistoryModal, setShowHistoryModal] = useState(false);
+  const [topUpAmount, setTopUpAmount] = useState('');
+  const [transferAmount, setTransferAmount] = useState('');
+  const [transferRecipientQuery, setTransferRecipientQuery] = useState('');
+  const [selectedRecipient, setSelectedRecipient] = useState<CashlessSearchResult | null>(null);
 
-  const filteredAccounts = statusFilter === 'all'
-    ? mockAccounts
-    : mockAccounts.filter((a) => a.status === statusFilter);
+  // Search for accounts
+  const { data: searchResults, isLoading: isSearching } = useQuery({
+    queryKey: ['cashless-search', searchQuery],
+    queryFn: () => cashlessApi.search(searchQuery),
+    enabled: searchQuery.length >= 2,
+  });
 
-  const filteredTransactions = typeFilter === 'all'
-    ? mockTransactions
-    : mockTransactions.filter((t) => t.type === typeFilter);
+  // Get transactions for selected account
+  const { data: transactionsData } = useQuery({
+    queryKey: ['cashless-transactions', selectedAccount?.account.id],
+    queryFn: () =>
+      cashlessApi.getTransactions({
+        accountId: selectedAccount?.account.id,
+        limit: 50,
+      }),
+    enabled: !!selectedAccount && showHistoryModal,
+  });
 
-  // Calculate stats
-  const stats = useMemo(() => {
-    const totalBalance = mockAccounts.reduce((sum, a) => sum + a.balance, 0);
-    const totalTopUp = mockAccounts.reduce((sum, a) => sum + a.totalTopUp, 0);
-    const totalSpent = mockAccounts.reduce((sum, a) => sum + a.totalSpent, 0);
-    const activeAccounts = mockAccounts.filter((a) => a.status === 'active').length;
-    const todayTransactions = mockTransactions.length;
-    const todayVolume = mockTransactions
-      .filter((t) => t.type === 'payment')
-      .reduce((sum, t) => sum + Math.abs(t.amount), 0);
+  // Search for transfer recipient
+  const { data: recipientResults } = useQuery({
+    queryKey: ['cashless-recipient-search', transferRecipientQuery],
+    queryFn: () => cashlessApi.search(transferRecipientQuery),
+    enabled: transferRecipientQuery.length >= 2,
+  });
 
-    return {
-      totalBalance,
-      totalTopUp,
-      totalSpent,
-      activeAccounts,
-      todayTransactions,
-      todayVolume,
+  // Top up mutation
+  const topUpMutation = useMutation({
+    mutationFn: (data: { accountId: string; amount: number }) =>
+      cashlessApi.topUp({
+        accountId: data.accountId,
+        amount: data.amount,
+        description: 'Recharge manuelle par admin',
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cashless-search'] });
+      setShowTopUpModal(false);
+      setTopUpAmount('');
+      setSelectedAccount(null);
+    },
+  });
+
+  // Transfer mutation
+  const transferMutation = useMutation({
+    mutationFn: (data: { fromAccountId: string; toAccountId: string; amount: number }) =>
+      cashlessApi.transfer({
+        fromAccountId: data.fromAccountId,
+        toAccountId: data.toAccountId,
+        amount: data.amount,
+        description: 'Transfert manuel par admin',
+      }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cashless-search'] });
+      setShowTransferModal(false);
+      setTransferAmount('');
+      setTransferRecipientQuery('');
+      setSelectedRecipient(null);
+      setSelectedAccount(null);
+    },
+  });
+
+  // Update account status mutation
+  const updateStatusMutation = useMutation({
+    mutationFn: (data: { accountId: string; status: 'ACTIVE' | 'SUSPENDED' | 'CLOSED' }) =>
+      cashlessApi.updateAccountStatus(data.accountId, data.status),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['cashless-search'] });
+    },
+  });
+
+  const handleSearch = debounce((query: string) => {
+    setSearchQuery(query);
+  }, 300);
+
+  const handleTopUp = () => {
+    if (!selectedAccount || !topUpAmount) return;
+    const amount = parseFloat(topUpAmount);
+    if (isNaN(amount) || amount <= 0) return;
+
+    topUpMutation.mutate({
+      accountId: selectedAccount.account.id,
+      amount,
+    });
+  };
+
+  const handleTransfer = () => {
+    if (!selectedAccount || !selectedRecipient || !transferAmount) return;
+    const amount = parseFloat(transferAmount);
+    if (isNaN(amount) || amount <= 0) return;
+
+    transferMutation.mutate({
+      fromAccountId: selectedAccount.account.id,
+      toAccountId: selectedRecipient.account.id,
+      amount,
+    });
+  };
+
+  const handleToggleStatus = (account: CashlessSearchResult) => {
+    const newStatus = account.account.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE';
+    updateStatusMutation.mutate({
+      accountId: account.account.id,
+      status: newStatus,
+    });
+  };
+
+  const getStatusColor = (status: string) => {
+    const colors = {
+      ACTIVE: 'badge-success',
+      SUSPENDED: 'badge-warning',
+      CLOSED: 'badge-neutral',
     };
-  }, []);
-
-  const statusColors: Record<string, string> = {
-    active: 'badge-success',
-    suspended: 'badge-warning',
-    closed: 'badge-neutral',
+    return colors[status as keyof typeof colors] || 'badge-neutral';
   };
 
-  const statusLabels: Record<string, string> = {
-    active: 'Actif',
-    suspended: 'Suspendu',
-    closed: 'Ferme',
+  const getStatusLabel = (status: string) => {
+    const labels = {
+      ACTIVE: 'Actif',
+      SUSPENDED: 'Suspendu',
+      CLOSED: 'Ferme',
+    };
+    return labels[status as keyof typeof labels] || status;
   };
 
-  const typeColors: Record<string, string> = {
-    topup: 'badge-success',
-    payment: 'badge-info',
-    refund: 'badge-warning',
-    transfer: 'badge-neutral',
+  const getTypeColor = (type: string) => {
+    const colors = {
+      TOPUP: 'badge-success',
+      PAYMENT: 'badge-info',
+      REFUND: 'badge-warning',
+      TRANSFER_IN: 'badge-success',
+      TRANSFER_OUT: 'badge-info',
+    };
+    return colors[type as keyof typeof colors] || 'badge-neutral';
   };
 
-  const typeLabels: Record<string, string> = {
-    topup: 'Recharge',
-    payment: 'Paiement',
-    refund: 'Remboursement',
-    transfer: 'Transfert',
+  const getTypeLabel = (type: string) => {
+    const labels = {
+      TOPUP: 'Recharge',
+      PAYMENT: 'Paiement',
+      REFUND: 'Remboursement',
+      TRANSFER_IN: 'Transfert recu',
+      TRANSFER_OUT: 'Transfert envoye',
+    };
+    return labels[type as keyof typeof labels] || type;
   };
-
-  const accountColumns: TableColumn<CashlessAccount>[] = [
-    {
-      key: 'userName',
-      label: 'Utilisateur',
-      sortable: true,
-      render: (_, row) => (
-        <div>
-          <p className="font-medium text-gray-900">{row.userName}</p>
-          <p className="text-sm text-gray-500">{row.userEmail}</p>
-        </div>
-      ),
-    },
-    {
-      key: 'nfcTagId',
-      label: 'Tag NFC',
-      render: (value) => (
-        <span className="text-sm font-mono text-gray-600">
-          {(value as string | undefined) || '-'}
-        </span>
-      ),
-    },
-    {
-      key: 'balance',
-      label: 'Solde',
-      sortable: true,
-      render: (value) => (
-        <span className={cn(
-          'font-semibold',
-          (value as number) > 0 ? 'text-green-600' : 'text-gray-600'
-        )}>
-          {formatCurrency(value as number)}
-        </span>
-      ),
-    },
-    {
-      key: 'totalTopUp',
-      label: 'Total recharge',
-      sortable: true,
-      render: (value) => (
-        <span className="text-gray-600">{formatCurrency(value as number)}</span>
-      ),
-    },
-    {
-      key: 'totalSpent',
-      label: 'Total depense',
-      sortable: true,
-      render: (value) => (
-        <span className="text-gray-600">{formatCurrency(value as number)}</span>
-      ),
-    },
-    {
-      key: 'status',
-      label: 'Statut',
-      sortable: true,
-      render: (value) => (
-        <span className={cn('badge', statusColors[value as string])}>
-          {statusLabels[value as string]}
-        </span>
-      ),
-    },
-    {
-      key: 'lastTransaction',
-      label: 'Derniere transaction',
-      sortable: true,
-      render: (value) => (
-        <span className="text-sm text-gray-500">
-          {value ? formatDateTime(value as string) : '-'}
-        </span>
-      ),
-    },
-  ];
-
-  const transactionColumns: TableColumn<CashlessTransaction>[] = [
-    {
-      key: 'timestamp',
-      label: 'Date/Heure',
-      sortable: true,
-      render: (value) => (
-        <span className="text-sm text-gray-600">
-          {formatDateTime(value as string)}
-        </span>
-      ),
-    },
-    {
-      key: 'userName',
-      label: 'Utilisateur',
-      sortable: true,
-    },
-    {
-      key: 'type',
-      label: 'Type',
-      sortable: true,
-      render: (value) => (
-        <span className={cn('badge', typeColors[value as string])}>
-          {typeLabels[value as string]}
-        </span>
-      ),
-    },
-    {
-      key: 'amount',
-      label: 'Montant',
-      sortable: true,
-      render: (value) => (
-        <span className={cn(
-          'font-semibold',
-          (value as number) >= 0 ? 'text-green-600' : 'text-red-600'
-        )}>
-          {(value as number) >= 0 ? '+' : ''}{formatCurrency(value as number)}
-        </span>
-      ),
-    },
-    {
-      key: 'vendorName',
-      label: 'Vendeur',
-      render: (value) => (
-        <span className="text-gray-600">{(value as string | undefined) || '-'}</span>
-      ),
-    },
-    {
-      key: 'description',
-      label: 'Description',
-      render: (value) => (
-        <span className="text-sm text-gray-500">{value as string}</span>
-      ),
-    },
-    {
-      key: 'status',
-      label: 'Statut',
-      render: (value) => (
-        <span className={cn(
-          'badge',
-          value === 'completed' ? 'badge-success' : value === 'pending' ? 'badge-warning' : 'badge-danger'
-        )}>
-          {value === 'completed' ? 'Complete' : value === 'pending' ? 'En attente' : 'Echec'}
-        </span>
-      ),
-    },
-  ];
 
   return (
     <div className="space-y-6">
       {/* Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Cashless</h1>
-          <p className="text-gray-500 mt-1">
-            Surveillez les soldes et transactions cashless en temps reel.
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <button className="btn-secondary flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-            </svg>
-            Exporter
-          </button>
-          <button className="btn-primary flex items-center gap-2">
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            Remboursement masse
-          </button>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-gray-900">Gestion Cashless</h1>
+        <p className="text-gray-500 mt-1">
+          Recherchez et gerez les comptes cashless des utilisateurs.
+        </p>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <p className="text-sm text-gray-500">Solde total</p>
-          <p className="text-2xl font-bold text-green-600 mt-1">
-            {formatCurrency(stats.totalBalance)}
-          </p>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <p className="text-sm text-gray-500">Total recharges</p>
-          <p className="text-2xl font-bold text-blue-600 mt-1">
-            {formatCurrency(stats.totalTopUp)}
-          </p>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <p className="text-sm text-gray-500">Total depenses</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
-            {formatCurrency(stats.totalSpent)}
-          </p>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <p className="text-sm text-gray-500">Comptes actifs</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{stats.activeAccounts}</p>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <p className="text-sm text-gray-500">Transactions (24h)</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{stats.todayTransactions}</p>
-        </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
-          <p className="text-sm text-gray-500">Volume (24h)</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
-            {formatCurrency(stats.todayVolume)}
-          </p>
-        </div>
-      </div>
-
-      {/* Live indicator */}
-      <div className="flex items-center gap-2 text-sm text-gray-600">
-        <span className="relative flex h-3 w-3">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-        </span>
-        Donnees en temps reel - Derniere mise a jour: {new Date().toLocaleTimeString('fr-FR')}
-      </div>
-
-      {/* Tabs */}
-      <div className="border-b border-gray-200">
-        <nav className="flex gap-8">
-          <button
-            onClick={() => setActiveTab('overview')}
-            className={cn(
-              'py-4 text-sm font-medium border-b-2 transition-colors',
-              activeTab === 'overview'
-                ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            )}
+      {/* Search Bar */}
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <label className="block text-sm font-medium text-gray-700 mb-2">
+          Rechercher un utilisateur
+        </label>
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Email, nom, prenom ou tag NFC..."
+            className="w-full px-4 py-3 pl-10 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            onChange={(e) => handleSearch(e.target.value)}
+          />
+          <svg
+            className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
           >
-            Vue d'ensemble
-          </button>
-          <button
-            onClick={() => setActiveTab('accounts')}
-            className={cn(
-              'py-4 text-sm font-medium border-b-2 transition-colors',
-              activeTab === 'accounts'
-                ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            )}
-          >
-            Comptes ({mockAccounts.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('transactions')}
-            className={cn(
-              'py-4 text-sm font-medium border-b-2 transition-colors',
-              activeTab === 'transactions'
-                ? 'border-primary-500 text-primary-600'
-                : 'border-transparent text-gray-500 hover:text-gray-700'
-            )}
-          >
-            Transactions
-          </button>
-        </nav>
-      </div>
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
+          </svg>
+        </div>
 
-      {activeTab === 'overview' && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Hourly transactions chart */}
-          <div className="chart-container">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Transactions par heure</h3>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={hourlyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                  <XAxis dataKey="hour" tick={{ fill: '#6b7280', fontSize: 12 }} />
-                  <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} />
-                  <Tooltip
-                    content={(props) => {
-                      const { active, payload, label } = props;
-                      if (active && payload && payload.length) {
-                        return (
-                          <div className="bg-white px-4 py-3 rounded-lg shadow-lg border border-gray-200">
-                            <p className="text-sm font-medium text-gray-900">{label}</p>
-                            <p className="text-sm text-gray-600">
-                              {payload[0]?.value} transactions
-                            </p>
-                            <p className="text-sm text-gray-600">
-                              {formatCurrency((payload[0]?.payload as { amount?: number })?.amount || 0)}
-                            </p>
-                          </div>
-                        );
-                      }
-                      return null;
-                    }}
-                  />
-                  <Bar dataKey="transactions" fill="#3b82f6" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
+        {/* Search Results */}
+        {isSearching && (
+          <div className="mt-4 text-center text-gray-500">Recherche en cours...</div>
+        )}
 
-          {/* Vendor breakdown */}
-          <div className="chart-container">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Repartition par vendeur</h3>
-            <div className="flex items-center gap-8">
-              <div className="h-48 w-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={vendorData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={40}
-                      outerRadius={70}
-                      dataKey="value"
-                    >
-                      {vendorData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      formatter={(value) => formatCurrency(value as number)}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="flex-1 space-y-2">
-                {vendorData.map((vendor) => (
-                  <div key={vendor.name} className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <div
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: vendor.color }}
-                      />
-                      <span className="text-sm text-gray-600">{vendor.name}</span>
-                    </div>
-                    <span className="text-sm font-medium text-gray-900">
-                      {formatCurrency(vendor.value)}
-                    </span>
+        {searchResults && searchResults.length > 0 && (
+          <div className="mt-4 space-y-3">
+            {searchResults.map((result) => (
+              <div
+                key={result.account.id}
+                className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50 transition-colors"
+              >
+                {/* User Info */}
+                <div className="flex items-start justify-between mb-3">
+                  <div>
+                    <h3 className="font-medium text-gray-900">
+                      {result.account.user?.firstName} {result.account.user?.lastName}
+                    </h3>
+                    <p className="text-sm text-gray-500">{result.account.user?.email}</p>
+                    {result.account.nfcTagId && (
+                      <p className="text-xs font-mono text-gray-400 mt-1">
+                        NFC: {result.account.nfcTagId}
+                      </p>
+                    )}
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
+                  <span className={cn('badge', getStatusColor(result.account.status))}>
+                    {getStatusLabel(result.account.status)}
+                  </span>
+                </div>
 
-          {/* Recent transactions */}
-          <div className="lg:col-span-2 chart-container">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Transactions recentes</h3>
-            <div className="space-y-3">
-              {mockTransactions.slice(0, 5).map((tx) => (
-                <div key={tx.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <div className={cn(
-                      'w-10 h-10 rounded-full flex items-center justify-center',
-                      tx.type === 'topup' ? 'bg-green-100' : tx.type === 'refund' ? 'bg-yellow-100' : 'bg-blue-100'
-                    )}>
-                      {tx.type === 'topup' ? (
-                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-                        </svg>
-                      ) : tx.type === 'refund' ? (
-                        <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                        </svg>
-                      ) : (
-                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                      )}
-                    </div>
-                    <div>
-                      <p className="font-medium text-gray-900">{tx.userName}</p>
-                      <p className="text-sm text-gray-500">{tx.description}</p>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    <p className={cn(
-                      'font-semibold',
-                      tx.amount >= 0 ? 'text-green-600' : 'text-gray-900'
-                    )}>
-                      {tx.amount >= 0 ? '+' : ''}{formatCurrency(tx.amount)}
+                {/* Account Card */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-3">
+                  <div className="bg-green-50 rounded-lg p-3">
+                    <p className="text-xs text-green-600 font-medium">Solde actuel</p>
+                    <p className="text-xl font-bold text-green-700 mt-1">
+                      {formatCurrency(result.account.balance)}
                     </p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(tx.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                  <div className="bg-blue-50 rounded-lg p-3">
+                    <p className="text-xs text-blue-600 font-medium">Total recharge</p>
+                    <p className="text-lg font-semibold text-blue-700 mt-1">
+                      {formatCurrency(result.totalTopUp)}
+                    </p>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-xs text-gray-600 font-medium">Total depense</p>
+                    <p className="text-lg font-semibold text-gray-700 mt-1">
+                      {formatCurrency(result.totalSpent)}
+                    </p>
+                  </div>
+                  <div className="bg-purple-50 rounded-lg p-3">
+                    <p className="text-xs text-purple-600 font-medium">Derniere transaction</p>
+                    <p className="text-xs text-purple-700 mt-1">
+                      {result.lastTransaction
+                        ? formatDateTime(result.lastTransaction.createdAt)
+                        : 'Aucune'}
                     </p>
                   </div>
                 </div>
-              ))}
+
+                {/* Action Buttons */}
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    onClick={() => {
+                      setSelectedAccount(result);
+                      setShowTopUpModal(true);
+                    }}
+                    className="btn-primary flex items-center gap-2 text-sm"
+                    disabled={result.account.status !== 'ACTIVE'}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                      />
+                    </svg>
+                    Recharger
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedAccount(result);
+                      setShowTransferModal(true);
+                    }}
+                    className="btn-secondary flex items-center gap-2 text-sm"
+                    disabled={result.account.status !== 'ACTIVE'}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                      />
+                    </svg>
+                    Transferer
+                  </button>
+                  <button
+                    onClick={() => {
+                      setSelectedAccount(result);
+                      setShowHistoryModal(true);
+                    }}
+                    className="btn-secondary flex items-center gap-2 text-sm"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    Historique
+                  </button>
+                  <button
+                    onClick={() => handleToggleStatus(result)}
+                    className={cn(
+                      'btn-secondary flex items-center gap-2 text-sm',
+                      result.account.status === 'ACTIVE'
+                        ? 'text-orange-600 hover:bg-orange-50'
+                        : 'text-green-600 hover:bg-green-50'
+                    )}
+                  >
+                    {result.account.status === 'ACTIVE' ? (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                          />
+                        </svg>
+                        Suspendre
+                      </>
+                    ) : (
+                      <>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                        Reactiver
+                      </>
+                    )}
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {searchResults && searchResults.length === 0 && searchQuery.length >= 2 && (
+          <div className="mt-4 text-center text-gray-500">Aucun resultat trouve.</div>
+        )}
+      </div>
+
+      {/* Top-up Modal */}
+      {showTopUpModal && selectedAccount && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <h2 className="text-lg font-semibold text-gray-900">Recharger le compte</h2>
+              <button
+                onClick={() => {
+                  setShowTopUpModal(false);
+                  setTopUpAmount('');
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <p className="text-sm text-gray-500">Utilisateur</p>
+                <p className="font-medium text-gray-900">
+                  {selectedAccount.account.user?.firstName} {selectedAccount.account.user?.lastName}
+                </p>
+                <p className="text-sm text-gray-500">{selectedAccount.account.user?.email}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500">Solde actuel</p>
+                <p className="text-2xl font-bold text-green-600">
+                  {formatCurrency(selectedAccount.account.balance)}
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Montant a recharger (EUR)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={topUpAmount}
+                  onChange={(e) => setTopUpAmount(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="0.00"
+                />
+              </div>
+              {topUpAmount && parseFloat(topUpAmount) > 0 && (
+                <div className="bg-blue-50 rounded-lg p-3">
+                  <p className="text-sm text-blue-600">Nouveau solde</p>
+                  <p className="text-xl font-bold text-blue-700">
+                    {formatCurrency(selectedAccount.account.balance + parseFloat(topUpAmount))}
+                  </p>
+                </div>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
+              <button
+                onClick={() => {
+                  setShowTopUpModal(false);
+                  setTopUpAmount('');
+                }}
+                className="btn-secondary"
+                disabled={topUpMutation.isPending}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleTopUp}
+                className="btn-primary"
+                disabled={!topUpAmount || parseFloat(topUpAmount) <= 0 || topUpMutation.isPending}
+              >
+                {topUpMutation.isPending ? 'Traitement...' : 'Confirmer la recharge'}
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {activeTab === 'accounts' && (
-        <>
-          {/* Filters */}
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">Statut:</label>
-              <select
-                value={statusFilter}
-                onChange={(e) => setStatusFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+      {/* Transfer Modal */}
+      {showTransferModal && selectedAccount && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <h2 className="text-lg font-semibold text-gray-900">Transferer des fonds</h2>
+              <button
+                onClick={() => {
+                  setShowTransferModal(false);
+                  setTransferAmount('');
+                  setTransferRecipientQuery('');
+                  setSelectedRecipient(null);
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <option value="all">Tous les statuts</option>
-                {Object.entries(statusLabels).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="p-6 space-y-4">
+              <div>
+                <p className="text-sm text-gray-500">De</p>
+                <p className="font-medium text-gray-900">
+                  {selectedAccount.account.user?.firstName} {selectedAccount.account.user?.lastName}
+                </p>
+                <p className="text-sm text-gray-500">
+                  Solde: {formatCurrency(selectedAccount.account.balance)}
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Rechercher le destinataire
+                </label>
+                <input
+                  type="text"
+                  value={transferRecipientQuery}
+                  onChange={(e) => setTransferRecipientQuery(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="Email, nom ou tag NFC..."
+                />
+                {recipientResults && recipientResults.length > 0 && (
+                  <div className="mt-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg">
+                    {recipientResults
+                      .filter((r) => r.account.id !== selectedAccount.account.id)
+                      .map((result) => (
+                        <button
+                          key={result.account.id}
+                          onClick={() => {
+                            setSelectedRecipient(result);
+                            setTransferRecipientQuery('');
+                          }}
+                          className="w-full text-left px-3 py-2 hover:bg-gray-50 transition-colors"
+                        >
+                          <p className="font-medium text-sm text-gray-900">
+                            {result.account.user?.firstName} {result.account.user?.lastName}
+                          </p>
+                          <p className="text-xs text-gray-500">{result.account.user?.email}</p>
+                        </button>
+                      ))}
+                  </div>
+                )}
+              </div>
+
+              {selectedRecipient && (
+                <div className="bg-blue-50 rounded-lg p-3">
+                  <p className="text-sm text-blue-600">Vers</p>
+                  <p className="font-medium text-blue-900">
+                    {selectedRecipient.account.user?.firstName} {selectedRecipient.account.user?.lastName}
+                  </p>
+                  <p className="text-xs text-blue-700">{selectedRecipient.account.user?.email}</p>
+                </div>
+              )}
+
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Montant a transferer (EUR)
+                </label>
+                <input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  max={selectedAccount.account.balance}
+                  value={transferAmount}
+                  onChange={(e) => setTransferAmount(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="0.00"
+                />
+              </div>
+            </div>
+            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
+              <button
+                onClick={() => {
+                  setShowTransferModal(false);
+                  setTransferAmount('');
+                  setTransferRecipientQuery('');
+                  setSelectedRecipient(null);
+                }}
+                className="btn-secondary"
+                disabled={transferMutation.isPending}
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleTransfer}
+                className="btn-primary"
+                disabled={
+                  !selectedRecipient ||
+                  !transferAmount ||
+                  parseFloat(transferAmount) <= 0 ||
+                  parseFloat(transferAmount) > selectedAccount.account.balance ||
+                  transferMutation.isPending
+                }
+              >
+                {transferMutation.isPending ? 'Traitement...' : 'Confirmer le transfert'}
+              </button>
             </div>
           </div>
-
-          {/* Accounts Table */}
-          <DataTable
-            data={filteredAccounts}
-            columns={accountColumns}
-            searchPlaceholder="Rechercher un compte..."
-            actions={(account) => (
-              <div className="flex items-center gap-1">
-                <button
-                  className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-                  title="Voir details"
-                >
-                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                </button>
-                <button
-                  className={cn(
-                    'p-2 rounded-lg transition-colors',
-                    account.status === 'active' ? 'hover:bg-orange-50' : 'hover:bg-green-50'
-                  )}
-                  title={account.status === 'active' ? 'Suspendre' : 'Reactiver'}
-                >
-                  {account.status === 'active' ? (
-                    <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
-                    </svg>
-                  ) : (
-                    <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                    </svg>
-                  )}
-                </button>
-                <button
-                  className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
-                  title="Rembourser"
-                >
-                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
-                  </svg>
-                </button>
-              </div>
-            )}
-          />
-        </>
+        </div>
       )}
 
-      {activeTab === 'transactions' && (
-        <>
-          {/* Filters */}
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">Type:</label>
-              <select
-                value={typeFilter}
-                onChange={(e) => setTypeFilter(e.target.value)}
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+      {/* History Modal */}
+      {showHistoryModal && selectedAccount && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-4xl w-full max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-100">
+              <div>
+                <h2 className="text-lg font-semibold text-gray-900">Historique des transactions</h2>
+                <p className="text-sm text-gray-500">
+                  {selectedAccount.account.user?.firstName} {selectedAccount.account.user?.lastName}
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowHistoryModal(false);
+                  setSelectedAccount(null);
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <option value="all">Tous les types</option>
-                {Object.entries(typeLabels).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
-                ))}
-              </select>
+                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
             </div>
-            <div className="flex items-center gap-2">
-              <label className="text-sm text-gray-600">Date:</label>
-              <input
-                type="date"
-                className="px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
+            <div className="flex-1 overflow-y-auto p-6">
+              {transactionsData && transactionsData.data.length > 0 ? (
+                <div className="space-y-2">
+                  <table className="w-full">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Type</th>
+                        <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Montant</th>
+                        <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Solde apres</th>
+                        <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">Statut</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {transactionsData.data.map((tx: CashlessTransaction) => (
+                        <tr key={tx.id} className="hover:bg-gray-50">
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {formatDateTime(tx.createdAt)}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className={cn('badge text-xs', getTypeColor(tx.type))}>
+                              {getTypeLabel(tx.type)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-gray-600">
+                            {tx.description || '-'}
+                            {tx.vendor && (
+                              <span className="block text-xs text-gray-400">{tx.vendor.name}</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right">
+                            <span
+                              className={cn(
+                                'font-semibold',
+                                tx.amount >= 0 ? 'text-green-600' : 'text-red-600'
+                              )}
+                            >
+                              {tx.amount >= 0 ? '+' : ''}
+                              {formatCurrency(tx.amount)}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-sm text-right font-medium text-gray-900">
+                            {formatCurrency(tx.balanceAfter)}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span
+                              className={cn(
+                                'badge text-xs',
+                                tx.status === 'COMPLETED'
+                                  ? 'badge-success'
+                                  : tx.status === 'PENDING'
+                                  ? 'badge-warning'
+                                  : 'badge-danger'
+                              )}
+                            >
+                              {tx.status === 'COMPLETED'
+                                ? 'Complete'
+                                : tx.status === 'PENDING'
+                                ? 'En attente'
+                                : tx.status === 'FAILED'
+                                ? 'Echec'
+                                : 'Annule'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="text-center text-gray-500 py-8">Aucune transaction trouvee.</div>
+              )}
             </div>
           </div>
-
-          {/* Transactions Table */}
-          <DataTable
-            data={filteredTransactions}
-            columns={transactionColumns}
-            searchPlaceholder="Rechercher une transaction..."
-          />
-        </>
+        </div>
       )}
     </div>
   );
