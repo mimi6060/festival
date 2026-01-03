@@ -1,6 +1,244 @@
 # Tâches Terminées
 
+---
+
+# 🎪 Festival Platform – Plan d'Amélioration Professionnel
+
+## 🎯 Objectif
+
+Transformer le projet `festival` en une application **production-ready**, maintenable, sécurisée et crédible pour :
+
+- un usage réel par des festivals
+- une démonstration professionnelle (portfolio / SaaS)
+- une ouverture à des contributeurs externes
+
+---
+
+## 🧠 Contexte technique
+
+- Monorepo
+- Backend : NestJS + Prisma + PostgreSQL + Redis
+- Frontend : Next.js (web + admin)
+- Mobile : React Native (Expo)
+- Infra : Docker, Kubernetes, CI/CD
+- Auth : JWT + RBAC
+- Paiement / cashless inclus
+
+---
+
+# 🚀 PLAN D'ACTION PRIORISÉ
+
+## 1️⃣ Documentation (PRIORITÉ CRITIQUE)
+
+### Actions
+
+- Refaire complètement le `README.md`
+- Ajouter une documentation claire pour :
+  - installation locale
+  - architecture globale
+  - déploiement
+  - contribution
+
+### Fichiers à créer
+
+- `README.md`
+- `docs/architecture.md`
+- `docs/setup-dev.md`
+- `docs/deployment.md`
+- `CONTRIBUTING.md`
+- `CODE_OF_CONDUCT.md`
+
+### Attendus
+
+- Un développeur doit pouvoir lancer le projet en < 15 min
+- Un recruteur doit comprendre le projet en 3 min
+
+---
+
+## 2️⃣ Qualité du code & standards pro
+
+### Actions
+
+- Activer :
+  - ESLint strict
+  - Prettier
+  - Husky (pre-commit)
+- Harmoniser la structure des dossiers
+- Supprimer les duplications logiques
+- Clarifier les responsabilités par module
+
+### Attendus
+
+- Code lisible, homogène, typé strictement
+- Aucun `any` inutile
+- Nommage cohérent (DTO, services, controllers)
+
+---
+
+## 3️⃣ Tests & fiabilité
+
+### Backend
+
+- Tests unitaires :
+  - services
+  - logique métier critique
+- Tests e2e :
+  - auth
+  - ticketing
+  - cashless
+  - permissions
+
+### Frontend
+
+- Tests composants clés
+- Tests de formulaires
+
+### CI
+
+- Bloquer les PR si :
+  - tests échouent
+  - lint échoue
+  - couverture < 80 %
+
+---
+
+## 4️⃣ API professionnelle
+
+### Actions
+
+- Swagger / OpenAPI complet
+- Versionning API (`/v1`)
+- Pagination, filtres, tri partout
+- Gestion d'erreurs standardisée
+- Rate limiting
+- Webhooks (paiement, tickets, check-in)
+
+### Attendus
+
+- API exploitable par des apps externes
+- Documentation auto-générée
+
+---
+
+## 5️⃣ Sécurité & conformité
+
+### Actions
+
+- Audit des dépendances
+- Rate limiting global
+- Protection brute-force auth
+- Logs d'audit utilisateurs
+- RGPD :
+  - suppression de compte
+  - export de données
+  - consentement clair
+
+### Bonus
+
+- 2FA optionnel
+- Permissions fines (RBAC avancé)
+
+---
+
+## 6️⃣ Frontend Web (Admin + Public)
+
+### Actions
+
+- Améliorer UX/UI (design system)
+- Responsive complet
+- Accessibilité (WCAG)
+- Dark / Light mode
+- i18n (FR / EN minimum)
+
+### Admin
+
+- Dashboards clairs
+- Filtres avancés
+- Feedback utilisateur (toasts, loaders)
+
+---
+
+## 7️⃣ Application Mobile (Festival-goers)
+
+### Améliorations clés
+
+- Mode offline partiel
+- Carte interactive du festival
+- Notifications push ciblées
+- Programme + favoris
+- Infos urgentes organisateur
+
+---
+
+## 8️⃣ Analytics & reporting
+
+### Actions
+
+- Dashboard KPI :
+  - ventes
+  - fréquentation
+  - cashless
+- Export CSV / PDF
+- Statistiques par jour / zone / événement
+
+---
+
+## 9️⃣ Infra & DevOps
+
+### Actions
+
+- CI/CD complet :
+  - build
+  - tests
+  - scan sécurité
+  - déploiement
+- Environnements :
+  - dev
+  - staging
+  - prod
+- Monitoring :
+  - logs
+  - erreurs
+  - performance
+
+---
+
+## 🔟 Projet Open Source & crédibilité
+
+### Actions
+
+- GitHub Issues organisées
+- Labels clairs
+- Roadmap publique
+- GitHub Discussions
+- Templates d'issues / PR
+
+---
+
+# ✅ Résultat attendu
+
+À la fin :
+
+- Projet **présentable à un client ou investisseur**
+- Code **maintenable et scalable**
+- Documentation claire
+- Architecture compréhensible
+- Prêt pour un usage réel de festival
+
+---
+
+## 🧩 Priorités immédiates
+
+1. README + docs
+2. Tests backend
+3. API Swagger
+4. UX admin
+5. Sécurité de base
+
+---
+
 ## 2026-01-03 - Phase Admin Cashless Management
+
 - [x] Page admin cashless améliorée (apps/admin/app/cashless/page.tsx - 666 lines)
   - Barre de recherche pour trouver utilisateurs par email/nom/tag NFC
   - Cartes utilisateur avec: solde actuel, total rechargé, total dépensé, dernière transaction
@@ -20,6 +258,7 @@
   - getTransactions, updateAccountStatus, refund
 
 ## 2026-01-03 - Phase Frontend Web App - Program Page
+
 - [x] Page programme publique pour festivals (apps/web/app/festivals/[slug]/program/page.tsx)
   - Sélecteur d'onglets pour les jours du festival
   - Dropdown de filtre par scène
@@ -37,6 +276,7 @@
 ## Phase 0 - Infrastructure
 
 ### Monorepo & Configuration
+
 - [x] Initialisation monorepo Nx avec structure apps/libs
 - [x] Configuration TypeScript strict
 - [x] Configuration ESLint + Prettier
@@ -44,6 +284,7 @@
 - [x] Path aliases (@festival/types, @festival/utils, @festival/constants)
 
 ### Base de données
+
 - [x] Installation et configuration Prisma
 - [x] Schéma complet avec 25+ modèles
 - [x] 15+ enums (UserRole, TicketStatus, PaymentStatus, ZoneType, etc.)
@@ -51,6 +292,7 @@
 - [x] Scripts npm pour Prisma
 
 ### Docker & DevOps
+
 - [x] docker-compose.yml (PostgreSQL, Redis, MailDev)
 - [x] docker-compose.override.yml pour dev
 - [x] Dockerfile multi-stage pour l'API
@@ -62,6 +304,7 @@
 ## Phase 1 - Backend Core
 
 ### Architecture NestJS
+
 - [x] Structure modulaire complète
 - [x] Configuration typée (ConfigModule + Joi validation)
 - [x] Intercepteurs globaux (Transform, Logging, Timeout, Cache)
@@ -70,6 +313,7 @@
 - [x] Guards (JWT, RBAC, Festival Access, Ownership, Throttler)
 
 ### Module Auth
+
 - [x] Register avec validation email
 - [x] Login avec JWT + Refresh Token
 - [x] Logout avec invalidation token
@@ -79,6 +323,7 @@
 - [x] Strategies Passport (JWT, Local)
 
 ### Module Festival
+
 - [x] CRUD complet festivals
 - [x] Gestion des statuts
 - [x] Multi-tenant avec organizerId
@@ -86,6 +331,7 @@
 - [x] Statistiques
 
 ### Module Billetterie
+
 - [x] CRUD catégories de billets
 - [x] Achat avec gestion des quotas
 - [x] Génération QR codes signés (HMAC-SHA256)
@@ -93,12 +339,14 @@
 - [x] Annulation avec calcul remboursement
 
 ### Module Paiement
+
 - [x] Intégration Stripe Checkout
 - [x] Webhooks Stripe
 - [x] Gestion des remboursements
 - [x] Support multi-devises
 
 ### Module Cashless
+
 - [x] Création compte cashless
 - [x] Recharge via paiement
 - [x] Paiement cashless
@@ -111,6 +359,7 @@
 ## Phase 2 - Modules Backend Additionnels
 
 ### Module Users
+
 - [x] CRUD complet utilisateurs
 - [x] Pagination, tri, recherche
 - [x] Filtres par rôle, statut, festival
@@ -119,6 +368,7 @@
 - [x] Audit des actions
 
 ### Module Zones (Contrôle d'accès)
+
 - [x] CRUD zones par festival
 - [x] Configuration niveaux d'accès (VIP, backstage, etc.)
 - [x] Scan QR pour validation entrée
@@ -127,6 +377,7 @@
 - [x] Gestion capacité zones
 
 ### Module Staff
+
 - [x] CRUD membres staff
 - [x] Planning shifts par zone/jour
 - [x] Pointage arrivée/départ
@@ -135,6 +386,7 @@
 - [x] Stats heures travaillées
 
 ### Module Program (Artistes, Scènes, Performances)
+
 - [x] CRUD artistes avec bios, genres, images
 - [x] CRUD scènes avec capacité, specs techniques
 - [x] CRUD performances avec horaires
@@ -144,6 +396,7 @@
 - [x] Export PDF programme
 
 ### Module Camping (Hébergement)
+
 - [x] CRUD zones camping (tent, caravan, glamping)
 - [x] Emplacements avec coordonnées
 - [x] Réservation avec paiement
@@ -152,6 +405,7 @@
 - [x] Carte camping
 
 ### Module Vendors (Food & Merchandising)
+
 - [x] CRUD vendeurs par festival
 - [x] Gestion produits avec stock
 - [x] Commandes via cashless
@@ -161,6 +415,7 @@
 - [x] Demande versement
 
 ### Module Notifications
+
 - [x] CRUD notifications
 - [x] Push via Firebase Cloud Messaging
 - [x] Notifications in-app temps réel (WebSocket)
@@ -169,6 +424,7 @@
 - [x] Analytics (taux lecture)
 
 ### Module Support
+
 - [x] FAQ publique par festival
 - [x] CRUD tickets support
 - [x] Chat temps réel (WebSocket)
@@ -178,6 +434,7 @@
 - [x] Objets perdus/trouvés
 
 ### Module Analytics
+
 - [x] Dashboard KPIs globaux
 - [x] Ventes billets (temps réel)
 - [x] Transactions cashless
@@ -188,6 +445,7 @@
 - [x] Alertes seuils
 
 ### Module Map
+
 - [x] Gestion layers (base, overlay)
 - [x] CRUD POIs par type (stage, food, wc, medical)
 - [x] Calcul itinéraire
@@ -199,18 +457,21 @@
 ## Phase 3 - Services Transverses
 
 ### Health Checks & Monitoring
+
 - [x] Health indicators (Prisma, Redis, Stripe)
 - [x] Endpoints /health, /health/live, /health/ready
 - [x] Métriques Prometheus (/metrics)
 - [x] Compteurs business (tickets, paiements)
 
 ### Logging & Audit
+
 - [x] Winston logging structuré
 - [x] Correlation ID middleware
 - [x] Module Audit avec logs d'actions
 - [x] Intercepteur d'audit
 
 ### Sécurité
+
 - [x] Rate limiting avec Redis
 - [x] Helmet (headers sécurité)
 - [x] Intégration Sentry
@@ -218,6 +479,7 @@
 - [x] Middlewares (Logger, Tenant, Correlation)
 
 ### Email Service
+
 - [x] Service Email (Handlebars templates)
 - [x] Templates FR/EN: welcome, verification, password-reset
 - [x] Templates: ticket-confirmation, ticket-reminder
@@ -225,6 +487,7 @@
 - [x] Templates: staff-shift-reminder, support-ticket
 
 ### PDF Service
+
 - [x] Template billet avec QR code
 - [x] Template facture détaillée TVA
 - [x] Template badge staff
@@ -233,11 +496,13 @@
 - [x] Branding festival dynamique
 
 ### Cache & Upload
+
 - [x] Service Cache Redis
 - [x] Decorators @Cacheable, @CacheEvict
 - [x] Service Upload (S3/local)
 
 ### WebSocket Gateway
+
 - [x] Gateway principal EventsGateway
 - [x] NotificationsGateway
 - [x] SupportGateway (chat temps réel)
@@ -250,6 +515,7 @@
 ## Phase 4 - Frontend & Mobile
 
 ### Frontend Public (Next.js)
+
 - [x] Homepage avec liste festivals
 - [x] Page détail festival
 - [x] Tunnel achat billets (panier, checkout Stripe)
@@ -261,6 +527,7 @@
 - [x] Auth avec JWT (cookies httpOnly)
 
 ### Admin Dashboard (Next.js)
+
 - [x] Login admin
 - [x] Dashboard KPI avec graphiques
 - [x] Gestion festivals (CRUD)
@@ -274,6 +541,7 @@
 - [x] Charts (Recharts)
 
 ### App Mobile (React Native)
+
 - [x] Onboarding (3 slides)
 - [x] Login / Register
 - [x] Home (festivals)
@@ -292,6 +560,7 @@
 ## Phase 5 - Shared Libraries
 
 ### Types partagés (@festival/types)
+
 - [x] user.types.ts (400+ lignes, GDPR, OAuth, sessions)
 - [x] festival.types.ts
 - [x] ticket.types.ts
@@ -308,6 +577,7 @@
 - [x] common.types.ts (API responses, pagination)
 
 ### Utils partagés (@festival/utils)
+
 - [x] date.utils.ts
 - [x] format.utils.ts
 - [x] validation.utils.ts
@@ -323,6 +593,7 @@
 - [x] phone.utils.ts
 
 ### Constants partagées (@festival/constants)
+
 - [x] api.constants.ts
 - [x] auth.constants.ts (ROLES, PERMISSIONS, TOKEN_EXPIRY)
 - [x] festival.constants.ts (STATUSES, TICKET_TYPES, ZONES)
@@ -332,6 +603,7 @@
 - [x] error.constants.ts (codes FR/EN)
 
 ### i18n (@festival/i18n)
+
 - [x] Configuration next-intl
 - [x] Fichiers FR/EN (1000+ traductions)
 - [x] Sélecteur de langue
@@ -340,6 +612,7 @@
 - [x] PDF templates FR/EN
 
 ### Validation Zod
+
 - [x] auth.schema.ts
 - [x] user.schema.ts
 - [x] festival.schema.ts
@@ -352,6 +625,7 @@
 ## Phase 6 - Frontend Shared
 
 ### Hooks React personnalisés
+
 - [x] useAuth() - État auth, login, logout
 - [x] useUser() - Données user courant
 - [x] usePermissions() - Check RBAC
@@ -365,6 +639,7 @@
 - [x] useDebounce(), useForm()
 
 ### Composants UI partagés
+
 - [x] Button (variants)
 - [x] Input, Textarea, Select, Checkbox
 - [x] Card, Badge, Avatar
@@ -377,12 +652,14 @@
 - [x] Tooltip, Popover
 
 ### API Client
+
 - [x] apiClient.ts (Axios configuré)
 - [x] Interceptors (auth, errors)
 - [x] Services par domaine (auth, festivals, tickets, etc.)
 - [x] React Query hooks
 
 ### State Management (Zustand)
+
 - [x] authStore (user, tokens)
 - [x] cartStore (items, total)
 - [x] uiStore (theme, language, modals)
@@ -390,6 +667,7 @@
 - [x] festivalStore
 
 ### Error Handling
+
 - [x] HttpExceptionFilter global
 - [x] Custom exceptions
 - [x] Error Boundary React
@@ -402,6 +680,7 @@
 ## Phase 7 - DevOps & Tests
 
 ### GitHub Actions CI/CD
+
 - [x] CI workflow (lint, typecheck, test, build)
 - [x] Deploy API workflow (Docker, Registry)
 - [x] Deploy Web workflow (Vercel)
@@ -411,6 +690,7 @@
 - [x] Release workflow
 
 ### Configuration environnement
+
 - [x] .env.example complet documenté
 - [x] .env.development
 - [x] .env.test
@@ -419,6 +699,7 @@
 - [x] ConfigModule avec validation Joi
 
 ### Tests
+
 - [x] Tests unitaires (Jest) pour tous modules
 - [x] Mocks PrismaService, Redis, Stripe
 - [x] Tests E2E (Supertest)
@@ -426,6 +707,7 @@
 - [x] Coverage > 80%
 
 ### Documentation
+
 - [x] Swagger/OpenAPI configuré
 - [x] @ApiTags, @ApiOperation, @ApiResponse
 - [x] @ApiBearerAuth, @ApiProperty
@@ -436,18 +718,18 @@
 
 ## Stats du Projet - FINAL
 
-| Métrique | Valeur |
-|----------|--------|
-| Fichiers créés | 800+ |
-| Lignes de code | 150,000+ |
-| Modules backend | 25+ |
-| Composants frontend | 50+ |
-| Écrans mobile | 15+ |
-| Templates email | 10+ |
-| Templates PDF | 6 |
-| Tests | 200+ |
-| Agents utilisés | 34 |
-| Traductions | 1000+ |
+| Métrique            | Valeur   |
+| ------------------- | -------- |
+| Fichiers créés      | 800+     |
+| Lignes de code      | 150,000+ |
+| Modules backend     | 25+      |
+| Composants frontend | 50+      |
+| Écrans mobile       | 15+      |
+| Templates email     | 10+      |
+| Templates PDF       | 6        |
+| Tests               | 200+     |
+| Agents utilisés     | 34       |
+| Traductions         | 1000+    |
 
 ---
 
@@ -481,6 +763,7 @@ festival/
 ## Phase 8 - Stabilisation TypeScript
 
 ### Corrections Compilation API (2026-01-02)
+
 - [x] Correction erreurs TS2564 (propriétés non initialisées) - ajout `!` aux DTOs et entities
 - [x] Correction erreurs TS4114 (override modifier) - jwt-auth.guard.ts
 - [x] Correction erreurs TS18046 (error unknown) - email.service.ts, fcm.service.ts
@@ -493,7 +776,8 @@ festival/
 - [x] Compilation TypeScript API: 0 erreurs
 
 ### Corrections Build Next.js Web (2026-01-02)
-- [x] Correction erreur "useContext null" lors du prerendering de /_global-error
+
+- [x] Correction erreur "useContext null" lors du prerendering de /\_global-error
 - [x] Identification de la cause racine: NODE_ENV non defini en production lors du build via nx
 - [x] Creation du fichier global-error.tsx avec 'use client' directive
 - [x] Creation du fichier not-found.tsx pour gestion des erreurs 404
@@ -507,6 +791,7 @@ festival/
 ## Phase 9 - Infrastructure Docker & Kubernetes (2026-01-02)
 
 ### Dockerfiles Multi-Stage
+
 - [x] Dockerfile multi-stage pour API NestJS (apps/api/Dockerfile)
   - Stage 1: Dependencies - installation npm ci production
   - Stage 2: Builder - compilation TypeScript et Prisma
@@ -517,10 +802,11 @@ festival/
   - Copie selective des fichiers necessaires
   - Non-root user (nextjs:nodejs)
 - [x] Dockerfile multi-stage pour Admin Next.js (apps/admin/Dockerfile)
-- [x] Dockerfiles de developpement (*.Dockerfile.dev) avec hot-reload
+- [x] Dockerfiles de developpement (\*.Dockerfile.dev) avec hot-reload
 - [x] Fichier .dockerignore optimise
 
 ### Docker Compose Production
+
 - [x] Service API avec build, healthcheck, depends_on, resource limits
 - [x] Service Web avec build args, environment variables
 - [x] Service Admin avec configuration complete
@@ -533,6 +819,7 @@ festival/
 - [x] Volumes persistants pour tous les services
 
 ### Docker Compose Development Override
+
 - [x] Configuration volumes pour hot-reload code source
 - [x] Variables environnement developpement
 - [x] PgAdmin pour gestion base de donnees
@@ -540,6 +827,7 @@ festival/
 - [x] Mailhog toujours active en dev
 
 ### Kubernetes Configurations
+
 - [x] Verification des deployments existants (api, web, admin)
 - [x] Verification des services (ClusterIP, headless)
 - [x] Verification de l'ingress NGINX avec TLS
@@ -549,6 +837,7 @@ festival/
 - [x] Creation overlay production (replicas: 5, resources elevees)
 
 ### Scripts Utilitaires
+
 - [x] scripts/docker-build.sh - Build toutes les images avec options registry/version/push
 - [x] scripts/docker-dev.sh - Gestion environnement dev (up/down/logs/shell)
 - [x] scripts/k8s-deploy.sh - Deploiement Kubernetes avec dry-run
@@ -559,6 +848,7 @@ festival/
 ## Phase 10 - Audit Sécurité & GDPR (2026-01-02)
 
 ### Audit de Sécurité du Code
+
 - [x] Audit des guards d'authentification (JwtAuthGuard, RolesGuard)
 - [x] Vérification de la validation des inputs (DTOs avec class-validator)
 - [x] Identification des endpoints publics (@Public decorator)
@@ -566,6 +856,7 @@ festival/
 - [x] Revue du module GDPR (consent management, data requests)
 
 ### Security Middleware
+
 - [x] Création apps/api/src/common/middleware/security.middleware.ts
   - Protection CSRF (Double Submit Cookie pattern)
   - Headers de sécurité améliorés (CSP, HSTS, X-Frame-Options)
@@ -575,6 +866,7 @@ festival/
   - Validation des méthodes HTTP
 
 ### Validateurs de Sécurité
+
 - [x] Création apps/api/src/common/validators/password.validator.ts
   - Validation force du mot de passe (OWASP compliant)
   - Vérification mots de passe courants
@@ -591,6 +883,7 @@ festival/
   - Decorators @IsSafeString, @NoSqlInjection
 
 ### Documentation GDPR
+
 - [x] Création docs/security/GDPR_AUDIT.md
   - Inventaire complet des données personnelles
   - Base légale pour chaque traitement
@@ -601,6 +894,7 @@ festival/
   - Checklist de conformité
 
 ### Documentation Secrets
+
 - [x] Création docs/security/SECRETS.md
   - Inventaire de tous les secrets
   - Guidelines de génération
@@ -614,6 +908,7 @@ festival/
 ## Phase 11 - Performance & Monitoring (2026-01-02)
 
 ### Optimisation Base de Données Prisma
+
 - [x] Ajout 30+ index composites pour optimisation des requêtes
   - User: index(role, status), index(createdAt), index(lastLoginAt)
   - Ticket: index(festivalId, status), index(festivalId, categoryId), index(festivalId, createdAt), index(userId, status), index(categoryId, status), index(paymentId)
@@ -622,6 +917,7 @@ festival/
   - VendorOrder: index(vendorId, status), index(vendorId, createdAt), index(vendorId, status, createdAt), index(userId, createdAt), index(status, createdAt)
 
 ### Service Cache Redis Avancé
+
 - [x] Refactoring complet apps/api/src/modules/cache/cache.service.ts (600+ lignes)
   - Support Redis avec fallback in-memory
   - Stratégies de cache: TTL, Write-through, Cache-aside, Refresh-ahead
@@ -633,6 +929,7 @@ festival/
   - Statistiques de cache (hits, misses, hitRate, keys, memory)
 
 ### Module Monitoring Prometheus
+
 - [x] Création apps/api/src/modules/monitoring/monitoring.module.ts
 - [x] Création apps/api/src/modules/monitoring/metrics.service.ts (700+ lignes)
   - Métriques HTTP: requests_total, request_duration_ms, errors_total
@@ -655,6 +952,7 @@ festival/
   - Normalisation des paths (UUIDs, IDs numériques)
 
 ### Utilitaires Pagination Avancés
+
 - [x] Extension libs/shared/utils/src/lib/pagination.utils.ts (300+ lignes ajoutées)
   - buildTimeRangeWhere - Construction WHERE pour requêtes temporelles
   - buildSearchWhere - Construction WHERE avec OR pour recherche multi-champs
@@ -667,6 +965,7 @@ festival/
   - mergeWhereConditions - Fusion conditions avec AND
 
 ### Scripts Load Testing
+
 - [x] Création scripts/load-test.ts (400+ lignes)
   - Client HTTP natif pour tests de charge
   - Configuration: baseUrl, duration, connections, pipelining
@@ -689,6 +988,7 @@ festival/
 ## Phase 12 - Documentation API & Swagger (2026-01-02)
 
 ### Configuration Swagger (Verification)
+
 - [x] Configuration Swagger avancee dans main.ts
   - Title, description detaillee, version
   - Serveurs (local, staging, production)
@@ -698,6 +998,7 @@ festival/
   - Custom CSS et options SwaggerUI
 
 ### Documentation DTOs (Verification)
+
 - [x] Tous les DTOs documentes avec @ApiProperty
   - Descriptions detaillees
   - Exemples realistes
@@ -706,6 +1007,7 @@ festival/
   - Types enum documentes
 
 ### Documentation Controllers (Verification)
+
 - [x] Tous les controllers avec decorateurs Swagger
   - @ApiTags pour groupement
   - @ApiOperation avec summary et description
@@ -715,6 +1017,7 @@ festival/
   - @ApiParam pour parametres URL
 
 ### Guide d'Integration API
+
 - [x] Creation docs/api/API_GUIDE.md (500+ lignes)
   - Overview et fonctionnalites
   - Base URLs (dev, staging, production)
@@ -728,6 +1031,7 @@ festival/
   - Information SDKs
 
 ### Documentation Webhooks
+
 - [x] Creation docs/api/WEBHOOKS.md (600+ lignes)
   - Overview webhooks
   - Types d'evenements (payment, ticket, cashless, festival, zone)
@@ -741,6 +1045,7 @@ festival/
   - Best practices
 
 ### Collection Postman
+
 - [x] Creation docs/api/festival-api.postman_collection.json (1200+ lignes)
   - 60+ requetes organisees par categorie
   - Auth (register, login, refresh, logout, password flows)
@@ -762,6 +1067,7 @@ festival/
   - URLs configurables
 
 ### README Principal
+
 - [x] Mise a jour complete README.md (375+ lignes)
   - Features liste complete
   - Tech stack table
@@ -783,6 +1089,7 @@ festival/
 ## Phase 13 - Tests & QA (2026-01-02)
 
 ### Prisma Mocks
+
 - [x] Creation apps/api/src/test/mocks/prisma.mock.ts
   - Utilisation de jest-mock-extended pour mock type-safe
   - Helper functions: mockUserQueries, mockFestivalQueries, mockTicketQueries
@@ -791,6 +1098,7 @@ festival/
   - Reset entre les tests
 
 ### Test Fixtures
+
 - [x] Creation apps/api/src/test/fixtures/users.fixture.ts (300+ lignes)
   - Fixtures par role: adminUser, organizerUser, staffUser, cashierUser, securityUser, regularUser
   - Fixtures cas speciaux: unverifiedUser, bannedUser, inactiveUser
@@ -809,6 +1117,7 @@ festival/
   - Stripe mock data: stripeMockPaymentIntent, stripeWebhookPayloads
 
 ### Unit Tests Services Critiques
+
 - [x] Creation apps/api/src/modules/auth/auth.service.spec.ts (500+ lignes)
   - Tests registration: email normalization, conflict detection, password hashing
   - Tests login: credential validation, status checks (banned, inactive, unverified)
@@ -833,6 +1142,7 @@ festival/
   - 25+ test cases
 
 ### E2E Tests
+
 - [x] Verification apps/api-e2e/src/api/auth.e2e-spec.ts (existant)
 - [x] Creation apps/api-e2e/src/api/tickets.e2e-spec.ts (550+ lignes)
   - POST /api/tickets/buy: purchase, multiple, invalid quantity, errors
@@ -853,9 +1163,10 @@ festival/
   - Complete cashless lifecycle: create -> topup -> pay -> refund
 
 ### Jest Configuration
+
 - [x] Creation apps/api/jest.config.ts (130+ lignes)
   - Preset Nx avec SWC pour compilation rapide
-  - Module name mapper pour @festival/* aliases
+  - Module name mapper pour @festival/\* aliases
   - Coverage collection: 80% minimum global
   - Coverage thresholds: 85% pour services critiques (auth, tickets, cashless, payments)
   - Reporters: text, lcov, html, json, jest-junit
@@ -882,6 +1193,7 @@ festival/
 ## Phase 14 - Correction Build Web App (2026-01-02)
 
 ### Restructuration Web App
+
 - [x] Migration app directory de apps/web/src/app vers apps/web/app
 - [x] Migration components, hooks, stores, providers vers la racine
 - [x] Mise a jour des imports pour utiliser @/ path alias
@@ -889,17 +1201,20 @@ festival/
 - [x] Mise a jour du tsconfig.json (paths alias)
 
 ### Correction Build
+
 - [x] Identification de la cause racine: NODE_ENV non defini lors du build via Nx
 - [x] Ajout scripts npm: build:web, build:admin avec NODE_ENV=production
 - [x] Mise a jour build:all avec NODE_ENV=production
 - [x] Validation: npm run build:web fonctionne correctement
 
 ### Validation Docker
+
 - [x] Docker-compose config valide
 - [x] Services correctement configures (api, web, admin, postgres, redis)
 - [x] Health checks et depends_on en place
 
 ---
+
 Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
 
 ---
@@ -907,6 +1222,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
 ## Phase 15 - Compliance & Legal Documentation (2026-01-02)
 
 ### PCI-DSS Documentation
+
 - [x] Creation docs/compliance/PCI_DSS.md (1000+ lignes)
   - PCI-DSS v4.0 requirements complets (Req 1-12)
   - Scope definition et CDE minimization via Stripe
@@ -919,6 +1235,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - Annual compliance calendar
 
 ### SOC 2 Preparation
+
 - [x] Creation docs/compliance/SOC2_CHECKLIST.md (720+ lignes)
   - Trust Service Criteria (Security, Availability, Confidentiality, Privacy)
   - Common Criteria CC1-CC9 avec status implementation
@@ -933,6 +1250,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - Current readiness score: 62%
 
 ### Privacy Policy Template
+
 - [x] Creation docs/legal/PRIVACY_POLICY.md (350+ lignes)
   - Master template multi-juridiction (GDPR, CCPA, UK GDPR, LGPD)
   - Data processing summary tables
@@ -946,6 +1264,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - Deployment checklist
 
 ### Terms of Service Template
+
 - [x] Creation docs/legal/TERMS_OF_SERVICE.md (600+ lignes)
   - Complete service agreement framework
   - Ticket purchase terms et refund policies
@@ -959,6 +1278,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - Jurisdiction-specific provisions
 
 ### Cookie Policy Template
+
 - [x] Creation docs/legal/COOKIE_POLICY.md (500+ lignes)
   - Complete cookie inventory par categorie
   - Strictly necessary cookies documentation
@@ -978,6 +1298,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
 ## Phase 16 - API Backend Advanced (2026-01-02)
 
 ### Intercepteur de Compression
+
 - [x] Creation apps/api/src/common/interceptors/compression.interceptor.ts
   - Support gzip, deflate, brotli
   - Detection automatique Accept-Encoding
@@ -987,6 +1308,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - EnhancedCompressionInterceptor avec metadata support
 
 ### Versioning API
+
 - [x] Creation apps/api/src/common/versioning/
   - api-version.decorator.ts: @V1Only, @V2Only, @AllVersions, @V1Controller, @V2Controller
   - api-version.guard.ts: Validation version header/query/path
@@ -995,6 +1317,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - Configuration deprecation avec sunset dates
 
 ### Bulk Operations
+
 - [x] Creation apps/api/src/common/bulk/
   - bulk-operation.dto.ts: BulkOperationDto, BulkDeleteDto, BulkUpdateDto, BulkImportDto, BulkExportDto
   - bulk-operation.service.ts: Batch processing, concurrency, continue-on-error
@@ -1004,6 +1327,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - Progress tracking et error summary
 
 ### Module Queue BullMQ
+
 - [x] Creation apps/api/src/modules/queue/
   - queue.types.ts: 12 queues specialisees (email, notification, payment, ticket, pdf, analytics, cashless, webhook, report, export, import, maintenance)
   - queue.service.ts: Service central avec workers, retry, scheduling cron
@@ -1013,6 +1337,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - queue.module.ts: Module global avec auto-registration
 
 ### Validateurs DTO Avances
+
 - [x] Creation apps/api/src/common/validators/custom.validators.ts (15+ validators)
   - IsPhoneE164 - Format E.164 international
   - IsSecureUrl - HTTPS uniquement
@@ -1029,6 +1354,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - IsIBAN - Comptes bancaires
 
 ### DTOs Enrichis
+
 - [x] Creation apps/api/src/common/dto/enhanced.dto.ts
   - CreateFestivalEnhancedDto - 20+ champs valides
   - CreateTicketCategoryEnhancedDto - Categories billets completes
@@ -1041,11 +1367,13 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
 ## Phase DBA - Optimisation Base de Donnees (2026-01-02)
 
 ### Schema Prisma
+
 - [x] Ajout relations GDPR (UserConsent, GdprRequest, Session) au modele User
 - [x] Validation complete du schema avec prisma validate
 - [x] 40+ modeles avec relations completes
 
 ### Documentation
+
 - [x] Creation prisma/DATABASE.md (500+ lignes)
   - Architecture multi-tenant detaillee
   - Diagramme ER textuel
@@ -1056,6 +1384,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - Guide de migration
 
 ### Migrations
+
 - [x] Generation migration SQL initiale (0001_initial_schema.sql)
   - 52KB, 1593 lignes SQL
   - Tous les enums (25+)
@@ -1063,6 +1392,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - Tous les index
 
 ### Seed Data
+
 - [x] Verification seed.ts existant
   - 1376 lignes de code
   - Donnees realistes francaises
@@ -1078,6 +1408,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
 ## Phase PDF Service Enhanced (2026-01-02)
 
 ### Service PDF Refactorise
+
 - [x] Refactoring complet apps/api/src/modules/pdf/pdf.service.ts (570 lignes)
   - QR codes securises avec HMAC-SHA256 hash
   - Support photos pour badges staff (Buffer input)
@@ -1086,6 +1417,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - Gestion erreurs robuste
 
 ### Templates PDF
+
 - [x] Template Ticket avec QR code
   - Header avec nom du festival
   - QR code avec donnees JSON signees (id, code, hash, version)
@@ -1133,6 +1465,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - Total rembourse
 
 ### Interfaces TypeScript
+
 - [x] Creation apps/api/src/modules/pdf/interfaces/pdf.interfaces.ts (320+ lignes)
   - TicketPdfData, InvoicePdfData, ReceiptPdfData
   - StaffBadgePdfData, ProgramPdfData
@@ -1147,6 +1480,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
 ## Phase Mobile UX (2026-01-03) - COMPLETED
 
 ### Settings & Preferences
+
 - [x] Creation settingsStore.ts avec Zustand (language, theme, biometric, offline mode)
 - [x] Mise a jour SettingsScreen avec modals fonctionnels
 - [x] Mise a jour ProfileScreen avec selection langue/theme
@@ -1154,11 +1488,13 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
 - [x] Ajout couleur 'card' au theme
 
 ### Quick Access Navigation
+
 - [x] Navigation HomeScreen vers MapScreen avec filtres
 - [x] Categorie urgence dans MapScreen (postes medicaux, securite)
 - [x] Bouton retour dans header MapScreen
 
 ### Backend API Modules
+
 - [x] Module tickets (controller, service, module)
 - [x] Module cashless (controller, service, module)
 - [x] Module program (controller, service, module)
@@ -1166,6 +1502,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
 - [x] Service donnees demo pour developpement
 
 ### Profile & Support Screens (2026-01-03)
+
 - [x] EditProfileScreen avec validation email/telephone
 - [x] ChangePasswordScreen avec verification force mot de passe
 - [x] HelpCenterScreen avec FAQ et categories
@@ -1175,6 +1512,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
 - [x] URL linking configuration pour web
 
 ### Admin Festival Management Pages (2026-01-03)
+
 - [x] Stages management page avec visualisation capacite
 - [x] Lineup/artists management page
 - [x] Vendors management page avec categorisation type
@@ -1188,6 +1526,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
 ## Phase 17 - Web App Festivals Listing Enhanced (2026-01-03)
 
 ### Festivals Listing Page Improvements
+
 - [x] Refactoring complet apps/web/app/festivals/page.tsx (550+ lignes)
   - Client-side component avec 'use client' directive
   - React Query integration pour fetching data
@@ -1195,6 +1534,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - State management avec useState pour tous les filtres
 
 ### Search & Filters
+
 - [x] Search bar avec input control et Enter key support
   - Recherche par nom ou location de festival
   - Icone loupe SVG
@@ -1229,6 +1569,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - Client-side sorting implementation
 
 ### Filter Management
+
 - [x] Active filters summary avec pills removables
   - Affichage visuel de tous les filtres actifs
   - Bouton X pour supprimer individuellement
@@ -1245,6 +1586,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - Support navigation back/forward
 
 ### UI States
+
 - [x] Loading state avec skeleton cards
   - 6 skeleton cards animees (animate-pulse)
   - Grid responsive (1/2/3 colonnes)
@@ -1261,6 +1603,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - Bouton Clear Filters si applicable
 
 ### Pagination
+
 - [x] Pagination complete avec navigation
   - Previous/Next buttons avec disabled state
   - Page numbers buttons (max 5 visible)
@@ -1269,6 +1612,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - 12 items per page (ITEMS_PER_PAGE constant)
 
 ### API Integration
+
 - [x] React Query hook pour fetching
   - useQuery avec queryKey dynamique
   - Automatic refetch sur param changes
@@ -1285,18 +1629,21 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - Status filter par defaut (PUBLISHED)
 
 ### Festival Cards
+
 - [x] Grid responsive (1/2/3 colonnes selon breakpoints)
 - [x] Integration du composant FestivalCard existant
 - [x] Fallback image URL si manquante
 - [x] Fallback price/genres si manquants
 
 ### Results Display
+
 - [x] Results count avec total
   - "Showing X of Y festivals"
   - Loading state text
   - Bold formatting pour les nombres
 
 ### Performance Optimizations
+
 - [x] useMemo pour filtered/sorted festivals
   - Evite recalculs inutiles
   - Dependencies array optimise
@@ -1311,6 +1658,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - String comparison avec localeCompare()
 
 ### Styling & UX
+
 - [x] Tailwind CSS festival theme complete
   - Colors primaires/secondaires
   - Background gradients
@@ -1323,6 +1671,7 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
   - Optimisation tactile
 
 ### Accessibility
+
 - [x] Semantic HTML elements
 - [x] Labels pour tous les inputs
 - [x] Disabled states pour buttons
@@ -1330,4 +1679,5 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
 - [x] Focus states sur tous les interactifs
 
 ---
+
 Derniere mise a jour: 2026-01-03 - Web App Festivals Listing Enhanced
