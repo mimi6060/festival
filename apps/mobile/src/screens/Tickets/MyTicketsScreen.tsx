@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -86,12 +86,22 @@ const mockTickets: Ticket[] = [
 
 export const MyTicketsScreen: React.FC = () => {
   const navigation = useNavigation<TicketsNavigationProp>();
-  const { tickets: storeTickets } = useTicketStore();
+  const { tickets: storeTickets, setTickets, clearTickets } = useTicketStore();
   const [activeFilter, setActiveFilter] = useState<FilterType>('all');
   const [refreshing, setRefreshing] = useState(false);
 
-  // Use mock data if store is empty
-  const tickets = storeTickets.length > 0 ? storeTickets : mockTickets;
+  // Clear invalid tickets and replace with mock data on mount
+  useEffect(() => {
+    const hasInvalidTickets = storeTickets.some(t => !t.eventDate || !t.eventName);
+    if (hasInvalidTickets || storeTickets.length === 0) {
+      clearTickets();
+      setTickets(mockTickets);
+    }
+  }, []);
+
+  // Use mock data if store is empty or has invalid data
+  const hasValidTickets = storeTickets.length > 0 && storeTickets.every(t => t.eventDate && t.eventName);
+  const tickets = hasValidTickets ? storeTickets : mockTickets;
 
   const filteredTickets = useMemo(() => {
     if (activeFilter === 'all') return tickets;
