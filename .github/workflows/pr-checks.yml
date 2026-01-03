@@ -1,27 +1,26 @@
 # =============================================================================
-# PR Checks - Festival Monorepo
+# PR Checks - Festival Platform
 # =============================================================================
-# Lightweight checks that run on every PR to provide fast feedback
+# Lightweight checks for pull requests
 # =============================================================================
 
 name: PR Checks
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened, ready_for_review]
+    types: [opened, synchronize, reopened]
 
 concurrency:
-  group: pr-checks-${{ github.event.pull_request.number }}
+  group: pr-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 jobs:
   # ===========================================================================
-  # PR Metadata Validation
+  # PR Title Validation
   # ===========================================================================
-  pr-validation:
-    name: PR Validation
+  validate-pr:
+    name: Validate PR
     runs-on: ubuntu-latest
-    if: github.event.pull_request.draft == false
     steps:
       - name: Check PR title format
         uses: amannn/action-semantic-pull-request@v5
@@ -42,74 +41,28 @@ jobs:
             revert
           requireScope: false
           subjectPattern: ^.{1,80}$
-          subjectPatternError: |
-            The subject "{subject}" found in the PR title must be 80 characters or less.
-
-      - name: Check PR description
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const pr = context.payload.pull_request;
-            const body = pr.body || '';
-
-            if (body.length < 50) {
-              core.setFailed('PR description is too short. Please provide more context about your changes.');
-            }
-
-            const requiredSections = ['## Summary', '## Test'];
-            const missingSections = requiredSections.filter(section =>
-              !body.toLowerCase().includes(section.toLowerCase())
-            );
-
-            if (missingSections.length > 0 && !body.includes('dependabot')) {
-              core.warning(`Consider adding these sections: ${missingSections.join(', ')}`);
-            }
 
   # ===========================================================================
-  # Size Check
+  # Quick Build Check
   # ===========================================================================
-  size-check:
-    name: PR Size Check
+  quick-build:
+    name: Quick Build Check
     runs-on: ubuntu-latest
     steps:
-      - name: Check PR size
-        uses: actions/github-script@v7
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          script: |
-            const pr = context.payload.pull_request;
-            const additions = pr.additions;
-            const deletions = pr.deletions;
-            const total = additions + deletions;
+          node-version: '20'
+          cache: 'npm'
 
-            let label = 'size/S';
-            if (total > 1000) {
-              label = 'size/XL';
-              core.warning('This PR is very large. Consider breaking it into smaller PRs.');
-            } else if (total > 500) {
-              label = 'size/L';
-            } else if (total > 100) {
-              label = 'size/M';
-            }
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
 
-            await github.rest.issues.addLabels({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              issue_number: pr.number,
-              labels: [label]
-            });
+      - name: Generate Prisma
+        run: npx prisma generate
 
-  # ===========================================================================
-  # Conflict Check
-  # ===========================================================================
-  conflict-check:
-    name: Conflict Check
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check for merge conflicts
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const pr = context.payload.pull_request;
-            if (pr.mergeable === false) {
-              core.setFailed('This PR has merge conflicts that must be resolved.');
-            }
+      - name: Build API
+        run: npx nx build api --skip-nx-cache

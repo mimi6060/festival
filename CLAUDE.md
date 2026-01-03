@@ -20,6 +20,36 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 4. Pousser immédiatement les changements avec `git push`
 5. Ne pas accumuler plusieurs fonctionnalités avant de commit - **1 fonctionnalité = 1 commit + 1 push**
 
+## Vérification CI Avant Push - RÈGLE OBLIGATOIRE
+
+**AVANT chaque `git push`, tu DOIS vérifier que le code passera les GitHub Actions:**
+
+1. **Build API obligatoire:** `npx nx build api --skip-nx-cache`
+   - Si le build échoue, corriger les erreurs AVANT de push
+   - Ne JAMAIS push du code qui ne compile pas
+
+2. **Vérification rapide des imports:**
+   - Vérifier que tous les imports sont corrects
+   - Vérifier que les modules exports existent
+
+3. **Script de vérification complet (optionnel):** `./scripts/verify-ci.sh`
+   - Simule ce que GitHub Actions va exécuter
+   - Utiliser pour les changements importants
+
+**Si un build échoue après push:**
+1. Corriger immédiatement
+2. Ne pas faire d'autres changements jusqu'à ce que CI soit vert
+3. Monitorer les GitHub Actions après chaque push
+
+**Commandes de vérification rapide:**
+```bash
+# Build API (OBLIGATOIRE avant push)
+npx nx build api --skip-nx-cache
+
+# Vérification complète (recommandé)
+./scripts/verify-ci.sh
+```
+
 **Convention de messages de commit:**
 - `feat(module): description` - nouvelle fonctionnalité
 - `fix(module): description` - correction de bug

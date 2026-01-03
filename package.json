@@ -11,6 +11,8 @@
     "build:admin": "NODE_ENV=production nx build admin",
     "build:all": "NODE_ENV=production nx run-many --target=build --all",
     "test": "nx test",
+    "verify-ci": "./scripts/verify-ci.sh",
+    "pre-push": "npm run verify-ci",
     "test:all": "nx run-many --target=test --all",
     "test:coverage": "nx run-many --target=test --all --coverage",
     "lint": "nx lint",
