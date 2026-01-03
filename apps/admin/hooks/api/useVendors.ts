@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { vendorsApi } from '../../lib/api';
-import type { Vendor, CreateVendorDto, UpdateVendorDto } from '../../types';
+import type { CreateVendorDto, UpdateVendorDto } from '../../types';
 
 // =====================
 // Query Keys

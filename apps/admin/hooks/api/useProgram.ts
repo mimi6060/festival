@@ -2,7 +2,13 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { artistsApi, stagesApi, lineupApi } from '../../lib/api';
-import type { CreatePerformanceDto, UpdatePerformanceDto } from '../../types';
+import type {
+  Artist,
+  CreateStageDto,
+  UpdateStageDto,
+  CreatePerformanceDto,
+  UpdatePerformanceDto,
+} from '../../types';
 
 // =====================
 // Query Keys
@@ -187,7 +193,7 @@ export function useCreateStage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ festivalId, data }: { festivalId: string; data: Partial<Stage> }) =>
+    mutationFn: ({ festivalId, data }: { festivalId: string; data: CreateStageDto }) =>
       stagesApi.create(festivalId, data),
     onSuccess: (_, { festivalId }) => {
       queryClient.invalidateQueries({ queryKey: stageQueryKeys.byFestival(festivalId) });
@@ -202,7 +208,7 @@ export function useUpdateStage() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<Stage> }) => stagesApi.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: UpdateStageDto }) => stagesApi.update(id, data),
     onSuccess: (updatedStage) => {
       queryClient.setQueryData(stageQueryKeys.detail(updatedStage.id), updatedStage);
       // We need to invalidate all festival stage lists since we don't know which festival

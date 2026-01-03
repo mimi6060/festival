@@ -253,6 +253,22 @@ export interface Stage {
   };
 }
 
+export interface CreateStageDto {
+  name: string;
+  description?: string;
+  capacity: number;
+  location?: string;
+  imageUrl?: string;
+}
+
+export interface UpdateStageDto {
+  name?: string;
+  description?: string;
+  capacity?: number;
+  location?: string;
+  imageUrl?: string;
+}
+
 // Artist Types
 export interface Artist {
   id: string;

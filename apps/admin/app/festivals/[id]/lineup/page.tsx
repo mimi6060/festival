@@ -42,20 +42,21 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
     description: '',
   });
 
-  const performances = lineupData?.data || [];
-  const stages = stagesData;
-  const artists = artistsData?.data || [];
+  const performances = lineupData || [];
+  const stages = stagesData || [];
+  // artistsData is PaginatedResponse<Artist>, extract the data array
+  const artists = (artistsData && 'data' in artistsData ? artistsData.data : artistsData) || [];
 
   // Group performances by day
   const groupedByDay = useMemo(() => {
-    const groups: { [key: string]: Performance[] } = {};
+    const groups: Record<string, Performance[]> = {};
 
     performances.forEach((performance: Performance) => {
       const date = new Date(performance.startTime);
       const dayKey = date.toLocaleDateString('fr-FR', {
         weekday: 'long',
         day: 'numeric',
-        month: 'long'
+        month: 'long',
       });
 
       if (!groups[dayKey]) {
@@ -66,9 +67,7 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
 
     // Sort performances within each day by start time
     Object.keys(groups).forEach((day) => {
-      groups[day].sort((a, b) =>
-        new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-      );
+      groups[day].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
     });
 
     // Sort days chronologically
@@ -183,13 +182,23 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
         <Link href="/festivals" className="text-gray-500 hover:text-gray-700">
           Festivals
         </Link>
-        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-4 h-4 text-gray-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
         <Link href={`/festivals/${id}`} className="text-gray-500 hover:text-gray-700">
           {festival.name}
         </Link>
-        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-4 h-4 text-gray-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
         <span className="text-gray-900 font-medium">Lineup</span>
@@ -269,13 +278,27 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
       {/* Warning if no stages or artists */}
       {!isLoading && (stages.length === 0 || artists.length === 0) && (
         <div className="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center">
-          <svg className="w-12 h-12 mx-auto mb-4 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          <svg
+            className="w-12 h-12 mx-auto mb-4 text-yellow-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
           </svg>
           <h3 className="text-lg font-semibold text-yellow-800 mb-2">Configuration requise</h3>
           {stages.length === 0 && (
             <p className="text-yellow-700 mb-2">
-              Veuillez d&apos;abord <Link href={`/festivals/${id}/stages`} className="underline font-medium">creer des scenes</Link> avant d&apos;ajouter des performances.
+              Veuillez d&apos;abord{' '}
+              <Link href={`/festivals/${id}/stages`} className="underline font-medium">
+                creer des scenes
+              </Link>{' '}
+              avant d&apos;ajouter des performances.
             </p>
           )}
           {artists.length === 0 && (
@@ -291,8 +314,18 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
         <div className="space-y-8">
           {groupedByDay.length === 0 ? (
             <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
-              <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+              <svg
+                className="w-12 h-12 mx-auto mb-4 text-gray-300"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+                />
               </svg>
               <p className="text-gray-500 mb-4">Aucune performance programmee pour ce festival</p>
               {stages.length > 0 && artists.length > 0 && (
@@ -303,7 +336,10 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
             </div>
           ) : (
             groupedByDay.map(({ day, performances: dayPerformances }) => (
-              <div key={day} className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+              <div
+                key={day}
+                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+              >
                 <div className="bg-gradient-to-r from-primary-500 to-pink-500 px-6 py-4">
                   <h2 className="text-xl font-bold text-white capitalize">{day}</h2>
                   <p className="text-white/80 text-sm">{dayPerformances.length} performances</p>
@@ -311,21 +347,28 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
 
                 <div className="divide-y divide-gray-100">
                   {dayPerformances.map((performance) => (
-                    <div key={performance.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
+                    <div
+                      key={performance.id}
+                      className="p-4 flex items-center justify-between hover:bg-gray-50"
+                    >
                       <div className="flex items-center gap-4">
                         <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-400 to-pink-400 flex items-center justify-center text-white font-bold">
                           {performance.artist.name.charAt(0)}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
-                            <h3 className="font-semibold text-gray-900">{performance.artist.name}</h3>
+                            <h3 className="font-semibold text-gray-900">
+                              {performance.artist.name}
+                            </h3>
                             {performance.isCancelled && (
                               <span className="px-2 py-0.5 text-xs font-medium bg-red-100 text-red-800 rounded-full">
                                 Annule
                               </span>
                             )}
                           </div>
-                          <p className="text-sm text-gray-500">{performance.artist.genre || 'Genre non specifie'}</p>
+                          <p className="text-sm text-gray-500">
+                            {performance.artist.genre || 'Genre non specifie'}
+                          </p>
                         </div>
                       </div>
                       <div className="flex items-center gap-6">
@@ -341,8 +384,18 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
                             className="p-2 hover:bg-gray-100 rounded-lg"
                             title="Modifier"
                           >
-                            <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            <svg
+                              className="w-5 h-5 text-gray-500"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
                             </svg>
                           </button>
                           <button
@@ -351,8 +404,18 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
                             title="Supprimer"
                             disabled={deletePerformanceMutation.isPending}
                           >
-                            <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            <svg
+                              className="w-5 h-5 text-red-500"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
                             </svg>
                           </button>
                         </div>
@@ -379,8 +442,18 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
                   onClick={() => setShowModal(false)}
                   className="p-2 hover:bg-gray-100 rounded-lg"
                 >
-                  <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg
+                    className="w-5 h-5 text-gray-500"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
@@ -388,9 +461,7 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
 
             <form onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Artiste *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Artiste *</label>
                 <select
                   value={formData.artistId}
                   onChange={(e) => setFormData({ ...formData, artistId: e.target.value })}
@@ -407,9 +478,7 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Scene *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Scene *</label>
                 <select
                   value={formData.stageId}
                   onChange={(e) => setFormData({ ...formData, stageId: e.target.value })}
@@ -418,15 +487,15 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
                 >
                   <option value="">Selectionner une scene</option>
                   {stages.map((stage: Stage) => (
-                    <option key={stage.id} value={stage.id}>{stage.name}</option>
+                    <option key={stage.id} value={stage.id}>
+                      {stage.name}
+                    </option>
                   ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date *
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
                 <input
                   type="date"
                   value={formData.date}
@@ -488,7 +557,9 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
                 <button
                   type="submit"
                   className="flex-1 btn-primary"
-                  disabled={createPerformanceMutation.isPending || updatePerformanceMutation.isPending}
+                  disabled={
+                    createPerformanceMutation.isPending || updatePerformanceMutation.isPending
+                  }
                 >
                   {createPerformanceMutation.isPending || updatePerformanceMutation.isPending
                     ? 'Enregistrement...'

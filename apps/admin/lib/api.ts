@@ -393,24 +393,25 @@ export const lineupApi = {
     if (params?.includeCancelled) {
       searchParams.set('includeCancelled', 'true');
     }
-    return request<import('../types').LineupSlot[]>(
+    return request<import('../types').Performance[]>(
       `/admin/festivals/${festivalId}/lineup?${searchParams.toString()}`
     );
   },
   getByStage: (stageId: string) =>
-    request<import('../types').LineupSlot[]>(`/admin/stages/${stageId}/lineup`),
-  getPerformanceById: (id: string) => request<import('../types').LineupSlot>(`/admin/lineup/${id}`),
-  createPerformance: (festivalId: string, data: import('../types').CreateLineupSlotDto) =>
-    request<import('../types').LineupSlot>(`/admin/festivals/${festivalId}/lineup`, {
+    request<import('../types').Performance[]>(`/admin/stages/${stageId}/lineup`),
+  getPerformanceById: (id: string) =>
+    request<import('../types').Performance>(`/admin/lineup/${id}`),
+  createPerformance: (festivalId: string, data: import('../types').CreatePerformanceDto) =>
+    request<import('../types').Performance>(`/admin/festivals/${festivalId}/lineup`, {
       method: 'POST',
       body: data,
     }),
-  updatePerformance: (id: string, data: Partial<import('../types').UpdateLineupSlotDto>) =>
-    request<import('../types').LineupSlot>(`/admin/lineup/${id}`, {
+  updatePerformance: (id: string, data: Partial<import('../types').UpdatePerformanceDto>) =>
+    request<import('../types').Performance>(`/admin/lineup/${id}`, {
       method: 'PUT',
       body: data,
     }),
   deletePerformance: (id: string) => request<void>(`/admin/lineup/${id}`, { method: 'DELETE' }),
   cancelPerformance: (id: string) =>
-    request<import('../types').LineupSlot>(`/admin/lineup/${id}/cancel`, { method: 'POST' }),
+    request<import('../types').Performance>(`/admin/lineup/${id}/cancel`, { method: 'POST' }),
 };

@@ -75,15 +75,7 @@ export {
 } from './useVendors';
 
 // POI hooks
-export {
-  usePois,
-  usePoi,
-  useCreatePoi,
-  useUpdatePoi,
-  useDeletePoi,
-  useTogglePoiActive,
-  poiQueryKeys,
-} from './usePois';
+export { usePois, usePoi, useCreatePoi, useUpdatePoi, useDeletePoi, poiQueryKeys } from './usePois';
 
 // Camping hooks
 export {

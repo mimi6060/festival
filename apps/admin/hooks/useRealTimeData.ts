@@ -109,7 +109,7 @@ function generateMockTransactions(count: number): RealtimeTransaction[] {
 
   return Array.from({ length: count }, (_, i) => ({
     id: `tx-${Date.now()}-${i}`,
-    type: types[Math.floor(Math.random() * types.length)]!,
+    type: types[Math.floor(Math.random() * types.length)] ?? 'ticket_sale',
     amount: Math.floor(Math.random() * 200) + 10,
     timestamp: new Date(Date.now() - Math.random() * 300000).toISOString(),
   }));
@@ -152,9 +152,7 @@ function generateMockAlerts(): RealtimeAlert[] {
   return alerts;
 }
 
-export function useRealtimeData(
-  options: UseRealtimeDataOptions = {}
-): UseRealtimeDataReturn {
+export function useRealtimeData(options: UseRealtimeDataOptions = {}): UseRealtimeDataReturn {
   const {
     festivalId,
     autoConnect = true,
@@ -205,10 +203,7 @@ export function useRealtimeData(
           ...prev,
           zoneOccupancy: {
             ...prev.zoneOccupancy,
-            ...(message.payload as Record<
-              string,
-              { current: number; capacity: number }
-            >),
+            ...(message.payload as Record<string, { current: number; capacity: number }>),
           },
         }));
         break;
@@ -249,10 +244,7 @@ export function useRealtimeData(
         setStats((prev) => ({
           ...newStats,
           // Preserve acknowledged alerts
-          alerts: [
-            ...newStats.alerts,
-            ...prev.alerts.filter((a) => a.acknowledged),
-          ],
+          alerts: [...newStats.alerts, ...prev.alerts.filter((a) => a.acknowledged)],
         }));
         setLastUpdate(new Date());
       };
@@ -270,6 +262,7 @@ export function useRealtimeData(
         }
       };
     }
+    return undefined;
   }, [pollingFallback, pollingInterval]);
 
   // Connect on mount if autoConnect
@@ -295,10 +288,7 @@ export function useRealtimeData(
       const newStats = generateMockStats();
       setStats((prev) => ({
         ...newStats,
-        alerts: [
-          ...newStats.alerts,
-          ...prev.alerts.filter((a) => a.acknowledged),
-        ],
+        alerts: [...newStats.alerts, ...prev.alerts.filter((a) => a.acknowledged)],
       }));
       setLastUpdate(new Date());
     }

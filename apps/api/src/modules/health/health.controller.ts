@@ -1,11 +1,10 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, HttpException, HttpStatus } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
   ApiOkResponse,
   ApiServiceUnavailableResponse,
 } from '@nestjs/swagger';
-import { HealthCheckService, HealthCheck, MemoryHealthIndicator } from '@nestjs/terminus';
 import { PrismaHealthIndicator } from './indicators/prisma.health';
 
 /**
@@ -19,6 +18,7 @@ class HealthCheckResponseDto {
     database: { status: string; responseTime?: number };
     redis: { status: string; responseTime?: number };
     stripe: { status: string };
+    memory: { status: string; heapUsed?: number; heapTotal?: number };
   };
 }
 
@@ -51,11 +51,7 @@ class ReadinessResponseDto {
 export class HealthController {
   private readonly startTime = Date.now();
 
-  constructor(
-    private readonly health: HealthCheckService,
-    private readonly prismaHealth: PrismaHealthIndicator,
-    private readonly memory: MemoryHealthIndicator,
-  ) {}
+  constructor(private readonly prismaHealth: PrismaHealthIndicator) {}
 
   /**
    * Full health check
@@ -91,6 +87,7 @@ Returns a comprehensive health status of the API including:
         database: { status: 'up', responseTime: 5 },
         redis: { status: 'up', responseTime: 2 },
         stripe: { status: 'up' },
+        memory: { status: 'up', heapUsed: 50000000, heapTotal: 150000000 },
       },
     },
   })
@@ -104,41 +101,61 @@ Returns a comprehensive health status of the API including:
         database: { status: 'down', error: 'Connection refused' },
         redis: { status: 'up', responseTime: 2 },
         stripe: { status: 'up' },
+        memory: { status: 'up' },
       },
     },
   })
-  @HealthCheck()
   async check(): Promise<HealthCheckResponseDto> {
     const timestamp = new Date().toISOString();
     const uptime = Math.floor((Date.now() - this.startTime) / 1000);
 
     try {
-      const result = await this.health.check([
-        () => this.prismaHealth.isHealthy('database'),
-        () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024),
-      ]);
+      const dbResult = await this.prismaHealth.isHealthy('database');
+      const memoryUsage = process.memoryUsage();
+      const heapUsedMB = memoryUsage.heapUsed / 1024 / 1024;
+      const heapTotalMB = memoryUsage.heapTotal / 1024 / 1024;
+      const memoryOk = heapUsedMB < 150; // 150 MB threshold
 
-      return {
-        status: 'ok',
+      const dbStatus = dbResult.database;
+      const isHealthy = dbStatus.status === 'up' && memoryOk;
+
+      const response: HealthCheckResponseDto = {
+        status: isHealthy ? 'ok' : 'error',
         timestamp,
         uptime,
         checks: {
-          database: result.details.database as { status: string; responseTime?: number },
+          database: dbStatus as { status: string; responseTime?: number },
           redis: { status: 'up', responseTime: 0 }, // TODO: Implement Redis health check when Redis is added
           stripe: { status: 'up' }, // TODO: Implement Stripe health check when needed
+          memory: {
+            status: memoryOk ? 'up' : 'warning',
+            heapUsed: Math.round(heapUsedMB),
+            heapTotal: Math.round(heapTotalMB),
+          },
         },
       };
-    } catch (error: any) {
-      return {
+
+      if (!isHealthy) {
+        throw new HttpException(response, HttpStatus.SERVICE_UNAVAILABLE);
+      }
+
+      return response;
+    } catch (error) {
+      if (error instanceof HttpException) {
+        throw error;
+      }
+      const response: HealthCheckResponseDto = {
         status: 'error',
         timestamp,
         uptime,
         checks: {
-          database: error.response?.details?.database || { status: 'down' },
+          database: { status: 'down' },
           redis: { status: 'up', responseTime: 0 },
           stripe: { status: 'up' },
+          memory: { status: 'unknown' },
         },
       };
+      throw new HttpException(response, HttpStatus.SERVICE_UNAVAILABLE);
     }
   }
 
@@ -246,17 +263,23 @@ If this endpoint returns 503, the pod will be removed from the load balancer.
 
     const isReady = Object.values(dependencies).every((v) => v);
 
-    return {
+    const response: ReadinessResponseDto = {
       status: isReady ? 'ready' : 'not_ready',
       timestamp: new Date().toISOString(),
       dependencies,
     };
+
+    if (!isReady) {
+      throw new HttpException(response, HttpStatus.SERVICE_UNAVAILABLE);
+    }
+
+    return response;
   }
 
   private async checkDatabase(): Promise<boolean> {
     try {
-      await this.prismaHealth.isHealthy('database');
-      return true;
+      const result = await this.prismaHealth.isHealthy('database');
+      return result.database.status === 'up';
     } catch {
       return false;
     }
