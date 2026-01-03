@@ -372,17 +372,25 @@ const token = localStorage.getItem('auth_token');
 
 ## 🟡 PRIORITÉ MOYENNE - À Faire Ce Mois
 
-### M1: ConfigModule Sans Validation Schema
+### ✅ M1: ConfigModule Sans Validation Schema - RÉSOLU
 
 **Fichier:** `apps/api/src/app/app.module.ts`
+**Résolution:**
+- ConfigModule.forRoot() utilise déjà validationSchema et validationOptions
+- Ajouté JWT_ACCESS_SECRET validation (min 32 chars, required)
+- Ajouté QR_CODE_SECRET validation (min 32 chars, required)
+- Validations des formats Stripe (sk_test/live, whsec_)
+- Validation DATABASE_URL format PostgreSQL
+- Créé script de pre-deployment: scripts/check-env.sh
+- Documenté toutes les variables critiques dans .env.example
+- Documentation complète: docs/security/PRODUCTION_CONFIG.md
+**Commit:** 99006b5
 
-```typescript
-ConfigModule.forRoot({
-  // Missing: validationSchema from config/validation.schema.ts
-}),
-```
-
-**Action:** Ajouter `validationSchema` et `validationOptions`
+**Améliorations sécurité:**
+- Enforce différence entre JWT_ACCESS_SECRET et JWT_REFRESH_SECRET
+- Validation SSL database en production (sslmode=require)
+- Détection valeurs par défaut insécures
+- Script check-env.sh valide 7 catégories critiques
 
 ### M2: Cache Service Memory Leak Potentiel
 
@@ -529,6 +537,11 @@ if (email === 'admin@festival.com' && password === 'admin123')
 ### Semaine 3 - Performance & Quality
 
 - [x] H10: Fix N+1 query tickets ✅
+- [x] Pagination implémentée sur endpoints de liste ✅
+  - PaginationDto avec sortBy/sortOrder (max 100 items/page)
+  - Helper paginate() dans shared utils
+  - Appliqué sur tickets.controller, cashless.controller, program.controller
+  - Backward compatible (params optionnels)
 - [ ] M1: Ajouter ConfigModule validation
 - [ ] M8: Configurer connection pooling
 
