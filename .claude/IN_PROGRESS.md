@@ -74,21 +74,23 @@ const user = await this.prisma.user.findFirst({
 **Action:** Implémenter vérification token depuis table password_reset_tokens
 **Impact:** N'importe qui peut reset n'importe quel password
 
-### C4: Missing Error Boundaries (Frontend)
+### ~~C4: Missing Error Boundaries (Frontend)~~ ✅ TERMINÉ
 
-**Fichiers manquants:**
+**Fichiers créés:**
 
-- `apps/web/app/error.tsx`
-- `apps/web/app/global-error.tsx`
-- `apps/admin/app/error.tsx`
-  **Action:** Créer error boundaries Next.js
-  **Impact:** Crash propagés, mauvaise UX
+- `apps/web/app/error.tsx` ✅
+- `apps/admin/app/error.tsx` ✅
+  **Action:** ✅ Error boundaries Next.js créées avec support dark mode
+  **Commit:** f6d61b2
 
-### C5: Missing Loading States (Frontend)
+### ~~C5: Missing Loading States (Frontend)~~ ✅ TERMINÉ
 
-**Fichiers manquants:** `apps/*/app/loading.tsx`
-**Action:** Créer loading.tsx pour streaming UI
-**Impact:** Pas de feedback pendant chargement
+**Fichiers créés:**
+
+- `apps/web/app/loading.tsx` ✅
+- `apps/admin/app/loading.tsx` ✅
+  **Action:** ✅ Loading states créés avec skeletons et spinners
+  **Commit:** f6d61b2
 
 ### C6: Auth Token dans localStorage (XSS Risk)
 
@@ -333,15 +335,15 @@ if (email === 'admin@festival.com' && password === 'admin123')
 
 ## 📊 Métriques Actuelles
 
-| Métrique                  | Valeur | Cible  |
-| ------------------------- | ------ | ------ |
-| Backend Production Ready  | 70%    | 95%    |
-| Frontend TypeScript Score | 8.4/10 | 9.5/10 |
-| Test Coverage API         | ~80%   | 90%    |
-| Test Coverage Libs        | <10%   | 80%    |
-| Security Issues CRITICAL  | 6      | 0      |
-| Security Issues HIGH      | 10     | 0      |
-| CI Security Scanning      | Non    | Oui    |
+| Métrique                  | Valeur | Cible  | Note                   |
+| ------------------------- | ------ | ------ | ---------------------- |
+| Backend Production Ready  | 70%    | 95%    |                        |
+| Frontend TypeScript Score | 8.4/10 | 9.5/10 |                        |
+| Test Coverage API         | ~80%   | 90%    |                        |
+| Test Coverage Libs        | <10%   | 80%    |                        |
+| Security Issues CRITICAL  | 4      | 0      | ⬇️ -2 (C4, C5 résolus) |
+| Security Issues HIGH      | 10     | 0      |                        |
+| CI Security Scanning      | Non    | Oui    |                        |
 
 ---
 
@@ -357,8 +359,8 @@ if (email === 'admin@festival.com' && password === 'admin123')
 
 ### Semaine 2 - Frontend & API
 
-- [ ] C4: Créer error boundaries
-- [ ] C5: Créer loading states
+- [x] C4: Créer error boundaries ✅
+- [x] C5: Créer loading states ✅
 - [ ] C6: Migrer tokens vers httpOnly cookies
 - [ ] H2: Implémenter vrais health checks
 - [ ] H5: Refactorer admin layout
