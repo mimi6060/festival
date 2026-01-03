@@ -23,7 +23,7 @@
     "affected:test": "nx affected --target=test",
     "affected:lint": "nx affected --target=lint",
     "graph": "nx graph",
-    "prepare": "echo 'Ready to go!'",
+    "prepare": "husky",
     "clean": "nx reset && rm -rf node_modules dist coverage"
   },
   "private": true,
@@ -50,10 +50,12 @@
     "@types/pdfkit": "^0.17.4",
     "@vitejs/plugin-react": "^5.1.2",
     "eslint-config-prettier": "^10.1.8",
+    "husky": "^9.1.7",
     "jest": "^29.7.0",
     "jest-environment-node": "^29.7.0",
     "jest-junit": "^16.0.0",
     "jest-mock-extended": "^3.0.5",
+    "lint-staged": "^16.2.7",
     "nx": "22.3.3",
     "prettier": "~3.6.2",
     "react-native-svg-web": "^1.0.9",
@@ -76,6 +78,19 @@
     "readdirp": "^4.0.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0"
+  },
+  "lint-staged": {
+    "*.{ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{js,jsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,css,scss}": [
+      "prettier --write"
+    ]
   },
   "dependencies": {
     "@egjs/hammerjs": "^2.0.17",
