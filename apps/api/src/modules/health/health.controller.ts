@@ -5,6 +5,8 @@ import {
   ApiOkResponse,
   ApiServiceUnavailableResponse,
 } from '@nestjs/swagger';
+import { HealthCheckService, HealthCheck, MemoryHealthIndicator } from '@nestjs/terminus';
+import { PrismaHealthIndicator } from './indicators/prisma.health';
 
 /**
  * Health check response DTO
@@ -48,6 +50,12 @@ class ReadinessResponseDto {
 @Controller('health')
 export class HealthController {
   private readonly startTime = Date.now();
+
+  constructor(
+    private readonly health: HealthCheckService,
+    private readonly prismaHealth: PrismaHealthIndicator,
+    private readonly memory: MemoryHealthIndicator,
+  ) {}
 
   /**
    * Full health check
@@ -99,21 +107,39 @@ Returns a comprehensive health status of the API including:
       },
     },
   })
+  @HealthCheck()
   async check(): Promise<HealthCheckResponseDto> {
     const timestamp = new Date().toISOString();
     const uptime = Math.floor((Date.now() - this.startTime) / 1000);
 
-    // In a real implementation, these would check actual services
-    return {
-      status: 'ok',
-      timestamp,
-      uptime,
-      checks: {
-        database: { status: 'up', responseTime: 5 },
-        redis: { status: 'up', responseTime: 2 },
-        stripe: { status: 'up' },
-      },
-    };
+    try {
+      const result = await this.health.check([
+        () => this.prismaHealth.isHealthy('database'),
+        () => this.memory.checkHeap('memory_heap', 150 * 1024 * 1024),
+      ]);
+
+      return {
+        status: 'ok',
+        timestamp,
+        uptime,
+        checks: {
+          database: result.details.database as { status: string; responseTime?: number },
+          redis: { status: 'up', responseTime: 0 }, // TODO: Implement Redis health check when Redis is added
+          stripe: { status: 'up' }, // TODO: Implement Stripe health check when needed
+        },
+      };
+    } catch (error: any) {
+      return {
+        status: 'error',
+        timestamp,
+        uptime,
+        checks: {
+          database: error.response?.details?.database || { status: 'down' },
+          redis: { status: 'up', responseTime: 0 },
+          stripe: { status: 'up' },
+        },
+      };
+    }
   }
 
   /**

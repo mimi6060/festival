@@ -5,6 +5,7 @@ import {
   Body,
   HttpCode,
   HttpStatus,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -40,6 +41,10 @@ import {
   TooManyRequestsResponseDto,
   SuccessResponseDto,
 } from '../../common/dto';
+import { AuthService } from './auth.service';
+import { Public } from './decorators/public.decorator';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { CurrentUser } from './decorators/current-user.decorator';
 
 /**
  * Authentication Controller
@@ -53,6 +58,8 @@ import {
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
   /**
    * Register a new user
    *
@@ -60,6 +67,7 @@ export class AuthController {
    * The user must verify their email before they can log in.
    */
   @Post('register')
+  @Public()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Register a new user',
