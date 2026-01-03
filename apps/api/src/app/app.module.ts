@@ -4,6 +4,9 @@ import { EventEmitterModule } from '@nestjs/event-emitter';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
+// Configuration
+import { validationSchema, validationOptions } from '../config';
+
 // Core modules
 import { PrismaModule } from '../modules/prisma';
 import { AuthModule } from '../modules/auth';
@@ -35,6 +38,8 @@ import { GdprModule } from '../modules/gdpr';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: ['.env.local', '.env'],
+      validationSchema,
+      validationOptions,
     }),
     EventEmitterModule.forRoot(),
 

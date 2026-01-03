@@ -40,6 +40,9 @@ async function bootstrap() {
     }),
   );
 
+  // Enable graceful shutdown hooks
+  app.enableShutdownHooks();
+
   // Swagger/OpenAPI Configuration
   const config = new DocumentBuilder()
     .setTitle('Festival Management Platform API')
@@ -160,6 +163,16 @@ For API support, contact: api-support@festival-platform.com
       tagsSorter: 'alpha',
       operationsSorter: 'alpha',
     },
+  });
+
+  // Handle shutdown signals for graceful termination
+  const signals = ['SIGTERM', 'SIGINT'];
+  signals.forEach((signal) => {
+    process.on(signal, async () => {
+      Logger.log(`Received ${signal}, shutting down gracefully...`);
+      await app.close();
+      process.exit(0);
+    });
   });
 
   const port = process.env.PORT || 3000;

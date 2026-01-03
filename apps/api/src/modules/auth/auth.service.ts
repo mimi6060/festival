@@ -20,6 +20,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { v4 as uuidv4 } from 'uuid';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserRole, UserStatus } from '@prisma/client';
@@ -89,9 +90,22 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly configService: ConfigService,
   ) {
-    // Token expiration in seconds
-    this.accessTokenExpiresIn = this.configService.get<number>('JWT_ACCESS_EXPIRES_IN', 900); // 15 minutes
-    this.refreshTokenExpiresIn = this.configService.get<number>('JWT_REFRESH_EXPIRES_IN', 604800); // 7 days
+    // Token expiration in seconds - fail fast if not configured
+    this.accessTokenExpiresIn = this.configService.getOrThrow<number>('JWT_ACCESS_EXPIRES_IN');
+    this.refreshTokenExpiresIn = this.configService.getOrThrow<number>('JWT_REFRESH_EXPIRES_IN');
+
+    // Validate JWT secrets are configured at startup
+    this.validateJwtSecrets();
+  }
+
+  /**
+   * Validate that all required JWT secrets are configured
+   * Fails fast on application startup if secrets are missing
+   */
+  private validateJwtSecrets(): void {
+    this.configService.getOrThrow<string>('JWT_ACCESS_SECRET');
+    this.configService.getOrThrow<string>('JWT_REFRESH_SECRET');
+    this.logger.log('JWT secrets validated successfully');
   }
 
   /**
@@ -211,7 +225,7 @@ export class AuthService {
     try {
       // Verify refresh token
       const payload = this.jwtService.verify<JwtPayload>(dto.refreshToken, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET'),
+        secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
       });
 
       // Find user and verify refresh token matches
@@ -414,11 +428,11 @@ export class AuthService {
 
     const [accessToken, refreshToken] = await Promise.all([
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('JWT_ACCESS_SECRET', 'access-secret'),
+        secret: this.configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
         expiresIn: this.accessTokenExpiresIn,
       }),
       this.jwtService.signAsync(payload, {
-        secret: this.configService.get<string>('JWT_REFRESH_SECRET', 'refresh-secret'),
+        secret: this.configService.getOrThrow<string>('JWT_REFRESH_SECRET'),
         expiresIn: this.refreshTokenExpiresIn,
       }),
     ]);
