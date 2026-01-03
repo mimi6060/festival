@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Post,
-  Get,
-  Body,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
+import { Controller, Post, Get, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
 import {
   ApiTags,
   ApiOperation,
@@ -30,7 +23,6 @@ import {
   RegisterResponseDto,
   UserResponseDto,
   AuthTokensDto,
-  UserRole,
 } from './dto';
 import {
   ErrorResponseDto,
@@ -40,6 +32,10 @@ import {
   TooManyRequestsResponseDto,
   SuccessResponseDto,
 } from '../../common/dto';
+import { AuthService } from './auth.service';
+import { Public } from './decorators/public.decorator';
+import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { CurrentUser } from './decorators/current-user.decorator';
 
 /**
  * Authentication Controller
@@ -52,7 +48,10 @@ import {
  */
 @ApiTags('Auth')
 @Controller('auth')
+@UseGuards(JwtAuthGuard)
 export class AuthController {
+  constructor(private readonly authService: AuthService) {}
+
   /**
    * Register a new user
    *
@@ -60,6 +59,7 @@ export class AuthController {
    * The user must verify their email before they can log in.
    */
   @Post('register')
+  @Public()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Register a new user',
@@ -127,21 +127,7 @@ Creates a new user account with the provided information.
     type: TooManyRequestsResponseDto,
   })
   async register(@Body() registerDto: RegisterDto): Promise<RegisterResponseDto> {
-    // Implementation would go here
-    return {
-      user: {
-        id: '550e8400-e29b-41d4-a716-446655440000',
-        email: registerDto.email,
-        firstName: registerDto.firstName,
-        lastName: registerDto.lastName,
-        phone: registerDto.phone,
-        role: UserRole.ATTENDEE,
-        emailVerified: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      message: 'Registration successful. Please check your email to verify your account.',
-    };
+    return this.authService.register(registerDto);
   }
 
   /**
@@ -150,6 +136,7 @@ Creates a new user account with the provided information.
    * Authenticates a user and returns JWT tokens.
    */
   @Post('login')
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Login with email and password',
@@ -205,25 +192,7 @@ When the access token expires, use the refresh token with \`POST /auth/refresh\`
     type: TooManyRequestsResponseDto,
   })
   async login(@Body() loginDto: LoginDto): Promise<LoginResponseDto> {
-    // Implementation would go here
-    return {
-      user: {
-        id: '550e8400-e29b-41d4-a716-446655440000',
-        email: loginDto.email,
-        firstName: 'John',
-        lastName: 'Doe',
-        role: UserRole.ATTENDEE,
-        emailVerified: true,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-      tokens: {
-        accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-        refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-        expiresIn: 900,
-        tokenType: 'Bearer',
-      },
-    };
+    return this.authService.login(loginDto);
   }
 
   /**
@@ -256,7 +225,8 @@ Clear tokens from client storage after calling this endpoint.
     description: 'Not authenticated',
     type: UnauthorizedResponseDto,
   })
-  async logout(): Promise<SuccessResponseDto> {
+  async logout(@CurrentUser('id') userId: string): Promise<SuccessResponseDto> {
+    await this.authService.logout(userId);
     return {
       success: true,
       message: 'Logout successful',
@@ -269,6 +239,7 @@ Clear tokens from client storage after calling this endpoint.
    * Uses a refresh token to get new access and refresh tokens.
    */
   @Post('refresh')
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Refresh access token',
@@ -307,13 +278,8 @@ If a refresh token is used twice (indicating theft), all sessions are invalidate
     description: 'Invalid or expired refresh token',
     type: UnauthorizedResponseDto,
   })
-  async refresh(@Body() _refreshTokenDto: RefreshTokenDto): Promise<AuthTokensDto> {
-    return {
-      accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.new...',
-      refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.new...',
-      expiresIn: 900,
-      tokenType: 'Bearer',
-    };
+  async refresh(@Body() refreshTokenDto: RefreshTokenDto): Promise<AuthTokensDto> {
+    return this.authService.refreshTokens(refreshTokenDto);
   }
 
   /**
@@ -341,17 +307,8 @@ Returns the profile information of the currently authenticated user.
     description: 'Not authenticated',
     type: UnauthorizedResponseDto,
   })
-  async me(): Promise<UserResponseDto> {
-    return {
-      id: '550e8400-e29b-41d4-a716-446655440000',
-      email: 'john.doe@example.com',
-      firstName: 'John',
-      lastName: 'Doe',
-      role: UserRole.ATTENDEE,
-      emailVerified: true,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+  async me(@CurrentUser('id') userId: string): Promise<UserResponseDto> {
+    return this.authService.getCurrentUser(userId);
   }
 
   /**
@@ -360,6 +317,7 @@ Returns the profile information of the currently authenticated user.
    * Verifies a user's email using the token sent via email.
    */
   @Post('verify-email')
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Verify email address',
@@ -395,7 +353,8 @@ Verifies a user's email address using the token received via email.
     description: 'Invalid or expired token',
     type: ErrorResponseDto,
   })
-  async verifyEmail(@Body() _verifyEmailDto: VerifyEmailDto): Promise<SuccessResponseDto> {
+  async verifyEmail(@Body() verifyEmailDto: VerifyEmailDto): Promise<SuccessResponseDto> {
+    await this.authService.verifyEmail(verifyEmailDto.token);
     return {
       success: true,
       message: 'Email verified successfully. You can now log in.',
@@ -408,6 +367,7 @@ Verifies a user's email address using the token received via email.
    * Sends a password reset email to the specified address.
    */
   @Post('forgot-password')
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Request password reset',
@@ -445,7 +405,8 @@ Initiates the password reset flow by sending an email with a reset link.
     description: 'Too many reset requests',
     type: TooManyRequestsResponseDto,
   })
-  async forgotPassword(@Body() _forgotPasswordDto: ForgotPasswordDto): Promise<SuccessResponseDto> {
+  async forgotPassword(@Body() forgotPasswordDto: ForgotPasswordDto): Promise<SuccessResponseDto> {
+    await this.authService.forgotPassword(forgotPasswordDto.email);
     return {
       success: true,
       message: 'If an account exists with this email, a reset link has been sent.',
@@ -458,6 +419,7 @@ Initiates the password reset flow by sending an email with a reset link.
    * Sets a new password using the reset token from email.
    */
   @Post('reset-password')
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Reset password with token',
@@ -496,7 +458,8 @@ Resets the user's password using a valid reset token.
     description: 'Invalid or expired token',
     type: ErrorResponseDto,
   })
-  async resetPassword(@Body() _resetPasswordDto: ResetPasswordDto): Promise<SuccessResponseDto> {
+  async resetPassword(@Body() resetPasswordDto: ResetPasswordDto): Promise<SuccessResponseDto> {
+    await this.authService.resetPassword(resetPasswordDto);
     return {
       success: true,
       message: 'Password reset successful. Please log in with your new password.',
@@ -551,7 +514,11 @@ Changes the password for the currently authenticated user.
     description: 'Validation error or same as old password',
     type: ValidationErrorResponseDto,
   })
-  async changePassword(@Body() _changePasswordDto: ChangePasswordDto): Promise<SuccessResponseDto> {
+  async changePassword(
+    @CurrentUser('id') userId: string,
+    @Body() changePasswordDto: ChangePasswordDto
+  ): Promise<SuccessResponseDto> {
+    await this.authService.changePassword(userId, changePasswordDto);
     return {
       success: true,
       message: 'Password changed successfully.',
@@ -564,6 +531,7 @@ Changes the password for the currently authenticated user.
    * Sends a new verification email to the user.
    */
   @Post('resend-verification')
+  @Public()
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Resend verification email',
@@ -590,7 +558,8 @@ Sends a new verification email to the specified address.
     description: 'Too many requests',
     type: TooManyRequestsResponseDto,
   })
-  async resendVerification(@Body() _dto: ForgotPasswordDto): Promise<SuccessResponseDto> {
+  async resendVerification(@Body() dto: ForgotPasswordDto): Promise<SuccessResponseDto> {
+    await this.authService.forgotPassword(dto.email);
     return {
       success: true,
       message: 'If the account exists and is not verified, a new verification email has been sent.',
