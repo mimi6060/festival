@@ -605,4 +605,93 @@ export class CacheService implements OnModuleDestroy {
 
     this.logger.debug(`Cleaned up ${cleaned} expired cache entries`);
   }
+
+  // ==================== CACHE WARMING ====================
+
+  /**
+   * Pre-warm cache with frequently accessed data
+   * Called on application startup to improve initial response times
+   *
+   * Warms:
+   * 1. Active festivals list
+   * 2. Popular ticket categories
+   * 3. System configuration
+   *
+   * @param dataLoader - Optional function to load data from database
+   */
+  async warmCache(dataLoader?: {
+    loadActiveFestivals?: () => Promise<any[]>;
+    loadPopularTicketCategories?: () => Promise<any[]>;
+    loadSystemConfig?: () => Promise<any>;
+  }): Promise<void> {
+    this.logger.log('Starting cache warming...');
+    const startTime = Date.now();
+
+    try {
+      const warmingTasks: Promise<void>[] = [];
+
+      // 1. Pre-load active festivals if loader provided
+      if (dataLoader?.loadActiveFestivals) {
+        warmingTasks.push(
+          (async () => {
+            try {
+              const festivals = await dataLoader.loadActiveFestivals!();
+              await this.set('festivals:active', festivals, {
+                ttl: 300, // 5 minutes
+                tags: [CacheTag.FESTIVAL],
+              });
+              this.logger.debug(`Warmed cache: ${festivals.length} active festivals`);
+            } catch (error) {
+              this.logger.warn(`Failed to warm active festivals: ${(error as Error).message}`);
+            }
+          })(),
+        );
+      }
+
+      // 2. Pre-load popular ticket categories if loader provided
+      if (dataLoader?.loadPopularTicketCategories) {
+        warmingTasks.push(
+          (async () => {
+            try {
+              const categories = await dataLoader.loadPopularTicketCategories!();
+              await this.set('tickets:categories:popular', categories, {
+                ttl: 600, // 10 minutes
+                tags: [CacheTag.TICKET],
+              });
+              this.logger.debug(`Warmed cache: ${categories.length} popular ticket categories`);
+            } catch (error) {
+              this.logger.warn(`Failed to warm ticket categories: ${(error as Error).message}`);
+            }
+          })(),
+        );
+      }
+
+      // 3. Pre-load system configuration if loader provided
+      if (dataLoader?.loadSystemConfig) {
+        warmingTasks.push(
+          (async () => {
+            try {
+              const config = await dataLoader.loadSystemConfig!();
+              await this.set('system:config', config, {
+                ttl: this.CONFIG_TTL,
+                tags: [CacheTag.CONFIG],
+              });
+              this.logger.debug('Warmed cache: system configuration');
+            } catch (error) {
+              this.logger.warn(`Failed to warm system config: ${(error as Error).message}`);
+            }
+          })(),
+        );
+      }
+
+      // Wait for all warming tasks to complete
+      await Promise.all(warmingTasks);
+
+      const duration = Date.now() - startTime;
+      this.logger.log(`Cache warming completed in ${duration}ms`);
+    } catch (error) {
+      this.logger.error(`Cache warming failed: ${(error as Error).message}`);
+      // Don't throw - cache warming failure shouldn't prevent app startup
+    }
+  }
 }
