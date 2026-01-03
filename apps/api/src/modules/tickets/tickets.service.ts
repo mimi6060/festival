@@ -18,12 +18,7 @@ import {
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
-import {
-  TicketStatus,
-  TicketType,
-  FestivalStatus,
-  Prisma,
-} from '@prisma/client';
+import { TicketStatus, TicketType, FestivalStatus, Prisma } from '@prisma/client';
 import * as QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
@@ -85,7 +80,7 @@ export class TicketsService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {
     // Validate QR code secret is configured and meets minimum security requirements
     const qrSecret = this.configService.getOrThrow<string>('QR_CODE_SECRET');
@@ -100,10 +95,7 @@ export class TicketsService {
   /**
    * Purchase tickets for a festival
    */
-  async purchaseTickets(
-    userId: string,
-    dto: PurchaseTicketDto,
-  ): Promise<TicketEntity[]> {
+  async purchaseTickets(userId: string, dto: PurchaseTicketDto): Promise<TicketEntity[]> {
     const { festivalId, categoryId, quantity } = dto;
 
     // Validate quantity
@@ -179,7 +171,7 @@ export class TicketsService {
 
     if (userTicketCount + quantity > category.maxPerUser) {
       throw new BadRequestException(
-        `Maximum ${category.maxPerUser} tickets per user for this category`,
+        `Maximum ${category.maxPerUser} tickets per user for this category`
       );
     }
 
@@ -233,9 +225,7 @@ export class TicketsService {
       return createdTickets.map(this.mapToEntity);
     });
 
-    this.logger.log(
-      `User ${userId} purchased ${quantity} ticket(s) for festival ${festivalId}`,
-    );
+    this.logger.log(`User ${userId} purchased ${quantity} ticket(s) for festival ${festivalId}`);
 
     return tickets;
   }
@@ -243,10 +233,7 @@ export class TicketsService {
   /**
    * Validate a ticket QR code
    */
-  async validateTicket(
-    dto: ValidateTicketDto,
-    _staffId?: string,
-  ): Promise<ValidationResult> {
+  async validateTicket(dto: ValidateTicketDto, _staffId?: string): Promise<ValidationResult> {
     const { qrCode, zoneId } = dto;
 
     // Find ticket by QR code
@@ -363,11 +350,7 @@ export class TicketsService {
   /**
    * Scan ticket at entry point (marks as used)
    */
-  async scanTicket(
-    qrCode: string,
-    staffId: string,
-    zoneId?: string,
-  ): Promise<ValidationResult> {
+  async scanTicket(qrCode: string, staffId: string, zoneId?: string): Promise<ValidationResult> {
     // First validate
     const validation = await this.validateTicket({ qrCode, zoneId }, staffId);
 
@@ -424,10 +407,7 @@ export class TicketsService {
   /**
    * Get user's tickets
    */
-  async getUserTickets(
-    userId: string,
-    festivalId?: string,
-  ): Promise<TicketEntity[]> {
+  async getUserTickets(userId: string, festivalId?: string): Promise<TicketEntity[]> {
     const where: Prisma.TicketWhereInput = { userId };
 
     if (festivalId) {
@@ -561,7 +541,7 @@ export class TicketsService {
   private generateQrCode(
     ticketId: string,
     festivalId: string,
-    ticketType: TicketType,
+    ticketType: TicketType
   ): { code: string; signedData: string } {
     const timestamp = Date.now();
     const payload = {
@@ -592,7 +572,7 @@ export class TicketsService {
   private async generateQrCodeData(
     ticketId: string,
     festivalId: string,
-    ticketType: TicketType,
+    ticketType: TicketType
   ): Promise<string> {
     const payload = {
       ticketId,
@@ -607,7 +587,20 @@ export class TicketsService {
   /**
    * Map Prisma ticket to entity
    */
-  private mapToEntity(ticket: { id: string; festivalId: string; categoryId: string; userId: string; qrCode: string; status: TicketStatus; purchasePrice: number | Prisma.Decimal; usedAt: Date | null; createdAt: Date; updatedAt: Date; festival?: { id: string; name: string; startDate: Date; endDate: Date }; category?: { id: string; name: string; type: TicketType } }): TicketEntity {
+  private mapToEntity(ticket: {
+    id: string;
+    festivalId: string;
+    categoryId: string;
+    userId: string;
+    qrCode: string;
+    status: TicketStatus;
+    purchasePrice: number | Prisma.Decimal;
+    usedAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+    festival?: { id: string; name: string; startDate: Date; endDate: Date };
+    category?: { id: string; name: string; type: TicketType };
+  }): TicketEntity {
     return {
       id: ticket.id,
       festivalId: ticket.festivalId,
