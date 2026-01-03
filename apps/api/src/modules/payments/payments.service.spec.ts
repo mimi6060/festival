@@ -31,27 +31,38 @@ import {
 // Mock Setup
 // ============================================================================
 
-// Mock Stripe
-const mockStripePaymentIntents = {
-  create: jest.fn(),
-  cancel: jest.fn(),
-};
-
-const mockStripeRefunds = {
-  create: jest.fn(),
-};
-
-const mockStripeWebhooks = {
-  constructEvent: jest.fn(),
-};
-
+// Mock Stripe - create mocks INSIDE the factory function to avoid hoisting issues
 jest.mock('stripe', () => {
-  return jest.fn().mockImplementation(() => ({
-    paymentIntents: mockStripePaymentIntents,
-    refunds: mockStripeRefunds,
-    webhooks: mockStripeWebhooks,
+  const mockPaymentIntents = {
+    create: jest.fn(),
+    cancel: jest.fn(),
+  };
+  const mockRefunds = {
+    create: jest.fn(),
+  };
+  const mockWebhooks = {
+    constructEvent: jest.fn(),
+  };
+
+  const MockStripe = jest.fn().mockImplementation(() => ({
+    paymentIntents: mockPaymentIntents,
+    refunds: mockRefunds,
+    webhooks: mockWebhooks,
   }));
+
+  // Store references for test access
+  MockStripe.mockPaymentIntents = mockPaymentIntents;
+  MockStripe.mockRefunds = mockRefunds;
+  MockStripe.mockWebhooks = mockWebhooks;
+
+  return MockStripe;
 });
+
+// Get references to the mocks after the module is loaded
+import Stripe from 'stripe';
+const mockStripePaymentIntents = (Stripe as any).mockPaymentIntents;
+const mockStripeRefunds = (Stripe as any).mockRefunds;
+const mockStripeWebhooks = (Stripe as any).mockWebhooks;
 
 describe('PaymentsService', () => {
   let paymentsService: PaymentsService;
@@ -66,13 +77,14 @@ describe('PaymentsService', () => {
     },
   };
 
+  // Use explicit mocking to ensure values are returned correctly
   const mockConfigService = {
-    get: jest.fn((key: string, defaultValue?: any) => {
+    get: jest.fn().mockImplementation((key: string, defaultValue?: any) => {
       const config: Record<string, any> = {
         STRIPE_SECRET_KEY: 'sk_test_mock_key',
         STRIPE_WEBHOOK_SECRET: 'whsec_test_secret',
       };
-      return config[key] ?? defaultValue;
+      return key in config ? config[key] : defaultValue;
     }),
   };
 
