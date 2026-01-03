@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsInt, IsOptional, Max, Min, IsString, IsEnum } from 'class-validator';
 
 /**
  * Pagination query parameters DTO
@@ -32,6 +32,24 @@ export class PaginationDto {
   @Max(100)
   @Type(() => Number)
   limit?: number = 20;
+
+  @ApiPropertyOptional({
+    description: 'Field to sort by',
+    example: 'createdAt',
+  })
+  @IsOptional()
+  @IsString()
+  sortBy?: string;
+
+  @ApiPropertyOptional({
+    description: 'Sort order',
+    enum: ['asc', 'desc'],
+    default: 'desc',
+    example: 'desc',
+  })
+  @IsOptional()
+  @IsEnum(['asc', 'desc'])
+  sortOrder?: 'asc' | 'desc' = 'desc';
 }
 
 /**
@@ -41,39 +59,12 @@ export class PaginationDto {
 export class PaginatedResponseDto<T> {
   data!: T[];
 
-  @ApiPropertyOptional({
-    description: 'Total number of items',
-    example: 150,
-  })
-  total!: number;
-
-  @ApiPropertyOptional({
-    description: 'Current page number',
-    example: 1,
-  })
-  page!: number;
-
-  @ApiPropertyOptional({
-    description: 'Number of items per page',
-    example: 20,
-  })
-  limit!: number;
-
-  @ApiPropertyOptional({
-    description: 'Total number of pages',
-    example: 8,
-  })
-  totalPages!: number;
-
-  @ApiPropertyOptional({
-    description: 'Whether there is a next page',
-    example: true,
-  })
-  hasNextPage!: boolean;
-
-  @ApiPropertyOptional({
-    description: 'Whether there is a previous page',
-    example: false,
-  })
-  hasPreviousPage!: boolean;
+  meta!: {
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  };
 }

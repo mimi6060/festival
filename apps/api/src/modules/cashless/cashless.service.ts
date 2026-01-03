@@ -20,13 +20,12 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   TransactionType,
-  PaymentStatus,
-  PaymentProvider,
   FestivalStatus,
   Prisma,
 } from '@prisma/client';
-import { v4 as uuidv4 } from 'uuid';
 
+import { PaginationDto } from '../../common/dto/pagination.dto';
+import { paginate } from '@festival/utils';
 // ============================================================================
 // Types
 // ============================================================================

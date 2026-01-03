@@ -12,6 +12,7 @@ import {
 } from '@nestjs/common';
 import { CashlessService, TopupDto, CashlessPaymentDto, RefundDto } from './cashless.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 
 @Controller('api/wallet')
 export class CashlessController {

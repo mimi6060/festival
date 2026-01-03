@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { ProgramService } from './program.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 
 @Controller('api/program')
 export class ProgramController {

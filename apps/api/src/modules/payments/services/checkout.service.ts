@@ -163,9 +163,23 @@ export class CheckoutService {
             expiresAt: session.expires_at,
             connectedAccountId: dto.connectedAccountId,
             applicationFeeAmount: dto.applicationFeeAmount,
+            ...(promoCodeData && {
+              promoCode: promoCodeData.code,
+              promoCodeId: promoCodeData.id,
+              originalAmount: (totalAmount + discountAmount) / 100,
+              discountAmount: discountAmount / 100,
+            }),
           },
-          description: `Checkout: ${dto.lineItems.map((i) => i.name).join(', ')}`,
-          metadata: dto.metadata,
+          description: `Checkout: ${dto.lineItems.map((i) => i.name).join(', ')}${
+            promoCodeData ? ` (Promo: ${promoCodeData.code})` : ''
+          }`,
+          metadata: {
+            ...dto.metadata,
+            ...(promoCodeData && {
+              promoCode: promoCodeData.code,
+              promoCodeId: promoCodeData.id,
+            }),
+          },
         },
       });
 
