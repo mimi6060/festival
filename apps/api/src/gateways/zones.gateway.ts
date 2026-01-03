@@ -99,7 +99,7 @@ interface WsUser {
 // Thresholds for capacity alerts
 const CAPACITY_THRESHOLDS = {
   WARNING: 0.75, // 75%
-  CRITICAL: 0.90, // 90%
+  CRITICAL: 0.9, // 90%
   FULL: 0.98, // 98%
 };
 
@@ -107,58 +107,66 @@ const CAPACITY_THRESHOLDS = {
 @WebSocketGateway({
   namespace: '/zones',
   cors: {
-    origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:4200'],
+    origin: process.env.CORS_ORIGINS?.split(',') || [
+      'http://localhost:3000',
+      'http://localhost:4200',
+    ],
     credentials: true,
   },
   transports: ['websocket', 'polling'],
 })
-export class ZonesGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class ZonesGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server!: Server;
 
   private readonly logger = new Logger(ZonesGateway.name);
 
   // Store zone occupancy data
-  private zoneOccupancy: Map<string, ZoneOccupancy> = new Map();
+  private zoneOccupancy = new Map<string, ZoneOccupancy>();
 
   // Track active alerts
-  private activeAlerts: Map<string, ZoneAlert> = new Map();
+  private activeAlerts = new Map<string, ZoneAlert>();
 
   // Track staff positions
-  private staffPositions: Map<string, StaffPosition> = new Map();
+  private staffPositions = new Map<string, StaffPosition>();
 
   // Map socket to user
-  private socketToUser: Map<string, WsUser> = new Map();
+  private socketToUser = new Map<string, WsUser>();
 
   // Track entry/exit counts per hour
-  private hourlyStats: Map<string, { entries: number; exits: number; hour: number }> = new Map();
+  private hourlyStats = new Map<string, { entries: number; exits: number; hour: number }>();
 
   constructor(
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {}
 
   afterInit(server: Server): void {
     this.logger.log('WebSocket Zones Gateway initialized');
 
-    // Authentication middleware
+    // Authentication middleware - requires valid token
     server.use(async (socket, next) => {
       try {
         const token =
           socket.handshake.auth?.token ||
           socket.handshake.headers?.authorization?.replace('Bearer ', '');
 
-        if (token) {
-          const payload = await this.verifyToken(token);
-          (socket as Socket & { user?: WsUser }).user = payload;
+        if (!token) {
+          this.logger.warn(
+            `Zones gateway connection rejected: No token provided - Client: ${socket.id}`
+          );
+          return next(new Error('Authentication required'));
         }
+
+        const payload = await this.verifyToken(token);
+        (socket as Socket & { user?: WsUser }).user = payload;
 
         next();
       } catch (error) {
-        this.logger.warn(`Zones gateway auth failed: ${(error as Error).message}`);
-        next();
+        this.logger.warn(
+          `Zones gateway auth failed: ${(error as Error).message} - Client: ${socket.id}`
+        );
+        next(new Error('Authentication failed'));
       }
     });
 
@@ -169,21 +177,29 @@ export class ZonesGateway
   async handleConnection(client: Socket): Promise<void> {
     const user = (client as Socket & { user?: WsUser }).user;
 
-    if (user) {
-      this.socketToUser.set(client.id, user);
-
-      // Auto-join festival zones room if user has festival context
-      if (user.festivalId) {
-        await client.join(`festival:${user.festivalId}:zones`);
-      }
-
-      this.logger.log(`User ${user.email} connected to zones gateway`);
-    } else {
-      this.logger.debug(`Anonymous connection to zones gateway: ${client.id}`);
+    // This should never happen due to middleware, but added as safety check
+    if (!user) {
+      this.logger.error(`Client connected without authentication: ${client.id} - Disconnecting`);
+      client.disconnect(true);
+      return;
     }
 
+    this.socketToUser.set(client.id, user);
+
+    // Auto-join festival zones room if user has festival context
+    if (user.festivalId) {
+      await client.join(`festival:${user.festivalId}:zones`);
+    }
+
+    this.logger.log(`User ${user.email} connected to zones gateway`);
+
     client.emit('connected', {
-      authenticated: !!user,
+      authenticated: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
       timestamp: new Date(),
     });
   }
@@ -207,7 +223,7 @@ export class ZonesGateway
   @SubscribeMessage('subscribe_zone')
   async handleSubscribeZone(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: SubscribeZonePayload,
+    @MessageBody() payload: SubscribeZonePayload
   ): Promise<{ success: boolean; occupancy?: ZoneOccupancy }> {
     const { zoneId, festivalId } = payload;
 
@@ -235,7 +251,7 @@ export class ZonesGateway
   @SubscribeMessage('unsubscribe_zone')
   async handleUnsubscribeZone(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: SubscribeZonePayload,
+    @MessageBody() payload: SubscribeZonePayload
   ): Promise<{ success: boolean }> {
     const { zoneId, festivalId } = payload;
 
@@ -252,9 +268,9 @@ export class ZonesGateway
    * Get current occupancy for all zones in a festival
    */
   @SubscribeMessage('get_all_occupancy')
-  handleGetAllOccupancy(
-    @MessageBody() payload: { festivalId: string },
-  ): { zones: ZoneOccupancy[] } {
+  handleGetAllOccupancy(@MessageBody() payload: { festivalId: string }): {
+    zones: ZoneOccupancy[];
+  } {
     const zones: ZoneOccupancy[] = [];
 
     this.zoneOccupancy.forEach((occupancy, key) => {
@@ -270,9 +286,7 @@ export class ZonesGateway
    * Get active alerts
    */
   @SubscribeMessage('get_alerts')
-  handleGetAlerts(
-    @MessageBody() payload: { festivalId: string },
-  ): { alerts: ZoneAlert[] } {
+  handleGetAlerts(@MessageBody() payload: { festivalId: string }): { alerts: ZoneAlert[] } {
     const alerts: ZoneAlert[] = [];
 
     this.activeAlerts.forEach((alert) => {
@@ -293,7 +307,7 @@ export class ZonesGateway
   @SubscribeMessage('acknowledge_alert')
   handleAcknowledgeAlert(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { alertId: string },
+    @MessageBody() payload: { alertId: string }
   ): { success: boolean; error?: string } {
     const user = this.socketToUser.get(client.id);
 
@@ -325,7 +339,8 @@ export class ZonesGateway
   @SubscribeMessage('update_position')
   handleUpdatePosition(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { zoneId: string; festivalId: string; position?: { lat: number; lng: number } },
+    @MessageBody()
+    payload: { zoneId: string; festivalId: string; position?: { lat: number; lng: number } }
   ): { success: boolean } {
     const user = this.socketToUser.get(client.id);
 
@@ -346,7 +361,9 @@ export class ZonesGateway
     this.staffPositions.set(user.id, staffPosition);
 
     // Broadcast to zone managers
-    this.server.to(`festival:${payload.festivalId}:zones:staff`).emit('staff_position_update', staffPosition);
+    this.server
+      .to(`festival:${payload.festivalId}:zones:staff`)
+      .emit('staff_position_update', staffPosition);
 
     return { success: true };
   }
@@ -355,9 +372,9 @@ export class ZonesGateway
    * Get staff positions in a zone
    */
   @SubscribeMessage('get_staff_positions')
-  handleGetStaffPositions(
-    @MessageBody() payload: { festivalId: string; zoneId?: string },
-  ): { staff: StaffPosition[] } {
+  handleGetStaffPositions(@MessageBody() payload: { festivalId: string; zoneId?: string }): {
+    staff: StaffPosition[];
+  } {
     const staff: StaffPosition[] = [];
 
     this.staffPositions.forEach((position) => {
@@ -376,7 +393,14 @@ export class ZonesGateway
   /**
    * Record zone entry
    */
-  recordEntry(festivalId: string, zoneId: string, zoneName: string, maxCapacity: number, userId?: string, ticketId?: string): void {
+  recordEntry(
+    festivalId: string,
+    zoneId: string,
+    zoneName: string,
+    maxCapacity: number,
+    userId?: string,
+    ticketId?: string
+  ): void {
     const key = `${festivalId}:${zoneId}`;
     let occupancy = this.zoneOccupancy.get(key);
 
@@ -411,7 +435,9 @@ export class ZonesGateway
     // Check for capacity alerts
     this.checkCapacityAlerts(occupancy);
 
-    this.logger.debug(`Entry recorded for zone ${zoneId}: ${occupancy.currentOccupancy}/${maxCapacity}`);
+    this.logger.debug(
+      `Entry recorded for zone ${zoneId}: ${occupancy.currentOccupancy}/${maxCapacity}`
+    );
   }
 
   /**
@@ -451,12 +477,22 @@ export class ZonesGateway
     this.server.to(`zone:${festivalId}:${zoneId}`).emit('zone_event', event);
 
     // Check if we dropped below critical threshold
-    if (occupancy.status === 'full' && occupancy.occupancyPercentage < CAPACITY_THRESHOLDS.CRITICAL) {
+    if (
+      occupancy.status === 'full' &&
+      occupancy.occupancyPercentage < CAPACITY_THRESHOLDS.CRITICAL
+    ) {
       occupancy.status = 'near_capacity';
-      this.createAlert(occupancy, 'capacity_warning', `Zone ${occupancy.zoneName} is no longer at full capacity`, 'info');
+      this.createAlert(
+        occupancy,
+        'capacity_warning',
+        `Zone ${occupancy.zoneName} is no longer at full capacity`,
+        'info'
+      );
     }
 
-    this.logger.debug(`Exit recorded for zone ${zoneId}: ${occupancy.currentOccupancy}/${occupancy.maxCapacity}`);
+    this.logger.debug(
+      `Exit recorded for zone ${zoneId}: ${occupancy.currentOccupancy}/${occupancy.maxCapacity}`
+    );
   }
 
   /**
@@ -498,11 +534,26 @@ export class ZonesGateway
 
     // Create appropriate alert
     if (status === 'emergency') {
-      this.createAlert(occupancy, 'emergency', `EMERGENCY: Zone ${occupancy.zoneName} - ${reason || 'Emergency declared'}`, 'critical');
+      this.createAlert(
+        occupancy,
+        'emergency',
+        `EMERGENCY: Zone ${occupancy.zoneName} - ${reason || 'Emergency declared'}`,
+        'critical'
+      );
     } else if (status === 'closed') {
-      this.createAlert(occupancy, 'zone_closed', `Zone ${occupancy.zoneName} has been closed: ${reason || 'No reason provided'}`, 'warning');
+      this.createAlert(
+        occupancy,
+        'zone_closed',
+        `Zone ${occupancy.zoneName} has been closed: ${reason || 'No reason provided'}`,
+        'warning'
+      );
     } else if (oldStatus === 'closed' && status === 'open') {
-      this.createAlert(occupancy, 'zone_reopened', `Zone ${occupancy.zoneName} has reopened`, 'info');
+      this.createAlert(
+        occupancy,
+        'zone_reopened',
+        `Zone ${occupancy.zoneName} has reopened`,
+        'info'
+      );
     }
 
     this.logger.log(`Zone ${zoneId} status changed from ${oldStatus} to ${status}`);
@@ -511,7 +562,13 @@ export class ZonesGateway
   /**
    * Initialize or reset zone occupancy
    */
-  initializeZone(festivalId: string, zoneId: string, zoneName: string, maxCapacity: number, currentOccupancy = 0): void {
+  initializeZone(
+    festivalId: string,
+    zoneId: string,
+    zoneName: string,
+    maxCapacity: number,
+    currentOccupancy = 0
+  ): void {
     const occupancy = this.initializeZoneOccupancy(festivalId, zoneId, zoneName, maxCapacity);
     occupancy.currentOccupancy = currentOccupancy;
     this.updateOccupancyStats(occupancy);
@@ -544,7 +601,7 @@ export class ZonesGateway
   // ==================== Private helpers ====================
 
   private async verifyToken(token: string): Promise<WsUser> {
-    const secret = this.configService.get<string>('JWT_SECRET') || 'default-secret';
+    const secret = this.configService.getOrThrow<string>('JWT_ACCESS_SECRET');
     const payload = await this.jwtService.verifyAsync(token, { secret });
 
     return {
@@ -559,7 +616,12 @@ export class ZonesGateway
     return ['ADMIN', 'ORGANIZER', 'STAFF', 'SECURITY', 'SUPER_ADMIN'].includes(user.role);
   }
 
-  private initializeZoneOccupancy(festivalId: string, zoneId: string, zoneName: string, maxCapacity: number): ZoneOccupancy {
+  private initializeZoneOccupancy(
+    festivalId: string,
+    zoneId: string,
+    zoneName: string,
+    maxCapacity: number
+  ): ZoneOccupancy {
     const key = `${festivalId}:${zoneId}`;
     const occupancy: ZoneOccupancy = {
       zoneId,
@@ -579,7 +641,9 @@ export class ZonesGateway
   }
 
   private updateOccupancyStats(occupancy: ZoneOccupancy): void {
-    occupancy.occupancyPercentage = Math.round((occupancy.currentOccupancy / occupancy.maxCapacity) * 100);
+    occupancy.occupancyPercentage = Math.round(
+      (occupancy.currentOccupancy / occupancy.maxCapacity) * 100
+    );
 
     // Get hourly stats
     const key = `${occupancy.festivalId}:${occupancy.zoneId}`;
@@ -612,7 +676,11 @@ export class ZonesGateway
     }
   }
 
-  private broadcastOccupancyUpdate(festivalId: string, zoneId: string, occupancy: ZoneOccupancy): void {
+  private broadcastOccupancyUpdate(
+    festivalId: string,
+    zoneId: string,
+    occupancy: ZoneOccupancy
+  ): void {
     // Broadcast to specific zone subscribers
     this.server.to(`zone:${festivalId}:${zoneId}`).emit('occupancy_update', occupancy);
 
@@ -624,20 +692,40 @@ export class ZonesGateway
     const percentage = occupancy.occupancyPercentage / 100;
 
     if (percentage >= CAPACITY_THRESHOLDS.FULL) {
-      this.createAlert(occupancy, 'capacity_critical', `CRITICAL: Zone ${occupancy.zoneName} is at FULL CAPACITY (${occupancy.occupancyPercentage}%)`, 'critical');
+      this.createAlert(
+        occupancy,
+        'capacity_critical',
+        `CRITICAL: Zone ${occupancy.zoneName} is at FULL CAPACITY (${occupancy.occupancyPercentage}%)`,
+        'critical'
+      );
     } else if (percentage >= CAPACITY_THRESHOLDS.CRITICAL) {
-      this.createAlert(occupancy, 'capacity_critical', `Zone ${occupancy.zoneName} is near capacity (${occupancy.occupancyPercentage}%)`, 'warning');
+      this.createAlert(
+        occupancy,
+        'capacity_critical',
+        `Zone ${occupancy.zoneName} is near capacity (${occupancy.occupancyPercentage}%)`,
+        'warning'
+      );
     } else if (percentage >= CAPACITY_THRESHOLDS.WARNING) {
-      this.createAlert(occupancy, 'capacity_warning', `Zone ${occupancy.zoneName} is getting busy (${occupancy.occupancyPercentage}%)`, 'info');
+      this.createAlert(
+        occupancy,
+        'capacity_warning',
+        `Zone ${occupancy.zoneName} is getting busy (${occupancy.occupancyPercentage}%)`,
+        'info'
+      );
     }
   }
 
-  private createAlert(occupancy: ZoneOccupancy, type: ZoneAlert['type'], message: string, level: ZoneAlert['level']): void {
+  private createAlert(
+    occupancy: ZoneOccupancy,
+    type: ZoneAlert['type'],
+    message: string,
+    level: ZoneAlert['level']
+  ): void {
     const alertId = `alert_${occupancy.zoneId}_${type}`;
 
     // Check if similar alert already exists
     const existingAlert = this.activeAlerts.get(alertId);
-    if (existingAlert && (Date.now() - new Date(existingAlert.timestamp).getTime()) < 60000) {
+    if (existingAlert && Date.now() - new Date(existingAlert.timestamp).getTime() < 60000) {
       // Don't create duplicate alerts within 1 minute
       return;
     }
@@ -665,7 +753,7 @@ export class ZonesGateway
     const currentHour = new Date().getHours();
     let stats = this.hourlyStats.get(key);
 
-    if (!stats || stats.hour !== currentHour) {
+    if (stats?.hour !== currentHour) {
       stats = { entries: 0, exits: 0, hour: currentHour };
       this.hourlyStats.set(key, stats);
     }

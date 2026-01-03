@@ -338,7 +338,7 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
 
   private async verifyToken(token: string): Promise<WsUser> {
     try {
-      const secret = this.configService.get<string>('JWT_SECRET') || 'default-secret';
+      const secret = this.configService.getOrThrow<string>('JWT_ACCESS_SECRET');
       const payload = await this.jwtService.verifyAsync(token, { secret });
 
       return {

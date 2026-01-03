@@ -69,59 +69,67 @@ interface WsUser {
 @WebSocketGateway({
   namespace: '/presence',
   cors: {
-    origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:4200'],
+    origin: process.env.CORS_ORIGINS?.split(',') || [
+      'http://localhost:3000',
+      'http://localhost:4200',
+    ],
     credentials: true,
   },
   transports: ['websocket', 'polling'],
 })
-export class PresenceGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class PresenceGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server!: Server;
 
   private readonly logger = new Logger(PresenceGateway.name);
 
   // Store user presence data
-  private userPresence: Map<string, UserPresence> = new Map();
+  private userPresence = new Map<string, UserPresence>();
 
   // Map socket IDs to user IDs
-  private socketToUser: Map<string, string> = new Map();
+  private socketToUser = new Map<string, string>();
 
   // Map user IDs to socket IDs (a user can have multiple connections)
-  private userToSockets: Map<string, Set<string>> = new Map();
+  private userToSockets = new Map<string, Set<string>>();
 
   // Track typing indicators by channel
-  private typingUsers: Map<string, Set<string>> = new Map();
+  private typingUsers = new Map<string, Set<string>>();
 
   // Away timeout (5 minutes of inactivity)
   private readonly AWAY_TIMEOUT_MS = 5 * 60 * 1000;
-  private activityTimeouts: Map<string, NodeJS.Timeout> = new Map();
+  private activityTimeouts = new Map<string, NodeJS.Timeout>();
 
   constructor(
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {}
 
   afterInit(server: Server): void {
     this.logger.log('WebSocket Presence Gateway initialized');
 
-    // Authentication middleware
+    // Authentication middleware - requires valid token
     server.use(async (socket, next) => {
       try {
         const token =
           socket.handshake.auth?.token ||
           socket.handshake.headers?.authorization?.replace('Bearer ', '');
 
-        if (token) {
-          const payload = await this.verifyToken(token);
-          (socket as Socket & { user?: WsUser }).user = payload;
+        if (!token) {
+          this.logger.warn(
+            `Presence gateway connection rejected: No token provided - Client: ${socket.id}`
+          );
+          return next(new Error('Authentication required'));
         }
+
+        const payload = await this.verifyToken(token);
+        (socket as Socket & { user?: WsUser }).user = payload;
 
         next();
       } catch (error) {
-        this.logger.warn(`Presence auth failed: ${(error as Error).message}`);
-        next();
+        this.logger.warn(
+          `Presence auth failed: ${(error as Error).message} - Client: ${socket.id}`
+        );
+        next(new Error('Authentication failed'));
       }
     });
   }
@@ -129,8 +137,10 @@ export class PresenceGateway
   async handleConnection(client: Socket): Promise<void> {
     const user = (client as Socket & { user?: WsUser }).user;
 
+    // This should never happen due to middleware, but added as safety check
     if (!user) {
-      this.logger.debug(`Anonymous connection to presence: ${client.id}`);
+      this.logger.error(`Client connected without authentication: ${client.id} - Disconnecting`);
+      client.disconnect(true);
       return;
     }
 
@@ -222,7 +232,7 @@ export class PresenceGateway
   @SubscribeMessage('update_status')
   handleUpdateStatus(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: PresenceUpdate,
+    @MessageBody() payload: PresenceUpdate
   ): { success: boolean; presence?: UserPresence } {
     const userId = this.socketToUser.get(client.id);
 
@@ -301,7 +311,7 @@ export class PresenceGateway
   @SubscribeMessage('typing_start')
   handleTypingStart(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: TypingIndicator,
+    @MessageBody() payload: TypingIndicator
   ): void {
     const userId = this.socketToUser.get(client.id);
 
@@ -331,7 +341,7 @@ export class PresenceGateway
   @SubscribeMessage('typing_stop')
   handleTypingStop(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: TypingIndicator,
+    @MessageBody() payload: TypingIndicator
   ): void {
     const userId = this.socketToUser.get(client.id);
 
@@ -364,7 +374,7 @@ export class PresenceGateway
   @SubscribeMessage('get_presence')
   handleGetPresence(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: PresenceQuery,
+    @MessageBody() payload: PresenceQuery
   ): { users: UserPresence[] } {
     const users: UserPresence[] = [];
 
@@ -405,7 +415,7 @@ export class PresenceGateway
   @SubscribeMessage('subscribe_presence')
   async handleSubscribePresence(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { userIds: string[] },
+    @MessageBody() payload: { userIds: string[] }
   ): Promise<{ success: boolean }> {
     for (const userId of payload.userIds) {
       await client.join(`presence:${userId}`);
@@ -420,7 +430,7 @@ export class PresenceGateway
   @SubscribeMessage('unsubscribe_presence')
   async handleUnsubscribePresence(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { userIds: string[] },
+    @MessageBody() payload: { userIds: string[] }
   ): Promise<{ success: boolean }> {
     for (const userId of payload.userIds) {
       await client.leave(`presence:${userId}`);
@@ -437,7 +447,11 @@ export class PresenceGateway
   getOnlineCount(): number {
     let count = 0;
     this.userPresence.forEach((presence) => {
-      if (presence.status === 'online' || presence.status === 'away' || presence.status === 'busy') {
+      if (
+        presence.status === 'online' ||
+        presence.status === 'away' ||
+        presence.status === 'busy'
+      ) {
         count++;
       }
     });
@@ -500,7 +514,7 @@ export class PresenceGateway
   // ==================== Private helpers ====================
 
   private async verifyToken(token: string): Promise<WsUser> {
-    const secret = this.configService.get<string>('JWT_SECRET') || 'default-secret';
+    const secret = this.configService.getOrThrow<string>('JWT_ACCESS_SECRET');
     const payload = await this.jwtService.verifyAsync(token, { secret });
 
     return {
@@ -540,7 +554,7 @@ export class PresenceGateway
 
     const timeout = setTimeout(() => {
       const presence = this.userPresence.get(userId);
-      if (presence && presence.status === 'online') {
+      if (presence?.status === 'online') {
         presence.status = 'away';
         this.userPresence.set(userId, presence);
         this.broadcastPresenceChange(userId, presence);

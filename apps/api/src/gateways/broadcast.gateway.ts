@@ -150,58 +150,66 @@ interface WsUser {
 @WebSocketGateway({
   namespace: '/broadcast',
   cors: {
-    origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:4200'],
+    origin: process.env.CORS_ORIGINS?.split(',') || [
+      'http://localhost:3000',
+      'http://localhost:4200',
+    ],
     credentials: true,
   },
   transports: ['websocket', 'polling'],
 })
-export class BroadcastGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class BroadcastGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server!: Server;
 
   private readonly logger = new Logger(BroadcastGateway.name);
 
   // Store active broadcasts
-  private activeBroadcasts: Map<string, Broadcast> = new Map();
+  private activeBroadcasts = new Map<string, Broadcast>();
 
   // Store active emergency alerts
-  private activeEmergencies: Map<string, EmergencyAlert> = new Map();
+  private activeEmergencies = new Map<string, EmergencyAlert>();
 
   // Store schedule changes
-  private scheduleChanges: Map<string, ScheduleChange[]> = new Map();
+  private scheduleChanges = new Map<string, ScheduleChange[]>();
 
   // Map socket to user
-  private socketToUser: Map<string, WsUser> = new Map();
+  private socketToUser = new Map<string, WsUser>();
 
   // Track read/dismiss counts
-  private broadcastStats: Map<string, { reads: Set<string>; dismisses: Set<string> }> = new Map();
+  private broadcastStats = new Map<string, { reads: Set<string>; dismisses: Set<string> }>();
 
   constructor(
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {}
 
   afterInit(server: Server): void {
     this.logger.log('WebSocket Broadcast Gateway initialized');
 
-    // Authentication middleware
+    // Authentication middleware - requires valid token
     server.use(async (socket, next) => {
       try {
         const token =
           socket.handshake.auth?.token ||
           socket.handshake.headers?.authorization?.replace('Bearer ', '');
 
-        if (token) {
-          const payload = await this.verifyToken(token);
-          (socket as Socket & { user?: WsUser }).user = payload;
+        if (!token) {
+          this.logger.warn(
+            `Broadcast gateway connection rejected: No token provided - Client: ${socket.id}`
+          );
+          return next(new Error('Authentication required'));
         }
+
+        const payload = await this.verifyToken(token);
+        (socket as Socket & { user?: WsUser }).user = payload;
 
         next();
       } catch (error) {
-        this.logger.warn(`Broadcast auth failed: ${(error as Error).message}`);
-        next();
+        this.logger.warn(
+          `Broadcast auth failed: ${(error as Error).message} - Client: ${socket.id}`
+        );
+        next(new Error('Authentication failed'));
       }
     });
   }
@@ -209,34 +217,37 @@ export class BroadcastGateway
   async handleConnection(client: Socket): Promise<void> {
     const user = (client as Socket & { user?: WsUser }).user;
 
-    if (user) {
-      this.socketToUser.set(client.id, user);
-
-      // Join festival broadcasts
-      if (user.festivalId) {
-        await client.join(`broadcast:${user.festivalId}`);
-        await client.join(`broadcast:${user.festivalId}:all`);
-      }
-
-      // Join role-based channels
-      if (this.isStaff(user)) {
-        await client.join(`broadcast:${user.festivalId}:staff`);
-      }
-
-      if (this.isVIP(user)) {
-        await client.join(`broadcast:${user.festivalId}:vip`);
-      }
-
-      // Join emergency channel
-      await client.join(`emergency:${user.festivalId}`);
-
-      this.logger.log(`User ${user.email} connected to broadcast gateway`);
-    } else {
-      this.logger.debug(`Anonymous connection to broadcast gateway: ${client.id}`);
+    // This should never happen due to middleware, but added as safety check
+    if (!user) {
+      this.logger.error(`Client connected without authentication: ${client.id} - Disconnecting`);
+      client.disconnect(true);
+      return;
     }
 
+    this.socketToUser.set(client.id, user);
+
+    // Join festival broadcasts
+    if (user.festivalId) {
+      await client.join(`broadcast:${user.festivalId}`);
+      await client.join(`broadcast:${user.festivalId}:all`);
+    }
+
+    // Join role-based channels
+    if (this.isStaff(user)) {
+      await client.join(`broadcast:${user.festivalId}:staff`);
+    }
+
+    if (this.isVIP(user)) {
+      await client.join(`broadcast:${user.festivalId}:vip`);
+    }
+
+    // Join emergency channel
+    await client.join(`emergency:${user.festivalId}`);
+
+    this.logger.log(`User ${user.email} connected to broadcast gateway`);
+
     // Send active broadcasts and emergencies
-    if (user?.festivalId) {
+    if (user.festivalId) {
       const broadcasts = this.getActiveBroadcastsForUser(user);
       const emergencies = this.getActiveEmergenciesForFestival(user.festivalId);
       const changes = this.scheduleChanges.get(user.festivalId) || [];
@@ -250,7 +261,12 @@ export class BroadcastGateway
     }
 
     client.emit('connected', {
-      authenticated: !!user,
+      authenticated: true,
+      user: {
+        id: user.id,
+        email: user.email,
+        role: user.role,
+      },
       timestamp: new Date(),
     });
   }
@@ -271,7 +287,7 @@ export class BroadcastGateway
   @SubscribeMessage('subscribe')
   async handleSubscribe(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { festivalId: string; channel?: string },
+    @MessageBody() payload: { festivalId: string; channel?: string }
   ): Promise<{ success: boolean }> {
     const { festivalId, channel } = payload;
 
@@ -290,7 +306,7 @@ export class BroadcastGateway
   @SubscribeMessage('mark_read')
   handleMarkRead(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { broadcastId: string },
+    @MessageBody() payload: { broadcastId: string }
   ): { success: boolean } {
     const user = this.socketToUser.get(client.id);
 
@@ -317,7 +333,7 @@ export class BroadcastGateway
   @SubscribeMessage('dismiss')
   handleDismiss(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { broadcastId: string },
+    @MessageBody() payload: { broadcastId: string }
   ): { success: boolean } {
     const user = this.socketToUser.get(client.id);
 
@@ -344,7 +360,7 @@ export class BroadcastGateway
   @SubscribeMessage('get_active')
   handleGetActive(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { festivalId: string },
+    @MessageBody() payload: { festivalId: string }
   ): { broadcasts: Broadcast[]; emergencies: EmergencyAlert[] } {
     const user = this.socketToUser.get(client.id);
 
@@ -361,17 +377,15 @@ export class BroadcastGateway
    * Get schedule changes
    */
   @SubscribeMessage('get_schedule_changes')
-  handleGetScheduleChanges(
-    @MessageBody() payload: { festivalId: string; since?: Date },
-  ): { changes: ScheduleChange[] } {
+  handleGetScheduleChanges(@MessageBody() payload: { festivalId: string; since?: Date }): {
+    changes: ScheduleChange[];
+  } {
     const allChanges = this.scheduleChanges.get(payload.festivalId) || [];
 
     if (payload.since) {
       const sinceDate = new Date(payload.since);
       return {
-        changes: allChanges.filter(
-          (change) => new Date(change.announcedAt) > sinceDate
-        ),
+        changes: allChanges.filter((change) => new Date(change.announcedAt) > sinceDate),
       };
     }
 
@@ -421,7 +435,9 @@ export class BroadcastGateway
       });
     }
 
-    this.logger.log(`Broadcast sent: ${broadcast.title} (${broadcast.category}) to ${broadcast.target}`);
+    this.logger.log(
+      `Broadcast sent: ${broadcast.title} (${broadcast.category}) to ${broadcast.target}`
+    );
 
     // Schedule expiry cleanup
     if (broadcast.expiresAt) {
@@ -476,7 +492,9 @@ export class BroadcastGateway
 
     this.server.to(`broadcast:${payload.festivalId}`).emit('broadcast', broadcast);
 
-    this.logger.warn(`EMERGENCY ALERT: ${payload.title} (${payload.level}) for festival ${payload.festivalId}`);
+    this.logger.warn(
+      `EMERGENCY ALERT: ${payload.title} (${payload.level}) for festival ${payload.festivalId}`
+    );
 
     return alert;
   }
@@ -581,8 +599,13 @@ export class BroadcastGateway
   /**
    * Send weather alert
    */
-  sendWeatherAlert(festivalId: string, message: string, severity: 'info' | 'warning' | 'severe'): Broadcast {
-    const priority: BroadcastPriority = severity === 'severe' ? 'emergency' : severity === 'warning' ? 'high' : 'normal';
+  sendWeatherAlert(
+    festivalId: string,
+    message: string,
+    severity: 'info' | 'warning' | 'severe'
+  ): Broadcast {
+    const priority: BroadcastPriority =
+      severity === 'severe' ? 'emergency' : severity === 'warning' ? 'high' : 'normal';
 
     return this.sendBroadcast(
       {
@@ -600,7 +623,11 @@ export class BroadcastGateway
   /**
    * Send lost and found announcement
    */
-  sendLostFoundAnnouncement(festivalId: string, type: 'lost' | 'found', description: string): Broadcast {
+  sendLostFoundAnnouncement(
+    festivalId: string,
+    type: 'lost' | 'found',
+    description: string
+  ): Broadcast {
     return this.sendBroadcast(
       {
         festivalId,
@@ -631,7 +658,7 @@ export class BroadcastGateway
   // ==================== Private helpers ====================
 
   private async verifyToken(token: string): Promise<WsUser> {
-    const secret = this.configService.get<string>('JWT_SECRET') || 'default-secret';
+    const secret = this.configService.getOrThrow<string>('JWT_ACCESS_SECRET');
     const payload = await this.jwtService.verifyAsync(token, { secret });
 
     return {
@@ -709,7 +736,9 @@ export class BroadcastGateway
     return broadcasts.sort((a, b) => {
       const priorityOrder = { emergency: 0, urgent: 1, high: 2, normal: 3, low: 4 };
       const priorityDiff = priorityOrder[a.priority] - priorityOrder[b.priority];
-      if (priorityDiff !== 0) return priorityDiff;
+      if (priorityDiff !== 0) {
+        return priorityDiff;
+      }
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
     });
   }
@@ -778,7 +807,9 @@ export class BroadcastGateway
   }
 
   private formatTime(date?: Date): string {
-    if (!date) return 'TBA';
+    if (!date) {
+      return 'TBA';
+    }
     return new Date(date).toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',

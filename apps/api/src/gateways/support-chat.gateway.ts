@@ -96,37 +96,38 @@ interface WsUser {
 @WebSocketGateway({
   namespace: '/support',
   cors: {
-    origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:4200'],
+    origin: process.env.CORS_ORIGINS?.split(',') || [
+      'http://localhost:3000',
+      'http://localhost:4200',
+    ],
     credentials: true,
   },
   transports: ['websocket', 'polling'],
 })
-export class SupportChatGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class SupportChatGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server!: Server;
 
   private readonly logger = new Logger(SupportChatGateway.name);
 
   // Track ticket rooms
-  private ticketRooms: Map<string, TicketRoom> = new Map();
+  private ticketRooms = new Map<string, TicketRoom>();
 
   // Map socket to user
-  private socketToUser: Map<string, WsUser> = new Map();
+  private socketToUser = new Map<string, WsUser>();
 
   // Map user to sockets
-  private userToSockets: Map<string, Set<string>> = new Map();
+  private userToSockets = new Map<string, Set<string>>();
 
   // Message queue for offline delivery
-  private messageQueue: Map<string, ChatMessage[]> = new Map();
+  private messageQueue = new Map<string, ChatMessage[]>();
 
   // Typing indicators per ticket
-  private typingInTicket: Map<string, Map<string, NodeJS.Timeout>> = new Map();
+  private typingInTicket = new Map<string, Map<string, NodeJS.Timeout>>();
 
   constructor(
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {}
 
   afterInit(server: Server): void {
@@ -234,7 +235,7 @@ export class SupportChatGateway
   @SubscribeMessage('join_ticket')
   async handleJoinTicket(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: JoinTicketPayload,
+    @MessageBody() payload: JoinTicketPayload
   ): Promise<{ success: boolean; room?: TicketRoom; error?: string }> {
     const user = this.socketToUser.get(client.id);
 
@@ -296,7 +297,7 @@ export class SupportChatGateway
   @SubscribeMessage('leave_ticket')
   async handleLeaveTicket(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: JoinTicketPayload,
+    @MessageBody() payload: JoinTicketPayload
   ): Promise<{ success: boolean }> {
     const user = this.socketToUser.get(client.id);
 
@@ -332,7 +333,7 @@ export class SupportChatGateway
   @SubscribeMessage('send_message')
   async handleSendMessage(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: SendMessagePayload,
+    @MessageBody() payload: SendMessagePayload
   ): Promise<{ success: boolean; message?: ChatMessage; error?: string }> {
     const user = this.socketToUser.get(client.id);
 
@@ -429,7 +430,7 @@ export class SupportChatGateway
   @SubscribeMessage('mark_read')
   handleMarkRead(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { ticketId: string; messageIds: string[] },
+    @MessageBody() payload: { ticketId: string; messageIds: string[] }
   ): { success: boolean } {
     const user = this.socketToUser.get(client.id);
 
@@ -456,7 +457,7 @@ export class SupportChatGateway
   @SubscribeMessage('typing_start')
   handleTypingStart(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { ticketId: string },
+    @MessageBody() payload: { ticketId: string }
   ): void {
     const user = this.socketToUser.get(client.id);
 
@@ -500,7 +501,7 @@ export class SupportChatGateway
   @SubscribeMessage('typing_stop')
   handleTypingStop(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { ticketId: string },
+    @MessageBody() payload: { ticketId: string }
   ): void {
     const user = this.socketToUser.get(client.id);
 
@@ -517,7 +518,7 @@ export class SupportChatGateway
   @SubscribeMessage('update_status')
   handleUpdateStatus(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: TicketStatusPayload,
+    @MessageBody() payload: TicketStatusPayload
   ): { success: boolean; error?: string } {
     const user = this.socketToUser.get(client.id);
 
@@ -574,7 +575,7 @@ export class SupportChatGateway
   @SubscribeMessage('assign_agent')
   async handleAssignAgent(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: AgentAssignPayload,
+    @MessageBody() payload: AgentAssignPayload
   ): Promise<{ success: boolean; error?: string }> {
     const user = this.socketToUser.get(client.id);
 
@@ -637,7 +638,7 @@ export class SupportChatGateway
   @SubscribeMessage('get_active_tickets')
   handleGetActiveTickets(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: { festivalId?: string },
+    @MessageBody() payload: { festivalId?: string }
   ): { tickets: ReturnType<typeof this.serializeRoom>[] } {
     const user = this.socketToUser.get(client.id);
 
@@ -702,7 +703,7 @@ export class SupportChatGateway
   // ==================== Private helpers ====================
 
   private async verifyToken(token: string): Promise<WsUser> {
-    const secret = this.configService.get<string>('JWT_SECRET') || 'default-secret';
+    const secret = this.configService.getOrThrow<string>('JWT_ACCESS_SECRET');
     const payload = await this.jwtService.verifyAsync(token, { secret });
 
     return {
@@ -766,7 +767,9 @@ export class SupportChatGateway
     return `msg_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   }
 
-  private serializeRoom(room: TicketRoom): Omit<TicketRoom, 'participants'> & { participants: string[] } {
+  private serializeRoom(
+    room: TicketRoom
+  ): Omit<TicketRoom, 'participants'> & { participants: string[] } {
     return {
       ...room,
       participants: Array.from(room.participants),
