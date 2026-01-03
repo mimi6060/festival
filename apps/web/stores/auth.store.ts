@@ -264,8 +264,12 @@ export const useAuthStore = create<AuthStore>()(
           }
           return {
             getItem: () => null,
-            setItem: () => {},
-            removeItem: () => {},
+            setItem: () => {
+              /* No-op for server-side */
+            },
+            removeItem: () => {
+              /* No-op for server-side */
+            },
           };
         }),
         // Only persist user data, not tokens

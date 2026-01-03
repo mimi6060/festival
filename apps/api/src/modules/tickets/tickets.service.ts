@@ -16,12 +16,12 @@ import {
   ForbiddenException,
   Logger,
 } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   TicketStatus,
   TicketType,
   FestivalStatus,
-  PaymentStatus,
   Prisma,
 } from '@prisma/client';
 import * as QRCode from 'qrcode';
@@ -83,8 +83,18 @@ export class TicketsService {
   private readonly logger = new Logger(TicketsService.name);
   private readonly qrSecret: string;
 
-  constructor(private readonly prisma: PrismaService) {
-    this.qrSecret = process.env.QR_CODE_SECRET || 'default-qr-secret-change-in-production';
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
+  ) {
+    // Validate QR code secret is configured and meets minimum security requirements
+    const qrSecret = this.configService.getOrThrow<string>('QR_CODE_SECRET');
+
+    if (qrSecret.length < 32) {
+      throw new Error('QR_CODE_SECRET must be at least 32 characters for security');
+    }
+
+    this.qrSecret = qrSecret;
   }
 
   /**
@@ -235,7 +245,7 @@ export class TicketsService {
    */
   async validateTicket(
     dto: ValidateTicketDto,
-    staffId?: string,
+    _staffId?: string,
   ): Promise<ValidationResult> {
     const { qrCode, zoneId } = dto;
 
@@ -597,7 +607,7 @@ export class TicketsService {
   /**
    * Map Prisma ticket to entity
    */
-  private mapToEntity(ticket: any): TicketEntity {
+  private mapToEntity(ticket: { id: string; festivalId: string; categoryId: string; userId: string; qrCode: string; status: TicketStatus; purchasePrice: number | Prisma.Decimal; usedAt: Date | null; createdAt: Date; updatedAt: Date; festival?: { id: string; name: string; startDate: Date; endDate: Date }; category?: { id: string; name: string; type: TicketType } }): TicketEntity {
     return {
       id: ticket.id,
       festivalId: ticket.festivalId,

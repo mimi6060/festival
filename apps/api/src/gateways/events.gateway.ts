@@ -69,8 +69,8 @@ export class EventsGateway implements OnGatewayInit, OnGatewayConnection, OnGate
 
   private readonly logger = new Logger(EventsGateway.name);
 
-  // Track connected clients with their user info
-  private connectedClients = new Map<string, { socket: Socket; user: WsUser | null }>();
+  // Track connected clients with their user info (all authenticated)
+  private connectedClients = new Map<string, { socket: Socket; user: WsUser }>();
 
   // Track users in rooms
   private roomUsers = new Map<string, Set<string>>();
