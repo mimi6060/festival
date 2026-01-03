@@ -96,6 +96,8 @@
     "@nestjs/passport": "^11.0.5",
     "@nestjs/platform-express": "^11.0.0",
     "@react-navigation/core": "^7.13.7",
+    "@sentry/nestjs": "^10.32.1",
+    "@sentry/node": "^10.32.1",
     "@types/express": "^5.0.6",
     "@types/nodemailer": "^7.0.4",
     "@types/passport-jwt": "^4.0.1",

@@ -1,6 +1,7 @@
 # Festival Management Platform
 
 [![CI](https://github.com/mimi6060/festival/actions/workflows/ci.yml/badge.svg)](https://github.com/mimi6060/festival/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/mimi6060/festival/branch/main/graph/badge.svg)](https://codecov.io/gh/mimi6060/festival)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D20.0.0-brightgreen)](https://nodejs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.0-blue)](https://www.typescriptlang.org/)
@@ -35,20 +36,20 @@
 
 ## Tech Stack
 
-| Layer | Technologies |
-|-------|-------------|
-| **Frontend Web** | Next.js 15, React 19, Tailwind CSS, next-intl |
-| **Admin Dashboard** | Next.js, React, Recharts, DataTables |
-| **Mobile App** | React Native, Expo, AsyncStorage |
-| **Backend API** | NestJS, Prisma, PostgreSQL, Redis |
-| **Authentication** | JWT, Passport.js, RBAC |
-| **Payments** | Stripe Checkout, Webhooks |
-| **Real-time** | WebSocket, Socket.io |
-| **Email** | Nodemailer, Handlebars templates |
-| **PDF Generation** | PDFKit |
-| **Monitoring** | Prometheus, Sentry |
-| **CI/CD** | GitHub Actions |
-| **Infrastructure** | Docker, Kubernetes-ready |
+| Layer               | Technologies                                  |
+| ------------------- | --------------------------------------------- |
+| **Frontend Web**    | Next.js 15, React 19, Tailwind CSS, next-intl |
+| **Admin Dashboard** | Next.js, React, Recharts, DataTables          |
+| **Mobile App**      | React Native, Expo, AsyncStorage              |
+| **Backend API**     | NestJS, Prisma, PostgreSQL, Redis             |
+| **Authentication**  | JWT, Passport.js, RBAC                        |
+| **Payments**        | Stripe Checkout, Webhooks                     |
+| **Real-time**       | WebSocket, Socket.io                          |
+| **Email**           | Nodemailer, Handlebars templates              |
+| **PDF Generation**  | PDFKit                                        |
+| **Monitoring**      | Prometheus, Sentry                            |
+| **CI/CD**           | GitHub Actions                                |
+| **Infrastructure**  | Docker, Kubernetes-ready                      |
 
 ## Architecture
 
@@ -149,13 +150,13 @@ npx nx serve admin
 
 ### 6. Access Applications
 
-| Application | URL | Description |
-|-------------|-----|-------------|
-| API | http://localhost:3333/api | Backend API |
-| API Docs | http://localhost:3333/api/docs | Swagger documentation |
-| Web | http://localhost:3000 | Public website |
-| Admin | http://localhost:4200 | Admin dashboard |
-| MailDev | http://localhost:1080 | Email testing UI |
+| Application | URL                            | Description           |
+| ----------- | ------------------------------ | --------------------- |
+| API         | http://localhost:3333/api      | Backend API           |
+| API Docs    | http://localhost:3333/api/docs | Swagger documentation |
+| Web         | http://localhost:3000          | Public website        |
+| Admin       | http://localhost:4200          | Admin dashboard       |
+| MailDev     | http://localhost:1080          | Email testing UI      |
 
 ## API Documentation
 
@@ -169,6 +170,7 @@ The API is fully documented with Swagger/OpenAPI:
 ### API Guide
 
 See [docs/api/API_GUIDE.md](docs/api/API_GUIDE.md) for:
+
 - Authentication flow
 - Rate limiting
 - Error codes
@@ -177,6 +179,7 @@ See [docs/api/API_GUIDE.md](docs/api/API_GUIDE.md) for:
 ### Webhooks
 
 See [docs/api/WEBHOOKS.md](docs/api/WEBHOOKS.md) for:
+
 - Stripe webhook setup
 - Event types and payloads
 - Security and signature verification
@@ -184,6 +187,7 @@ See [docs/api/WEBHOOKS.md](docs/api/WEBHOOKS.md) for:
 ### Postman Collection
 
 Import the Postman collection for easy API testing:
+
 - Collection: [docs/api/festival-api.postman_collection.json](docs/api/festival-api.postman_collection.json)
 - Environment: [docs/api/festival-api.postman_environment.json](docs/api/festival-api.postman_environment.json)
 
@@ -302,13 +306,13 @@ docker-compose logs -f    # View logs
 
 ## User Roles
 
-| Role | Description | Permissions |
-|------|-------------|-------------|
-| `ADMIN` | Platform administrator | Full access |
-| `ORGANIZER` | Festival organizer | Manage own festivals |
-| `STAFF` | Event staff | Scan tickets, zone access |
-| `VENDOR` | Food/merch vendor | Manage products, view sales |
-| `ATTENDEE` | Festival attendee | Buy tickets, use cashless |
+| Role        | Description            | Permissions                 |
+| ----------- | ---------------------- | --------------------------- |
+| `ADMIN`     | Platform administrator | Full access                 |
+| `ORGANIZER` | Festival organizer     | Manage own festivals        |
+| `STAFF`     | Event staff            | Scan tickets, zone access   |
+| `VENDOR`    | Food/merch vendor      | Manage products, view sales |
+| `ATTENDEE`  | Festival attendee      | Buy tickets, use cashless   |
 
 ## Security
 
@@ -354,6 +358,7 @@ kubectl apply -f k8s/
 ## Roadmap
 
 ### Q1 2026
+
 - [x] Multi-tenant festival management
 - [x] Complete ticketing system with QR codes
 - [x] Cashless payment integration
@@ -361,6 +366,7 @@ kubectl apply -f k8s/
 - [x] Mobile app (iOS/Android)
 
 ### Q2 2026
+
 - [ ] Dark/light mode toggle
 - [ ] Enhanced offline mode for mobile
 - [ ] Multi-currency support
@@ -368,6 +374,7 @@ kubectl apply -f k8s/
 - [ ] Storybook design system
 
 ### Q3 2026
+
 - [ ] AI-powered crowd forecasting
 - [ ] Fraud detection system
 - [ ] NLP chatbot support
@@ -375,6 +382,7 @@ kubectl apply -f k8s/
 - [ ] Artist recommendation engine
 
 ### Q4 2026
+
 - [ ] SaaS model with pricing tiers
 - [ ] Plugin marketplace
 - [ ] White-label customization
