@@ -55,10 +55,18 @@ export const validationSchema = Joi.object({
   // ==========================================================================
   // JWT AUTHENTICATION
   // ==========================================================================
-  JWT_SECRET: Joi.string().min(32).required(),
+  // Main JWT secret (legacy, use JWT_ACCESS_SECRET instead)
+  JWT_SECRET: Joi.string().min(32).optional(),
   JWT_EXPIRES_IN: Joi.string().default('15m'),
+
+  // Access token secret (REQUIRED for production)
+  JWT_ACCESS_SECRET: Joi.string().min(32).required(),
+  JWT_ACCESS_EXPIRES_IN: Joi.string().default('15m'),
+
+  // Refresh token secret (REQUIRED for production)
   JWT_REFRESH_SECRET: Joi.string().min(32).required(),
   JWT_REFRESH_EXPIRES_IN: Joi.string().default('7d'),
+
   JWT_ISSUER: Joi.string().default('festival-api'),
   JWT_AUDIENCE: Joi.string().default('festival-app'),
   JWT_ALGORITHM: Joi.string()

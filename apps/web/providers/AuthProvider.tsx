@@ -26,28 +26,24 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children, showLoadingScreen = false }: AuthProviderProps) {
-  const { user, isAuthenticated, isLoading, isInitialized, initialize, refreshToken, isTokenExpired } = useAuthStore();
+  const { user, isAuthenticated, isLoading, isInitialized, initialize, checkAuth } = useAuthStore();
 
   // Initialize auth state on mount
   useEffect(() => {
     initialize();
   }, [initialize]);
 
-  // Set up automatic token refresh
+  // Set up periodic auth check (tokens are managed via httpOnly cookies)
   useEffect(() => {
     if (!isAuthenticated) {return;}
 
-    const checkAndRefresh = async () => {
-      if (isTokenExpired()) {
-        await refreshToken();
-      }
-    };
-
-    // Check every minute
-    const interval = setInterval(checkAndRefresh, 60 * 1000);
+    // Check auth status every 5 minutes
+    const interval = setInterval(() => {
+      checkAuth();
+    }, 5 * 60 * 1000);
 
     return () => clearInterval(interval);
-  }, [isAuthenticated, isTokenExpired, refreshToken]);
+  }, [isAuthenticated, checkAuth]);
 
   // Show loading screen while initializing
   if (showLoadingScreen && !isInitialized) {
