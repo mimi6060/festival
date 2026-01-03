@@ -11,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { ProgramService } from './program.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 
 @Controller('api/program')
 export class ProgramController {
@@ -45,8 +46,11 @@ export class ProgramController {
    * Get all artists for a festival
    */
   @Get('artists')
-  async getArtists(@Query('festivalId') festivalId: string) {
-    return this.programService.getArtists(festivalId);
+  async getArtists(
+    @Query('festivalId') festivalId: string,
+    @Query() pagination?: PaginationDto,
+  ) {
+    return this.programService.getArtists(festivalId, pagination);
   }
 
   /**

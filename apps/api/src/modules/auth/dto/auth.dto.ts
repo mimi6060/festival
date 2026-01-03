@@ -208,6 +208,20 @@ export class VerifyEmailDto {
 }
 
 /**
+ * Resend verification email DTO
+ */
+export class ResendVerificationDto {
+  @ApiProperty({
+    description: 'Email address to send verification to',
+    example: 'john.doe@example.com',
+    format: 'email',
+  })
+  @IsEmail({}, { message: 'Please provide a valid email address' })
+  @IsNotEmpty({ message: 'Email is required' })
+  email!: string;
+}
+
+/**
  * User response DTO (used in auth responses)
  */
 export class UserResponseDto {
