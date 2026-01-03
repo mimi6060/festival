@@ -78,7 +78,7 @@
 ### 📱 7) App Mobile Événementielle (PRIORITÉ MOYENNE)
 
 - [x] Cartes interactives
-- [ ] Mode offline complet avec maps
+- [x] Mode offline complet avec maps
 - [x] Notifications push
 - [ ] Fil d'actualité/messages internes
 - [ ] Réservation d'ateliers/workshops
