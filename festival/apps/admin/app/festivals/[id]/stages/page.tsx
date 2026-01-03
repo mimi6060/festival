@@ -27,6 +27,11 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
     description: '',
     capacity: 1000,
     location: '',
+    coordinates: {
+      lat: 0,
+      lng: 0,
+    },
+    isActive: true,
   });
 
   if (!festival) {
@@ -51,6 +56,11 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
       description: '',
       capacity: 1000,
       location: '',
+      coordinates: {
+        lat: 0,
+        lng: 0,
+      },
+      isActive: true,
     });
     setShowModal(true);
   };
@@ -62,8 +72,21 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
       description: stage.description || '',
       capacity: stage.capacity,
       location: stage.location || '',
+      coordinates: stage.coordinates || { lat: 0, lng: 0 },
+      isActive: stage.isActive,
     });
     setShowModal(true);
+  };
+
+  const handleToggleActive = async (stage: Stage) => {
+    try {
+      await updateMutation.mutateAsync({
+        id: stage.id,
+        data: { isActive: !stage.isActive },
+      });
+    } catch (error) {
+      console.error('Error toggling stage status:', error);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -202,13 +225,18 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
             {stages.map((stage) => (
               <div key={stage.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
                 <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-400 to-pink-400 flex items-center justify-center text-white font-bold">
+                  <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${stage.isActive ? 'from-primary-400 to-pink-400' : 'from-gray-300 to-gray-400'} flex items-center justify-center text-white font-bold`}>
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
                     </svg>
                   </div>
                   <div>
-                    <h3 className="font-semibold text-gray-900">{stage.name}</h3>
+                    <div className="flex items-center gap-2 mb-1">
+                      <h3 className="font-semibold text-gray-900">{stage.name}</h3>
+                      <span className={`px-2 py-0.5 text-xs font-medium rounded-full ${stage.isActive ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-700'}`}>
+                        {stage.isActive ? 'Active' : 'Inactive'}
+                      </span>
+                    </div>
                     <p className="text-sm text-gray-500">{stage.description}</p>
                   </div>
                 </div>
@@ -216,13 +244,28 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
                   <div className="text-right">
                     <p className="font-medium text-gray-900">{stage.capacity.toLocaleString()} pers.</p>
                     <p className="text-sm text-gray-500">{stage.location}</p>
+                    {stage.coordinates && (
+                      <p className="text-xs text-gray-400 mt-1">
+                        {stage.coordinates.lat.toFixed(4)}, {stage.coordinates.lng.toFixed(4)}
+                      </p>
+                    )}
                   </div>
                   <div className="flex gap-2">
+                    <button
+                      onClick={() => handleToggleActive(stage)}
+                      className={`p-2 hover:bg-gray-100 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed ${stage.isActive ? 'text-green-600' : 'text-gray-400'}`}
+                      title={stage.isActive ? 'Desactiver' : 'Activer'}
+                      disabled={updateMutation.isPending || deleteMutation.isPending}
+                    >
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                      </svg>
+                    </button>
                     <button
                       onClick={() => openEditModal(stage)}
                       className="p-2 hover:bg-gray-100 rounded-lg"
                       title="Modifier"
-                      disabled={deleteMutation.isPending}
+                      disabled={updateMutation.isPending || deleteMutation.isPending}
                     >
                       <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -232,7 +275,7 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
                       onClick={() => handleDelete(stage.id)}
                       className="p-2 hover:bg-red-50 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Supprimer"
-                      disabled={deleteMutation.isPending}
+                      disabled={updateMutation.isPending || deleteMutation.isPending}
                     >
                       {deleteMutation.isPending ? (
                         <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-red-500"></div>
@@ -356,6 +399,54 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
                   placeholder="Ex: Zone A - Entree principale"
                   required
                 />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Latitude
+                  </label>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={formData.coordinates.lat}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      coordinates: { ...formData.coordinates, lat: parseFloat(e.target.value) || 0 }
+                    })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="Ex: 48.8566"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Longitude
+                  </label>
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={formData.coordinates.lng}
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      coordinates: { ...formData.coordinates, lng: parseFloat(e.target.value) || 0 }
+                    })}
+                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="Ex: 2.3522"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="isActive"
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                  className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                />
+                <label htmlFor="isActive" className="text-sm text-gray-700">
+                  Scene active (visible et utilisable)
+                </label>
               </div>
 
               <div className="flex gap-3 pt-4">

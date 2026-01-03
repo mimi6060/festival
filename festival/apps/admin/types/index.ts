@@ -245,6 +245,11 @@ export interface Stage {
   description?: string;
   capacity: number;
   location?: string;
+  coordinates?: {
+    lat: number;
+    lng: number;
+  };
+  isActive: boolean;
   imageUrl?: string;
   createdAt?: string;
   updatedAt?: string;
@@ -381,4 +386,81 @@ export interface UpdateCampingZoneDto {
   pricePerNight?: number;
   amenities?: string[];
   isActive?: boolean;
+}
+
+// Cashless Types
+export interface CashlessAccount {
+  id: string;
+  userId: string;
+  festivalId: string;
+  balance: number;
+  nfcTagId?: string;
+  status: 'ACTIVE' | 'SUSPENDED' | 'CLOSED';
+  createdAt: string;
+  updatedAt: string;
+  user?: {
+    id: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+  };
+  festival?: {
+    id: string;
+    name: string;
+  };
+  _count?: {
+    transactions: number;
+  };
+}
+
+export interface CashlessTransaction {
+  id: string;
+  accountId: string;
+  type: 'TOPUP' | 'PAYMENT' | 'REFUND' | 'TRANSFER_IN' | 'TRANSFER_OUT';
+  amount: number;
+  balanceBefore: number;
+  balanceAfter: number;
+  status: 'PENDING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+  description?: string;
+  vendorId?: string;
+  relatedAccountId?: string;
+  metadata?: Record<string, unknown>;
+  createdAt: string;
+  completedAt?: string;
+  account?: CashlessAccount;
+  vendor?: {
+    id: string;
+    name: string;
+    type: VendorType;
+  };
+  relatedAccount?: {
+    id: string;
+    user?: {
+      id: string;
+      email: string;
+      firstName: string;
+      lastName: string;
+    };
+  };
+}
+
+export interface CashlessTopUpDto {
+  accountId: string;
+  amount: number;
+  paymentMethodId?: string;
+  description?: string;
+}
+
+export interface CashlessTransferDto {
+  fromAccountId: string;
+  toAccountId: string;
+  amount: number;
+  description?: string;
+}
+
+export interface CashlessSearchResult {
+  account: CashlessAccount;
+  lastTransaction?: CashlessTransaction;
+  totalTopUp: number;
+  totalSpent: number;
 }

@@ -219,6 +219,8 @@ export const stagesApi = {
   update: (id: string, data: Partial<import('../types').Stage>) =>
     request<import('../types').Stage>(`/stages/${id}`, { method: 'PUT', body: data }),
   delete: (id: string) => request<void>(`/stages/${id}`, { method: 'DELETE' }),
+  toggleActive: (id: string, isActive: boolean) =>
+    request<import('../types').Stage>(`/stages/${id}`, { method: 'PATCH', body: { isActive } }),
 };
 
 // Artists
@@ -317,4 +319,88 @@ export const campingApi = {
   updateZone: (id: string, data: import('../types').UpdateCampingZoneDto) =>
     request<import('../types').CampingZone>(`/camping-zones/${id}`, { method: 'PUT', body: data }),
   deleteZone: (id: string) => request<void>(`/camping-zones/${id}`, { method: 'DELETE' }),
+};
+
+// Cashless
+export const cashlessApi = {
+  // Search for user account
+  search: (query: string, festivalId?: string) => {
+    const searchParams = new URLSearchParams({ query });
+    if (festivalId) searchParams.set('festivalId', festivalId);
+    return request<import('../types').CashlessSearchResult[]>(
+      `/admin/cashless/search?${searchParams.toString()}`
+    );
+  },
+
+  // Get account details
+  getAccount: (accountId: string) =>
+    request<import('../types').CashlessSearchResult>(`/admin/cashless/accounts/${accountId}`),
+
+  // Get all accounts with pagination
+  getAccounts: (params?: {
+    page?: number;
+    limit?: number;
+    festivalId?: string;
+    status?: string;
+    search?: string;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.limit) searchParams.set('limit', params.limit.toString());
+    if (params?.festivalId) searchParams.set('festivalId', params.festivalId);
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.search) searchParams.set('search', params.search);
+    return request<import('../types').PaginatedResponse<import('../types').CashlessAccount>>(
+      `/admin/cashless/accounts?${searchParams.toString()}`
+    );
+  },
+
+  // Top up account
+  topUp: (data: import('../types').CashlessTopUpDto) =>
+    request<import('../types').CashlessTransaction>('/admin/cashless/topup', {
+      method: 'POST',
+      body: data,
+    }),
+
+  // Transfer between accounts
+  transfer: (data: import('../types').CashlessTransferDto) =>
+    request<import('../types').CashlessTransaction>('/admin/cashless/transfer', {
+      method: 'POST',
+      body: data,
+    }),
+
+  // Get transaction history
+  getTransactions: (params?: {
+    accountId?: string;
+    festivalId?: string;
+    type?: string;
+    status?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.accountId) searchParams.set('accountId', params.accountId);
+    if (params?.festivalId) searchParams.set('festivalId', params.festivalId);
+    if (params?.type) searchParams.set('type', params.type);
+    if (params?.status) searchParams.set('status', params.status);
+    if (params?.page) searchParams.set('page', params.page.toString());
+    if (params?.limit) searchParams.set('limit', params.limit.toString());
+    return request<import('../types').PaginatedResponse<import('../types').CashlessTransaction>>(
+      `/admin/cashless/transactions?${searchParams.toString()}`
+    );
+  },
+
+  // Update account status
+  updateAccountStatus: (accountId: string, status: 'ACTIVE' | 'SUSPENDED' | 'CLOSED') =>
+    request<import('../types').CashlessAccount>(`/admin/cashless/accounts/${accountId}/status`, {
+      method: 'PATCH',
+      body: { status },
+    }),
+
+  // Refund account balance
+  refund: (accountId: string, amount?: number) =>
+    request<import('../types').CashlessTransaction>(`/admin/cashless/accounts/${accountId}/refund`, {
+      method: 'POST',
+      body: amount ? { amount } : undefined,
+    }),
 };
