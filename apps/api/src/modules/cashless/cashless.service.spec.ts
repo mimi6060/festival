@@ -17,7 +17,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { CashlessService } from './cashless.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { TransactionType, FestivalStatus } from '@prisma/client';
 import {
   regularUser,

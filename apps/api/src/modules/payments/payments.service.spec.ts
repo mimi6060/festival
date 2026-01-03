@@ -16,7 +16,7 @@ import {
   InternalServerErrorException,
 } from '@nestjs/common';
 import { PaymentsService, CreatePaymentDto } from './payments.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { PaymentStatus, PaymentProvider } from '@prisma/client';
 import {
   regularUser,

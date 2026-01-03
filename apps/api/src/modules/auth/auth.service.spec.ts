@@ -20,7 +20,7 @@ import {
 } from '@nestjs/common';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { UserRole, UserStatus } from '@prisma/client';
 import {
   regularUser,

@@ -16,7 +16,7 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { TicketsService, PurchaseTicketDto } from './tickets.service';
-import { PrismaService } from '../prisma/prisma.service';
+import { PrismaService } from '../../prisma/prisma.service';
 import { TicketStatus, TicketType, FestivalStatus } from '@prisma/client';
 import {
   regularUser,
