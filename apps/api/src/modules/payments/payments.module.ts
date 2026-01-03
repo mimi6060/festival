@@ -12,7 +12,7 @@
 
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { PrismaModule } from '../prisma/prisma.module';
+import { PrismaModule } from '../../prisma/prisma.module';
 import { PaymentsService } from './payments.service';
 import { PaymentsController } from './payments.controller';
 import { CheckoutService } from './services/checkout.service';

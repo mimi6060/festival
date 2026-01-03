@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { CashlessController } from './cashless.controller';
 import { CashlessService } from './cashless.service';
-import { PrismaModule } from '../prisma';
+import { PrismaModule } from '../../prisma';
 
 @Module({
   imports: [PrismaModule],
