@@ -37,12 +37,8 @@ export interface NotificationPreferences {
   sms: boolean;
 }
 
-export interface AuthTokens {
-  accessToken: string;
-  refreshToken: string;
-  expiresAt: number;
-}
-
+// Note: Tokens are now stored in httpOnly cookies for security
+// We no longer store them in localStorage or the Zustand store
 export interface RegisterData {
   email: string;
   password: string;
@@ -64,7 +60,6 @@ export interface LoginCredentials {
 interface AuthState {
   // State
   user: User | null;
-  tokens: AuthTokens | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   isInitialized: boolean;
@@ -74,15 +69,13 @@ interface AuthState {
 interface AuthActions {
   // Actions
   setUser: (user: User | null) => void;
-  setTokens: (tokens: AuthTokens | null) => void;
   login: (credentials: LoginCredentials) => Promise<void>;
   register: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
-  refreshToken: () => Promise<boolean>;
   updateProfile: (data: Partial<User>) => void;
   clearError: () => void;
   initialize: () => Promise<void>;
-  isTokenExpired: () => boolean;
+  checkAuth: () => Promise<void>;
 }
 
 export type AuthStore = AuthState & AuthActions;
@@ -93,7 +86,6 @@ export type AuthStore = AuthState & AuthActions;
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 const STORE_NAME = 'festival-auth';
-const TOKEN_REFRESH_THRESHOLD = 5 * 60 * 1000; // 5 minutes before expiry
 
 // ============================================================================
 // Store
@@ -105,7 +97,6 @@ export const useAuthStore = create<AuthStore>()(
       immer((set, get) => ({
         // Initial state
         user: null as User | null,
-        tokens: null as AuthTokens | null,
         isAuthenticated: false,
         isLoading: false,
         isInitialized: false,
@@ -116,12 +107,6 @@ export const useAuthStore = create<AuthStore>()(
           set((state) => {
             state.user = user;
             state.isAuthenticated = !!user;
-          });
-        },
-
-        setTokens: (tokens: AuthTokens | null) => {
-          set((state) => {
-            state.tokens = tokens;
           });
         },
 
@@ -138,7 +123,7 @@ export const useAuthStore = create<AuthStore>()(
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify(credentials),
-              credentials: 'include',
+              credentials: 'include', // Important: send and receive cookies
             });
 
             const data = await response.json();
@@ -147,13 +132,9 @@ export const useAuthStore = create<AuthStore>()(
               throw new Error(data.message || 'Login failed');
             }
 
+            // Store only user data, tokens are in httpOnly cookies
             set((state) => {
               state.user = data.user;
-              state.tokens = {
-                accessToken: data.accessToken || data.token,
-                refreshToken: data.refreshToken,
-                expiresAt: Date.now() + (data.expiresIn || 3600) * 1000,
-              };
               state.isAuthenticated = true;
               state.isLoading = false;
               state.error = null;
@@ -180,7 +161,7 @@ export const useAuthStore = create<AuthStore>()(
                 'Content-Type': 'application/json',
               },
               body: JSON.stringify(registerData),
-              credentials: 'include',
+              credentials: 'include', // Important: send and receive cookies
             });
 
             const result = await response.json();
@@ -189,13 +170,9 @@ export const useAuthStore = create<AuthStore>()(
               throw new Error(result.message || 'Registration failed');
             }
 
+            // Store only user data, tokens are in httpOnly cookies
             set((state) => {
               state.user = result.user;
-              state.tokens = {
-                accessToken: result.accessToken || result.token,
-                refreshToken: result.refreshToken,
-                expiresAt: Date.now() + (result.expiresIn || 3600) * 1000,
-              };
               state.isAuthenticated = true;
               state.isLoading = false;
               state.error = null;
@@ -210,68 +187,21 @@ export const useAuthStore = create<AuthStore>()(
         },
 
         logout: async () => {
-          const tokens = get().tokens;
-
-          // Call logout API (fire and forget)
-          if (tokens?.accessToken) {
-            try {
-              await fetch(`${API_URL}/v1/auth/logout`, {
-                method: 'POST',
-                headers: {
-                  Authorization: `Bearer ${tokens.accessToken}`,
-                },
-                credentials: 'include',
-              });
-            } catch {
-              // Ignore errors on logout
-            }
+          try {
+            // Call logout API to clear httpOnly cookies
+            await fetch(`${API_URL}/v1/auth/logout`, {
+              method: 'POST',
+              credentials: 'include',
+            });
+          } catch {
+            // Ignore errors on logout, we'll clear local state anyway
           }
 
           set((state) => {
             state.user = null;
-            state.tokens = null;
             state.isAuthenticated = false;
             state.error = null;
           });
-        },
-
-        refreshToken: async () => {
-          const currentTokens = get().tokens;
-
-          if (!currentTokens?.refreshToken) {
-            await get().logout();
-            return false;
-          }
-
-          try {
-            const response = await fetch(`${API_URL}/v1/auth/refresh`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({ refreshToken: currentTokens.refreshToken }),
-              credentials: 'include',
-            });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-              throw new Error('Token refresh failed');
-            }
-
-            set((state) => {
-              state.tokens = {
-                accessToken: data.accessToken || data.token,
-                refreshToken: data.refreshToken,
-                expiresAt: Date.now() + (data.expiresIn || 3600) * 1000,
-              };
-            });
-
-            return true;
-          } catch {
-            await get().logout();
-            return false;
-          }
         },
 
         updateProfile: (profileData: Partial<User>) => {
@@ -289,22 +219,41 @@ export const useAuthStore = create<AuthStore>()(
         },
 
         initialize: async () => {
-          const { tokens, isTokenExpired, refreshToken } = get();
-
-          // Check if we need to refresh the token
-          if (tokens && isTokenExpired()) {
-            await refreshToken();
-          }
+          // Check authentication status by calling /auth/me
+          await get().checkAuth();
 
           set((state) => {
             state.isInitialized = true;
           });
         },
 
-        isTokenExpired: () => {
-          const tokens = get().tokens;
-          if (!tokens?.expiresAt) {return true;}
-          return Date.now() > tokens.expiresAt - TOKEN_REFRESH_THRESHOLD;
+        checkAuth: async () => {
+          try {
+            const response = await fetch(`${API_URL}/v1/auth/me`, {
+              method: 'GET',
+              credentials: 'include', // Send cookies with request
+            });
+
+            if (response.ok) {
+              const userData = await response.json();
+              set((state) => {
+                state.user = userData;
+                state.isAuthenticated = true;
+              });
+            } else {
+              // Not authenticated or token expired
+              set((state) => {
+                state.user = null;
+                state.isAuthenticated = false;
+              });
+            }
+          } catch {
+            // Network error or other issue
+            set((state) => {
+              state.user = null;
+              state.isAuthenticated = false;
+            });
+          }
         },
       })),
       {
@@ -315,15 +264,13 @@ export const useAuthStore = create<AuthStore>()(
           }
           return {
             getItem: () => null,
-            // eslint-disable-next-line @typescript-eslint/no-empty-function
             setItem: () => {},
-            // eslint-disable-next-line @typescript-eslint/no-empty-function
             removeItem: () => {},
           };
         }),
+        // Only persist user data, not tokens
         partialize: (state) => ({
           user: state.user,
-          tokens: state.tokens,
           isAuthenticated: state.isAuthenticated,
         }),
       }
