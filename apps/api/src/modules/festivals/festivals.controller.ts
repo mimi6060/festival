@@ -23,6 +23,7 @@ import {
   ApiForbiddenResponse,
   ApiNotFoundResponse,
   ApiConflictResponse,
+  ApiResponse,
 } from '@nestjs/swagger';
 import {
   CreateFestivalDto,
@@ -39,7 +40,6 @@ import {
   ForbiddenResponseDto,
   NotFoundResponseDto,
 } from '../../common/dto';
-import { Cacheable, CacheEvict, CacheTag } from '../cache';
 
 /**
  * Paginated festivals response
@@ -67,39 +67,10 @@ export class FestivalsController {
    * Create a new festival
    */
   @Post()
-  @CacheEvict({ tags: [CacheTag.FESTIVAL] })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create a new festival',
-    description: `
-Creates a new festival. The authenticated user becomes the festival organizer.
-
-**Required Role:** ORGANIZER or ADMIN
-
-**Slug Generation:**
-If no slug is provided, one will be automatically generated from the festival name.
-Slugs must be unique across all festivals.
-
-**Initial Status:**
-New festivals are created with DRAFT status. Use the status update endpoint to publish.
-
-**Example Request:**
-\`\`\`json
-{
-  "name": "Summer Vibes Festival 2025",
-  "shortDescription": "The biggest electronic music festival in France",
-  "startDate": "2025-07-15T14:00:00.000Z",
-  "endDate": "2025-07-17T23:00:00.000Z",
-  "location": {
-    "venueName": "Parc des Expositions",
-    "address": "1 Place de la Porte de Versailles",
-    "city": "Paris",
-    "country": "FR",
-    "postalCode": "75015"
-  }
-}
-\`\`\`
-    `,
+    description: 'Creates a new festival. The authenticated user becomes the festival organizer.',
   })
   @ApiCreatedResponse({
     description: 'Festival created successfully',
@@ -114,7 +85,7 @@ New festivals are created with DRAFT status. Use the status update endpoint to p
     type: UnauthorizedResponseDto,
   })
   @ApiForbiddenResponse({
-    description: 'Insufficient permissions (requires ORGANIZER or ADMIN role)',
+    description: 'Insufficient permissions',
     type: ForbiddenResponseDto,
   })
   @ApiConflictResponse({
@@ -149,28 +120,9 @@ New festivals are created with DRAFT status. Use the status update endpoint to p
    * Get all festivals with filtering and pagination
    */
   @Get()
-  @Cacheable({
-    key: { prefix: 'festivals:list', paramIndices: [0] },
-    ttl: 60,
-    tags: [CacheTag.FESTIVAL]
-  })
   @ApiOperation({
     summary: 'List festivals',
-    description: `
-Returns a paginated list of festivals with optional filtering.
-
-**Public Access:**
-- Only PUBLISHED festivals are returned to unauthenticated users
-- DRAFT festivals are only visible to their organizers
-
-**Filtering Options:**
-- Search by name
-- Filter by status, country, date range
-- Filter by tags
-
-**Sorting:**
-Default sorting is by start date (ascending). Use \`sortBy\` and \`sortOrder\` to customize.
-    `,
+    description: 'Returns a paginated list of festivals with optional filtering.',
   })
   @ApiOkResponse({
     description: 'List of festivals',
@@ -215,27 +167,14 @@ Default sorting is by start date (ascending). Use \`sortBy\` and \`sortOrder\` t
    * Get festival by ID
    */
   @Get(':id')
-  @Cacheable({
-    key: { prefix: 'festivals:id', paramIndices: [0] },
-    ttl: 30,
-    tags: [CacheTag.FESTIVAL]
-  })
   @ApiOperation({
     summary: 'Get festival by ID',
-    description: `
-Returns detailed information about a specific festival.
-
-**Public Access:**
-- PUBLISHED festivals are accessible to everyone
-- DRAFT festivals require authentication as the organizer
-    `,
+    description: 'Returns detailed information about a specific festival.',
   })
   @ApiParam({
     name: 'id',
     description: 'Festival UUID',
     example: '550e8400-e29b-41d4-a716-446655440000',
-    type: 'string',
-    format: 'uuid',
   })
   @ApiOkResponse({
     description: 'Festival details',
@@ -245,9 +184,7 @@ Returns detailed information about a specific festival.
     description: 'Festival not found',
     type: NotFoundResponseDto,
   })
-  async findOne(
-    @Param('id', ParseUUIDPipe) id: string,
-  ): Promise<FestivalResponseDto> {
+  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<FestivalResponseDto> {
     return {
       id,
       name: 'Summer Vibes Festival 2025',
@@ -283,23 +220,14 @@ Returns detailed information about a specific festival.
    * Get festival by slug
    */
   @Get('by-slug/:slug')
-  @Cacheable({
-    key: { prefix: 'festivals:slug', paramIndices: [0] },
-    ttl: 30,
-    tags: [CacheTag.FESTIVAL]
-  })
   @ApiOperation({
     summary: 'Get festival by slug',
-    description: `
-Returns festival information using its URL-friendly slug.
-This is useful for SEO-friendly URLs like \`/festivals/summer-vibes-2025\`.
-    `,
+    description: 'Returns festival information using its URL-friendly slug.',
   })
   @ApiParam({
     name: 'slug',
     description: 'Festival slug',
     example: 'summer-vibes-festival-2025',
-    type: 'string',
   })
   @ApiOkResponse({
     description: 'Festival details',
@@ -337,18 +265,10 @@ This is useful for SEO-friendly URLs like \`/festivals/summer-vibes-2025\`.
    * Update festival
    */
   @Put(':id')
-  @CacheEvict({ tags: [CacheTag.FESTIVAL] })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Update festival',
-    description: `
-Updates an existing festival. Only the organizer or an admin can update a festival.
-
-**Restrictions:**
-- Cannot change the slug after creation
-- Cannot change status to COMPLETED or CANCELLED through this endpoint
-- Some fields cannot be modified after the festival starts
-    `,
+    description: 'Updates an existing festival.',
   })
   @ApiParam({
     name: 'id',
@@ -407,23 +327,10 @@ Updates an existing festival. Only the organizer or an admin can update a festiv
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @CacheEvict({ tags: [CacheTag.FESTIVAL] })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Delete festival',
-    description: `
-Permanently deletes a festival and all associated data.
-
-**Warning:** This action is irreversible!
-
-**Restrictions:**
-- Cannot delete a festival that has sold tickets
-- Cannot delete an ongoing or completed festival
-- Only the organizer or an admin can delete
-
-**Alternative:**
-Consider cancelling the festival instead using the status update endpoint.
-    `,
+    description: 'Permanently deletes a festival.',
   })
   @ApiParam({
     name: 'id',
@@ -439,7 +346,7 @@ Consider cancelling the festival instead using the status update endpoint.
     type: UnauthorizedResponseDto,
   })
   @ApiForbiddenResponse({
-    description: 'Not the festival organizer or has sold tickets',
+    description: 'Not the festival organizer',
     type: ForbiddenResponseDto,
   })
   @ApiNotFoundResponse({
@@ -457,17 +364,7 @@ Consider cancelling the festival instead using the status update endpoint.
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get festival statistics',
-    description: `
-Returns comprehensive statistics for a festival.
-
-**Includes:**
-- Ticket sales and revenue
-- Cashless account statistics
-- Check-in rates
-- Capacity utilization
-
-**Access:** Only accessible to the festival organizer and admins.
-    `,
+    description: 'Returns comprehensive statistics for a festival.',
   })
   @ApiParam({
     name: 'id',
@@ -506,23 +403,10 @@ Returns comprehensive statistics for a festival.
    * Publish festival
    */
   @Post(':id/publish')
-  @CacheEvict({ tags: [CacheTag.FESTIVAL] })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Publish festival',
-    description: `
-Changes the festival status from DRAFT to PUBLISHED, making it visible to the public.
-
-**Requirements:**
-- Festival must be in DRAFT status
-- All required fields must be filled
-- At least one ticket category must be created
-
-**What Happens:**
-- Festival becomes visible in public listings
-- Ticket sales are enabled (if dates allow)
-- Festival appears in search results
-    `,
+    description: 'Changes the festival status from DRAFT to PUBLISHED.',
   })
   @ApiParam({
     name: 'id',
@@ -534,7 +418,7 @@ Changes the festival status from DRAFT to PUBLISHED, making it visible to the pu
     type: FestivalResponseDto,
   })
   @ApiBadRequestResponse({
-    description: 'Festival is not in DRAFT status or missing required data',
+    description: 'Festival is not in DRAFT status',
     type: ErrorResponseDto,
   })
   @ApiUnauthorizedResponse({
@@ -577,25 +461,10 @@ Changes the festival status from DRAFT to PUBLISHED, making it visible to the pu
    * Cancel festival
    */
   @Post(':id/cancel')
-  @CacheEvict({ tags: [CacheTag.FESTIVAL] })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Cancel festival',
-    description: `
-Cancels a festival. This initiates the refund process for all ticket holders.
-
-**Warning:** This action is irreversible!
-
-**What Happens:**
-1. Festival status changes to CANCELLED
-2. All ticket holders are notified
-3. Automatic refund process begins
-4. Cashless balances are refunded
-
-**Restrictions:**
-- Cannot cancel a COMPLETED festival
-- Only organizers and admins can cancel
-    `,
+    description: 'Cancels a festival and initiates refund process.',
   })
   @ApiParam({
     name: 'id',
@@ -642,6 +511,3 @@ Cancels a festival. This initiates the refund process for all ticket holders.
     };
   }
 }
-
-// Import the missing decorator
-import { ApiResponse } from '@nestjs/swagger';
