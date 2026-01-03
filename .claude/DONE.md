@@ -1,5 +1,20 @@
 # Tâches Terminées
 
+## 2026-01-03 - Phase Frontend Web App - Program Page
+- [x] Page programme publique pour festivals (apps/web/app/festivals/[slug]/program/page.tsx)
+  - Sélecteur d'onglets pour les jours du festival
+  - Dropdown de filtre par scène
+  - Vue timeline avec performances triées par heure
+  - Cartes de performance avec: artiste, scène, heures, genre
+  - Modal de détails d'artiste avec bio, photo, liens sociaux
+  - Bouton coeur "Add to favorites" avec localStorage
+  - Design Tailwind responsive (mobile-first)
+  - Thème festival (fond sombre, accents colorés)
+  - Mock data complet (10 artistes, 4 jours, 5 scènes)
+  - Integration API endpoint /api/festivals/{slug}/program (préparé)
+
+# Tâches Terminées
+
 ## Phase 0 - Infrastructure
 
 ### Monorepo & Configuration
@@ -1150,4 +1165,150 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
 - [x] Types Stage, Artist, Performance, Vendor, Poi, CampingZone
 
 ---
-Derniere mise a jour: 2026-01-03 - Admin Festival Management Pages
+
+## Phase 17 - Web App Festivals Listing Enhanced (2026-01-03)
+
+### Festivals Listing Page Improvements
+- [x] Refactoring complet apps/web/app/festivals/page.tsx (550+ lignes)
+  - Client-side component avec 'use client' directive
+  - React Query integration pour fetching data
+  - URL query string sync pour shareable filter URLs
+  - State management avec useState pour tous les filtres
+
+### Search & Filters
+- [x] Search bar avec input control et Enter key support
+  - Recherche par nom ou location de festival
+  - Icone loupe SVG
+  - Bouton Apply Filters
+
+- [x] Genre/Type filter avec multi-selection
+  - 13 genres disponibles (Electronic, Rock, Hip-Hop, Jazz, Indie, Pop, Metal, Classical, Folk, Country, R&B, Techno, House)
+  - Pills cliquables avec toggle functionality
+  - Active state avec couleur primaire et shadow
+  - Hover states et transitions
+
+- [x] Date range filter
+  - Date From input (type="date")
+  - Date To input (type="date")
+  - Integration avec API params
+
+- [x] Region/Location filter
+  - Dropdown select avec 6 regions (Europe, North America, South America, Asia, Africa, Oceania)
+  - "All Regions" option par defaut
+
+- [x] Price range filter
+  - Min price input (type="number")
+  - Max price input (type="number")
+  - Client-side filtering sur les resultats
+
+- [x] Sort options
+  - 6 options de tri disponibles
+  - Date (Earliest First / Latest First)
+  - Price (Low to High / High to Low)
+  - Name (A-Z)
+  - Popularity (placeholder)
+  - Client-side sorting implementation
+
+### Filter Management
+- [x] Active filters summary avec pills removables
+  - Affichage visuel de tous les filtres actifs
+  - Bouton X pour supprimer individuellement
+  - Pills avec background primaire transparent
+
+- [x] Clear All Filters button
+  - Apparait seulement si des filtres sont actifs
+  - Reset tous les states et URL
+
+- [x] URL query string synchronization
+  - Tous les filtres sont sauvegardes dans l'URL
+  - Shareable URLs fonctionnelles
+  - Scroll preservation avec { scroll: false }
+  - Support navigation back/forward
+
+### UI States
+- [x] Loading state avec skeleton cards
+  - 6 skeleton cards animees (animate-pulse)
+  - Grid responsive (1/2/3 colonnes)
+
+- [x] Error state avec retry
+  - Message d'erreur detaille
+  - Icone alert SVG
+  - Bouton "Try Again" pour reload
+
+- [x] Empty state dynamique
+  - Message different selon presence de filtres
+  - Icone sad face SVG
+  - Suggestion d'ajuster les filtres
+  - Bouton Clear Filters si applicable
+
+### Pagination
+- [x] Pagination complete avec navigation
+  - Previous/Next buttons avec disabled state
+  - Page numbers buttons (max 5 visible)
+  - Smart pagination logic (current page centered)
+  - URL sync pour chaque page change
+  - 12 items per page (ITEMS_PER_PAGE constant)
+
+### API Integration
+- [x] React Query hook pour fetching
+  - useQuery avec queryKey dynamique
+  - Automatic refetch sur param changes
+  - Error handling integre
+
+- [x] PaginatedResponse interface
+  - Type-safe response avec data et meta
+  - Handling des reponses paginées et non-paginées
+  - Fallback meta generation si besoin
+
+- [x] GetFestivalsParams optimisation
+  - useMemo pour eviter re-renders inutiles
+  - Params construction conditionnelle
+  - Status filter par defaut (PUBLISHED)
+
+### Festival Cards
+- [x] Grid responsive (1/2/3 colonnes selon breakpoints)
+- [x] Integration du composant FestivalCard existant
+- [x] Fallback image URL si manquante
+- [x] Fallback price/genres si manquants
+
+### Results Display
+- [x] Results count avec total
+  - "Showing X of Y festivals"
+  - Loading state text
+  - Bold formatting pour les nombres
+
+### Performance Optimizations
+- [x] useMemo pour filtered/sorted festivals
+  - Evite recalculs inutiles
+  - Dependencies array optimise
+
+- [x] Client-side filtering pour price range
+  - Supplement au filtering API
+  - Range validation (min/max/infinity)
+
+- [x] Efficient sorting implementation
+  - Switch statement avec tous les cas
+  - Date comparison avec getTime()
+  - String comparison avec localeCompare()
+
+### Styling & UX
+- [x] Tailwind CSS festival theme complete
+  - Colors primaires/secondaires
+  - Background gradients
+  - Border styles avec opacity
+  - Hover effects et transitions
+
+- [x] Responsive design mobile-first
+  - Grid adaptatif selon breakpoints
+  - Stacked filters sur mobile
+  - Optimisation tactile
+
+### Accessibility
+- [x] Semantic HTML elements
+- [x] Labels pour tous les inputs
+- [x] Disabled states pour buttons
+- [x] SVG icons avec viewBox correct
+- [x] Focus states sur tous les interactifs
+
+---
+Derniere mise a jour: 2026-01-03 - Web App Festivals Listing Enhanced
