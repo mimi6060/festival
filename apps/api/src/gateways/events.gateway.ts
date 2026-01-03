@@ -21,7 +21,7 @@ import {
   WsException,
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
-import { Logger, UseGuards, Injectable } from '@nestjs/common';
+import { Logger, Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 
@@ -55,28 +55,29 @@ export interface WsUser {
 @WebSocketGateway({
   namespace: '/events',
   cors: {
-    origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:4200'],
+    origin: process.env.CORS_ORIGINS?.split(',') || [
+      'http://localhost:3000',
+      'http://localhost:4200',
+    ],
     credentials: true,
   },
   transports: ['websocket', 'polling'],
 })
-export class EventsGateway
-  implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
-{
+export class EventsGateway implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect {
   @WebSocketServer()
   server!: Server;
 
   private readonly logger = new Logger(EventsGateway.name);
 
   // Track connected clients with their user info
-  private connectedClients: Map<string, { socket: Socket; user: WsUser | null }> = new Map();
+  private connectedClients = new Map<string, { socket: Socket; user: WsUser | null }>();
 
   // Track users in rooms
-  private roomUsers: Map<string, Set<string>> = new Map();
+  private roomUsers = new Map<string, Set<string>>();
 
   constructor(
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {}
 
   afterInit(server: Server): void {
@@ -85,7 +86,9 @@ export class EventsGateway
     // Middleware for authentication
     server.use(async (socket, next) => {
       try {
-        const token = socket.handshake.auth?.token || socket.handshake.headers?.authorization?.replace('Bearer ', '');
+        const token =
+          socket.handshake.auth?.token ||
+          socket.handshake.headers?.authorization?.replace('Bearer ', '');
 
         if (token) {
           const payload = await this.verifyToken(token);
@@ -150,7 +153,7 @@ export class EventsGateway
   @SubscribeMessage('authenticate')
   async handleAuthenticate(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: WsAuthPayload,
+    @MessageBody() payload: WsAuthPayload
   ): Promise<{ success: boolean; message: string }> {
     try {
       const user = await this.verifyToken(payload.token);
@@ -167,7 +170,9 @@ export class EventsGateway
 
       return { success: true, message: 'Authenticated successfully' };
     } catch (error) {
-      this.logger.warn(`Authentication failed for client ${client.id}: ${(error as Error).message}`);
+      this.logger.warn(
+        `Authentication failed for client ${client.id}: ${(error as Error).message}`
+      );
       return { success: false, message: 'Authentication failed' };
     }
   }
@@ -178,7 +183,7 @@ export class EventsGateway
   @SubscribeMessage('join_room')
   async handleJoinRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: WsJoinRoomPayload,
+    @MessageBody() payload: WsJoinRoomPayload
   ): Promise<{ success: boolean; room: string }> {
     const { room, festivalId } = payload;
 
@@ -206,7 +211,7 @@ export class EventsGateway
   @SubscribeMessage('leave_room')
   async handleLeaveRoom(
     @ConnectedSocket() client: Socket,
-    @MessageBody() payload: WsJoinRoomPayload,
+    @MessageBody() payload: WsJoinRoomPayload
   ): Promise<{ success: boolean; room: string }> {
     const { room, festivalId } = payload;
     const roomName = festivalId ? `festival:${festivalId}:${room}` : room;
@@ -239,7 +244,7 @@ export class EventsGateway
    * Ping to keep connection alive
    */
   @SubscribeMessage('ping')
-  handlePing(@ConnectedSocket() client: Socket): { pong: boolean; timestamp: Date } {
+  handlePing(): { pong: boolean; timestamp: Date } {
     return { pong: true, timestamp: new Date() };
   }
 
@@ -327,7 +332,7 @@ export class EventsGateway
         role: payload.role,
         festivalId: payload.festivalId,
       };
-    } catch (error) {
+    } catch {
       throw new WsException('Invalid token');
     }
   }
@@ -336,7 +341,10 @@ export class EventsGateway
     if (!this.roomUsers.has(room)) {
       this.roomUsers.set(room, new Set());
     }
-    this.roomUsers.get(room)!.add(clientId);
+    const roomSet = this.roomUsers.get(room);
+    if (roomSet) {
+      roomSet.add(clientId);
+    }
   }
 
   private removeFromRoom(room: string, clientId: string): void {
