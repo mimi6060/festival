@@ -13,8 +13,10 @@ interface FestivalDetailPageProps {
 
 export default function FestivalDetailPage({ params }: FestivalDetailPageProps) {
   const { id } = use(params);
-  const festival = mockFestivals.find((f) => f.id === id);
-  const categories = mockTicketCategories.filter((c) => c.festivalId === id);
+  // Support both ID and slug lookups
+  const festival = mockFestivals.find((f) => f.id === id || f.slug === id);
+  const festivalId = festival?.id || id;
+  const categories = mockTicketCategories.filter((c) => c.festivalId === festivalId);
 
   if (!festival) {
     return (
