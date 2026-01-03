@@ -1,6 +1,7 @@
-import { Controller, Get, Header, Query } from '@nestjs/common';
+import { Controller, Get, Header, Query, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiQuery } from '@nestjs/swagger';
 import { MetricsService } from './metrics.service';
+import { HealthIndicatorsService, HealthStatus, SystemHealth } from './health-indicators.service';
 
 /**
  * Monitoring Controller
@@ -10,7 +11,10 @@ import { MetricsService } from './metrics.service';
 @ApiTags('Monitoring')
 @Controller('monitoring')
 export class MonitoringController {
-  constructor(private readonly metricsService: MetricsService) {}
+  constructor(
+    private readonly metricsService: MetricsService,
+    private readonly healthIndicatorsService: HealthIndicatorsService
+  ) {}
 
   /**
    * Prometheus metrics endpoint
@@ -63,6 +67,88 @@ export class MonitoringController {
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
     };
+  }
+
+  /**
+   * Comprehensive health check endpoint
+   */
+  @Get('health')
+  @ApiOperation({
+    summary: 'Get comprehensive health status',
+    description:
+      'Returns detailed health status of all dependencies (database, Redis, memory, disk, event loop)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'All systems healthy',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'One or more systems unhealthy',
+  })
+  async getHealth(): Promise<SystemHealth> {
+    return this.healthIndicatorsService.checkHealth();
+  }
+
+  /**
+   * Kubernetes liveness probe
+   * Returns 200 if the service is running
+   */
+  @Get('health/live')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: 'Kubernetes liveness probe',
+    description:
+      'Returns 200 if the service process is running. Used by Kubernetes to restart crashed pods.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Service is alive',
+  })
+  async getLiveness(): Promise<{ status: string; uptime: number }> {
+    const liveness = await this.healthIndicatorsService.checkLiveness();
+    return {
+      status: liveness.status,
+      uptime: liveness.uptime,
+    };
+  }
+
+  /**
+   * Kubernetes readiness probe
+   * Returns 200 if the service is ready to accept traffic
+   */
+  @Get('health/ready')
+  @ApiOperation({
+    summary: 'Kubernetes readiness probe',
+    description:
+      'Returns 200 if the service can accept traffic (database and Redis connected). Used by Kubernetes to route traffic.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Service is ready to accept traffic',
+  })
+  @ApiResponse({
+    status: 503,
+    description: 'Service not ready (dependencies unavailable)',
+  })
+  async getReadiness(): Promise<{ status: HealthStatus; checks: unknown[] }> {
+    return this.healthIndicatorsService.checkReadiness();
+  }
+
+  /**
+   * Health summary for dashboards
+   */
+  @Get('health/summary')
+  @ApiOperation({
+    summary: 'Get health summary',
+    description: 'Returns a formatted health summary suitable for monitoring dashboards',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Health summary',
+  })
+  async getHealthSummary(): Promise<Record<string, unknown>> {
+    return this.healthIndicatorsService.getHealthSummary();
   }
 
   /**
@@ -187,16 +273,24 @@ export class MonitoringController {
     const secs = Math.floor(seconds % 60);
 
     const parts: string[] = [];
-    if (days > 0) parts.push(`${days}d`);
-    if (hours > 0) parts.push(`${hours}h`);
-    if (minutes > 0) parts.push(`${minutes}m`);
+    if (days > 0) {
+      parts.push(`${days}d`);
+    }
+    if (hours > 0) {
+      parts.push(`${hours}h`);
+    }
+    if (minutes > 0) {
+      parts.push(`${minutes}m`);
+    }
     parts.push(`${secs}s`);
 
     return parts.join(' ');
   }
 
   private sumMetricValues(metric: any): number {
-    if (!metric || !metric.values) return 0;
+    if (!metric?.values) {
+      return 0;
+    }
     return metric.values.reduce((sum: number, v: any) => sum + (v.value || 0), 0);
   }
 
@@ -205,7 +299,9 @@ export class MonitoringController {
     const misses = this.sumMetricValues(metrics['cache_misses_total']);
     const total = hits + misses;
 
-    if (total === 0) return '0%';
+    if (total === 0) {
+      return '0%';
+    }
     return `${((hits / total) * 100).toFixed(2)}%`;
   }
 }
