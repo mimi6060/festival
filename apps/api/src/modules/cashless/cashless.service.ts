@@ -20,12 +20,11 @@ import {
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   TransactionType,
-  PaymentStatus,
-  PaymentProvider,
   FestivalStatus,
   Prisma,
 } from '@prisma/client';
-import { v4 as uuidv4 } from 'uuid';
+import { PaginationDto } from '../../common/dto/pagination.dto';
+import { paginate } from '@festival/shared/utils';
 
 // ============================================================================
 // Types
@@ -416,9 +415,8 @@ export class CashlessService {
   async getTransactionHistory(
     userId: string,
     festivalId?: string,
-    limit: number = 50,
-    offset: number = 0,
-  ): Promise<CashlessTransactionEntity[]> {
+    pagination?: PaginationDto,
+  ) {
     const account = await this.getAccount(userId);
 
     const where: Prisma.CashlessTransactionWhereInput = {
@@ -429,11 +427,28 @@ export class CashlessService {
       where.festivalId = festivalId;
     }
 
+    // If pagination is provided, use it
+    if (pagination) {
+      const { page = 1, limit = 20, sortBy = 'createdAt', sortOrder = 'desc' } = pagination;
+
+      const [data, total] = await Promise.all([
+        this.prisma.cashlessTransaction.findMany({
+          where,
+          skip: (page - 1) * limit,
+          take: limit,
+          orderBy: { [sortBy]: sortOrder },
+        }),
+        this.prisma.cashlessTransaction.count({ where }),
+      ]);
+
+      return paginate(data.map(this.mapTransactionToEntity), total, page, limit);
+    }
+
+    // Fallback to non-paginated response for backward compatibility
     const transactions = await this.prisma.cashlessTransaction.findMany({
       where,
       orderBy: { createdAt: 'desc' },
-      take: limit,
-      skip: offset,
+      take: 50,
     });
 
     return transactions.map(this.mapTransactionToEntity);

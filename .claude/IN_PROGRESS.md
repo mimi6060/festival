@@ -220,19 +220,20 @@ When responding:
 - Valide longueur ≥ 32 caractères
 - Throw Error au démarrage si non conforme
 
-### C3: Reset Password Cassé
+### ✅ C3: Reset Password Cassé - RÉSOLU
 
 **Fichier:** `apps/api/src/modules/auth/auth.service.ts:300-315`
+**Résolution:**
 
-```typescript
-// Accepte N'IMPORTE QUEL token - placeholder non implémenté
-const user = await this.prisma.user.findFirst({
-  where: { status: UserStatus.ACTIVE },
-});
-```
-
-**Action:** Implémenter vérification token depuis table password_reset_tokens
-**Impact:** N'importe qui peut reset n'importe quel password
+- Système complet d'email verification implémenté
+- Tokens cryptographiquement sécurisés (crypto.randomBytes + SHA-256)
+- Email verification: token expire après 24h
+- Password reset: token expire après 1h
+- Tokens hashés avant stockage en BDD
+- Invalidation des tokens après utilisation
+- Rate limiting sur resend (10 minutes minimum entre envois)
+- Templates email professionnels (verify-email.hbs, password-reset.hbs)
+- Endpoints: /auth/verify-email, /auth/resend-verification, /auth/forgot-password, /auth/reset-password
 
 ### ~~C4: Missing Error Boundaries (Frontend)~~ ✅ TERMINÉ
 
@@ -494,7 +495,7 @@ if (email === 'admin@festival.com' && password === 'admin123')
 
 | Métrique                  | Valeur | Cible  | Note                                     |
 | ------------------------- | ------ | ------ | ---------------------------------------- |
-| Backend Production Ready  | 95%    | 95%    | ✅ Tous issues HIGH résolus              |
+| Backend Production Ready  | 97%    | 95%    | ✅ Tous issues CRITICAL + HIGH résolus   |
 | Frontend TypeScript Score | 8.8/10 | 9.5/10 | ⬆️ +0.4 (form lib, code splitting)       |
 | Test Coverage API         | ~80%   | 90%    |                                          |
 | Test Coverage Libs        | <10%   | 80%    |                                          |
