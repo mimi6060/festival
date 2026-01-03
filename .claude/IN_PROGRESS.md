@@ -1,5 +1,26 @@
 # Tâches En Cours & À Faire
 
+## Session 2026-01-03 - Internationalisation
+
+### Traductions Complétées
+
+- [x] Traduction italienne (it.json) - 1256 clés
+- [x] Traduction néerlandaise (nl.json) - 1256 clés
+- [x] Export des nouvelles locales dans libs/shared/i18n/src/index.ts
+
+### Langues Disponibles
+
+| Langue      | Fichier | Clés |
+| ----------- | ------- | ---- |
+| Français    | fr.json | 1256 |
+| Anglais     | en.json | 1256 |
+| Allemand    | de.json | 1256 |
+| Espagnol    | es.json | 1256 |
+| Italien     | it.json | 1256 |
+| Néerlandais | nl.json | 1256 |
+
+---
+
 ## Session 2026-01-03 - Audit Expert du Code
 
 ### Résumé Exécutif
