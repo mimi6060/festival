@@ -6,6 +6,8 @@ import {
   ApiServiceUnavailableResponse,
 } from '@nestjs/swagger';
 import { PrismaHealthIndicator } from './indicators/prisma.health';
+import { RedisHealthIndicator } from './indicators/redis.health';
+import { StripeHealthIndicator } from './indicators/stripe.health';
 
 /**
  * Health check response DTO
@@ -51,7 +53,11 @@ class ReadinessResponseDto {
 export class HealthController {
   private readonly startTime = Date.now();
 
-  constructor(private readonly prismaHealth: PrismaHealthIndicator) {}
+  constructor(
+    private readonly prismaHealth: PrismaHealthIndicator,
+    private readonly redisHealth: RedisHealthIndicator,
+    private readonly stripeHealth: StripeHealthIndicator
+  ) {}
 
   /**
    * Full health check
@@ -110,14 +116,45 @@ Returns a comprehensive health status of the API including:
     const uptime = Math.floor((Date.now() - this.startTime) / 1000);
 
     try {
-      const dbResult = await this.prismaHealth.isHealthy('database');
+      // Run health checks with timeout (5s max for each)
+      const [dbResult, redisResult, stripeResult] = await Promise.all([
+        Promise.race([
+          this.prismaHealth.isHealthy('database'),
+          new Promise<any>((_, reject) =>
+            setTimeout(() => reject(new Error('Database health check timeout')), 5000)
+          ),
+        ]),
+        Promise.race([
+          this.redisHealth.isHealthy('redis'),
+          new Promise<any>((_, reject) =>
+            setTimeout(() => reject(new Error('Redis health check timeout')), 5000)
+          ),
+        ]),
+        Promise.race([
+          this.stripeHealth.isHealthy('stripe'),
+          new Promise<any>((_, reject) =>
+            setTimeout(() => reject(new Error('Stripe health check timeout')), 5000)
+          ),
+        ]),
+      ]);
+
       const memoryUsage = process.memoryUsage();
       const heapUsedMB = memoryUsage.heapUsed / 1024 / 1024;
       const heapTotalMB = memoryUsage.heapTotal / 1024 / 1024;
       const memoryOk = heapUsedMB < 150; // 150 MB threshold
 
       const dbStatus = dbResult.database;
-      const isHealthy = dbStatus.status === 'up' && memoryOk;
+      const redisStatus = redisResult.redis;
+      const stripeStatus = stripeResult.stripe;
+
+      // Check if critical services are up
+      // Redis 'degraded' (fallback to in-memory) is acceptable
+      // Stripe 'not_configured' (dev environment) is acceptable
+      const isHealthy =
+        dbStatus.status === 'up' &&
+        (redisStatus.status === 'up' || redisStatus.status === 'degraded') &&
+        (stripeStatus.status === 'up' || stripeStatus.status === 'not_configured') &&
+        memoryOk;
 
       const response: HealthCheckResponseDto = {
         status: isHealthy ? 'ok' : 'error',
@@ -125,8 +162,8 @@ Returns a comprehensive health status of the API including:
         uptime,
         checks: {
           database: dbStatus as { status: string; responseTime?: number },
-          redis: { status: 'up', responseTime: 0 }, // TODO: Implement Redis health check when Redis is added
-          stripe: { status: 'up' }, // TODO: Implement Stripe health check when needed
+          redis: redisStatus as { status: string; responseTime?: number },
+          stripe: stripeStatus as { status: string },
           memory: {
             status: memoryOk ? 'up' : 'warning',
             heapUsed: Math.round(heapUsedMB),
@@ -144,14 +181,16 @@ Returns a comprehensive health status of the API including:
       if (error instanceof HttpException) {
         throw error;
       }
+
+      // Fallback error response
       const response: HealthCheckResponseDto = {
         status: 'error',
         timestamp,
         uptime,
         checks: {
           database: { status: 'down' },
-          redis: { status: 'up', responseTime: 0 },
-          stripe: { status: 'up' },
+          redis: { status: 'down' },
+          stripe: { status: 'down' },
           memory: { status: 'unknown' },
         },
       };
@@ -255,10 +294,16 @@ If this endpoint returns 503, the pod will be removed from the load balancer.
     },
   })
   async ready(): Promise<ReadinessResponseDto> {
+    const [database, redis, stripe] = await Promise.all([
+      this.checkDatabase(),
+      this.checkRedis(),
+      this.checkStripe(),
+    ]);
+
     const dependencies = {
-      database: await this.checkDatabase(),
-      redis: true, // TODO: Implement Redis check when Redis is added
-      stripe: true, // TODO: Implement Stripe check when needed
+      database,
+      redis,
+      stripe,
     };
 
     const isReady = Object.values(dependencies).every((v) => v);
@@ -280,6 +325,26 @@ If this endpoint returns 503, the pod will be removed from the load balancer.
     try {
       const result = await this.prismaHealth.isHealthy('database');
       return result.database.status === 'up';
+    } catch {
+      return false;
+    }
+  }
+
+  private async checkRedis(): Promise<boolean> {
+    try {
+      const result = await this.redisHealth.isHealthy('redis');
+      // 'degraded' (in-memory fallback) is acceptable for readiness
+      return result.redis.status === 'up' || result.redis.status === 'degraded';
+    } catch {
+      return false;
+    }
+  }
+
+  private async checkStripe(): Promise<boolean> {
+    try {
+      const result = await this.stripeHealth.isHealthy('stripe');
+      // 'not_configured' (dev environment) is acceptable for readiness
+      return result.stripe.status === 'up' || result.stripe.status === 'not_configured';
     } catch {
       return false;
     }

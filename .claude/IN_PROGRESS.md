@@ -291,6 +291,15 @@ const token = localStorage.getItem('auth_token');
 - Retourne 503 si dependencies down
 **Commit:** 1f475b1
 
+**Amélioration supplémentaire - Health indicators Redis et Stripe:**
+- Créé `RedisHealthIndicator` avec fallback gracieux (degraded mode)
+- Créé `StripeHealthIndicator` avec support dev (not_configured mode)
+- Modifié `HealthController` pour utiliser les vrais checks avec timeout 5s
+- Status 503 retourné si Redis/Stripe down (mais accepte degraded/not_configured)
+- Fichiers créés:
+  - `/apps/api/src/modules/health/indicators/redis.health.ts`
+  - `/apps/api/src/modules/health/indicators/stripe.health.ts`
+
 ### ✅ H3: WebSocket Permet Connexions Anonymes - RÉSOLU
 
 **Fichiers:** Tous les gateways WebSocket
