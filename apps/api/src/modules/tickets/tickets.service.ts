@@ -181,39 +181,46 @@ export class TicketsService {
         data: { soldCount: { increment: quantity } },
       });
 
-      // Create tickets
-      const createdTickets: TicketEntity[] = [];
-
+      // Pre-generate ticket data for batch insert
+      const ticketDataArray = [];
       for (let i = 0; i < quantity; i++) {
         const ticketId = uuidv4();
         const qrCode = this.generateQrCode(ticketId, festivalId, category.type);
-        const qrCodeData = await this.generateQrCodeData(ticketId, festivalId, category.type);
 
-        const ticket = await tx.ticket.create({
-          data: {
-            id: ticketId,
-            festivalId,
-            categoryId,
-            userId,
-            qrCode: qrCode.code,
-            qrCodeData: qrCode.signedData,
-            status: TicketStatus.SOLD,
-            purchasePrice: category.price,
-          },
-          include: {
-            festival: {
-              select: { id: true, name: true, startDate: true, endDate: true },
-            },
-            category: {
-              select: { id: true, name: true, type: true },
-            },
-          },
+        ticketDataArray.push({
+          id: ticketId,
+          festivalId,
+          categoryId,
+          userId,
+          qrCode: qrCode.code,
+          qrCodeData: qrCode.signedData,
+          status: TicketStatus.SOLD,
+          purchasePrice: category.price,
         });
-
-        createdTickets.push(this.mapToEntity(ticket));
       }
 
-      return createdTickets;
+      // Batch insert tickets
+      await tx.ticket.createMany({
+        data: ticketDataArray,
+      });
+
+      // Retrieve created tickets with relations
+      const createdTickets = await tx.ticket.findMany({
+        where: {
+          id: { in: ticketDataArray.map((t) => t.id) },
+        },
+        include: {
+          festival: {
+            select: { id: true, name: true, startDate: true, endDate: true },
+          },
+          category: {
+            select: { id: true, name: true, type: true },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      return createdTickets.map(this.mapToEntity);
     });
 
     this.logger.log(
