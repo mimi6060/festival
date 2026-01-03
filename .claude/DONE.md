@@ -1140,5 +1140,14 @@ Derniere mise a jour: 2026-01-02 - Phase Build Web App complete
 - [x] Navigation fonctionnelle dans ProfileScreen
 - [x] URL linking configuration pour web
 
+### Admin Festival Management Pages (2026-01-03)
+- [x] Stages management page avec visualisation capacite
+- [x] Lineup/artists management page
+- [x] Vendors management page avec categorisation type
+- [x] POIs management page pour carte festival
+- [x] Camping zones management page
+- [x] API hooks (useProgram, useVendors, usePois, useCamping)
+- [x] Types Stage, Artist, Performance, Vendor, Poi, CampingZone
+
 ---
-Derniere mise a jour: 2026-01-03 - Profile & Support Screens
+Derniere mise a jour: 2026-01-03 - Admin Festival Management Pages
