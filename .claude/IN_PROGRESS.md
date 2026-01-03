@@ -524,7 +524,7 @@ if (email === 'admin@festival.com' && password === 'admin123')
 - [ ] C2: Valider QR secret
 - [ ] C3: Implémenter reset password correctement
 - [ ] H1: Connecter AuthController au service
-- [ ] H8: Ajouter Trivy scanning CI
+- [x] H8: Ajouter Trivy scanning CI ✅
 
 ### Semaine 2 - Frontend & API
 
@@ -543,7 +543,7 @@ if (email === 'admin@festival.com' && password === 'admin123')
 
 ### Semaine 4 - Infrastructure & Tests
 
-- [ ] H9: Ajouter SAST/DAST CI
+- [x] H9: Ajouter SAST/DAST CI ✅
 - [ ] M5: Passer WAF en mode BLOCK
 - [ ] L5: Ajouter tests shared libraries
 - [ ] Audit de sécurité final
