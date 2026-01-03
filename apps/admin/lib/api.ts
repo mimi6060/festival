@@ -37,17 +37,27 @@ export const dashboardApi = {
   getRevenueChart: (period: 'week' | 'month' | 'year') =>
     request<import('../types').RevenueChartData>(`/admin/dashboard/revenue?period=${period}`),
   getTicketSalesChart: (period: 'week' | 'month' | 'year') =>
-    request<import('../types').TicketSalesChartData>(`/admin/dashboard/ticket-sales?period=${period}`),
+    request<import('../types').TicketSalesChartData>(
+      `/admin/dashboard/ticket-sales?period=${period}`
+    ),
 };
 
 // Festivals
 export const festivalsApi = {
   getAll: (params?: { page?: number; limit?: number; status?: string; search?: string }) => {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.limit) searchParams.set('limit', params.limit.toString());
-    if (params?.status) searchParams.set('status', params.status);
-    if (params?.search) searchParams.set('search', params.search);
+    if (params?.page) {
+      searchParams.set('page', params.page.toString());
+    }
+    if (params?.limit) {
+      searchParams.set('limit', params.limit.toString());
+    }
+    if (params?.status) {
+      searchParams.set('status', params.status);
+    }
+    if (params?.search) {
+      searchParams.set('search', params.search);
+    }
     return request<import('../types').PaginatedResponse<import('../types').Festival>>(
       `/admin/festivals?${searchParams.toString()}`
     );
@@ -70,13 +80,19 @@ export const festivalsApi = {
 // Ticket Categories
 export const ticketCategoriesApi = {
   getByFestival: (festivalId: string) =>
-    request<import('../types').TicketCategory[]>(`/admin/festivals/${festivalId}/ticket-categories`),
+    request<import('../types').TicketCategory[]>(
+      `/admin/festivals/${festivalId}/ticket-categories`
+    ),
   create: (festivalId: string, data: Partial<import('../types').TicketCategory>) =>
     request<import('../types').TicketCategory>(`/admin/festivals/${festivalId}/ticket-categories`, {
       method: 'POST',
       body: data,
     }),
-  update: (festivalId: string, categoryId: string, data: Partial<import('../types').TicketCategory>) =>
+  update: (
+    festivalId: string,
+    categoryId: string,
+    data: Partial<import('../types').TicketCategory>
+  ) =>
     request<import('../types').TicketCategory>(
       `/admin/festivals/${festivalId}/ticket-categories/${categoryId}`,
       { method: 'PUT', body: data }
@@ -89,11 +105,20 @@ export const ticketCategoriesApi = {
 
 // Tickets
 export const ticketsApi = {
-  getByFestival: (festivalId: string, params?: { page?: number; limit?: number; status?: string }) => {
+  getByFestival: (
+    festivalId: string,
+    params?: { page?: number; limit?: number; status?: string }
+  ) => {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.limit) searchParams.set('limit', params.limit.toString());
-    if (params?.status) searchParams.set('status', params.status);
+    if (params?.page) {
+      searchParams.set('page', params.page.toString());
+    }
+    if (params?.limit) {
+      searchParams.set('limit', params.limit.toString());
+    }
+    if (params?.status) {
+      searchParams.set('status', params.status);
+    }
     return request<import('../types').PaginatedResponse<import('../types').Ticket>>(
       `/admin/festivals/${festivalId}/tickets?${searchParams.toString()}`
     );
@@ -109,10 +134,18 @@ export const ticketsApi = {
 export const usersApi = {
   getAll: (params?: { page?: number; limit?: number; role?: string; search?: string }) => {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.limit) searchParams.set('limit', params.limit.toString());
-    if (params?.role) searchParams.set('role', params.role);
-    if (params?.search) searchParams.set('search', params.search);
+    if (params?.page) {
+      searchParams.set('page', params.page.toString());
+    }
+    if (params?.limit) {
+      searchParams.set('limit', params.limit.toString());
+    }
+    if (params?.role) {
+      searchParams.set('role', params.role);
+    }
+    if (params?.search) {
+      searchParams.set('search', params.search);
+    }
     return request<import('../types').PaginatedResponse<import('../types').User>>(
       `/admin/users?${searchParams.toString()}`
     );
@@ -131,9 +164,15 @@ export const staffApi = {
     request<import('../types').Staff[]>(`/admin/festivals/${festivalId}/staff`),
   getAll: (params?: { page?: number; limit?: number; role?: string }) => {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.limit) searchParams.set('limit', params.limit.toString());
-    if (params?.role) searchParams.set('role', params.role);
+    if (params?.page) {
+      searchParams.set('page', params.page.toString());
+    }
+    if (params?.limit) {
+      searchParams.set('limit', params.limit.toString());
+    }
+    if (params?.role) {
+      searchParams.set('role', params.role);
+    }
     return request<import('../types').PaginatedResponse<import('../types').Staff>>(
       `/admin/staff?${searchParams.toString()}`
     );
@@ -162,11 +201,21 @@ export const paymentsApi = {
     dateTo?: string;
   }) => {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.limit) searchParams.set('limit', params.limit.toString());
-    if (params?.status) searchParams.set('status', params.status);
-    if (params?.dateFrom) searchParams.set('dateFrom', params.dateFrom);
-    if (params?.dateTo) searchParams.set('dateTo', params.dateTo);
+    if (params?.page) {
+      searchParams.set('page', params.page.toString());
+    }
+    if (params?.limit) {
+      searchParams.set('limit', params.limit.toString());
+    }
+    if (params?.status) {
+      searchParams.set('status', params.status);
+    }
+    if (params?.dateFrom) {
+      searchParams.set('dateFrom', params.dateFrom);
+    }
+    if (params?.dateTo) {
+      searchParams.set('dateTo', params.dateTo);
+    }
     return request<import('../types').PaginatedResponse<import('../types').Payment>>(
       `/admin/payments?${searchParams.toString()}`
     );
@@ -183,10 +232,18 @@ export const paymentsApi = {
 export const ordersApi = {
   getAll: (params?: { page?: number; limit?: number; status?: string; festivalId?: string }) => {
     const searchParams = new URLSearchParams();
-    if (params?.page) searchParams.set('page', params.page.toString());
-    if (params?.limit) searchParams.set('limit', params.limit.toString());
-    if (params?.status) searchParams.set('status', params.status);
-    if (params?.festivalId) searchParams.set('festivalId', params.festivalId);
+    if (params?.page) {
+      searchParams.set('page', params.page.toString());
+    }
+    if (params?.limit) {
+      searchParams.set('limit', params.limit.toString());
+    }
+    if (params?.status) {
+      searchParams.set('status', params.status);
+    }
+    if (params?.festivalId) {
+      searchParams.set('festivalId', params.festivalId);
+    }
     return request<import('../types').PaginatedResponse<import('../types').Order>>(
       `/admin/orders?${searchParams.toString()}`
     );
@@ -204,4 +261,156 @@ export const authApi = {
   logout: () => request<void>('/admin/auth/logout', { method: 'POST' }),
   me: () => request<import('../types').User>('/admin/auth/me'),
   refreshToken: () => request<{ token: string }>('/admin/auth/refresh', { method: 'POST' }),
+};
+
+// Vendors
+export const vendorsApi = {
+  getByFestival: (festivalId: string) =>
+    request<import('../types').Vendor[]>(`/admin/festivals/${festivalId}/vendors`),
+  getById: (id: string) => request<import('../types').Vendor>(`/admin/vendors/${id}`),
+  create: (festivalId: string, data: import('../types').CreateVendorDto) =>
+    request<import('../types').Vendor>(`/admin/festivals/${festivalId}/vendors`, {
+      method: 'POST',
+      body: data,
+    }),
+  update: (id: string, data: import('../types').UpdateVendorDto) =>
+    request<import('../types').Vendor>(`/admin/vendors/${id}`, {
+      method: 'PUT',
+      body: data,
+    }),
+  delete: (id: string) => request<void>(`/admin/vendors/${id}`, { method: 'DELETE' }),
+  toggleOpen: (id: string, isOpen: boolean) =>
+    request<import('../types').Vendor>(`/admin/vendors/${id}/toggle-open`, {
+      method: 'POST',
+      body: { isOpen },
+    }),
+};
+
+// Camping
+export const campingApi = {
+  getByFestival: (festivalId: string) =>
+    request<import('../types').CampingZone[]>(`/admin/festivals/${festivalId}/camping`),
+  getById: (id: string) => request<import('../types').CampingZone>(`/admin/camping/${id}`),
+  create: (festivalId: string, data: import('../types').CreateCampingZoneDto) =>
+    request<import('../types').CampingZone>(`/admin/festivals/${festivalId}/camping`, {
+      method: 'POST',
+      body: data,
+    }),
+  update: (id: string, data: import('../types').UpdateCampingZoneDto) =>
+    request<import('../types').CampingZone>(`/admin/camping/${id}`, {
+      method: 'PUT',
+      body: data,
+    }),
+  delete: (id: string) => request<void>(`/admin/camping/${id}`, { method: 'DELETE' }),
+};
+
+// POIs (Points of Interest)
+export const poisApi = {
+  getByFestival: (festivalId: string) =>
+    request<import('../types').Poi[]>(`/admin/festivals/${festivalId}/pois`),
+  getById: (id: string) => request<import('../types').Poi>(`/admin/pois/${id}`),
+  create: (festivalId: string, data: import('../types').CreatePoiDto) =>
+    request<import('../types').Poi>(`/admin/festivals/${festivalId}/pois`, {
+      method: 'POST',
+      body: data,
+    }),
+  update: (id: string, data: import('../types').UpdatePoiDto) =>
+    request<import('../types').Poi>(`/admin/pois/${id}`, {
+      method: 'PUT',
+      body: data,
+    }),
+  delete: (id: string) => request<void>(`/admin/pois/${id}`, { method: 'DELETE' }),
+};
+
+// Artists
+export const artistsApi = {
+  getAll: (params?: { page?: number; limit?: number; search?: string; genre?: string }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.page) {
+      searchParams.set('page', params.page.toString());
+    }
+    if (params?.limit) {
+      searchParams.set('limit', params.limit.toString());
+    }
+    if (params?.search) {
+      searchParams.set('search', params.search);
+    }
+    if (params?.genre) {
+      searchParams.set('genre', params.genre);
+    }
+    return request<import('../types').PaginatedResponse<import('../types').Artist>>(
+      `/admin/artists?${searchParams.toString()}`
+    );
+  },
+  getByFestival: (festivalId: string) =>
+    request<import('../types').Artist[]>(`/admin/festivals/${festivalId}/artists`),
+  getById: (id: string) => request<import('../types').Artist>(`/admin/artists/${id}`),
+  getGenres: () => request<string[]>('/admin/artists/genres'),
+  create: (data: Partial<import('../types').Artist>) =>
+    request<import('../types').Artist>('/admin/artists', {
+      method: 'POST',
+      body: data,
+    }),
+  update: (id: string, data: Partial<import('../types').Artist>) =>
+    request<import('../types').Artist>(`/admin/artists/${id}`, {
+      method: 'PUT',
+      body: data,
+    }),
+  delete: (id: string) => request<void>(`/admin/artists/${id}`, { method: 'DELETE' }),
+};
+
+// Stages
+export const stagesApi = {
+  getByFestival: (festivalId: string) =>
+    request<import('../types').Stage[]>(`/admin/festivals/${festivalId}/stages`),
+  getById: (id: string) => request<import('../types').Stage>(`/admin/stages/${id}`),
+  create: (festivalId: string, data: import('../types').CreateStageDto) =>
+    request<import('../types').Stage>(`/admin/festivals/${festivalId}/stages`, {
+      method: 'POST',
+      body: data,
+    }),
+  update: (id: string, data: import('../types').UpdateStageDto) =>
+    request<import('../types').Stage>(`/admin/stages/${id}`, {
+      method: 'PUT',
+      body: data,
+    }),
+  delete: (id: string) => request<void>(`/admin/stages/${id}`, { method: 'DELETE' }),
+};
+
+// Lineup (Performance slots)
+export const lineupApi = {
+  getByFestival: (
+    festivalId: string,
+    params?: { stageId?: string; date?: string; includeCancelled?: boolean }
+  ) => {
+    const searchParams = new URLSearchParams();
+    if (params?.stageId) {
+      searchParams.set('stageId', params.stageId);
+    }
+    if (params?.date) {
+      searchParams.set('date', params.date);
+    }
+    if (params?.includeCancelled) {
+      searchParams.set('includeCancelled', 'true');
+    }
+    return request<import('../types').LineupSlot[]>(
+      `/admin/festivals/${festivalId}/lineup?${searchParams.toString()}`
+    );
+  },
+  getByStage: (stageId: string) =>
+    request<import('../types').LineupSlot[]>(`/admin/stages/${stageId}/lineup`),
+  getPerformanceById: (id: string) => request<import('../types').LineupSlot>(`/admin/lineup/${id}`),
+  createPerformance: (festivalId: string, data: import('../types').CreateLineupSlotDto) =>
+    request<import('../types').LineupSlot>(`/admin/festivals/${festivalId}/lineup`, {
+      method: 'POST',
+      body: data,
+    }),
+  updatePerformance: (id: string, data: Partial<import('../types').UpdateLineupSlotDto>) =>
+    request<import('../types').LineupSlot>(`/admin/lineup/${id}`, {
+      method: 'PUT',
+      body: data,
+    }),
+  deletePerformance: (id: string) => request<void>(`/admin/lineup/${id}`, { method: 'DELETE' }),
+  cancelPerformance: (id: string) =>
+    request<import('../types').LineupSlot>(`/admin/lineup/${id}/cancel`, { method: 'POST' }),
 };

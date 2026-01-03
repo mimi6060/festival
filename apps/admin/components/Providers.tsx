@@ -16,12 +16,16 @@ const ThemeContext = React.createContext<ThemeContextType | undefined>(undefined
 const THEME_STORAGE_KEY = 'festival-theme';
 
 function getSystemTheme(): 'light' | 'dark' {
-  if (typeof window === 'undefined') return 'light';
+  if (typeof window === 'undefined') {
+    return 'light';
+  }
   return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
 }
 
 function getStoredTheme(): Theme {
-  if (typeof window === 'undefined') return 'system';
+  if (typeof window === 'undefined') {
+    return 'system';
+  }
   const stored = localStorage.getItem(THEME_STORAGE_KEY);
   if (stored === 'light' || stored === 'dark' || stored === 'system') {
     return stored;
@@ -45,7 +49,9 @@ export function Providers({ children }: ProvidersProps) {
   }, []);
 
   React.useEffect(() => {
-    if (!mounted) return;
+    if (!mounted) {
+      return;
+    }
 
     const updateResolvedTheme = () => {
       const resolved = theme === 'system' ? getSystemTheme() : theme;
@@ -65,6 +71,7 @@ export function Providers({ children }: ProvidersProps) {
       mediaQuery.addEventListener('change', handleChange);
       return () => mediaQuery.removeEventListener('change', handleChange);
     }
+    return undefined;
   }, [theme, mounted]);
 
   const setTheme = React.useCallback((newTheme: Theme) => {

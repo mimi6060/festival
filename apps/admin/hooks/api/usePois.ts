@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { poisApi } from '../../lib/api';
-import type { Poi, CreatePoiDto, UpdatePoiDto } from '../../types';
+import type { CreatePoiDto, UpdatePoiDto } from '../../types';
 
 // Query Keys
 export const poiQueryKeys = {
@@ -89,26 +89,6 @@ export function useDeletePoi() {
       queryClient.removeQueries({ queryKey: poiQueryKeys.detail(id) });
       // Invalidate POIs list for this festival to refetch
       queryClient.invalidateQueries({ queryKey: poiQueryKeys.byFestival(festivalId) });
-    },
-  });
-}
-
-// Toggle POI active status mutation
-export function useTogglePoiActive() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({ id, isActive, festivalId }: { id: string; isActive: boolean; festivalId: string }) => {
-      const response = await poisApi.toggleActive(id, isActive);
-      return { ...response, festivalId };
-    },
-    onSuccess: (updatedPoi) => {
-      // Update the specific POI in cache
-      queryClient.setQueryData(poiQueryKeys.detail(updatedPoi.id), updatedPoi);
-      // Invalidate POIs list for this festival to refetch
-      if (updatedPoi.festivalId) {
-        queryClient.invalidateQueries({ queryKey: poiQueryKeys.byFestival(updatedPoi.festivalId) });
-      }
     },
   });
 }

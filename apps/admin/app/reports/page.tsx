@@ -23,7 +23,6 @@ import {
   PolarAngleAxis,
   PolarRadiusAxis,
   Radar,
-  Treemap,
   Scatter,
   ScatterChart,
   ZAxis,
@@ -48,7 +47,16 @@ type ReportPeriod = '7d' | '30d' | '90d' | '1y' | 'all';
 type ChartType = 'revenue' | 'tickets' | 'users' | 'cashless' | 'zones';
 
 // Color palette
-const COLORS = ['#0ea5e9', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#06b6d4', '#84cc16'];
+const COLORS = [
+  '#0ea5e9',
+  '#8b5cf6',
+  '#10b981',
+  '#f59e0b',
+  '#ef4444',
+  '#ec4899',
+  '#06b6d4',
+  '#84cc16',
+];
 
 // Generate mock data for advanced reports
 function generateCashlessData(days: number) {
@@ -141,8 +149,16 @@ function generateVendorSalesData() {
 }
 
 // Custom tooltip
-const CustomTooltip = ({ active, payload, label }: { active?: boolean; payload?: Array<{ name: string; value: number; color: string }>; label?: string }) => {
-  if (active && payload && payload.length) {
+const CustomTooltip = ({
+  active,
+  payload,
+  label,
+}: {
+  active?: boolean;
+  payload?: { name: string; value: number; color: string }[];
+  label?: string;
+}) => {
+  if (active && payload?.length) {
     return (
       <div className="bg-white px-4 py-3 rounded-lg shadow-lg border border-gray-200">
         <p className="text-sm font-medium text-gray-900 mb-2">{label}</p>
@@ -165,11 +181,16 @@ export default function ReportsPage() {
   // Generate data based on period
   const days = useMemo(() => {
     switch (period) {
-      case '7d': return 7;
-      case '30d': return 30;
-      case '90d': return 90;
-      case '1y': return 365;
-      default: return 365;
+      case '7d':
+        return 7;
+      case '30d':
+        return 30;
+      case '90d':
+        return 90;
+      case '1y':
+        return 365;
+      default:
+        return 365;
     }
   }, [period]);
 
@@ -191,26 +212,52 @@ export default function ReportsPage() {
     const previousTickets = currentTickets * 0.9;
     const currentCashless = cashlessData.reduce((sum, d) => sum + d.topups, 0);
     const previousCashless = currentCashless * 0.75;
-    const avgOccupancy = zoneData.reduce((sum, z) => sum + (z.current / z.capacity) * 100, 0) / zoneData.length;
+    const avgOccupancy =
+      zoneData.reduce((sum, z) => sum + (z.current / z.capacity) * 100, 0) / zoneData.length;
 
     return [
-      { label: 'Revenus totaux', value: currentRevenue, previousValue: previousRevenue, format: 'currency' },
-      { label: 'Billets vendus', value: currentTickets, previousValue: previousTickets, format: 'number' },
-      { label: 'Recharges cashless', value: currentCashless, previousValue: previousCashless, format: 'currency' },
-      { label: 'Taux occupation moyen', value: avgOccupancy, previousValue: 72, format: 'percentage' },
+      {
+        label: 'Revenus totaux',
+        value: currentRevenue,
+        previousValue: previousRevenue,
+        format: 'currency',
+      },
+      {
+        label: 'Billets vendus',
+        value: currentTickets,
+        previousValue: previousTickets,
+        format: 'number',
+      },
+      {
+        label: 'Recharges cashless',
+        value: currentCashless,
+        previousValue: previousCashless,
+        format: 'currency',
+      },
+      {
+        label: 'Taux occupation moyen',
+        value: avgOccupancy,
+        previousValue: 72,
+        format: 'percentage',
+      },
     ];
   }, [revenueData, ticketSalesData, cashlessData, zoneData]);
 
   const formatMetricValue = (metric: ReportMetric) => {
     switch (metric.format) {
-      case 'currency': return formatCurrency(metric.value);
-      case 'percentage': return `${metric.value.toFixed(1)}%`;
-      default: return formatNumber(metric.value);
+      case 'currency':
+        return formatCurrency(metric.value);
+      case 'percentage':
+        return `${metric.value.toFixed(1)}%`;
+      default:
+        return formatNumber(metric.value);
     }
   };
 
   const getPercentageChange = (current: number, previous: number) => {
-    if (previous === 0) return current > 0 ? 100 : 0;
+    if (previous === 0) {
+      return current > 0 ? 100 : 0;
+    }
     return ((current - previous) / previous) * 100;
   };
 
@@ -233,7 +280,9 @@ export default function ReportsPage() {
           >
             <option value="all">Tous les festivals</option>
             {mockFestivals.map((f) => (
-              <option key={f.id} value={f.id}>{f.name}</option>
+              <option key={f.id} value={f.id}>
+                {f.name}
+              </option>
             ))}
           </select>
 
@@ -266,12 +315,24 @@ export default function ReportsPage() {
             <div key={index} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
               <p className="text-sm text-gray-500 mb-1">{metric.label}</p>
               <p className="text-2xl font-bold text-gray-900">{formatMetricValue(metric)}</p>
-              <div className={cn(
-                'flex items-center gap-1 mt-2 text-sm font-medium',
-                isPositive ? 'text-green-600' : 'text-red-600'
-              )}>
-                <svg className={cn('w-4 h-4', !isPositive && 'rotate-180')} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+              <div
+                className={cn(
+                  'flex items-center gap-1 mt-2 text-sm font-medium',
+                  isPositive ? 'text-green-600' : 'text-red-600'
+                )}
+              >
+                <svg
+                  className={cn('w-4 h-4', !isPositive && 'rotate-180')}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 10l7-7m0 0l7 7m-7-7v18"
+                  />
                 </svg>
                 {Math.abs(change).toFixed(1)}% vs periode precedente
               </div>
@@ -394,8 +455,22 @@ export default function ReportsPage() {
                   />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend />
-                  <Line type="monotone" dataKey="newUsers" name="Nouveaux" stroke="#10b981" strokeWidth={2} dot={false} />
-                  <Line type="monotone" dataKey="activeUsers" name="Actifs" stroke="#f59e0b" strokeWidth={2} dot={false} />
+                  <Line
+                    type="monotone"
+                    dataKey="newUsers"
+                    name="Nouveaux"
+                    stroke="#10b981"
+                    strokeWidth={2}
+                    dot={false}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="activeUsers"
+                    name="Actifs"
+                    stroke="#f59e0b"
+                    strokeWidth={2}
+                    dot={false}
+                  />
                 </LineChart>
               ) : activeChart === 'cashless' ? (
                 <ComposedChart data={cashlessData}>
@@ -416,13 +491,31 @@ export default function ReportsPage() {
                   <Legend />
                   <Bar dataKey="topups" name="Recharges" fill="#10b981" radius={[4, 4, 0, 0]} />
                   <Bar dataKey="payments" name="Paiements" fill="#0ea5e9" radius={[4, 4, 0, 0]} />
-                  <Line type="monotone" dataKey="refunds" name="Remboursements" stroke="#ef4444" strokeWidth={2} />
+                  <Line
+                    type="monotone"
+                    dataKey="refunds"
+                    name="Remboursements"
+                    stroke="#ef4444"
+                    strokeWidth={2}
+                  />
                 </ComposedChart>
               ) : (
                 <BarChart data={zoneData} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" horizontal={false} />
-                  <XAxis type="number" tick={{ fill: '#6b7280', fontSize: 12 }} tickLine={false} axisLine={{ stroke: '#e5e7eb' }} />
-                  <YAxis dataKey="name" type="category" tick={{ fill: '#6b7280', fontSize: 12 }} tickLine={false} axisLine={false} width={100} />
+                  <XAxis
+                    type="number"
+                    tick={{ fill: '#6b7280', fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={{ stroke: '#e5e7eb' }}
+                  />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    tick={{ fill: '#6b7280', fontSize: 12 }}
+                    tickLine={false}
+                    axisLine={false}
+                    width={100}
+                  />
                   <Tooltip content={<CustomTooltip />} />
                   <Legend />
                   <Bar dataKey="current" name="Actuel" fill="#0ea5e9" radius={[0, 4, 4, 0]} />
@@ -448,14 +541,14 @@ export default function ReportsPage() {
                   paddingAngle={2}
                   dataKey="value"
                   nameKey="name"
-                  label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                  label={({ name, percent }) => `${name} (${((percent ?? 0) * 100).toFixed(0)}%)`}
                   labelLine={{ stroke: '#6b7280', strokeWidth: 1 }}
                 >
                   {revenueByCategoryData.map((_, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip formatter={(value: number) => formatCurrency(value)} />
+                <Tooltip formatter={(value) => formatCurrency(value as number)} />
               </PieChart>
             </ResponsiveContainer>
           </div>
@@ -478,12 +571,29 @@ export default function ReportsPage() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" vertical={false} />
-                <XAxis dataKey="hour" tick={{ fill: '#6b7280', fontSize: 10 }} tickLine={false} axisLine={{ stroke: '#e5e7eb' }} />
+                <XAxis
+                  dataKey="hour"
+                  tick={{ fill: '#6b7280', fontSize: 10 }}
+                  tickLine={false}
+                  axisLine={{ stroke: '#e5e7eb' }}
+                />
                 <YAxis tick={{ fill: '#6b7280', fontSize: 12 }} tickLine={false} axisLine={false} />
                 <Tooltip content={<CustomTooltip />} />
                 <Legend />
-                <Area type="monotone" dataKey="entries" name="Entrees" stroke="#10b981" fill="url(#entriesGradient)" />
-                <Area type="monotone" dataKey="exits" name="Sorties" stroke="#ef4444" fill="url(#exitsGradient)" />
+                <Area
+                  type="monotone"
+                  dataKey="entries"
+                  name="Entrees"
+                  stroke="#10b981"
+                  fill="url(#entriesGradient)"
+                />
+                <Area
+                  type="monotone"
+                  dataKey="exits"
+                  name="Sorties"
+                  stroke="#ef4444"
+                  fill="url(#exitsGradient)"
+                />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -497,9 +607,25 @@ export default function ReportsPage() {
               <RadarChart data={performanceRadarData}>
                 <PolarGrid stroke="#e5e7eb" />
                 <PolarAngleAxis dataKey="metric" tick={{ fill: '#6b7280', fontSize: 12 }} />
-                <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#6b7280', fontSize: 10 }} />
-                <Radar name="Actuel" dataKey="current" stroke="#0ea5e9" fill="#0ea5e9" fillOpacity={0.5} />
-                <Radar name="Objectif" dataKey="target" stroke="#e5e7eb" fill="#e5e7eb" fillOpacity={0.2} />
+                <PolarRadiusAxis
+                  angle={30}
+                  domain={[0, 100]}
+                  tick={{ fill: '#6b7280', fontSize: 10 }}
+                />
+                <Radar
+                  name="Actuel"
+                  dataKey="current"
+                  stroke="#0ea5e9"
+                  fill="#0ea5e9"
+                  fillOpacity={0.5}
+                />
+                <Radar
+                  name="Objectif"
+                  dataKey="target"
+                  stroke="#e5e7eb"
+                  fill="#e5e7eb"
+                  fillOpacity={0.2}
+                />
                 <Legend />
                 <Tooltip />
               </RadarChart>
@@ -531,9 +657,13 @@ export default function ReportsPage() {
                 <ZAxis type="number" dataKey="z" range={[100, 500]} name="Satisfaction" />
                 <Tooltip
                   content={({ payload }) => {
-                    if (payload && payload.length) {
-                      const data = payload[0]?.payload as { name: string; x: number; y: number; z: number } | undefined;
-                      if (!data) return null;
+                    if (payload?.length) {
+                      const data = payload[0]?.payload as
+                        | { name: string; x: number; y: number; z: number }
+                        | undefined;
+                      if (!data) {
+                        return null;
+                      }
                       return (
                         <div className="bg-white px-4 py-3 rounded-lg shadow-lg border border-gray-200">
                           <p className="font-medium text-gray-900">{data.name}</p>
@@ -564,10 +694,18 @@ export default function ReportsPage() {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Categorie</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Vendus</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Revenus</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Taux</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Categorie
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                    Vendus
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                    Revenus
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                    Taux
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
@@ -575,12 +713,19 @@ export default function ReportsPage() {
                   <tr key={index} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center gap-2">
-                        <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
+                        <div
+                          className="w-3 h-3 rounded-full"
+                          style={{ backgroundColor: COLORS[index % COLORS.length] }}
+                        />
                         <span className="text-sm font-medium text-gray-900">{cat.name}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-600">{formatNumber(cat.sold)}</td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">{formatCurrency(cat.value)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-600">
+                      {formatNumber(cat.sold)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium text-gray-900">
+                      {formatCurrency(cat.value)}
+                    </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <div className="flex items-center justify-end gap-2">
                         <div className="w-16 bg-gray-200 rounded-full h-2">
@@ -589,7 +734,9 @@ export default function ReportsPage() {
                             style={{ width: `${(cat.sold / 15230) * 100}%` }}
                           />
                         </div>
-                        <span className="text-sm text-gray-600">{((cat.sold / 15230) * 100).toFixed(0)}%</span>
+                        <span className="text-sm text-gray-600">
+                          {((cat.sold / 15230) * 100).toFixed(0)}%
+                        </span>
                       </div>
                     </td>
                   </tr>
@@ -608,30 +755,58 @@ export default function ReportsPage() {
             <table className="w-full">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Zone</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actuel</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Capacite</th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Occupation</th>
+                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                    Zone
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                    Actuel
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                    Capacite
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                    Occupation
+                  </th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {zoneData.map((zone, index) => {
                   const occupancyPercent = (zone.current / zone.capacity) * 100;
-                  const occupancyColor = occupancyPercent > 90 ? 'bg-red-500' : occupancyPercent > 70 ? 'bg-yellow-500' : 'bg-green-500';
+                  const occupancyColor =
+                    occupancyPercent > 90
+                      ? 'bg-red-500'
+                      : occupancyPercent > 70
+                        ? 'bg-yellow-500'
+                        : 'bg-green-500';
                   return (
                     <tr key={index} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{zone.name}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-600">{formatNumber(zone.current)}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-600">{formatNumber(zone.capacity)}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {zone.name}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-600">
+                        {formatNumber(zone.current)}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm text-gray-600">
+                        {formatNumber(zone.capacity)}
+                      </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
                         <div className="flex items-center justify-end gap-2">
                           <div className="w-16 bg-gray-200 rounded-full h-2">
-                            <div className={cn('h-2 rounded-full', occupancyColor)} style={{ width: `${occupancyPercent}%` }} />
+                            <div
+                              className={cn('h-2 rounded-full', occupancyColor)}
+                              style={{ width: `${occupancyPercent}%` }}
+                            />
                           </div>
-                          <span className={cn(
-                            'text-sm font-medium',
-                            occupancyPercent > 90 ? 'text-red-600' : occupancyPercent > 70 ? 'text-yellow-600' : 'text-green-600'
-                          )}>
+                          <span
+                            className={cn(
+                              'text-sm font-medium',
+                              occupancyPercent > 90
+                                ? 'text-red-600'
+                                : occupancyPercent > 70
+                                  ? 'text-yellow-600'
+                                  : 'text-green-600'
+                            )}
+                          >
                             {occupancyPercent.toFixed(0)}%
                           </span>
                         </div>

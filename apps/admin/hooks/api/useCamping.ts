@@ -2,7 +2,7 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { campingApi } from '../../lib/api';
-import type { CampingZone, CreateCampingZoneDto, UpdateCampingZoneDto } from '../../types';
+import type { CreateCampingZoneDto, UpdateCampingZoneDto } from '../../types';
 
 // Query Keys
 export const campingQueryKeys = {
@@ -15,10 +15,7 @@ export const campingQueryKeys = {
 export function useCampingZones(festivalId: string) {
   return useQuery({
     queryKey: campingQueryKeys.zones(festivalId),
-    queryFn: async () => {
-      const response = await campingApi.getZones(festivalId);
-      return response;
-    },
+    queryFn: () => campingApi.getByFestival(festivalId),
     enabled: !!festivalId,
     staleTime: 2 * 60 * 1000, // 2 minutes
   });
@@ -28,10 +25,7 @@ export function useCampingZones(festivalId: string) {
 export function useCampingZone(id: string) {
   return useQuery({
     queryKey: campingQueryKeys.zone(id),
-    queryFn: async () => {
-      const response = await campingApi.getZone(id);
-      return response;
-    },
+    queryFn: () => campingApi.getById(id),
     enabled: !!id,
     staleTime: 5 * 60 * 1000, // 5 minutes
   });
@@ -42,12 +36,9 @@ export function useCreateCampingZone() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ festivalId, data }: { festivalId: string; data: CreateCampingZoneDto }) => {
-      const response = await campingApi.createZone(festivalId, data);
-      return response;
-    },
+    mutationFn: ({ festivalId, data }: { festivalId: string; data: CreateCampingZoneDto }) =>
+      campingApi.create(festivalId, data),
     onSuccess: (newZone) => {
-      // Invalidate camping zones list to refetch
       queryClient.invalidateQueries({ queryKey: campingQueryKeys.zones(newZone.festivalId) });
     },
   });
@@ -58,14 +49,10 @@ export function useUpdateCampingZone() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: UpdateCampingZoneDto }) => {
-      const response = await campingApi.updateZone(id, data);
-      return response;
-    },
+    mutationFn: ({ id, data }: { id: string; data: UpdateCampingZoneDto }) =>
+      campingApi.update(id, data),
     onSuccess: (updatedZone) => {
-      // Update the specific zone in cache
       queryClient.setQueryData(campingQueryKeys.zone(updatedZone.id), updatedZone);
-      // Invalidate camping zones list to refetch
       queryClient.invalidateQueries({ queryKey: campingQueryKeys.zones(updatedZone.festivalId) });
     },
   });
@@ -77,13 +64,11 @@ export function useDeleteCampingZone() {
 
   return useMutation({
     mutationFn: async ({ id, festivalId }: { id: string; festivalId: string }) => {
-      await campingApi.deleteZone(id);
+      await campingApi.delete(id);
       return { id, festivalId };
     },
     onSuccess: ({ id, festivalId }) => {
-      // Remove the specific zone from cache
       queryClient.removeQueries({ queryKey: campingQueryKeys.zone(id) });
-      // Invalidate camping zones list to refetch
       queryClient.invalidateQueries({ queryKey: campingQueryKeys.zones(festivalId) });
     },
   });

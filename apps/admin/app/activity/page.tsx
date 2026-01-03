@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { cn, formatDateTime, formatDate } from '../../lib/utils';
+import { cn, formatDateTime } from '../../lib/utils';
 import { ExportButton } from '../../components/export';
 import type { ExportColumn } from '../../lib/export';
 
@@ -16,7 +16,16 @@ interface ActivityLog {
   action: string;
   actionType: 'create' | 'update' | 'delete' | 'read' | 'login' | 'logout' | 'export' | 'import';
   resource: string;
-  resourceType: 'user' | 'festival' | 'ticket' | 'payment' | 'cashless' | 'zone' | 'staff' | 'vendor' | 'system';
+  resourceType:
+    | 'user'
+    | 'festival'
+    | 'ticket'
+    | 'payment'
+    | 'cashless'
+    | 'zone'
+    | 'staff'
+    | 'vendor'
+    | 'system';
   resourceId?: string;
   details?: string;
   metadata?: Record<string, unknown>;
@@ -238,7 +247,10 @@ const mockActivityLogs: ActivityLog[] = [
 ];
 
 // Config
-const actionTypeConfig: Record<ActivityLog['actionType'], { label: string; icon: string; color: string }> = {
+const actionTypeConfig: Record<
+  ActivityLog['actionType'],
+  { label: string; icon: string; color: string }
+> = {
   create: { label: 'Creation', icon: '+', color: 'bg-green-100 text-green-700' },
   update: { label: 'Modification', icon: 'e', color: 'bg-blue-100 text-blue-700' },
   delete: { label: 'Suppression', icon: '-', color: 'bg-red-100 text-red-700' },
@@ -287,8 +299,12 @@ const activityExportColumns: ExportColumn<Record<string, unknown>>[] = [
 export default function ActivityLogsPage() {
   const [logs] = useState<ActivityLog[]>(mockActivityLogs);
   const [searchQuery, setSearchQuery] = useState('');
-  const [actionTypeFilter, setActionTypeFilter] = useState<ActivityLog['actionType'] | 'all'>('all');
-  const [resourceTypeFilter, setResourceTypeFilter] = useState<ActivityLog['resourceType'] | 'all'>('all');
+  const [actionTypeFilter, setActionTypeFilter] = useState<ActivityLog['actionType'] | 'all'>(
+    'all'
+  );
+  const [resourceTypeFilter, setResourceTypeFilter] = useState<ActivityLog['resourceType'] | 'all'>(
+    'all'
+  );
   const [statusFilter, setStatusFilter] = useState<ActivityLog['status'] | 'all'>('all');
   const [dateRange, setDateRange] = useState<{ start: string; end: string }>({
     start: '',
@@ -308,29 +324,41 @@ export default function ActivityLogsPage() {
           log.userEmail.toLowerCase().includes(query) ||
           log.resource.toLowerCase().includes(query) ||
           (log.details?.toLowerCase().includes(query) ?? false);
-        if (!matchesSearch) return false;
+        if (!matchesSearch) {
+          return false;
+        }
       }
 
       // Action type filter
-      if (actionTypeFilter !== 'all' && log.actionType !== actionTypeFilter) return false;
+      if (actionTypeFilter !== 'all' && log.actionType !== actionTypeFilter) {
+        return false;
+      }
 
       // Resource type filter
-      if (resourceTypeFilter !== 'all' && log.resourceType !== resourceTypeFilter) return false;
+      if (resourceTypeFilter !== 'all' && log.resourceType !== resourceTypeFilter) {
+        return false;
+      }
 
       // Status filter
-      if (statusFilter !== 'all' && log.status !== statusFilter) return false;
+      if (statusFilter !== 'all' && log.status !== statusFilter) {
+        return false;
+      }
 
       // Date range filter
       if (dateRange.start) {
         const logDate = new Date(log.timestamp);
         const startDate = new Date(dateRange.start);
-        if (logDate < startDate) return false;
+        if (logDate < startDate) {
+          return false;
+        }
       }
       if (dateRange.end) {
         const logDate = new Date(log.timestamp);
         const endDate = new Date(dateRange.end);
         endDate.setHours(23, 59, 59, 999);
-        if (logDate > endDate) return false;
+        if (logDate > endDate) {
+          return false;
+        }
       }
 
       return true;
@@ -364,9 +392,7 @@ export default function ActivityLogsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Journal d'Activite</h1>
-          <p className="text-gray-500 mt-1">
-            Suivi des actions et evenements du systeme
-          </p>
+          <p className="text-gray-500 mt-1">Suivi des actions et evenements du systeme</p>
         </div>
         <ExportButton
           data={filteredLogs as unknown as Record<string, unknown>[]}
@@ -412,7 +438,9 @@ export default function ActivityLogsPage() {
           {/* Action Type */}
           <select
             value={actionTypeFilter}
-            onChange={(e) => setActionTypeFilter(e.target.value as ActivityLog['actionType'] | 'all')}
+            onChange={(e) =>
+              setActionTypeFilter(e.target.value as ActivityLog['actionType'] | 'all')
+            }
             className="input-field"
           >
             <option value="all">Tous les types</option>
@@ -426,7 +454,9 @@ export default function ActivityLogsPage() {
           {/* Resource Type */}
           <select
             value={resourceTypeFilter}
-            onChange={(e) => setResourceTypeFilter(e.target.value as ActivityLog['resourceType'] | 'all')}
+            onChange={(e) =>
+              setResourceTypeFilter(e.target.value as ActivityLog['resourceType'] | 'all')
+            }
             className="input-field"
           >
             <option value="all">Toutes ressources</option>
@@ -467,12 +497,24 @@ export default function ActivityLogsPage() {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date/Heure</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Utilisateur</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Action</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Ressource</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Statut</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Date/Heure
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Utilisateur
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Action
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Ressource
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Statut
+                </th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Details
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -494,7 +536,12 @@ export default function ActivityLogsPage() {
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
-                        <span className={cn('px-2 py-0.5 text-xs font-medium rounded', actionTypeConfig[log.actionType].color)}>
+                        <span
+                          className={cn(
+                            'px-2 py-0.5 text-xs font-medium rounded',
+                            actionTypeConfig[log.actionType].color
+                          )}
+                        >
                           {actionTypeConfig[log.actionType].label}
                         </span>
                         <span className="text-sm text-gray-700">{log.action}</span>
@@ -502,22 +549,34 @@ export default function ActivityLogsPage() {
                     </td>
                     <td className="px-4 py-4">
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-gray-400">[{resourceTypeConfig[log.resourceType].label}]</span>
+                        <span className="text-xs text-gray-400">
+                          [{resourceTypeConfig[log.resourceType].label}]
+                        </span>
                         <span className="text-sm text-gray-700">{log.resource}</span>
                       </div>
                     </td>
                     <td className="px-4 py-4 whitespace-nowrap">
-                      <span className={cn(
-                        'px-2 py-0.5 text-xs font-medium rounded-full',
-                        log.status === 'success' ? 'bg-green-100 text-green-700' :
-                        log.status === 'failure' ? 'bg-red-100 text-red-700' :
-                        'bg-yellow-100 text-yellow-700'
-                      )}>
-                        {log.status === 'success' ? 'Succes' : log.status === 'failure' ? 'Echec' : 'En cours'}
+                      <span
+                        className={cn(
+                          'px-2 py-0.5 text-xs font-medium rounded-full',
+                          log.status === 'success'
+                            ? 'bg-green-100 text-green-700'
+                            : log.status === 'failure'
+                              ? 'bg-red-100 text-red-700'
+                              : 'bg-yellow-100 text-yellow-700'
+                        )}
+                      >
+                        {log.status === 'success'
+                          ? 'Succes'
+                          : log.status === 'failure'
+                            ? 'Echec'
+                            : 'En cours'}
                       </span>
                     </td>
                     <td className="px-4 py-4">
-                      <p className="text-sm text-gray-500 truncate max-w-xs">{log.details || '-'}</p>
+                      <p className="text-sm text-gray-500 truncate max-w-xs">
+                        {log.details || '-'}
+                      </p>
                     </td>
                   </tr>
                 ))
@@ -544,7 +603,12 @@ export default function ActivityLogsPage() {
                 className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -553,17 +617,27 @@ export default function ActivityLogsPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <p className="text-xs text-gray-500 uppercase mb-1">Date/Heure</p>
-                  <p className="text-sm font-medium text-gray-900">{formatDateTime(selectedLog.timestamp)}</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {formatDateTime(selectedLog.timestamp)}
+                  </p>
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 uppercase mb-1">Statut</p>
-                  <span className={cn(
-                    'px-2 py-0.5 text-xs font-medium rounded-full',
-                    selectedLog.status === 'success' ? 'bg-green-100 text-green-700' :
-                    selectedLog.status === 'failure' ? 'bg-red-100 text-red-700' :
-                    'bg-yellow-100 text-yellow-700'
-                  )}>
-                    {selectedLog.status === 'success' ? 'Succes' : selectedLog.status === 'failure' ? 'Echec' : 'En cours'}
+                  <span
+                    className={cn(
+                      'px-2 py-0.5 text-xs font-medium rounded-full',
+                      selectedLog.status === 'success'
+                        ? 'bg-green-100 text-green-700'
+                        : selectedLog.status === 'failure'
+                          ? 'bg-red-100 text-red-700'
+                          : 'bg-yellow-100 text-yellow-700'
+                    )}
+                  >
+                    {selectedLog.status === 'success'
+                      ? 'Succes'
+                      : selectedLog.status === 'failure'
+                        ? 'Echec'
+                        : 'En cours'}
                   </span>
                 </div>
               </div>
@@ -579,7 +653,12 @@ export default function ActivityLogsPage() {
                     <p className="text-sm font-medium text-gray-900">{selectedLog.userName}</p>
                     <p className="text-xs text-gray-500">{selectedLog.userEmail}</p>
                   </div>
-                  <span className={cn('ml-auto px-2 py-0.5 text-xs font-medium rounded', roleConfig[selectedLog.userRole].color)}>
+                  <span
+                    className={cn(
+                      'ml-auto px-2 py-0.5 text-xs font-medium rounded',
+                      roleConfig[selectedLog.userRole].color
+                    )}
+                  >
                     {roleConfig[selectedLog.userRole].label}
                   </span>
                 </div>
@@ -593,7 +672,12 @@ export default function ActivityLogsPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 uppercase mb-1">Type</p>
-                  <span className={cn('px-2 py-0.5 text-xs font-medium rounded', actionTypeConfig[selectedLog.actionType].color)}>
+                  <span
+                    className={cn(
+                      'px-2 py-0.5 text-xs font-medium rounded',
+                      actionTypeConfig[selectedLog.actionType].color
+                    )}
+                  >
                     {actionTypeConfig[selectedLog.actionType].label}
                   </span>
                 </div>
@@ -607,7 +691,9 @@ export default function ActivityLogsPage() {
                 </div>
                 <div>
                   <p className="text-xs text-gray-500 uppercase mb-1">Type ressource</p>
-                  <p className="text-sm text-gray-700">{resourceTypeConfig[selectedLog.resourceType].label}</p>
+                  <p className="text-sm text-gray-700">
+                    {resourceTypeConfig[selectedLog.resourceType].label}
+                  </p>
                 </div>
               </div>
 
@@ -615,7 +701,9 @@ export default function ActivityLogsPage() {
               {selectedLog.details && (
                 <div>
                   <p className="text-xs text-gray-500 uppercase mb-1">Details</p>
-                  <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">{selectedLog.details}</p>
+                  <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
+                    {selectedLog.details}
+                  </p>
                 </div>
               )}
 
@@ -635,7 +723,9 @@ export default function ActivityLogsPage() {
                   )}
                   <div className="col-span-2">
                     <p className="text-gray-500">User Agent</p>
-                    <p className="font-mono text-gray-900 text-xs break-all">{selectedLog.userAgent}</p>
+                    <p className="font-mono text-gray-900 text-xs break-all">
+                      {selectedLog.userAgent}
+                    </p>
                   </div>
                 </div>
               </div>

@@ -9,13 +9,8 @@ import {
   cashlessExportColumns,
   staffExportColumns,
 } from '../../lib/export';
-import {
-  mockUsers,
-  mockFestivals,
-  mockOrders,
-  mockStaff,
-} from '../../lib/mock-data';
-import { formatCurrency, formatDateTime, cn } from '../../lib/utils';
+import { mockUsers, mockFestivals, mockOrders, mockStaff } from '../../lib/mock-data';
+import { formatDateTime, cn } from '../../lib/utils';
 
 // Types for export configurations
 interface ExportConfig {
@@ -24,7 +19,7 @@ interface ExportConfig {
   description: string;
   icon: string;
   category: 'sales' | 'users' | 'operations' | 'finance';
-  columns: ReturnType<typeof userExportColumns>;
+  columns: typeof userExportColumns;
   getData: () => Record<string, unknown>[];
   recordCount: number;
 }
@@ -109,8 +104,7 @@ export default function ExportsPage() {
         icon: '💳',
         category: 'finance',
         columns: cashlessExportColumns,
-        getData: () =>
-          mockCashlessTransactions as unknown as Record<string, unknown>[],
+        getData: () => mockCashlessTransactions as unknown as Record<string, unknown>[],
         recordCount: mockCashlessTransactions.length,
       },
       {
@@ -129,10 +123,10 @@ export default function ExportsPage() {
 
   // Filter by category
   const filteredConfigs = useMemo(() => {
-    if (selectedCategory === 'all') return exportConfigs;
-    return exportConfigs.filter(
-      (config) => config.category === selectedCategory
-    );
+    if (selectedCategory === 'all') {
+      return exportConfigs;
+    }
+    return exportConfigs.filter((config) => config.category === selectedCategory);
   }, [exportConfigs, selectedCategory]);
 
   // Categories
@@ -157,12 +151,8 @@ export default function ExportsPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">
-            Centre d'Export
-          </h1>
-          <p className="text-gray-500 mt-1">
-            Exportez vos donnees en CSV, Excel ou JSON
-          </p>
+          <h1 className="text-2xl font-bold text-gray-900">Centre d'Export</h1>
+          <p className="text-gray-500 mt-1">Exportez vos donnees en CSV, Excel ou JSON</p>
         </div>
       </div>
 
@@ -197,9 +187,7 @@ export default function ExportsPage() {
                   {config.icon}
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">
-                    {config.name}
-                  </h3>
+                  <h3 className="text-lg font-semibold text-gray-900">{config.name}</h3>
                   <p className="text-sm text-gray-500">
                     {config.recordCount} enregistrement
                     {config.recordCount > 1 ? 's' : ''}
@@ -218,9 +206,7 @@ export default function ExportsPage() {
                 data={config.getData()}
                 columns={config.columns}
                 filename={config.id}
-                onExportComplete={(format) =>
-                  handleExportComplete(config.name, format)
-                }
+                onExportComplete={(format) => handleExportComplete(config.name, format)}
               />
             </div>
           </div>
@@ -247,9 +233,7 @@ export default function ExportsPage() {
               </svg>
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">
-                {exportConfigs.length}
-              </p>
+              <p className="text-2xl font-bold text-gray-900">{exportConfigs.length}</p>
               <p className="text-sm text-gray-500">Types d'export</p>
             </div>
           </div>
@@ -273,9 +257,7 @@ export default function ExportsPage() {
               </svg>
             </div>
             <div>
-              <p className="text-2xl font-bold text-gray-900">
-                {exportHistory.length}
-              </p>
+              <p className="text-2xl font-bold text-gray-900">{exportHistory.length}</p>
               <p className="text-sm text-gray-500">Exports cette session</p>
             </div>
           </div>
@@ -312,16 +294,11 @@ export default function ExportsPage() {
       {exportHistory.length > 0 && (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Historique des exports
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900">Historique des exports</h3>
           </div>
           <div className="divide-y divide-gray-100">
             {exportHistory.map((item, index) => (
-              <div
-                key={index}
-                className="px-6 py-4 flex items-center justify-between"
-              >
+              <div key={index} className="px-6 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 bg-green-50 rounded-full flex items-center justify-center">
                     <svg
@@ -339,17 +316,11 @@ export default function ExportsPage() {
                     </svg>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">
-                      {item.name}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      Format: {item.format.toUpperCase()}
-                    </p>
+                    <p className="text-sm font-medium text-gray-900">{item.name}</p>
+                    <p className="text-xs text-gray-500">Format: {item.format.toUpperCase()}</p>
                   </div>
                 </div>
-                <span className="text-xs text-gray-400">
-                  {formatDateTime(item.date)}
-                </span>
+                <span className="text-xs text-gray-400">{formatDateTime(item.date)}</span>
               </div>
             ))}
           </div>
@@ -358,29 +329,24 @@ export default function ExportsPage() {
 
       {/* Help Section */}
       <div className="bg-blue-50 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-blue-900 mb-2">
-          Aide a l'export
-        </h3>
+        <h3 className="text-lg font-semibold text-blue-900 mb-2">Aide a l'export</h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm text-blue-800">
           <div>
             <p className="font-medium mb-1">CSV</p>
             <p className="text-blue-600">
-              Format universel compatible avec Excel, Google Sheets et la
-              plupart des logiciels.
+              Format universel compatible avec Excel, Google Sheets et la plupart des logiciels.
             </p>
           </div>
           <div>
             <p className="font-medium mb-1">Excel</p>
             <p className="text-blue-600">
-              Format natif Microsoft Excel avec mise en forme automatique des
-              en-tetes.
+              Format natif Microsoft Excel avec mise en forme automatique des en-tetes.
             </p>
           </div>
           <div>
             <p className="font-medium mb-1">JSON</p>
             <p className="text-blue-600">
-              Format technique pour integration avec d'autres systemes et
-              APIs.
+              Format technique pour integration avec d'autres systemes et APIs.
             </p>
           </div>
         </div>
