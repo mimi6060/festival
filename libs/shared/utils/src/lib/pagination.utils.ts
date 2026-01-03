@@ -111,6 +111,30 @@ export function createPaginatedResponse<T>(
 }
 
 /**
+ * Simple paginate helper for API responses
+ * Returns data with meta object containing pagination info
+ */
+export function paginate<T>(
+  data: T[],
+  total: number,
+  page: number,
+  limit: number
+): { data: T[]; meta: { total: number; page: number; limit: number; totalPages: number; hasNextPage: boolean; hasPrevPage: boolean } } {
+  const totalPages = Math.ceil(total / limit);
+  return {
+    data,
+    meta: {
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    },
+  };
+}
+
+/**
  * Paginate an array in memory
  */
 export function paginateArray<T>(

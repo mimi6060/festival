@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Body,
-  Param,
   Query,
   UseGuards,
   Request,
@@ -12,6 +11,7 @@ import {
 } from '@nestjs/common';
 import { CashlessService, TopupDto, CashlessPaymentDto, RefundDto } from './cashless.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { PaginationDto } from '../../common/dto/pagination.dto';
 
 @Controller('api/wallet')
 export class CashlessController {
@@ -67,14 +67,12 @@ export class CashlessController {
   async getTransactions(
     @Request() req,
     @Query('festivalId') festivalId?: string,
-    @Query('limit') limit?: string,
-    @Query('offset') offset?: string,
+    @Query() pagination?: PaginationDto,
   ) {
     return this.cashlessService.getTransactionHistory(
       req.user.id,
       festivalId,
-      limit ? parseInt(limit, 10) : 50,
-      offset ? parseInt(offset, 10) : 0,
+      pagination,
     );
   }
 

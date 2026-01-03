@@ -24,6 +24,7 @@ import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserRole, UserStatus, User } from '@prisma/client';
 import { RegisterDto, LoginDto, RefreshTokenDto, ResetPasswordDto, ChangePasswordDto } from './dto';
+import { EmailService } from '../email/email.service';
 
 // ============================================================================
 // Types
@@ -81,7 +82,8 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly emailService: EmailService
   ) {
     // Token expiration in seconds - fail fast if not configured
     this.accessTokenExpiresIn = this.configService.getOrThrow<number>('JWT_ACCESS_EXPIRES_IN');
@@ -135,7 +137,8 @@ export class AuthService {
 
     this.logger.log(`New user registered: ${normalizedEmail}`);
 
-    // TODO: Send verification email
+    // Send verification email
+    await this.sendVerificationEmail(user.id, user.email, user.firstName);
 
     return {
       user: this.sanitizeUser(user),
@@ -251,17 +254,15 @@ export class AuthService {
   /**
    * Verify email with token
    */
-  async verifyEmail(_token: string): Promise<void> {
-    // In a real implementation, this would:
-    // 1. Verify the token from a verification_tokens table
-    // 2. Update the user's emailVerified status
-    // 3. Activate the account
+  async verifyEmail(token: string): Promise<void> {
+    // Hash the received token to compare with stored hash
+    const hashedToken = crypto.createHash('sha256').update(token).digest('hex');
 
-    // For now, this is a placeholder
+    // Find user with matching token that hasn't expired
     const user = await this.prisma.user.findFirst({
       where: {
-        status: UserStatus.PENDING_VERIFICATION,
-        // In reality: verification token would be checked
+        emailVerificationToken: hashedToken,
+        emailVerificationExpires: { gt: new Date() },
       },
     });
 
@@ -269,11 +270,15 @@ export class AuthService {
       throw new BadRequestException('Invalid or expired verification token');
     }
 
+    // Update user: mark as verified and activate account
     await this.prisma.user.update({
       where: { id: user.id },
       data: {
         emailVerified: true,
+        emailVerifiedAt: new Date(),
         status: UserStatus.ACTIVE,
+        emailVerificationToken: null,
+        emailVerificationExpires: null,
       },
     });
 
@@ -314,9 +319,17 @@ export class AuthService {
       },
     });
 
-    // TODO: Send email with resetToken (unhashed) to user
-    // The resetToken should be sent in the email as a link: /reset-password?token={resetToken}
-    this.logger.log(`Password reset token generated for: ${normalizedEmail}`);
+    // Send password reset email with the unhashed token
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
+    const resetUrl = `${frontendUrl}/reset-password?token=${resetToken}`;
+
+    await this.emailService.sendPasswordResetEmail(user.email, {
+      firstName: user.firstName,
+      resetUrl,
+      expiresIn: '1 hour',
+    });
+
+    this.logger.log(`Password reset email sent to: ${normalizedEmail}`);
   }
 
   /**
@@ -421,6 +434,75 @@ export class AuthService {
     }
 
     return this.sanitizeUser(user);
+  }
+
+  /**
+   * Send verification email to user
+   */
+  async sendVerificationEmail(userId: string, email: string, firstName: string): Promise<void> {
+    // Generate a random verification token (32 bytes = 64 hex chars)
+    const verificationToken = crypto.randomBytes(32).toString('hex');
+
+    // Hash the token before storing in database
+    const hashedToken = crypto.createHash('sha256').update(verificationToken).digest('hex');
+
+    // Token expires in 24 hours
+    const tokenExpiry = new Date(Date.now() + 24 * 60 * 60 * 1000);
+
+    // Store hashed token and expiry in database
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        emailVerificationToken: hashedToken,
+        emailVerificationExpires: tokenExpiry,
+      },
+    });
+
+    // Send verification email with the unhashed token
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
+    const verificationUrl = `${frontendUrl}/verify-email?token=${verificationToken}`;
+
+    await this.emailService.sendVerificationEmail(email, {
+      firstName,
+      verificationUrl,
+      expiresIn: '24 hours',
+    });
+
+    this.logger.log(`Verification email sent to: ${email}`);
+  }
+
+  /**
+   * Resend verification email (with rate limiting)
+   */
+  async resendVerificationEmail(email: string): Promise<void> {
+    const normalizedEmail = email.toLowerCase().trim();
+
+    const user = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (!user) {
+      // Don't reveal if email exists - always return success
+      this.logger.log(`Resend verification requested for non-existent email: ${normalizedEmail}`);
+      return;
+    }
+
+    if (user.emailVerified) {
+      throw new BadRequestException('Email is already verified');
+    }
+
+    // Check if a token was recently sent (within the last 10 minutes) to prevent spam
+    if (user.emailVerificationExpires) {
+      const tokenAge = Date.now() - (user.emailVerificationExpires.getTime() - 24 * 60 * 60 * 1000);
+      const tenMinutesInMs = 10 * 60 * 1000;
+
+      if (tokenAge < tenMinutesInMs) {
+        throw new BadRequestException('Verification email was recently sent. Please wait a few minutes before requesting again.');
+      }
+    }
+
+    // Send new verification email
+    await this.sendVerificationEmail(user.id, user.email, user.firstName);
   }
 
   // ============================================================================

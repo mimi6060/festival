@@ -55,10 +55,18 @@ export const validationSchema = Joi.object({
   // ==========================================================================
   // JWT AUTHENTICATION
   // ==========================================================================
-  JWT_SECRET: Joi.string().min(32).required(),
+  // Main JWT secret (legacy, use JWT_ACCESS_SECRET instead)
+  JWT_SECRET: Joi.string().min(32).optional(),
   JWT_EXPIRES_IN: Joi.string().default('15m'),
+
+  // Access token secret (REQUIRED for production)
+  JWT_ACCESS_SECRET: Joi.string().min(32).required(),
+  JWT_ACCESS_EXPIRES_IN: Joi.string().default('15m'),
+
+  // Refresh token secret (REQUIRED for production)
   JWT_REFRESH_SECRET: Joi.string().min(32).required(),
   JWT_REFRESH_EXPIRES_IN: Joi.string().default('7d'),
+
   JWT_ISSUER: Joi.string().default('festival-api'),
   JWT_AUDIENCE: Joi.string().default('festival-app'),
   JWT_ALGORITHM: Joi.string()
@@ -179,7 +187,11 @@ export const validationSchema = Joi.object({
   THROTTLE_LIMIT: Joi.number().default(10),
   CSRF_ENABLED: Joi.boolean().default(true),
   CSRF_SECRET: Joi.string().allow('').default(''),
+
+  // QR Code signing secrets (REQUIRED for production - min 32 characters)
   QR_SECRET: Joi.string().min(32).required(),
+  QR_CODE_SECRET: Joi.string().min(32).required(),
+
   ENCRYPTION_KEY: Joi.string().min(32).allow('').default(''),
 
   // ==========================================================================
