@@ -19,6 +19,7 @@ import {
   ResetPasswordDto,
   ChangePasswordDto,
   VerifyEmailDto,
+  ResendVerificationDto,
   LoginResponseDto,
   RegisterResponseDto,
   UserResponseDto,
@@ -547,19 +548,31 @@ Sends a new verification email to the specified address.
     `,
   })
   @ApiBody({
-    type: ForgotPasswordDto,
+    type: ResendVerificationDto,
     description: 'Email address to resend verification to',
+    examples: {
+      standard: {
+        summary: 'Resend verification',
+        value: {
+          email: 'john.doe@example.com',
+        },
+      },
+    },
   })
   @ApiOkResponse({
     description: 'Verification email sent',
     type: SuccessResponseDto,
   })
+  @ApiBadRequestResponse({
+    description: 'Email already verified or too many recent requests',
+    type: ErrorResponseDto,
+  })
   @ApiTooManyRequestsResponse({
     description: 'Too many requests',
     type: TooManyRequestsResponseDto,
   })
-  async resendVerification(@Body() dto: ForgotPasswordDto): Promise<SuccessResponseDto> {
-    await this.authService.forgotPassword(dto.email);
+  async resendVerification(@Body() dto: ResendVerificationDto): Promise<SuccessResponseDto> {
+    await this.authService.resendVerificationEmail(dto.email);
     return {
       success: true,
       message: 'If the account exists and is not verified, a new verification email has been sent.',
