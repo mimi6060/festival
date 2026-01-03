@@ -1,355 +1,403 @@
 # Tâches En Cours & À Faire
 
-## Session 2026-01-03 - Fixes & Maintenance
+## Session 2026-01-03 - Audit Expert du Code
 
-### Corrections Effectuées
+### Résumé Exécutif
 
-- [x] Fix `/festivals` admin page - TypeScript errors fixed
-- [x] Export useRealtimeData, RealtimeTransaction, RealtimeAlert from hooks
-- [x] Fix TypeScript type annotations in festival subpages (stages, lineup, vendors, pois, camping)
-- [x] Remove nested duplicate `festival/` folder causing nx project graph errors
-- [x] Add ts-node for Jest TypeScript config support
-- [x] Fix tickets service tests - uuid and crypto mock chain issues
-- [x] Fix auth.service and payments.service test mocks
+5 experts ont analysé l'ensemble de la codebase:
 
-### Tests En Cours
-
-- [x] Run test suite - reduced failures from 14 to 12
-- [ ] Fix remaining test failures (tickets QR image)
-- [ ] Increase coverage to 90% for critical services
+- **NestJS Backend** - 70% production-ready
+- **Next.js Frontend** - Bonne architecture, gaps critiques en error handling
+- **Database/Prisma** - Excellent design, 1 problème N+1
+- **DevOps/Infrastructure** - Note B+ (excellent sécurité, manque scanning CI)
+- **TypeScript Quality** - 8.4/10
 
 ---
 
-## 🚀 ROADMAP PRO - Rendre le projet Production-Ready
+## 🚨 PRIORITÉ CRITIQUE - Sécurité (Semaine 1)
 
-### 🛠️ 1) Documentation & Onboarding (PRIORITÉ HAUTE)
+### C1: Secrets par Défaut Hardcodés
 
-- [x] README complet avec objectifs, architecture, cas d'usage
-- [ ] Screenshots et démos vidéo
-- [x] Arborescence du projet documentée
-- [x] Guide d'installation pas à pas (dev + prod)
-- [x] Guide de contribution (CONTRIBUTING.md)
-- [x] Roadmap publique (GitHub Projects ou README)
-- [x] Exemples de commandes courantes
+**Fichier:** `apps/api/src/modules/auth/auth.service.ts:417-420`
 
-### ⚙️ 2) Qualité du Code (PRIORITÉ HAUTE)
+```typescript
+// DANGEREUX: secret par défaut utilisé si env non défini
+secret: this.configService.get<string>('JWT_ACCESS_SECRET', 'access-secret');
+```
 
-- [x] ESLint + Prettier configurés
-- [x] Husky pre-commit hooks
-- [x] Tests unitaires partiels
-- [ ] Tests unitaires complets (90% coverage)
-- [ ] Tests E2E complets
-- [x] OpenAPI/Swagger pour API
+**Action:** Supprimer le fallback, fail si secret non configuré
+**Impact:** Forge de tokens JWT possible
 
-### 🧪 3) CI/CD & Coverage (PRIORITÉ HAUTE)
+### C2: Secret QR Code par Défaut
 
-- [x] GitHub Actions CI workflow
-- [x] Coverage minimal obligatoire sur chaque PR (Codecov)
-- [ ] Preview apps déploiement (Vercel/Netlify)
-- [x] Sentry error reporting intégré
-- [x] Badge coverage dans README
+**Fichier:** `apps/api/src/modules/tickets/tickets.service.ts:87`
 
-### 🔐 4) Sécurité & Conformité (PRIORITÉ MOYENNE)
+```typescript
+this.qrSecret = process.env.QR_CODE_SECRET || 'default-qr-secret-change-in-production';
+```
 
-- [x] Rate limiting implémenté
-- [ ] npm audit automatique dans CI
-- [ ] Dependabot ou Renovate pour deps
-- [ ] 2FA optionnel pour admin
-- [x] GDPR ready (audit trails, suppression)
-- [x] Protection XSS/CSRF
+**Action:** Valider présence et longueur minimale (32 chars)
+**Impact:** Falsification de billets possible
 
-### 🧑‍💻 5) Interface Utilisateur (PRIORITÉ HAUTE)
+### C3: Reset Password Cassé
 
-- [x] Tailwind CSS configuré
-- [ ] Design system documenté (Storybook)
-- [x] Mode dark/light toggle
-- [ ] Accessibilité WCAG 2.1 AA
-- [ ] Responsive testé sur tous breakpoints
-- [ ] Skeleton loaders partout
+**Fichier:** `apps/api/src/modules/auth/auth.service.ts:300-315`
 
-### 📊 6) Analytics & KPI (PRIORITÉ HAUTE)
+```typescript
+// Accepte N'IMPORTE QUEL token - placeholder non implémenté
+const user = await this.prisma.user.findFirst({
+  where: { status: UserStatus.ACTIVE },
+});
+```
 
-- [x] Dashboard KPI admin
-- [ ] Heatmaps zones temps réel
-- [x] Export CSV/PDF
-- [ ] Engagement utilisateurs métriques
-- [ ] A/B testing framework
+**Action:** Implémenter vérification token depuis table password_reset_tokens
+**Impact:** N'importe qui peut reset n'importe quel password
 
-### 📱 7) App Mobile Événementielle (PRIORITÉ MOYENNE)
+### C4: Missing Error Boundaries (Frontend)
 
-- [x] Cartes interactives
-- [x] Mode offline complet avec maps
-- [x] Notifications push
-- [ ] Fil d'actualité/messages internes
-- [ ] Réservation d'ateliers/workshops
-- [ ] Gamification (badges, points)
+**Fichiers manquants:**
 
-### 💳 8) Paiement Optimisé (PRIORITÉ MOYENNE)
+- `apps/web/app/error.tsx`
+- `apps/web/app/global-error.tsx`
+- `apps/admin/app/error.tsx`
+  **Action:** Créer error boundaries Next.js
+  **Impact:** Crash propagés, mauvaise UX
 
-- [ ] Support multi-devise (EUR, USD, GBP)
-- [x] Cashless on-site
-- [ ] Auto-reconciliation Stripe/compta
-- [x] Remboursements automatisés
-- [ ] Rapports financiers comptables
+### C5: Missing Loading States (Frontend)
 
-### 🌍 9) Internationalisation (PRIORITÉ MOYENNE)
+**Fichiers manquants:** `apps/*/app/loading.tsx`
+**Action:** Créer loading.tsx pour streaming UI
+**Impact:** Pas de feedback pendant chargement
 
-- [x] i18n front + mobile (FR/EN)
-- [ ] Traductions ES, DE, IT, PT
-- [ ] Format monétaire/date local
-- [ ] Crowdsourcing traductions
+### C6: Auth Token dans localStorage (XSS Risk)
 
-### 💡 10) Support & Communauté (PRIORITÉ BASSE)
+**Fichier:** `apps/web/lib/api.ts`
 
-- [ ] GitHub Discussions activé
-- [ ] Discord/Slack communauté
-- [ ] Modèle SaaS/pricing
-- [ ] Plugin marketplace (maps, analytics)
+```typescript
+const token = localStorage.getItem('auth_token');
+```
+
+**Action:** Migrer vers httpOnly cookies
+**Impact:** Tokens accessibles via XSS
 
 ---
 
-## Phases Complétées (34 agents - 2026-01-02)
+## 🔴 PRIORITÉ HAUTE - À Faire Cette Semaine
 
-Toutes les tâches des phases 0-7 ont été complétées avec succès.
-Voir `.claude/DONE.md` pour le détail complet.
+### H1: Auth Controller Non Connecté au Service
 
----
+**Fichier:** `apps/api/src/modules/auth/auth.controller.ts:129-145`
 
-## Prochaines Phases Disponibles
+```typescript
+// Retourne des mock data au lieu d'appeler le service
+return {
+  user: {
+    /* hardcoded mock data */
+  },
+  message: 'Registration successful...',
+};
+```
 
-### Phase Mobile Avancée (2026-01-02) - COMPLETED
+**Action:** Connecter register, login, logout, refresh, me au AuthService
+**Impact:** L'API auth ne fonctionne pas réellement
 
-- [x] Mode offline complet avec sync (DataSyncService)
-- [x] Scan NFC pour cashless (NFCCashlessService)
-- [x] Géolocalisation indoor (useIndoorLocation)
-- [x] Apple Wallet / Google Wallet (useWallet)
+### H2: Health Checks Statiques
 
-### Phase IA
+**Fichier:** `apps/api/src/modules/health/health.controller.ts:102-117`
 
-- [ ] Service Python IA
-- [ ] Prévision affluence
-- [ ] Détection fraude
-- [ ] Chatbot NLP
-- [ ] Recommandations artistes
+```typescript
+// Retourne des valeurs hardcodées, ne vérifie pas vraiment les services
+return {
+  status: 'ok',
+  checks: {
+    database: { status: 'up', responseTime: 5 }, // Hardcoded
+  },
+};
+```
 
-### Phase Scale (2026-01-02) - COMPLETED
+**Action:** Utiliser @nestjs/terminus avec vrais health indicators
+**Impact:** Pas de monitoring réel de la santé des services
 
-- [x] Kubernetes configs (base + overlays dev/staging/prod)
-- [x] Docker multi-stage builds optimises
-- [x] Kustomize overlays pour environnements
-- [x] Auto-scaling AWS (HPA deja configure)
-- [x] CDN pour assets (CloudFront + S3, cache policies, security headers)
-- [x] Database replication (PostgreSQL master/replica, HAProxy, Patroni HA)
-- [x] Redis cluster configuration (6 nodes, 3 masters + 3 replicas)
-- [x] Load balancer configuration (AWS ALB/NLB, NGINX Ingress optimized)
+### H3: WebSocket Permet Connexions Anonymes
 
-### Phase Performance (2026-01-02) - COMPLETED
+**Fichier:** `apps/api/src/gateways/events.gateway.ts:96-99`
 
-- [x] Optimisation indexes Prisma (30+ nouveaux index composite)
-- [x] Service Cache Redis avance (strategies, tags, invalidation)
-- [x] Module Monitoring Prometheus (metriques custom business)
-- [x] Utilitaires pagination avances (cursor, keyset, batch)
-- [x] Scripts load testing (TypeScript + k6)
+```typescript
+} catch (error) {
+  next(); // Allow connection but without user context
+}
+```
 
-### Phase Sécurité Avancée
+**Action:** Rejeter les connexions non authentifiées: `next(new Error('Authentication required'))`
+**Impact:** Utilisateurs anonymes peuvent se connecter aux WebSockets
 
-- [x] Security middleware (CSRF, XSS, sanitization)
-- [x] Password validator (OWASP compliant)
-- [x] Input sanitization validators
-- [x] Secrets management documentation
-- [ ] Pen testing documentation
-- [ ] WAF configuration
-- [ ] DDoS protection
-- [ ] Secrets rotation automation
+### H4: JWT Strategy Manquante
 
-### Phase Compliance
+**Fichier manquant:** `apps/api/src/modules/auth/strategies/jwt.strategy.ts`
+**Action:** Créer JwtStrategy qui étend PassportStrategy
+**Impact:** JwtAuthGuard ne fonctionne pas correctement
 
-- [x] GDPR audit complet (docs/security/GDPR_AUDIT.md)
-- [x] Secrets documentation (docs/security/SECRETS.md)
-- [ ] PCI-DSS documentation
-- [ ] SOC 2 preparation
-- [ ] Privacy policy templates
+### H5: Root Admin Layout 'use client'
 
-### Phase Tests & QA
+**Fichier:** `apps/admin/app/layout.tsx:1`
 
-- [x] Prisma mocks (prisma.mock.ts avec jest-mock-extended)
-- [x] Test fixtures (users, festivals, tickets)
-- [x] Unit tests auth.service.spec.ts
-- [x] Unit tests tickets.service.spec.ts
-- [x] Unit tests cashless.service.spec.ts
-- [x] Unit tests payments.service.spec.ts
-- [x] E2E tests auth.e2e-spec.ts
-- [x] E2E tests tickets.e2e-spec.ts
-- [x] E2E tests cashless.e2e-spec.ts
-- [x] Jest configuration 80% coverage minimum
-- [ ] Run full test suite and fix failures
-- [ ] Increase coverage to 90% for critical services
+```typescript
+'use client'; // Toute l'app devient client-side
+```
 
-### Phase Build Web App (2026-01-02) - COMPLETED
+**Action:** Séparer en Server Component layout + Client Component wrapper
+**Impact:** Perte des bénéfices Server Components (SEO, bundle size)
 
-- [x] Restructuration web app (app directory a la racine)
-- [x] Correction NODE_ENV pour build via Nx
-- [x] Scripts npm build:web, build:admin avec NODE_ENV=production
-- [x] Validation Docker-compose config
+### H6: Pas de Code Splitting
 
-### Phase CI/CD Avancee (2026-01-02) - COMPLETED
+**Fichiers:** Toutes les apps frontend
+**Action:** Utiliser `next/dynamic` et `React.lazy()` pour composants lourds
+**Impact:** Bundle JS trop gros, chargement lent
 
-- [x] ci.yml ameliore avec matrix builds (Node 18/20, Ubuntu/macOS)
-- [x] Caching avance (node_modules, NX, Prisma, Docker layers)
-- [x] deploy-staging.yml - Deploiement automatique staging
-- [x] deploy-production.yml - Deploiement production avec approval gates
-- [x] mobile-build.yml - Build iOS/Android complet avec EAS
-- [x] database-migration.yml - Workflow migrations Prisma
+### H7: Pas de Form Library
 
----
+**Fichiers:** `apps/web/app/auth/login/page.tsx` et autres forms
+**Action:** Adopter react-hook-form + zod
+**Impact:** Validation manuelle, mauvaise UX, code dupliqué
 
-## Stats Projet Actuel
+### H8: Pas de Scanning Images Container en CI
 
-| Métrique            | Valeur   |
-| ------------------- | -------- |
-| Fichiers créés      | 825+     |
-| Lignes de code      | 162,000+ |
-| Modules backend     | 25+      |
-| Composants frontend | 50+      |
-| Écrans mobile       | 15+      |
-| Templates email     | 10+      |
-| Templates PDF       | 8        |
-| Tests               | 300+     |
-| Traductions         | 1000+    |
-| Workflows CI/CD     | 10+      |
+**Fichier:** `.github/workflows/ci.yml`
+**Action:** Ajouter Trivy/Grype scanning
 
-### Phase Frontend UX Avancee (2026-01-03) - COMPLETED
+```yaml
+- name: Run Trivy vulnerability scanner
+  uses: aquasecurity/trivy-action@master
+```
 
-- [x] Animations et transitions CSS avancees (animations.css - 50+ keyframes)
-- [x] Composants animes React (AnimatedComponents.tsx - 15+ composants)
-- [x] Recherche avancee festivals (FestivalSearch.tsx - suggestions, filtres, keyboard nav)
-- [x] Systeme de filtres complet (FestivalFilters.tsx - genres, prix, dates, location)
-- [x] Calendrier evenements (EventCalendar.tsx - vues mois/semaine/jour/liste)
-- [x] Composants accessibles (AccessibleComponents.tsx - ARIA, focus trap, screen reader)
-- [x] Hooks debounce/throttle (useDebounce.ts)
-- [x] Page festivals listing complete avec filtres avances (apps/web/app/festivals/page.tsx)
+**Impact:** Images vulnérables déployées
+
+### H9: Pas de SAST/DAST en CI
+
+**Fichier:** `.github/workflows/ci.yml`
+**Action:** Ajouter CodeQL, Snyk, ou Semgrep
+**Impact:** Vulnérabilités code non détectées
+
+### H10: N+1 Query en Création de Tickets
+
+**Fichier:** `apps/api/src/modules/tickets/tickets.service.ts:187-214`
+
+```typescript
+// Crée les tickets un par un en boucle
+for (let i = 0; i < quantity; i++) {
+  const ticket = await tx.ticket.create({...});
+}
+```
+
+**Action:** Utiliser `createMany` + batch fetch
+**Impact:** Performance dégradée pour achats multiples
 
 ---
 
-Derniere mise a jour: 2026-01-02 - Phase Scale Infrastructure (CDN, Database replication, Redis cluster, Load balancer)
+## 🟡 PRIORITÉ MOYENNE - À Faire Ce Mois
 
-### Phase Error Handling & Logging (2026-01-02) - COMPLETED
+### M1: ConfigModule Sans Validation Schema
 
-- [x] HttpExceptionFilter - Filtre global pour HttpException
-- [x] AllExceptionsFilter - Filtre global pour erreurs non-HTTP et Prisma
-- [x] ValidationExceptionFilter - Filtre specialise class-validator avec i18n
-- [x] Custom exceptions metier: staff, camping, program
-- [x] 60+ nouveaux codes d'erreur standardises (12xxx-17xxx)
-- [x] Messages d'erreur FR/EN pour tous les codes
-- [x] ErrorLoggerService - Logging structure avec stats
-- [x] RetryService - Retry exponential backoff avec jitter
-- [x] RetryPresets - Configurations pre-faites (database, API, payment, email)
+**Fichier:** `apps/api/src/app/app.module.ts`
 
-### Phase API Backend Advanced (2026-01-02) - COMPLETED
+```typescript
+ConfigModule.forRoot({
+  // Missing: validationSchema from config/validation.schema.ts
+}),
+```
 
-- [x] Intercepteur de compression gzip/brotli/deflate
-- [x] Systeme de versioning API (v1, v2) avec decorateurs
-- [x] Endpoints bulk operations avec batch processing
-- [x] Module file d'attente BullMQ (12 queues specialisees)
-- [x] Validateurs DTO avances (15+ validators custom)
+**Action:** Ajouter `validationSchema` et `validationOptions`
 
-### Phase Payments Avancee (2026-01-02) - COMPLETED
+### M2: Cache Service Memory Leak Potentiel
 
-- [x] Checkout Sessions Stripe (CreateCheckoutSessionDto, CheckoutService)
-- [x] Support Stripe Connect pour vendeurs (StripeConnectService)
-- [x] Subscriptions pour pass saison (SubscriptionService)
-- [x] Paiements recurrents (products, prices, subscriptions)
-- [x] Gestion avancee des remboursements (RefundService, eligibility, bulk)
-- [x] Webhooks complets (payment, checkout, subscription, refund events)
-- [x] Controller REST complet (PaymentsController)
-- [x] DTOs complets (checkout, connect, subscription, refund)
+**Fichier:** `apps/api/src/modules/cache/cache.service.ts:590`
+**Action:** Ajouter cleanup périodique avec setInterval
 
----
+### M3: Rate Limit Guard Non Global
 
-Derniere mise a jour: 2026-01-02 - Phase Payments Avancee (Stripe Checkout, Connect, Subscriptions, Refunds)
+**Fichier:** `apps/api/src/main.ts`
+**Action:** `app.useGlobalGuards(new RateLimitGuard(reflector, redis))`
 
-### Phase Analytics Avancee (2026-01-02) - COMPLETED
+### M4: Compression via Interceptor Problématique
 
-- [x] Service metriques avancees (AdvancedMetricsService - revenue, customers, performance, fraud, growth)
-- [x] Metriques staff, environnement et securite
-- [x] Forecasting avec regression lineaire
-- [x] Service rapports personnalises (CustomReportsService - creation, execution, comparaison)
-- [x] Analyse de cohortes (acquisition_date, ticket_type, first_purchase)
-- [x] Analyse funnel (purchase, entry, cashless)
-- [x] Detection d'anomalies avec z-score
-- [x] Benchmarks industrie
-- [x] Service agregations temps reel (RealtimeAggregationService)
-- [x] Buffers in-memory pour metriques streaming
-- [x] Multiple window sizes (1m, 5m, 15m, 1h)
-- [x] Compteurs live (ventes, revenus, attendance, cashless, vendors)
-- [x] Service export (ExportService - CSV, JSON, PDF, XLSX)
-- [x] Export donnees: ventes, cashless, attendance, vendors
-- [x] Rapport financier comptable
-- [x] Rapport analytique complet
-- [x] Service dashboards (DashboardConfigService)
-- [x] 10 templates pre-configures (executive, operations, finance, security, marketing, realtime, vendor, staff, attendance, cashless)
-- [x] 10 types de widgets (KPI, charts, tables, maps, gauges, alerts)
-- [x] Controller REST complet (AnalyticsController - 50+ endpoints)
+**Fichier:** `apps/api/src/common/interceptors/compression.interceptor.ts`
+**Action:** Utiliser middleware express `compression()` à la place
 
-### Phase Admin Dashboard Avancee (2026-01-02) - COMPLETED
+### M5: WAF Mode COUNT au lieu de BLOCK
 
-- [x] Page rapports avancee (Recharts - 10+ types de graphiques)
-- [x] Systeme export CSV/Excel/JSON (ExportButton, export.ts)
-- [x] Page centre d'export avec categories
-- [x] Tableau de bord temps reel WebSocket (useWebSocket, useRealTimeData)
-- [x] Page realtime avec alertes et transactions live
-- [x] Centre de notifications admin (NotificationCenter)
-- [x] Page notifications avec preferences et filtres
-- [x] Systeme de logs d'activite (activity logs page)
-- [x] Filtres avances et export pour audit
+**Fichier:** `infra/security/waf/waf.tf:44`
+**Action:** Changer `waf_mode = "BLOCK"` en production
 
-### Phase Monitoring Avancee (2026-01-02) - COMPLETED
+### M6: Default Credentials docker-compose
 
-- [x] Regles d'alertes Prometheus (alerts.yml - 40+ alertes)
-  - Infrastructure (memory, uptime, instance health)
-  - HTTP/API (error rates, latency, traffic anomalies)
-  - Database (errors, slow queries, load)
-  - Cache (hit rate, keys)
-  - Business (tickets, payments, cashless, zones, vendors)
-  - SLA (availability, response time, payment success)
-- [x] Recording rules Prometheus (recording_rules.yml - metriques pre-calculees)
-- [x] Configuration Prometheus (prometheus.yml - scrape configs K8s)
-- [x] Dashboards Grafana JSON:
-  - api-overview.json (HTTP, latency, cache, system)
-  - business-metrics.json (revenue, tickets, cashless, zones)
-  - alerts-overview.json (active alerts, SLA, history)
-- [x] Provisioning Grafana (datasources, dashboards)
-- [x] Script health-check.sh (multi-env, JSON output, services checks)
-- [x] AlertsService (in-app alerting, notifications webhook/slack)
-- [x] HealthIndicatorsService (DB, Redis, memory, disk, event loop)
+**Fichier:** `docker-compose.yml:29,157-159,215-216`
+**Action:** Utiliser Docker secrets ou fichier .env séparé
+
+### M7: Queries Catégories Séquentielles Analytics
+
+**Fichier:** `apps/api/src/modules/analytics/services/analytics.service.ts:477-499`
+**Action:** Utiliser `groupBy` au lieu de Promise.all avec map
+
+### M8: Connection Pooling Non Configuré
+
+**Fichier:** `apps/api/src/modules/prisma/prisma.service.ts`
+**Action:** Ajouter params pool à DATABASE_URL: `?connection_limit=10&pool_timeout=10`
+
+### M9: Path Aliases Manquants
+
+**Fichier:** `tsconfig.base.json`
+**Action:** Ajouter aliases pour `hooks`, `api-client`, `validation`
+
+### M10: Module Boundary Rules Trop Permissives
+
+**Fichier:** `eslint.config.mjs`
+**Action:** Configurer `depConstraints` strictes par scope
+
+### M11: Missing CSP Header
+
+**Fichier:** `apps/admin/middleware.ts`
+**Action:** Ajouter `Content-Security-Policy` header
+
+### M12: `noUncheckedIndexedAccess` Désactivé
+
+**Fichier:** `tsconfig.base.json:30`
+**Action:** Activer pour accès array/object plus sûrs
 
 ---
 
-Derniere mise a jour: 2026-01-02 - Phase Monitoring Avancee (Prometheus, Grafana, Health Check, Alerts)
+## 🟢 PRIORITÉ BASSE - Backlog
 
-### Phase PDF Service Enhanced (2026-01-02) - COMPLETED
+### L1: Base Images Non Pinnées au Digest
 
-- [x] Service PDF ameliore avec QR codes securises (HMAC-SHA256 hash)
-- [x] Template ticket avec QR code et hash de verification
-- [x] Template facture detaillee avec TVA (20%)
-- [x] Template badge staff avec photo et niveaux d'acces (LOW/MEDIUM/HIGH/FULL)
-- [x] Template programme festival multi-pages (couverture, TOC, pages jour)
-- [x] Template rapport financier complet (revenus, TVA, remboursements)
-- [x] Template recu de paiement
-- [x] Template bon de camping avec QR code
+**Fichiers:** `apps/*/Dockerfile`
+**Action:** Utiliser `node:20-alpine@sha256:...`
 
-### Phase Shared Libraries Enhancement (2026-01-02) - COMPLETED
+### L2: Logger Non Configuré pour Production
 
-- [x] Validation Zod Schemas (libs/shared/validation/src/lib/)
-  - festival.schema.ts - 265 lines (festival CRUD, query, settings, stats)
-  - ticket.schema.ts - 512 lines (tickets, promo codes, scans, batch ops)
-  - payment.schema.ts - 488 lines (payments, refunds, invoices, disputes)
-  - cashless.schema.ts - 609 lines (NFC, topup, transfers, terminals)
-  - index.ts - 312 lines (central exports for all schemas)
-- [x] Shared Constants (libs/shared/constants/src/lib/)
-  - cashless.constants.ts - 400+ lines (NFC status, transaction types, limits)
-  - index.ts - Updated to export all 9 constant files
-- Previously completed:
-  - Types: camping.types.ts, notification.types.ts, vendor.types.ts, support.types.ts
-  - Utils: geo.utils.ts, file.utils.ts, phone.utils.ts
-  - Hooks: useDebounce.ts, useLocalStorage.ts, useMediaQuery.ts
+**Fichier:** `apps/api/src/main.ts`
+**Action:** Configurer Winston/Pino avec structured logging
+
+### L3: Graceful Shutdown Manquant
+
+**Fichier:** `apps/api/src/main.ts`
+**Action:** Ajouter `app.enableShutdownHooks()`
+
+### L4: No Network Policies K8s
+
+**Fichier:** `k8s/`
+**Action:** Ajouter NetworkPolicy pour isolation pod-to-pod
+
+### L5: Tests Shared Libraries Manquants
+
+**Fichiers:** `libs/shared/*/`
+**Action:** Ajouter tests pour utils, hooks, api-client
+
+### L6: Demo Credentials dans Code
+
+**Fichier:** `apps/admin/lib/auth-context.tsx`
+
+```typescript
+if (email === 'admin@festival.com' && password === 'admin123')
+```
+
+**Action:** Supprimer avant production
+
+### L7: User Model Sans Soft Delete
+
+**Fichier:** `prisma/schema.prisma`
+**Action:** Ajouter isDeleted/deletedAt (si pas intentionnel pour GDPR)
+
+### L8: Format Erreur Incohérent
+
+**Fichiers:** Services divers
+**Action:** Unifier avec BusinessException partout
+
+---
+
+## 📊 Métriques Actuelles
+
+| Métrique                  | Valeur | Cible  |
+| ------------------------- | ------ | ------ |
+| Backend Production Ready  | 70%    | 95%    |
+| Frontend TypeScript Score | 8.4/10 | 9.5/10 |
+| Test Coverage API         | ~80%   | 90%    |
+| Test Coverage Libs        | <10%   | 80%    |
+| Security Issues CRITICAL  | 6      | 0      |
+| Security Issues HIGH      | 10     | 0      |
+| CI Security Scanning      | Non    | Oui    |
+
+---
+
+## 🎯 Plan d'Action Recommandé
+
+### Semaine 1 - Sécurité Critique
+
+- [ ] C1: Supprimer JWT secrets par défaut
+- [ ] C2: Valider QR secret
+- [ ] C3: Implémenter reset password correctement
+- [ ] H1: Connecter AuthController au service
+- [ ] H8: Ajouter Trivy scanning CI
+
+### Semaine 2 - Frontend & API
+
+- [ ] C4: Créer error boundaries
+- [ ] C5: Créer loading states
+- [ ] C6: Migrer tokens vers httpOnly cookies
+- [ ] H2: Implémenter vrais health checks
+- [ ] H5: Refactorer admin layout
+
+### Semaine 3 - Performance & Quality
+
+- [ ] H10: Fix N+1 query tickets
+- [ ] M1: Ajouter ConfigModule validation
+- [ ] M8: Configurer connection pooling
+- [ ] H6: Implémenter code splitting
+
+### Semaine 4 - Infrastructure & Tests
+
+- [ ] H9: Ajouter SAST/DAST CI
+- [ ] M5: Passer WAF en mode BLOCK
+- [ ] L5: Ajouter tests shared libraries
+- [ ] Audit de sécurité final
+
+---
+
+## Fichiers Analysés
+
+### Backend (NestJS)
+
+- `apps/api/src/main.ts`
+- `apps/api/src/app/app.module.ts`
+- `apps/api/src/modules/auth/*`
+- `apps/api/src/modules/tickets/*`
+- `apps/api/src/modules/health/*`
+- `apps/api/src/gateways/events.gateway.ts`
+- `apps/api/src/common/*`
+
+### Frontend (Next.js)
+
+- `apps/web/app/layout.tsx`
+- `apps/web/lib/api.ts`
+- `apps/admin/app/layout.tsx`
+- `apps/admin/middleware.ts`
+- `apps/*/components/*`
+
+### Infrastructure
+
+- `.github/workflows/ci.yml`
+- `docker-compose.yml`
+- `k8s/api/*.yaml`
+- `infra/security/waf/*`
+- `infra/terraform/*`
+
+### Shared Libraries
+
+- `libs/shared/types/src/*`
+- `libs/shared/utils/src/*`
+- `libs/shared/validation/src/*`
+- `tsconfig.base.json`
+- `eslint.config.mjs`
+
+---
+
+Dernière mise à jour: 2026-01-03 - Audit Expert Complet (5 rapports)
