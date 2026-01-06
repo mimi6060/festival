@@ -1,0 +1,220 @@
+# ============================================
+# Festival Platform - Docker Compose DEV
+# ============================================
+# Development configuration with hot-reload
+# Usage: docker-compose -f docker-compose.dev.yml up -d
+
+version: '3.8'
+
+services:
+  # ============================================
+  # Infrastructure Services (Always in Docker)
+  # ============================================
+
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: festival-postgres
+    restart: unless-stopped
+    ports:
+      - '5432:5432'
+    environment:
+      POSTGRES_USER: festival_user
+      POSTGRES_PASSWORD: festival_password
+      POSTGRES_DB: festival_db
+      PGDATA: /var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init-db.sql:ro
+    networks:
+      - festival-network
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U festival_user -d festival_db']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache & Session Store
+  redis:
+    image: redis:7-alpine
+    container_name: festival-redis
+    restart: unless-stopped
+    ports:
+      - '6379:6379'
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    volumes:
+      - redis_data:/data
+    networks:
+      - festival-network
+    healthcheck:
+      test: ['CMD', 'redis-cli', 'ping']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO (S3-compatible Object Storage)
+  minio:
+    image: minio/minio:latest
+    container_name: festival-minio
+    restart: unless-stopped
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - festival-network
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:9000/minio/health/live']
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # Mailpit (Email Testing - ARM64 compatible)
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: festival-mailpit
+    restart: unless-stopped
+    ports:
+      - '1026:1025' # SMTP (changed to 1026)
+      - '8026:8025' # Web UI
+    networks:
+      - festival-network
+
+  # ============================================
+  # Application Services (with hot-reload)
+  # ============================================
+
+  # NestJS API Backend - Development
+  api:
+    image: node:20-alpine
+    container_name: festival-api-dev
+    working_dir: /app
+    command: sh -c "[ -f node_modules/.package-lock.json ] || npm install && npx prisma generate && npx nx serve api --host 0.0.0.0"
+    ports:
+      - '3001:3000'
+    environment:
+      NODE_ENV: development
+      PORT: 3000
+      DATABASE_URL: postgresql://festival_user:festival_password@postgres:5432/festival_db?schema=public
+      REDIS_URL: redis://redis:6379
+      JWT_SECRET: dev-secret-key-change-in-production
+      JWT_EXPIRES_IN: 7d
+      CORS_ORIGINS: http://localhost:4200,http://localhost:4201
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_placeholder}
+      MINIO_ENDPOINT: minio
+      MINIO_PORT: 9000
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+      MINIO_BUCKET: festival-uploads
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      SMTP_USER: ''
+      SMTP_PASSWORD: ''
+      SMTP_FROM: noreply@festival-platform.com
+    volumes:
+      - .:/app:cached
+      - node_modules:/app/node_modules
+      - nx_cache:/app/.nx
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - festival-network
+
+  # Next.js Web Frontend - Development
+  web:
+    image: node:20-alpine
+    container_name: festival-web-dev
+    working_dir: /app
+    command: sh -c "[ -f node_modules/.package-lock.json ] || npm install && npx nx serve web --host 0.0.0.0 --port 4200"
+    ports:
+      - '4200:4200'
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api
+      NEXT_PUBLIC_APP_URL: http://localhost:4200
+      NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-pk_test_placeholder}
+    volumes:
+      - .:/app:cached
+      - node_modules:/app/node_modules
+      - nx_cache:/app/.nx
+      - web_next:/app/apps/web/.next
+    depends_on:
+      - api
+    networks:
+      - festival-network
+
+  # Next.js Admin Panel - Development
+  admin:
+    image: node:20-alpine
+    container_name: festival-admin-dev
+    working_dir: /app
+    command: sh -c "[ -f node_modules/.package-lock.json ] || npm install && npx nx serve admin --host 0.0.0.0 --port 4201"
+    ports:
+      - '4201:4201'
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api
+      NEXT_PUBLIC_APP_URL: http://localhost:4201
+    volumes:
+      - .:/app:cached
+      - node_modules:/app/node_modules
+      - nx_cache:/app/.nx
+      - admin_next:/app/apps/admin/.next
+    depends_on:
+      - api
+    networks:
+      - festival-network
+
+  # ============================================
+  # Dev Tools (ARM64 compatible)
+  # ============================================
+
+  # PgAdmin for database management
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    platform: linux/amd64
+    container_name: festival-pgadmin
+    restart: unless-stopped
+    ports:
+      - '5050:80'
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@festival.local
+      PGADMIN_DEFAULT_PASSWORD: admin
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - postgres
+    networks:
+      - festival-network
+    profiles:
+      - tools
+
+# ============================================
+# Networks
+# ============================================
+networks:
+  festival-network:
+    driver: bridge
+
+# ============================================
+# Volumes
+# ============================================
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  pgadmin_data:
+  node_modules:
+  nx_cache:
+  web_next:
+  admin_next:
