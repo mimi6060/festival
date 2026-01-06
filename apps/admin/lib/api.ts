@@ -415,3 +415,29 @@ export const lineupApi = {
   cancelPerformance: (id: string) =>
     request<import('../types').Performance>(`/admin/lineup/${id}/cancel`, { method: 'POST' }),
 };
+
+// Axios-style API wrapper for generic requests
+const api = {
+  get: async <T = unknown>(endpoint: string): Promise<{ data: T }> => {
+    const data = await request<T>(endpoint);
+    return { data };
+  },
+  post: async <T = unknown>(endpoint: string, body?: unknown): Promise<{ data: T }> => {
+    const data = await request<T>(endpoint, { method: 'POST', body });
+    return { data };
+  },
+  put: async <T = unknown>(endpoint: string, body?: unknown): Promise<{ data: T }> => {
+    const data = await request<T>(endpoint, { method: 'PUT', body });
+    return { data };
+  },
+  patch: async <T = unknown>(endpoint: string, body?: unknown): Promise<{ data: T }> => {
+    const data = await request<T>(endpoint, { method: 'PATCH', body });
+    return { data };
+  },
+  delete: async <T = unknown>(endpoint: string): Promise<{ data: T }> => {
+    const data = await request<T>(endpoint, { method: 'DELETE' });
+    return { data };
+  },
+};
+
+export default api;

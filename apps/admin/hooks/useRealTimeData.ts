@@ -44,6 +44,8 @@ export interface UseRealtimeDataReturn {
   isConnected: boolean;
   connectionState: 'connecting' | 'connected' | 'disconnected' | 'error';
   lastUpdate: Date | null;
+  isLoading: boolean;
+  error: string | null;
   connect: () => void;
   disconnect: () => void;
   acknowledgeAlert: (alertId: string) => void;
@@ -62,94 +64,41 @@ const initialStats: RealtimeStats = {
   alerts: [],
 };
 
-// Simulated real-time data generator for demo
-function generateMockStats(): RealtimeStats {
-  const baseStats = {
-    activeConnections: Math.floor(Math.random() * 100) + 50,
-    ticketsSoldToday: Math.floor(Math.random() * 500) + 200,
-    revenueToday: Math.floor(Math.random() * 50000) + 10000,
-    cashlessBalance: Math.floor(Math.random() * 100000) + 50000,
-    currentAttendees: Math.floor(Math.random() * 10000) + 5000,
-    zoneOccupancy: {
-      'main-stage': {
-        current: Math.floor(Math.random() * 40000) + 10000,
-        capacity: 50000,
-      },
-      'vip-area': {
-        current: Math.floor(Math.random() * 1500) + 500,
-        capacity: 2000,
-      },
-      backstage: {
-        current: Math.floor(Math.random() * 300) + 100,
-        capacity: 500,
-      },
-      'food-court': {
-        current: Math.floor(Math.random() * 3000) + 1000,
-        capacity: 5000,
-      },
-      camping: {
-        current: Math.floor(Math.random() * 8000) + 2000,
-        capacity: 10000,
-      },
-    },
-    recentTransactions: generateMockTransactions(5),
-    alerts: generateMockAlerts(),
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+
+// Fetch real data from the API
+async function fetchRealtimeStats(festivalId?: string): Promise<RealtimeStats> {
+  if (!festivalId) {
+    throw new Error('Festival ID is required for realtime data');
+  }
+
+  const [liveResponse, zonesResponse] = await Promise.all([
+    fetch(`${API_URL}/v1/analytics/festivals/${festivalId}/realtime/live`, {
+      credentials: 'include',
+    }),
+    fetch(`${API_URL}/v1/analytics/festivals/${festivalId}/realtime/zones`, {
+      credentials: 'include',
+    }),
+  ]);
+
+  if (!liveResponse.ok) {
+    throw new Error(`Failed to fetch live metrics: ${liveResponse.statusText}`);
+  }
+
+  const liveData = await liveResponse.json();
+  const zonesData = zonesResponse.ok ? await zonesResponse.json() : {};
+
+  // Map API response to RealtimeStats interface
+  return {
+    activeConnections: liveData.activeConnections ?? 0,
+    ticketsSoldToday: liveData.ticketsSoldToday ?? 0,
+    revenueToday: liveData.revenueToday ?? 0,
+    cashlessBalance: liveData.totalCashlessBalance ?? 0,
+    currentAttendees: liveData.currentAttendees ?? 0,
+    zoneOccupancy: zonesData.zones ?? {},
+    recentTransactions: liveData.recentTransactions ?? [],
+    alerts: liveData.alerts ?? [],
   };
-
-  return baseStats;
-}
-
-function generateMockTransactions(count: number): RealtimeTransaction[] {
-  const types: RealtimeTransaction['type'][] = [
-    'ticket_sale',
-    'cashless_topup',
-    'cashless_payment',
-    'refund',
-  ];
-
-  return Array.from({ length: count }, (_, i) => ({
-    id: `tx-${Date.now()}-${i}`,
-    type: types[Math.floor(Math.random() * types.length)] ?? 'ticket_sale',
-    amount: Math.floor(Math.random() * 200) + 10,
-    timestamp: new Date(Date.now() - Math.random() * 300000).toISOString(),
-  }));
-}
-
-function generateMockAlerts(): RealtimeAlert[] {
-  const alerts: RealtimeAlert[] = [];
-
-  // Randomly generate alerts
-  if (Math.random() > 0.7) {
-    alerts.push({
-      id: `alert-${Date.now()}`,
-      type: 'warning',
-      message: 'Zone VIP proche de la capacite maximale (92%)',
-      timestamp: new Date().toISOString(),
-      acknowledged: false,
-    });
-  }
-
-  if (Math.random() > 0.9) {
-    alerts.push({
-      id: `alert-${Date.now()}-2`,
-      type: 'error',
-      message: 'Echec de connexion au terminal de paiement #12',
-      timestamp: new Date().toISOString(),
-      acknowledged: false,
-    });
-  }
-
-  if (Math.random() > 0.8) {
-    alerts.push({
-      id: `alert-${Date.now()}-3`,
-      type: 'success',
-      message: 'Objectif de ventes journalier atteint!',
-      timestamp: new Date().toISOString(),
-      acknowledged: false,
-    });
-  }
-
-  return alerts;
 }
 
 export function useRealtimeData(options: UseRealtimeDataOptions = {}): UseRealtimeDataReturn {
@@ -157,21 +106,28 @@ export function useRealtimeData(options: UseRealtimeDataOptions = {}): UseRealti
     festivalId,
     autoConnect = true,
     pollingFallback = true,
-    pollingInterval = 5000,
+    pollingInterval = 30000, // 30 seconds - reasonable for real API calls
   } = options;
 
   const [stats, setStats] = useState<RealtimeStats>(initialStats);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const pollingRef = useRef<NodeJS.Timeout | null>(null);
-  const usePolling = useRef(true); // Set to true for demo mode
+  const isPollingActive = useRef(false);
+  const isMounted = useRef(true);
 
-  // WebSocket URL (would be real in production)
+  // WebSocket URL for real-time updates
   const wsUrl = festivalId
-    ? `wss://api.festival.com/ws/realtime?festivalId=${festivalId}`
-    : 'wss://api.festival.com/ws/realtime';
+    ? `${API_URL.replace('http', 'ws')}/ws/realtime?festivalId=${festivalId}`
+    : '';
 
-  // Handle incoming messages
+  // Handle incoming WebSocket messages
   const handleMessage = useCallback((message: WebSocketMessage) => {
+    if (!isMounted.current) {
+      return;
+    }
+
     switch (message.type) {
       case 'stats_update':
         setStats((prev) => ({
@@ -224,53 +180,84 @@ export function useRealtimeData(options: UseRealtimeDataOptions = {}): UseRealti
         clearInterval(pollingRef.current);
         pollingRef.current = null;
       }
-      usePolling.current = false;
+      isPollingActive.current = false;
     },
     onDisconnect: () => {
-      // Start polling fallback
-      if (pollingFallback) {
-        usePolling.current = true;
+      // Start polling fallback when WebSocket disconnects
+      if (pollingFallback && festivalId) {
+        isPollingActive.current = true;
       }
     },
     reconnect: true,
     maxReconnectAttempts: 5,
   });
 
-  // Polling fallback for demo or when WebSocket unavailable
-  useEffect(() => {
-    if (usePolling.current && pollingFallback) {
-      const poll = () => {
-        const newStats = generateMockStats();
+  // Fetch data from API
+  const fetchData = useCallback(async () => {
+    if (!festivalId || !isMounted.current) {
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const newStats = await fetchRealtimeStats(festivalId);
+      if (isMounted.current) {
         setStats((prev) => ({
           ...newStats,
           // Preserve acknowledged alerts
           alerts: [...newStats.alerts, ...prev.alerts.filter((a) => a.acknowledged)],
         }));
         setLastUpdate(new Date());
-      };
+      }
+    } catch (err) {
+      if (isMounted.current) {
+        setError(err instanceof Error ? err.message : 'Failed to fetch data');
+      }
+    } finally {
+      if (isMounted.current) {
+        setIsLoading(false);
+      }
+    }
+  }, [festivalId]);
 
-      // Initial fetch
-      poll();
+  // Initial fetch and polling setup
+  useEffect(() => {
+    isMounted.current = true;
 
-      // Set up interval
-      pollingRef.current = setInterval(poll, pollingInterval);
-
+    // Only fetch if we have a festivalId
+    if (!festivalId) {
       return () => {
-        if (pollingRef.current) {
-          clearInterval(pollingRef.current);
-          pollingRef.current = null;
-        }
+        isMounted.current = false;
       };
     }
-    return undefined;
-  }, [pollingFallback, pollingInterval]);
 
-  // Connect on mount if autoConnect
+    // Initial fetch
+    fetchData();
+
+    // Setup polling if WebSocket is not connected and polling is enabled
+    if (pollingFallback && !isConnected) {
+      isPollingActive.current = true;
+      pollingRef.current = setInterval(fetchData, pollingInterval);
+    }
+
+    return () => {
+      isMounted.current = false;
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+        pollingRef.current = null;
+      }
+    };
+  }, [festivalId, pollingFallback, pollingInterval, isConnected, fetchData]);
+
+  // Connect WebSocket on mount if autoConnect
   useEffect(() => {
-    if (autoConnect && !usePolling.current) {
+    if (autoConnect && festivalId && wsUrl) {
       wsConnect();
     }
-  }, [autoConnect, wsConnect]);
+    return undefined;
+  }, [autoConnect, festivalId, wsUrl, wsConnect]);
 
   // Acknowledge alert
   const acknowledgeAlert = useCallback((alertId: string) => {
@@ -284,21 +271,16 @@ export function useRealtimeData(options: UseRealtimeDataOptions = {}): UseRealti
 
   // Refresh data manually
   const refresh = useCallback(() => {
-    if (usePolling.current) {
-      const newStats = generateMockStats();
-      setStats((prev) => ({
-        ...newStats,
-        alerts: [...newStats.alerts, ...prev.alerts.filter((a) => a.acknowledged)],
-      }));
-      setLastUpdate(new Date());
-    }
-  }, []);
+    fetchData();
+  }, [fetchData]);
 
   return {
     stats,
-    isConnected: isConnected || usePolling.current,
-    connectionState: usePolling.current ? 'connected' : connectionState,
+    isConnected,
+    connectionState: isConnected ? 'connected' : connectionState,
     lastUpdate,
+    isLoading,
+    error,
     connect: wsConnect,
     disconnect: wsDisconnect,
     acknowledgeAlert,

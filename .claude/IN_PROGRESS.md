@@ -2,6 +2,29 @@
 
 ---
 
+## Session 2026-01-06 - Fix Memory Leak & Realtime Data
+
+### En cours
+
+- [ ] Vérifier que tout fonctionne après redémarrage du serveur
+
+### Terminé cette session
+
+- [x] Fix fuite mémoire Next.js (serveur tournait depuis 4 jours, 125% CPU)
+- [x] Migration useRealTimeData des données mock vers vraie API
+  - Suppression des fonctions generateMock\*
+  - Utilisation des endpoints `/analytics/festivals/:id/realtime/live` et `/realtime/zones`
+  - Polling changé de 5s à 30s (raisonnable pour API réelle)
+  - Ajout isLoading et error states
+- [x] Fix useWebSocket pour éviter les fuites mémoire
+  - useEffect cleanup avec deps vides au lieu de [disconnect]
+  - Nettoyage direct des refs sans appeler disconnect()
+- [x] Fix exports api.ts pour style axios (get, post, put, patch, delete)
+- [x] Fix types promo-codes/page.tsx
+- [x] Fix tsconfig.json admin (path @/types)
+
+---
+
 # Claude Configuration – Festival Platform
 
 ## Model

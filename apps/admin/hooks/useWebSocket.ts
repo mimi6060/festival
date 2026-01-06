@@ -123,10 +123,7 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
         onDisconnect?.();
 
         // Attempt reconnection
-        if (
-          reconnect &&
-          reconnectAttemptsRef.current < maxReconnectAttempts
-        ) {
+        if (reconnect && reconnectAttemptsRef.current < maxReconnectAttempts) {
           reconnectAttemptsRef.current += 1;
           reconnectTimeoutRef.current = setTimeout(() => {
             connect();
@@ -176,12 +173,25 @@ export function useWebSocket(options: UseWebSocketOptions): UseWebSocketReturn {
     }
   }, []);
 
-  // Cleanup on unmount
+  // Cleanup on unmount - use ref to avoid dependency issues
   useEffect(() => {
     return () => {
-      disconnect();
+      // Clear all timeouts
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      if (heartbeatIntervalRef.current) {
+        clearInterval(heartbeatIntervalRef.current);
+        heartbeatIntervalRef.current = null;
+      }
+      // Close WebSocket
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
     };
-  }, [disconnect]);
+  }, []); // Empty deps - only run on unmount
 
   return {
     isConnected,

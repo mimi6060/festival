@@ -17,10 +17,17 @@ export default function PromoCodesPage() {
     queryKey: ['promo-codes', selectedFestival, filterActive],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (selectedFestival) params.append('festivalId', selectedFestival);
-      if (filterActive !== null) params.append('isActive', String(filterActive));
+      if (selectedFestival) {
+        params.append('festivalId', selectedFestival);
+      }
+      if (filterActive !== null) {
+        params.append('isActive', String(filterActive));
+      }
 
-      const response = await api.get(`/promo-codes?${params.toString()}`);
+      const response = await api.get<{
+        data: PromoCode[];
+        meta?: { page: number; totalPages: number };
+      }>(`/promo-codes?${params.toString()}`);
       return response.data;
     },
   });
@@ -29,7 +36,7 @@ export default function PromoCodesPage() {
   const { data: festivals } = useQuery({
     queryKey: ['festivals'],
     queryFn: async () => {
-      const response = await api.get('/festivals');
+      const response = await api.get<{ data: { id: string; name: string }[] }>('/festivals');
       return response.data;
     },
   });
@@ -37,7 +44,7 @@ export default function PromoCodesPage() {
   // Create mutation
   const createMutation = useMutation({
     mutationFn: async (data: CreatePromoCodeDto) => {
-      const response = await api.post('/promo-codes', data);
+      const response = await api.post<PromoCode>('/promo-codes', data);
       return response.data;
     },
     onSuccess: () => {
@@ -49,7 +56,7 @@ export default function PromoCodesPage() {
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: string; data: Partial<CreatePromoCodeDto> }) => {
-      const response = await api.patch(`/promo-codes/${id}`, data);
+      const response = await api.patch<PromoCode>(`/promo-codes/${id}`, data);
       return response.data;
     },
     onSuccess: () => {
@@ -72,9 +79,11 @@ export default function PromoCodesPage() {
   const [statsCodeId, setStatsCodeId] = useState<string | null>(null);
   const { data: stats } = useQuery<PromoCodeStats>({
     queryKey: ['promo-code-stats', statsCodeId],
-    queryFn: async () => {
-      if (!statsCodeId) throw new Error('No code ID');
-      const response = await api.get(`/promo-codes/${statsCodeId}/stats`);
+    queryFn: async (): Promise<PromoCodeStats> => {
+      if (!statsCodeId) {
+        throw new Error('No code ID');
+      }
+      const response = await api.get<PromoCodeStats>(`/promo-codes/${statsCodeId}/stats`);
       return response.data;
     },
     enabled: !!statsCodeId,
@@ -89,10 +98,12 @@ export default function PromoCodesPage() {
       discountType: formData.get('discountType') as 'PERCENTAGE' | 'FIXED_AMOUNT',
       discountValue: parseFloat(formData.get('discountValue') as string),
       maxUses: formData.get('maxUses') ? parseInt(formData.get('maxUses') as string) : undefined,
-      minAmount: formData.get('minAmount') ? parseFloat(formData.get('minAmount') as string) : undefined,
-      expiresAt: formData.get('expiresAt') as string || undefined,
+      minAmount: formData.get('minAmount')
+        ? parseFloat(formData.get('minAmount') as string)
+        : undefined,
+      expiresAt: (formData.get('expiresAt') as string) || undefined,
       isActive: formData.get('isActive') === 'on',
-      festivalId: formData.get('festivalId') as string || undefined,
+      festivalId: (formData.get('festivalId') as string) || undefined,
     };
 
     if (editingCode) {
@@ -110,17 +121,23 @@ export default function PromoCodesPage() {
   };
 
   const getUsageDisplay = (code: PromoCode) => {
-    if (code.maxUses === null) return `${code.currentUses} (illimité)`;
+    if (code.maxUses === null) {
+      return `${code.currentUses} (illimité)`;
+    }
     return `${code.currentUses} / ${code.maxUses}`;
   };
 
   const isExpired = (code: PromoCode) => {
-    if (!code.expiresAt) return false;
+    if (!code.expiresAt) {
+      return false;
+    }
     return new Date(code.expiresAt) < new Date();
   };
 
   const isExhausted = (code: PromoCode) => {
-    if (code.maxUses === null) return false;
+    if (code.maxUses === null) {
+      return false;
+    }
     return code.currentUses >= code.maxUses;
   };
 
@@ -128,9 +145,7 @@ export default function PromoCodesPage() {
     <div className="p-6 max-w-7xl mx-auto">
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
-            Codes Promo
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Codes Promo</h1>
           <p className="text-gray-600 dark:text-gray-400 mt-1">
             Gérez les codes de réduction pour vos festivals
           </p>
@@ -171,7 +186,9 @@ export default function PromoCodesPage() {
             </label>
             <select
               value={filterActive === null ? '' : String(filterActive)}
-              onChange={(e) => setFilterActive(e.target.value === '' ? null : e.target.value === 'true')}
+              onChange={(e) =>
+                setFilterActive(e.target.value === '' ? null : e.target.value === 'true')
+              }
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="">Tous</option>
@@ -273,7 +290,11 @@ export default function PromoCodesPage() {
                     <input
                       type="datetime-local"
                       name="expiresAt"
-                      defaultValue={editingCode?.expiresAt ? new Date(editingCode.expiresAt).toISOString().slice(0, 16) : ''}
+                      defaultValue={
+                        editingCode?.expiresAt
+                          ? new Date(editingCode.expiresAt).toISOString().slice(0, 16)
+                          : ''
+                      }
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     />
                   </div>
@@ -304,7 +325,10 @@ export default function PromoCodesPage() {
                       id="isActive"
                       className="w-4 h-4 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
                     />
-                    <label htmlFor="isActive" className="ml-2 text-sm text-gray-700 dark:text-gray-300">
+                    <label
+                      htmlFor="isActive"
+                      className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+                    >
                       Code actif
                     </label>
                   </div>
@@ -362,7 +386,9 @@ export default function PromoCodesPage() {
 
                 {stats.maxUses !== null && (
                   <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
-                    <div className="text-sm text-gray-600 dark:text-gray-400">Taux d'utilisation</div>
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      Taux d'utilisation
+                    </div>
                     <div className="text-2xl font-bold text-gray-900 dark:text-white">
                       {stats.usageRate.toFixed(1)}%
                     </div>
@@ -382,13 +408,19 @@ export default function PromoCodesPage() {
                   <div className="text-sm text-gray-600 dark:text-gray-400">Statut</div>
                   <div className="flex flex-wrap gap-2 mt-2">
                     {stats.isActive && (
-                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">Actif</span>
+                      <span className="px-2 py-1 bg-green-100 text-green-800 text-xs rounded">
+                        Actif
+                      </span>
                     )}
                     {stats.isExpired && (
-                      <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">Expiré</span>
+                      <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded">
+                        Expiré
+                      </span>
                     )}
                     {stats.isExhausted && (
-                      <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded">Épuisé</span>
+                      <span className="px-2 py-1 bg-orange-100 text-orange-800 text-xs rounded">
+                        Épuisé
+                      </span>
                     )}
                   </div>
                 </div>
@@ -403,9 +435,7 @@ export default function PromoCodesPage() {
         {isLoading ? (
           <div className="p-8 text-center text-gray-500">Chargement...</div>
         ) : !promoCodes?.data || promoCodes.data.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            Aucun code promo trouvé
-          </div>
+          <div className="p-8 text-center text-gray-500">Aucun code promo trouvé</div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full">
@@ -436,7 +466,10 @@ export default function PromoCodesPage() {
               </thead>
               <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
                 {promoCodes.data.map((code: PromoCode) => (
-                  <tr key={code.id} className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+                  <tr
+                    key={code.id}
+                    className="hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <span className="font-mono font-bold text-gray-900 dark:text-white">
                         {code.code}
@@ -527,7 +560,7 @@ export default function PromoCodesPage() {
             <button
               key={page}
               className={`px-3 py-1 rounded ${
-                page === promoCodes.meta.page
+                page === promoCodes.meta?.page
                   ? 'bg-indigo-600 text-white'
                   : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
               }`}
