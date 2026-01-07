@@ -168,7 +168,7 @@ export default async function FestivalsPage() {
             ))}
           </div>
         ) : (
-          <Card variant="solid" padding="xl" className="text-center">
+          <Card variant="solid" padding="lg" className="text-center">
             <div className="py-12">
               <svg
                 className="w-16 h-16 mx-auto text-white/20 mb-4"

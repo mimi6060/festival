@@ -94,7 +94,7 @@ export default function CashlessPage() {
         </div>
 
         {/* How it works */}
-        <Card variant="gradient" padding="xl" className="mb-16">
+        <Card variant="gradient" padding="lg" className="mb-16">
           <h2 className="text-2xl font-bold text-white mb-8 text-center">Comment ça marche ?</h2>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
             <div className="text-center">

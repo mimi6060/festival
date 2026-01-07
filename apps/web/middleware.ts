@@ -11,35 +11,25 @@ import { NextResponse, type NextRequest } from 'next/server';
  */
 
 // Routes that require authentication
-const protectedRoutes = [
-  '/account',
-  '/tickets',
-  '/orders',
-  '/profile',
-];
+const protectedRoutes = ['/account', '/tickets', '/orders', '/profile'];
 
 // Routes that should redirect to /account if already authenticated
-const authRoutes = [
-  '/auth/login',
-  '/auth/register',
-];
+const authRoutes = ['/auth/login', '/auth/register'];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Check if the user has an access token cookie
-  // Note: We can't read httpOnly cookies in middleware, but we can check if they exist
-  const hasAuthToken = request.cookies.has('access_token') ||
-                       request.cookies.has('accessToken') ||
-                       request.cookies.has('jwt');
+  // The backend sets 'access_token' as the cookie name
+  const hasAuthToken = request.cookies.has('access_token');
 
   // Redirect authenticated users away from auth pages
-  if (authRoutes.some(route => pathname.startsWith(route)) && hasAuthToken) {
+  if (authRoutes.some((route) => pathname.startsWith(route)) && hasAuthToken) {
     return NextResponse.redirect(new URL('/account', request.url));
   }
 
   // Redirect unauthenticated users to login
-  if (protectedRoutes.some(route => pathname.startsWith(route)) && !hasAuthToken) {
+  if (protectedRoutes.some((route) => pathname.startsWith(route)) && !hasAuthToken) {
     const loginUrl = new URL('/auth/login', request.url);
     loginUrl.searchParams.set('redirect', pathname);
     return NextResponse.redirect(loginUrl);

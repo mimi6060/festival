@@ -194,7 +194,7 @@ export default function ProgrammePage() {
         </section>
 
         {/* CTA */}
-        <Card variant="gradient" padding="xl" className="text-center">
+        <Card variant="gradient" padding="lg" className="text-center">
           <h2 className="text-2xl font-bold text-white mb-4">Prêt à planifier votre festival ?</h2>
           <p className="text-white/60 mb-8 max-w-xl mx-auto">
             Connectez-vous pour créer votre programme personnalisé et recevoir des notifications

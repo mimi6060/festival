@@ -17,8 +17,8 @@ interface PromoCodeInputProps {
 
 export function PromoCodeInput({
   onApply,
-  originalAmount,
-  currency = 'EUR',
+  originalAmount: _originalAmount,
+  currency: _currency = 'EUR',
 }: PromoCodeInputProps) {
   const [promoCode, setPromoCode] = useState('');
   const [isValidating, setIsValidating] = useState(false);
@@ -31,7 +31,9 @@ export function PromoCodeInput({
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
 
   const handleApply = async () => {
-    if (!promoCode.trim()) return;
+    if (!promoCode.trim()) {
+      return;
+    }
 
     setIsValidating(true);
     setValidationResult(null);
@@ -43,7 +45,7 @@ export function PromoCodeInput({
       if (result.valid) {
         setAppliedCode(promoCode.toUpperCase());
       }
-    } catch (error) {
+    } catch {
       setValidationResult({
         valid: false,
         error: 'Erreur lors de la validation du code promo',
@@ -84,12 +86,12 @@ export function PromoCodeInput({
             type="button"
             onClick={handleApply}
             disabled={!promoCode.trim() || isValidating}
-            variant="outline"
+            variant="secondary"
           >
             {isValidating ? 'Validation...' : 'Appliquer'}
           </Button>
         ) : (
-          <Button type="button" onClick={handleRemove} variant="outline">
+          <Button type="button" onClick={handleRemove} variant="secondary">
             Retirer
           </Button>
         )}
@@ -131,9 +133,7 @@ export function PromoCodeInput({
           <div className="flex items-center justify-between text-sm">
             <div>
               <span className="text-gray-400">Code promo:</span>{' '}
-              <span className="font-mono font-bold text-primary-400">
-                {appliedCode}
-              </span>
+              <span className="font-mono font-bold text-primary-400">{appliedCode}</span>
             </div>
             <div className="text-green-400 font-semibold">
               -{validationResult.discountAmount?.toFixed(2)} {currency}

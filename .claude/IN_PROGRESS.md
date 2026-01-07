@@ -2,6 +2,37 @@
 
 ---
 
+## Session 2026-01-07 - Fix Login Authentication (httpOnly Cookies)
+
+### Terminé cette session
+
+- [x] Fix backend auth controller to set httpOnly cookies
+  - Login, logout, refresh, OAuth callbacks all set cookies
+  - Secure cookies in production (httpOnly, sameSite strict)
+  - Added cookie-parser middleware
+- [x] Fix JWT strategy to extract token from cookie OR header
+- [x] Fix frontend login page to use real API call (useAuthStore)
+- [x] Fix auth store URLs (removed /v1 prefix - backend has no version prefix)
+- [x] Fix middleware to check correct cookie name (access_token)
+- [x] Add OAuth callback page for handling OAuth redirects
+- [x] Fix misc type errors (Card padding, Button variant)
+
+### Fichiers modifiés
+
+- `apps/api/src/modules/auth/auth.controller.ts` - httpOnly cookies for login/logout/refresh/OAuth
+- `apps/api/src/modules/auth/strategies/jwt.strategy.ts` - Extract JWT from cookie or header
+- `apps/api/src/main.ts` - Added cookie-parser middleware
+- `apps/web/app/auth/login/page.tsx` - Use useAuthStore for real login
+- `apps/web/app/auth/callback/page.tsx` - NEW: OAuth callback handler
+- `apps/web/stores/auth.store.ts` - Fix API URLs (no /v1)
+- `apps/web/middleware.ts` - Check access_token cookie
+- `apps/web/app/cashless/page.tsx` - Fix Card padding type
+- `apps/web/app/festivals/page.tsx` - Fix Card padding type
+- `apps/web/app/programme/page.tsx` - Fix Card padding type
+- `apps/web/components/checkout/PromoCodeInput.tsx` - Fix Button variant type
+
+---
+
 ## Session 2026-01-07 - Frontend/API Integration & OAuth
 
 ### Terminé cette session
@@ -23,12 +54,12 @@
   - Added AuthProvider enum to Prisma schema
   - Added OAuth fields to User model (avatarUrl, authProvider, oauthProviderId)
   - Updated validation schema with GitHub OAuth
+- [x] Add OAuth callback page on frontend
 
 ### À faire
 
 - [ ] Enable OAuth providers with real credentials (Google Console, GitHub Developer)
 - [ ] Test OAuth flow end-to-end
-- [ ] Add OAuth callback page on frontend
 
 ---
 

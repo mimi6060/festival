@@ -117,7 +117,7 @@ export const useAuthStore = create<AuthStore>()(
           });
 
           try {
-            const response = await fetch(`${API_URL}/v1/auth/login`, {
+            const response = await fetch(`${API_URL}/auth/login`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -155,7 +155,7 @@ export const useAuthStore = create<AuthStore>()(
           });
 
           try {
-            const response = await fetch(`${API_URL}/v1/auth/register`, {
+            const response = await fetch(`${API_URL}/auth/register`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -189,7 +189,7 @@ export const useAuthStore = create<AuthStore>()(
         logout: async () => {
           try {
             // Call logout API to clear httpOnly cookies
-            await fetch(`${API_URL}/v1/auth/logout`, {
+            await fetch(`${API_URL}/auth/logout`, {
               method: 'POST',
               credentials: 'include',
             });
@@ -229,7 +229,7 @@ export const useAuthStore = create<AuthStore>()(
 
         checkAuth: async () => {
           try {
-            const response = await fetch(`${API_URL}/v1/auth/me`, {
+            const response = await fetch(`${API_URL}/auth/me`, {
               method: 'GET',
               credentials: 'include', // Send cookies with request
             });

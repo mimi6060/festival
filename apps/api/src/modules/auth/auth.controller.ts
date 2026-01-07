@@ -209,8 +209,34 @@ When the access token expires, use the refresh token with \`POST /auth/refresh\`
     description: 'Account locked due to too many failed attempts',
     type: TooManyRequestsResponseDto,
   })
-  async login(@Body() loginDto: LoginDto): Promise<LoginResponseDto> {
-    return this.authService.login(loginDto);
+  async login(
+    @Body() loginDto: LoginDto,
+    @Res({ passthrough: true }) res: Response
+  ): Promise<LoginResponseDto> {
+    const result = await this.authService.login(loginDto);
+
+    // Set httpOnly cookies for tokens (secure in production)
+    const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? ('strict' as const) : ('lax' as const),
+      path: '/',
+    };
+
+    // Access token cookie (shorter expiry)
+    res.cookie('access_token', result.tokens.accessToken, {
+      ...cookieOptions,
+      maxAge: result.tokens.expiresIn * 1000, // Convert to milliseconds
+    });
+
+    // Refresh token cookie (longer expiry - 7 days)
+    res.cookie('refresh_token', result.tokens.refreshToken, {
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    return result;
   }
 
   /**
@@ -243,8 +269,16 @@ Clear tokens from client storage after calling this endpoint.
     description: 'Not authenticated',
     type: UnauthorizedResponseDto,
   })
-  async logout(@CurrentUser('id') userId: string): Promise<SuccessResponseDto> {
+  async logout(
+    @CurrentUser('id') userId: string,
+    @Res({ passthrough: true }) res: Response
+  ): Promise<SuccessResponseDto> {
     await this.authService.logout(userId);
+
+    // Clear auth cookies
+    res.clearCookie('access_token', { path: '/' });
+    res.clearCookie('refresh_token', { path: '/' });
+
     return {
       success: true,
       message: 'Logout successful',
@@ -296,8 +330,38 @@ If a refresh token is used twice (indicating theft), all sessions are invalidate
     description: 'Invalid or expired refresh token',
     type: UnauthorizedResponseDto,
   })
-  async refresh(@Body() refreshTokenDto: RefreshTokenDto): Promise<AuthTokensDto> {
-    return this.authService.refreshTokens(refreshTokenDto);
+  async refresh(
+    @Body() refreshTokenDto: RefreshTokenDto,
+    @Req() req: Request,
+    @Res({ passthrough: true }) res: Response
+  ): Promise<AuthTokensDto> {
+    // Try to get refresh token from cookie if not in body
+    const refreshToken = refreshTokenDto.refreshToken || (req.cookies?.refresh_token as string);
+
+    const result = await this.authService.refreshTokens({
+      refreshToken,
+    });
+
+    // Update cookies with new tokens
+    const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? ('strict' as const) : ('lax' as const),
+      path: '/',
+    };
+
+    res.cookie('access_token', result.accessToken, {
+      ...cookieOptions,
+      maxAge: result.expiresIn * 1000,
+    });
+
+    res.cookie('refresh_token', result.refreshToken, {
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return result;
   }
 
   /**
@@ -616,15 +680,28 @@ Sends a new verification email to the specified address.
     const user = req.user as AuthenticatedUser;
     const result = await this.authService.loginOAuth(user);
 
-    // Redirect to frontend with tokens
+    // Set httpOnly cookies for tokens
+    const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
     const frontendUrl = this.configService.get<string>('APP_URL') || 'http://localhost:3000';
-    const params = new URLSearchParams({
-      accessToken: result.tokens.accessToken,
-      refreshToken: result.tokens.refreshToken,
-      expiresIn: String(result.tokens.expiresIn),
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? ('strict' as const) : ('lax' as const),
+      path: '/',
+    };
+
+    res.cookie('access_token', result.tokens.accessToken, {
+      ...cookieOptions,
+      maxAge: result.tokens.expiresIn * 1000,
     });
 
-    res.redirect(`${frontendUrl}/auth/callback?${params.toString()}`);
+    res.cookie('refresh_token', result.tokens.refreshToken, {
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // Redirect to frontend callback page (without tokens in URL)
+    res.redirect(`${frontendUrl}/auth/callback?success=true`);
   }
 
   /**
@@ -655,15 +732,28 @@ Sends a new verification email to the specified address.
     const user = req.user as AuthenticatedUser;
     const result = await this.authService.loginOAuth(user);
 
-    // Redirect to frontend with tokens
+    // Set httpOnly cookies for tokens
+    const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
     const frontendUrl = this.configService.get<string>('APP_URL') || 'http://localhost:3000';
-    const params = new URLSearchParams({
-      accessToken: result.tokens.accessToken,
-      refreshToken: result.tokens.refreshToken,
-      expiresIn: String(result.tokens.expiresIn),
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? ('strict' as const) : ('lax' as const),
+      path: '/',
+    };
+
+    res.cookie('access_token', result.tokens.accessToken, {
+      ...cookieOptions,
+      maxAge: result.tokens.expiresIn * 1000,
     });
 
-    res.redirect(`${frontendUrl}/auth/callback?${params.toString()}`);
+    res.cookie('refresh_token', result.tokens.refreshToken, {
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // Redirect to frontend callback page (without tokens in URL)
+    res.redirect(`${frontendUrl}/auth/callback?success=true`);
   }
 
   /**

@@ -1,15 +1,36 @@
 /**
  * JWT Strategy for Passport Authentication
  *
- * Validates JWT tokens from the Authorization header and
- * extracts user information for request context.
+ * Validates JWT tokens from the Authorization header OR httpOnly cookies
+ * and extracts user information for request context.
  */
 
 import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
+import { Request } from 'express';
 import { AuthService, JwtPayload } from '../auth.service';
+
+/**
+ * Custom extractor that tries:
+ * 1. Authorization header (Bearer token)
+ * 2. access_token cookie
+ */
+const extractJwtFromHeaderOrCookie = (req: Request): string | null => {
+  // First try Authorization header
+  const headerToken = ExtractJwt.fromAuthHeaderAsBearerToken()(req);
+  if (headerToken) {
+    return headerToken;
+  }
+
+  // Then try cookie
+  if (req.cookies?.access_token) {
+    return req.cookies.access_token as string;
+  }
+
+  return null;
+};
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
@@ -18,7 +39,7 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     private readonly authService: AuthService
   ) {
     super({
-      jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
+      jwtFromRequest: extractJwtFromHeaderOrCookie,
       ignoreExpiration: false,
       secretOrKey: configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
     });
