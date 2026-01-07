@@ -46,8 +46,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const data = await response.json();
 
-      // Verify user has admin/organizer role
-      if (!['admin', 'organizer'].includes(data.user.role)) {
+      // Verify user has admin/organizer role (case-insensitive)
+      const userRole = data.user.role?.toLowerCase();
+      if (!['admin', 'organizer'].includes(userRole)) {
         throw new Error('Unauthorized access');
       }
 
@@ -85,12 +86,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const data = await response.json();
 
-      // Check if user has admin/organizer role
-      if (!['admin', 'organizer'].includes(data.user.role)) {
+      // Check if user has admin/organizer role (case-insensitive)
+      const userRole = data.user.role?.toLowerCase();
+      if (!['admin', 'organizer'].includes(userRole)) {
         throw new Error('Acces non autorise. Vous devez etre administrateur ou organisateur.');
       }
 
-      localStorage.setItem('admin_token', data.token);
+      // API returns tokens.accessToken, not token
+      const accessToken = data.tokens?.accessToken || data.token;
+      localStorage.setItem('admin_token', accessToken);
       localStorage.setItem('admin_user', JSON.stringify(data.user));
       setUser(data.user);
       router.push('/');
@@ -142,7 +146,7 @@ export function withAuth<P extends object>(
     useEffect(() => {
       if (!isLoading && !isAuthenticated) {
         router.push('/login');
-      } else if (!isLoading && user && !requiredRoles.includes(user.role)) {
+      } else if (!isLoading && user && !requiredRoles.includes(user.role?.toLowerCase())) {
         router.push('/unauthorized');
       }
     }, [isLoading, isAuthenticated, user, router]);
@@ -155,7 +159,7 @@ export function withAuth<P extends object>(
       );
     }
 
-    if (!isAuthenticated || !user || !requiredRoles.includes(user.role)) {
+    if (!isAuthenticated || !user || !requiredRoles.includes(user.role?.toLowerCase())) {
       return null;
     }
 
