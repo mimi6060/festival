@@ -37,7 +37,7 @@ export default function LoginPage() {
     setServerError('');
 
     try {
-      await login(data.email, data.password);
+      await login(data.email.trim(), data.password.trim());
     } catch (err) {
       setServerError(err instanceof Error ? err.message : 'Une erreur est survenue');
     }
@@ -80,10 +80,10 @@ export default function LoginPage() {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
             <p className="text-sm text-blue-800 font-medium">Mode Demo</p>
             <p className="text-sm text-blue-600 mt-1">
-              Email: <code className="bg-blue-100 px-1 rounded">admin@festival-platform.com</code>
+              Email: <code className="bg-blue-100 px-1 rounded">admin@festival.fr</code>
             </p>
             <p className="text-sm text-blue-600">
-              Mot de passe: <code className="bg-blue-100 px-1 rounded">admin123</code>
+              Mot de passe: <code className="bg-blue-100 px-1 rounded">Festival2025!</code>
             </p>
           </div>
 
@@ -134,7 +134,7 @@ export default function LoginPage() {
                   type="email"
                   {...register('email')}
                   className={`input-field pl-10 ${errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-                  placeholder="admin@festival-platform.com"
+                  placeholder="admin@festival.fr"
                   autoComplete="email"
                 />
               </div>
