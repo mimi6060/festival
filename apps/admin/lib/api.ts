@@ -254,13 +254,13 @@ export const ordersApi = {
 // Auth
 export const authApi = {
   login: (email: string, password: string) =>
-    request<{ token: string; user: import('../types').User }>('/admin/auth/login', {
+    request<{ token: string; user: import('../types').User }>('/auth/login', {
       method: 'POST',
       body: { email, password },
     }),
-  logout: () => request<void>('/admin/auth/logout', { method: 'POST' }),
-  me: () => request<import('../types').User>('/admin/auth/me'),
-  refreshToken: () => request<{ token: string }>('/admin/auth/refresh', { method: 'POST' }),
+  logout: () => request<void>('/auth/logout', { method: 'POST' }),
+  me: () => request<import('../types').User>('/auth/me'),
+  refreshToken: () => request<{ token: string }>('/auth/refresh', { method: 'POST' }),
 };
 
 // Vendors
