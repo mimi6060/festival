@@ -139,6 +139,38 @@ for i in {1..120}; do
     sleep 2
 done
 
+# =============================================================================
+# Ensure database schema and create admin user
+# =============================================================================
+log_info "Ensuring database schema is up to date..."
+docker-compose -f docker-compose.dev.yml exec -T api sh -c "./node_modules/.bin/prisma db push --skip-generate" 2>/dev/null || true
+
+log_info "Checking for admin user..."
+ADMIN_EXISTS=$(docker-compose -f docker-compose.dev.yml exec -T postgres psql -U festival_user -d festival_db -tAc "SELECT COUNT(*) FROM \"User\" WHERE email = 'admin@festival-platform.com';" 2>/dev/null || echo "0")
+
+if [ "$ADMIN_EXISTS" = "0" ]; then
+    log_info "Creating admin user..."
+    # Generate bcrypt hash for 'admin123'
+    BCRYPT_HASH=$(docker-compose -f docker-compose.dev.yml exec -T api node -e "console.log(require('bcrypt').hashSync('admin123', 10))" 2>/dev/null)
+
+    docker-compose -f docker-compose.dev.yml exec -T postgres psql -U festival_user -d festival_db -c "
+    INSERT INTO \"User\" (id, email, \"passwordHash\", \"firstName\", \"lastName\", role, status, \"emailVerified\", \"createdAt\", \"updatedAt\")
+    VALUES (
+        'admin-' || gen_random_uuid()::text,
+        'admin@festival-platform.com',
+        '$BCRYPT_HASH',
+        'Admin',
+        'Festival',
+        'ADMIN',
+        'ACTIVE',
+        true,
+        NOW(),
+        NOW()
+    );" 2>/dev/null && log_success "Admin user created (admin@festival-platform.com / admin123)"
+else
+    log_success "Admin user already exists"
+fi
+
 # Check Web and Admin (they usually start faster)
 sleep 5
 WEB_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4200 2>/dev/null || echo "000")
@@ -169,6 +201,10 @@ echo "  - PostgreSQL: localhost:5432"
 echo "  - Redis:      localhost:6379"
 echo "  - MinIO:      http://localhost:9000 (Console: http://localhost:9001)"
 echo "  - Mailpit:    http://localhost:8026 (SMTP: localhost:1026)"
+echo ""
+echo "Admin Credentials:"
+echo "  - Email:    admin@festival-platform.com"
+echo "  - Password: admin123"
 echo ""
 echo "Useful commands:"
 echo "  - View logs:     docker logs -f festival-api-dev"
