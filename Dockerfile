@@ -1,5 +1,6 @@
 # Festival API - Production Dockerfile
-FROM node:20-alpine AS base
+# Pin base image to SHA256 digest for reproducible builds
+FROM node:20-alpine@sha256:6a91081a440be0b57336fbc4ee87f3dab1a2fd6f80cdb355dcf960e13bda3b59 AS base
 
 # Install dependencies for native modules
 RUN apk add --no-cache libc6-compat python3 make g++

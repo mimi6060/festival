@@ -3,7 +3,8 @@
 # ============================================
 # Optimized for development with hot-reload
 
-FROM node:20-alpine AS development
+# Pin base image to SHA256 digest for reproducible builds
+FROM node:20-alpine@sha256:6a91081a440be0b57336fbc4ee87f3dab1a2fd6f80cdb355dcf960e13bda3b59 AS development
 
 # Install required system dependencies
 RUN apk add --no-cache libc6-compat

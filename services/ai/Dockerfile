@@ -1,10 +1,13 @@
 # Festival AI Service - Multi-stage Dockerfile
 # Python 3.11 with ML dependencies
 
+# Pin base image to SHA256 digest for reproducible builds
+ARG PYTHON_IMAGE=python:3.11-slim@sha256:8868a8ce46300fe1038a2a9eb3ff740db8866b0cb30bf124379f2d3605d037ab
+
 # =============================================================================
 # Stage 1: Builder
 # =============================================================================
-FROM python:3.11-slim as builder
+FROM ${PYTHON_IMAGE} as builder
 
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
@@ -31,7 +34,7 @@ RUN pip install --upgrade pip setuptools wheel && \
 # =============================================================================
 # Stage 2: Production
 # =============================================================================
-FROM python:3.11-slim as production
+FROM ${PYTHON_IMAGE} as production
 
 # Labels
 LABEL org.opencontainers.image.title="Festival AI Service"

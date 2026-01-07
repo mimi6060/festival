@@ -4,10 +4,13 @@
 # Optimized for production with minimal image size
 # Node 20 Alpine base for security and performance
 
+# Pin base image to SHA256 digest for reproducible builds
+ARG NODE_IMAGE=node:20-alpine@sha256:6a91081a440be0b57336fbc4ee87f3dab1a2fd6f80cdb355dcf960e13bda3b59
+
 # ============================================
 # Stage 1: Dependencies
 # ============================================
-FROM node:20-alpine AS deps
+FROM ${NODE_IMAGE} AS deps
 
 # Install required system dependencies
 RUN apk add --no-cache libc6-compat openssl
@@ -26,7 +29,7 @@ RUN npm ci --only=production && npm cache clean --force
 # ============================================
 # Stage 2: Builder
 # ============================================
-FROM node:20-alpine AS builder
+FROM ${NODE_IMAGE} AS builder
 
 # Install required system dependencies
 RUN apk add --no-cache libc6-compat openssl
@@ -58,7 +61,7 @@ RUN npm run build:api
 # ============================================
 # Stage 3: Production
 # ============================================
-FROM node:20-alpine AS production
+FROM ${NODE_IMAGE} AS production
 
 # Add labels for container identification
 LABEL org.opencontainers.image.title="Festival API"

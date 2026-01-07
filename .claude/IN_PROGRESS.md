@@ -576,10 +576,15 @@ const token = localStorage.getItem('auth_token');
 
 ## 🟢 PRIORITÉ BASSE - Backlog
 
-### L1: Base Images Non Pinnées au Digest
+### ✅ L1: Base Images Non Pinnées au Digest - RÉSOLU
 
-**Fichiers:** `apps/*/Dockerfile`
-**Action:** Utiliser `node:20-alpine@sha256:...`
+**Fichiers:** Tous les Dockerfiles du projet
+**Résolution:**
+- Tous les Dockerfiles utilisent maintenant des digests SHA256 pour builds reproductibles
+- `node:20-alpine@sha256:6a91081a440be0b57336fbc4ee87f3dab1a2fd6f80cdb355dcf960e13bda3b59`
+- `python:3.11-slim@sha256:8868a8ce46300fe1038a2a9eb3ff740db8866b0cb30bf124379f2d3605d037ab`
+- Multi-stage builds utilisent ARG pour réutiliser le même digest
+- Fichiers modifiés: Dockerfile, Dockerfile.dev, apps/api/Dockerfile, apps/api/Dockerfile.dev, apps/web/Dockerfile, apps/web/Dockerfile.dev, apps/admin/Dockerfile, apps/admin/Dockerfile.dev, services/ai/Dockerfile
 
 ### ✅ L2: Logger Non Configuré pour Production - RÉSOLU
 
