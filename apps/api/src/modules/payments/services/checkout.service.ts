@@ -24,6 +24,7 @@ import {
   CheckoutSessionResponseDto,
   CheckoutMode,
 } from '../dto/create-checkout-session.dto';
+import { PromoCodesService } from '../../promo-codes/promo-codes.service';
 
 export interface CheckoutSessionStatus {
   status: string;
@@ -43,6 +44,7 @@ export class CheckoutService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
+    private readonly promoCodesService: PromoCodesService
   ) {
     const stripeSecretKey = this.configService.get<string>('STRIPE_SECRET_KEY');
 
@@ -59,9 +61,7 @@ export class CheckoutService {
    * Create a Stripe Checkout Session for seamless hosted payments
    * Supports one-time payments, subscriptions, and setup mode
    */
-  async createCheckoutSession(
-    dto: CreateCheckoutSessionDto,
-  ): Promise<CheckoutSessionResponseDto> {
+  async createCheckoutSession(dto: CreateCheckoutSessionDto): Promise<CheckoutSessionResponseDto> {
     this.ensureStripeConfigured();
 
     // Validate user exists
@@ -75,14 +75,37 @@ export class CheckoutService {
 
     try {
       // Calculate total amount
-      const totalAmount = dto.lineItems.reduce(
+      let totalAmount = dto.lineItems.reduce(
         (sum, item) => sum + item.unitAmount * item.quantity,
-        0,
+        0
       );
 
+      // Apply promo code if provided
+      let promoCodeData = null;
+      let discountAmount = 0;
+      if (dto.promoCode) {
+        const promoValidation = await this.promoCodesService.apply({
+          code: dto.promoCode,
+          amount: totalAmount / 100, // Convert cents to currency units
+          festivalId: dto.festivalId,
+        });
+
+        if (!promoValidation.valid) {
+          throw new BadRequestException(promoValidation.error || 'Code promo invalide');
+        }
+
+        discountAmount = Math.round((promoValidation.discountAmount || 0) * 100);
+        totalAmount = Math.round((promoValidation.finalAmount || 0) * 100);
+        promoCodeData = promoValidation.promoCode;
+
+        this.logger.log(
+          `Promo code ${dto.promoCode} applied: -${discountAmount / 100} ${dto.currency || 'EUR'}`
+        );
+      }
+
       // Build line items for Stripe
-      const stripeLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] =
-        dto.lineItems.map((item) => ({
+      const stripeLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = dto.lineItems.map(
+        (item) => ({
           price_data: {
             currency: dto.currency || 'eur',
             product_data: {
@@ -97,7 +120,8 @@ export class CheckoutService {
             }),
           },
           quantity: item.quantity,
-        }));
+        })
+      );
 
       // Build checkout session params
       const sessionParams: Stripe.Checkout.SessionCreateParams = {
@@ -125,8 +149,7 @@ export class CheckoutService {
 
       // Set expiration
       if (dto.expiresAfterMinutes) {
-        sessionParams.expires_at =
-          Math.floor(Date.now() / 1000) + dto.expiresAfterMinutes * 60;
+        sessionParams.expires_at = Math.floor(Date.now() / 1000) + dto.expiresAfterMinutes * 60;
       }
 
       // Stripe Connect: Direct charge to connected account
@@ -142,10 +165,7 @@ export class CheckoutService {
         }
       }
 
-      const session = await this.stripe!.checkout.sessions.create(
-        sessionParams,
-        stripeOptions,
-      );
+      const session = await this.stripe!.checkout.sessions.create(sessionParams, stripeOptions);
 
       // Create payment record in database
       const payment = await this.prisma.payment.create({
@@ -183,9 +203,7 @@ export class CheckoutService {
         },
       });
 
-      this.logger.log(
-        `Checkout session created: ${session.id} for user ${dto.userId}`,
-      );
+      this.logger.log(`Checkout session created: ${session.id} for user ${dto.userId}`);
 
       return {
         paymentId: payment.id,
@@ -208,12 +226,12 @@ export class CheckoutService {
   async createTicketCheckout(params: {
     userId: string;
     festivalId: string;
-    tickets: Array<{
+    tickets: {
       categoryId: string;
       name: string;
       price: number;
       quantity: number;
-    }>;
+    }[];
     successUrl: string;
     cancelUrl: string;
     customerEmail?: string;
@@ -284,24 +302,22 @@ export class CheckoutService {
     userId: string;
     vendorId: string;
     connectedAccountId: string;
-    items: Array<{
+    items: {
       productId: string;
       name: string;
       price: number;
       quantity: number;
-    }>;
+    }[];
     applicationFeePercent: number;
     successUrl: string;
     cancelUrl: string;
   }): Promise<CheckoutSessionResponseDto> {
     const totalAmount = params.items.reduce(
       (sum, item) => sum + item.price * item.quantity * 100,
-      0,
+      0
     );
 
-    const applicationFeeAmount = Math.round(
-      (totalAmount * params.applicationFeePercent) / 100,
-    );
+    const applicationFeeAmount = Math.round((totalAmount * params.applicationFeePercent) / 100);
 
     const lineItems = params.items.map((item) => ({
       name: item.name,
@@ -342,10 +358,7 @@ export class CheckoutService {
       return {
         status: session.status || 'unknown',
         paymentStatus: session.payment_status,
-        customerId:
-          typeof session.customer === 'string'
-            ? session.customer
-            : session.customer?.id,
+        customerId: typeof session.customer === 'string' ? session.customer : session.customer?.id,
         subscriptionId:
           typeof session.subscription === 'string'
             ? session.subscription
@@ -398,10 +411,7 @@ export class CheckoutService {
   /**
    * List checkout sessions for a user
    */
-  async listUserCheckoutSessions(
-    userId: string,
-    limit: number = 10,
-  ): Promise<CheckoutSessionStatus[]> {
+  async listUserCheckoutSessions(userId: string, limit = 10): Promise<CheckoutSessionStatus[]> {
     this.ensureStripeConfigured();
 
     // Get payment records to find session IDs
@@ -452,24 +462,21 @@ export class CheckoutService {
         : session.payment_intent?.id;
 
     const subscriptionId =
-      typeof session.subscription === 'string'
-        ? session.subscription
-        : session.subscription?.id;
+      typeof session.subscription === 'string' ? session.subscription : session.subscription?.id;
 
     await this.prisma.payment.update({
       where: { id: payment.id },
       data: {
         status:
-          session.payment_status === 'paid'
-            ? PaymentStatus.COMPLETED
-            : PaymentStatus.PROCESSING,
+          session.payment_status === 'paid' ? PaymentStatus.COMPLETED : PaymentStatus.PROCESSING,
         paidAt: session.payment_status === 'paid' ? new Date() : null,
         providerPaymentId: paymentIntentId || session.id,
         providerData: {
           ...(payment.providerData as Record<string, unknown>),
           sessionId: session.id,
           paymentIntentId,
-          customerId: typeof session.customer === 'string' ? session.customer : session.customer?.id,
+          customerId:
+            typeof session.customer === 'string' ? session.customer : session.customer?.id,
           subscriptionId,
           amountTotal: session.amount_total,
         } as unknown as Prisma.InputJsonValue,
@@ -499,7 +506,7 @@ export class CheckoutService {
    */
   private async handlePostPaymentActions(
     paymentId: string,
-    metadata: Record<string, string>,
+    metadata: Record<string, string>
   ): Promise<void> {
     const type = metadata.type;
 
