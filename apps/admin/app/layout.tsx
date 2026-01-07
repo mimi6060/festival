@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
 import { Providers, themeScript } from '../components/Providers';
-import AdminShell from '../components/layout/AdminShell';
 
 export const metadata: Metadata = {
   title: 'Festival Admin',
@@ -23,9 +22,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <script dangerouslySetInnerHTML={{ __html: themeScript }} />
       </head>
       <body className="bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-gray-100">
-        <Providers>
-          <AdminShell>{children}</AdminShell>
-        </Providers>
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
