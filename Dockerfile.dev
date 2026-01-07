@@ -1,0 +1,34 @@
+# ==============================================
+# Festival Platform - Development Image
+# ==============================================
+# This image pre-installs all dependencies for fast dev startup
+# Usage: docker build -f Dockerfile.dev -t festival-dev .
+
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install system dependencies
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    git
+
+# Copy package files first (for layer caching)
+COPY package*.json ./
+COPY prisma/schema.prisma ./prisma/
+
+# Copy workspace package.json files for proper npm workspaces install
+# Note: apps/mobile is excluded via .dockerignore (built separately for React Native)
+COPY apps/api/package.json ./apps/api/
+COPY apps/web/package.json ./apps/web/
+COPY apps/api-e2e/package.json ./apps/api-e2e/
+
+# Install ALL dependencies (including devDependencies from all workspaces)
+RUN npm ci
+
+# Prisma generate will be done at runtime (needs DATABASE_URL)
+
+# Default command (overridden by docker-compose)
+CMD ["npm", "run", "dev"]

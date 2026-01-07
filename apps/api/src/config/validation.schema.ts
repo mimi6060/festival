@@ -56,6 +56,8 @@ export const validationSchema = Joi.object({
   // JWT AUTHENTICATION
   // ==========================================================================
   JWT_SECRET: Joi.string().min(32).required(),
+  JWT_ACCESS_SECRET: Joi.string().min(32).required(),
+  JWT_ACCESS_EXPIRES_IN: Joi.number().default(900), // 15 minutes in seconds
   JWT_EXPIRES_IN: Joi.string().default('15m'),
   JWT_REFRESH_SECRET: Joi.string().min(32).required(),
   JWT_REFRESH_EXPIRES_IN: Joi.string().default('7d'),
@@ -67,6 +69,11 @@ export const validationSchema = Joi.object({
   BCRYPT_SALT_ROUNDS: Joi.number().min(4).max(16).default(12),
   SESSION_SECRET: Joi.string().allow('').default(''),
   SESSION_MAX_AGE: Joi.number().default(86400000),
+
+  // ==========================================================================
+  // QR CODE & TICKETS
+  // ==========================================================================
+  QR_CODE_SECRET: Joi.string().min(32).required(),
 
   // ==========================================================================
   // OAUTH (Optional)
@@ -134,7 +141,7 @@ export const validationSchema = Joi.object({
   UPLOAD_MAX_SIZE: Joi.number().default(10485760),
   UPLOAD_MAX_IMAGE_SIZE: Joi.number().default(5242880),
   UPLOAD_ALLOWED_MIME_TYPES: Joi.string().default(
-    'image/jpeg,image/png,image/gif,image/webp,application/pdf',
+    'image/jpeg,image/png,image/gif,image/webp,application/pdf'
   ),
   AWS_SIGNED_URL_EXPIRY: Joi.number().default(3600),
 
@@ -233,7 +240,7 @@ export const validationSchema = Joi.object({
   SWAGGER_ENABLED: Joi.boolean().default(true),
   SWAGGER_TITLE: Joi.string().default('Festival Platform API'),
   SWAGGER_DESCRIPTION: Joi.string().default(
-    'API documentation for the Festival Management Platform',
+    'API documentation for the Festival Management Platform'
   ),
   SWAGGER_VERSION: Joi.string().default('1.0.0'),
   SWAGGER_PATH: Joi.string().default('api/docs'),

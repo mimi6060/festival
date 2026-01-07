@@ -91,22 +91,23 @@ services:
 
   # NestJS API Backend - Development
   api:
-    image: node:20-alpine
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: festival-dev:latest
     container_name: festival-api-dev
     working_dir: /app
-    command: sh -c "[ -f node_modules/.package-lock.json ] || npm install && npx prisma generate && npx nx serve api --host 0.0.0.0"
+    command: sh -c "./node_modules/.bin/prisma generate && ./node_modules/.bin/nx serve api --host 0.0.0.0"
     ports:
       - '3001:3000'
+    env_file:
+      - .env.development
     environment:
+      # Override specific vars for Docker networking
       NODE_ENV: development
       PORT: 3000
       DATABASE_URL: postgresql://festival_user:festival_password@postgres:5432/festival_db?schema=public
       REDIS_URL: redis://redis:6379
-      JWT_SECRET: dev-secret-key-change-in-production
-      JWT_EXPIRES_IN: 7d
-      CORS_ORIGINS: http://localhost:4200,http://localhost:4201
-      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-sk_test_placeholder}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-whsec_placeholder}
       MINIO_ENDPOINT: minio
       MINIO_PORT: 9000
       MINIO_ACCESS_KEY: minioadmin
@@ -114,9 +115,7 @@ services:
       MINIO_BUCKET: festival-uploads
       SMTP_HOST: mailpit
       SMTP_PORT: 1025
-      SMTP_USER: ''
-      SMTP_PASSWORD: ''
-      SMTP_FROM: noreply@festival-platform.com
+      CORS_ORIGINS: http://localhost:4200,http://localhost:4201
     volumes:
       - .:/app:cached
       - node_modules:/app/node_modules
@@ -131,10 +130,10 @@ services:
 
   # Next.js Web Frontend - Development
   web:
-    image: node:20-alpine
+    image: festival-dev:latest
     container_name: festival-web-dev
     working_dir: /app
-    command: sh -c "[ -f node_modules/.package-lock.json ] || npm install && npx nx serve web --host 0.0.0.0 --port 4200"
+    command: ./node_modules/.bin/nx serve web --host 0.0.0.0 --port 4200
     ports:
       - '4200:4200'
     environment:
@@ -154,10 +153,10 @@ services:
 
   # Next.js Admin Panel - Development
   admin:
-    image: node:20-alpine
+    image: festival-dev:latest
     container_name: festival-admin-dev
     working_dir: /app
-    command: sh -c "[ -f node_modules/.package-lock.json ] || npm install && npx nx serve admin --host 0.0.0.0 --port 4201"
+    command: ./node_modules/.bin/nx serve admin --host 0.0.0.0 --port 4201
     ports:
       - '4201:4201'
     environment:
