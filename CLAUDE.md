@@ -2,113 +2,194 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-## Workflow CTO - RÈGLES OBLIGATOIRES
+## Workflow Rules (MANDATORY)
 
-**Avant chaque session de travail:**
-1. Lire `.claude/IN_PROGRESS.md` pour voir les tâches en cours et à faire
-2. Lire `.claude/DONE.md` pour voir ce qui a été accompli
+**Before each session:**
 
-**Pendant le travail:**
-1. Mettre à jour `.claude/IN_PROGRESS.md` avec les tâches en cours
-2. Quand une tâche est terminée, la déplacer de `IN_PROGRESS.md` vers `DONE.md`
-3. Ajouter de nouvelles tâches découvertes dans `IN_PROGRESS.md`
+1. Read `.claude/IN_PROGRESS.md` for current and pending tasks
+2. Read `.claude/DONE.md` for completed work
 
-**Après chaque fonctionnalité ajoutée ou tâche terminée:**
-1. Ajouter les fichiers modifiés/créés avec `git add`
-2. Faire un commit avec un message descriptif expliquant ce qui a été fait
-3. **INTERDIT: Ne JAMAIS inclure "Claude", "AI", "assistant" ou toute référence à l'IA dans les messages de commit**
-4. Pousser immédiatement les changements avec `git push`
-5. Ne pas accumuler plusieurs fonctionnalités avant de commit - **1 fonctionnalité = 1 commit + 1 push**
+**During work:**
 
-## Vérification CI Avant Push - RÈGLE OBLIGATOIRE
+1. Update `.claude/IN_PROGRESS.md` with current tasks
+2. Move completed tasks to `.claude/DONE.md`
 
-**AVANT chaque `git push`, tu DOIS vérifier que le code passera les GitHub Actions:**
+**After each feature/task:**
 
-1. **Build API obligatoire:** `npx nx build api --skip-nx-cache`
-   - Si le build échoue, corriger les erreurs AVANT de push
-   - Ne JAMAIS push du code qui ne compile pas
+1. `git add` modified files
+2. Commit with descriptive message
+3. **FORBIDDEN: Never include "Claude", "AI", "assistant" in commit messages**
+4. Push immediately - **1 feature = 1 commit + 1 push**
 
-2. **Vérification rapide des imports:**
-   - Vérifier que tous les imports sont corrects
-   - Vérifier que les modules exports existent
+## Pre-Push Verification (MANDATORY)
 
-3. **Script de vérification complet (optionnel):** `./scripts/verify-ci.sh`
-   - Simule ce que GitHub Actions va exécuter
-   - Utiliser pour les changements importants
+**Before `git push`:**
 
-**Si un build échoue après push:**
-1. Corriger immédiatement
-2. Ne pas faire d'autres changements jusqu'à ce que CI soit vert
-3. Monitorer les GitHub Actions après chaque push
-
-**Commandes de vérification rapide:**
 ```bash
-# Build API (OBLIGATOIRE avant push)
+# REQUIRED: Build API
 npx nx build api --skip-nx-cache
 
-# Vérification complète (recommandé)
+# RECOMMENDED: Full verification
 ./scripts/verify-ci.sh
 ```
 
-**Convention de messages de commit:**
-- `feat(module): description` - nouvelle fonctionnalité
-- `fix(module): description` - correction de bug
-- `refactor(module): description` - refactoring
-- `docs: description` - documentation
-- `test: description` - ajout/modification de tests
-- `chore: description` - maintenance, dépendances
+If build fails after push: fix immediately, no other changes until CI is green.
 
-**Objectif:** Créer la "Ferrari" des applications de gestion de festival - une plateforme complète couvrant tous les besoins d'un festival (billetterie, paiements, cashless, hébergement, programme, food & drinks, etc.)
+## Commit Convention
 
-## Project Overview
+- `feat(module):` - new feature
+- `fix(module):` - bug fix
+- `refactor(module):` - refactoring
+- `docs:` - documentation
+- `test:` - tests
+- `chore:` - maintenance
 
-Festival Management Platform - a multi-tenant system for managing festivals (ticketing, payments, cashless, staff). Designed to handle 10,000 to 500,000 users across multiple simultaneous events.
+## Quick Reference Commands
+
+```bash
+# Development servers
+npx nx serve api                    # API on :3333 (Swagger: /api/docs)
+npx nx serve web                    # Web on :3000
+npx nx serve admin                  # Admin on :4200
+cd apps/mobile && npx expo start    # Mobile app
+
+# Building
+npx nx build api --skip-nx-cache    # Build API (required before push)
+NODE_ENV=production npx nx build web
+NODE_ENV=production npx nx build admin
+npm run build:all                   # Build everything
+
+# Testing
+npx nx test api                     # API tests
+npm run test:all                    # All tests
+npm run test:coverage               # With coverage
+
+# Linting & Formatting
+npm run lint:all
+npm run lint:fix
+npm run format
+
+# Database (Prisma)
+npx prisma generate                 # Generate client
+npx prisma migrate dev              # Run migrations
+npx prisma db seed                  # Seed data
+npx prisma studio                   # Interactive viewer
+
+# Docker
+docker-compose up -d                # Start PostgreSQL, Redis, MailHog
+docker-compose down                 # Stop services
+```
+
+## Project Architecture
+
+```
+festival/
+├── apps/
+│   ├── api/           # NestJS backend (port 3333)
+│   ├── web/           # Next.js public site (port 3000)
+│   ├── admin/         # Next.js admin dashboard (port 4200)
+│   ├── mobile/        # React Native + Expo
+│   └── api-e2e/       # E2E tests
+├── libs/shared/
+│   ├── types/         # @festival/shared/types
+│   ├── utils/         # @festival/shared/utils
+│   ├── constants/     # @festival/shared/constants
+│   ├── i18n/          # @festival/shared/i18n (6 languages)
+│   └── validation/    # Zod schemas
+├── prisma/
+│   ├── schema.prisma  # 40+ models, 25+ enums
+│   └── seed.ts        # Sample data
+└── docs/              # API, security, compliance docs
+```
 
 ## Tech Stack
 
-- **Frontend**: React + Next.js, Tailwind CSS, i18n
-- **Mobile**: React Native (offline-first, push notifications)
-- **Backend**: Node.js with NestJS, PostgreSQL, Redis, Prisma ORM
-- **AI/ML**: Python service (Scikit-learn, TensorFlow)
-- **Infrastructure**: AWS, Docker, GitHub Actions CI/CD, Prometheus monitoring
+| Layer     | Technologies                                  |
+| --------- | --------------------------------------------- |
+| Backend   | NestJS 11, Prisma 6, PostgreSQL 15+, Redis 7  |
+| Frontend  | Next.js 15, React 18, Tailwind CSS, next-intl |
+| Mobile    | React Native, Expo, AsyncStorage              |
+| Auth      | JWT + httpOnly cookies, Passport.js, RBAC     |
+| Payments  | Stripe Checkout + Webhooks                    |
+| Real-time | WebSocket (Socket.io)                         |
 
-## Architecture
+## Key Path Aliases
 
-- Monorepo structure (Nx or Turbo)
-- Progressive microservices with REST API + Webhooks
-- Event-driven architecture with message queues
+```typescript
+import { ... } from '@festival/shared/types';
+import { ... } from '@festival/shared/utils';
+import { ... } from '@festival/shared/constants';
+import { ... } from '@festival/shared/i18n';
+```
 
-### Core Data Models
+## API Module Structure (apps/api/src/)
 
-- **User**: UUID, email, role (RBAC), status
-- **Festival**: Multi-tenant, dates, location, status
-- **Ticket**: Festival-linked, type, price, quota, QR code
-- **Payment**: User-linked, amount, provider, status (webhook-driven)
-- **CashlessAccount**: Prepaid wallet with balance
+```
+modules/
+├── auth/        # JWT, OAuth (Google, GitHub), strategies
+├── users/       # User management, RBAC
+├── festivals/   # Multi-tenant festivals
+├── tickets/     # Categories, QR codes, validation
+├── payments/    # Stripe integration
+├── cashless/    # Digital wallet, NFC
+├── zones/       # Access control, capacity
+├── staff/       # Shifts, badges
+├── program/     # Artists, stages, performances
+├── vendors/     # Food, merchandise
+├── camping/     # Accommodation booking
+├── notifications/ # Push, email, SMS
+└── analytics/   # KPIs, real-time stats
 
-### Key API Endpoints
+common/
+├── guards/      # JwtAuthGuard, RolesGuard
+├── decorators/  # @Public(), @Roles(), @User()
+├── dto/         # Shared DTOs
+└── interceptors/
+```
 
-- Auth: `POST /auth/login`, `POST /auth/register`, `GET /auth/me`
-- Festivals: `POST /festivals`, `GET /festivals/{id}`
-- Tickets: `POST /tickets/buy`, `GET /tickets/me`
-- Cashless: `POST /cashless/topup`, `POST /cashless/pay`
+## Backend Patterns
+
+- **Controllers**: Thin, no business logic
+- **Services**: All business logic here
+- **DTOs**: Use class-validator + class-transformer
+- **Multi-tenant**: All queries scoped to festivalId
+- **Auth**: JWT in httpOnly cookies, validate via JwtStrategy
+
+## Frontend Patterns (Next.js)
+
+- **State**: Zustand stores in `stores/`
+- **Data fetching**: React Query with hooks
+- **Forms**: react-hook-form + zod validation
+- **API calls**: Include `credentials: 'include'` for cookies
+
+## Database (Prisma)
+
+Core models: User, Festival, Ticket, Payment, CashlessAccount, Zone, Staff, Artist, Stage, Performance, Vendor, Notification
+
+User roles: ADMIN, ORGANIZER, STAFF, CASHIER, SECURITY, USER
 
 ## Security Requirements
 
-- JWT + Refresh Tokens for authentication
-- Strict RBAC (Role-Based Access Control)
-- GDPR compliance for user data
-- PCI-DSS compliance for payment processing
-- AES encryption for sensitive data
-- Comprehensive audit logging
+- JWT tokens stored in httpOnly cookies (not localStorage)
+- All sensitive endpoints protected with guards
+- Multi-tenant: scope all queries to festival
+- Payment processing via Stripe (PCI-DSS compliant)
+- GDPR: consent tracking, data export/deletion
 
-## Development Notes
+## Environment Variables
 
-- This is a payment-critical platform; always validate transactions and handle edge cases
-- Multi-tenant architecture: all queries must be scoped to the appropriate festival
-- Mobile app requires offline-first design with sync capabilities
-- QR codes are used for ticket validation at entry points
+Required in `.env.development`:
 
-## Reference Document
+- `DATABASE_URL` - PostgreSQL connection
+- `REDIS_URL` - Redis connection
+- `JWT_ACCESS_SECRET` - Min 32 chars
+- `JWT_REFRESH_SECRET` - Different from access secret
+- `QR_CODE_SECRET` - Min 32 chars
+- `STRIPE_SECRET_KEY` - sk*test*... or sk*live*...
 
-`DOSSIER_FINAL_FESTIVAL_CTO.md` is the contractual basis for development - consult it for detailed specifications.
+## Reference
+
+- API Docs: `http://localhost:3333/api/docs` (Swagger)
+- API Guide: `docs/api/API_GUIDE.md`
+- Database Docs: `prisma/DATABASE.md`
+- Security: `docs/security/`
