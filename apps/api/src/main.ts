@@ -188,13 +188,27 @@ For API support, contact: api-support@festival-platform.com
   }
 
   // Handle shutdown signals for graceful termination
-  const signals = ['SIGTERM', 'SIGINT'];
-  signals.forEach((signal) => {
-    process.on(signal, async () => {
-      Logger.log(`Received ${signal}, shutting down gracefully...`);
-      await app.close();
-      process.exit(0);
-    });
+  // Note: enableShutdownHooks() makes NestJS listen for SIGTERM/SIGINT
+  // and call OnModuleDestroy hooks (like Prisma disconnect)
+  // We add custom handlers for logging purposes only
+  const logger = new Logger('Bootstrap');
+
+  process.on('SIGTERM', () => {
+    logger.log('Received SIGTERM signal, initiating graceful shutdown...');
+  });
+
+  process.on('SIGINT', () => {
+    logger.log('Received SIGINT signal, initiating graceful shutdown...');
+  });
+
+  // Handle uncaught exceptions and unhandled rejections
+  process.on('uncaughtException', (error: Error) => {
+    logger.error(`Uncaught Exception: ${error.message}`, error.stack);
+    process.exit(1);
+  });
+
+  process.on('unhandledRejection', (reason: unknown) => {
+    logger.error(`Unhandled Rejection: ${reason}`);
   });
 
   const port = process.env.PORT || 3000;

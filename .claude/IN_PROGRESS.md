@@ -557,10 +557,15 @@ const token = localStorage.getItem('auth_token');
 **Fichier:** `apps/api/src/main.ts`
 **Action:** Configurer Winston/Pino avec structured logging
 
-### L3: Graceful Shutdown Manquant
+### ✅ L3: Graceful Shutdown Manquant - RÉSOLU
 
 **Fichier:** `apps/api/src/main.ts`
-**Action:** Ajouter `app.enableShutdownHooks()`
+**Résolution:**
+- `app.enableShutdownHooks()` déjà présent
+- PrismaService implémente OnModuleDestroy pour disconnect propre
+- Ajouté logging pour SIGTERM/SIGINT signals
+- Ajouté handlers pour uncaughtException et unhandledRejection
+- NestJS gère automatiquement l'arrêt gracieux via shutdown hooks
 
 ### L4: No Network Policies K8s
 
