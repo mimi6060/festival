@@ -5,15 +5,25 @@
  * It configures Swagger/OpenAPI documentation, validation, security headers, and CORS.
  */
 
-import { Logger, ValidationPipe } from '@nestjs/common';
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
+import compression from 'compression';
+import { Logger, LoggerErrorInterceptor } from 'nestjs-pino';
 import { AppModule } from './app/app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  const app = await NestFactory.create(AppModule, {
+    // Disable default logger in favor of Pino (will be initialized via LoggerModule)
+    bufferLogs: true,
+  });
+
+  // Use Pino logger from LoggerModule
+  const logger = app.get(Logger);
+  app.useLogger(logger);
+  app.useGlobalInterceptors(new LoggerErrorInterceptor());
 
   // Global prefix for all routes
   const globalPrefix = 'api';
@@ -24,6 +34,23 @@ async function bootstrap() {
 
   // Cookie parser for httpOnly cookie authentication
   app.use(cookieParser());
+
+  // Response compression middleware (gzip, deflate, br)
+  // More efficient than NestJS interceptor - handles streaming and proper chunked encoding
+  app.use(
+    compression({
+      filter: (req, res) => {
+        // Don't compress for server-sent events
+        if (req.headers['accept'] === 'text/event-stream') {
+          return false;
+        }
+        // Use default compression filter
+        return compression.filter(req, res);
+      },
+      threshold: 1024, // Only compress responses larger than 1KB
+      level: 6, // Balanced compression level (1-9)
+    })
+  );
 
   // CORS configuration
   app.enableCors({
@@ -191,7 +218,6 @@ For API support, contact: api-support@festival-platform.com
   // Note: enableShutdownHooks() makes NestJS listen for SIGTERM/SIGINT
   // and call OnModuleDestroy hooks (like Prisma disconnect)
   // We add custom handlers for logging purposes only
-  const logger = new Logger('Bootstrap');
 
   process.on('SIGTERM', () => {
     logger.log('Received SIGTERM signal, initiating graceful shutdown...');
@@ -214,9 +240,9 @@ For API support, contact: api-support@festival-platform.com
   const port = process.env.PORT || 3000;
   await app.listen(port);
 
-  Logger.log(`Application is running on: http://localhost:${port}/${globalPrefix}`);
-  Logger.log(`Swagger documentation: http://localhost:${port}/api/docs`);
-  Logger.log(`OpenAPI JSON: http://localhost:${port}/api/docs-json`);
+  logger.log(`Application is running on: http://localhost:${port}/${globalPrefix}`);
+  logger.log(`Swagger documentation: http://localhost:${port}/api/docs`);
+  logger.log(`OpenAPI JSON: http://localhost:${port}/api/docs-json`);
 }
 
 bootstrap();

@@ -498,10 +498,15 @@ const token = localStorage.getItem('auth_token');
 **Fichier:** `apps/api/src/main.ts`
 **Action:** `app.useGlobalGuards(new RateLimitGuard(reflector, redis))`
 
-### M4: Compression via Interceptor Problématique
+### ✅ M4: Compression via Interceptor Problématique - RÉSOLU
 
-**Fichier:** `apps/api/src/common/interceptors/compression.interceptor.ts`
-**Action:** Utiliser middleware express `compression()` à la place
+**Fichier:** `apps/api/src/main.ts`
+**Résolution:**
+- Installé le package `compression` et `@types/compression`
+- Ajouté middleware Express `compression()` dans main.ts après cookieParser
+- Configuration: threshold 1024 bytes, level 6, filter SSE events
+- Déprécié le CompressionInterceptor (fichier conservé pour backward compatibility)
+- L'approche middleware est plus efficace pour streaming et chunked encoding
 
 ### M5: WAF Mode COUNT au lieu de BLOCK
 
@@ -576,10 +581,20 @@ const token = localStorage.getItem('auth_token');
 **Fichiers:** `apps/*/Dockerfile`
 **Action:** Utiliser `node:20-alpine@sha256:...`
 
-### L2: Logger Non Configuré pour Production
+### ✅ L2: Logger Non Configuré pour Production - RÉSOLU
 
 **Fichier:** `apps/api/src/main.ts`
-**Action:** Configurer Winston/Pino avec structured logging
+**Résolution:**
+- Installé nestjs-pino, pino-http, pino, pino-pretty
+- Créé LoggerModule avec configuration production-ready
+- JSON format pour production (structured logging pour log aggregation)
+- Pretty format pour développement (human-readable)
+- Log levels basés sur NODE_ENV (LOG_LEVEL configurable)
+- ISO 8601 timestamps
+- Request/response logging avec correlation IDs (X-Request-Id)
+- Redaction automatique des données sensibles (passwords, tokens, cookies)
+- Skip des health check requests pour éviter le bruit
+- LoggerErrorInterceptor pour logging des erreurs
 
 ### ✅ L3: Graceful Shutdown Manquant - RÉSOLU
 

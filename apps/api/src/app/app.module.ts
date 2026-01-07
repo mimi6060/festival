@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 
@@ -12,6 +13,7 @@ import { PrismaModule } from '../modules/prisma';
 import { AuthModule } from '../modules/auth';
 import { HealthModule } from '../modules/health';
 import { CacheModule } from '../modules/cache';
+import { LoggerModule } from '../modules/logger';
 
 // Feature modules
 import { UsersModule } from '../modules/users';
@@ -32,6 +34,9 @@ import { AnalyticsModule } from '../modules/analytics';
 import { SupportModule } from '../modules/support';
 import { GdprModule } from '../modules/gdpr';
 
+// Guards
+import { RateLimitGuard } from '../common/guards';
+
 @Module({
   imports: [
     // Configuration
@@ -42,6 +47,9 @@ import { GdprModule } from '../modules/gdpr';
       validationOptions,
     }),
     EventEmitterModule.forRoot(),
+
+    // Logger (must be imported early for proper logging)
+    LoggerModule,
 
     // Core modules
     PrismaModule,
@@ -69,6 +77,13 @@ import { GdprModule } from '../modules/gdpr';
     GdprModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    // Global rate limit guard - applies to all routes
+    {
+      provide: APP_GUARD,
+      useClass: RateLimitGuard,
+    },
+  ],
 })
 export class AppModule {}
