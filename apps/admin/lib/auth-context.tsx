@@ -46,14 +46,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const data = await response.json();
 
+      // API returns user directly, not wrapped in { user: ... }
+      const userData = data.user || data;
+
       // Verify user has admin/organizer role (case-insensitive)
-      const userRole = data.user.role?.toLowerCase();
+      const userRole = userData.role?.toLowerCase();
       if (!['admin', 'organizer'].includes(userRole)) {
         throw new Error('Unauthorized access');
       }
 
-      setUser(data.user);
-      localStorage.setItem('admin_user', JSON.stringify(data.user));
+      setUser(userData);
+      localStorage.setItem('admin_user', JSON.stringify(userData));
     } catch (error) {
       console.error('Auth check failed:', error);
       setUser(null);
