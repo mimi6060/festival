@@ -518,25 +518,43 @@ const token = localStorage.getItem('auth_token');
 **Fichier:** `apps/api/src/modules/analytics/services/analytics.service.ts:477-499`
 **Action:** Utiliser `groupBy` au lieu de Promise.all avec map
 
-### M8: Connection Pooling Non Configuré
+### ✅ M8: Connection Pooling Non Configuré - RÉSOLU
 
 **Fichier:** `apps/api/src/modules/prisma/prisma.service.ts`
-**Action:** Ajouter params pool à DATABASE_URL: `?connection_limit=10&pool_timeout=10`
+**Résolution:**
+- PrismaService construit dynamiquement l'URL avec connection_limit et pool_timeout
+- Variables d'environnement: `DATABASE_CONNECTION_LIMIT` (défaut: 10), `DATABASE_POOL_TIMEOUT` (défaut: 10s)
+- Paramètres automatiquement ajoutés à DATABASE_URL si absents
+- Documentation ajoutée dans `.env.example`
 
-### M9: Path Aliases Manquants
+### ✅ M9: Path Aliases Manquants - RÉSOLU
 
 **Fichier:** `tsconfig.base.json`
-**Action:** Ajouter aliases pour `hooks`, `api-client`, `validation`
+**Résolution:**
+- Ajouté alias `@festival/shared/hooks` -> `libs/shared/hooks/src/index.ts`
+- Ajouté alias `@festival/shared/api-client` -> `libs/shared/api-client/src/index.ts`
+- Ajouté alias `@festival/shared/validation` -> `libs/shared/validation/src/index.ts`
+- Créé fichier index.ts manquant pour api-client
+- Build API vérifié avec succès
 
 ### M10: Module Boundary Rules Trop Permissives
 
 **Fichier:** `eslint.config.mjs`
 **Action:** Configurer `depConstraints` strictes par scope
 
-### M11: Missing CSP Header
+### ✅ M11: Missing CSP Header - RÉSOLU
 
 **Fichier:** `apps/admin/middleware.ts`
-**Action:** Ajouter `Content-Security-Policy` header
+**Résolution:**
+- Ajout CSP header complet avec toutes les directives nécessaires
+- default-src 'self', script-src avec CDNs nécessaires
+- style-src 'self' 'unsafe-inline' pour Tailwind
+- img-src 'self' data: blob: https:
+- font-src avec Google Fonts
+- connect-src avec API Stripe et WebSocket
+- frame-ancestors 'self'
+- object-src 'none' pour sécurité
+- Helper function addSecurityHeaders() pour application cohérente sur toutes les routes
 
 ### M12: `noUncheckedIndexedAccess` Désactivé
 
@@ -644,7 +662,7 @@ if (email === 'admin@festival.com' && password === 'admin123')
   - Appliqué sur tickets.controller, cashless.controller, program.controller
   - Backward compatible (params optionnels)
 - [ ] M1: Ajouter ConfigModule validation
-- [ ] M8: Configurer connection pooling
+- [x] M8: Configurer connection pooling ✅
 
 ### Semaine 4 - Infrastructure & Tests
 
