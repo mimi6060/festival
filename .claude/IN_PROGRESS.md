@@ -2,6 +2,36 @@
 
 ---
 
+## Session 2026-01-07 - Frontend/API Integration & OAuth
+
+### Terminé cette session
+
+- [x] Connect festivals controller to real database service
+- [x] Add @Public() decorator for public endpoints
+- [x] Fix homepage buttons (Billetterie, Cashless, Programme)
+- [x] Create /cashless and /programme pages
+- [x] Update API client (remove /v1 prefix)
+- [x] Update festivals list page to fetch from real API
+- [x] Fix database seed script (AccommodationType, CampingSpot issues)
+- [x] Run database seed (4 festivals, 57 users, 60 ticket categories)
+- [x] Add missing .env variables (JWT_ACCESS_SECRET, QR_CODE_SECRET)
+- [x] Setup OAuth providers (Google, GitHub)
+  - Created Google OAuth strategy
+  - Created GitHub OAuth strategy
+  - Added OAuth guards
+  - Added OAuth endpoints to auth controller
+  - Added AuthProvider enum to Prisma schema
+  - Added OAuth fields to User model (avatarUrl, authProvider, oauthProviderId)
+  - Updated validation schema with GitHub OAuth
+
+### À faire
+
+- [ ] Enable OAuth providers with real credentials (Google Console, GitHub Developer)
+- [ ] Test OAuth flow end-to-end
+- [ ] Add OAuth callback page on frontend
+
+---
+
 ## Session 2026-01-07 - Admin Panel Fixes
 
 ### Terminé cette session

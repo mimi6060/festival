@@ -153,6 +153,14 @@ enum AccommodationType {
   CAMPERVAN
 }
 
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  GITHUB
+  FACEBOOK
+  APPLE
+}
+
 enum CampingSpotStatus {
   AVAILABLE
   OCCUPIED
@@ -172,21 +180,24 @@ enum BookingStatus {
 
 // Models
 model User {
-  id                String      @id @default(uuid())
-  email             String      @unique
-  passwordHash      String
+  id                String        @id @default(uuid())
+  email             String        @unique
+  passwordHash      String?       // Optional for OAuth users
   firstName         String
   lastName          String
   phone             String?
-  role              UserRole    @default(USER)
-  status            UserStatus  @default(PENDING_VERIFICATION)
-  emailVerified     Boolean     @default(false)
+  avatarUrl         String?       // Profile picture URL
+  role              UserRole      @default(USER)
+  status            UserStatus    @default(PENDING_VERIFICATION)
+  emailVerified     Boolean       @default(false)
+  authProvider      AuthProvider  @default(LOCAL)  // Authentication provider
+  oauthProviderId   String?       // ID from OAuth provider
   refreshToken      String?
-  resetToken        String?     // Hashed password reset token
-  resetTokenExpiry  DateTime?   // Token expiration timestamp
+  resetToken        String?       // Hashed password reset token
+  resetTokenExpiry  DateTime?     // Token expiration timestamp
   lastLoginAt       DateTime?
-  createdAt         DateTime    @default(now())
-  updatedAt         DateTime    @updatedAt
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   // Relations
   tickets           Ticket[]

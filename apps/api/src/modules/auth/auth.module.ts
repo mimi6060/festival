@@ -2,7 +2,8 @@
  * Authentication Module
  *
  * Provides JWT-based authentication with Passport integration.
- * Handles user registration, login, token refresh, and password management.
+ * Handles user registration, login, token refresh, password management.
+ * Supports OAuth2 authentication with Google and GitHub.
  */
 
 import { Module } from '@nestjs/common';
@@ -12,13 +13,18 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
+import { GoogleStrategy } from './strategies/google.strategy';
+import { GitHubStrategy } from './strategies/github.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
+import { GoogleOAuthGuard } from './guards/google-oauth.guard';
+import { GitHubOAuthGuard } from './guards/github-oauth.guard';
 import { PrismaModule } from '../../prisma/prisma.module';
 
 @Module({
   imports: [
     PrismaModule,
+    ConfigModule,
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
@@ -32,7 +38,16 @@ import { PrismaModule } from '../../prisma/prisma.module';
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, JwtAuthGuard, RolesGuard],
-  exports: [AuthService, JwtAuthGuard, RolesGuard],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    GoogleStrategy,
+    GitHubStrategy,
+    JwtAuthGuard,
+    RolesGuard,
+    GoogleOAuthGuard,
+    GitHubOAuthGuard,
+  ],
+  exports: [AuthService, JwtAuthGuard, RolesGuard, GoogleOAuthGuard, GitHubOAuthGuard],
 })
 export class AuthModule {}

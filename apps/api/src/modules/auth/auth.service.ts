@@ -22,8 +22,18 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
-import { UserRole, UserStatus, User } from '@prisma/client';
+import { UserRole, UserStatus, User, AuthProvider } from '@prisma/client';
 import { RegisterDto, LoginDto, RefreshTokenDto, ResetPasswordDto, ChangePasswordDto } from './dto';
+
+// OAuth user data interface
+export interface OAuthUserData {
+  email: string;
+  firstName: string;
+  lastName: string;
+  avatarUrl: string | null;
+  provider: string;
+  providerId: string;
+}
 
 // ============================================================================
 // Types
@@ -421,6 +431,100 @@ export class AuthService {
     }
 
     return this.sanitizeUser(user);
+  }
+
+  /**
+   * Validate or create OAuth user
+   * Called by OAuth strategies (Google, GitHub, etc.)
+   */
+  async validateOAuthUser(oauthData: OAuthUserData): Promise<AuthenticatedUser> {
+    const normalizedEmail = oauthData.email.toLowerCase().trim();
+    const provider = this.mapProviderString(oauthData.provider);
+
+    // Try to find existing user by email
+    let user = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (user) {
+      // User exists - update OAuth info if using same provider
+      if (user.authProvider === provider || user.authProvider === AuthProvider.LOCAL) {
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: {
+            authProvider: provider,
+            oauthProviderId: oauthData.providerId,
+            avatarUrl: oauthData.avatarUrl || user.avatarUrl,
+            emailVerified: true, // OAuth emails are verified
+            status: UserStatus.ACTIVE,
+            lastLoginAt: new Date(),
+          },
+        });
+      }
+
+      this.logger.log(
+        `OAuth login for existing user: ${normalizedEmail} via ${oauthData.provider}`
+      );
+    } else {
+      // Create new user from OAuth
+      user = await this.prisma.user.create({
+        data: {
+          email: normalizedEmail,
+          firstName: oauthData.firstName.trim(),
+          lastName: oauthData.lastName.trim(),
+          avatarUrl: oauthData.avatarUrl,
+          authProvider: provider,
+          oauthProviderId: oauthData.providerId,
+          passwordHash: null, // No password for OAuth users
+          role: UserRole.USER,
+          status: UserStatus.ACTIVE,
+          emailVerified: true, // OAuth emails are verified
+        },
+      });
+
+      this.logger.log(`New OAuth user created: ${normalizedEmail} via ${oauthData.provider}`);
+    }
+
+    return this.sanitizeUser(user);
+  }
+
+  /**
+   * Generate tokens for OAuth user after successful authentication
+   */
+  async loginOAuth(user: AuthenticatedUser): Promise<LoginResult> {
+    const tokens = await this.generateTokens(user.id, user.email, user.role);
+
+    // Update refresh token and last login
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        refreshToken: tokens.refreshToken,
+        lastLoginAt: new Date(),
+      },
+    });
+
+    return {
+      user,
+      tokens,
+    };
+  }
+
+  /**
+   * Map provider string to AuthProvider enum
+   */
+  private mapProviderString(provider: string): AuthProvider {
+    switch (provider.toLowerCase()) {
+      case 'google':
+        return AuthProvider.GOOGLE;
+      case 'github':
+        return AuthProvider.GITHUB;
+      case 'facebook':
+        return AuthProvider.FACEBOOK;
+      case 'apple':
+        return AuthProvider.APPLE;
+      default:
+        return AuthProvider.LOCAL;
+    }
   }
 
   // ============================================================================

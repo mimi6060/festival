@@ -1,4 +1,16 @@
-import { Controller, Post, Get, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  HttpCode,
+  HttpStatus,
+  UseGuards,
+  Req,
+  Res,
+} from '@nestjs/common';
+import { Request, Response } from 'express';
+import { ConfigService } from '@nestjs/config';
 import {
   ApiTags,
   ApiOperation,
@@ -10,6 +22,7 @@ import {
   ApiOkResponse,
   ApiCreatedResponse,
   ApiTooManyRequestsResponse,
+  ApiExcludeEndpoint,
 } from '@nestjs/swagger';
 import {
   RegisterDto,
@@ -32,9 +45,11 @@ import {
   TooManyRequestsResponseDto,
   SuccessResponseDto,
 } from '../../common/dto';
-import { AuthService } from './auth.service';
+import { AuthService, AuthenticatedUser } from './auth.service';
 import { Public } from './decorators/public.decorator';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { GoogleOAuthGuard } from './guards/google-oauth.guard';
+import { GitHubOAuthGuard } from './guards/github-oauth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 
 /**
@@ -50,7 +65,10 @@ import { CurrentUser } from './decorators/current-user.decorator';
 @Controller('auth')
 @UseGuards(JwtAuthGuard)
 export class AuthController {
-  constructor(private readonly authService: AuthService) {}
+  constructor(
+    private readonly authService: AuthService,
+    private readonly configService: ConfigService
+  ) {}
 
   /**
    * Register a new user
@@ -563,6 +581,117 @@ Sends a new verification email to the specified address.
     return {
       success: true,
       message: 'If the account exists and is not verified, a new verification email has been sent.',
+    };
+  }
+
+  // ==========================================================================
+  // OAuth Endpoints
+  // ==========================================================================
+
+  /**
+   * Initiate Google OAuth flow
+   */
+  @Get('google')
+  @Public()
+  @UseGuards(GoogleOAuthGuard)
+  @ApiOperation({
+    summary: 'Login with Google',
+    description: 'Redirects to Google OAuth consent screen.',
+  })
+  @ApiOkResponse({
+    description: 'Redirects to Google OAuth',
+  })
+  async googleAuth() {
+    // Guard handles redirect to Google
+  }
+
+  /**
+   * Google OAuth callback
+   */
+  @Get('google/callback')
+  @Public()
+  @UseGuards(GoogleOAuthGuard)
+  @ApiExcludeEndpoint()
+  async googleAuthCallback(@Req() req: Request, @Res() res: Response) {
+    const user = req.user as AuthenticatedUser;
+    const result = await this.authService.loginOAuth(user);
+
+    // Redirect to frontend with tokens
+    const frontendUrl = this.configService.get<string>('APP_URL') || 'http://localhost:3000';
+    const params = new URLSearchParams({
+      accessToken: result.tokens.accessToken,
+      refreshToken: result.tokens.refreshToken,
+      expiresIn: String(result.tokens.expiresIn),
+    });
+
+    res.redirect(`${frontendUrl}/auth/callback?${params.toString()}`);
+  }
+
+  /**
+   * Initiate GitHub OAuth flow
+   */
+  @Get('github')
+  @Public()
+  @UseGuards(GitHubOAuthGuard)
+  @ApiOperation({
+    summary: 'Login with GitHub',
+    description: 'Redirects to GitHub OAuth authorization page.',
+  })
+  @ApiOkResponse({
+    description: 'Redirects to GitHub OAuth',
+  })
+  async githubAuth() {
+    // Guard handles redirect to GitHub
+  }
+
+  /**
+   * GitHub OAuth callback
+   */
+  @Get('github/callback')
+  @Public()
+  @UseGuards(GitHubOAuthGuard)
+  @ApiExcludeEndpoint()
+  async githubAuthCallback(@Req() req: Request, @Res() res: Response) {
+    const user = req.user as AuthenticatedUser;
+    const result = await this.authService.loginOAuth(user);
+
+    // Redirect to frontend with tokens
+    const frontendUrl = this.configService.get<string>('APP_URL') || 'http://localhost:3000';
+    const params = new URLSearchParams({
+      accessToken: result.tokens.accessToken,
+      refreshToken: result.tokens.refreshToken,
+      expiresIn: String(result.tokens.expiresIn),
+    });
+
+    res.redirect(`${frontendUrl}/auth/callback?${params.toString()}`);
+  }
+
+  /**
+   * Get available OAuth providers
+   */
+  @Get('providers')
+  @Public()
+  @ApiOperation({
+    summary: 'Get available OAuth providers',
+    description: 'Returns a list of enabled OAuth providers.',
+  })
+  @ApiOkResponse({
+    description: 'List of OAuth providers',
+  })
+  getOAuthProviders() {
+    return {
+      providers: [
+        {
+          name: 'google',
+          enabled: this.configService.get<boolean>('GOOGLE_OAUTH_ENABLED') || false,
+          url: '/api/auth/google',
+        },
+        {
+          name: 'github',
+          enabled: this.configService.get<boolean>('GITHUB_OAUTH_ENABLED') || false,
+          url: '/api/auth/github',
+        },
+      ],
     };
   }
 }
