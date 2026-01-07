@@ -32,7 +32,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       // Validate token with API
-      const response = await fetch(`${API_BASE_URL}/admin/auth/me`, {
+      const response = await fetch(`${API_BASE_URL}/auth/me`, {
         method: 'GET',
         headers: {
           Authorization: `Bearer ${token}`,
