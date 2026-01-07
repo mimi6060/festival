@@ -563,10 +563,17 @@ const token = localStorage.getItem('auth_token');
 **Fichier:** `infra/security/waf/waf.tf:44`
 **Action:** Changer `waf_mode = "BLOCK"` en production
 
-### M6: Default Credentials docker-compose
+### ✅ M6: Default Credentials docker-compose - RÉSOLU
 
 **Fichier:** `docker-compose.yml:29,157-159,215-216`
-**Action:** Utiliser Docker secrets ou fichier .env séparé
+**Résolution:**
+- Toutes les credentials hardcodées remplacées par des variables d'environnement avec syntax `${VAR:-default}`
+- PostgreSQL: `POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB`
+- MinIO: `MINIO_ROOT_USER`, `MINIO_ROOT_PASSWORD`, `MINIO_BUCKET`
+- DATABASE_URL construit dynamiquement avec les variables PostgreSQL
+- Healthcheck PostgreSQL utilise les variables d'environnement
+- `.env.example` mis à jour avec les nouvelles variables et warnings de sécurité
+- Commentaire de sécurité ajouté en haut du docker-compose.yml
 
 ### ✅ M7: Queries Catégories Séquentielles Analytics - RÉSOLU
 
@@ -661,10 +668,15 @@ const token = localStorage.getItem('auth_token');
 - Ajouté handlers pour uncaughtException et unhandledRejection
 - NestJS gère automatiquement l'arrêt gracieux via shutdown hooks
 
-### L4: No Network Policies K8s
+### ~~L4: No Network Policies K8s~~ RESOLU
 
-**Fichier:** `k8s/`
-**Action:** Ajouter NetworkPolicy pour isolation pod-to-pod
+**Fichier:** `k8s/network-policies/`
+**Resolution:**
+- Cree `default-deny.yaml` - Default deny all ingress + allow DNS egress
+- Cree `api-policy.yaml` - API pods: ingress from ingress-nginx, egress to PostgreSQL/Redis
+- Cree `web-policy.yaml` - Web/Admin pods: ingress from ingress-nginx only, egress to API only
+- Cree `database-policy.yaml` - PostgreSQL/Redis: ingress from API only, replication between replicas
+- Mis a jour `kustomization.yaml` pour inclure les network policies
 
 ### ✅ L5: Tests Shared Libraries Manquants - RÉSOLU
 

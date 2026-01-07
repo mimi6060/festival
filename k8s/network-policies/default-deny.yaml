@@ -1,0 +1,60 @@
+# Default deny all ingress traffic for the festival namespace
+# This policy ensures zero-trust networking where all traffic must be explicitly allowed
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-ingress
+  namespace: festival
+  labels:
+    app.kubernetes.io/name: default-deny-ingress
+    app.kubernetes.io/component: network-policy
+    app.kubernetes.io/part-of: festival-platform
+spec:
+  # Apply to all pods in the namespace
+  podSelector: {}
+  policyTypes:
+    - Ingress
+  # No ingress rules = deny all ingress traffic by default
+  ingress: []
+---
+# Default deny all egress traffic (optional, more restrictive)
+# Uncomment if you want to also control outbound traffic
+# apiVersion: networking.k8s.io/v1
+# kind: NetworkPolicy
+# metadata:
+#   name: default-deny-egress
+#   namespace: festival
+#   labels:
+#     app.kubernetes.io/name: default-deny-egress
+#     app.kubernetes.io/component: network-policy
+#     app.kubernetes.io/part-of: festival-platform
+# spec:
+#   podSelector: {}
+#   policyTypes:
+#     - Egress
+#   egress: []
+---
+# Allow DNS resolution for all pods (required if egress is denied)
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: festival
+  labels:
+    app.kubernetes.io/name: allow-dns
+    app.kubernetes.io/component: network-policy
+    app.kubernetes.io/part-of: festival-platform
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53

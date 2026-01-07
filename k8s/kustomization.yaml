@@ -61,6 +61,12 @@ resources:
   - ingress/ingress.yaml
   - ingress/nginx-config.yaml
 
+  # Network Policies (pod-to-pod isolation)
+  - network-policies/default-deny.yaml
+  - network-policies/api-policy.yaml
+  - network-policies/web-policy.yaml
+  - network-policies/database-policy.yaml
+
   # SSL/TLS
   - cert-manager/cluster-issuer.yaml
   - cert-manager/certificates.yaml
