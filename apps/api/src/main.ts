@@ -23,7 +23,10 @@ async function bootstrap() {
 
   // CORS configuration
   app.enableCors({
-    origin: process.env.CORS_ORIGINS?.split(',') || ['http://localhost:3000', 'http://localhost:4200'],
+    origin: process.env.CORS_ORIGINS?.split(',') || [
+      'http://localhost:3000',
+      'http://localhost:4200',
+    ],
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     credentials: true,
   });
@@ -37,7 +40,7 @@ async function bootstrap() {
       transformOptions: {
         enableImplicitConversion: true,
       },
-    }),
+    })
   );
 
   // Enable graceful shutdown hooks
@@ -46,7 +49,8 @@ async function bootstrap() {
   // Swagger/OpenAPI Configuration
   const config = new DocumentBuilder()
     .setTitle('Festival Management Platform API')
-    .setDescription(`
+    .setDescription(
+      `
 # Festival Management Platform API Documentation
 
 Welcome to the comprehensive API documentation for the Festival Management Platform - a multi-tenant system designed to handle festivals from 10,000 to 500,000+ attendees.
@@ -106,9 +110,14 @@ All festival-related operations are scoped to a specific festival. The festival 
 ## Support
 
 For API support, contact: api-support@festival-platform.com
-    `)
+    `
+    )
     .setVersion('1.0.0')
-    .setContact('Festival Platform Team', 'https://festival-platform.com', 'api-support@festival-platform.com')
+    .setContact(
+      'Festival Platform Team',
+      'https://festival-platform.com',
+      'api-support@festival-platform.com'
+    )
     .setLicense('MIT', 'https://opensource.org/licenses/MIT')
     .addServer('http://localhost:3000/api', 'Local Development')
     .addServer('https://api.festival-platform.com', 'Production')
@@ -122,7 +131,7 @@ For API support, contact: api-support@festival-platform.com
         description: 'Enter your JWT token',
         in: 'header',
       },
-      'JWT-auth',
+      'JWT-auth'
     )
     .addApiKey(
       {
@@ -131,7 +140,7 @@ For API support, contact: api-support@festival-platform.com
         in: 'header',
         description: 'API Key for webhook authentication',
       },
-      'api-key',
+      'api-key'
     )
     .addTag('Health', 'System health checks and monitoring endpoints')
     .addTag('Auth', 'Authentication and authorization endpoints')
@@ -147,6 +156,7 @@ For API support, contact: api-support@festival-platform.com
 
   // Setup Swagger UI at /api/docs
   SwaggerModule.setup('api/docs', app, document, {
+    useGlobalPrefix: false,
     customSiteTitle: 'Festival Platform API Documentation',
     customfavIcon: 'https://festival-platform.com/favicon.ico',
     customCss: `
@@ -164,6 +174,23 @@ For API support, contact: api-support@festival-platform.com
       operationsSorter: 'alpha',
     },
   });
+
+  // Redirect root to Swagger docs in development
+  if (process.env.NODE_ENV !== 'production') {
+    app.use(
+      '/',
+      (
+        req: { url: string; method: string },
+        res: { redirect: (url: string) => void },
+        next: () => void
+      ) => {
+        if (req.url === '/' && req.method === 'GET') {
+          return res.redirect('/api/docs');
+        }
+        next();
+      }
+    );
+  }
 
   // Handle shutdown signals for graceful termination
   const signals = ['SIGTERM', 'SIGINT'];
