@@ -28,13 +28,13 @@ export default function Home() {
 
         <div className="mt-16 flex gap-4 justify-center">
           <a
-            href="/login"
+            href="/auth/login"
             className="px-8 py-3 bg-festival-accent hover:bg-pink-600 rounded-full font-semibold transition"
           >
             Se connecter
           </a>
           <a
-            href="/register"
+            href="/auth/register"
             className="px-8 py-3 bg-white/10 hover:bg-white/20 rounded-full font-semibold transition"
           >
             Créer un compte

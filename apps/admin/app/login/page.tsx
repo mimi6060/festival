@@ -80,7 +80,7 @@ export default function LoginPage() {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
             <p className="text-sm text-blue-800 font-medium">Mode Demo</p>
             <p className="text-sm text-blue-600 mt-1">
-              Email: <code className="bg-blue-100 px-1 rounded">admin@festival.com</code>
+              Email: <code className="bg-blue-100 px-1 rounded">admin@festival-platform.com</code>
             </p>
             <p className="text-sm text-blue-600">
               Mot de passe: <code className="bg-blue-100 px-1 rounded">admin123</code>
@@ -134,7 +134,7 @@ export default function LoginPage() {
                   type="email"
                   {...register('email')}
                   className={`input-field pl-10 ${errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
-                  placeholder="admin@festival.com"
+                  placeholder="admin@festival-platform.com"
                   autoComplete="email"
                 />
               </div>
