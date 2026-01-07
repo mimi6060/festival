@@ -177,19 +177,10 @@ For API support, contact: api-support@festival-platform.com
 
   // Redirect root to Swagger docs in development
   if (process.env.NODE_ENV !== 'production') {
-    app.use(
-      '/',
-      (
-        req: { url: string; method: string },
-        res: { redirect: (url: string) => void },
-        next: () => void
-      ) => {
-        if (req.url === '/' && req.method === 'GET') {
-          return res.redirect('/api/docs');
-        }
-        next();
-      }
-    );
+    const httpAdapter = app.getHttpAdapter();
+    httpAdapter.get('/', (_req: unknown, res: { redirect: (url: string) => void }) => {
+      res.redirect('/api/docs');
+    });
   }
 
   // Handle shutdown signals for graceful termination
