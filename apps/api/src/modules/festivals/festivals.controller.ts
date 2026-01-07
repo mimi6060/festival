@@ -10,6 +10,8 @@ import {
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
+  UseGuards,
+  Request,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -25,6 +27,7 @@ import {
   ApiConflictResponse,
   ApiResponse,
 } from '@nestjs/swagger';
+import { FestivalsService } from './festivals.service';
 import {
   CreateFestivalDto,
   UpdateFestivalDto,
@@ -40,6 +43,8 @@ import {
   ForbiddenResponseDto,
   NotFoundResponseDto,
 } from '../../common/dto';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { Public } from '../auth/decorators/public.decorator';
 
 /**
  * Paginated festivals response
@@ -63,10 +68,13 @@ class PaginatedFestivalsResponseDto {
 @ApiTags('Festivals')
 @Controller('festivals')
 export class FestivalsController {
+  constructor(private readonly festivalsService: FestivalsService) {}
+
   /**
    * Create a new festival
    */
   @Post()
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create a new festival',
@@ -92,81 +100,39 @@ export class FestivalsController {
     description: 'Festival with this slug already exists',
     type: ErrorResponseDto,
   })
-  async create(@Body() createFestivalDto: CreateFestivalDto): Promise<FestivalResponseDto> {
-    return {
-      id: '550e8400-e29b-41d4-a716-446655440000',
-      name: createFestivalDto.name,
-      slug: createFestivalDto.slug || 'summer-vibes-festival-2025',
-      shortDescription: createFestivalDto.shortDescription,
-      description: createFestivalDto.description,
-      startDate: new Date(createFestivalDto.startDate),
-      endDate: new Date(createFestivalDto.endDate),
-      location: createFestivalDto.location,
-      status: FestivalStatus.DRAFT,
-      capacity: createFestivalDto.capacity,
-      coverImage: createFestivalDto.coverImage,
-      logo: createFestivalDto.logo,
-      primaryColor: createFestivalDto.primaryColor,
-      tags: createFestivalDto.tags,
-      currency: createFestivalDto.currency || 'EUR',
-      timezone: createFestivalDto.timezone || 'UTC',
-      organizerId: '550e8400-e29b-41d4-a716-446655440001',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+  async create(
+    @Body() createFestivalDto: CreateFestivalDto,
+    @Request() req: { user: { sub: string } }
+  ) {
+    return this.festivalsService.create(createFestivalDto, req.user.sub);
   }
 
   /**
-   * Get all festivals with filtering and pagination
+   * Get all published festivals (PUBLIC)
    */
   @Get()
+  @Public()
   @ApiOperation({
     summary: 'List festivals',
-    description: 'Returns a paginated list of festivals with optional filtering.',
+    description: 'Returns a paginated list of published festivals. Public endpoint.',
   })
   @ApiOkResponse({
     description: 'List of festivals',
     type: PaginatedFestivalsResponseDto,
   })
-  async findAll(@Query() query: FestivalQueryDto): Promise<PaginatedFestivalsResponseDto> {
-    return {
-      data: [
-        {
-          id: '550e8400-e29b-41d4-a716-446655440000',
-          name: 'Summer Vibes Festival 2025',
-          slug: 'summer-vibes-festival-2025',
-          shortDescription: 'The biggest electronic music festival in France',
-          startDate: new Date('2025-07-15T14:00:00.000Z'),
-          endDate: new Date('2025-07-17T23:00:00.000Z'),
-          location: {
-            venueName: 'Parc des Expositions',
-            address: '1 Place de la Porte de Versailles',
-            city: 'Paris',
-            country: 'FR',
-            postalCode: '75015',
-          },
-          status: FestivalStatus.PUBLISHED,
-          capacity: 50000,
-          currency: 'EUR',
-          timezone: 'Europe/Paris',
-          organizerId: '550e8400-e29b-41d4-a716-446655440001',
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ],
-      total: 1,
-      page: query.page || 1,
-      limit: query.limit || 20,
-      totalPages: 1,
-      hasNextPage: false,
-      hasPreviousPage: false,
-    };
+  async findAll(@Query() query: FestivalQueryDto) {
+    // By default, only show published festivals for public access
+    if (!query.status) {
+      query.status = FestivalStatus.PUBLISHED;
+    }
+    return this.festivalsService.findAll(query);
   }
 
   /**
    * Get festival by ID
    */
   @Get(':id')
+  @Public()
   @ApiOperation({
     summary: 'Get festival by ID',
     description: 'Returns detailed information about a specific festival.',
@@ -184,45 +150,18 @@ export class FestivalsController {
     description: 'Festival not found',
     type: NotFoundResponseDto,
   })
-  async findOne(@Param('id', ParseUUIDPipe) id: string): Promise<FestivalResponseDto> {
-    return {
-      id,
-      name: 'Summer Vibes Festival 2025',
-      slug: 'summer-vibes-festival-2025',
-      shortDescription: 'The biggest electronic music festival in France',
-      description: '## About Summer Vibes\n\nJoin us for 3 days of incredible music...',
-      startDate: new Date('2025-07-15T14:00:00.000Z'),
-      endDate: new Date('2025-07-17T23:00:00.000Z'),
-      location: {
-        venueName: 'Parc des Expositions',
-        address: '1 Place de la Porte de Versailles',
-        city: 'Paris',
-        country: 'FR',
-        postalCode: '75015',
-        latitude: 48.8323,
-        longitude: 2.2885,
-      },
-      status: FestivalStatus.PUBLISHED,
-      capacity: 50000,
-      coverImage: 'https://cdn.example.com/festivals/summer-vibes-cover.jpg',
-      logo: 'https://cdn.example.com/festivals/summer-vibes-logo.png',
-      primaryColor: '#FF6B35',
-      tags: ['electronic', 'techno', 'house', 'outdoor'],
-      currency: 'EUR',
-      timezone: 'Europe/Paris',
-      organizerId: '550e8400-e29b-41d4-a716-446655440001',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+  async findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.festivalsService.findOne(id);
   }
 
   /**
-   * Get festival by slug
+   * Get festival by slug (PUBLIC)
    */
   @Get('by-slug/:slug')
+  @Public()
   @ApiOperation({
     summary: 'Get festival by slug',
-    description: 'Returns festival information using its URL-friendly slug.',
+    description: 'Returns festival information using its URL-friendly slug. Public endpoint.',
   })
   @ApiParam({
     name: 'slug',
@@ -237,34 +176,15 @@ export class FestivalsController {
     description: 'Festival not found',
     type: NotFoundResponseDto,
   })
-  async findBySlug(@Param('slug') slug: string): Promise<FestivalResponseDto> {
-    return {
-      id: '550e8400-e29b-41d4-a716-446655440000',
-      name: 'Summer Vibes Festival 2025',
-      slug,
-      shortDescription: 'The biggest electronic music festival in France',
-      startDate: new Date('2025-07-15T14:00:00.000Z'),
-      endDate: new Date('2025-07-17T23:00:00.000Z'),
-      location: {
-        venueName: 'Parc des Expositions',
-        address: '1 Place de la Porte de Versailles',
-        city: 'Paris',
-        country: 'FR',
-        postalCode: '75015',
-      },
-      status: FestivalStatus.PUBLISHED,
-      currency: 'EUR',
-      timezone: 'Europe/Paris',
-      organizerId: '550e8400-e29b-41d4-a716-446655440001',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+  async findBySlug(@Param('slug') slug: string) {
+    return this.festivalsService.findBySlug(slug);
   }
 
   /**
    * Update festival
    */
   @Put(':id')
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Update festival',
@@ -298,28 +218,9 @@ export class FestivalsController {
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateFestivalDto: UpdateFestivalDto,
-  ): Promise<FestivalResponseDto> {
-    return {
-      id,
-      name: updateFestivalDto.name || 'Summer Vibes Festival 2025',
-      slug: 'summer-vibes-festival-2025',
-      shortDescription: updateFestivalDto.shortDescription || 'The biggest electronic music festival in France',
-      startDate: updateFestivalDto.startDate ? new Date(updateFestivalDto.startDate) : new Date('2025-07-15T14:00:00.000Z'),
-      endDate: updateFestivalDto.endDate ? new Date(updateFestivalDto.endDate) : new Date('2025-07-17T23:00:00.000Z'),
-      location: updateFestivalDto.location || {
-        venueName: 'Parc des Expositions',
-        address: '1 Place de la Porte de Versailles',
-        city: 'Paris',
-        country: 'FR',
-        postalCode: '75015',
-      },
-      status: updateFestivalDto.status || FestivalStatus.DRAFT,
-      currency: 'EUR',
-      timezone: 'Europe/Paris',
-      organizerId: '550e8400-e29b-41d4-a716-446655440001',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    @Request() req: { user: { sub: string } }
+  ) {
+    return this.festivalsService.update(id, updateFestivalDto, req.user.sub);
   }
 
   /**
@@ -327,6 +228,7 @@ export class FestivalsController {
    */
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Delete festival',
@@ -353,14 +255,18 @@ export class FestivalsController {
     description: 'Festival not found',
     type: NotFoundResponseDto,
   })
-  async remove(@Param('id', ParseUUIDPipe) _id: string): Promise<void> {
-    // Implementation would delete the festival
+  async remove(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: { user: { sub: string } }
+  ): Promise<void> {
+    await this.festivalsService.remove(id, req.user.sub);
   }
 
   /**
    * Get festival statistics
    */
   @Get(':id/stats')
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Get festival statistics',
@@ -387,22 +293,15 @@ export class FestivalsController {
     description: 'Festival not found',
     type: NotFoundResponseDto,
   })
-  async getStats(@Param('id', ParseUUIDPipe) _id: string): Promise<FestivalStatsDto> {
-    return {
-      ticketsSold: 25430,
-      totalRevenue: 2543000,
-      ticketCategories: 5,
-      cashlessAccounts: 18500,
-      cashlessTransactions: 125000,
-      capacityPercentage: 50.86,
-      checkInRate: 75.5,
-    };
+  async getStats(@Param('id', ParseUUIDPipe) id: string) {
+    return this.festivalsService.getStats(id);
   }
 
   /**
    * Publish festival
    */
   @Post(':id/publish')
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Publish festival',
@@ -433,34 +332,15 @@ export class FestivalsController {
     description: 'Festival not found',
     type: NotFoundResponseDto,
   })
-  async publish(@Param('id', ParseUUIDPipe) id: string): Promise<FestivalResponseDto> {
-    return {
-      id,
-      name: 'Summer Vibes Festival 2025',
-      slug: 'summer-vibes-festival-2025',
-      shortDescription: 'The biggest electronic music festival in France',
-      startDate: new Date('2025-07-15T14:00:00.000Z'),
-      endDate: new Date('2025-07-17T23:00:00.000Z'),
-      location: {
-        venueName: 'Parc des Expositions',
-        address: '1 Place de la Porte de Versailles',
-        city: 'Paris',
-        country: 'FR',
-        postalCode: '75015',
-      },
-      status: FestivalStatus.PUBLISHED,
-      currency: 'EUR',
-      timezone: 'Europe/Paris',
-      organizerId: '550e8400-e29b-41d4-a716-446655440001',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+  async publish(@Param('id', ParseUUIDPipe) id: string, @Request() req: { user: { sub: string } }) {
+    return this.festivalsService.updateStatus(id, FestivalStatus.PUBLISHED, req.user.sub);
   }
 
   /**
    * Cancel festival
    */
   @Post(':id/cancel')
+  @UseGuards(JwtAuthGuard)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Cancel festival',
@@ -487,27 +367,7 @@ export class FestivalsController {
     description: 'Not the festival organizer',
     type: ForbiddenResponseDto,
   })
-  async cancel(@Param('id', ParseUUIDPipe) id: string): Promise<FestivalResponseDto> {
-    return {
-      id,
-      name: 'Summer Vibes Festival 2025',
-      slug: 'summer-vibes-festival-2025',
-      shortDescription: 'The biggest electronic music festival in France',
-      startDate: new Date('2025-07-15T14:00:00.000Z'),
-      endDate: new Date('2025-07-17T23:00:00.000Z'),
-      location: {
-        venueName: 'Parc des Expositions',
-        address: '1 Place de la Porte de Versailles',
-        city: 'Paris',
-        country: 'FR',
-        postalCode: '75015',
-      },
-      status: FestivalStatus.CANCELLED,
-      currency: 'EUR',
-      timezone: 'Europe/Paris',
-      organizerId: '550e8400-e29b-41d4-a716-446655440001',
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+  async cancel(@Param('id', ParseUUIDPipe) id: string, @Request() req: { user: { sub: string } }) {
+    return this.festivalsService.updateStatus(id, FestivalStatus.CANCELLED, req.user.sub);
   }
 }

@@ -1,125 +1,85 @@
 import { Metadata } from 'next';
-import { FestivalCard, Festival } from '@/components/festivals/FestivalCard';
+import { FestivalCard, Festival as FestivalCardType } from '@/components/festivals/FestivalCard';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Festival } from '@/lib/api';
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Discover Festivals',
-  description: 'Browse and find the perfect music festival for you. Filter by genre, location, and date.',
+  title: 'Découvrir les Festivals',
+  description: 'Parcourez et trouvez le festival idéal. Filtrez par genre, lieu et date.',
 };
 
-// Mock data - in production this would come from an API
-const festivals: Festival[] = [
-  {
-    id: '1',
-    slug: 'electric-dreams-2025',
-    name: 'Electric Dreams Festival',
-    description: 'Experience the ultimate electronic music festival featuring world-renowned DJs and immersive art installations across 5 stages.',
-    location: 'Barcelona, Spain',
-    startDate: '2025-07-15',
-    endDate: '2025-07-18',
-    imageUrl: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&h=600&fit=crop',
-    price: { from: 199, currency: 'EUR' },
-    genres: ['Electronic', 'House', 'Techno'],
-    isFeatured: true,
-  },
-  {
-    id: '2',
-    slug: 'rock-revolution-2025',
-    name: 'Rock Revolution',
-    description: 'The biggest rock festival in Europe with legendary headliners and emerging artists.',
-    location: 'London, UK',
-    startDate: '2025-08-22',
-    endDate: '2025-08-24',
-    imageUrl: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800&h=600&fit=crop',
-    price: { from: 149, currency: 'GBP' },
-    genres: ['Rock', 'Alternative', 'Metal'],
-  },
-  {
-    id: '3',
-    slug: 'summer-beats-2025',
-    name: 'Summer Beats Festival',
-    description: 'A celebration of hip-hop, R&B, and urban music under the summer sun.',
-    location: 'Paris, France',
-    startDate: '2025-06-28',
-    endDate: '2025-06-30',
-    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600&fit=crop',
-    price: { from: 129, currency: 'EUR' },
-    genres: ['Hip-Hop', 'R&B', 'Urban'],
-  },
-  {
-    id: '4',
-    slug: 'jazz-nights-2025',
-    name: 'Jazz Nights',
-    description: 'An intimate jazz experience in the heart of Amsterdam with international artists.',
-    location: 'Amsterdam, Netherlands',
-    startDate: '2025-09-05',
-    endDate: '2025-09-07',
-    imageUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&h=600&fit=crop',
-    price: { from: 89, currency: 'EUR' },
-    genres: ['Jazz', 'Soul', 'Blues'],
-  },
-  {
-    id: '5',
-    slug: 'indie-vibes-2025',
-    name: 'Indie Vibes',
-    description: 'Discover the best indie and alternative artists in a beautiful coastal setting.',
-    location: 'Lisbon, Portugal',
-    startDate: '2025-07-01',
-    endDate: '2025-07-03',
-    imageUrl: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=800&h=600&fit=crop',
-    price: { from: 99, currency: 'EUR' },
-    genres: ['Indie', 'Alternative', 'Folk'],
-  },
-  {
-    id: '6',
-    slug: 'tropical-bass-2025',
-    name: 'Tropical Bass Festival',
-    description: 'Where electronic beats meet tropical vibes. Dance on the beach all day and night.',
-    location: 'Ibiza, Spain',
-    startDate: '2025-08-10',
-    endDate: '2025-08-14',
-    imageUrl: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&h=600&fit=crop',
-    price: { from: 249, currency: 'EUR' },
-    genres: ['Electronic', 'Tropical', 'Bass'],
-  },
-];
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
 
-const genres = [
-  'All Genres',
-  'Electronic',
-  'Rock',
-  'Hip-Hop',
-  'Jazz',
-  'Indie',
-  'Pop',
-  'Metal',
-  'Classical',
-];
+// Transform API festival data to FestivalCard expected format
+function transformFestival(festival: Festival): FestivalCardType {
+  // Get minimum price from ticket categories
+  let minPrice = 0;
+  if (festival.ticketCategories && festival.ticketCategories.length > 0) {
+    const prices = festival.ticketCategories
+      .filter((tc) => tc.isActive)
+      .map((tc) => parseFloat(tc.price));
+    minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+  }
 
-const countries = [
-  'All Countries',
-  'Spain',
-  'UK',
-  'France',
-  'Netherlands',
-  'Portugal',
-  'Germany',
-  'Italy',
-];
+  return {
+    id: festival.id,
+    slug: festival.slug,
+    name: festival.name,
+    description: festival.description || 'Découvrez ce festival incroyable',
+    location: festival.location,
+    startDate: festival.startDate,
+    endDate: festival.endDate,
+    imageUrl:
+      festival.bannerUrl ||
+      'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&h=600&fit=crop',
+    price: {
+      from: minPrice,
+      currency: festival.currency || 'EUR',
+    },
+    genres: [], // TODO: Add genres to API
+    isSoldOut: festival.currentAttendees >= festival.maxCapacity,
+    isFeatured: festival.status === 'ONGOING',
+  };
+}
 
-export default function FestivalsPage() {
+async function getFestivals(): Promise<FestivalCardType[]> {
+  try {
+    const res = await fetch(`${API_URL}/festivals?status=PUBLISHED`, {
+      next: { revalidate: 60 }, // Cache for 60 seconds
+    });
+
+    if (!res.ok) {
+      console.error('Failed to fetch festivals:', res.status);
+      return [];
+    }
+
+    const data = await res.json();
+
+    // Handle both direct array and paginated response
+    const festivals: Festival[] = Array.isArray(data) ? data : data.data || [];
+
+    return festivals.map(transformFestival);
+  } catch (error) {
+    console.error('Error fetching festivals:', error);
+    return [];
+  }
+}
+
+export default async function FestivalsPage() {
+  const festivals = await getFestivals();
+
   return (
     <div className="min-h-screen pt-24 pb-16">
       <div className="container-app">
         {/* Header */}
         <div className="mb-12">
-          <h1 className="section-title mb-4">Discover Festivals</h1>
+          <h1 className="section-title mb-4">Découvrir les Festivals</h1>
           <p className="text-white/60 text-lg max-w-2xl">
-            Find your perfect festival experience from hundreds of events around the world.
+            Trouvez votre expérience festival idéale parmi des centaines d&apos;événements.
           </p>
         </div>
 
@@ -129,34 +89,35 @@ export default function FestivalsPage() {
             {/* Search */}
             <div className="flex-1">
               <Input
-                placeholder="Search festivals..."
+                placeholder="Rechercher des festivals..."
                 leftIcon={
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                    />
                   </svg>
                 }
               />
             </div>
 
-            {/* Genre Filter */}
+            {/* Status Filter */}
             <div className="w-full lg:w-48">
               <select className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary-500 transition-colors appearance-none cursor-pointer">
-                {genres.map((genre) => (
-                  <option key={genre} value={genre} className="bg-festival-dark">
-                    {genre}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            {/* Country Filter */}
-            <div className="w-full lg:w-48">
-              <select className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary-500 transition-colors appearance-none cursor-pointer">
-                {countries.map((country) => (
-                  <option key={country} value={country} className="bg-festival-dark">
-                    {country}
-                  </option>
-                ))}
+                <option value="" className="bg-festival-dark">
+                  Tous les statuts
+                </option>
+                <option value="PUBLISHED" className="bg-festival-dark">
+                  À venir
+                </option>
+                <option value="ONGOING" className="bg-festival-dark">
+                  En cours
+                </option>
+                <option value="COMPLETED" className="bg-festival-dark">
+                  Terminés
+                </option>
               </select>
             </div>
 
@@ -170,9 +131,14 @@ export default function FestivalsPage() {
 
             <Button variant="primary">
               <svg className="w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 4a1 1 0 011-1h16a1 1 0 011 1v2.586a1 1 0 01-.293.707l-6.414 6.414a1 1 0 00-.293.707V17l-4 4v-6.586a1 1 0 00-.293-.707L3.293 7.293A1 1 0 013 6.586V4z"
+                />
               </svg>
-              Filter
+              Filtrer
             </Button>
           </div>
         </Card>
@@ -180,32 +146,62 @@ export default function FestivalsPage() {
         {/* Results Count */}
         <div className="flex items-center justify-between mb-6">
           <p className="text-white/60">
-            Showing <span className="text-white font-semibold">{festivals.length}</span> festivals
+            <span className="text-white font-semibold">{festivals.length}</span> festival
+            {festivals.length > 1 ? 's' : ''} trouvé{festivals.length > 1 ? 's' : ''}
           </p>
           <div className="flex items-center gap-2">
-            <span className="text-white/60 text-sm">Sort by:</span>
+            <span className="text-white/60 text-sm">Trier par:</span>
             <select className="px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-primary-500 transition-colors appearance-none cursor-pointer">
               <option className="bg-festival-dark">Date</option>
-              <option className="bg-festival-dark">Price (Low to High)</option>
-              <option className="bg-festival-dark">Price (High to Low)</option>
-              <option className="bg-festival-dark">Name</option>
+              <option className="bg-festival-dark">Prix (croissant)</option>
+              <option className="bg-festival-dark">Prix (décroissant)</option>
+              <option className="bg-festival-dark">Nom</option>
             </select>
           </div>
         </div>
 
         {/* Festival Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {festivals.map((festival) => (
-            <FestivalCard key={festival.id} festival={festival} />
-          ))}
-        </div>
+        {festivals.length > 0 ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {festivals.map((festival) => (
+              <FestivalCard key={festival.id} festival={festival} />
+            ))}
+          </div>
+        ) : (
+          <Card variant="solid" padding="xl" className="text-center">
+            <div className="py-12">
+              <svg
+                className="w-16 h-16 mx-auto text-white/20 mb-4"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={1.5}
+                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <h3 className="text-xl font-semibold text-white mb-2">Aucun festival trouvé</h3>
+              <p className="text-white/60 mb-6">
+                Les festivals seront bientôt disponibles. Revenez nous voir !
+              </p>
+              <Button as="link" href="/" variant="secondary">
+                Retour à l&apos;accueil
+              </Button>
+            </div>
+          </Card>
+        )}
 
         {/* Load More */}
-        <div className="mt-12 text-center">
-          <Button variant="secondary" size="lg">
-            Load More Festivals
-          </Button>
-        </div>
+        {festivals.length > 0 && (
+          <div className="mt-12 text-center">
+            <Button variant="secondary" size="lg">
+              Charger plus de festivals
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,4 +1,10 @@
-import { Injectable, NotFoundException, ConflictException, ForbiddenException, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  ForbiddenException,
+  Logger,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateFestivalDto, UpdateFestivalDto, FestivalQueryDto, FestivalStatus } from './dto';
 import { FestivalStatus as PrismaFestivalStatus } from '@prisma/client';
@@ -229,8 +235,8 @@ export class FestivalsService {
         _count: true,
       }),
       this.prisma.ticket.aggregate({
-        where: { festivalId: id, status: 'VALID' },
-        _sum: { price: true },
+        where: { festivalId: id, status: 'SOLD' },
+        _sum: { purchasePrice: true },
       }),
     ]);
 
@@ -241,7 +247,7 @@ export class FestivalsService {
       currentAttendees: festival.currentAttendees,
       ticketsSold: ticketStats.reduce((acc, s) => acc + s._count, 0),
       ticketsByStatus: ticketStats,
-      totalRevenue: revenueStats._sum.price || 0,
+      totalRevenue: revenueStats._sum.purchasePrice || 0,
       occupancyRate: (festival.currentAttendees / festival.maxCapacity) * 100,
     };
   }

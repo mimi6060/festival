@@ -3,7 +3,6 @@
  */
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
-const API_VERSION = process.env.NEXT_PUBLIC_API_VERSION || 'v1';
 
 interface ApiResponse<T> {
   data: T;
@@ -29,7 +28,7 @@ class ApiClient {
     const { params, ...fetchOptions } = options;
 
     // Build URL with query params
-    let url = `${this.baseUrl}/${API_VERSION}${endpoint}`;
+    let url = `${this.baseUrl}${endpoint}`;
     if (params) {
       const searchParams = new URLSearchParams();
       Object.entries(params).forEach(([key, value]) => {
@@ -120,26 +119,31 @@ export const api = new ApiClient(API_URL);
 
 // Festivals
 export const festivalsApi = {
-  getAll: (params?: { page?: number; limit?: number; genre?: string; country?: string }) =>
-    api.get<Festival[]>('/festivals', params),
+  getAll: (params?: { page?: number; limit?: number; status?: string; search?: string }) =>
+    api.get<PaginatedFestivals>('/festivals', params),
 
-  getBySlug: (slug: string) =>
-    api.get<Festival>(`/festivals/${slug}`),
+  getById: (id: string) => api.get<Festival>(`/festivals/${id}`),
 
-  getFeatured: () =>
-    api.get<Festival[]>('/festivals/featured'),
+  getBySlug: (slug: string) => api.get<Festival>(`/festivals/by-slug/${slug}`),
 
-  search: (query: string) =>
-    api.get<Festival[]>('/festivals/search', { q: query }),
+  search: (query: string) => api.get<PaginatedFestivals>('/festivals', { search: query }),
 };
+
+export interface PaginatedFestivals {
+  data: Festival[];
+  total: number;
+  page: number;
+  limit: number;
+  totalPages: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+}
 
 // Tickets
 export const ticketsApi = {
-  getByFestival: (festivalId: string) =>
-    api.get<TicketType[]>(`/festivals/${festivalId}/tickets`),
+  getByFestival: (festivalId: string) => api.get<TicketType[]>(`/festivals/${festivalId}/tickets`),
 
-  purchase: (data: PurchaseTicketData) =>
-    api.post<Order>('/orders', data),
+  purchase: (data: PurchaseTicketData) => api.post<Order>('/orders', data),
 };
 
 // Auth
@@ -147,35 +151,26 @@ export const authApi = {
   login: (email: string, password: string) =>
     api.post<AuthResponse>('/auth/login', { email, password }),
 
-  register: (data: RegisterData) =>
-    api.post<AuthResponse>('/auth/register', data),
+  register: (data: RegisterData) => api.post<AuthResponse>('/auth/register', data),
 
-  logout: () =>
-    api.post('/auth/logout'),
+  logout: () => api.post('/auth/logout'),
 
-  me: () =>
-    api.get<User>('/auth/me'),
+  me: () => api.get<User>('/auth/me'),
 
-  refreshToken: () =>
-    api.post<AuthResponse>('/auth/refresh'),
+  refreshToken: () => api.post<AuthResponse>('/auth/refresh'),
 };
 
 // User
 export const userApi = {
-  getProfile: () =>
-    api.get<User>('/user/profile'),
+  getProfile: () => api.get<User>('/user/profile'),
 
-  updateProfile: (data: Partial<User>) =>
-    api.patch<User>('/user/profile', data),
+  updateProfile: (data: Partial<User>) => api.patch<User>('/user/profile', data),
 
-  getTickets: () =>
-    api.get<Ticket[]>('/user/tickets'),
+  getTickets: () => api.get<Ticket[]>('/user/tickets'),
 
-  getOrders: () =>
-    api.get<Order[]>('/user/orders'),
+  getOrders: () => api.get<Order[]>('/user/orders'),
 
-  getOrderById: (orderId: string) =>
-    api.get<Order>(`/user/orders/${orderId}`),
+  getOrderById: (orderId: string) => api.get<Order>(`/user/orders/${orderId}`),
 };
 
 // ===========================================
@@ -186,18 +181,51 @@ export interface Festival {
   id: string;
   slug: string;
   name: string;
-  description: string;
+  description: string | null;
   location: string;
+  address: string | null;
   startDate: string;
   endDate: string;
-  imageUrl: string;
-  price: {
-    from: number;
-    currency: string;
+  status: 'DRAFT' | 'PUBLISHED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
+  maxCapacity: number;
+  currentAttendees: number;
+  logoUrl: string | null;
+  bannerUrl: string | null;
+  websiteUrl: string | null;
+  contactEmail: string | null;
+  timezone: string;
+  currency: string;
+  organizer?: {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
   };
-  genres: string[];
-  isSoldOut?: boolean;
-  isFeatured?: boolean;
+  ticketCategories?: TicketCategory[];
+  stages?: Stage[];
+  _count?: {
+    tickets: number;
+    ticketCategories?: number;
+    vendors?: number;
+  };
+}
+
+export interface TicketCategory {
+  id: string;
+  name: string;
+  description: string | null;
+  type: string;
+  price: string;
+  quota: number;
+  soldCount: number;
+  isActive: boolean;
+}
+
+export interface Stage {
+  id: string;
+  name: string;
+  description: string | null;
+  capacity: number | null;
 }
 
 export interface TicketType {
