@@ -18,7 +18,7 @@ interface PromoCodeInputProps {
 export function PromoCodeInput({
   onApply,
   originalAmount: _originalAmount,
-  currency: _currency = 'EUR',
+  currency = 'EUR',
 }: PromoCodeInputProps) {
   const [promoCode, setPromoCode] = useState('');
   const [isValidating, setIsValidating] = useState(false);

@@ -355,7 +355,7 @@ const user = await this.prisma.user.findFirst({
 ~~```typescript
 const token = localStorage.getItem('auth_token');
 
-````~~
+```~~
 
 **Action:** Migrer vers httpOnly cookies
 **Impact:** Tokens accessibles via XSS
@@ -513,10 +513,13 @@ const token = localStorage.getItem('auth_token');
 **Fichier:** `docker-compose.yml:29,157-159,215-216`
 **Action:** Utiliser Docker secrets ou fichier .env séparé
 
-### M7: Queries Catégories Séquentielles Analytics
+### ✅ M7: Queries Catégories Séquentielles Analytics - RÉSOLU
 
 **Fichier:** `apps/api/src/modules/analytics/services/analytics.service.ts:477-499`
-**Action:** Utiliser `groupBy` au lieu de Promise.all avec map
+**Résolution:**
+- Remplacé Promise.all avec map par un seul appel `groupBy`
+- Utilise une Map pour lookup rapide des stats par categoryId
+- Performance améliorée: 1 requête au lieu de N requêtes (N = nombre de catégories)
 
 ### ✅ M8: Connection Pooling Non Configuré - RÉSOLU
 
@@ -556,10 +559,13 @@ const token = localStorage.getItem('auth_token');
 - object-src 'none' pour sécurité
 - Helper function addSecurityHeaders() pour application cohérente sur toutes les routes
 
-### M12: `noUncheckedIndexedAccess` Désactivé
+### ✅ M12: `noUncheckedIndexedAccess` Désactivé - RÉSOLU
 
 **Fichier:** `tsconfig.base.json:30`
-**Action:** Activer pour accès array/object plus sûrs
+**Résolution:**
+- Activé `noUncheckedIndexedAccess: true` dans tsconfig.base.json
+- Corrigé 1 erreur dans PromoCodeInput.tsx (variable `currency` mal nommée)
+- Build API, Admin et Web validés avec succès
 
 ---
 
@@ -595,15 +601,10 @@ const token = localStorage.getItem('auth_token');
 **Fichiers:** `libs/shared/*/`
 **Action:** Ajouter tests pour utils, hooks, api-client
 
-### L6: Demo Credentials dans Code
+### ✅ L6: Demo Credentials dans Code - RÉSOLU
 
 **Fichier:** `apps/admin/lib/auth-context.tsx`
-
-```typescript
-if (email === 'admin@festival.com' && password === 'admin123')
-```
-
-**Action:** Supprimer avant production
+**Résolution:** Les credentials hardcodés ont été supprimés. Le login utilise maintenant l'API backend `/api/auth/login` avec une vraie authentification.
 
 ### L7: User Model Sans Soft Delete
 
@@ -712,4 +713,4 @@ if (email === 'admin@festival.com' && password === 'admin123')
 ---
 
 Dernière mise à jour: 2026-01-03 - Audit Expert Complet (5 rapports)
-````
+```
