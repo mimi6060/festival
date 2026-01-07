@@ -1,11 +1,35 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse, type NextRequest } from 'next/server';
 
 // Routes publiques qui ne nécessitent pas d'authentification
 const publicRoutes = ['/login', '/forgot-password', '/reset-password'];
 
 // Routes API publiques
 const publicApiRoutes = ['/api/auth/login', '/api/auth/register', '/api/auth/forgot-password'];
+
+// Content-Security-Policy directives
+const cspDirectives = [
+  "default-src 'self'",
+  "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' https://fonts.gstatic.com",
+  "connect-src 'self' https://api.stripe.com wss:",
+  "frame-ancestors 'self'",
+  "form-action 'self'",
+  "base-uri 'self'",
+  "object-src 'none'",
+];
+
+/**
+ * Add security headers to the response
+ */
+function addSecurityHeaders(response: NextResponse): NextResponse {
+  response.headers.set('X-Frame-Options', 'DENY');
+  response.headers.set('X-Content-Type-Options', 'nosniff');
+  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  response.headers.set('Content-Security-Policy', cspDirectives.join('; '));
+  return response;
+}
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
@@ -24,7 +48,8 @@ export function middleware(request: NextRequest) {
   const isPublicApiRoute = publicApiRoutes.some((route) => pathname.startsWith(route));
 
   if (isPublicRoute || isPublicApiRoute) {
-    return NextResponse.next();
+    const response = NextResponse.next();
+    return addSecurityHeaders(response);
   }
 
   // Récupérer le token d'authentification
@@ -65,13 +90,9 @@ export function middleware(request: NextRequest) {
     return response;
   }
 
-  // Ajouter des headers de sécurité
+  // Ajouter des headers de sécurité et retourner la réponse
   const response = NextResponse.next();
-  response.headers.set('X-Frame-Options', 'DENY');
-  response.headers.set('X-Content-Type-Options', 'nosniff');
-  response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
-
-  return response;
+  return addSecurityHeaders(response);
 }
 
 export const config = {
