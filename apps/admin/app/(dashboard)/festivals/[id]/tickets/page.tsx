@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useRef } from 'react';
 import Link from 'next/link';
 import { mockFestivals, mockTicketCategories } from '../../../../lib/mock-data';
 import { formatCurrency, formatDate, formatNumber, formatPercentage } from '../../../../lib/utils';
@@ -15,9 +15,76 @@ export default function TicketsPage({ params }: TicketsPageProps) {
   // Support both ID and slug lookups
   const festival = mockFestivals.find((f) => f.id === id || f.slug === id);
   const festivalId = festival?.id || id;
-  const categories = mockTicketCategories.filter((c) => c.festivalId === festivalId);
+  const [categories, setCategories] = useState(() =>
+    mockTicketCategories.filter((c) => c.festivalId === festivalId)
+  );
   const [showModal, setShowModal] = useState(false);
   const [editingCategory, setEditingCategory] = useState<TicketCategory | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
+
+  const handleDelete = (categoryId: string) => {
+    setCategories((prev) => prev.filter((c) => c.id !== categoryId));
+    setShowDeleteConfirm(null);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formRef.current) {
+      return;
+    }
+
+    const formData = new FormData(formRef.current);
+    const name = formData.get('name') as string;
+    const description = formData.get('description') as string;
+    const price = parseFloat(formData.get('price') as string) || 0;
+    const quantity = parseInt(formData.get('quantity') as string) || 0;
+    const maxPerOrder = parseInt(formData.get('maxPerOrder') as string) || 4;
+    const salesStart = formData.get('salesStart') as string;
+    const salesEnd = formData.get('salesEnd') as string;
+    const isActive = formData.get('isActive') === 'on';
+
+    if (editingCategory) {
+      // Update existing category
+      setCategories((prev) =>
+        prev.map((c) =>
+          c.id === editingCategory.id
+            ? {
+                ...c,
+                name,
+                description,
+                price,
+                quantity,
+                maxPerOrder,
+                salesStart,
+                salesEnd,
+                isActive,
+              }
+            : c
+        )
+      );
+    } else {
+      // Create new category
+      const newCategory: TicketCategory = {
+        id: `cat-${Date.now()}`,
+        festivalId,
+        name,
+        description,
+        price,
+        quantity,
+        sold: 0,
+        maxPerOrder,
+        salesStart: salesStart || new Date().toISOString(),
+        salesEnd: salesEnd || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
+        isActive,
+        benefits: [],
+      };
+      setCategories((prev) => [...prev, newCategory]);
+    }
+
+    setShowModal(false);
+    setEditingCategory(null);
+  };
 
   if (!festival) {
     return (
@@ -43,13 +110,23 @@ export default function TicketsPage({ params }: TicketsPageProps) {
         <Link href="/festivals" className="text-gray-500 hover:text-gray-700">
           Festivals
         </Link>
-        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-4 h-4 text-gray-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
         <Link href={`/festivals/${id}`} className="text-gray-500 hover:text-gray-700">
           {festival.name}
         </Link>
-        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-4 h-4 text-gray-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
         <span className="text-gray-900 font-medium">Billets</span>
@@ -127,31 +204,41 @@ export default function TicketsPage({ params }: TicketsPageProps) {
         </div>
         {categories.length === 0 ? (
           <div className="p-12 text-center">
-            <svg className="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+            <svg
+              className="w-12 h-12 text-gray-300 mx-auto mb-4"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
+              />
             </svg>
             <h3 className="text-lg font-medium text-gray-900 mb-2">Aucune categorie</h3>
             <p className="text-gray-500 mb-4">Commencez par creer une categorie de billets.</p>
-            <button
-              onClick={() => setShowModal(true)}
-              className="btn-primary"
-            >
+            <button onClick={() => setShowModal(true)} className="btn-primary">
               Creer une categorie
             </button>
           </div>
         ) : (
           <div className="divide-y divide-gray-100">
             {categories.map((category) => {
-              const soldPercent = category.quantity > 0 ? (category.sold / category.quantity) * 100 : 0;
+              const soldPercent =
+                category.quantity > 0 ? (category.sold / category.quantity) * 100 : 0;
               const revenue = category.sold * category.price;
 
               return (
-                <div key={category.id} className="p-6 hover:bg-gray-50 transition-colors">
+                <div key={category.id} className="p-6 hover:bg-gray-50 transition-colors relative">
                   <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2">
                         <h3 className="font-semibold text-gray-900">{category.name}</h3>
-                        <span className={`badge ${category.isActive ? 'badge-success' : 'badge-neutral'}`}>
+                        <span
+                          className={`badge ${category.isActive ? 'badge-success' : 'badge-neutral'}`}
+                        >
                           {category.isActive ? 'Actif' : 'Inactif'}
                         </span>
                       </div>
@@ -159,7 +246,9 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                       <div className="flex flex-wrap gap-4 text-sm">
                         <div>
                           <span className="text-gray-500">Prix: </span>
-                          <span className="font-medium text-gray-900">{formatCurrency(category.price)}</span>
+                          <span className="font-medium text-gray-900">
+                            {formatCurrency(category.price)}
+                          </span>
                         </div>
                         <div>
                           <span className="text-gray-500">Max/commande: </span>
@@ -168,14 +257,18 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                         <div>
                           <span className="text-gray-500">Ventes: </span>
                           <span className="font-medium text-gray-900">
-                            {formatDate(category.salesStart, { day: 'numeric', month: 'short' })} - {formatDate(category.salesEnd, { day: 'numeric', month: 'short' })}
+                            {formatDate(category.salesStart, { day: 'numeric', month: 'short' })} -{' '}
+                            {formatDate(category.salesEnd, { day: 'numeric', month: 'short' })}
                           </span>
                         </div>
                       </div>
                       {category.benefits && category.benefits.length > 0 && (
                         <div className="flex flex-wrap gap-2 mt-3">
                           {category.benefits.map((benefit, idx) => (
-                            <span key={idx} className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">
+                            <span
+                              key={idx}
+                              className="inline-flex items-center px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600"
+                            >
                               {benefit}
                             </span>
                           ))}
@@ -186,13 +279,21 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                     <div className="flex flex-col sm:flex-row lg:flex-col xl:flex-row items-start sm:items-center gap-4">
                       <div className="min-w-[180px]">
                         <div className="flex items-center justify-between text-sm mb-1">
-                          <span className="text-gray-500">{formatNumber(category.sold)} / {formatNumber(category.quantity)}</span>
-                          <span className="font-medium text-gray-900">{formatPercentage(soldPercent)}</span>
+                          <span className="text-gray-500">
+                            {formatNumber(category.sold)} / {formatNumber(category.quantity)}
+                          </span>
+                          <span className="font-medium text-gray-900">
+                            {formatPercentage(soldPercent)}
+                          </span>
                         </div>
                         <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                           <div
                             className={`h-full rounded-full ${
-                              soldPercent >= 90 ? 'bg-red-500' : soldPercent >= 70 ? 'bg-orange-500' : 'bg-green-500'
+                              soldPercent >= 90
+                                ? 'bg-red-500'
+                                : soldPercent >= 70
+                                  ? 'bg-orange-500'
+                                  : 'bg-green-500'
                             }`}
                             style={{ width: `${Math.min(soldPercent, 100)}%` }}
                           />
@@ -209,17 +310,63 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                             setShowModal(true);
                           }}
                           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                          title="Modifier"
                         >
-                          <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          <svg
+                            className="w-5 h-5 text-gray-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                            />
                           </svg>
                         </button>
-                        <button className="p-2 hover:bg-red-50 rounded-lg transition-colors">
-                          <svg className="w-5 h-5 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        <button
+                          onClick={() => setShowDeleteConfirm(category.id)}
+                          className="p-2 hover:bg-red-50 rounded-lg transition-colors"
+                          title="Supprimer"
+                        >
+                          <svg
+                            className="w-5 h-5 text-red-600"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
                           </svg>
                         </button>
                       </div>
+
+                      {/* Delete Confirmation Dialog */}
+                      {showDeleteConfirm === category.id && (
+                        <div className="absolute right-0 top-full mt-2 bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-10">
+                          <p className="text-sm text-gray-700 mb-3">Supprimer cette categorie ?</p>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => setShowDeleteConfirm(null)}
+                              className="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded"
+                            >
+                              Annuler
+                            </button>
+                            <button
+                              onClick={() => handleDelete(category.id)}
+                              className="px-3 py-1 text-sm text-white bg-red-600 hover:bg-red-700 rounded"
+                            >
+                              Supprimer
+                            </button>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -241,24 +388,37 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                 onClick={() => setShowModal(false)}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-5 h-5 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
-            <form className="p-6 space-y-4">
+            <form ref={formRef} onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
                 <label className="form-label">Nom de la categorie</label>
                 <input
                   type="text"
+                  name="name"
                   className="input-field"
                   placeholder="Ex: Pass VIP"
                   defaultValue={editingCategory?.name}
+                  required
                 />
               </div>
               <div>
                 <label className="form-label">Description</label>
                 <textarea
+                  name="description"
                   className="input-field"
                   rows={3}
                   placeholder="Description de la categorie..."
@@ -270,18 +430,25 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                   <label className="form-label">Prix (EUR)</label>
                   <input
                     type="number"
+                    name="price"
+                    step="0.01"
+                    min="0"
                     className="input-field"
                     placeholder="0.00"
                     defaultValue={editingCategory?.price}
+                    required
                   />
                 </div>
                 <div>
                   <label className="form-label">Quantite</label>
                   <input
                     type="number"
+                    name="quantity"
+                    min="1"
                     className="input-field"
                     placeholder="100"
                     defaultValue={editingCategory?.quantity}
+                    required
                   />
                 </div>
               </div>
@@ -289,9 +456,11 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                 <label className="form-label">Max par commande</label>
                 <input
                   type="number"
+                  name="maxPerOrder"
+                  min="1"
                   className="input-field"
                   placeholder="4"
-                  defaultValue={editingCategory?.maxPerOrder}
+                  defaultValue={editingCategory?.maxPerOrder || 4}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -299,6 +468,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                   <label className="form-label">Debut des ventes</label>
                   <input
                     type="date"
+                    name="salesStart"
                     className="input-field"
                     defaultValue={editingCategory?.salesStart?.split('T')[0]}
                   />
@@ -307,6 +477,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                   <label className="form-label">Fin des ventes</label>
                   <input
                     type="date"
+                    name="salesEnd"
                     className="input-field"
                     defaultValue={editingCategory?.salesEnd?.split('T')[0]}
                   />
@@ -316,6 +487,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                 <input
                   type="checkbox"
                   id="isActive"
+                  name="isActive"
                   className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                   defaultChecked={editingCategory?.isActive ?? true}
                 />
@@ -323,18 +495,15 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                   Categorie active (visible et achetable)
                 </label>
               </div>
+              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">
+                  Annuler
+                </button>
+                <button type="submit" className="btn-primary">
+                  {editingCategory ? 'Enregistrer' : 'Creer'}
+                </button>
+              </div>
             </form>
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
-              <button
-                onClick={() => setShowModal(false)}
-                className="btn-secondary"
-              >
-                Annuler
-              </button>
-              <button className="btn-primary">
-                {editingCategory ? 'Enregistrer' : 'Creer'}
-              </button>
-            </div>
           </div>
         </div>
       )}

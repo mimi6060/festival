@@ -2,6 +2,18 @@
 
 ---
 
+## Session 2026-01-07 - Admin Panel Fixes
+
+### Terminé cette session
+
+- [x] Fix structure admin app avec route groups (auth) et (dashboard)
+- [x] Fix import path login page après restructure
+- [x] Fix boutons tickets page (delete, create, edit)
+- [x] Ajout confirmation suppression catégorie
+- [x] Form handlers avec validation pour création/édition catégories
+
+---
+
 ## Session 2026-01-06 - Fix Memory Leak & Realtime Data
 
 ### En cours
