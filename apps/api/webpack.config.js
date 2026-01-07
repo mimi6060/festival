@@ -9,6 +9,12 @@ module.exports = {
       devtoolModuleFilenameTemplate: '[absolute-resource-path]',
     }),
   },
+  // Optimize file watching for Docker on macOS
+  watchOptions: {
+    poll: 1000, // Check for changes every second
+    aggregateTimeout: 300, // Delay rebuild after first change
+    ignored: ['**/node_modules/**', '**/dist/**', '**/.git/**'],
+  },
   plugins: [
     new NxAppWebpackPlugin({
       target: 'node',

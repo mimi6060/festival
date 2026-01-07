@@ -97,7 +97,8 @@ services:
     image: festival-dev:latest
     container_name: festival-api-dev
     working_dir: /app
-    command: sh -c "./node_modules/.bin/prisma generate && ./node_modules/.bin/nx serve api --host 0.0.0.0"
+    # Build once then run with nodemon for simpler watch (avoids NX restart loop)
+    command: sh -c "./node_modules/.bin/prisma generate && ./node_modules/.bin/nx build api && node dist/apps/api/main.js"
     ports:
       - '3001:3000'
     env_file:
@@ -115,7 +116,7 @@ services:
       MINIO_BUCKET: festival-uploads
       SMTP_HOST: mailpit
       SMTP_PORT: 1025
-      CORS_ORIGINS: http://localhost:4200,http://localhost:4201
+      CORS_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:4200,http://localhost:4201
     volumes:
       - .:/app:cached
       - node_modules:/app/node_modules
