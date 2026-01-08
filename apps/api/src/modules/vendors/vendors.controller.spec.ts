@@ -13,11 +13,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { VendorsController, UserOrdersController } from './vendors.controller';
 import { VendorsService } from './vendors.service';
-import {
-  VendorType,
-  VendorPaymentMethod,
-  OrderStatus,
-} from './dto';
+import { VendorType, VendorPaymentMethod, OrderStatus } from './dto';
 import { Prisma } from '@prisma/client';
 import {
   NotFoundException,
@@ -31,7 +27,7 @@ import {
 // ============================================================================
 
 const mockUser = { id: 'user-uuid-00000000-0000-0000-0000-000000000001' };
-const mockAdminUser = { id: 'admin-uuid-00000000-0000-0000-0000-000000000002' };
+const _mockAdminUser = { id: 'admin-uuid-00000000-0000-0000-0000-000000000002' };
 
 const mockFestival = {
   id: 'festival-uuid-00000000-0000-0000-0000-000000000001',
@@ -115,12 +111,8 @@ const mockStats = {
   topProducts: [
     { productId: mockProduct.id, productName: mockProduct.name, quantitySold: 100, revenue: 1250 },
   ],
-  revenueByPaymentMethod: [
-    { paymentMethod: 'CASHLESS', revenue: 4000, orderCount: 160 },
-  ],
-  ordersByStatus: [
-    { status: 'DELIVERED', count: 180 },
-  ],
+  revenueByPaymentMethod: [{ paymentMethod: 'CASHLESS', revenue: 4000, orderCount: 160 }],
+  ordersByStatus: [{ status: 'DELIVERED', count: 180 }],
 };
 
 const mockPaginatedVendors = {
@@ -172,9 +164,7 @@ describe('VendorsController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [VendorsController],
-      providers: [
-        { provide: VendorsService, useValue: mockVendorsService },
-      ],
+      providers: [{ provide: VendorsService, useValue: mockVendorsService }],
     }).compile();
 
     controller = module.get<VendorsController>(VendorsController);
@@ -221,7 +211,9 @@ describe('VendorsController', () => {
     });
 
     it('should propagate NotFoundException from service', async () => {
-      mockVendorsService.createVendor.mockRejectedValue(new NotFoundException('Festival not found'));
+      mockVendorsService.createVendor.mockRejectedValue(
+        new NotFoundException('Festival not found')
+      );
 
       await expect(controller.create(createVendorDto, mockUser)).rejects.toThrow(NotFoundException);
     });
@@ -277,7 +269,9 @@ describe('VendorsController', () => {
     });
 
     it('should propagate NotFoundException when QR code not found', async () => {
-      mockVendorsService.findVendorByQrCode.mockRejectedValue(new NotFoundException('Vendor not found'));
+      mockVendorsService.findVendorByQrCode.mockRejectedValue(
+        new NotFoundException('Vendor not found')
+      );
 
       await expect(controller.getMenuByQrCode('INVALID')).rejects.toThrow(NotFoundException);
     });
@@ -294,7 +288,9 @@ describe('VendorsController', () => {
     });
 
     it('should propagate NotFoundException when vendor not found', async () => {
-      mockVendorsService.findVendorById.mockRejectedValue(new NotFoundException('Vendor not found'));
+      mockVendorsService.findVendorById.mockRejectedValue(
+        new NotFoundException('Vendor not found')
+      );
 
       await expect(controller.findOne('non-existent')).rejects.toThrow(NotFoundException);
     });
@@ -309,7 +305,11 @@ describe('VendorsController', () => {
       const result = await controller.update(mockVendor.id, updateDto, mockUser);
 
       expect(result.name).toBe(updateDto.name);
-      expect(vendorsService.updateVendor).toHaveBeenCalledWith(mockVendor.id, mockUser.id, updateDto);
+      expect(vendorsService.updateVendor).toHaveBeenCalledWith(
+        mockVendor.id,
+        mockUser.id,
+        updateDto
+      );
     });
 
     it('should use dev-user-id when user is undefined', async () => {
@@ -317,13 +317,19 @@ describe('VendorsController', () => {
 
       await controller.update(mockVendor.id, updateDto, undefined as unknown as { id: string });
 
-      expect(vendorsService.updateVendor).toHaveBeenCalledWith(mockVendor.id, 'dev-user-id', updateDto);
+      expect(vendorsService.updateVendor).toHaveBeenCalledWith(
+        mockVendor.id,
+        'dev-user-id',
+        updateDto
+      );
     });
 
     it('should propagate ForbiddenException for unauthorized user', async () => {
       mockVendorsService.updateVendor.mockRejectedValue(new ForbiddenException('Not authorized'));
 
-      await expect(controller.update(mockVendor.id, updateDto, mockUser)).rejects.toThrow(ForbiddenException);
+      await expect(controller.update(mockVendor.id, updateDto, mockUser)).rejects.toThrow(
+        ForbiddenException
+      );
     });
   });
 
@@ -363,11 +369,17 @@ describe('VendorsController', () => {
     });
 
     it('should use dev-user-id when user is undefined', async () => {
-      mockVendorsService.regenerateQrMenuCode.mockResolvedValue({ id: mockVendor.id, qrMenuCode: 'NEW' });
+      mockVendorsService.regenerateQrMenuCode.mockResolvedValue({
+        id: mockVendor.id,
+        qrMenuCode: 'NEW',
+      });
 
       await controller.regenerateQrCode(mockVendor.id, undefined as unknown as { id: string });
 
-      expect(vendorsService.regenerateQrMenuCode).toHaveBeenCalledWith(mockVendor.id, 'dev-user-id');
+      expect(vendorsService.regenerateQrMenuCode).toHaveBeenCalledWith(
+        mockVendor.id,
+        'dev-user-id'
+      );
     });
   });
 
@@ -388,40 +400,79 @@ describe('VendorsController', () => {
       const result = await controller.createProduct(mockVendor.id, createProductDto, mockUser);
 
       expect(result).toEqual(mockProduct);
-      expect(vendorsService.createProduct).toHaveBeenCalledWith(mockVendor.id, mockUser.id, createProductDto);
+      expect(vendorsService.createProduct).toHaveBeenCalledWith(
+        mockVendor.id,
+        mockUser.id,
+        createProductDto
+      );
     });
 
     it('should use dev-user-id when user is undefined', async () => {
       mockVendorsService.createProduct.mockResolvedValue(mockProduct);
 
-      await controller.createProduct(mockVendor.id, createProductDto, undefined as unknown as { id: string });
+      await controller.createProduct(
+        mockVendor.id,
+        createProductDto,
+        undefined as unknown as { id: string }
+      );
 
-      expect(vendorsService.createProduct).toHaveBeenCalledWith(mockVendor.id, 'dev-user-id', createProductDto);
+      expect(vendorsService.createProduct).toHaveBeenCalledWith(
+        mockVendor.id,
+        'dev-user-id',
+        createProductDto
+      );
     });
 
     it('should propagate NotFoundException when vendor not found', async () => {
       mockVendorsService.createProduct.mockRejectedValue(new NotFoundException('Vendor not found'));
 
-      await expect(controller.createProduct('non-existent', createProductDto, mockUser)).rejects.toThrow(NotFoundException);
+      await expect(
+        controller.createProduct('non-existent', createProductDto, mockUser)
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
   describe('findAllProducts (GET /vendors/:id/products)', () => {
     it('should return all products for vendor', async () => {
-      mockVendorsService.findAllProducts.mockResolvedValue([mockProduct]);
+      const paginatedResponse = {
+        data: [mockProduct],
+        meta: {
+          total: 1,
+          page: 1,
+          limit: 20,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
+      };
+      mockVendorsService.findAllProducts.mockResolvedValue(paginatedResponse);
 
-      const result = await controller.findAllProducts(mockVendor.id);
+      const result = await controller.findAllProducts(mockVendor.id, {});
 
-      expect(result).toHaveLength(1);
-      expect(vendorsService.findAllProducts).toHaveBeenCalledWith(mockVendor.id);
+      expect(result.data).toHaveLength(1);
+      expect(vendorsService.findAllProducts).toHaveBeenCalledWith(mockVendor.id, {
+        page: undefined,
+        limit: undefined,
+      });
     });
 
     it('should return empty array when no products', async () => {
-      mockVendorsService.findAllProducts.mockResolvedValue([]);
+      const paginatedResponse = {
+        data: [],
+        meta: {
+          total: 0,
+          page: 1,
+          limit: 20,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
+      };
+      mockVendorsService.findAllProducts.mockResolvedValue(paginatedResponse);
 
-      const result = await controller.findAllProducts(mockVendor.id);
+      const result = await controller.findAllProducts(mockVendor.id, {});
 
-      expect(result).toHaveLength(0);
+      expect(result.data).toHaveLength(0);
     });
   });
 
@@ -436,9 +487,13 @@ describe('VendorsController', () => {
     });
 
     it('should propagate NotFoundException', async () => {
-      mockVendorsService.findProductById.mockRejectedValue(new NotFoundException('Product not found'));
+      mockVendorsService.findProductById.mockRejectedValue(
+        new NotFoundException('Product not found')
+      );
 
-      await expect(controller.findProduct(mockVendor.id, 'non-existent')).rejects.toThrow(NotFoundException);
+      await expect(controller.findProduct(mockVendor.id, 'non-existent')).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
@@ -448,18 +503,38 @@ describe('VendorsController', () => {
     it('should update product successfully', async () => {
       mockVendorsService.updateProduct.mockResolvedValue({ ...mockProduct, ...updateDto });
 
-      const result = await controller.updateProduct(mockVendor.id, mockProduct.id, updateDto, mockUser);
+      const result = await controller.updateProduct(
+        mockVendor.id,
+        mockProduct.id,
+        updateDto,
+        mockUser
+      );
 
       expect(result.name).toBe(updateDto.name);
-      expect(vendorsService.updateProduct).toHaveBeenCalledWith(mockVendor.id, mockProduct.id, mockUser.id, updateDto);
+      expect(vendorsService.updateProduct).toHaveBeenCalledWith(
+        mockVendor.id,
+        mockProduct.id,
+        mockUser.id,
+        updateDto
+      );
     });
 
     it('should use dev-user-id when user is undefined', async () => {
       mockVendorsService.updateProduct.mockResolvedValue({ ...mockProduct, ...updateDto });
 
-      await controller.updateProduct(mockVendor.id, mockProduct.id, updateDto, undefined as unknown as { id: string });
+      await controller.updateProduct(
+        mockVendor.id,
+        mockProduct.id,
+        updateDto,
+        undefined as unknown as { id: string }
+      );
 
-      expect(vendorsService.updateProduct).toHaveBeenCalledWith(mockVendor.id, mockProduct.id, 'dev-user-id', updateDto);
+      expect(vendorsService.updateProduct).toHaveBeenCalledWith(
+        mockVendor.id,
+        mockProduct.id,
+        'dev-user-id',
+        updateDto
+      );
     });
   });
 
@@ -469,15 +544,27 @@ describe('VendorsController', () => {
 
       await controller.deleteProduct(mockVendor.id, mockProduct.id, mockUser);
 
-      expect(vendorsService.deleteProduct).toHaveBeenCalledWith(mockVendor.id, mockProduct.id, mockUser.id);
+      expect(vendorsService.deleteProduct).toHaveBeenCalledWith(
+        mockVendor.id,
+        mockProduct.id,
+        mockUser.id
+      );
     });
 
     it('should use dev-user-id when user is undefined', async () => {
       mockVendorsService.deleteProduct.mockResolvedValue(mockProduct);
 
-      await controller.deleteProduct(mockVendor.id, mockProduct.id, undefined as unknown as { id: string });
+      await controller.deleteProduct(
+        mockVendor.id,
+        mockProduct.id,
+        undefined as unknown as { id: string }
+      );
 
-      expect(vendorsService.deleteProduct).toHaveBeenCalledWith(mockVendor.id, mockProduct.id, 'dev-user-id');
+      expect(vendorsService.deleteProduct).toHaveBeenCalledWith(
+        mockVendor.id,
+        mockProduct.id,
+        'dev-user-id'
+      );
     });
   });
 
@@ -485,27 +572,57 @@ describe('VendorsController', () => {
     it('should update product stock', async () => {
       mockVendorsService.updateProductStock.mockResolvedValue({ ...mockProduct, stock: 200 });
 
-      const result = await controller.updateStock(mockVendor.id, mockProduct.id, { stock: 200 }, mockUser);
+      const result = await controller.updateStock(
+        mockVendor.id,
+        mockProduct.id,
+        { stock: 200 },
+        mockUser
+      );
 
       expect(result.stock).toBe(200);
-      expect(vendorsService.updateProductStock).toHaveBeenCalledWith(mockVendor.id, mockProduct.id, mockUser.id, 200);
+      expect(vendorsService.updateProductStock).toHaveBeenCalledWith(
+        mockVendor.id,
+        mockProduct.id,
+        mockUser.id,
+        200
+      );
     });
 
     it('should set stock to null for unlimited', async () => {
       mockVendorsService.updateProductStock.mockResolvedValue({ ...mockProduct, stock: null });
 
-      const result = await controller.updateStock(mockVendor.id, mockProduct.id, { stock: null }, mockUser);
+      const result = await controller.updateStock(
+        mockVendor.id,
+        mockProduct.id,
+        { stock: null },
+        mockUser
+      );
 
       expect(result.stock).toBeNull();
-      expect(vendorsService.updateProductStock).toHaveBeenCalledWith(mockVendor.id, mockProduct.id, mockUser.id, null);
+      expect(vendorsService.updateProductStock).toHaveBeenCalledWith(
+        mockVendor.id,
+        mockProduct.id,
+        mockUser.id,
+        null
+      );
     });
 
     it('should use dev-user-id when user is undefined', async () => {
       mockVendorsService.updateProductStock.mockResolvedValue({ ...mockProduct, stock: 50 });
 
-      await controller.updateStock(mockVendor.id, mockProduct.id, { stock: 50 }, undefined as unknown as { id: string });
+      await controller.updateStock(
+        mockVendor.id,
+        mockProduct.id,
+        { stock: 50 },
+        undefined as unknown as { id: string }
+      );
 
-      expect(vendorsService.updateProductStock).toHaveBeenCalledWith(mockVendor.id, mockProduct.id, 'dev-user-id', 50);
+      expect(vendorsService.updateProductStock).toHaveBeenCalledWith(
+        mockVendor.id,
+        mockProduct.id,
+        'dev-user-id',
+        50
+      );
     });
   });
 
@@ -525,27 +642,47 @@ describe('VendorsController', () => {
       const result = await controller.createOrder(mockVendor.id, createOrderDto, mockUser);
 
       expect(result).toEqual(mockOrder);
-      expect(vendorsService.createOrder).toHaveBeenCalledWith(mockVendor.id, mockUser.id, createOrderDto);
+      expect(vendorsService.createOrder).toHaveBeenCalledWith(
+        mockVendor.id,
+        mockUser.id,
+        createOrderDto
+      );
     });
 
     it('should use dev-user-id when user is undefined', async () => {
       mockVendorsService.createOrder.mockResolvedValue(mockOrder);
 
-      await controller.createOrder(mockVendor.id, createOrderDto, undefined as unknown as { id: string });
+      await controller.createOrder(
+        mockVendor.id,
+        createOrderDto,
+        undefined as unknown as { id: string }
+      );
 
-      expect(vendorsService.createOrder).toHaveBeenCalledWith(mockVendor.id, 'dev-user-id', createOrderDto);
+      expect(vendorsService.createOrder).toHaveBeenCalledWith(
+        mockVendor.id,
+        'dev-user-id',
+        createOrderDto
+      );
     });
 
     it('should propagate BadRequestException when vendor is closed', async () => {
-      mockVendorsService.createOrder.mockRejectedValue(new BadRequestException('Vendor is currently closed'));
+      mockVendorsService.createOrder.mockRejectedValue(
+        new BadRequestException('Vendor is currently closed')
+      );
 
-      await expect(controller.createOrder(mockVendor.id, createOrderDto, mockUser)).rejects.toThrow(BadRequestException);
+      await expect(controller.createOrder(mockVendor.id, createOrderDto, mockUser)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should propagate BadRequestException when insufficient balance', async () => {
-      mockVendorsService.createOrder.mockRejectedValue(new BadRequestException('Insufficient cashless balance'));
+      mockVendorsService.createOrder.mockRejectedValue(
+        new BadRequestException('Insufficient cashless balance')
+      );
 
-      await expect(controller.createOrder(mockVendor.id, createOrderDto, mockUser)).rejects.toThrow(BadRequestException);
+      await expect(controller.createOrder(mockVendor.id, createOrderDto, mockUser)).rejects.toThrow(
+        BadRequestException
+      );
     });
   });
 
@@ -553,10 +690,17 @@ describe('VendorsController', () => {
     it('should return paginated orders for vendor', async () => {
       mockVendorsService.findOrdersByVendor.mockResolvedValue(mockPaginatedOrders);
 
-      const result = await controller.findVendorOrders(mockVendor.id, { page: 1, limit: 20 }, mockUser);
+      const result = await controller.findVendorOrders(
+        mockVendor.id,
+        { page: 1, limit: 20 },
+        mockUser
+      );
 
       expect(result).toEqual(mockPaginatedOrders);
-      expect(vendorsService.findOrdersByVendor).toHaveBeenCalledWith(mockVendor.id, mockUser.id, { page: 1, limit: 20 });
+      expect(vendorsService.findOrdersByVendor).toHaveBeenCalledWith(mockVendor.id, mockUser.id, {
+        page: 1,
+        limit: 20,
+      });
     });
 
     it('should pass all query filters to service', async () => {
@@ -572,7 +716,11 @@ describe('VendorsController', () => {
 
       await controller.findVendorOrders(mockVendor.id, query, mockUser);
 
-      expect(vendorsService.findOrdersByVendor).toHaveBeenCalledWith(mockVendor.id, mockUser.id, query);
+      expect(vendorsService.findOrdersByVendor).toHaveBeenCalledWith(
+        mockVendor.id,
+        mockUser.id,
+        query
+      );
     });
 
     it('should use dev-user-id when user is undefined', async () => {
@@ -580,7 +728,11 @@ describe('VendorsController', () => {
 
       await controller.findVendorOrders(mockVendor.id, {}, undefined as unknown as { id: string });
 
-      expect(vendorsService.findOrdersByVendor).toHaveBeenCalledWith(mockVendor.id, 'dev-user-id', {});
+      expect(vendorsService.findOrdersByVendor).toHaveBeenCalledWith(
+        mockVendor.id,
+        'dev-user-id',
+        {}
+      );
     });
   });
 
@@ -597,19 +749,29 @@ describe('VendorsController', () => {
     it('should propagate NotFoundException', async () => {
       mockVendorsService.findOrderById.mockRejectedValue(new NotFoundException('Order not found'));
 
-      await expect(controller.findOrder(mockVendor.id, 'non-existent')).rejects.toThrow(NotFoundException);
+      await expect(controller.findOrder(mockVendor.id, 'non-existent')).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
   describe('updateOrderStatus (PATCH /vendors/:id/orders/:orderId/status)', () => {
     it('should update order status to CONFIRMED', async () => {
       const dto = { status: OrderStatus.CONFIRMED };
-      mockVendorsService.updateOrderStatus.mockResolvedValue({ ...mockOrder, status: OrderStatus.CONFIRMED });
+      mockVendorsService.updateOrderStatus.mockResolvedValue({
+        ...mockOrder,
+        status: OrderStatus.CONFIRMED,
+      });
 
       const result = await controller.updateOrderStatus(mockVendor.id, mockOrder.id, dto, mockUser);
 
       expect(result.status).toBe(OrderStatus.CONFIRMED);
-      expect(vendorsService.updateOrderStatus).toHaveBeenCalledWith(mockVendor.id, mockOrder.id, mockUser.id, dto);
+      expect(vendorsService.updateOrderStatus).toHaveBeenCalledWith(
+        mockVendor.id,
+        mockOrder.id,
+        mockUser.id,
+        dto
+      );
     });
 
     it('should update order status with estimatedReadyAt', async () => {
@@ -645,15 +807,34 @@ describe('VendorsController', () => {
     it('should use dev-user-id when user is undefined', async () => {
       mockVendorsService.updateOrderStatus.mockResolvedValue(mockOrder);
 
-      await controller.updateOrderStatus(mockVendor.id, mockOrder.id, { status: OrderStatus.CONFIRMED }, undefined as unknown as { id: string });
+      await controller.updateOrderStatus(
+        mockVendor.id,
+        mockOrder.id,
+        { status: OrderStatus.CONFIRMED },
+        undefined as unknown as { id: string }
+      );
 
-      expect(vendorsService.updateOrderStatus).toHaveBeenCalledWith(mockVendor.id, mockOrder.id, 'dev-user-id', { status: OrderStatus.CONFIRMED });
+      expect(vendorsService.updateOrderStatus).toHaveBeenCalledWith(
+        mockVendor.id,
+        mockOrder.id,
+        'dev-user-id',
+        { status: OrderStatus.CONFIRMED }
+      );
     });
 
     it('should propagate BadRequestException for invalid transition', async () => {
-      mockVendorsService.updateOrderStatus.mockRejectedValue(new BadRequestException('Cannot transition from PENDING to DELIVERED'));
+      mockVendorsService.updateOrderStatus.mockRejectedValue(
+        new BadRequestException('Cannot transition from PENDING to DELIVERED')
+      );
 
-      await expect(controller.updateOrderStatus(mockVendor.id, mockOrder.id, { status: OrderStatus.DELIVERED }, mockUser)).rejects.toThrow(BadRequestException);
+      await expect(
+        controller.updateOrderStatus(
+          mockVendor.id,
+          mockOrder.id,
+          { status: OrderStatus.DELIVERED },
+          mockUser
+        )
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -691,42 +872,75 @@ describe('VendorsController', () => {
     it('should propagate ForbiddenException', async () => {
       mockVendorsService.getVendorStats.mockRejectedValue(new ForbiddenException('Not authorized'));
 
-      await expect(controller.getStats(mockVendor.id, {}, mockUser)).rejects.toThrow(ForbiddenException);
+      await expect(controller.getStats(mockVendor.id, {}, mockUser)).rejects.toThrow(
+        ForbiddenException
+      );
     });
   });
 
   describe('exportData (GET /vendors/:id/export)', () => {
-    const exportResult = [
-      {
-        orderNumber: mockOrder.orderNumber,
-        date: mockOrder.createdAt.toISOString(),
-        customerName: 'John Doe',
-        customerEmail: 'john@example.com',
-        status: mockOrder.status,
-        paymentMethod: mockOrder.paymentMethod,
-        itemCount: 2,
-        subtotal: 25,
-        commission: 2.5,
-        total: 25,
-        items: [],
+    const exportResult = {
+      data: [
+        {
+          orderNumber: mockOrder.orderNumber,
+          date: mockOrder.createdAt.toISOString(),
+          customerName: 'John Doe',
+          customerEmail: 'john@example.com',
+          status: mockOrder.status,
+          paymentMethod: mockOrder.paymentMethod,
+          itemCount: 2,
+          subtotal: 25,
+          commission: 2.5,
+          total: 25,
+          items: [],
+        },
+      ],
+      meta: {
+        total: 1,
+        page: 1,
+        limit: 100,
+        totalPages: 1,
+        hasNextPage: false,
+        hasPrevPage: false,
+        dateRange: { startDate: '2026-06-01', endDate: '2026-06-30' },
       },
-    ];
+    };
 
     it('should export vendor data for date range', async () => {
       mockVendorsService.exportVendorData.mockResolvedValue(exportResult);
 
-      const result = await controller.exportData(mockVendor.id, '2026-06-01', '2026-06-30', mockUser);
+      const result = await controller.exportData(
+        mockVendor.id,
+        { startDate: '2026-06-01', endDate: '2026-06-30' },
+        mockUser
+      );
 
       expect(result).toEqual(exportResult);
-      expect(vendorsService.exportVendorData).toHaveBeenCalledWith(mockVendor.id, mockUser.id, '2026-06-01', '2026-06-30');
+      expect(vendorsService.exportVendorData).toHaveBeenCalledWith(
+        mockVendor.id,
+        mockUser.id,
+        '2026-06-01',
+        '2026-06-30',
+        { page: undefined, limit: undefined }
+      );
     });
 
     it('should use dev-user-id when user is undefined', async () => {
       mockVendorsService.exportVendorData.mockResolvedValue(exportResult);
 
-      await controller.exportData(mockVendor.id, '2026-06-01', '2026-06-30', undefined as unknown as { id: string });
+      await controller.exportData(
+        mockVendor.id,
+        { startDate: '2026-06-01', endDate: '2026-06-30' },
+        undefined as unknown as { id: string }
+      );
 
-      expect(vendorsService.exportVendorData).toHaveBeenCalledWith(mockVendor.id, 'dev-user-id', '2026-06-01', '2026-06-30');
+      expect(vendorsService.exportVendorData).toHaveBeenCalledWith(
+        mockVendor.id,
+        'dev-user-id',
+        '2026-06-01',
+        '2026-06-30',
+        { page: undefined, limit: undefined }
+      );
     });
   });
 
@@ -748,46 +962,94 @@ describe('VendorsController', () => {
       const result = await controller.createPayout(mockVendor.id, createPayoutDto, mockUser);
 
       expect(result).toEqual(mockPayout);
-      expect(vendorsService.createPayout).toHaveBeenCalledWith(mockVendor.id, mockUser.id, createPayoutDto);
+      expect(vendorsService.createPayout).toHaveBeenCalledWith(
+        mockVendor.id,
+        mockUser.id,
+        createPayoutDto
+      );
     });
 
     it('should use dev-user-id when user is undefined', async () => {
       mockVendorsService.createPayout.mockResolvedValue(mockPayout);
 
-      await controller.createPayout(mockVendor.id, createPayoutDto, undefined as unknown as { id: string });
+      await controller.createPayout(
+        mockVendor.id,
+        createPayoutDto,
+        undefined as unknown as { id: string }
+      );
 
-      expect(vendorsService.createPayout).toHaveBeenCalledWith(mockVendor.id, 'dev-user-id', createPayoutDto);
+      expect(vendorsService.createPayout).toHaveBeenCalledWith(
+        mockVendor.id,
+        'dev-user-id',
+        createPayoutDto
+      );
     });
 
     it('should propagate ConflictException for overlapping period', async () => {
-      mockVendorsService.createPayout.mockRejectedValue(new ConflictException('A payout already exists for this period'));
+      mockVendorsService.createPayout.mockRejectedValue(
+        new ConflictException('A payout already exists for this period')
+      );
 
-      await expect(controller.createPayout(mockVendor.id, createPayoutDto, mockUser)).rejects.toThrow(ConflictException);
+      await expect(
+        controller.createPayout(mockVendor.id, createPayoutDto, mockUser)
+      ).rejects.toThrow(ConflictException);
     });
 
     it('should propagate BadRequestException when no orders for period', async () => {
-      mockVendorsService.createPayout.mockRejectedValue(new BadRequestException('No completed orders for this period'));
+      mockVendorsService.createPayout.mockRejectedValue(
+        new BadRequestException('No completed orders for this period')
+      );
 
-      await expect(controller.createPayout(mockVendor.id, createPayoutDto, mockUser)).rejects.toThrow(BadRequestException);
+      await expect(
+        controller.createPayout(mockVendor.id, createPayoutDto, mockUser)
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
   describe('findPayouts (GET /vendors/:id/payouts)', () => {
     it('should return list of payouts', async () => {
-      mockVendorsService.findPayouts.mockResolvedValue([mockPayout]);
+      const paginatedResponse = {
+        data: [mockPayout],
+        meta: {
+          total: 1,
+          page: 1,
+          limit: 20,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
+      };
+      mockVendorsService.findPayouts.mockResolvedValue(paginatedResponse);
 
-      const result = await controller.findPayouts(mockVendor.id, mockUser);
+      const result = await controller.findPayouts(mockVendor.id, {}, mockUser);
 
-      expect(result).toHaveLength(1);
-      expect(vendorsService.findPayouts).toHaveBeenCalledWith(mockVendor.id, mockUser.id);
+      expect(result.data).toHaveLength(1);
+      expect(vendorsService.findPayouts).toHaveBeenCalledWith(mockVendor.id, mockUser.id, {
+        page: undefined,
+        limit: undefined,
+      });
     });
 
     it('should use dev-user-id when user is undefined', async () => {
-      mockVendorsService.findPayouts.mockResolvedValue([mockPayout]);
+      const paginatedResponse = {
+        data: [mockPayout],
+        meta: {
+          total: 1,
+          page: 1,
+          limit: 20,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPrevPage: false,
+        },
+      };
+      mockVendorsService.findPayouts.mockResolvedValue(paginatedResponse);
 
-      await controller.findPayouts(mockVendor.id, undefined as unknown as { id: string });
+      await controller.findPayouts(mockVendor.id, {}, undefined as unknown as { id: string });
 
-      expect(vendorsService.findPayouts).toHaveBeenCalledWith(mockVendor.id, 'dev-user-id');
+      expect(vendorsService.findPayouts).toHaveBeenCalledWith(mockVendor.id, 'dev-user-id', {
+        page: undefined,
+        limit: undefined,
+      });
     });
   });
 
@@ -798,21 +1060,37 @@ describe('VendorsController', () => {
       const result = await controller.findPayout(mockVendor.id, mockPayout.id, mockUser);
 
       expect(result).toEqual(mockPayout);
-      expect(vendorsService.findPayoutById).toHaveBeenCalledWith(mockVendor.id, mockPayout.id, mockUser.id);
+      expect(vendorsService.findPayoutById).toHaveBeenCalledWith(
+        mockVendor.id,
+        mockPayout.id,
+        mockUser.id
+      );
     });
 
     it('should use dev-user-id when user is undefined', async () => {
       mockVendorsService.findPayoutById.mockResolvedValue(mockPayout);
 
-      await controller.findPayout(mockVendor.id, mockPayout.id, undefined as unknown as { id: string });
+      await controller.findPayout(
+        mockVendor.id,
+        mockPayout.id,
+        undefined as unknown as { id: string }
+      );
 
-      expect(vendorsService.findPayoutById).toHaveBeenCalledWith(mockVendor.id, mockPayout.id, 'dev-user-id');
+      expect(vendorsService.findPayoutById).toHaveBeenCalledWith(
+        mockVendor.id,
+        mockPayout.id,
+        'dev-user-id'
+      );
     });
 
     it('should propagate NotFoundException', async () => {
-      mockVendorsService.findPayoutById.mockRejectedValue(new NotFoundException('Payout not found'));
+      mockVendorsService.findPayoutById.mockRejectedValue(
+        new NotFoundException('Payout not found')
+      );
 
-      await expect(controller.findPayout(mockVendor.id, 'non-existent', mockUser)).rejects.toThrow(NotFoundException);
+      await expect(controller.findPayout(mockVendor.id, 'non-existent', mockUser)).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 });
@@ -834,9 +1112,7 @@ describe('UserOrdersController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [UserOrdersController],
-      providers: [
-        { provide: VendorsService, useValue: mockVendorsService },
-      ],
+      providers: [{ provide: VendorsService, useValue: mockVendorsService }],
     }).compile();
 
     controller = module.get<UserOrdersController>(UserOrdersController);
@@ -856,7 +1132,10 @@ describe('UserOrdersController', () => {
       const result = await controller.findMyOrders({ page: 1, limit: 20 }, mockUser);
 
       expect(result).toEqual(mockPaginatedOrders);
-      expect(vendorsService.findUserOrders).toHaveBeenCalledWith(mockUser.id, { page: 1, limit: 20 });
+      expect(vendorsService.findUserOrders).toHaveBeenCalledWith(mockUser.id, {
+        page: 1,
+        limit: 20,
+      });
     });
 
     it('should pass all query filters to service', async () => {

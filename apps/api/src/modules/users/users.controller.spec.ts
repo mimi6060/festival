@@ -27,7 +27,7 @@ import {
 
 describe('UsersController', () => {
   let controller: UsersController;
-  let usersService: jest.Mocked<UsersService>;
+  let _usersService: jest.Mocked<UsersService>;
 
   // Mock authenticated users for testing
   const mockAdminUser: AuthenticatedUser = {
@@ -96,7 +96,7 @@ describe('UsersController', () => {
     }).compile();
 
     controller = module.get<UsersController>(UsersController);
-    usersService = module.get(UsersService);
+    _usersService = module.get(UsersService);
   });
 
   // ==========================================================================
@@ -131,10 +131,7 @@ describe('UsersController', () => {
 
       // Assert
       expect(result).toBe(mockUserEntity);
-      expect(mockUsersService.create).toHaveBeenCalledWith(
-        validCreateDto,
-        mockAdminUser,
-      );
+      expect(mockUsersService.create).toHaveBeenCalledWith(validCreateDto, mockAdminUser);
     });
 
     it('should pass the correct DTO to service', async () => {
@@ -152,7 +149,7 @@ describe('UsersController', () => {
           firstName: validCreateDto.firstName,
           lastName: validCreateDto.lastName,
         }),
-        mockAdminUser,
+        mockAdminUser
       );
     });
 
@@ -185,7 +182,7 @@ describe('UsersController', () => {
         expect.objectContaining({
           skipEmailVerification: true,
         }),
-        mockAdminUser,
+        mockAdminUser
       );
     });
   });
@@ -208,10 +205,7 @@ describe('UsersController', () => {
       mockUsersService.findAll.mockResolvedValue(mockPaginatedResponse);
 
       // Act
-      const result = await controller.findAll(
-        { page: 1, limit: 10 } as any,
-        mockAdminUser,
-      );
+      const result = await controller.findAll({ page: 1, limit: 10 } as any, mockAdminUser);
 
       // Assert
       expect(result).toBe(mockPaginatedResponse);
@@ -234,10 +228,7 @@ describe('UsersController', () => {
       await controller.findAll(query as any, mockAdminUser);
 
       // Assert
-      expect(mockUsersService.findAll).toHaveBeenCalledWith(
-        query,
-        mockAdminUser,
-      );
+      expect(mockUsersService.findAll).toHaveBeenCalledWith(query, mockAdminUser);
     });
 
     it('should support filtering by email', async () => {
@@ -251,7 +242,7 @@ describe('UsersController', () => {
       // Assert
       expect(mockUsersService.findAll).toHaveBeenCalledWith(
         expect.objectContaining({ email: 'test@example.com' }),
-        mockAdminUser,
+        mockAdminUser
       );
     });
 
@@ -267,7 +258,7 @@ describe('UsersController', () => {
       // Assert
       expect(mockUsersService.findAll).toHaveBeenCalledWith(
         expect.objectContaining({ festivalId }),
-        mockAdminUser,
+        mockAdminUser
       );
     });
 
@@ -282,7 +273,7 @@ describe('UsersController', () => {
       // Assert
       expect(mockUsersService.findAll).toHaveBeenCalledWith(
         expect.objectContaining({ sortBy: 'email', sortOrder: 'asc' }),
-        mockAdminUser,
+        mockAdminUser
       );
     });
   });
@@ -312,10 +303,7 @@ describe('UsersController', () => {
       await controller.search({ q: 'jean dupont' }, mockAdminUser);
 
       // Assert
-      expect(mockUsersService.search).toHaveBeenCalledWith(
-        { q: 'jean dupont' },
-        mockAdminUser,
-      );
+      expect(mockUsersService.search).toHaveBeenCalledWith({ q: 'jean dupont' }, mockAdminUser);
     });
 
     it('should respect limit parameter', async () => {
@@ -326,10 +314,7 @@ describe('UsersController', () => {
       await controller.search({ q: 'test', limit: 5 }, mockAdminUser);
 
       // Assert
-      expect(mockUsersService.search).toHaveBeenCalledWith(
-        { q: 'test', limit: 5 },
-        mockAdminUser,
-      );
+      expect(mockUsersService.search).toHaveBeenCalledWith({ q: 'test', limit: 5 }, mockAdminUser);
     });
 
     it('should return empty array when no matches', async () => {
@@ -337,10 +322,7 @@ describe('UsersController', () => {
       mockUsersService.search.mockResolvedValue([]);
 
       // Act
-      const result = await controller.search(
-        { q: 'nonexistent' },
-        mockAdminUser,
-      );
+      const result = await controller.search({ q: 'nonexistent' }, mockAdminUser);
 
       // Assert
       expect(result).toEqual([]);
@@ -357,10 +339,7 @@ describe('UsersController', () => {
       mockUsersService.findOne.mockResolvedValue(mockUserEntity);
 
       // Act
-      const result = await controller.findOne(
-        'test-user-id',
-        mockAdminUser,
-      );
+      const result = await controller.findOne('test-user-id', mockAdminUser);
 
       // Assert
       expect(result).toBe(mockUserEntity);
@@ -376,17 +355,11 @@ describe('UsersController', () => {
       mockUsersService.findOne.mockResolvedValue(ownUserEntity);
 
       // Act
-      const result = await controller.findOne(
-        regularUser.id,
-        mockRegularUser,
-      );
+      const result = await controller.findOne(regularUser.id, mockRegularUser);
 
       // Assert
       expect(result).toBe(ownUserEntity);
-      expect(mockUsersService.findOne).toHaveBeenCalledWith(
-        regularUser.id,
-        mockRegularUser,
-      );
+      expect(mockUsersService.findOne).toHaveBeenCalledWith(regularUser.id, mockRegularUser);
     });
 
     it('should pass user ID to service', async () => {
@@ -398,10 +371,7 @@ describe('UsersController', () => {
       await controller.findOne(userId, mockAdminUser);
 
       // Assert
-      expect(mockUsersService.findOne).toHaveBeenCalledWith(
-        userId,
-        mockAdminUser,
-      );
+      expect(mockUsersService.findOne).toHaveBeenCalledWith(userId, mockAdminUser);
     });
   });
 
@@ -425,11 +395,7 @@ describe('UsersController', () => {
       mockUsersService.update.mockResolvedValue(updatedEntity);
 
       // Act
-      const result = await controller.update(
-        'test-user-id',
-        updateDto,
-        mockAdminUser,
-      );
+      const result = await controller.update('test-user-id', updateDto, mockAdminUser);
 
       // Assert
       expect(result.firstName).toBe('Updated');
@@ -447,7 +413,7 @@ describe('UsersController', () => {
       expect(mockUsersService.update).toHaveBeenCalledWith(
         regularUser.id,
         updateDto,
-        mockRegularUser,
+        mockRegularUser
       );
     });
 
@@ -468,7 +434,7 @@ describe('UsersController', () => {
       expect(mockUsersService.update).toHaveBeenCalledWith(
         'test-user-id',
         fullUpdateDto,
-        mockAdminUser,
+        mockAdminUser
       );
     });
 
@@ -490,7 +456,7 @@ describe('UsersController', () => {
           password: 'NewPassword123!',
           currentPassword: 'OldPassword123!',
         }),
-        mockRegularUser,
+        mockRegularUser
       );
     });
   });
@@ -507,10 +473,7 @@ describe('UsersController', () => {
       });
 
       // Act
-      const result = await controller.deactivate(
-        'test-user-id',
-        mockAdminUser,
-      );
+      const result = await controller.deactivate('test-user-id', mockAdminUser);
 
       // Assert
       expect(result.message).toContain('has been deactivated');
@@ -524,10 +487,7 @@ describe('UsersController', () => {
       await controller.deactivate('test-user-id', mockAdminUser);
 
       // Assert
-      expect(mockUsersService.deactivate).toHaveBeenCalledWith(
-        'test-user-id',
-        mockAdminUser,
-      );
+      expect(mockUsersService.deactivate).toHaveBeenCalledWith('test-user-id', mockAdminUser);
     });
   });
 
@@ -548,7 +508,7 @@ describe('UsersController', () => {
       const result = await controller.changeRole(
         'test-user-id',
         { role: UserRole.ORGANIZER },
-        mockAdminUser,
+        mockAdminUser
       );
 
       // Assert
@@ -567,7 +527,7 @@ describe('UsersController', () => {
       expect(mockUsersService.changeRole).toHaveBeenCalledWith(
         'test-user-id',
         roleDto,
-        mockAdminUser,
+        mockAdminUser
       );
     });
 
@@ -583,16 +543,10 @@ describe('UsersController', () => {
       ];
 
       for (const role of roles) {
-        mockUsersService.changeRole.mockResolvedValue(
-          new UserEntity({ ...mockUserEntity, role }),
-        );
+        mockUsersService.changeRole.mockResolvedValue(new UserEntity({ ...mockUserEntity, role }));
 
         // Act
-        const result = await controller.changeRole(
-          'test-user-id',
-          { role },
-          mockAdminUser,
-        );
+        const result = await controller.changeRole('test-user-id', { role }, mockAdminUser);
 
         // Assert
         expect(result.role).toBe(role);
@@ -615,7 +569,7 @@ describe('UsersController', () => {
       const result = await controller.ban(
         'test-user-id',
         { reason: 'Violation of terms' },
-        mockAdminUser,
+        mockAdminUser
       );
 
       // Assert
@@ -631,11 +585,7 @@ describe('UsersController', () => {
       await controller.ban('test-user-id', banDto, mockAdminUser);
 
       // Assert
-      expect(mockUsersService.ban).toHaveBeenCalledWith(
-        'test-user-id',
-        banDto,
-        mockAdminUser,
-      );
+      expect(mockUsersService.ban).toHaveBeenCalledWith('test-user-id', banDto, mockAdminUser);
     });
   });
 
@@ -654,7 +604,7 @@ describe('UsersController', () => {
       const result = await controller.unban(
         bannedUser.id,
         { reason: 'Ban period completed' },
-        mockAdminUser,
+        mockAdminUser
       );
 
       // Assert
@@ -670,11 +620,7 @@ describe('UsersController', () => {
       await controller.unban(bannedUser.id, unbanDto, mockAdminUser);
 
       // Assert
-      expect(mockUsersService.unban).toHaveBeenCalledWith(
-        bannedUser.id,
-        unbanDto,
-        mockAdminUser,
-      );
+      expect(mockUsersService.unban).toHaveBeenCalledWith(bannedUser.id, unbanDto, mockAdminUser);
     });
 
     it('should allow unban without reason', async () => {
@@ -685,11 +631,7 @@ describe('UsersController', () => {
       await controller.unban(bannedUser.id, {}, mockAdminUser);
 
       // Assert
-      expect(mockUsersService.unban).toHaveBeenCalledWith(
-        bannedUser.id,
-        {},
-        mockAdminUser,
-      );
+      expect(mockUsersService.unban).toHaveBeenCalledWith(bannedUser.id, {}, mockAdminUser);
     });
   });
 
@@ -715,47 +657,71 @@ describe('UsersController', () => {
       },
     ];
 
+    const mockPaginatedResponse = {
+      items: mockActivities,
+      total: 2,
+      page: 1,
+      limit: 20,
+      totalPages: 1,
+      hasNextPage: false,
+      hasPrevPage: false,
+    };
+
     it('should return user activity history', async () => {
       // Arrange
-      mockUsersService.getActivity.mockResolvedValue(mockActivities);
+      mockUsersService.getActivity.mockResolvedValue(mockPaginatedResponse);
 
       // Act
       const result = await controller.getActivity(
         'test-user-id',
-        mockAdminUser,
+        undefined,
+        undefined,
+        mockAdminUser
       );
 
       // Assert
-      expect(result).toHaveLength(2);
-      expect(result[0].action).toBe('ACCOUNT_CREATED');
+      expect(result.items).toHaveLength(2);
+      expect(result.items[0].action).toBe('ACCOUNT_CREATED');
     });
 
     it('should pass user ID to service', async () => {
       // Arrange
-      mockUsersService.getActivity.mockResolvedValue([]);
+      const emptyResponse = { ...mockPaginatedResponse, items: [], total: 0 };
+      mockUsersService.getActivity.mockResolvedValue(emptyResponse);
 
       // Act
-      await controller.getActivity('specific-user-id', mockAdminUser);
+      await controller.getActivity('specific-user-id', undefined, undefined, mockAdminUser);
 
       // Assert
-      expect(mockUsersService.getActivity).toHaveBeenCalledWith(
-        'specific-user-id',
-        mockAdminUser,
-      );
+      expect(mockUsersService.getActivity).toHaveBeenCalledWith('specific-user-id', mockAdminUser, {
+        page: undefined,
+        limit: undefined,
+      });
     });
 
     it('should return empty array when no activities', async () => {
       // Arrange
-      mockUsersService.getActivity.mockResolvedValue([]);
+      const emptyResponse = {
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPrevPage: false,
+      };
+      mockUsersService.getActivity.mockResolvedValue(emptyResponse);
 
       // Act
       const result = await controller.getActivity(
         'test-user-id',
-        mockAdminUser,
+        undefined,
+        undefined,
+        mockAdminUser
       );
 
       // Assert
-      expect(result).toEqual([]);
+      expect(result.items).toEqual([]);
     });
   });
 
@@ -772,13 +738,13 @@ describe('UsersController', () => {
         // Act
         await controller.create(
           { email: 'new@test.com', password: VALID_PASSWORD, firstName: 'New', lastName: 'User' },
-          mockAdminUser,
+          mockAdminUser
         );
 
         // Assert
         expect(mockUsersService.create).toHaveBeenCalledWith(
           expect.anything(),
-          expect.objectContaining({ role: UserRole.ADMIN }),
+          expect.objectContaining({ role: UserRole.ADMIN })
         );
       });
 
@@ -798,7 +764,7 @@ describe('UsersController', () => {
         // Assert
         expect(mockUsersService.findAll).toHaveBeenCalledWith(
           expect.anything(),
-          expect.objectContaining({ role: UserRole.ADMIN }),
+          expect.objectContaining({ role: UserRole.ADMIN })
         );
       });
 
@@ -812,7 +778,7 @@ describe('UsersController', () => {
         // Assert
         expect(mockUsersService.search).toHaveBeenCalledWith(
           expect.anything(),
-          expect.objectContaining({ role: UserRole.ADMIN }),
+          expect.objectContaining({ role: UserRole.ADMIN })
         );
       });
 
@@ -826,7 +792,7 @@ describe('UsersController', () => {
         // Assert
         expect(mockUsersService.deactivate).toHaveBeenCalledWith(
           expect.anything(),
-          expect.objectContaining({ role: UserRole.ADMIN }),
+          expect.objectContaining({ role: UserRole.ADMIN })
         );
       });
 
@@ -835,17 +801,13 @@ describe('UsersController', () => {
         mockUsersService.changeRole.mockResolvedValue(mockUserEntity);
 
         // Act
-        await controller.changeRole(
-          'user-id',
-          { role: UserRole.ORGANIZER },
-          mockAdminUser,
-        );
+        await controller.changeRole('user-id', { role: UserRole.ORGANIZER }, mockAdminUser);
 
         // Assert
         expect(mockUsersService.changeRole).toHaveBeenCalledWith(
           expect.anything(),
           expect.anything(),
-          expect.objectContaining({ role: UserRole.ADMIN }),
+          expect.objectContaining({ role: UserRole.ADMIN })
         );
       });
 
@@ -854,17 +816,13 @@ describe('UsersController', () => {
         mockUsersService.ban.mockResolvedValue({ message: 'Success' });
 
         // Act
-        await controller.ban(
-          'user-id',
-          { reason: 'Violation' },
-          mockAdminUser,
-        );
+        await controller.ban('user-id', { reason: 'Violation' }, mockAdminUser);
 
         // Assert
         expect(mockUsersService.ban).toHaveBeenCalledWith(
           expect.anything(),
           expect.anything(),
-          expect.objectContaining({ role: UserRole.ADMIN }),
+          expect.objectContaining({ role: UserRole.ADMIN })
         );
       });
 
@@ -879,21 +837,31 @@ describe('UsersController', () => {
         expect(mockUsersService.unban).toHaveBeenCalledWith(
           expect.anything(),
           expect.anything(),
-          expect.objectContaining({ role: UserRole.ADMIN }),
+          expect.objectContaining({ role: UserRole.ADMIN })
         );
       });
 
       it('getActivity should be called with admin user', async () => {
         // Arrange
-        mockUsersService.getActivity.mockResolvedValue([]);
+        const emptyResponse = {
+          items: [],
+          total: 0,
+          page: 1,
+          limit: 20,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPrevPage: false,
+        };
+        mockUsersService.getActivity.mockResolvedValue(emptyResponse);
 
         // Act
-        await controller.getActivity('user-id', mockAdminUser);
+        await controller.getActivity('user-id', undefined, undefined, mockAdminUser);
 
         // Assert
         expect(mockUsersService.getActivity).toHaveBeenCalledWith(
           expect.anything(),
           expect.objectContaining({ role: UserRole.ADMIN }),
+          expect.anything()
         );
       });
     });
@@ -907,10 +875,7 @@ describe('UsersController', () => {
         await controller.findOne(regularUser.id, mockRegularUser);
 
         // Assert
-        expect(mockUsersService.findOne).toHaveBeenCalledWith(
-          regularUser.id,
-          mockRegularUser,
-        );
+        expect(mockUsersService.findOne).toHaveBeenCalledWith(regularUser.id, mockRegularUser);
       });
 
       it('update allows self-access', async () => {
@@ -918,17 +883,13 @@ describe('UsersController', () => {
         mockUsersService.update.mockResolvedValue(mockUserEntity);
 
         // Act
-        await controller.update(
-          regularUser.id,
-          { firstName: 'Updated' },
-          mockRegularUser,
-        );
+        await controller.update(regularUser.id, { firstName: 'Updated' }, mockRegularUser);
 
         // Assert
         expect(mockUsersService.update).toHaveBeenCalledWith(
           regularUser.id,
           expect.anything(),
-          mockRegularUser,
+          mockRegularUser
         );
       });
     });
@@ -944,7 +905,7 @@ describe('UsersController', () => {
         // Assert
         expect(mockUsersService.findOne).toHaveBeenCalledWith(
           organizerUser.id,
-          expect.objectContaining({ role: UserRole.ORGANIZER }),
+          expect.objectContaining({ role: UserRole.ORGANIZER })
         );
       });
 
@@ -958,7 +919,7 @@ describe('UsersController', () => {
         // Assert
         expect(mockUsersService.findOne).toHaveBeenCalledWith(
           regularUser.id,
-          expect.objectContaining({ role: UserRole.USER }),
+          expect.objectContaining({ role: UserRole.USER })
         );
       });
     });
@@ -978,10 +939,7 @@ describe('UsersController', () => {
       await controller.findOne(validUuid, mockAdminUser);
 
       // Assert
-      expect(mockUsersService.findOne).toHaveBeenCalledWith(
-        validUuid,
-        mockAdminUser,
-      );
+      expect(mockUsersService.findOne).toHaveBeenCalledWith(validUuid, mockAdminUser);
     });
 
     it('should pass all create DTO fields to service', async () => {
@@ -1001,10 +959,7 @@ describe('UsersController', () => {
       await controller.create(fullDto, mockAdminUser);
 
       // Assert
-      expect(mockUsersService.create).toHaveBeenCalledWith(
-        fullDto,
-        mockAdminUser,
-      );
+      expect(mockUsersService.create).toHaveBeenCalledWith(fullDto, mockAdminUser);
     });
 
     it('should pass all update DTO fields to service', async () => {
@@ -1023,11 +978,7 @@ describe('UsersController', () => {
       await controller.update('user-id', fullUpdateDto, mockAdminUser);
 
       // Assert
-      expect(mockUsersService.update).toHaveBeenCalledWith(
-        'user-id',
-        fullUpdateDto,
-        mockAdminUser,
-      );
+      expect(mockUsersService.update).toHaveBeenCalledWith('user-id', fullUpdateDto, mockAdminUser);
     });
   });
 
@@ -1042,9 +993,9 @@ describe('UsersController', () => {
       mockUsersService.findOne.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.findOne('non-existent-id', mockAdminUser),
-      ).rejects.toThrow('User not found');
+      await expect(controller.findOne('non-existent-id', mockAdminUser)).rejects.toThrow(
+        'User not found'
+      );
     });
 
     it('should propagate ConflictException from service', async () => {
@@ -1055,9 +1006,14 @@ describe('UsersController', () => {
       // Act & Assert
       await expect(
         controller.create(
-          { email: 'existing@test.com', password: VALID_PASSWORD, firstName: 'Test', lastName: 'User' },
-          mockAdminUser,
-        ),
+          {
+            email: 'existing@test.com',
+            password: VALID_PASSWORD,
+            firstName: 'Test',
+            lastName: 'User',
+          },
+          mockAdminUser
+        )
       ).rejects.toThrow('Email already in use');
     });
 
@@ -1067,9 +1023,9 @@ describe('UsersController', () => {
       mockUsersService.findOne.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.findOne('other-user-id', mockRegularUser),
-      ).rejects.toThrow('You can only access your own profile');
+      await expect(controller.findOne('other-user-id', mockRegularUser)).rejects.toThrow(
+        'You can only access your own profile'
+      );
     });
 
     it('should propagate BadRequestException from service', async () => {
@@ -1079,11 +1035,7 @@ describe('UsersController', () => {
 
       // Act & Assert
       await expect(
-        controller.ban(
-          bannedUser.id,
-          { reason: 'Test' },
-          mockAdminUser,
-        ),
+        controller.ban(bannedUser.id, { reason: 'Test' }, mockAdminUser)
       ).rejects.toThrow('User is already banned');
     });
   });
@@ -1100,7 +1052,7 @@ describe('UsersController', () => {
       // Act
       const result = await controller.create(
         { email: 'test@test.com', password: VALID_PASSWORD, firstName: 'Test', lastName: 'User' },
-        mockAdminUser,
+        mockAdminUser
       );
 
       // Assert
@@ -1119,10 +1071,7 @@ describe('UsersController', () => {
       mockUsersService.findAll.mockResolvedValue(paginatedResponse);
 
       // Act
-      const result = await controller.findAll(
-        { page: 1, limit: 10 } as any,
-        mockAdminUser,
-      );
+      const result = await controller.findAll({ page: 1, limit: 10 } as any, mockAdminUser);
 
       // Assert
       expect(result).toHaveProperty('items');
@@ -1160,11 +1109,7 @@ describe('UsersController', () => {
       mockUsersService.update.mockResolvedValue(mockUserEntity);
 
       // Act
-      const result = await controller.update(
-        'user-id',
-        { firstName: 'Updated' },
-        mockAdminUser,
-      );
+      const result = await controller.update('user-id', { firstName: 'Updated' }, mockAdminUser);
 
       // Assert
       expect(result).toBeInstanceOf(UserEntity);
@@ -1190,7 +1135,7 @@ describe('UsersController', () => {
       const result = await controller.changeRole(
         'user-id',
         { role: UserRole.ORGANIZER },
-        mockAdminUser,
+        mockAdminUser
       );
 
       // Assert
@@ -1202,11 +1147,7 @@ describe('UsersController', () => {
       mockUsersService.ban.mockResolvedValue({ message: 'Banned' });
 
       // Act
-      const result = await controller.ban(
-        'user-id',
-        { reason: 'Violation' },
-        mockAdminUser,
-      );
+      const result = await controller.ban('user-id', { reason: 'Violation' }, mockAdminUser);
 
       // Assert
       expect(result).toHaveProperty('message');
@@ -1223,15 +1164,26 @@ describe('UsersController', () => {
       expect(result).toHaveProperty('message');
     });
 
-    it('getActivity should return activity array', async () => {
+    it('getActivity should return paginated activity response', async () => {
       // Arrange
-      mockUsersService.getActivity.mockResolvedValue([]);
+      const emptyResponse = {
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+        hasNextPage: false,
+        hasPrevPage: false,
+      };
+      mockUsersService.getActivity.mockResolvedValue(emptyResponse);
 
       // Act
-      const result = await controller.getActivity('user-id', mockAdminUser);
+      const result = await controller.getActivity('user-id', undefined, undefined, mockAdminUser);
 
       // Assert
-      expect(Array.isArray(result)).toBe(true);
+      expect(result).toHaveProperty('items');
+      expect(result).toHaveProperty('total');
+      expect(Array.isArray(result.items)).toBe(true);
     });
   });
 });

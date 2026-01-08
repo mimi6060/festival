@@ -22,9 +22,8 @@ import {
 } from '@nestjs/swagger';
 import { UserRole, UserStatus } from '@prisma/client';
 import { Throttle } from '@nestjs/throttler';
-import { UserEntity, UserActivityEntry } from './entities';
-import { UsersService } from './users.service';
-import type { AuthenticatedUser, PaginatedResponse } from './users.service';
+import { UserEntity } from './entities';
+import { UsersService, type AuthenticatedUser, type PaginatedResponse } from './users.service';
 import {
   BanUserDto,
   ChangeRoleDto,
@@ -92,7 +91,7 @@ export class UsersController {
   @ApiResponse({ status: 409, description: 'Email already in use' })
   async create(
     @Body() dto: CreateUserDto,
-    @CurrentUser() currentUser: AuthenticatedUser,
+    @CurrentUser() currentUser: AuthenticatedUser
   ): Promise<UserEntity> {
     return this.usersService.create(dto, currentUser);
   }
@@ -106,7 +105,7 @@ export class UsersController {
   @Cacheable({
     key: { prefix: 'users:list', paramIndices: [0] },
     ttl: 30,
-    tags: [CacheTag.USER]
+    tags: [CacheTag.USER],
   })
   @Roles(UserRole.ADMIN)
   @ApiOperation({
@@ -130,7 +129,7 @@ export class UsersController {
   @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
   async findAll(
     @Query() query: UserQueryDto,
-    @CurrentUser() currentUser: AuthenticatedUser,
+    @CurrentUser() currentUser: AuthenticatedUser
   ): Promise<PaginatedResponse<UserEntity>> {
     return this.usersService.findAll(query, currentUser);
   }
@@ -168,7 +167,7 @@ export class UsersController {
   @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
   async search(
     @Query() query: UserSearchDto,
-    @CurrentUser() currentUser: AuthenticatedUser,
+    @CurrentUser() currentUser: AuthenticatedUser
   ): Promise<UserEntity[]> {
     return this.usersService.search(query, currentUser);
   }
@@ -202,7 +201,7 @@ export class UsersController {
   @ApiResponse({ status: 404, description: 'User not found' })
   async findOne(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() currentUser: AuthenticatedUser,
+    @CurrentUser() currentUser: AuthenticatedUser
   ): Promise<UserEntity> {
     return this.usersService.findOne(id, currentUser);
   }
@@ -241,7 +240,7 @@ export class UsersController {
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateUserDto,
-    @CurrentUser() currentUser: AuthenticatedUser,
+    @CurrentUser() currentUser: AuthenticatedUser
   ): Promise<UserEntity> {
     return this.usersService.update(id, dto, currentUser);
   }
@@ -283,7 +282,7 @@ export class UsersController {
   @ApiResponse({ status: 404, description: 'User not found' })
   async deactivate(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() currentUser: AuthenticatedUser,
+    @CurrentUser() currentUser: AuthenticatedUser
   ): Promise<{ message: string }> {
     return this.usersService.deactivate(id, currentUser);
   }
@@ -299,8 +298,7 @@ export class UsersController {
   @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 requests per minute (sensitive)
   @ApiOperation({
     summary: 'Change user role (Admin)',
-    description:
-      'Changes the role of a user. Cannot change own role or demote another admin.',
+    description: 'Changes the role of a user. Cannot change own role or demote another admin.',
   })
   @ApiParam({
     name: 'id',
@@ -319,7 +317,7 @@ export class UsersController {
   async changeRole(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: ChangeRoleDto,
-    @CurrentUser() currentUser: AuthenticatedUser,
+    @CurrentUser() currentUser: AuthenticatedUser
   ): Promise<UserEntity> {
     return this.usersService.changeRole(id, dto, currentUser);
   }
@@ -362,7 +360,7 @@ export class UsersController {
   async ban(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: BanUserDto,
-    @CurrentUser() currentUser: AuthenticatedUser,
+    @CurrentUser() currentUser: AuthenticatedUser
   ): Promise<{ message: string }> {
     return this.usersService.ban(id, dto, currentUser);
   }
@@ -402,14 +400,14 @@ export class UsersController {
   async unban(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UnbanUserDto,
-    @CurrentUser() currentUser: AuthenticatedUser,
+    @CurrentUser() currentUser: AuthenticatedUser
   ): Promise<{ message: string }> {
     return this.usersService.unban(id, dto, currentUser);
   }
 
   /**
    * GET /users/:id/activity
-   * Get user activity history.
+   * Get user activity history with pagination.
    * Admin only.
    */
   @Get(':id/activity')
@@ -425,16 +423,23 @@ export class UsersController {
     type: 'string',
     format: 'uuid',
   })
+  @ApiQuery({ name: 'page', required: false, type: Number, example: 1 })
+  @ApiQuery({ name: 'limit', required: false, type: Number, example: 20 })
   @ApiResponse({
     status: 200,
-    description: 'User activity history',
+    description: 'Paginated user activity history',
   })
   @ApiResponse({ status: 403, description: 'Forbidden - Admin only' })
   @ApiResponse({ status: 404, description: 'User not found' })
   async getActivity(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() currentUser: AuthenticatedUser,
-  ): Promise<UserActivityEntry[]> {
-    return this.usersService.getActivity(id, currentUser);
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @CurrentUser() currentUser?: AuthenticatedUser
+  ) {
+    return this.usersService.getActivity(id, currentUser!, {
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
+    });
   }
 }

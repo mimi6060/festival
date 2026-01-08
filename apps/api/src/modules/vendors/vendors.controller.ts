@@ -31,6 +31,9 @@ import {
   QueryVendorsDto,
   QueryOrdersDto,
   QueryStatsDto,
+  QueryProductsDto,
+  QueryPayoutsDto,
+  QueryExportDto,
 } from './dto';
 
 // Placeholder for auth decorators - will be integrated with auth module
@@ -40,6 +43,7 @@ import {
 // import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 // Temporary decorator for development
+// eslint-disable-next-line @typescript-eslint/no-empty-function
 const CurrentUser = () => (_target: object, _key: string, _index: number) => {};
 
 @ApiTags('Vendors')
@@ -55,10 +59,7 @@ export class VendorsController {
   @ApiResponse({ status: 400, description: 'Invalid input' })
   @ApiResponse({ status: 404, description: 'Festival not found' })
   @ApiBearerAuth()
-  async create(
-    @Body() dto: CreateVendorDto,
-    @CurrentUser() user: { id: string },
-  ) {
+  async create(@Body() dto: CreateVendorDto, @CurrentUser() user: { id: string }) {
     // In production, get user from JWT token
     const userId = user?.id || 'dev-user-id';
     return this.vendorsService.createVendor(userId, dto);
@@ -99,7 +100,7 @@ export class VendorsController {
   async update(
     @Param('id') id: string,
     @Body() dto: UpdateVendorDto,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string }
   ) {
     const userId = user?.id || 'dev-user-id';
     return this.vendorsService.updateVendor(id, userId, dto);
@@ -113,10 +114,7 @@ export class VendorsController {
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiResponse({ status: 404, description: 'Vendor not found' })
   @ApiBearerAuth()
-  async remove(
-    @Param('id') id: string,
-    @CurrentUser() user: { id: string },
-  ) {
+  async remove(@Param('id') id: string, @CurrentUser() user: { id: string }) {
     const userId = user?.id || 'dev-user-id';
     await this.vendorsService.deleteVendor(id, userId);
   }
@@ -126,10 +124,7 @@ export class VendorsController {
   @ApiParam({ name: 'id', description: 'Vendor ID' })
   @ApiResponse({ status: 200, description: 'QR code regenerated' })
   @ApiBearerAuth()
-  async regenerateQrCode(
-    @Param('id') id: string,
-    @CurrentUser() user: { id: string },
-  ) {
+  async regenerateQrCode(@Param('id') id: string, @CurrentUser() user: { id: string }) {
     const userId = user?.id || 'dev-user-id';
     return this.vendorsService.regenerateQrMenuCode(id, userId);
   }
@@ -146,7 +141,7 @@ export class VendorsController {
   async createProduct(
     @Param('id') vendorId: string,
     @Body() dto: CreateProductDto,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string }
   ) {
     const userId = user?.id || 'dev-user-id';
     return this.vendorsService.createProduct(vendorId, userId, dto);
@@ -155,10 +150,15 @@ export class VendorsController {
   @Get(':id/products')
   @ApiOperation({ summary: 'Get all products for a vendor' })
   @ApiParam({ name: 'id', description: 'Vendor ID' })
-  @ApiResponse({ status: 200, description: 'List of products' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: 'Paginated list of products' })
   @ApiResponse({ status: 404, description: 'Vendor not found' })
-  async findAllProducts(@Param('id') vendorId: string) {
-    return this.vendorsService.findAllProducts(vendorId);
+  async findAllProducts(@Param('id') vendorId: string, @Query() query: QueryProductsDto) {
+    return this.vendorsService.findAllProducts(vendorId, {
+      page: query.page,
+      limit: query.limit,
+    });
   }
 
   @Get(':id/products/:productId')
@@ -167,10 +167,7 @@ export class VendorsController {
   @ApiParam({ name: 'productId', description: 'Product ID' })
   @ApiResponse({ status: 200, description: 'Product details' })
   @ApiResponse({ status: 404, description: 'Product not found' })
-  async findProduct(
-    @Param('id') vendorId: string,
-    @Param('productId') productId: string,
-  ) {
+  async findProduct(@Param('id') vendorId: string, @Param('productId') productId: string) {
     return this.vendorsService.findProductById(vendorId, productId);
   }
 
@@ -186,7 +183,7 @@ export class VendorsController {
     @Param('id') vendorId: string,
     @Param('productId') productId: string,
     @Body() dto: UpdateProductDto,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string }
   ) {
     const userId = user?.id || 'dev-user-id';
     return this.vendorsService.updateProduct(vendorId, productId, userId, dto);
@@ -204,7 +201,7 @@ export class VendorsController {
   async deleteProduct(
     @Param('id') vendorId: string,
     @Param('productId') productId: string,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string }
   ) {
     const userId = user?.id || 'dev-user-id';
     await this.vendorsService.deleteProduct(vendorId, productId, userId);
@@ -220,7 +217,7 @@ export class VendorsController {
     @Param('id') vendorId: string,
     @Param('productId') productId: string,
     @Body() body: { stock: number | null },
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string }
   ) {
     const userId = user?.id || 'dev-user-id';
     return this.vendorsService.updateProductStock(vendorId, productId, userId, body.stock);
@@ -238,7 +235,7 @@ export class VendorsController {
   async createOrder(
     @Param('id') vendorId: string,
     @Body() dto: CreateOrderDto,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string }
   ) {
     const userId = user?.id || 'dev-user-id';
     return this.vendorsService.createOrder(vendorId, userId, dto);
@@ -253,7 +250,7 @@ export class VendorsController {
   async findVendorOrders(
     @Param('id') vendorId: string,
     @Query() query: QueryOrdersDto,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string }
   ) {
     const userId = user?.id || 'dev-user-id';
     return this.vendorsService.findOrdersByVendor(vendorId, userId, query);
@@ -266,10 +263,7 @@ export class VendorsController {
   @ApiResponse({ status: 200, description: 'Order details' })
   @ApiResponse({ status: 404, description: 'Order not found' })
   @ApiBearerAuth()
-  async findOrder(
-    @Param('id') vendorId: string,
-    @Param('orderId') orderId: string,
-  ) {
+  async findOrder(@Param('id') vendorId: string, @Param('orderId') orderId: string) {
     return this.vendorsService.findOrderById(vendorId, orderId);
   }
 
@@ -286,7 +280,7 @@ export class VendorsController {
     @Param('id') vendorId: string,
     @Param('orderId') orderId: string,
     @Body() dto: UpdateOrderStatusDto,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string }
   ) {
     const userId = user?.id || 'dev-user-id';
     return this.vendorsService.updateOrderStatus(vendorId, orderId, userId, dto);
@@ -305,7 +299,7 @@ export class VendorsController {
   async getStats(
     @Param('id') vendorId: string,
     @Query() query: QueryStatsDto,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string }
   ) {
     const userId = user?.id || 'dev-user-id';
     return this.vendorsService.getVendorStats(vendorId, userId, query);
@@ -316,17 +310,21 @@ export class VendorsController {
   @ApiParam({ name: 'id', description: 'Vendor ID' })
   @ApiQuery({ name: 'startDate', required: true })
   @ApiQuery({ name: 'endDate', required: true })
-  @ApiResponse({ status: 200, description: 'Exported data' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number, description: 'Max 1000 for exports' })
+  @ApiResponse({ status: 200, description: 'Paginated exported data' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiBearerAuth()
   async exportData(
     @Param('id') vendorId: string,
-    @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
-    @CurrentUser() user: { id: string },
+    @Query() query: QueryExportDto,
+    @CurrentUser() user: { id: string }
   ) {
     const userId = user?.id || 'dev-user-id';
-    return this.vendorsService.exportVendorData(vendorId, userId, startDate, endDate);
+    return this.vendorsService.exportVendorData(vendorId, userId, query.startDate, query.endDate, {
+      page: query.page,
+      limit: query.limit,
+    });
   }
 
   // ==================== PAYOUTS ====================
@@ -342,7 +340,7 @@ export class VendorsController {
   async createPayout(
     @Param('id') vendorId: string,
     @Body() dto: CreatePayoutDto,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string }
   ) {
     const userId = user?.id || 'dev-user-id';
     return this.vendorsService.createPayout(vendorId, userId, dto);
@@ -351,15 +349,21 @@ export class VendorsController {
   @Get(':id/payouts')
   @ApiOperation({ summary: 'Get vendor payouts' })
   @ApiParam({ name: 'id', description: 'Vendor ID' })
-  @ApiResponse({ status: 200, description: 'List of payouts' })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiResponse({ status: 200, description: 'Paginated list of payouts' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
   @ApiBearerAuth()
   async findPayouts(
     @Param('id') vendorId: string,
-    @CurrentUser() user: { id: string },
+    @Query() query: QueryPayoutsDto,
+    @CurrentUser() user: { id: string }
   ) {
     const userId = user?.id || 'dev-user-id';
-    return this.vendorsService.findPayouts(vendorId, userId);
+    return this.vendorsService.findPayouts(vendorId, userId, {
+      page: query.page,
+      limit: query.limit,
+    });
   }
 
   @Get(':id/payouts/:payoutId')
@@ -373,7 +377,7 @@ export class VendorsController {
   async findPayout(
     @Param('id') vendorId: string,
     @Param('payoutId') payoutId: string,
-    @CurrentUser() user: { id: string },
+    @CurrentUser() user: { id: string }
   ) {
     const userId = user?.id || 'dev-user-id';
     return this.vendorsService.findPayoutById(vendorId, payoutId, userId);
@@ -391,10 +395,7 @@ export class UserOrdersController {
   @ApiOperation({ summary: 'Get current user orders' })
   @ApiResponse({ status: 200, description: 'List of user orders' })
   @ApiBearerAuth()
-  async findMyOrders(
-    @Query() query: QueryOrdersDto,
-    @CurrentUser() user: { id: string },
-  ) {
+  async findMyOrders(@Query() query: QueryOrdersDto, @CurrentUser() user: { id: string }) {
     const userId = user?.id || 'dev-user-id';
     return this.vendorsService.findUserOrders(userId, query);
   }

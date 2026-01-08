@@ -429,29 +429,59 @@ export class TicketsService {
   }
 
   /**
-   * Get user's tickets
+   * Get user's tickets with pagination
    */
-  async getUserTickets(userId: string, festivalId?: string): Promise<TicketEntity[]> {
+  async getUserTickets(
+    userId: string,
+    options?: { festivalId?: string; page?: number; limit?: number }
+  ): Promise<{
+    items: TicketEntity[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  }> {
+    const page = options?.page ?? 1;
+    const limit = Math.min(options?.limit ?? 20, 100);
+    const skip = (page - 1) * limit;
+
     const where: Prisma.TicketWhereInput = { userId };
 
-    if (festivalId) {
-      where.festivalId = festivalId;
+    if (options?.festivalId) {
+      where.festivalId = options.festivalId;
     }
 
-    const tickets = await this.prisma.ticket.findMany({
-      where,
-      include: {
-        festival: {
-          select: { id: true, name: true, startDate: true, endDate: true },
+    const [tickets, total] = await Promise.all([
+      this.prisma.ticket.findMany({
+        where,
+        include: {
+          festival: {
+            select: { id: true, name: true, startDate: true, endDate: true },
+          },
+          category: {
+            select: { id: true, name: true, type: true },
+          },
         },
-        category: {
-          select: { id: true, name: true, type: true },
-        },
-      },
-      orderBy: { createdAt: 'desc' },
-    });
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.ticket.count({ where }),
+    ]);
 
-    return tickets.map(this.mapToEntity);
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      items: tickets.map(this.mapToEntity),
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    };
   }
 
   /**

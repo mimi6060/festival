@@ -44,10 +44,7 @@ export class StaffService {
   /**
    * Create a new staff member assignment
    */
-  async createStaffMember(
-    dto: CreateStaffMemberDto,
-    currentUser: AuthenticatedUser,
-  ) {
+  async createStaffMember(dto: CreateStaffMemberDto, currentUser: AuthenticatedUser) {
     // Verify the user exists
     const user = await this.prisma.user.findUnique({
       where: { id: dto.userId },
@@ -67,18 +64,11 @@ export class StaffService {
     }
 
     // Check permissions
-    if (
-      currentUser.role !== UserRole.ADMIN &&
-      festival.organizerId !== currentUser.id
-    ) {
-      throw new ForbiddenException(
-        'You do not have permission to add staff to this festival',
-      );
+    if (currentUser.role !== UserRole.ADMIN && festival.organizerId !== currentUser.id) {
+      throw new ForbiddenException('You do not have permission to add staff to this festival');
     }
 
-    this.logger.log(
-      `Creating staff member for user ${dto.userId} at festival ${dto.festivalId}`,
-    );
+    this.logger.log(`Creating staff member for user ${dto.userId} at festival ${dto.festivalId}`);
 
     return this.prisma.staffMember.create({
       data: {
@@ -124,7 +114,7 @@ export class StaffService {
       isActive?: boolean;
       page?: number;
       limit?: number;
-    },
+    }
   ) {
     const { department, role, isActive, page = 1, limit = 50 } = options || {};
 
@@ -212,11 +202,7 @@ export class StaffService {
   /**
    * Update a staff member
    */
-  async updateStaffMember(
-    id: string,
-    dto: UpdateStaffMemberDto,
-    currentUser: AuthenticatedUser,
-  ) {
+  async updateStaffMember(id: string, dto: UpdateStaffMemberDto, currentUser: AuthenticatedUser) {
     const staffMember = await this.getStaffMember(id);
 
     // Check permissions
@@ -224,13 +210,8 @@ export class StaffService {
       where: { id: staffMember.festivalId },
     });
 
-    if (
-      currentUser.role !== UserRole.ADMIN &&
-      festival?.organizerId !== currentUser.id
-    ) {
-      throw new ForbiddenException(
-        'You do not have permission to update this staff member',
-      );
+    if (currentUser.role !== UserRole.ADMIN && festival?.organizerId !== currentUser.id) {
+      throw new ForbiddenException('You do not have permission to update this staff member');
     }
 
     return this.prisma.staffMember.update({
@@ -270,13 +251,8 @@ export class StaffService {
       where: { id: staffMember.festivalId },
     });
 
-    if (
-      currentUser.role !== UserRole.ADMIN &&
-      festival?.organizerId !== currentUser.id
-    ) {
-      throw new ForbiddenException(
-        'You do not have permission to delete this staff member',
-      );
+    if (currentUser.role !== UserRole.ADMIN && festival?.organizerId !== currentUser.id) {
+      throw new ForbiddenException('You do not have permission to delete this staff member');
     }
 
     await this.prisma.staffMember.delete({ where: { id } });
@@ -291,7 +267,10 @@ export class StaffService {
   /**
    * Create a shift for a staff member
    */
-  async createShift(dto: CreateShiftDto & { staffMemberId: string }, currentUser: AuthenticatedUser) {
+  async createShift(
+    dto: CreateShiftDto & { staffMemberId: string },
+    currentUser: AuthenticatedUser
+  ) {
     const staffMember = await this.getStaffMember(dto.staffMemberId);
 
     // Check permissions
@@ -299,13 +278,8 @@ export class StaffService {
       where: { id: staffMember.festivalId },
     });
 
-    if (
-      currentUser.role !== UserRole.ADMIN &&
-      festival?.organizerId !== currentUser.id
-    ) {
-      throw new ForbiddenException(
-        'You do not have permission to create shifts for this festival',
-      );
+    if (currentUser.role !== UserRole.ADMIN && festival?.organizerId !== currentUser.id) {
+      throw new ForbiddenException('You do not have permission to create shifts for this festival');
     }
 
     // Validate shift times
@@ -349,13 +323,16 @@ export class StaffService {
   }
 
   /**
-   * Get shifts for a staff member
+   * Get shifts for a staff member with pagination
    */
   async getShifts(
     staffMemberId: string,
-    options?: { startDate?: Date; endDate?: Date },
+    options?: { startDate?: Date; endDate?: Date; page?: number; limit?: number }
   ) {
     const { startDate, endDate } = options || {};
+    const page = options?.page ?? 1;
+    const limit = Math.min(options?.limit ?? 20, 100);
+    const skip = (page - 1) * limit;
 
     const where: Prisma.StaffShiftWhereInput = {
       staffMemberId,
@@ -365,31 +342,44 @@ export class StaffService {
         }),
     };
 
-    return this.prisma.staffShift.findMany({
-      where,
-      include: {
-        zone: {
-          select: {
-            id: true,
-            name: true,
+    const [shifts, total] = await Promise.all([
+      this.prisma.staffShift.findMany({
+        where,
+        include: {
+          zone: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          checkIns: {
+            orderBy: { checkInTime: 'desc' },
           },
         },
-        checkIns: {
-          orderBy: { checkInTime: 'desc' },
-        },
-      },
-      orderBy: { startTime: 'asc' },
-    });
+        orderBy: { startTime: 'asc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.staffShift.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      items: shifts,
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    };
   }
 
   /**
    * Update a shift
    */
-  async updateShift(
-    id: string,
-    dto: UpdateShiftDto,
-    currentUser: AuthenticatedUser,
-  ) {
+  async updateShift(id: string, dto: UpdateShiftDto, currentUser: AuthenticatedUser) {
     const shift = await this.prisma.staffShift.findUnique({
       where: { id },
       include: {
@@ -410,9 +400,7 @@ export class StaffService {
       currentUser.role !== UserRole.ADMIN &&
       shift.staffMember.festival.organizerId !== currentUser.id
     ) {
-      throw new ForbiddenException(
-        'You do not have permission to update this shift',
-      );
+      throw new ForbiddenException('You do not have permission to update this shift');
     }
 
     // Validate times if both provided
@@ -467,9 +455,7 @@ export class StaffService {
       currentUser.role !== UserRole.ADMIN &&
       shift.staffMember.festival.organizerId !== currentUser.id
     ) {
-      throw new ForbiddenException(
-        'You do not have permission to delete this shift',
-      );
+      throw new ForbiddenException('You do not have permission to delete this shift');
     }
 
     await this.prisma.staffShift.delete({ where: { id } });
@@ -590,7 +576,9 @@ export class StaffService {
       where: { id: activeCheckIn.id },
       data: {
         checkOutTime: new Date(),
-        notes: dto.notes ? `${activeCheckIn.notes || ''}\nCheckout: ${dto.notes}` : activeCheckIn.notes,
+        notes: dto.notes
+          ? `${activeCheckIn.notes || ''}\nCheckout: ${dto.notes}`
+          : activeCheckIn.notes,
       },
       include: {
         shift: true,
@@ -618,27 +606,26 @@ export class StaffService {
     const todayStart = new Date(new Date().setHours(0, 0, 0, 0));
     const todayEnd = new Date(new Date().setHours(23, 59, 59, 999));
 
-    const [totalStaff, activeStaff, byDepartment, shiftsToday] =
-      await Promise.all([
-        this.prisma.staffMember.count({ where: { festivalId } }),
-        this.prisma.staffMember.count({
-          where: { festivalId, isActive: true },
-        }),
-        this.prisma.staffMember.groupBy({
-          by: ['department'],
-          where: { festivalId },
-          _count: true,
-        }),
-        this.prisma.staffShift.count({
-          where: {
-            staffMember: { festivalId },
-            startTime: {
-              gte: todayStart,
-              lt: todayEnd,
-            },
+    const [totalStaff, activeStaff, byDepartment, shiftsToday] = await Promise.all([
+      this.prisma.staffMember.count({ where: { festivalId } }),
+      this.prisma.staffMember.count({
+        where: { festivalId, isActive: true },
+      }),
+      this.prisma.staffMember.groupBy({
+        by: ['department'],
+        where: { festivalId },
+        _count: true,
+      }),
+      this.prisma.staffShift.count({
+        where: {
+          staffMember: { festivalId },
+          startTime: {
+            gte: todayStart,
+            lt: todayEnd,
           },
-        }),
-      ]);
+        },
+      }),
+    ]);
 
     // Count currently working staff (checked in today but not checked out)
     const checkedInToday = await this.prisma.staffCheckIn.count({

@@ -18,10 +18,8 @@ import {
   adminUser,
   regularUser,
   bannedUser,
-  inactiveUser,
   organizerUser,
   VALID_PASSWORD,
-  createUserFixture,
 } from '../../test/fixtures';
 import {
   BadRequestException,
@@ -42,7 +40,7 @@ jest.mock('bcrypt', () => ({
 
 describe('UsersService', () => {
   let usersService: UsersService;
-  let prismaService: jest.Mocked<PrismaService>;
+  let _prismaService: jest.Mocked<PrismaService>;
 
   // Mock authenticated users for testing
   const mockAdminUser: AuthenticatedUser = {
@@ -63,7 +61,7 @@ describe('UsersService', () => {
     lastName: regularUser.lastName,
   };
 
-  const mockOrganizerUser: AuthenticatedUser = {
+  const _mockOrganizerUser: AuthenticatedUser = {
     id: organizerUser.id,
     email: organizerUser.email,
     role: UserRole.ORGANIZER,
@@ -85,6 +83,7 @@ describe('UsersService', () => {
     auditLog: {
       create: jest.fn(),
       findMany: jest.fn(),
+      count: jest.fn(),
     },
     ticket: {
       count: jest.fn(),
@@ -98,14 +97,11 @@ describe('UsersService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        UsersService,
-        { provide: PrismaService, useValue: mockPrismaService },
-      ],
+      providers: [UsersService, { provide: PrismaService, useValue: mockPrismaService }],
     }).compile();
 
     usersService = module.get<UsersService>(UsersService);
-    prismaService = module.get(PrismaService);
+    _prismaService = module.get(PrismaService);
   });
 
   // ==========================================================================
@@ -185,12 +181,12 @@ describe('UsersService', () => {
       });
 
       // Act & Assert
-      await expect(
-        usersService.create(validCreateDto, mockAdminUser),
-      ).rejects.toThrow(ConflictException);
-      await expect(
-        usersService.create(validCreateDto, mockAdminUser),
-      ).rejects.toThrow('Email is already in use');
+      await expect(usersService.create(validCreateDto, mockAdminUser)).rejects.toThrow(
+        ConflictException
+      );
+      await expect(usersService.create(validCreateDto, mockAdminUser)).rejects.toThrow(
+        'Email is already in use'
+      );
     });
 
     it('should normalize email to lowercase', async () => {
@@ -252,7 +248,7 @@ describe('UsersService', () => {
             firstName: 'John',
             lastName: 'Doe',
           }),
-        }),
+        })
       );
     });
 
@@ -316,10 +312,7 @@ describe('UsersService', () => {
       mockPrismaService.user.count.mockResolvedValue(2);
 
       // Act
-      const result = await usersService.findAll(
-        { page: 1, limit: 10 } as any,
-        mockAdminUser,
-      );
+      const result = await usersService.findAll({ page: 1, limit: 10 } as any, mockAdminUser);
 
       // Assert
       expect(result.items).toHaveLength(2);
@@ -343,7 +336,7 @@ describe('UsersService', () => {
           where: expect.objectContaining({
             isDeleted: false,
           }),
-        }),
+        })
       );
     });
 
@@ -355,7 +348,7 @@ describe('UsersService', () => {
       // Act
       await usersService.findAll(
         { page: 1, limit: 10, role: UserRole.ADMIN } as any,
-        mockAdminUser,
+        mockAdminUser
       );
 
       // Assert
@@ -364,7 +357,7 @@ describe('UsersService', () => {
           where: expect.objectContaining({
             role: UserRole.ADMIN,
           }),
-        }),
+        })
       );
     });
 
@@ -376,7 +369,7 @@ describe('UsersService', () => {
       // Act
       await usersService.findAll(
         { page: 1, limit: 10, status: UserStatus.BANNED } as any,
-        mockAdminUser,
+        mockAdminUser
       );
 
       // Assert
@@ -385,7 +378,7 @@ describe('UsersService', () => {
           where: expect.objectContaining({
             status: UserStatus.BANNED,
           }),
-        }),
+        })
       );
     });
 
@@ -397,7 +390,7 @@ describe('UsersService', () => {
       // Act
       await usersService.findAll(
         { page: 1, limit: 10, email: 'test@example.com' } as any,
-        mockAdminUser,
+        mockAdminUser
       );
 
       // Assert
@@ -406,7 +399,7 @@ describe('UsersService', () => {
           where: expect.objectContaining({
             email: { contains: 'test@example.com', mode: 'insensitive' },
           }),
-        }),
+        })
       );
     });
 
@@ -416,10 +409,7 @@ describe('UsersService', () => {
       mockPrismaService.user.count.mockResolvedValue(0);
 
       // Act
-      await usersService.findAll(
-        { page: 1, limit: 10, search: 'jean' } as any,
-        mockAdminUser,
-      );
+      await usersService.findAll({ page: 1, limit: 10, search: 'jean' } as any, mockAdminUser);
 
       // Assert
       expect(mockPrismaService.user.findMany).toHaveBeenCalledWith(
@@ -431,7 +421,7 @@ describe('UsersService', () => {
               { lastName: { contains: 'jean', mode: 'insensitive' } },
             ],
           }),
-        }),
+        })
       );
     });
 
@@ -442,10 +432,7 @@ describe('UsersService', () => {
       mockPrismaService.user.count.mockResolvedValue(0);
 
       // Act
-      await usersService.findAll(
-        { page: 1, limit: 10, festivalId } as any,
-        mockAdminUser,
-      );
+      await usersService.findAll({ page: 1, limit: 10, festivalId } as any, mockAdminUser);
 
       // Assert
       expect(mockPrismaService.user.findMany).toHaveBeenCalledWith(
@@ -453,7 +440,7 @@ describe('UsersService', () => {
           where: expect.objectContaining({
             tickets: { some: { festivalId } },
           }),
-        }),
+        })
       );
     });
 
@@ -465,14 +452,14 @@ describe('UsersService', () => {
       // Act
       await usersService.findAll(
         { page: 1, limit: 10, sortBy: 'email', sortOrder: 'asc' } as any,
-        mockAdminUser,
+        mockAdminUser
       );
 
       // Assert
       expect(mockPrismaService.user.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           orderBy: { email: 'asc' },
-        }),
+        })
       );
     });
 
@@ -484,7 +471,7 @@ describe('UsersService', () => {
       // Act
       const result = await usersService.findAll(
         { page: 2, limit: 10, skip: 10, take: 10 } as any,
-        mockAdminUser,
+        mockAdminUser
       );
 
       // Assert
@@ -495,7 +482,7 @@ describe('UsersService', () => {
         expect.objectContaining({
           skip: 10,
           take: 10,
-        }),
+        })
       );
     });
   });
@@ -542,10 +529,7 @@ describe('UsersService', () => {
       });
 
       // Act
-      const result = await usersService.findOne(
-        regularUser.id,
-        mockRegularUser,
-      );
+      const result = await usersService.findOne(regularUser.id, mockRegularUser);
 
       // Assert
       expect(result.id).toBe(regularUser.id);
@@ -553,12 +537,12 @@ describe('UsersService', () => {
 
     it('should throw ForbiddenException when user accesses other user profile', async () => {
       // Arrange & Act & Assert
-      await expect(
-        usersService.findOne('other-user-id', mockRegularUser),
-      ).rejects.toThrow(ForbiddenException);
-      await expect(
-        usersService.findOne('other-user-id', mockRegularUser),
-      ).rejects.toThrow('You can only access your own profile');
+      await expect(usersService.findOne('other-user-id', mockRegularUser)).rejects.toThrow(
+        ForbiddenException
+      );
+      await expect(usersService.findOne('other-user-id', mockRegularUser)).rejects.toThrow(
+        'You can only access your own profile'
+      );
     });
 
     it('should throw NotFoundException when user not found', async () => {
@@ -566,9 +550,9 @@ describe('UsersService', () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        usersService.findOne('non-existent-id', mockAdminUser),
-      ).rejects.toThrow(NotFoundException);
+      await expect(usersService.findOne('non-existent-id', mockAdminUser)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw NotFoundException for soft-deleted user when non-admin accesses', async () => {
@@ -586,9 +570,9 @@ describe('UsersService', () => {
       });
 
       // Act & Assert
-      await expect(
-        usersService.findOne(regularUser.id, mockRegularUser),
-      ).rejects.toThrow(NotFoundException);
+      await expect(usersService.findOne(regularUser.id, mockRegularUser)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should allow admin to view soft-deleted user', async () => {
@@ -636,7 +620,7 @@ describe('UsersService', () => {
             action: AuditAction.USER_VIEWED,
             entityId: regularUser.id,
           }),
-        }),
+        })
       );
     });
   });
@@ -691,7 +675,7 @@ describe('UsersService', () => {
           where: expect.objectContaining({
             isDeleted: false,
           }),
-        }),
+        })
       );
     });
 
@@ -712,7 +696,7 @@ describe('UsersService', () => {
           where: {
             email: regularUser.email.toLowerCase(),
           },
-        }),
+        })
       );
     });
 
@@ -729,7 +713,7 @@ describe('UsersService', () => {
           where: expect.objectContaining({
             email: 'test@example.com',
           }),
-        }),
+        })
       );
     });
   });
@@ -763,7 +747,7 @@ describe('UsersService', () => {
       const result = await usersService.update(
         regularUser.id,
         { firstName: 'Updated', lastName: 'Name' },
-        mockAdminUser,
+        mockAdminUser
       );
 
       // Assert
@@ -774,11 +758,7 @@ describe('UsersService', () => {
     it('should throw ForbiddenException when user updates other user profile', async () => {
       // Act & Assert
       await expect(
-        usersService.update(
-          'other-user-id',
-          { firstName: 'Hacker' },
-          mockRegularUser,
-        ),
+        usersService.update('other-user-id', { firstName: 'Hacker' }, mockRegularUser)
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -788,11 +768,7 @@ describe('UsersService', () => {
 
       // Act & Assert
       await expect(
-        usersService.update(
-          'non-existent-id',
-          { firstName: 'Test' },
-          mockAdminUser,
-        ),
+        usersService.update('non-existent-id', { firstName: 'Test' }, mockAdminUser)
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -810,11 +786,7 @@ describe('UsersService', () => {
 
       // Act & Assert
       await expect(
-        usersService.update(
-          regularUser.id,
-          { email: 'existing@test.com' },
-          mockAdminUser,
-        ),
+        usersService.update(regularUser.id, { email: 'existing@test.com' }, mockAdminUser)
       ).rejects.toThrow(ConflictException);
     });
 
@@ -828,18 +800,10 @@ describe('UsersService', () => {
 
       // Act & Assert
       await expect(
-        usersService.update(
-          regularUser.id,
-          { password: 'NewPassword123!' },
-          mockRegularUser,
-        ),
+        usersService.update(regularUser.id, { password: 'NewPassword123!' }, mockRegularUser)
       ).rejects.toThrow(BadRequestException);
       await expect(
-        usersService.update(
-          regularUser.id,
-          { password: 'NewPassword123!' },
-          mockRegularUser,
-        ),
+        usersService.update(regularUser.id, { password: 'NewPassword123!' }, mockRegularUser)
       ).rejects.toThrow('Current password is required to change password');
     });
 
@@ -857,15 +821,15 @@ describe('UsersService', () => {
         usersService.update(
           regularUser.id,
           { password: 'NewPassword123!', currentPassword: 'WrongPassword' },
-          mockRegularUser,
-        ),
+          mockRegularUser
+        )
       ).rejects.toThrow(BadRequestException);
       await expect(
         usersService.update(
           regularUser.id,
           { password: 'NewPassword123!', currentPassword: 'WrongPassword' },
-          mockRegularUser,
-        ),
+          mockRegularUser
+        )
       ).rejects.toThrow('Current password is incorrect');
     });
 
@@ -891,7 +855,7 @@ describe('UsersService', () => {
       const result = await usersService.update(
         regularUser.id,
         { password: 'NewPassword123!' },
-        mockAdminUser,
+        mockAdminUser
       );
 
       // Assert
@@ -938,11 +902,7 @@ describe('UsersService', () => {
       });
 
       // Act
-      await usersService.update(
-        regularUser.id,
-        { email: 'new@test.com' },
-        mockAdminUser,
-      );
+      await usersService.update(regularUser.id, { email: 'new@test.com' }, mockAdminUser);
 
       // Assert
       expect(mockPrismaService.user.update).toHaveBeenCalledWith(
@@ -951,7 +911,7 @@ describe('UsersService', () => {
             email: 'new@test.com',
             emailVerified: false,
           }),
-        }),
+        })
       );
     });
   });
@@ -976,10 +936,7 @@ describe('UsersService', () => {
       });
 
       // Act
-      const result = await usersService.softDelete(
-        regularUser.id,
-        mockAdminUser,
-      );
+      const result = await usersService.softDelete(regularUser.id, mockAdminUser);
 
       // Assert
       expect(result.message).toContain('has been deleted');
@@ -989,7 +946,7 @@ describe('UsersService', () => {
             isDeleted: true,
             refreshToken: null,
           }),
-        }),
+        })
       );
     });
 
@@ -998,9 +955,9 @@ describe('UsersService', () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        usersService.softDelete('non-existent-id', mockAdminUser),
-      ).rejects.toThrow(NotFoundException);
+      await expect(usersService.softDelete('non-existent-id', mockAdminUser)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw ForbiddenException when trying to delete another admin', async () => {
@@ -1013,12 +970,12 @@ describe('UsersService', () => {
       });
 
       // Act & Assert
-      await expect(
-        usersService.softDelete('other-admin-id', mockAdminUser),
-      ).rejects.toThrow(ForbiddenException);
-      await expect(
-        usersService.softDelete('other-admin-id', mockAdminUser),
-      ).rejects.toThrow('Cannot delete another admin');
+      await expect(usersService.softDelete('other-admin-id', mockAdminUser)).rejects.toThrow(
+        ForbiddenException
+      );
+      await expect(usersService.softDelete('other-admin-id', mockAdminUser)).rejects.toThrow(
+        'Cannot delete another admin'
+      );
     });
 
     it('should throw ForbiddenException when trying to delete self', async () => {
@@ -1031,12 +988,12 @@ describe('UsersService', () => {
       });
 
       // Act & Assert
-      await expect(
-        usersService.softDelete(mockAdminUser.id, mockAdminUser),
-      ).rejects.toThrow(ForbiddenException);
-      await expect(
-        usersService.softDelete(mockAdminUser.id, mockAdminUser),
-      ).rejects.toThrow('Cannot delete your own account');
+      await expect(usersService.softDelete(mockAdminUser.id, mockAdminUser)).rejects.toThrow(
+        ForbiddenException
+      );
+      await expect(usersService.softDelete(mockAdminUser.id, mockAdminUser)).rejects.toThrow(
+        'Cannot delete your own account'
+      );
     });
 
     it('should throw BadRequestException when user is already deleted', async () => {
@@ -1049,12 +1006,12 @@ describe('UsersService', () => {
       });
 
       // Act & Assert
-      await expect(
-        usersService.softDelete(regularUser.id, mockAdminUser),
-      ).rejects.toThrow(BadRequestException);
-      await expect(
-        usersService.softDelete(regularUser.id, mockAdminUser),
-      ).rejects.toThrow('User is already deleted');
+      await expect(usersService.softDelete(regularUser.id, mockAdminUser)).rejects.toThrow(
+        BadRequestException
+      );
+      await expect(usersService.softDelete(regularUser.id, mockAdminUser)).rejects.toThrow(
+        'User is already deleted'
+      );
     });
 
     it('should invalidate refresh token on soft delete', async () => {
@@ -1080,7 +1037,7 @@ describe('UsersService', () => {
           data: expect.objectContaining({
             refreshToken: null,
           }),
-        }),
+        })
       );
     });
 
@@ -1107,7 +1064,7 @@ describe('UsersService', () => {
             action: AuditAction.USER_SOFT_DELETED,
             entityId: regularUser.id,
           }),
-        }),
+        })
       );
     });
   });
@@ -1129,10 +1086,7 @@ describe('UsersService', () => {
       });
 
       // Act
-      const result = await usersService.hardDelete(
-        regularUser.id,
-        mockAdminUser,
-      );
+      const result = await usersService.hardDelete(regularUser.id, mockAdminUser);
 
       // Assert
       expect(result.message).toContain('has been permanently deleted');
@@ -1146,9 +1100,9 @@ describe('UsersService', () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        usersService.hardDelete('non-existent-id', mockAdminUser),
-      ).rejects.toThrow(NotFoundException);
+      await expect(usersService.hardDelete('non-existent-id', mockAdminUser)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw ForbiddenException when trying to hard delete an admin', async () => {
@@ -1160,12 +1114,12 @@ describe('UsersService', () => {
       });
 
       // Act & Assert
-      await expect(
-        usersService.hardDelete('other-admin-id', mockAdminUser),
-      ).rejects.toThrow(ForbiddenException);
-      await expect(
-        usersService.hardDelete('other-admin-id', mockAdminUser),
-      ).rejects.toThrow('Cannot permanently delete an admin account');
+      await expect(usersService.hardDelete('other-admin-id', mockAdminUser)).rejects.toThrow(
+        ForbiddenException
+      );
+      await expect(usersService.hardDelete('other-admin-id', mockAdminUser)).rejects.toThrow(
+        'Cannot permanently delete an admin account'
+      );
     });
 
     it('should throw ForbiddenException when trying to hard delete self', async () => {
@@ -1177,9 +1131,9 @@ describe('UsersService', () => {
       });
 
       // Act & Assert
-      await expect(
-        usersService.hardDelete(mockAdminUser.id, mockAdminUser),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(usersService.hardDelete(mockAdminUser.id, mockAdminUser)).rejects.toThrow(
+        ForbiddenException
+      );
     });
 
     it('should create audit log before deletion', async () => {
@@ -1201,7 +1155,7 @@ describe('UsersService', () => {
             action: AuditAction.USER_HARD_DELETED,
             entityId: regularUser.id,
           }),
-        }),
+        })
       );
     });
   });
@@ -1233,7 +1187,7 @@ describe('UsersService', () => {
       const result = await usersService.changeRole(
         regularUser.id,
         { role: UserRole.ORGANIZER, reason: 'Promoted to organizer' },
-        mockAdminUser,
+        mockAdminUser
       );
 
       // Assert
@@ -1246,11 +1200,7 @@ describe('UsersService', () => {
 
       // Act & Assert
       await expect(
-        usersService.changeRole(
-          'non-existent-id',
-          { role: UserRole.ORGANIZER },
-          mockAdminUser,
-        ),
+        usersService.changeRole('non-existent-id', { role: UserRole.ORGANIZER }, mockAdminUser)
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -1264,18 +1214,10 @@ describe('UsersService', () => {
 
       // Act & Assert
       await expect(
-        usersService.changeRole(
-          mockAdminUser.id,
-          { role: UserRole.USER },
-          mockAdminUser,
-        ),
+        usersService.changeRole(mockAdminUser.id, { role: UserRole.USER }, mockAdminUser)
       ).rejects.toThrow(ForbiddenException);
       await expect(
-        usersService.changeRole(
-          mockAdminUser.id,
-          { role: UserRole.USER },
-          mockAdminUser,
-        ),
+        usersService.changeRole(mockAdminUser.id, { role: UserRole.USER }, mockAdminUser)
       ).rejects.toThrow('Cannot change your own role');
     });
 
@@ -1289,18 +1231,10 @@ describe('UsersService', () => {
 
       // Act & Assert
       await expect(
-        usersService.changeRole(
-          'other-admin-id',
-          { role: UserRole.USER },
-          mockAdminUser,
-        ),
+        usersService.changeRole('other-admin-id', { role: UserRole.USER }, mockAdminUser)
       ).rejects.toThrow(ForbiddenException);
       await expect(
-        usersService.changeRole(
-          'other-admin-id',
-          { role: UserRole.USER },
-          mockAdminUser,
-        ),
+        usersService.changeRole('other-admin-id', { role: UserRole.USER }, mockAdminUser)
       ).rejects.toThrow('Cannot demote another admin');
     });
 
@@ -1326,7 +1260,7 @@ describe('UsersService', () => {
       await usersService.changeRole(
         regularUser.id,
         { role: UserRole.ORGANIZER, reason: 'Promoted' },
-        mockAdminUser,
+        mockAdminUser
       );
 
       // Assert
@@ -1335,7 +1269,7 @@ describe('UsersService', () => {
           data: expect.objectContaining({
             action: AuditAction.USER_ROLE_CHANGED,
           }),
-        }),
+        })
       );
     });
   });
@@ -1398,7 +1332,7 @@ describe('UsersService', () => {
           where: expect.objectContaining({
             isDeleted: false,
           }),
-        }),
+        })
       );
     });
 
@@ -1413,7 +1347,7 @@ describe('UsersService', () => {
       expect(mockPrismaService.user.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           take: 5,
-        }),
+        })
       );
     });
 
@@ -1434,7 +1368,7 @@ describe('UsersService', () => {
               { lastName: { contains: 'test', mode: 'insensitive' } },
             ],
           }),
-        }),
+        })
       );
     });
   });
@@ -1461,7 +1395,7 @@ describe('UsersService', () => {
       const result = await usersService.ban(
         regularUser.id,
         { reason: 'Violation of terms' },
-        mockAdminUser,
+        mockAdminUser
       );
 
       // Assert
@@ -1474,11 +1408,7 @@ describe('UsersService', () => {
 
       // Act & Assert
       await expect(
-        usersService.ban(
-          'non-existent-id',
-          { reason: 'Test' },
-          mockAdminUser,
-        ),
+        usersService.ban('non-existent-id', { reason: 'Test' }, mockAdminUser)
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -1493,18 +1423,10 @@ describe('UsersService', () => {
 
       // Act & Assert
       await expect(
-        usersService.ban(
-          'other-admin-id',
-          { reason: 'Test' },
-          mockAdminUser,
-        ),
+        usersService.ban('other-admin-id', { reason: 'Test' }, mockAdminUser)
       ).rejects.toThrow(ForbiddenException);
       await expect(
-        usersService.ban(
-          'other-admin-id',
-          { reason: 'Test' },
-          mockAdminUser,
-        ),
+        usersService.ban('other-admin-id', { reason: 'Test' }, mockAdminUser)
       ).rejects.toThrow('Cannot ban an admin');
     });
 
@@ -1519,7 +1441,7 @@ describe('UsersService', () => {
 
       // Act & Assert
       await expect(
-        usersService.ban(mockAdminUser.id, { reason: 'Test' }, mockAdminUser),
+        usersService.ban(mockAdminUser.id, { reason: 'Test' }, mockAdminUser)
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -1534,18 +1456,10 @@ describe('UsersService', () => {
 
       // Act & Assert
       await expect(
-        usersService.ban(
-          regularUser.id,
-          { reason: 'Test' },
-          mockAdminUser,
-        ),
+        usersService.ban(regularUser.id, { reason: 'Test' }, mockAdminUser)
       ).rejects.toThrow(BadRequestException);
       await expect(
-        usersService.ban(
-          regularUser.id,
-          { reason: 'Test' },
-          mockAdminUser,
-        ),
+        usersService.ban(regularUser.id, { reason: 'Test' }, mockAdminUser)
       ).rejects.toThrow('User is already banned');
     });
 
@@ -1564,11 +1478,7 @@ describe('UsersService', () => {
       });
 
       // Act
-      await usersService.ban(
-        regularUser.id,
-        { reason: 'Violation' },
-        mockAdminUser,
-      );
+      await usersService.ban(regularUser.id, { reason: 'Violation' }, mockAdminUser);
 
       // Assert
       expect(mockPrismaService.user.update).toHaveBeenCalledWith(
@@ -1576,7 +1486,7 @@ describe('UsersService', () => {
           data: expect.objectContaining({
             refreshToken: null,
           }),
-        }),
+        })
       );
     });
   });
@@ -1602,7 +1512,7 @@ describe('UsersService', () => {
       const result = await usersService.unban(
         bannedUser.id,
         { reason: 'Completed ban period' },
-        mockAdminUser,
+        mockAdminUser
       );
 
       // Assert
@@ -1614,9 +1524,9 @@ describe('UsersService', () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        usersService.unban('non-existent-id', {}, mockAdminUser),
-      ).rejects.toThrow(NotFoundException);
+      await expect(usersService.unban('non-existent-id', {}, mockAdminUser)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw BadRequestException when user is not banned', async () => {
@@ -1628,12 +1538,12 @@ describe('UsersService', () => {
       });
 
       // Act & Assert
-      await expect(
-        usersService.unban(regularUser.id, {}, mockAdminUser),
-      ).rejects.toThrow(BadRequestException);
-      await expect(
-        usersService.unban(regularUser.id, {}, mockAdminUser),
-      ).rejects.toThrow('User is not banned');
+      await expect(usersService.unban(regularUser.id, {}, mockAdminUser)).rejects.toThrow(
+        BadRequestException
+      );
+      await expect(usersService.unban(regularUser.id, {}, mockAdminUser)).rejects.toThrow(
+        'User is not banned'
+      );
     });
 
     it('should set status to ACTIVE after unbanning', async () => {
@@ -1657,7 +1567,7 @@ describe('UsersService', () => {
           data: expect.objectContaining({
             status: UserStatus.ACTIVE,
           }),
-        }),
+        })
       );
     });
   });
@@ -1681,10 +1591,7 @@ describe('UsersService', () => {
       });
 
       // Act
-      const result = await usersService.deactivate(
-        regularUser.id,
-        mockAdminUser,
-      );
+      const result = await usersService.deactivate(regularUser.id, mockAdminUser);
 
       // Assert
       expect(result.message).toContain('has been deactivated');
@@ -1695,9 +1602,9 @@ describe('UsersService', () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        usersService.deactivate('non-existent-id', mockAdminUser),
-      ).rejects.toThrow(NotFoundException);
+      await expect(usersService.deactivate('non-existent-id', mockAdminUser)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw ForbiddenException when deactivating another admin', async () => {
@@ -1710,12 +1617,12 @@ describe('UsersService', () => {
       });
 
       // Act & Assert
-      await expect(
-        usersService.deactivate('other-admin-id', mockAdminUser),
-      ).rejects.toThrow(ForbiddenException);
-      await expect(
-        usersService.deactivate('other-admin-id', mockAdminUser),
-      ).rejects.toThrow('Cannot deactivate another admin');
+      await expect(usersService.deactivate('other-admin-id', mockAdminUser)).rejects.toThrow(
+        ForbiddenException
+      );
+      await expect(usersService.deactivate('other-admin-id', mockAdminUser)).rejects.toThrow(
+        'Cannot deactivate another admin'
+      );
     });
 
     it('should throw ForbiddenException when deactivating self', async () => {
@@ -1728,12 +1635,12 @@ describe('UsersService', () => {
       });
 
       // Act & Assert
-      await expect(
-        usersService.deactivate(mockAdminUser.id, mockAdminUser),
-      ).rejects.toThrow(ForbiddenException);
-      await expect(
-        usersService.deactivate(mockAdminUser.id, mockAdminUser),
-      ).rejects.toThrow('Cannot deactivate your own account');
+      await expect(usersService.deactivate(mockAdminUser.id, mockAdminUser)).rejects.toThrow(
+        ForbiddenException
+      );
+      await expect(usersService.deactivate(mockAdminUser.id, mockAdminUser)).rejects.toThrow(
+        'Cannot deactivate your own account'
+      );
     });
   });
 
@@ -1762,18 +1669,18 @@ describe('UsersService', () => {
           userId: mockAdminUser.id,
         },
       ]);
+      mockPrismaService.auditLog.count.mockResolvedValue(1);
       mockPrismaService.ticket.count.mockResolvedValue(3);
       mockPrismaService.payment.count.mockResolvedValue(2);
 
       // Act
-      const result = await usersService.getActivity(
-        regularUser.id,
-        mockAdminUser,
-      );
+      const result = await usersService.getActivity(regularUser.id, mockAdminUser);
 
       // Assert
-      expect(result.length).toBeGreaterThan(0);
-      expect(result.some((a) => a.action === 'ACCOUNT_CREATED')).toBe(true);
+      expect(result.items.length).toBeGreaterThan(0);
+      expect(result.items.some((a) => a.action === 'ACCOUNT_CREATED')).toBe(true);
+      expect(result.total).toBeGreaterThan(0);
+      expect(result.page).toBe(1);
     });
 
     it('should throw NotFoundException when user not found', async () => {
@@ -1781,9 +1688,9 @@ describe('UsersService', () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        usersService.getActivity('non-existent-id', mockAdminUser),
-      ).rejects.toThrow(NotFoundException);
+      await expect(usersService.getActivity('non-existent-id', mockAdminUser)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should include ticket and payment summaries', async () => {
@@ -1796,18 +1703,16 @@ describe('UsersService', () => {
         status: UserStatus.ACTIVE,
       });
       mockPrismaService.auditLog.findMany.mockResolvedValue([]);
+      mockPrismaService.auditLog.count.mockResolvedValue(0);
       mockPrismaService.ticket.count.mockResolvedValue(5);
       mockPrismaService.payment.count.mockResolvedValue(3);
 
       // Act
-      const result = await usersService.getActivity(
-        regularUser.id,
-        mockAdminUser,
-      );
+      const result = await usersService.getActivity(regularUser.id, mockAdminUser);
 
       // Assert
-      expect(result.some((a) => a.action === 'TICKETS_SUMMARY')).toBe(true);
-      expect(result.some((a) => a.action === 'PAYMENTS_SUMMARY')).toBe(true);
+      expect(result.items.some((a) => a.action === 'TICKETS_SUMMARY')).toBe(true);
+      expect(result.items.some((a) => a.action === 'PAYMENTS_SUMMARY')).toBe(true);
     });
 
     it('should sort activities by date descending', async () => {
@@ -1828,20 +1733,18 @@ describe('UsersService', () => {
           userId: mockAdminUser.id,
         },
       ]);
+      mockPrismaService.auditLog.count.mockResolvedValue(1);
       mockPrismaService.ticket.count.mockResolvedValue(0);
       mockPrismaService.payment.count.mockResolvedValue(0);
 
       // Act
-      const result = await usersService.getActivity(
-        regularUser.id,
-        mockAdminUser,
-      );
+      const result = await usersService.getActivity(regularUser.id, mockAdminUser);
 
       // Assert
       // Activities should be sorted from newest to oldest
-      for (let i = 0; i < result.length - 1; i++) {
-        expect(result[i].performedAt.getTime()).toBeGreaterThanOrEqual(
-          result[i + 1].performedAt.getTime(),
+      for (let i = 0; i < result.items.length - 1; i++) {
+        expect(result.items[i].performedAt.getTime()).toBeGreaterThanOrEqual(
+          result.items[i + 1].performedAt.getTime()
         );
       }
     });

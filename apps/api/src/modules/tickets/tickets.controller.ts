@@ -22,6 +22,7 @@ import {
   GuestPurchaseDto,
   ValidateTicketDto,
   TransferTicketDto,
+  GetUserTicketsDto,
 } from './dto/tickets.dto';
 
 @Controller('api/tickets')
@@ -30,8 +31,12 @@ export class TicketsController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  async getUserTickets(@Request() req, @Query('festivalId') festivalId?: string) {
-    return this.ticketsService.getUserTickets(req.user.id, festivalId);
+  async getUserTickets(@Request() req, @Query() query: GetUserTicketsDto) {
+    return this.ticketsService.getUserTickets(req.user.id, {
+      festivalId: query.festivalId,
+      page: query.page,
+      limit: query.limit,
+    });
   }
 
   @UseGuards(JwtAuthGuard)

@@ -1014,12 +1014,16 @@ describe('TicketsService', () => {
           },
         },
       ]);
+      mockPrismaService.ticket.count.mockResolvedValue(1);
 
       // Act
       const result = await ticketsService.getUserTickets(regularUser.id);
 
       // Assert
-      expect(result).toHaveLength(1);
+      expect(result.items).toHaveLength(1);
+      expect(result.total).toBe(1);
+      expect(result.page).toBe(1);
+      expect(result.limit).toBe(20);
       expect(mockPrismaService.ticket.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { userId: regularUser.id },
@@ -1030,9 +1034,10 @@ describe('TicketsService', () => {
     it('should filter by festivalId when provided', async () => {
       // Arrange
       mockPrismaService.ticket.findMany.mockResolvedValue([]);
+      mockPrismaService.ticket.count.mockResolvedValue(0);
 
       // Act
-      await ticketsService.getUserTickets(regularUser.id, publishedFestival.id);
+      await ticketsService.getUserTickets(regularUser.id, { festivalId: publishedFestival.id });
 
       // Assert
       expect(mockPrismaService.ticket.findMany).toHaveBeenCalledWith(
@@ -1048,12 +1053,14 @@ describe('TicketsService', () => {
     it('should return empty array if user has no tickets', async () => {
       // Arrange
       mockPrismaService.ticket.findMany.mockResolvedValue([]);
+      mockPrismaService.ticket.count.mockResolvedValue(0);
 
       // Act
       const result = await ticketsService.getUserTickets('user-with-no-tickets');
 
       // Assert
-      expect(result).toEqual([]);
+      expect(result.items).toEqual([]);
+      expect(result.total).toBe(0);
     });
 
     it('should include festival and category information', async () => {
@@ -1074,15 +1081,16 @@ describe('TicketsService', () => {
           },
         },
       ]);
+      mockPrismaService.ticket.count.mockResolvedValue(1);
 
       // Act
       const result = await ticketsService.getUserTickets(regularUser.id);
 
       // Assert
-      expect(result[0].festival).toBeDefined();
-      expect(result[0].festival?.name).toBe(publishedFestival.name);
-      expect(result[0].category).toBeDefined();
-      expect(result[0].category?.name).toBe(standardCategory.name);
+      expect(result.items[0].festival).toBeDefined();
+      expect(result.items[0].festival?.name).toBe(publishedFestival.name);
+      expect(result.items[0].category).toBeDefined();
+      expect(result.items[0].category?.name).toBe(standardCategory.name);
     });
   });
 

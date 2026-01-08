@@ -251,6 +251,7 @@ describe('VendorsService', () => {
     vendorPayout: {
       findFirst: jest.fn(),
       findMany: jest.fn(),
+      count: jest.fn(),
       create: jest.fn(),
     },
     festival: {
@@ -1698,13 +1699,16 @@ describe('VendorsService', () => {
       mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
       mockPrismaService.user.findUnique.mockResolvedValue(organizerUser);
       mockPrismaService.vendorPayout.findMany.mockResolvedValue([testPayout]);
+      mockPrismaService.vendorPayout.count.mockResolvedValue(1);
 
       // Act
       const result = await vendorsService.findPayouts(foodVendor.id, organizerUser.id);
 
       // Assert
-      expect(result).toHaveLength(1);
-      expect(result[0].id).toBe(testPayout.id);
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].id).toBe(testPayout.id);
+      expect(result.meta.total).toBe(1);
+      expect(result.meta.page).toBe(1);
     });
 
     it('should throw ForbiddenException for unauthorized user', async () => {
@@ -1812,12 +1816,15 @@ describe('VendorsService', () => {
       // Arrange
       mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
       mockPrismaService.vendorProduct.findMany.mockResolvedValue([testProduct, testProduct2]);
+      mockPrismaService.vendorProduct.count.mockResolvedValue(2);
 
       // Act
       const result = await vendorsService.findAllProducts(foodVendor.id);
 
       // Assert
-      expect(result).toHaveLength(2);
+      expect(result.data).toHaveLength(2);
+      expect(result.meta.total).toBe(2);
+      expect(result.meta.page).toBe(1);
     });
 
     it('should throw NotFoundException if vendor does not exist', async () => {
@@ -1918,6 +1925,7 @@ describe('VendorsService', () => {
           user: { firstName: 'John', lastName: 'Doe', email: 'john@example.com' },
         },
       ]);
+      mockPrismaService.vendorOrder.count.mockResolvedValue(1);
 
       // Act
       const result = await vendorsService.exportVendorData(
@@ -1928,9 +1936,10 @@ describe('VendorsService', () => {
       );
 
       // Assert
-      expect(result).toHaveLength(1);
-      expect(result[0].orderNumber).toBe(testOrder.orderNumber);
-      expect(result[0].customerName).toBe('John Doe');
+      expect(result.data).toHaveLength(1);
+      expect(result.data[0].orderNumber).toBe(testOrder.orderNumber);
+      expect(result.data[0].customerName).toBe('John Doe');
+      expect(result.meta.total).toBe(1);
     });
   });
 
@@ -2605,12 +2614,13 @@ describe('VendorsService', () => {
       mockPrismaService.vendor.findUnique.mockResolvedValue(otherOwnerVendor);
       mockPrismaService.user.findUnique.mockResolvedValue(organizerUser);
       mockPrismaService.vendorPayout.findMany.mockResolvedValue([testPayout]);
+      mockPrismaService.vendorPayout.count.mockResolvedValue(1);
 
       // Act
       const result = await vendorsService.findPayouts(otherOwnerVendor.id, organizerUser.id);
 
       // Assert
-      expect(result).toHaveLength(1);
+      expect(result.data).toHaveLength(1);
     });
   });
 

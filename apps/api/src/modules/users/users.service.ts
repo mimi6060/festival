@@ -107,7 +107,7 @@ export class UsersService {
     action: AuditAction,
     targetUserId: string,
     performedBy: AuthenticatedUser,
-    details: Record<string, unknown>,
+    details: Record<string, unknown>
   ): Promise<void> {
     const logEntry = {
       action,
@@ -129,8 +129,8 @@ export class UsersService {
           action: action,
           entityType: 'User',
           entityId: targetUserId,
-          oldValue: details.previousValue as Prisma.InputJsonValue || Prisma.JsonNull,
-          newValue: details.newValue as Prisma.InputJsonValue || Prisma.JsonNull,
+          oldValue: (details.previousValue as Prisma.InputJsonValue) || Prisma.JsonNull,
+          newValue: (details.newValue as Prisma.InputJsonValue) || Prisma.JsonNull,
         },
       });
     } catch (error) {
@@ -144,7 +144,7 @@ export class UsersService {
   private canAccessUser(
     requestingUser: AuthenticatedUser,
     targetUserId: string,
-    requireAdmin: boolean = false,
+    requireAdmin = false
   ): boolean {
     // Admin can access everything
     if (requestingUser.role === UserRole.ADMIN) {
@@ -163,10 +163,7 @@ export class UsersService {
   /**
    * Create a new user (admin only).
    */
-  async create(
-    dto: CreateUserDto,
-    currentUser: AuthenticatedUser,
-  ): Promise<UserEntity> {
+  async create(dto: CreateUserDto, currentUser: AuthenticatedUser): Promise<UserEntity> {
     const normalizedEmail = dto.email.toLowerCase().trim();
 
     // Check if email already exists
@@ -190,9 +187,7 @@ export class UsersService {
         lastName: dto.lastName.trim(),
         phone: dto.phone?.trim() || null,
         role: dto.role || UserRole.USER,
-        status: dto.skipEmailVerification
-          ? UserStatus.ACTIVE
-          : UserStatus.PENDING_VERIFICATION,
+        status: dto.skipEmailVerification ? UserStatus.ACTIVE : UserStatus.PENDING_VERIFICATION,
         emailVerified: dto.skipEmailVerification || false,
       },
       select: this.userSelect,
@@ -204,9 +199,7 @@ export class UsersService {
       skipEmailVerification: dto.skipEmailVerification,
     });
 
-    this.logger.log(
-      `User ${normalizedEmail} created by admin ${currentUser.email}`,
-    );
+    this.logger.log(`User ${normalizedEmail} created by admin ${currentUser.email}`);
 
     return new UserEntity(user);
   }
@@ -217,7 +210,7 @@ export class UsersService {
    */
   async findAll(
     query: UserQueryDto,
-    currentUser: AuthenticatedUser,
+    currentUser: AuthenticatedUser
   ): Promise<PaginatedResponse<UserEntity>> {
     // Build where clause for filters
     // By default, exclude soft-deleted users
@@ -292,10 +285,7 @@ export class UsersService {
    * Search users by email or name (autocomplete).
    * Admin only.
    */
-  async search(
-    query: UserSearchDto,
-    currentUser: AuthenticatedUser,
-  ): Promise<UserEntity[]> {
+  async search(query: UserSearchDto, currentUser: AuthenticatedUser): Promise<UserEntity[]> {
     if (!query.q || query.q.trim().length < 2) {
       return [];
     }
@@ -368,7 +358,7 @@ export class UsersService {
   async update(
     id: string,
     dto: UpdateUserDto,
-    currentUser: AuthenticatedUser,
+    currentUser: AuthenticatedUser
   ): Promise<UserEntity> {
     if (!this.canAccessUser(currentUser, id)) {
       throw new ForbiddenException('You can only update your own profile');
@@ -407,25 +397,17 @@ export class UsersService {
       // Non-admin users must provide current password
       if (currentUser.id === id && currentUser.role !== UserRole.ADMIN) {
         if (!dto.currentPassword) {
-          throw new BadRequestException(
-            'Current password is required to change password',
-          );
+          throw new BadRequestException('Current password is required to change password');
         }
 
-        const isCurrentPasswordValid = await bcrypt.compare(
-          dto.currentPassword,
-          user.passwordHash,
-        );
+        const isCurrentPasswordValid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
 
         if (!isCurrentPasswordValid) {
           throw new BadRequestException('Current password is incorrect');
         }
       }
 
-      updateData.passwordHash = await bcrypt.hash(
-        dto.password,
-        this.bcryptSaltRounds,
-      );
+      updateData.passwordHash = await bcrypt.hash(dto.password, this.bcryptSaltRounds);
       changedFields.push('password');
     }
 
@@ -457,15 +439,13 @@ export class UsersService {
     });
 
     await this.logAudit(
-      changedFields.includes('password')
-        ? AuditAction.PASSWORD_CHANGED
-        : AuditAction.USER_UPDATED,
+      changedFields.includes('password') ? AuditAction.PASSWORD_CHANGED : AuditAction.USER_UPDATED,
       id,
       currentUser,
       {
         changedFields,
         targetUserEmail: user.email,
-      },
+      }
     );
 
     return new UserEntity(updatedUser);
@@ -475,10 +455,7 @@ export class UsersService {
    * Soft delete (deactivate) a user.
    * Admin only.
    */
-  async deactivate(
-    id: string,
-    currentUser: AuthenticatedUser,
-  ): Promise<{ message: string }> {
+  async deactivate(id: string, currentUser: AuthenticatedUser): Promise<{ message: string }> {
     const user = await this.prisma.user.findUnique({
       where: { id },
       select: { id: true, email: true, role: true, status: true },
@@ -523,7 +500,7 @@ export class UsersService {
   async changeRole(
     id: string,
     dto: ChangeRoleDto,
-    currentUser: AuthenticatedUser,
+    currentUser: AuthenticatedUser
   ): Promise<UserEntity> {
     const user = await this.prisma.user.findUnique({
       where: { id },
@@ -560,7 +537,7 @@ export class UsersService {
     });
 
     this.logger.log(
-      `Role changed for user ${user.email}: ${previousRole} -> ${dto.role} by ${currentUser.email}`,
+      `Role changed for user ${user.email}: ${previousRole} -> ${dto.role} by ${currentUser.email}`
     );
 
     return new UserEntity(updatedUser);
@@ -573,7 +550,7 @@ export class UsersService {
   async ban(
     id: string,
     dto: BanUserDto,
-    currentUser: AuthenticatedUser,
+    currentUser: AuthenticatedUser
   ): Promise<{ message: string }> {
     const user = await this.prisma.user.findUnique({
       where: { id },
@@ -612,9 +589,7 @@ export class UsersService {
       reason: dto.reason,
     });
 
-    this.logger.warn(
-      `User ${user.email} banned by ${currentUser.email}. Reason: ${dto.reason}`,
-    );
+    this.logger.warn(`User ${user.email} banned by ${currentUser.email}. Reason: ${dto.reason}`);
 
     return { message: `User ${user.email} has been banned` };
   }
@@ -626,7 +601,7 @@ export class UsersService {
   async unban(
     id: string,
     dto: UnbanUserDto,
-    currentUser: AuthenticatedUser,
+    currentUser: AuthenticatedUser
   ): Promise<{ message: string }> {
     const user = await this.prisma.user.findUnique({
       where: { id },
@@ -659,13 +634,25 @@ export class UsersService {
   }
 
   /**
-   * Get user activity history.
+   * Get user activity history with pagination.
    * Admin only.
    */
   async getActivity(
     id: string,
     currentUser: AuthenticatedUser,
-  ): Promise<UserActivityEntry[]> {
+    options?: { page?: number; limit?: number }
+  ): Promise<{
+    items: UserActivityEntry[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+    hasNextPage: boolean;
+    hasPrevPage: boolean;
+  }> {
+    const page = options?.page ?? 1;
+    const limit = Math.min(options?.limit ?? 20, 100);
+
     const user = await this.prisma.user.findUnique({
       where: { id },
       select: {
@@ -681,22 +668,85 @@ export class UsersService {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    // Get audit logs for this user
+    // Get total count of audit logs for pagination
+    const totalAuditLogs = await this.prisma.auditLog.count({
+      where: { entityId: id, entityType: 'User' },
+    });
+
+    // Calculate the extra static entries (account created, last login, ticket/payment summaries)
+    // These will affect the total count
+    let staticEntriesCount = 1; // Account created is always there
+    if (user.lastLoginAt) {
+      staticEntriesCount++;
+    }
+
+    // Get user's related data counts
+    const [ticketCount, paymentCount] = await Promise.all([
+      this.prisma.ticket.count({ where: { userId: id } }),
+      this.prisma.payment.count({ where: { userId: id } }),
+    ]);
+
+    if (ticketCount > 0) {
+      staticEntriesCount++;
+    }
+    if (paymentCount > 0) {
+      staticEntriesCount++;
+    }
+
+    const total = totalAuditLogs + staticEntriesCount;
+    const totalPages = Math.ceil(total / limit);
+    const skip = (page - 1) * limit;
+
+    // Get audit logs with pagination
     const auditLogs = await this.prisma.auditLog.findMany({
       where: { entityId: id, entityType: 'User' },
       orderBy: { createdAt: 'desc' },
-      take: 50,
+      skip: Math.max(0, skip - staticEntriesCount), // Adjust for static entries
+      take: limit,
     });
 
-    const activities: UserActivityEntry[] = [
-      {
+    const activities: UserActivityEntry[] = [];
+
+    // Only add static entries on first page
+    if (page === 1) {
+      activities.push({
         id: `${user.id}-created`,
         action: 'ACCOUNT_CREATED',
         details: 'User account was created',
         performedBy: 'SYSTEM',
         performedAt: user.createdAt,
-      },
-    ];
+      });
+
+      if (user.lastLoginAt) {
+        activities.push({
+          id: `${user.id}-last-login`,
+          action: 'LAST_LOGIN',
+          details: 'User logged in',
+          performedBy: user.email,
+          performedAt: user.lastLoginAt,
+        });
+      }
+
+      if (ticketCount > 0) {
+        activities.push({
+          id: `${user.id}-tickets`,
+          action: 'TICKETS_SUMMARY',
+          details: `User has purchased ${ticketCount} ticket(s)`,
+          performedBy: 'SYSTEM',
+          performedAt: new Date(),
+        });
+      }
+
+      if (paymentCount > 0) {
+        activities.push({
+          id: `${user.id}-payments`,
+          action: 'PAYMENTS_SUMMARY',
+          details: `User has made ${paymentCount} payment(s)`,
+          performedBy: 'SYSTEM',
+          performedAt: new Date(),
+        });
+      }
+    }
 
     // Add audit log entries
     for (const log of auditLogs) {
@@ -711,51 +761,28 @@ export class UsersService {
       });
     }
 
-    if (user.lastLoginAt) {
-      activities.push({
-        id: `${user.id}-last-login`,
-        action: 'LAST_LOGIN',
-        details: 'User logged in',
-        performedBy: user.email,
-        performedAt: user.lastLoginAt,
-      });
-    }
-
-    // Get user's related data counts
-    const [ticketCount, paymentCount] = await Promise.all([
-      this.prisma.ticket.count({ where: { userId: id } }),
-      this.prisma.payment.count({ where: { userId: id } }),
-    ]);
-
-    if (ticketCount > 0) {
-      activities.push({
-        id: `${user.id}-tickets`,
-        action: 'TICKETS_SUMMARY',
-        details: `User has purchased ${ticketCount} ticket(s)`,
-        performedBy: 'SYSTEM',
-        performedAt: new Date(),
-      });
-    }
-
-    if (paymentCount > 0) {
-      activities.push({
-        id: `${user.id}-payments`,
-        action: 'PAYMENTS_SUMMARY',
-        details: `User has made ${paymentCount} payment(s)`,
-        performedBy: 'SYSTEM',
-        performedAt: new Date(),
-      });
-    }
-
     await this.logAudit(AuditAction.USER_VIEWED, id, currentUser, {
       action: 'view_activity',
       targetUserEmail: user.email,
     });
 
     // Sort by date descending
-    return activities.sort(
-      (a, b) => b.performedAt.getTime() - a.performedAt.getTime(),
+    const sortedActivities = activities.sort(
+      (a, b) => b.performedAt.getTime() - a.performedAt.getTime()
     );
+
+    // Limit to requested page size
+    const paginatedActivities = sortedActivities.slice(0, limit);
+
+    return {
+      items: paginatedActivities,
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    };
   }
 
   /**
@@ -794,10 +821,7 @@ export class UsersService {
    * User data is preserved but user is excluded from queries.
    * Admin only.
    */
-  async softDelete(
-    id: string,
-    currentUser: AuthenticatedUser,
-  ): Promise<{ message: string }> {
+  async softDelete(id: string, currentUser: AuthenticatedUser): Promise<{ message: string }> {
     const user = await this.prisma.user.findUnique({
       where: { id },
       select: { id: true, email: true, role: true, isDeleted: true },
@@ -845,10 +869,7 @@ export class UsersService {
    * This action is irreversible and should only be used for GDPR data deletion requests.
    * Admin only.
    */
-  async hardDelete(
-    id: string,
-    currentUser: AuthenticatedUser,
-  ): Promise<{ message: string }> {
+  async hardDelete(id: string, currentUser: AuthenticatedUser): Promise<{ message: string }> {
     const user = await this.prisma.user.findUnique({
       where: { id },
       select: { id: true, email: true, role: true },
@@ -881,7 +902,7 @@ export class UsersService {
     });
 
     this.logger.warn(
-      `User ${user.email} permanently deleted by ${currentUser.email} (GDPR compliance)`,
+      `User ${user.email} permanently deleted by ${currentUser.email} (GDPR compliance)`
     );
 
     return { message: `User ${user.email} has been permanently deleted` };

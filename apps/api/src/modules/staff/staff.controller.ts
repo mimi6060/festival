@@ -12,19 +12,12 @@ import {
   HttpStatus,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { StaffService } from './staff.service';
-import type { AuthenticatedUser } from './staff.service';
+import { StaffService, type AuthenticatedUser } from './staff.service';
 import {
   CreateStaffMemberDto,
   UpdateStaffMemberDto,
@@ -50,7 +43,7 @@ export class StaffController {
   @ApiResponse({ status: 403, description: 'Insufficient permissions' })
   async createStaffMember(
     @Body() dto: CreateStaffMemberDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     return this.staffService.createStaffMember(dto, user);
   }
@@ -71,7 +64,7 @@ export class StaffController {
   async updateStaffMember(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateStaffMemberDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     return this.staffService.updateStaffMember(id, dto, user);
   }
@@ -84,7 +77,7 @@ export class StaffController {
   @ApiResponse({ status: 404, description: 'Staff member not found' })
   async deleteStaffMember(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     return this.staffService.deleteStaffMember(id, user);
   }
@@ -98,26 +91,29 @@ export class StaffController {
   async createShift(
     @Param('staffId', ParseUUIDPipe) staffId: string,
     @Body() dto: CreateShiftDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
-    return this.staffService.createShift(
-      { ...dto, staffMemberId: staffId },
-      user,
-    );
+    return this.staffService.createShift({ ...dto, staffMemberId: staffId }, user);
   }
 
   @Get(':staffId/shifts')
   @ApiOperation({ summary: 'Get shifts for a staff member' })
   @ApiQuery({ name: 'startDate', required: false })
   @ApiQuery({ name: 'endDate', required: false })
+  @ApiQuery({ name: 'page', required: false, type: Number })
+  @ApiQuery({ name: 'limit', required: false, type: Number })
   async getShifts(
     @Param('staffId', ParseUUIDPipe) staffId: string,
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
+    @Query('page') page?: string,
+    @Query('limit') limit?: string
   ) {
     return this.staffService.getShifts(staffId, {
       startDate: startDate ? new Date(startDate) : undefined,
       endDate: endDate ? new Date(endDate) : undefined,
+      page: page ? parseInt(page, 10) : undefined,
+      limit: limit ? parseInt(limit, 10) : undefined,
     });
   }
 
@@ -128,7 +124,7 @@ export class StaffController {
   async updateShift(
     @Param('shiftId', ParseUUIDPipe) shiftId: string,
     @Body() dto: UpdateShiftDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     return this.staffService.updateShift(shiftId, dto, user);
   }
@@ -139,7 +135,7 @@ export class StaffController {
   @ApiOperation({ summary: 'Delete a shift' })
   async deleteShift(
     @Param('shiftId', ParseUUIDPipe) shiftId: string,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     return this.staffService.deleteShift(shiftId, user);
   }
@@ -153,7 +149,7 @@ export class StaffController {
   async checkIn(
     @Param('shiftId', ParseUUIDPipe) shiftId: string,
     @Body() dto: CheckInDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     return this.staffService.checkIn(shiftId, dto, user.id);
   }
@@ -165,7 +161,7 @@ export class StaffController {
   async checkOut(
     @Param('shiftId', ParseUUIDPipe) shiftId: string,
     @Body() dto: CheckOutDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ) {
     return this.staffService.checkOut(shiftId, dto, user.id);
   }
@@ -193,7 +189,7 @@ export class FestivalStaffController {
     @Query('role') role?: string,
     @Query('isActive') isActive?: string,
     @Query('page') page?: string,
-    @Query('limit') limit?: string,
+    @Query('limit') limit?: string
   ) {
     return this.staffService.getStaffMembers(festivalId, {
       department,
@@ -207,9 +203,7 @@ export class FestivalStaffController {
   @Get('stats')
   @Roles(UserRole.ADMIN, UserRole.ORGANIZER)
   @ApiOperation({ summary: 'Get staff statistics for a festival' })
-  async getStaffStats(
-    @Param('festivalId', ParseUUIDPipe) festivalId: string,
-  ) {
+  async getStaffStats(@Param('festivalId', ParseUUIDPipe) festivalId: string) {
     return this.staffService.getStaffStats(festivalId);
   }
 }

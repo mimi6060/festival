@@ -248,8 +248,30 @@
 ### DEV-13: Ajouter la pagination partout
 
 - **Fichier**: Tous les services avec `findMany()`
-- **Status**: [ ] À faire
-- **Description**: 145 requêtes findMany, certaines sans limite
+- **Status**: [x] Terminé
+- **Description**: Ajouté la pagination aux modules high-traffic
+- **Solution**:
+  - Ajouté pagination à `TicketsService.getUserTickets()`:
+    - Nouveau DTO `GetUserTicketsDto` avec page/limit/festivalId
+    - Retourne paginated response avec items, total, totalPages, hasNextPage, hasPrevPage
+    - Default limit: 20, max: 100
+  - Ajouté pagination à `VendorsService.findAllProducts()`:
+    - Nouveau DTO `QueryProductsDto` avec page/limit
+    - Retourne paginated response avec data et meta
+  - Ajouté pagination à `VendorsService.findPayouts()`:
+    - Nouveau DTO `QueryPayoutsDto` avec page/limit
+    - Retourne paginated response avec data et meta
+  - Ajouté pagination à `VendorsService.exportVendorData()`:
+    - Nouveau DTO `QueryExportDto` avec startDate/endDate/page/limit
+    - Max limit: 1000 pour bulk export
+  - Ajouté pagination à `StaffService.getShifts()`:
+    - Options page/limit dans les parametres
+    - Retourne paginated response avec items et meta
+  - Ajouté pagination à `UsersService.getActivity()`:
+    - Options page/limit dans les parametres
+    - Retourne paginated response avec items et meta
+  - Mis a jour tous les controllers pour accepter les query params de pagination
+  - Mis a jour tous les tests (4711 tests passants)
 
 ### DEV-14: Implémenter le cache Redis pour les artistes
 

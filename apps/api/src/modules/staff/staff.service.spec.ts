@@ -12,11 +12,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { StaffService, AuthenticatedUser } from './staff.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserRole } from '@prisma/client';
-import {
-  NotFoundException,
-  BadRequestException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import {
   adminUser,
   organizerUser,
@@ -134,7 +130,7 @@ const mockCheckIn = {
 
 describe('StaffService', () => {
   let staffService: StaffService;
-  let prismaService: jest.Mocked<PrismaService>;
+  let _prismaService: jest.Mocked<PrismaService>;
 
   const mockPrismaService = {
     user: {
@@ -190,14 +186,11 @@ describe('StaffService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        StaffService,
-        { provide: PrismaService, useValue: mockPrismaService },
-      ],
+      providers: [StaffService, { provide: PrismaService, useValue: mockPrismaService }],
     }).compile();
 
     staffService = module.get<StaffService>(StaffService);
-    prismaService = module.get(PrismaService);
+    _prismaService = module.get(PrismaService);
   });
 
   // ==========================================================================
@@ -257,8 +250,9 @@ describe('StaffService', () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(staffService.createStaffMember(createDto, adminAuthUser))
-        .rejects.toThrow(NotFoundException);
+      await expect(staffService.createStaffMember(createDto, adminAuthUser)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw NotFoundException if festival does not exist', async () => {
@@ -267,19 +261,24 @@ describe('StaffService', () => {
       mockPrismaService.festival.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(staffService.createStaffMember(createDto, adminAuthUser))
-        .rejects.toThrow(NotFoundException);
+      await expect(staffService.createStaffMember(createDto, adminAuthUser)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw ForbiddenException if user is not admin or organizer', async () => {
       // Arrange
-      const festivalWithDifferentOrganizer = { ...ongoingFestival, organizerId: 'different-user-id' };
+      const festivalWithDifferentOrganizer = {
+        ...ongoingFestival,
+        organizerId: 'different-user-id',
+      };
       mockPrismaService.user.findUnique.mockResolvedValue(staffUser);
       mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithDifferentOrganizer);
 
       // Act & Assert
-      await expect(staffService.createStaffMember(createDto, regularAuthUser))
-        .rejects.toThrow(ForbiddenException);
+      await expect(staffService.createStaffMember(createDto, regularAuthUser)).rejects.toThrow(
+        ForbiddenException
+      );
     });
 
     it('should create staff member with minimal required fields', async () => {
@@ -305,7 +304,7 @@ describe('StaffService', () => {
             roleId: minimalDto.roleId,
             isActive: true,
           }),
-        }),
+        })
       );
     });
   });
@@ -340,7 +339,9 @@ describe('StaffService', () => {
       mockPrismaService.staffMember.count.mockResolvedValue(1);
 
       // Act
-      await staffService.getStaffMembers(ongoingFestival.id, { department: StaffDepartment.SECURITY });
+      await staffService.getStaffMembers(ongoingFestival.id, {
+        department: StaffDepartment.SECURITY,
+      });
 
       // Assert
       expect(mockPrismaService.staffMember.findMany).toHaveBeenCalledWith(
@@ -349,7 +350,7 @@ describe('StaffService', () => {
             festivalId: ongoingFestival.id,
             department: StaffDepartment.SECURITY,
           }),
-        }),
+        })
       );
     });
 
@@ -368,7 +369,7 @@ describe('StaffService', () => {
             festivalId: ongoingFestival.id,
             isActive: true,
           }),
-        }),
+        })
       );
     });
 
@@ -385,7 +386,7 @@ describe('StaffService', () => {
         expect.objectContaining({
           skip: 20, // (3-1) * 10
           take: 10,
-        }),
+        })
       );
       expect(result.totalPages).toBe(10);
     });
@@ -435,8 +436,9 @@ describe('StaffService', () => {
       mockPrismaService.staffMember.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(staffService.getStaffMember('non-existent-id'))
-        .rejects.toThrow(NotFoundException);
+      await expect(staffService.getStaffMember('non-existent-id')).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
@@ -462,7 +464,11 @@ describe('StaffService', () => {
       });
 
       // Act
-      const result = await staffService.updateStaffMember(mockStaffMember.id, updateDto, adminAuthUser);
+      const result = await staffService.updateStaffMember(
+        mockStaffMember.id,
+        updateDto,
+        adminAuthUser
+      );
 
       // Assert
       expect(result.department).toBe(updateDto.department);
@@ -472,13 +478,17 @@ describe('StaffService', () => {
 
     it('should throw ForbiddenException if user is not admin or organizer', async () => {
       // Arrange
-      const festivalWithDifferentOrganizer = { ...ongoingFestival, organizerId: 'different-user-id' };
+      const festivalWithDifferentOrganizer = {
+        ...ongoingFestival,
+        organizerId: 'different-user-id',
+      };
       mockPrismaService.staffMember.findUnique.mockResolvedValue(mockStaffMemberWithRelations);
       mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithDifferentOrganizer);
 
       // Act & Assert
-      await expect(staffService.updateStaffMember(mockStaffMember.id, updateDto, regularAuthUser))
-        .rejects.toThrow(ForbiddenException);
+      await expect(
+        staffService.updateStaffMember(mockStaffMember.id, updateDto, regularAuthUser)
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('should allow organizer to update their festival staff', async () => {
@@ -492,7 +502,11 @@ describe('StaffService', () => {
       });
 
       // Act
-      const result = await staffService.updateStaffMember(mockStaffMember.id, updateDto, organizerAuthUser);
+      const result = await staffService.updateStaffMember(
+        mockStaffMember.id,
+        updateDto,
+        organizerAuthUser
+      );
 
       // Assert
       expect(result).toBeDefined();
@@ -524,13 +538,17 @@ describe('StaffService', () => {
 
     it('should throw ForbiddenException if user is not admin or organizer', async () => {
       // Arrange
-      const festivalWithDifferentOrganizer = { ...ongoingFestival, organizerId: 'different-user-id' };
+      const festivalWithDifferentOrganizer = {
+        ...ongoingFestival,
+        organizerId: 'different-user-id',
+      };
       mockPrismaService.staffMember.findUnique.mockResolvedValue(mockStaffMemberWithRelations);
       mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithDifferentOrganizer);
 
       // Act & Assert
-      await expect(staffService.deleteStaffMember(mockStaffMember.id, regularAuthUser))
-        .rejects.toThrow(ForbiddenException);
+      await expect(
+        staffService.deleteStaffMember(mockStaffMember.id, regularAuthUser)
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('should throw NotFoundException if staff member not found', async () => {
@@ -538,8 +556,9 @@ describe('StaffService', () => {
       mockPrismaService.staffMember.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(staffService.deleteStaffMember('non-existent-id', adminAuthUser))
-        .rejects.toThrow(NotFoundException);
+      await expect(
+        staffService.deleteStaffMember('non-existent-id', adminAuthUser)
+      ).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -586,19 +605,24 @@ describe('StaffService', () => {
       mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithOrganizer);
 
       // Act & Assert
-      await expect(staffService.createShift(invalidDto, adminAuthUser))
-        .rejects.toThrow(BadRequestException);
+      await expect(staffService.createShift(invalidDto, adminAuthUser)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should throw ForbiddenException if user is not admin or organizer', async () => {
       // Arrange
-      const festivalWithDifferentOrganizer = { ...ongoingFestival, organizerId: 'different-user-id' };
+      const festivalWithDifferentOrganizer = {
+        ...ongoingFestival,
+        organizerId: 'different-user-id',
+      };
       mockPrismaService.staffMember.findUnique.mockResolvedValue(mockStaffMemberWithRelations);
       mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithDifferentOrganizer);
 
       // Act & Assert
-      await expect(staffService.createShift(createShiftDto, regularAuthUser))
-        .rejects.toThrow(ForbiddenException);
+      await expect(staffService.createShift(createShiftDto, regularAuthUser)).rejects.toThrow(
+        ForbiddenException
+      );
     });
 
     it('should throw NotFoundException if staff member not found', async () => {
@@ -606,8 +630,9 @@ describe('StaffService', () => {
       mockPrismaService.staffMember.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(staffService.createShift(createShiftDto, adminAuthUser))
-        .rejects.toThrow(NotFoundException);
+      await expect(staffService.createShift(createShiftDto, adminAuthUser)).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
@@ -620,17 +645,22 @@ describe('StaffService', () => {
       // Arrange
       const shifts = [mockShiftWithRelations];
       mockPrismaService.staffShift.findMany.mockResolvedValue(shifts);
+      mockPrismaService.staffShift.count.mockResolvedValue(1);
 
       // Act
       const result = await staffService.getShifts(mockStaffMember.id);
 
       // Assert
-      expect(result).toEqual(shifts);
-      expect(mockPrismaService.staffShift.findMany).toHaveBeenCalledWith({
-        where: { staffMemberId: mockStaffMember.id },
-        include: expect.any(Object),
-        orderBy: { startTime: 'asc' },
-      });
+      expect(result.items).toEqual(shifts);
+      expect(result.total).toBe(1);
+      expect(result.page).toBe(1);
+      expect(mockPrismaService.staffShift.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { staffMemberId: mockStaffMember.id },
+          include: expect.any(Object),
+          orderBy: { startTime: 'asc' },
+        })
+      );
     });
 
     it('should filter shifts by date range', async () => {
@@ -638,30 +668,35 @@ describe('StaffService', () => {
       const startDate = new Date('2025-06-15T00:00:00Z');
       const endDate = new Date('2025-06-16T23:59:59Z');
       mockPrismaService.staffShift.findMany.mockResolvedValue([mockShiftWithRelations]);
+      mockPrismaService.staffShift.count.mockResolvedValue(1);
 
       // Act
       await staffService.getShifts(mockStaffMember.id, { startDate, endDate });
 
       // Assert
-      expect(mockPrismaService.staffShift.findMany).toHaveBeenCalledWith({
-        where: {
-          staffMemberId: mockStaffMember.id,
-          startTime: { gte: startDate, lte: endDate },
-        },
-        include: expect.any(Object),
-        orderBy: { startTime: 'asc' },
-      });
+      expect(mockPrismaService.staffShift.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            staffMemberId: mockStaffMember.id,
+            startTime: { gte: startDate, lte: endDate },
+          },
+          include: expect.any(Object),
+          orderBy: { startTime: 'asc' },
+        })
+      );
     });
 
     it('should return empty array when no shifts exist', async () => {
       // Arrange
       mockPrismaService.staffShift.findMany.mockResolvedValue([]);
+      mockPrismaService.staffShift.count.mockResolvedValue(0);
 
       // Act
       const result = await staffService.getShifts(mockStaffMember.id);
 
       // Assert
-      expect(result).toEqual([]);
+      expect(result.items).toEqual([]);
+      expect(result.total).toBe(0);
     });
   });
 
@@ -696,8 +731,9 @@ describe('StaffService', () => {
       mockPrismaService.staffShift.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(staffService.updateShift('non-existent-id', updateShiftDto, adminAuthUser))
-        .rejects.toThrow(NotFoundException);
+      await expect(
+        staffService.updateShift('non-existent-id', updateShiftDto, adminAuthUser)
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if updated times are invalid', async () => {
@@ -709,8 +745,9 @@ describe('StaffService', () => {
       mockPrismaService.staffShift.findUnique.mockResolvedValue(mockShiftWithRelations);
 
       // Act & Assert
-      await expect(staffService.updateShift(mockShift.id, invalidTimeUpdate, adminAuthUser))
-        .rejects.toThrow(BadRequestException);
+      await expect(
+        staffService.updateShift(mockShift.id, invalidTimeUpdate, adminAuthUser)
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw ForbiddenException for non-authorized user', async () => {
@@ -725,8 +762,9 @@ describe('StaffService', () => {
       mockPrismaService.staffShift.findUnique.mockResolvedValue(shiftWithDifferentOrganizer);
 
       // Act & Assert
-      await expect(staffService.updateShift(mockShift.id, updateShiftDto, regularAuthUser))
-        .rejects.toThrow(ForbiddenException);
+      await expect(
+        staffService.updateShift(mockShift.id, updateShiftDto, regularAuthUser)
+      ).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -755,8 +793,9 @@ describe('StaffService', () => {
       mockPrismaService.staffShift.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(staffService.deleteShift('non-existent-id', adminAuthUser))
-        .rejects.toThrow(NotFoundException);
+      await expect(staffService.deleteShift('non-existent-id', adminAuthUser)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw ForbiddenException for non-authorized user', async () => {
@@ -771,8 +810,9 @@ describe('StaffService', () => {
       mockPrismaService.staffShift.findUnique.mockResolvedValue(shiftWithDifferentOrganizer);
 
       // Act & Assert
-      await expect(staffService.deleteShift(mockShift.id, regularAuthUser))
-        .rejects.toThrow(ForbiddenException);
+      await expect(staffService.deleteShift(mockShift.id, regularAuthUser)).rejects.toThrow(
+        ForbiddenException
+      );
     });
   });
 
@@ -815,7 +855,7 @@ describe('StaffService', () => {
             location: checkInDto.location,
             checkInMethod: checkInDto.checkInMethod,
           }),
-        }),
+        })
       );
     });
 
@@ -846,8 +886,9 @@ describe('StaffService', () => {
       mockPrismaService.staffShift.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(staffService.checkIn('non-existent-id', checkInDto, staffUser.id))
-        .rejects.toThrow(NotFoundException);
+      await expect(
+        staffService.checkIn('non-existent-id', checkInDto, staffUser.id)
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if already checked in', async () => {
@@ -860,8 +901,9 @@ describe('StaffService', () => {
       mockPrismaService.staffShift.findUnique.mockResolvedValue(shiftWithActiveCheckIn);
 
       // Act & Assert
-      await expect(staffService.checkIn(mockShift.id, checkInDto, staffUser.id))
-        .rejects.toThrow(BadRequestException);
+      await expect(staffService.checkIn(mockShift.id, checkInDto, staffUser.id)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should throw ForbiddenException if non-staff user tries to check in for others shift', async () => {
@@ -875,8 +917,9 @@ describe('StaffService', () => {
       mockPrismaService.user.findUnique.mockResolvedValue({ ...regularUser, role: UserRole.USER });
 
       // Act & Assert
-      await expect(staffService.checkIn(mockShift.id, checkInDto, regularUser.id))
-        .rejects.toThrow(ForbiddenException);
+      await expect(staffService.checkIn(mockShift.id, checkInDto, regularUser.id)).rejects.toThrow(
+        ForbiddenException
+      );
     });
   });
 
@@ -916,7 +959,7 @@ describe('StaffService', () => {
           data: expect.objectContaining({
             checkOutTime: expect.any(Date),
           }),
-        }),
+        })
       );
     });
 
@@ -925,8 +968,9 @@ describe('StaffService', () => {
       mockPrismaService.staffShift.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(staffService.checkOut('non-existent-id', checkOutDto, staffUser.id))
-        .rejects.toThrow(NotFoundException);
+      await expect(
+        staffService.checkOut('non-existent-id', checkOutDto, staffUser.id)
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if not checked in', async () => {
@@ -939,8 +983,9 @@ describe('StaffService', () => {
       mockPrismaService.staffShift.findUnique.mockResolvedValue(shiftWithNoActiveCheckIn);
 
       // Act & Assert
-      await expect(staffService.checkOut(mockShift.id, checkOutDto, staffUser.id))
-        .rejects.toThrow(BadRequestException);
+      await expect(staffService.checkOut(mockShift.id, checkOutDto, staffUser.id)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should throw ForbiddenException if non-staff user tries to check out for others shift', async () => {
@@ -954,8 +999,9 @@ describe('StaffService', () => {
       mockPrismaService.user.findUnique.mockResolvedValue({ ...regularUser, role: UserRole.USER });
 
       // Act & Assert
-      await expect(staffService.checkOut(mockShift.id, checkOutDto, regularUser.id))
-        .rejects.toThrow(ForbiddenException);
+      await expect(
+        staffService.checkOut(mockShift.id, checkOutDto, regularUser.id)
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('should allow admin to check out for any shift', async () => {

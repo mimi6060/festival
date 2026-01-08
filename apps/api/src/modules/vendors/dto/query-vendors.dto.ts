@@ -1,12 +1,4 @@
-import {
-  IsOptional,
-  IsEnum,
-  IsBoolean,
-  IsString,
-  IsInt,
-  Min,
-  IsUUID,
-} from 'class-validator';
+import { IsOptional, IsEnum, IsBoolean, IsString, IsInt, Min, Max, IsUUID } from 'class-validator';
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Type, Transform } from 'class-transformer';
 import { VendorType } from './create-vendor.dto';
@@ -102,4 +94,68 @@ export class QueryStatsDto {
   @IsOptional()
   @IsString()
   groupBy?: 'hour' | 'day' | 'week' | 'month';
+}
+
+export class QueryProductsDto {
+  @ApiPropertyOptional({ description: 'Page number', minimum: 1, default: 1 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  page?: number = 1;
+
+  @ApiPropertyOptional({ description: 'Items per page', minimum: 1, maximum: 100, default: 20 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  @Type(() => Number)
+  limit?: number = 20;
+}
+
+export class QueryPayoutsDto {
+  @ApiPropertyOptional({ description: 'Page number', minimum: 1, default: 1 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  page?: number = 1;
+
+  @ApiPropertyOptional({ description: 'Items per page', minimum: 1, maximum: 100, default: 20 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  @Type(() => Number)
+  limit?: number = 20;
+}
+
+export class QueryExportDto {
+  @ApiPropertyOptional({ description: 'Start date (required)', required: true })
+  @IsString()
+  startDate!: string;
+
+  @ApiPropertyOptional({ description: 'End date (required)', required: true })
+  @IsString()
+  endDate!: string;
+
+  @ApiPropertyOptional({ description: 'Page number', minimum: 1, default: 1 })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  page?: number = 1;
+
+  @ApiPropertyOptional({
+    description: 'Items per page for export',
+    minimum: 1,
+    maximum: 1000,
+    default: 100,
+  })
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  @Type(() => Number)
+  limit?: number = 100;
 }
