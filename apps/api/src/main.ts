@@ -6,13 +6,19 @@
  */
 
 import { ValidationPipe } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
+import { NestFactory, Reflector } from '@nestjs/core';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
 import { Logger, LoggerErrorInterceptor } from 'nestjs-pino';
 import { AppModule } from './app/app.module';
+import {
+  ApiVersionGuard,
+  ApiVersionHeaderInterceptor,
+  API_VERSION_HEADER,
+} from './common/versioning';
+import { LoggingInterceptor } from './common/interceptors';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
@@ -23,7 +29,20 @@ async function bootstrap() {
   // Use Pino logger from LoggerModule
   const logger = app.get(Logger);
   app.useLogger(logger);
-  app.useGlobalInterceptors(new LoggerErrorInterceptor());
+
+  // Global interceptors
+  // - LoggingInterceptor: Request/response logging with request ID generation
+  // - LoggerErrorInterceptor: Pino error logging integration
+  // - ApiVersionHeaderInterceptor: API version header in responses
+  app.useGlobalInterceptors(
+    new LoggingInterceptor(),
+    new LoggerErrorInterceptor(),
+    new ApiVersionHeaderInterceptor()
+  );
+
+  // API Versioning guard
+  const reflector = app.get(Reflector);
+  app.useGlobalGuards(new ApiVersionGuard(reflector));
 
   // Global prefix for all routes
   const globalPrefix = 'api';
@@ -125,6 +144,17 @@ All error responses follow a consistent format:
 }
 \`\`\`
 
+## API Versioning
+
+The API supports versioning through multiple methods:
+- **Header**: Include \`X-API-Version: v1\` or \`X-API-Version: v2\` in your request
+- **Query Parameter**: Add \`?api-version=1\` or \`?api-version=2\` to your URL
+- **URL Path**: Use \`/api/v1/...\` or \`/api/v2/...\` (for versioned endpoints)
+
+**Default Version:** v1
+
+All responses include the \`X-API-Version\` header indicating the version used.
+
 ## Webhooks
 
 The platform supports webhooks for:
@@ -173,6 +203,17 @@ For API support, contact: api-support@festival-platform.com
       },
       'api-key'
     )
+    .addGlobalParameters({
+      name: API_VERSION_HEADER,
+      in: 'header',
+      description: 'API Version (v1 or v2). Defaults to v1 if not specified.',
+      required: false,
+      schema: {
+        type: 'string',
+        enum: ['v1', 'v2'],
+        default: 'v1',
+      },
+    })
     .addTag('Health', 'System health checks and monitoring endpoints')
     .addTag('Auth', 'Authentication and authorization endpoints')
     .addTag('Users', 'User management operations')

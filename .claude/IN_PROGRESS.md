@@ -453,9 +453,20 @@
 
 ### DEV-28: Ajouter le logging request/response
 
-- **Fichier**: `apps/api/src/common/interceptors/`
-- **Status**: [ ] À faire
+- **Fichier**: `apps/api/src/common/interceptors/logging.interceptor.ts`
+- **Status**: [x] Terminé
 - **Description**: Logger request ID, durée, status
+- **Solution**:
+  - Amélioré `LoggingInterceptor` avec génération automatique de request ID (UUID)
+  - Request ID extrait du header `X-Request-ID` ou généré automatiquement via `crypto.randomUUID()`
+  - Request ID inclus dans le header de réponse `X-Request-ID` pour le tracing client
+  - Logging de la méthode HTTP, URL et user ID à chaque requête entrante
+  - Logging du status code et durée (en ms) à chaque réponse
+  - Sanitization des URLs pour masquer les données sensibles (passwords, tokens, apiKey, etc.)
+  - Niveaux de log appropriés: info (2xx/3xx), warn (4xx), error (5xx)
+  - Support du correlation ID pour le tracing distribué
+  - Enregistrement global dans `main.ts` pour tous les endpoints API
+  - 36 tests unitaires couvrant tous les cas
 
 ### DEV-29: Implémenter le soft delete
 

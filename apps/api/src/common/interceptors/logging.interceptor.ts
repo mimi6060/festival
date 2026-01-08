@@ -1,12 +1,7 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
+import { randomUUID } from 'crypto';
 import type { Request, Response } from 'express';
 
 /**
@@ -18,9 +13,30 @@ interface RequestContext {
   ip: string;
   userAgent: string;
   userId?: string;
-  requestId?: string;
+  requestId: string;
   correlationId?: string;
 }
+
+/**
+ * List of sensitive fields that should not be logged
+ */
+const SENSITIVE_FIELDS = [
+  'password',
+  'confirmPassword',
+  'currentPassword',
+  'newPassword',
+  'token',
+  'refreshToken',
+  'accessToken',
+  'authorization',
+  'cookie',
+  'cardNumber',
+  'cvv',
+  'expiryDate',
+  'secret',
+  'apiKey',
+  'privateKey',
+];
 
 /**
  * Logging Interceptor
@@ -30,10 +46,12 @@ interface RequestContext {
  *
  * Features:
  * - Request/Response logging with timing
+ * - Automatic request ID generation for tracing
  * - Correlation ID support for distributed tracing
  * - User context logging when authenticated
  * - Configurable log level
- * - Sensitive data redaction
+ * - Sensitive data redaction (passwords, tokens, etc.)
+ * - Duration tracking in milliseconds
  *
  * @example
  * // Global registration in main.ts
@@ -54,7 +72,13 @@ export class LoggingInterceptor implements NestInterceptor {
     const request = ctx.getRequest<Request>();
     const response = ctx.getResponse<Response>();
 
-    const requestContext = this.extractRequestContext(request);
+    // Generate request ID if not present
+    const requestId = this.getOrGenerateRequestId(request);
+
+    // Set request ID on response headers for client tracing
+    response.setHeader('X-Request-ID', requestId);
+
+    const requestContext = this.extractRequestContext(request, requestId);
     const startTime = Date.now();
 
     // Log incoming request
@@ -70,23 +94,74 @@ export class LoggingInterceptor implements NestInterceptor {
           const duration = Date.now() - startTime;
           this.logError(requestContext, error, duration);
         },
-      }),
+      })
     );
+  }
+
+  /**
+   * Get existing request ID from header or generate a new one
+   * Stores the generated ID on the request object for downstream use
+   */
+  private getOrGenerateRequestId(request: Request): string {
+    const existingId = request.headers['x-request-id'] as string | undefined;
+    if (existingId) {
+      return existingId;
+    }
+
+    const generatedId = randomUUID();
+    // Store on request object for downstream access
+    (request as Request & { requestId: string }).requestId = generatedId;
+    return generatedId;
   }
 
   /**
    * Extract context information from the request
    */
-  private extractRequestContext(request: Request): RequestContext {
+  private extractRequestContext(request: Request, requestId: string): RequestContext {
     return {
       method: request.method,
-      url: request.url,
+      url: this.sanitizeUrl(request.url),
       ip: request.ip || request.connection?.remoteAddress || 'unknown',
       userAgent: request.headers['user-agent'] || 'unknown',
       userId: (request as Request & { user?: { id?: string } }).user?.id,
-      requestId: request.headers['x-request-id'] as string,
+      requestId,
       correlationId: request.headers['x-correlation-id'] as string,
     };
+  }
+
+  /**
+   * Sanitize URL to remove sensitive query parameters
+   */
+  private sanitizeUrl(url: string): string {
+    try {
+      const urlObj = new URL(url, 'http://localhost');
+      const sensitiveParams: string[] = [];
+
+      for (const field of SENSITIVE_FIELDS) {
+        if (urlObj.searchParams.has(field)) {
+          sensitiveParams.push(field);
+        }
+      }
+
+      // No sensitive params found, return original URL
+      if (sensitiveParams.length === 0) {
+        return url;
+      }
+
+      // Build sanitized query string manually to avoid URL encoding issues
+      const params: string[] = [];
+      urlObj.searchParams.forEach((value, key) => {
+        if (sensitiveParams.includes(key)) {
+          params.push(`${key}=[REDACTED]`);
+        } else {
+          params.push(`${key}=${value}`);
+        }
+      });
+
+      return urlObj.pathname + (params.length > 0 ? '?' + params.join('&') : '');
+    } catch {
+      return url;
+    }
   }
 
   /**
@@ -100,11 +175,7 @@ export class LoggingInterceptor implements NestInterceptor {
   /**
    * Log successful response
    */
-  private logResponse(
-    context: RequestContext,
-    statusCode: number,
-    duration: number,
-  ): void {
+  private logResponse(context: RequestContext, statusCode: number, duration: number): void {
     const logMessage = this.formatResponseLog(context, statusCode, duration);
 
     if (statusCode >= 400 && statusCode < 500) {
@@ -119,11 +190,7 @@ export class LoggingInterceptor implements NestInterceptor {
   /**
    * Log error response
    */
-  private logError(
-    context: RequestContext,
-    error: Error,
-    duration: number,
-  ): void {
+  private logError(context: RequestContext, error: Error, duration: number): void {
     const logMessage = this.formatErrorLog(context, error, duration);
     this.logger.error(logMessage, error.stack);
   }
@@ -133,7 +200,7 @@ export class LoggingInterceptor implements NestInterceptor {
    */
   private formatRequestLog(context: RequestContext): string {
     const parts = [
-      `[${context.requestId || 'no-id'}]`,
+      `[${context.requestId}]`,
       `${context.method}`,
       context.url,
       `- User: ${context.userId || 'anonymous'}`,
@@ -145,13 +212,9 @@ export class LoggingInterceptor implements NestInterceptor {
   /**
    * Format response log message
    */
-  private formatResponseLog(
-    context: RequestContext,
-    statusCode: number,
-    duration: number,
-  ): string {
+  private formatResponseLog(context: RequestContext, statusCode: number, duration: number): string {
     const parts = [
-      `[${context.requestId || 'no-id'}]`,
+      `[${context.requestId}]`,
       `${context.method}`,
       context.url,
       `-`,
@@ -165,13 +228,9 @@ export class LoggingInterceptor implements NestInterceptor {
   /**
    * Format error log message
    */
-  private formatErrorLog(
-    context: RequestContext,
-    error: Error,
-    duration: number,
-  ): string {
+  private formatErrorLog(context: RequestContext, error: Error, duration: number): string {
     const parts = [
-      `[${context.requestId || 'no-id'}]`,
+      `[${context.requestId}]`,
       `${context.method}`,
       context.url,
       `- ERROR:`,
@@ -188,7 +247,7 @@ export class LoggingInterceptor implements NestInterceptor {
   getStructuredLogData(
     context: RequestContext,
     statusCode: number,
-    duration: number,
+    duration: number
   ): Record<string, unknown> {
     return {
       type: 'http',
