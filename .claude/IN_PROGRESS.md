@@ -13,12 +13,12 @@
 
 | Metric     | Coverage   | Target | Status   |
 | ---------- | ---------- | ------ | -------- |
-| Statements | **82.80%** | 80%    | Exceeded |
-| Branches   | **69.62%** | 70%    | Near     |
-| Functions  | **81.91%** | 80%    | Exceeded |
-| Lines      | **82.67%** | 80%    | Exceeded |
+| Statements | **86.18%** | 80%    | Exceeded |
+| Branches   | **73.17%** | 70%    | Exceeded |
+| Functions  | **84.22%** | 80%    | Exceeded |
+| Lines      | **86.06%** | 80%    | Exceeded |
 
-**Total Tests: 4,711** | **Test Suites: 90**
+**Total Tests: 5,050** | **Test Suites: 96**
 
 ---
 
@@ -372,9 +372,34 @@
 
 ### DEV-19: Tests de charge pour la validation de tickets
 
-- **Fichier**: `apps/api/src/modules/tickets/`
-- **Status**: [ ] À faire
+- **Fichier**: `apps/api/src/modules/tickets/tickets.load.spec.ts`
+- **Status**: [x] Terminé
 - **Description**: Tester 100+ validations concurrentes
+- **Solution**:
+  - Créé `tickets.load.spec.ts` avec 16 tests de charge complets:
+  - **Concurrent Ticket Validations (4 tests)**:
+    - Validation de 10 tickets simultanés
+    - Validation de 50 tickets simultanés
+    - Validation de 100 tickets simultanés
+    - Validation mixte (valid/invalid tickets)
+  - **Performance Benchmarks (3 tests)**:
+    - Validation single ticket < 100ms
+    - Mesure du temps moyen sur 100 validations séquentielles
+    - Test de performance sous charge répétée
+  - **Race Condition Handling (3 tests)**:
+    - Scans concurrents du même ticket
+    - Achats concurrents avec quota limité
+    - Contrôle d'accès zone avec capacité limitée
+  - **Batch Validation Operations (4 tests)**:
+    - Validation batch de 20 tickets
+    - Validation batch avec statuts variés
+    - Validation batch de 200 tickets (chunked)
+    - Gestion des QR codes dupliqués
+  - **Stress Tests (2 tests)**:
+    - Validations rapides successives sans dégradation
+    - Récupération gracieuse des erreurs intermittentes
+  - Mocks appropriés pour PrismaService, ConfigService, EmailService
+  - Tests passants: 16/16
 
 ### DEV-20: Tests WebSocket
 
@@ -575,8 +600,39 @@
 ### DEV-29: Implémenter le soft delete
 
 - **Fichier**: Schéma Prisma, tous les services
-- **Status**: [ ] À faire
+- **Status**: [x] Terminé
 - **Description**: Ajouter `deletedAt` aux modèles critiques
+- **Solution**:
+  - Ajouté `isDeleted` (Boolean) et `deletedAt` (DateTime?) aux modèles critiques dans le schéma Prisma:
+    - `Ticket` - avec index sur `isDeleted` pour filtrage efficace
+    - `TicketCategory` - avec index sur `isDeleted`
+    - `Payment` - avec index sur `isDeleted`
+    - `Artist` - avec index sur `isDeleted`
+    - `Vendor` - avec index sur `isDeleted`
+    - `VendorOrder` - avec index sur `isDeleted`
+    - (User et Festival avaient déjà soft delete)
+  - Créé middleware Prisma `soft-delete.middleware.ts`:
+    - `createSoftDeleteFindMiddleware()` - Filtre automatiquement les enregistrements soft-deleted dans toutes les requêtes find/count/aggregate/groupBy
+    - `createSoftDeleteMiddleware()` - Convertit les opérations delete en soft delete (update avec isDeleted=true, deletedAt=now())
+    - Support de `includeDeleted: true` pour inclure les enregistrements supprimés
+    - Support de `onlyDeleted: true` pour ne récupérer que les enregistrements supprimés
+    - Support de `hardDelete: true` pour suppression permanente
+  - Créé `SoftDeleteService` dans `common/services/`:
+    - `softDelete()` - Soft delete un enregistrement par ID
+    - `restore()` - Restaure un enregistrement soft-deleted
+    - `hardDelete()` - Suppression permanente d'un enregistrement
+    - `findDeleted()` - Liste paginée des enregistrements soft-deleted
+    - `countAllDeleted()` - Compte tous les enregistrements soft-deleted par modèle
+    - `restoreAll()` - Restaure tous les enregistrements soft-deleted d'un modèle
+    - `purgeDeleted()` - Supprime définitivement tous les soft-deleted d'un modèle
+  - Ajouté méthodes restore aux services existants:
+    - `TicketsService`: `softDeleteTicket()`, `restoreTicket()`, `getDeletedTickets()`, `hardDeleteTicket()`
+    - `FestivalsService`: `restore()`, `findDeleted()`, `hardDelete()`
+    - `UsersService`: `restore()`, `findDeleted()` (complète les méthodes existantes)
+  - Ajouté tests complets:
+    - `soft-delete.middleware.spec.ts` - 45 tests pour le middleware
+    - `soft-delete.service.spec.ts` - 20 tests pour le service commun
+  - Total: 5,050 tests passants
 
 ### DEV-30: Health check pour FCM
 

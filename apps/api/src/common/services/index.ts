@@ -13,3 +13,10 @@ export {
   type TokenBucket,
   type SlidingWindowEntry,
 } from './rate-limit.service';
+
+export {
+  SoftDeleteService,
+  type SoftDeleteResult,
+  type RestoreResult,
+  type SoftDeletedCount,
+} from './soft-delete.service';

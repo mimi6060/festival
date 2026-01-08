@@ -907,4 +907,106 @@ export class UsersService {
 
     return { message: `User ${user.email} has been permanently deleted` };
   }
+
+  /**
+   * Restore a soft-deleted user.
+   * Admin only.
+   */
+  async restore(id: string, currentUser: AuthenticatedUser): Promise<UserEntity> {
+    const user = await this.prisma.user.findFirst({
+      where: { id },
+      select: { id: true, email: true, role: true, isDeleted: true },
+      includeDeleted: true,
+    } as any);
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    if (!user.isDeleted) {
+      throw new BadRequestException('User is not deleted');
+    }
+
+    const restoredUser = await this.prisma.user.update({
+      where: { id },
+      data: {
+        isDeleted: false,
+        deletedAt: null,
+        status: UserStatus.ACTIVE, // Reactivate the user
+      },
+      select: this.userSelect,
+    });
+
+    await this.logAudit(AuditAction.USER_UPDATED, id, currentUser, {
+      action: 'restore',
+      targetUserEmail: user.email,
+      previousValue: { isDeleted: true },
+      newValue: { isDeleted: false },
+    });
+
+    this.logger.log(`User ${user.email} restored by ${currentUser.email}`);
+
+    return new UserEntity(restoredUser);
+  }
+
+  /**
+   * Get all soft-deleted users.
+   * Admin only.
+   */
+  async findDeleted(
+    query: UserQueryDto,
+    currentUser: AuthenticatedUser
+  ): Promise<PaginatedResponse<UserEntity>> {
+    const where: Prisma.UserWhereInput = {
+      isDeleted: true,
+    };
+
+    if (query.role) {
+      where.role = query.role;
+    }
+
+    if (query.search) {
+      where.OR = [
+        { email: { contains: query.search, mode: 'insensitive' } },
+        { firstName: { contains: query.search, mode: 'insensitive' } },
+        { lastName: { contains: query.search, mode: 'insensitive' } },
+      ];
+    }
+
+    const orderBy: Prisma.UserOrderByWithRelationInput = {
+      deletedAt: 'desc',
+    };
+
+    const [users, total] = await Promise.all([
+      this.prisma.user.findMany({
+        where,
+        select: {
+          ...this.userSelect,
+          isDeleted: true,
+          deletedAt: true,
+        },
+        skip: query.skip,
+        take: query.take,
+        orderBy,
+        includeDeleted: true,
+      } as any),
+      this.prisma.user.count({
+        where,
+        includeDeleted: true,
+      } as any),
+    ]);
+
+    await this.logAudit(AuditAction.USER_SEARCHED, 'deleted-users', currentUser, {
+      filters: query,
+      resultsCount: users.length,
+    });
+
+    return {
+      items: users.map((user: any) => new UserEntity(user)),
+      total,
+      page: query.page || 1,
+      limit: query.limit || 10,
+      totalPages: Math.ceil(total / (query.limit || 10)),
+    };
+  }
 }

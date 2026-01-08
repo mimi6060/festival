@@ -408,4 +408,126 @@ export class FestivalsService {
 
     this.logger.debug(`Invalidated cache for festival: ${festivalId}`);
   }
+
+  // ============================================================================
+  // Soft Delete Operations
+  // ============================================================================
+
+  /**
+   * Restore a soft-deleted festival
+   */
+  async restore(id: string, userId: string) {
+    // Find the soft-deleted festival using raw query to bypass middleware
+    const festival = await this.prisma.festival.findFirst({
+      where: { id },
+      includeDeleted: true,
+    } as any);
+
+    if (!festival) {
+      throw new NotFoundException(`Festival with ID "${id}" not found`);
+    }
+
+    if (festival.organizerId !== userId) {
+      throw new ForbiddenException('You do not have permission to restore this festival');
+    }
+
+    if (!festival.isDeleted) {
+      throw new ConflictException('Festival is not deleted');
+    }
+
+    const restoredFestival = await this.prisma.festival.update({
+      where: { id },
+      data: {
+        isDeleted: false,
+        deletedAt: null,
+      },
+    });
+
+    // Invalidate festival cache
+    await this.invalidateFestivalCache(id, festival.slug);
+
+    this.logger.log(`Festival ${id} restored by user ${userId}`);
+
+    return restoredFestival;
+  }
+
+  /**
+   * Get all soft-deleted festivals for an organizer
+   */
+  async findDeleted(organizerId: string, query: FestivalQueryDto) {
+    const { page = 1, limit = 10 } = query;
+    const skip = (page - 1) * limit;
+
+    const where: any = {
+      organizerId,
+      isDeleted: true,
+    };
+
+    const [festivals, total] = await Promise.all([
+      this.prisma.festival.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { deletedAt: 'desc' },
+        include: {
+          organizer: {
+            select: { id: true, firstName: true, lastName: true, email: true },
+          },
+          _count: {
+            select: { tickets: true, ticketCategories: true },
+          },
+        },
+        includeDeleted: true,
+      } as any),
+      this.prisma.festival.count({
+        where,
+        includeDeleted: true,
+      } as any),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: festivals,
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPreviousPage: page > 1,
+    };
+  }
+
+  /**
+   * Permanently delete a soft-deleted festival
+   * WARNING: This is irreversible!
+   */
+  async hardDelete(id: string, userId: string) {
+    // Find the festival using raw query to bypass middleware
+    const festival = await this.prisma.festival.findFirst({
+      where: { id },
+      includeDeleted: true,
+    } as any);
+
+    if (!festival) {
+      throw new NotFoundException(`Festival with ID "${id}" not found`);
+    }
+
+    if (festival.organizerId !== userId) {
+      throw new ForbiddenException('You do not have permission to delete this festival');
+    }
+
+    // Permanently delete the festival
+    await (this.prisma.festival.delete as any)({
+      where: { id },
+      hardDelete: true,
+    });
+
+    // Invalidate festival cache
+    await this.invalidateFestivalCache(id, festival.slug);
+
+    this.logger.warn(`Festival ${id} permanently deleted by user ${userId}`);
+
+    return { message: `Festival ${id} has been permanently deleted` };
+  }
 }

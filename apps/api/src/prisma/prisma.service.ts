@@ -1,10 +1,11 @@
-import {
-  Injectable,
-  OnModuleInit,
-  OnModuleDestroy,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, OnModuleInit, OnModuleDestroy, Logger } from '@nestjs/common';
 import { PrismaClient, Prisma } from '@prisma/client';
+import {
+  createSoftDeleteFindMiddleware,
+  createSoftDeleteMiddleware,
+  SOFT_DELETE_MODELS,
+  SoftDeleteModel,
+} from './soft-delete.middleware';
 
 @Injectable()
 export class PrismaService
@@ -12,6 +13,7 @@ export class PrismaService
   implements OnModuleInit, OnModuleDestroy
 {
   private readonly logger = new Logger(PrismaService.name);
+  private softDeleteEnabled = true;
 
   constructor() {
     super({
@@ -44,6 +46,16 @@ export class PrismaService
     this.$on('warn', (event) => {
       this.logger.warn(`Prisma Warning: ${event.message}`);
     });
+
+    // Apply soft delete middleware (only if $use is available - not in tests with mocked client)
+    if (typeof this.$use === 'function') {
+      this.$use(createSoftDeleteFindMiddleware());
+      this.$use(createSoftDeleteMiddleware());
+
+      this.logger.log(
+        `Soft delete middleware enabled for models: ${SOFT_DELETE_MODELS.join(', ')}`
+      );
+    }
   }
 
   async onModuleInit() {
@@ -68,8 +80,7 @@ export class PrismaService
     }
 
     const models = Reflect.ownKeys(this).filter(
-      (key) =>
-        typeof key === 'string' && !key.startsWith('_') && !key.startsWith('$')
+      (key) => typeof key === 'string' && !key.startsWith('_') && !key.startsWith('$')
     );
 
     return Promise.all(
@@ -88,12 +99,23 @@ export class PrismaService
    */
   async executeInTransaction<T>(
     fn: (
-      prisma: Omit<
-        PrismaClient,
-        '$connect' | '$disconnect' | '$on' | '$transaction' | '$extends'
-      >
+      prisma: Omit<PrismaClient, '$connect' | '$disconnect' | '$on' | '$transaction' | '$extends'>
     ) => Promise<T>
   ): Promise<T> {
     return this.$transaction(fn);
+  }
+
+  /**
+   * Check if a model supports soft delete
+   */
+  isSoftDeleteModel(model: string): boolean {
+    return SOFT_DELETE_MODELS.includes(model as SoftDeleteModel);
+  }
+
+  /**
+   * Get list of models that support soft delete
+   */
+  getSoftDeleteModels(): readonly string[] {
+    return SOFT_DELETE_MODELS;
   }
 }

@@ -317,6 +317,9 @@ model TicketCategory {
   saleStartDate DateTime
   saleEndDate   DateTime
   isActive      Boolean     @default(true)
+  // Soft delete
+  isDeleted     Boolean     @default(false)
+  deletedAt     DateTime?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
 
@@ -331,6 +334,7 @@ model TicketCategory {
   @@index([festivalId, isActive])              // Festival's active categories
   @@index([festivalId, type, isActive])        // Festival categories by type
   @@index([saleStartDate, saleEndDate])        // Date range queries for on-sale categories
+  @@index([isDeleted])                         // Soft delete filter
 }
 
 model Ticket {
@@ -353,6 +357,9 @@ model Ticket {
   // Transfer fields
   transferredFromUserId String?
   transferredAt   DateTime?
+  // Soft delete
+  isDeleted       Boolean       @default(false)
+  deletedAt       DateTime?
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
@@ -380,6 +387,7 @@ model Ticket {
   @@index([guestEmail])                   // Guest ticket lookup by email
   @@index([isGuest])                      // Guest analytics
   @@index([transferredFromUserId])        // Transfer history lookup
+  @@index([isDeleted])                    // Soft delete filter
 }
 
 model Payment {
@@ -395,6 +403,9 @@ model Payment {
   metadata        Json?
   paidAt          DateTime?
   refundedAt      DateTime?
+  // Soft delete
+  isDeleted       Boolean         @default(false)
+  deletedAt       DateTime?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
 
@@ -412,6 +423,7 @@ model Payment {
   @@index([status, createdAt])            // Payment analytics
   @@index([provider, status])             // Provider analysis
   @@index([paidAt])                       // Completed payments timeline
+  @@index([isDeleted])                    // Soft delete filter
 }
 
 model CashlessAccount {
@@ -552,6 +564,9 @@ model Artist {
   spotifyUrl    String?
   instagramUrl  String?
   websiteUrl    String?
+  // Soft delete
+  isDeleted     Boolean       @default(false)
+  deletedAt     DateTime?
   createdAt     DateTime      @default(now())
   updatedAt     DateTime      @updatedAt
 
@@ -561,6 +576,7 @@ model Artist {
 
   @@index([name])
   @@index([genre])
+  @@index([isDeleted])
 }
 
 model Stage {
@@ -802,6 +818,9 @@ model Vendor {
   isActive        Boolean     @default(true)
   openingHours    Json?       // {"monday": {"open": "09:00", "close": "22:00"}, ...}
   qrMenuCode      String?     @unique // Unique QR code for digital menu
+  // Soft delete
+  isDeleted       Boolean     @default(false)
+  deletedAt       DateTime?
   createdAt       DateTime    @default(now())
   updatedAt       DateTime    @updatedAt
 
@@ -818,6 +837,7 @@ model Vendor {
   @@index([type])
   @@index([isOpen])
   @@index([isActive])
+  @@index([isDeleted])
 }
 
 model VendorProduct {
@@ -886,6 +906,9 @@ model VendorOrder {
   deliveredAt     DateTime?
   cancelledAt     DateTime?
   cancelReason    String?
+  // Soft delete
+  isDeleted       Boolean             @default(false)
+  deletedAt       DateTime?
   createdAt       DateTime            @default(now())
   updatedAt       DateTime            @updatedAt
 
@@ -906,6 +929,7 @@ model VendorOrder {
   @@index([vendorId, status, createdAt])  // Vendor analytics
   @@index([userId, createdAt])            // User order history
   @@index([status, createdAt])            // Global order analytics
+  @@index([isDeleted])                    // Soft delete filter
 }
 
 model VendorOrderItem {

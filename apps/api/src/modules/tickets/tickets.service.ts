@@ -116,138 +116,24 @@ export class TicketsService {
   async purchaseTickets(userId: string, dto: PurchaseTicketDto): Promise<TicketEntity[]> {
     const { festivalId, categoryId, quantity } = dto;
 
-    // Validate quantity
-    if (quantity < 1) {
-      throw new ValidationException('Quantity must be at least 1', [
-        { field: 'quantity', message: 'Quantity must be at least 1', value: quantity },
-      ]);
-    }
+    this.validatePurchaseQuantity(quantity);
 
-    // Get festival and category
-    const [festival, category] = await Promise.all([
-      this.prisma.festival.findUnique({
-        where: { id: festivalId },
-      }),
-      this.prisma.ticketCategory.findUnique({
-        where: { id: categoryId },
-      }),
-    ]);
+    const [festival, category] = await this.fetchFestivalAndCategory(festivalId, categoryId);
 
-    if (!festival) {
-      throw NotFoundException.festival(festivalId);
-    }
+    this.validateFestivalForPurchase(festival, festivalId);
+    this.validateCategoryForPurchase(category, categoryId, festivalId);
+    this.validateSalePeriod(category);
+    this.validateTicketAvailability(category, categoryId, quantity);
 
-    if (festival.isDeleted) {
-      throw new FestivalCancelledException(festivalId);
-    }
+    await this.validateUserQuota(userId, categoryId, quantity, category.maxPerUser);
 
-    if (festival.status === FestivalStatus.CANCELLED) {
-      throw new FestivalCancelledException(festivalId);
-    }
-
-    if (festival.status === FestivalStatus.COMPLETED) {
-      throw new FestivalEndedException(festivalId, festival.endDate);
-    }
-
-    if (!category) {
-      throw NotFoundException.ticketCategory(categoryId);
-    }
-
-    if (category.festivalId !== festivalId) {
-      throw new ValidationException('Category does not belong to this festival', [
-        {
-          field: 'categoryId',
-          message: 'Category does not belong to this festival',
-          value: categoryId,
-        },
-      ]);
-    }
-
-    if (!category.isActive) {
-      throw new TicketSoldOutException(categoryId, category.name);
-    }
-
-    // Check sale dates
-    const now = new Date();
-    if (now < category.saleStartDate) {
-      throw new TicketSaleNotStartedException(category.saleStartDate);
-    }
-
-    if (now > category.saleEndDate) {
-      throw new TicketSaleEndedException(category.saleEndDate);
-    }
-
-    // Check availability
-    const availableTickets = category.quota - category.soldCount;
-    if (availableTickets < quantity) {
-      if (availableTickets === 0) {
-        throw new TicketSoldOutException(categoryId, category.name);
-      }
-      throw new TicketQuotaExceededException(availableTickets, quantity);
-    }
-
-    // Check max per user
-    const userTicketCount = await this.prisma.ticket.count({
-      where: {
-        userId,
-        categoryId,
-        status: { in: [TicketStatus.SOLD, TicketStatus.RESERVED] },
-      },
-    });
-
-    if (userTicketCount + quantity > category.maxPerUser) {
-      throw new TicketQuotaExceededException(category.maxPerUser, userTicketCount + quantity);
-    }
-
-    // Create tickets in a transaction
-    const tickets = await this.prisma.$transaction(async (tx) => {
-      // Update sold count
-      await tx.ticketCategory.update({
-        where: { id: categoryId },
-        data: { soldCount: { increment: quantity } },
-      });
-
-      // Pre-generate ticket data for batch insert
-      const ticketDataArray = [];
-      for (let i = 0; i < quantity; i++) {
-        const ticketId = uuidv4();
-        const qrCode = this.generateQrCode(ticketId, festivalId, category.type);
-
-        ticketDataArray.push({
-          id: ticketId,
-          festivalId,
-          categoryId,
-          userId,
-          qrCode: qrCode.code,
-          qrCodeData: qrCode.signedData,
-          status: TicketStatus.SOLD,
-          purchasePrice: category.price,
-        });
-      }
-
-      // Batch insert tickets
-      await tx.ticket.createMany({
-        data: ticketDataArray,
-      });
-
-      // Retrieve created tickets with relations
-      const createdTickets = await tx.ticket.findMany({
-        where: {
-          id: { in: ticketDataArray.map((t) => t.id) },
-        },
-        include: {
-          festival: {
-            select: { id: true, name: true, startDate: true, endDate: true },
-          },
-          category: {
-            select: { id: true, name: true, type: true },
-          },
-        },
-        orderBy: { createdAt: 'desc' },
-      });
-
-      return createdTickets.map(this.mapToEntity);
-    });
+    const tickets = await this.createTicketsInTransaction(
+      userId,
+      festivalId,
+      categoryId,
+      quantity,
+      category
+    );
 
     this.logger.log(`User ${userId} purchased ${quantity} ticket(s) for festival ${festivalId}`);
 
@@ -576,138 +462,22 @@ export class TicketsService {
   ): Promise<TicketEntity> {
     const normalizedEmail = toUserEmail.toLowerCase().trim();
 
-    // Validate ticket exists and belongs to the sender
-    const ticket = await this.prisma.ticket.findUnique({
-      where: { id: ticketId },
-      include: {
-        festival: true,
-        category: true,
-        user: {
-          select: {
-            id: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-          },
-        },
-      },
-    });
+    const ticket = await this.fetchTicketForTransfer(ticketId);
+    this.validateTicketOwnership(ticket, ticketId, fromUserId);
+    this.validateTicketStatusForTransfer(ticket, ticketId);
+    this.validateFestivalStatusForTransfer(ticket);
+    this.validateNotSelfTransfer(ticket, ticketId, normalizedEmail);
 
-    if (!ticket) {
-      throw NotFoundException.ticket(ticketId);
-    }
+    const recipientUser = await this.findOrCreateRecipient(normalizedEmail);
+    await this.validateRecipientQuota(recipientUser.id, ticket, ticketId);
 
-    if (ticket.userId !== fromUserId) {
-      throw ForbiddenException.resourceForbidden(`ticket:${ticketId}`);
-    }
-
-    // Validate ticket is not already used
-    if (ticket.status === TicketStatus.USED) {
-      throw new TicketAlreadyUsedException(ticketId, ticket.usedAt || new Date());
-    }
-
-    // Validate ticket is not cancelled or refunded
-    if (ticket.status === TicketStatus.CANCELLED) {
-      throw new TicketTransferFailedException(ticketId, 'Ticket has been cancelled');
-    }
-
-    if (ticket.status === TicketStatus.REFUNDED) {
-      throw new TicketTransferFailedException(ticketId, 'Ticket has been refunded');
-    }
-
-    // Validate the festival is not ended or cancelled
-    if (ticket.festival.status === FestivalStatus.CANCELLED) {
-      throw new FestivalCancelledException(ticket.festivalId);
-    }
-
-    if (ticket.festival.status === FestivalStatus.COMPLETED) {
-      throw new FestivalEndedException(ticket.festivalId, ticket.festival.endDate);
-    }
-
-    // Prevent self-transfer
-    if (ticket.user.email.toLowerCase() === normalizedEmail) {
-      throw new TicketTransferFailedException(ticketId, 'Cannot transfer ticket to yourself');
-    }
-
-    // Find or create the recipient user
-    let recipientUser = await this.prisma.user.findUnique({
-      where: { email: normalizedEmail },
-    });
-
-    if (!recipientUser) {
-      // Create a new user with pending verification status
-      recipientUser = await this.prisma.user.create({
-        data: {
-          email: normalizedEmail,
-          passwordHash: '', // Will need to set password on first login
-          firstName: '',
-          lastName: '',
-          role: UserRole.USER,
-          status: UserStatus.PENDING_VERIFICATION,
-          emailVerified: false,
-        },
-      });
-
-      this.logger.log(`Created new user ${normalizedEmail} for ticket transfer`);
-    }
-
-    // Check recipient's ticket quota for this category
-    const recipientTicketCount = await this.prisma.ticket.count({
-      where: {
-        userId: recipientUser.id,
-        categoryId: ticket.categoryId,
-        status: { in: [TicketStatus.SOLD, TicketStatus.RESERVED] },
-      },
-    });
-
-    if (recipientTicketCount >= ticket.category.maxPerUser) {
-      throw new TicketTransferFailedException(
-        ticketId,
-        `Recipient has reached maximum tickets for this category (${ticket.category.maxPerUser})`
-      );
-    }
-
-    // Transfer the ticket
-    const updatedTicket = await this.prisma.ticket.update({
-      where: { id: ticketId },
-      data: {
-        userId: recipientUser.id,
-        transferredFromUserId: fromUserId,
-        transferredAt: new Date(),
-      },
-      include: {
-        festival: {
-          select: { id: true, name: true, startDate: true, endDate: true, location: true },
-        },
-        category: {
-          select: { id: true, name: true, type: true },
-        },
-      },
-    });
+    const updatedTicket = await this.executeTicketTransfer(ticketId, fromUserId, recipientUser.id);
 
     this.logger.log(
       `Ticket ${ticketId} transferred from ${ticket.user.email} to ${normalizedEmail}`
     );
 
-    // Send notification email to the recipient
-    try {
-      await this.emailService.sendTicketTransferEmail(normalizedEmail, {
-        recipientFirstName: recipientUser.firstName || undefined,
-        senderFirstName: ticket.user.firstName,
-        senderLastName: ticket.user.lastName,
-        senderEmail: ticket.user.email,
-        festivalName: ticket.festival.name,
-        ticketType: ticket.category.name,
-        ticketCode: ticket.qrCode,
-        eventDate: ticket.festival.startDate,
-        eventLocation: ticket.festival.location || undefined,
-      });
-    } catch (error) {
-      // Log the error but don't fail the transfer
-      this.logger.warn(
-        `Failed to send transfer notification email to ${normalizedEmail}: ${error instanceof Error ? error.message : String(error)}`
-      );
-    }
+    await this.sendTransferNotification(normalizedEmail, recipientUser, ticket);
 
     return this.mapToEntity(updatedTicket);
   }
@@ -784,6 +554,399 @@ export class TicketsService {
     return JSON.stringify(payload);
   }
 
+  // ============================================================================
+  // Purchase Ticket Helper Methods
+  // ============================================================================
+
+  /**
+   * Validate purchase quantity is at least 1
+   */
+  private validatePurchaseQuantity(quantity: number): void {
+    if (quantity < 1) {
+      throw new ValidationException('Quantity must be at least 1', [
+        { field: 'quantity', message: 'Quantity must be at least 1', value: quantity },
+      ]);
+    }
+  }
+
+  /**
+   * Fetch festival and category in parallel
+   */
+  private async fetchFestivalAndCategory(
+    festivalId: string,
+    categoryId: string
+  ): Promise<[any, any]> {
+    return Promise.all([
+      this.prisma.festival.findUnique({ where: { id: festivalId } }),
+      this.prisma.ticketCategory.findUnique({ where: { id: categoryId } }),
+    ]);
+  }
+
+  /**
+   * Validate festival status for ticket purchase
+   */
+  private validateFestivalForPurchase(festival: any, festivalId: string): void {
+    if (!festival) {
+      throw NotFoundException.festival(festivalId);
+    }
+
+    if (festival.isDeleted) {
+      throw new FestivalCancelledException(festivalId);
+    }
+
+    if (festival.status === FestivalStatus.CANCELLED) {
+      throw new FestivalCancelledException(festivalId);
+    }
+
+    if (festival.status === FestivalStatus.COMPLETED) {
+      throw new FestivalEndedException(festivalId, festival.endDate);
+    }
+  }
+
+  /**
+   * Validate category exists and belongs to the festival
+   */
+  private validateCategoryForPurchase(category: any, categoryId: string, festivalId: string): void {
+    if (!category) {
+      throw NotFoundException.ticketCategory(categoryId);
+    }
+
+    if (category.festivalId !== festivalId) {
+      throw new ValidationException('Category does not belong to this festival', [
+        {
+          field: 'categoryId',
+          message: 'Category does not belong to this festival',
+          value: categoryId,
+        },
+      ]);
+    }
+
+    if (!category.isActive) {
+      throw new TicketSoldOutException(categoryId, category.name);
+    }
+  }
+
+  /**
+   * Validate sale period is active
+   */
+  private validateSalePeriod(category: any): void {
+    const now = new Date();
+
+    if (now < category.saleStartDate) {
+      throw new TicketSaleNotStartedException(category.saleStartDate);
+    }
+
+    if (now > category.saleEndDate) {
+      throw new TicketSaleEndedException(category.saleEndDate);
+    }
+  }
+
+  /**
+   * Validate ticket availability
+   */
+  private validateTicketAvailability(category: any, categoryId: string, quantity: number): void {
+    const availableTickets = category.quota - category.soldCount;
+
+    if (availableTickets < quantity) {
+      if (availableTickets === 0) {
+        throw new TicketSoldOutException(categoryId, category.name);
+      }
+      throw new TicketQuotaExceededException(availableTickets, quantity);
+    }
+  }
+
+  /**
+   * Validate user hasn't exceeded max tickets per user
+   */
+  private async validateUserQuota(
+    userId: string,
+    categoryId: string,
+    quantity: number,
+    maxPerUser: number
+  ): Promise<void> {
+    const userTicketCount = await this.prisma.ticket.count({
+      where: {
+        userId,
+        categoryId,
+        status: { in: [TicketStatus.SOLD, TicketStatus.RESERVED] },
+      },
+    });
+
+    if (userTicketCount + quantity > maxPerUser) {
+      throw new TicketQuotaExceededException(maxPerUser, userTicketCount + quantity);
+    }
+  }
+
+  /**
+   * Create tickets in a database transaction
+   */
+  private async createTicketsInTransaction(
+    userId: string,
+    festivalId: string,
+    categoryId: string,
+    quantity: number,
+    category: any
+  ): Promise<TicketEntity[]> {
+    return this.prisma.$transaction(async (tx) => {
+      await tx.ticketCategory.update({
+        where: { id: categoryId },
+        data: { soldCount: { increment: quantity } },
+      });
+
+      const ticketDataArray = this.generateTicketDataArray(
+        userId,
+        festivalId,
+        categoryId,
+        quantity,
+        category
+      );
+
+      await tx.ticket.createMany({ data: ticketDataArray });
+
+      const createdTickets = await tx.ticket.findMany({
+        where: { id: { in: ticketDataArray.map((t) => t.id) } },
+        include: {
+          festival: {
+            select: { id: true, name: true, startDate: true, endDate: true },
+          },
+          category: {
+            select: { id: true, name: true, type: true },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      return createdTickets.map(this.mapToEntity);
+    });
+  }
+
+  /**
+   * Generate ticket data array for batch insert
+   */
+  private generateTicketDataArray(
+    userId: string,
+    festivalId: string,
+    categoryId: string,
+    quantity: number,
+    category: any
+  ): {
+    id: string;
+    festivalId: string;
+    categoryId: string;
+    userId: string;
+    qrCode: string;
+    qrCodeData: string;
+    status: TicketStatus;
+    purchasePrice: any;
+  }[] {
+    const ticketDataArray = [];
+
+    for (let i = 0; i < quantity; i++) {
+      const ticketId = uuidv4();
+      const qrCode = this.generateQrCode(ticketId, festivalId, category.type);
+
+      ticketDataArray.push({
+        id: ticketId,
+        festivalId,
+        categoryId,
+        userId,
+        qrCode: qrCode.code,
+        qrCodeData: qrCode.signedData,
+        status: TicketStatus.SOLD,
+        purchasePrice: category.price,
+      });
+    }
+
+    return ticketDataArray;
+  }
+
+  // ============================================================================
+  // Transfer Ticket Helper Methods
+  // ============================================================================
+
+  /**
+   * Fetch ticket with all relations needed for transfer
+   */
+  private async fetchTicketForTransfer(ticketId: string): Promise<any> {
+    const ticket = await this.prisma.ticket.findUnique({
+      where: { id: ticketId },
+      include: {
+        festival: true,
+        category: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+    });
+
+    if (!ticket) {
+      throw NotFoundException.ticket(ticketId);
+    }
+
+    return ticket;
+  }
+
+  /**
+   * Validate ticket belongs to the sender
+   */
+  private validateTicketOwnership(ticket: any, ticketId: string, userId: string): void {
+    if (ticket.userId !== userId) {
+      throw ForbiddenException.resourceForbidden(`ticket:${ticketId}`);
+    }
+  }
+
+  /**
+   * Validate ticket status allows transfer
+   */
+  private validateTicketStatusForTransfer(ticket: any, ticketId: string): void {
+    if (ticket.status === TicketStatus.USED) {
+      throw new TicketAlreadyUsedException(ticketId, ticket.usedAt || new Date());
+    }
+
+    if (ticket.status === TicketStatus.CANCELLED) {
+      throw new TicketTransferFailedException(ticketId, 'Ticket has been cancelled');
+    }
+
+    if (ticket.status === TicketStatus.REFUNDED) {
+      throw new TicketTransferFailedException(ticketId, 'Ticket has been refunded');
+    }
+  }
+
+  /**
+   * Validate festival status allows transfer
+   */
+  private validateFestivalStatusForTransfer(ticket: any): void {
+    if (ticket.festival.status === FestivalStatus.CANCELLED) {
+      throw new FestivalCancelledException(ticket.festivalId);
+    }
+
+    if (ticket.festival.status === FestivalStatus.COMPLETED) {
+      throw new FestivalEndedException(ticket.festivalId, ticket.festival.endDate);
+    }
+  }
+
+  /**
+   * Validate user is not transferring to themselves
+   */
+  private validateNotSelfTransfer(ticket: any, ticketId: string, recipientEmail: string): void {
+    if (ticket.user.email.toLowerCase() === recipientEmail) {
+      throw new TicketTransferFailedException(ticketId, 'Cannot transfer ticket to yourself');
+    }
+  }
+
+  /**
+   * Find or create recipient user
+   */
+  private async findOrCreateRecipient(email: string): Promise<any> {
+    let recipientUser = await this.prisma.user.findUnique({
+      where: { email },
+    });
+
+    if (!recipientUser) {
+      recipientUser = await this.prisma.user.create({
+        data: {
+          email,
+          passwordHash: '',
+          firstName: '',
+          lastName: '',
+          role: UserRole.USER,
+          status: UserStatus.PENDING_VERIFICATION,
+          emailVerified: false,
+        },
+      });
+
+      this.logger.log(`Created new user ${email} for ticket transfer`);
+    }
+
+    return recipientUser;
+  }
+
+  /**
+   * Validate recipient hasn't exceeded quota for this category
+   */
+  private async validateRecipientQuota(
+    recipientId: string,
+    ticket: any,
+    ticketId: string
+  ): Promise<void> {
+    const recipientTicketCount = await this.prisma.ticket.count({
+      where: {
+        userId: recipientId,
+        categoryId: ticket.categoryId,
+        status: { in: [TicketStatus.SOLD, TicketStatus.RESERVED] },
+      },
+    });
+
+    if (recipientTicketCount >= ticket.category.maxPerUser) {
+      throw new TicketTransferFailedException(
+        ticketId,
+        `Recipient has reached maximum tickets for this category (${ticket.category.maxPerUser})`
+      );
+    }
+  }
+
+  /**
+   * Execute the ticket transfer update
+   */
+  private async executeTicketTransfer(
+    ticketId: string,
+    fromUserId: string,
+    toUserId: string
+  ): Promise<any> {
+    return this.prisma.ticket.update({
+      where: { id: ticketId },
+      data: {
+        userId: toUserId,
+        transferredFromUserId: fromUserId,
+        transferredAt: new Date(),
+      },
+      include: {
+        festival: {
+          select: { id: true, name: true, startDate: true, endDate: true, location: true },
+        },
+        category: {
+          select: { id: true, name: true, type: true },
+        },
+      },
+    });
+  }
+
+  /**
+   * Send transfer notification email (non-blocking)
+   */
+  private async sendTransferNotification(
+    recipientEmail: string,
+    recipientUser: any,
+    ticket: any
+  ): Promise<void> {
+    try {
+      await this.emailService.sendTicketTransferEmail(recipientEmail, {
+        recipientFirstName: recipientUser.firstName || undefined,
+        senderFirstName: ticket.user.firstName,
+        senderLastName: ticket.user.lastName,
+        senderEmail: ticket.user.email,
+        festivalName: ticket.festival.name,
+        ticketType: ticket.category.name,
+        ticketCode: ticket.qrCode,
+        eventDate: ticket.festival.startDate,
+        eventLocation: ticket.festival.location || undefined,
+      });
+    } catch (error) {
+      this.logger.warn(
+        `Failed to send transfer notification email to ${recipientEmail}: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+  }
+
+  // ============================================================================
+  // Entity Mapping
+  // ============================================================================
+
   /**
    * Map Prisma ticket to entity
    */
@@ -827,6 +990,203 @@ export class TicketsService {
             type: ticket.category.type,
           }
         : undefined,
+    };
+  }
+
+  // ============================================================================
+  // Soft Delete Operations
+  // ============================================================================
+
+  /**
+   * Soft delete a ticket
+   * Sets isDeleted=true and deletedAt=now()
+   */
+  async softDeleteTicket(
+    ticketId: string,
+    userId: string
+  ): Promise<{ success: boolean; message: string }> {
+    const ticket = await this.prisma.ticket.findFirst({
+      where: { id: ticketId },
+      include: { festival: true },
+      includeDeleted: true,
+    } as any);
+
+    if (!ticket) {
+      throw NotFoundException.ticket(ticketId);
+    }
+
+    if (ticket.userId !== userId) {
+      throw ForbiddenException.resourceForbidden(`ticket:${ticketId}`);
+    }
+
+    if (ticket.isDeleted) {
+      throw new ValidationException('Ticket is already deleted', [
+        { field: 'ticketId', message: 'Ticket is already deleted', value: ticketId },
+      ]);
+    }
+
+    await this.prisma.ticket.update({
+      where: { id: ticketId },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+      },
+    });
+
+    this.logger.log(`Ticket ${ticketId} soft deleted by user ${userId}`);
+
+    return {
+      success: true,
+      message: `Ticket ${ticketId} has been deleted`,
+    };
+  }
+
+  /**
+   * Restore a soft-deleted ticket
+   * Sets isDeleted=false and deletedAt=null
+   */
+  async restoreTicket(ticketId: string, userId: string): Promise<TicketEntity> {
+    const ticket = await this.prisma.ticket.findFirst({
+      where: { id: ticketId },
+      include: {
+        festival: {
+          select: { id: true, name: true, startDate: true, endDate: true, status: true },
+        },
+        category: {
+          select: { id: true, name: true, type: true },
+        },
+      },
+      includeDeleted: true,
+    } as any);
+
+    if (!ticket) {
+      throw NotFoundException.ticket(ticketId);
+    }
+
+    if (ticket.userId !== userId) {
+      throw ForbiddenException.resourceForbidden(`ticket:${ticketId}`);
+    }
+
+    if (!ticket.isDeleted) {
+      throw new ValidationException('Ticket is not deleted', [
+        { field: 'ticketId', message: 'Ticket is not deleted', value: ticketId },
+      ]);
+    }
+
+    // Check if festival is still active
+    if (ticket.festival.status === FestivalStatus.CANCELLED) {
+      throw new FestivalCancelledException(ticket.festivalId);
+    }
+
+    if (ticket.festival.status === FestivalStatus.COMPLETED) {
+      throw new FestivalEndedException(ticket.festivalId, ticket.festival.endDate);
+    }
+
+    const restoredTicket = await this.prisma.ticket.update({
+      where: { id: ticketId },
+      data: {
+        isDeleted: false,
+        deletedAt: null,
+      },
+      include: {
+        festival: {
+          select: { id: true, name: true, startDate: true, endDate: true },
+        },
+        category: {
+          select: { id: true, name: true, type: true },
+        },
+      },
+    });
+
+    this.logger.log(`Ticket ${ticketId} restored by user ${userId}`);
+
+    return this.mapToEntity(restoredTicket);
+  }
+
+  /**
+   * Get all soft-deleted tickets for a user
+   */
+  async getDeletedTickets(
+    userId: string,
+    options?: { page?: number; limit?: number; festivalId?: string }
+  ): Promise<{
+    items: TicketEntity[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+  }> {
+    const page = options?.page ?? 1;
+    const limit = Math.min(options?.limit ?? 20, 100);
+    const skip = (page - 1) * limit;
+
+    const where: any = {
+      userId,
+      isDeleted: true,
+    };
+
+    if (options?.festivalId) {
+      where.festivalId = options.festivalId;
+    }
+
+    const [tickets, total] = await Promise.all([
+      this.prisma.ticket.findMany({
+        where,
+        include: {
+          festival: {
+            select: { id: true, name: true, startDate: true, endDate: true },
+          },
+          category: {
+            select: { id: true, name: true, type: true },
+          },
+        },
+        skip,
+        take: limit,
+        orderBy: { deletedAt: 'desc' },
+        includeDeleted: true,
+      } as any),
+      this.prisma.ticket.count({
+        where,
+        includeDeleted: true,
+      } as any),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      items: tickets.map(this.mapToEntity),
+      total,
+      page,
+      limit,
+      totalPages,
+    };
+  }
+
+  /**
+   * Hard delete a soft-deleted ticket (permanent deletion)
+   * Only for admin use
+   */
+  async hardDeleteTicket(ticketId: string): Promise<{ success: boolean; message: string }> {
+    const ticket = await this.prisma.ticket.findFirst({
+      where: { id: ticketId },
+      includeDeleted: true,
+    } as any);
+
+    if (!ticket) {
+      throw NotFoundException.ticket(ticketId);
+    }
+
+    // Permanently delete the ticket
+    await (this.prisma.ticket.delete as any)({
+      where: { id: ticketId },
+      hardDelete: true,
+    });
+
+    this.logger.warn(`Ticket ${ticketId} permanently deleted`);
+
+    return {
+      success: true,
+      message: `Ticket ${ticketId} has been permanently deleted`,
     };
   }
 }
