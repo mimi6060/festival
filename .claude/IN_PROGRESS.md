@@ -2,6 +2,209 @@
 
 ---
 
+## Session 2026-01-08 - Tests Unitaires Program Module
+
+### Tâches terminées cette session:
+
+- [x] **Created comprehensive unit tests for Program Module (61 tests)**
+  - `program.service.spec.ts` (61 tests):
+    - getProgram: return all performances, cache hit/miss, cache with TTL and tags, mark favorites, mark non-favorites, no userId no favorites query, empty array, null genre/imageUrl/location/capacity handling
+    - getProgramByDay: return performances for day, cache hit/miss, cache with TTL and tags, mark favorites, empty array, date range filtering
+    - getArtists: return all artists, cache hit/miss, cache after fetch, filter by festival performances, empty array, map properties
+    - getArtistById: return artist, NotFoundException, map all properties
+    - getArtistPerformances: return all performances, filter by festivalId, no festivalId filter, empty array, map properties, multiple performances
+    - getStages: return all stages, cache hit/miss, cache after fetch, filter by festivalId, empty array, map properties
+    - getFavorites: return favorite artist IDs, query by userId/festivalId, empty array
+    - toggleFavorite: add to favorites, remove from favorites, check unique key, no delete when adding, no create when removing
+    - caching behavior: correct cache keys for all methods, FESTIVAL tag usage, 10 min TTL
+    - time formatting: startTime/endTime format, day name calculation
+    - edge cases: null optional fields, long artist names, special characters, unicode, multiple favorites, midnight performances
+  - Tests caching that was just added (Redis cache with 10 min TTL)
+  - Uses Jest with mocks for PrismaService and CacheService
+  - All tests pass: `npx nx test api --testFile=program.service.spec` SUCCESS (61 tests)
+
+---
+
+## Session 2026-01-08 - Tests E2E Auth Module avec Cookie Support
+
+### Tâches terminées cette session:
+
+- [x] **Enhanced E2E tests for Auth Module with supertest and cookie support**
+  - `auth.e2e-spec.ts` (60+ tests using supertest):
+    - POST /auth/register: success, phone, validation errors, duplicate email, email normalization
+    - POST /auth/login: success with cookies, httpOnly cookies, invalid credentials, validation
+    - GET /auth/me: Bearer token auth, cookie auth, unauthorized, invalid token
+    - POST /auth/refresh: body token, cookie token, new cookies, validation, token preference
+    - POST /auth/logout: Bearer token, cookie auth, clear cookies, invalidate refresh token
+    - POST /auth/forgot-password: valid email, non-existent email (security), validation
+    - POST /auth/reset-password: validation, invalid token, password strength
+    - POST /auth/change-password: success, wrong password, auth required, validation
+    - POST /auth/verify-email: validation, invalid token
+    - POST /auth/resend-verification: success, validation
+    - GET /auth/providers: list providers, provider structure
+    - Complete Auth Flow Integration: full lifecycle with cookies, session maintenance
+    - Security Tests: no password exposure, no refresh token exposure, auth header validation, timing-safe
+  - Uses supertest instead of axios for proper cookie handling
+  - All endpoints tested with both Bearer token and cookie authentication
+  - Migrated from axios to supertest for better HTTP cookie support
+  - Build verified: `npx nx build api --skip-nx-cache` SUCCESS
+
+---
+
+## Session 2026-01-08 - Tests Unitaires Notifications Module
+
+### Tâches terminées cette session:
+
+- [x] **Created comprehensive unit tests for Notifications Module (72 tests)**
+  - `notifications.service.spec.ts` (72 tests):
+    - getUserNotifications: pagination, filtering by read status/type/festivalId, empty array, default values
+    - markAsRead: success, NotFoundException (not found/different user), already read
+    - markAllAsRead: mark all, count 0 when none unread
+    - deleteNotification: success, NotFoundException (not found/different user)
+    - getUnreadCount: return count, return 0
+    - sendNotification (includes Push/Email):
+      - Create in-app notification
+      - Send push when enabled with tokens
+      - Skip push when no tokens
+      - Emit email event when sendEmail=true
+      - Respect user category preferences
+      - Respect pushEnabled/emailEnabled preferences
+      - Handle FCM errors gracefully
+      - Respect quiet hours
+      - Handle all optional fields
+    - sendBulkNotifications: multiple users, partial failures, batch processing (100), empty list
+    - sendSegmentedNotification: targetAll, targetRoles, targetTicketTypes, no matches, combine criteria
+    - sendTemplatedNotification: using template, NotFoundException, multiple users, default options
+    - registerPushToken: new token, deactivate if other user, same user no deactivate
+    - deactivatePushToken: success
+    - getUserPushTokens: return tokens, empty array
+    - getPreferences: existing, create defaults
+    - updatePreferences: update single field, categories, quiet hours
+    - getAnalytics: return analytics, filter by festivalId/date range, 0 read rate
+    - Notification Types: all 11 types (TICKET_PURCHASED, PAYMENT_SUCCESS, etc.)
+    - Platform Support: IOS, ANDROID, WEB
+  - Uses Jest with mocks for PrismaService, FcmService, NotificationTemplateService, EventEmitter2
+  - All tests pass: `npx nx test api --testFile=notifications.service.spec` SUCCESS (72 tests)
+
+---
+
+## Session 2026-01-08 - Tests Unitaires Zones Module
+
+### Tâches terminées cette session:
+
+- [x] **Created comprehensive unit tests for Zones Module (110 tests)**
+  - `zones.service.spec.ts` (68 tests):
+    - create: success (organizer/admin), NotFoundException (festival), ForbiddenException (unauthorized), empty requiresTicketType
+    - findAllByFestival: return all zones, NotFoundException, empty array
+    - findOne: return zone by ID, NotFoundException
+    - update: success (organizer/admin), ForbiddenException, NotFoundException, partial updates
+    - remove: success (organizer/admin), ForbiddenException, NotFoundException
+    - checkAccess: grant VIP ticket access, deny standard ticket, inactive zone denial, full capacity denial, near capacity warning (80%+), ticket status validation, festival mismatch, QR code lookup, no ticket found, missing ticketId/qrCode error, zones without restrictions, USED ticket status
+    - logAccess: entry/exit logging, occupancy increment/decrement, access denied error, prevent negative occupancy, QR code resolution, CRITICAL alert at capacity, ticket status update to USED
+    - getCapacityStatus: GREEN/YELLOW/ORANGE/RED status based on occupancy %, zones without capacity limit, NotFoundException
+    - getAllZonesCapacityStatus: return all zones capacity, empty array
+    - getAccessLog: pagination, date range filtering, action type filtering, NotFoundException
+    - getAccessStats: statistics calculation, date range filtering, average stay duration, peak occupancy, hourly distribution
+    - resetOccupancy: admin-only reset, ForbiddenException
+    - adjustOccupancy: admin/organizer adjustment, ForbiddenException for staff/users, prevent negative occupancy
+  - `zones.controller.spec.ts` (42 tests):
+    - FestivalZonesController:
+      - POST /festivals/:festivalId/zones: create zone with auth
+      - GET /festivals/:festivalId/zones: list all zones
+      - GET /festivals/:festivalId/zones/capacity: dashboard capacity view
+    - ZonesController:
+      - GET /zones/:id: get zone details
+      - PATCH /zones/:id: update zone
+      - DELETE /zones/:id: delete zone
+      - GET /zones/:id/capacity: capacity status
+      - POST /zones/:id/check: QR scan access check
+      - POST /zones/:id/access: entry/exit logging
+      - POST /zones/:id/configure-access: access rules configuration
+      - GET /zones/:id/access-log: access history with pagination
+      - GET /zones/:id/stats: zone statistics
+      - POST /zones/:id/reset-occupancy: admin occupancy reset
+      - POST /zones/:id/adjust-occupancy: manual occupancy adjustment
+    - Error handling, authorization, input validation tests
+  - Uses Jest with mocks for ZonesService and PrismaService
+  - All tests pass: `npx nx test api --testFile=zones` SUCCESS (110 tests)
+  - Zones module coverage: **97.89%** statements, **100%** functions
+
+---
+
+## Session 2026-01-08 - Tests Unitaires Users Module
+
+### Tâches terminées cette session:
+
+- [x] **Created comprehensive unit tests for Users Module (144 tests)**
+  - `users.service.spec.ts` (81 tests):
+    - create: success, duplicate email, normalize email, trim whitespace, skip email verification
+    - findAll: pagination, exclude soft-deleted, filter by role/status/email/search/festivalId, sorting
+    - findOne: admin access, self-access, forbidden for other users, not found, soft-deleted access
+    - findByEmail: success, not found, exclude soft-deleted, include deleted
+    - update: success, forbidden for others, not found, email conflict, password validation
+    - softDelete: success, not found, prevent admin deletion, prevent self-deletion, already deleted
+    - hardDelete: permanent delete, prevent admin deletion, audit logging
+    - changeRole: success, prevent self-change, prevent admin demotion
+    - search: min query length, exclude soft-deleted, respect limit
+    - ban: success, prevent admin ban, prevent self-ban, already banned
+    - unban: success, not banned error
+    - deactivate: success, prevent admin deactivate, prevent self-deactivate
+    - getActivity: return history, include summaries, sort by date
+    - emailExists: check existence, exclude soft-deleted
+  - `users.controller.spec.ts` (63 tests):
+    - POST /users: create with admin auth
+    - GET /users: paginated list with filters
+    - GET /users/search: autocomplete search
+    - GET /users/:id: get user details
+    - PATCH /users/:id: update user profile
+    - DELETE /users/:id: deactivate user
+    - PATCH /users/:id/role: change user role
+    - POST /users/:id/ban: ban user
+    - POST /users/:id/unban: unban user
+    - GET /users/:id/activity: get activity history
+    - RBAC tests: admin-only endpoints, self-access endpoints
+    - Input validation tests
+    - Error handling tests
+    - Return type tests
+  - Uses Jest with mocks for PrismaService
+  - All tests pass: 144 tests total
+  - Users module coverage: **97.26%** statements, **100%** functions
+
+---
+
+## Session 2026-01-08 - Tests Unitaires Festivals Module
+
+### Tâches terminées cette session:
+
+- [x] **Created comprehensive unit tests for Festivals Module (100 tests)**
+  - `festivals.service.spec.ts` (49 tests):
+    - Festival creation (success, auto-slug, accents, validation, conflicts)
+    - Festival retrieval: findAll (pagination, filtering, search, multi-tenant), findOne, findBySlug
+    - Festival updates (success, authorization, partial updates)
+    - Status management (publish, cancel, authorization)
+    - Soft delete (success, authorization, not found)
+    - Statistics (comprehensive stats, occupancy rate, zero revenue handling)
+    - Multi-tenant isolation enforcement (organizer ownership checks)
+    - Edge cases (empty search, special characters, long names, concurrent slugs)
+  - `festivals.controller.spec.ts` (51 tests):
+    - POST /festivals (create with auth)
+    - GET /festivals (list with pagination, filtering)
+    - GET /festivals/:id (get by ID)
+    - GET /festivals/by-slug/:slug (get by slug)
+    - PUT /festivals/:id (update with auth)
+    - DELETE /festivals/:id (delete with auth)
+    - GET /festivals/:id/stats (statistics)
+    - POST /festivals/:id/publish (publish)
+    - POST /festivals/:id/cancel (cancel)
+    - Error handling (NotFoundException, ConflictException, ForbiddenException)
+    - Authentication tests (user ID extraction from request)
+    - Multi-tenant isolation tests
+    - Edge cases (empty payloads, UUID validation, special chars)
+  - Uses Jest with mocks for PrismaService and CacheService
+  - All tests pass: `npx nx test api --testFile=festivals` SUCCESS
+
+---
+
 ## Session 2026-01-08 - Prisma Schema Performance Indexes
 
 ### Tâches terminées cette session:
