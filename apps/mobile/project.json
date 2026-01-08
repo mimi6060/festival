@@ -4,5 +4,13 @@
   "sourceRoot": "apps/mobile/src",
   "projectType": "application",
   "tags": ["type:app", "scope:mobile"],
-  "targets": {}
+  "targets": {
+    "test": {
+      "executor": "@nx/jest:jest",
+      "outputs": ["{workspaceRoot}/coverage/apps/mobile"],
+      "options": {
+        "jestConfig": "apps/mobile/jest.config.ts"
+      }
+    }
+  }
 }

@@ -2,6 +2,147 @@
 
 ---
 
+## Session 2026-01-08 - React Native Mobile App Tests
+
+### Tâches terminées cette session:
+
+- [x] **Created comprehensive tests for React Native mobile app (175 tests)**
+  - **Testing dependencies installed:**
+    - @testing-library/react-native@^12.0.0
+    - react-test-renderer@18
+    - @types/react-test-renderer
+  - **Jest configuration for React Native:**
+    - `apps/mobile/jest.config.ts` - @swc/jest transformer, module name mapping
+    - `apps/mobile/jest.setup.ts` - Testing Library setup, navigation mocks
+    - `apps/mobile/tsconfig.spec.json` - TypeScript config for tests
+    - `apps/mobile/project.json` - test target added with @nx/jest
+  - **Module mocks created (`apps/mobile/src/__mocks__/`):**
+    - `async-storage.ts` - AsyncStorage mock with in-memory store
+    - `netinfo.ts` - NetInfo mock with event listener support
+    - `safe-area-context.ts` - SafeAreaView/Provider mocks
+    - `qrcode-svg.ts` - QR code component mock
+    - `react-native.ts` - Full React Native mock (View, Text, TouchableOpacity, etc.)
+  - **TicketCard.test.tsx (35 tests):**
+    - Status color logic: valid=success, used=muted, expired/cancelled=error
+    - Ticket type labels: STANDARD, VIP, BACKSTAGE
+    - Ticket type colors: primary, secondary, accent
+    - Date formatting: French locale, invalid date handling, ISO format
+    - Ticket data validation: required fields, optional seatInfo, types, statuses
+    - Edge cases: special characters, unicode, long text, zero/decimal prices
+  - **QRCodeDisplay.test.tsx (34 tests):**
+    - Props defaults: size=200, showBorder=true
+    - Value handling: ticket format, payment format, URL, empty, long, special chars
+    - Title and subtitle: optional, both together, unicode, special characters
+    - Size validation: small/large/typical sizes
+    - Full props combinations: all props, minimal props
+    - QR code value formats: ticket ID parsing, payment amount parsing, validation
+  - **authStore.test.ts (45 tests):**
+    - Initial state: null user/token, not authenticated, loading, onboarding not seen
+    - setUser: set/clear user, authentication state
+    - setToken: set/clear token
+    - login: user+token+authentication, loading state
+    - logout: clear all, preserve onboarding state
+    - updateUser: update properties, null user handling
+    - setHasSeenOnboarding: true/false
+    - setLoading: true/false
+    - Full authentication flow: login-update-logout, onboarding flow
+    - Edge cases: rapid updates, login after logout, minimal/full user data
+  - **offline.test.ts (31 tests):**
+    - SyncQueueItem interface: required fields, optional body, unique IDs, timestamps
+    - Network status: online/offline detection, null handling, connection types
+    - AsyncStorage operations: save/load queue, last sync time, clear data
+    - Sync data logic: tickets, wallet, program, error handling
+    - Queue processing: fetch calls, retry failed items
+    - Offline behavior: queue actions, process on online
+    - Edge cases: concurrent operations, storage errors, malformed data
+  - **api.test.ts (58 tests):**
+    - Headers: Content-Type, Authorization with/without token
+    - Login: credentials, success/error responses
+    - Register: user data, success/error
+    - Profile: get/update
+    - Tickets: list, get by ID, validate
+    - Wallet: balance, transactions, topup
+    - Program: full program, by day
+    - Notifications: list, mark read, register push token
+    - Error handling: network errors, HTTP errors, malformed JSON, timeout, 401/404
+    - Edge cases: empty response, null data, special characters
+  - **useOffline.test.ts (32 tests):**
+    - Network state interface: return type, offline state
+    - Network detection: initial state, wifi/cellular/offline, null values
+    - Network listener: subscribe, unsubscribe, callback
+    - Sync functionality: success/failure, concurrent prevention, errors
+    - Last sync time: get, null, update after sync
+    - Sync pending count: queue length, empty, update
+    - Connection state changes: offline/online transitions, rapid changes
+    - Edge cases: undefined state, sync during transition, cleanup
+  - All 175 tests pass: `npx nx test mobile --skip-nx-cache` SUCCESS
+  - Tests execute in 0.3 seconds
+
+---
+
+## Session 2026-01-08 - Tests Unitaires Interceptors & Filters
+
+### Tâches terminées cette session:
+
+- [x] **Created comprehensive unit tests for Interceptors & Exception Filters (175 tests)**
+  - **New interceptors created:**
+    - `logging.interceptor.ts` - Request/response logging with timing, correlation IDs
+    - `transform.interceptor.ts` - Standard API response wrapper with pagination support
+    - `timeout.interceptor.ts` - Request timeout with custom per-endpoint support
+  - **logging.interceptor.spec.ts (29 tests)**:
+    - intercept: log request, response, duration, anonymous/authenticated user, request ID
+    - Log levels: info for 2xx/3xx, warn for 4xx, error for 5xx
+    - Error handling: stack trace, error message, duration, error propagation
+    - HTTP methods: GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD
+    - URL logging: query parameters, path parameters
+    - getStructuredLogData: structured log format, timestamp, optional fields
+    - IP address extraction: request.ip, connection.remoteAddress fallback
+    - Concurrent requests handling
+  - **transform.interceptor.spec.ts (29 tests)**:
+    - Standard transformation: wrap data, null/undefined/array/string/number/boolean/empty responses
+    - Already wrapped: no double-wrap for success/error/meta responses
+    - Paginated response: meta calculation, totalPages, hasNext/hasPrevious, empty result
+    - SkipTransform decorator: skip when set, transform when not set, metadata key check
+    - Without reflector: works without reflector provided
+    - Complex nested data: deeply nested objects, arrays, mixed types
+    - createPaginatedResult: helper function tests
+  - **timeout.interceptor.spec.ts (26 tests)**:
+    - Default timeout: DEFAULT_TIMEOUT constant, custom options
+    - Successful requests: before timeout, null/array responses
+    - Timeout handling: RequestTimeoutException, timeout value, custom message, 408 status
+    - Custom timeout via decorator: metadata lookup, timeout with custom value
+    - Disabled timeout: zero/negative timeout values
+    - Error propagation: non-timeout errors, HTTP exceptions
+    - getEffectiveTimeout: default, custom, no reflector
+    - createTimeoutInterceptor factory function
+  - **http-exception.filter.spec.ts (40 tests)**:
+    - BaseException handling: flat response format, details, validation errors, auth/forbidden/conflict
+    - Standard HttpException: BadRequest, Unauthorized, Forbidden, NotFound, Conflict, string/object response
+    - Class-validator errors: parse validation errors, field extraction
+    - Language handling: French default, English when Accept-Language is en
+    - Request ID handling: use header, generate when missing
+    - Logging: warn for 4xx, error for 5xx, stack trace, request context
+    - Response format: timestamp, path, FlatErrorResponse interface
+    - Error code mapping: status to error code mapping, INTERNAL_ERROR for unmapped
+    - Edge cases: undefined message, empty object, no user, no connection
+  - **all-exceptions.filter.spec.ts (51 tests)**:
+    - Prisma errors: P2002 unique constraint (email/phone/slug/nfcTagId), P2003 foreign key, P2025 not found, P2011 required field, P1001/P1008/P1010 connection/timeout, unknown code
+    - PrismaClientInitializationError: database unavailable
+    - PrismaClientUnknownRequestError: internal error handling
+    - Standard JavaScript errors: TypeError, RangeError, SyntaxError, generic Error
+    - Unknown errors: string, number, null, undefined, object
+    - Language handling: French/English messages
+    - Request ID handling: header and generation
+    - Logging: stack trace, error type, request context, PrismaError type
+    - Body sanitization: password, token, secret, apiKey, cardNumber, cvv, pin redaction
+    - Development mode: include error details, raw error for unknown
+    - Response format: timestamp, path, consistent structure
+    - Conflict error code mapping: no meta target, unknown unique field
+  - All tests pass: `npx nx test api --testFile='interceptors|filters'` SUCCESS (175 tests)
+  - API build verified: `npx nx build api --skip-nx-cache` SUCCESS
+
+---
+
 ## Session 2026-01-08 - Tests Unitaires WebSocket Gateways
 
 ### Tâches terminées cette session:
