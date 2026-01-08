@@ -12,13 +12,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import {
-  AlertsService,
-  AlertSeverity,
-  AlertStatus,
-  AlertDefinition,
-  ActiveAlert,
-} from './alerts.service';
+import { AlertsService, AlertSeverity, AlertStatus, AlertDefinition } from './alerts.service';
 import { MetricsService } from './metrics.service';
 
 describe('AlertsService', () => {
@@ -93,7 +87,9 @@ describe('AlertsService', () => {
 
     it('should initialize webhook channel if configured', () => {
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'ALERT_WEBHOOK_URL') return 'https://webhook.example.com';
+        if (key === 'ALERT_WEBHOOK_URL') {
+          return 'https://webhook.example.com';
+        }
         return undefined;
       });
 
@@ -106,7 +102,9 @@ describe('AlertsService', () => {
 
     it('should initialize slack channel if configured', () => {
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'SLACK_ALERT_WEBHOOK') return 'https://hooks.slack.com/services/xxx';
+        if (key === 'SLACK_ALERT_WEBHOOK') {
+          return 'https://hooks.slack.com/services/xxx';
+        }
         return undefined;
       });
 
@@ -134,9 +132,7 @@ describe('AlertsService', () => {
       service.registerAlert(alertDef);
 
       const alertDefinitions = (service as any).alertDefinitions;
-      const registered = alertDefinitions.find(
-        (a: AlertDefinition) => a.name === 'TestAlert',
-      );
+      const registered = alertDefinitions.find((a: AlertDefinition) => a.name === 'TestAlert');
       expect(registered).toBeDefined();
       expect(registered.description).toBe('Test alert description');
     });
@@ -154,9 +150,7 @@ describe('AlertsService', () => {
       service.registerAlert(alertDef);
 
       const alertDefinitions = (service as any).alertDefinitions;
-      const registered = alertDefinitions.find(
-        (a: AlertDefinition) => a.name === 'LabeledAlert',
-      );
+      const registered = alertDefinitions.find((a: AlertDefinition) => a.name === 'LabeledAlert');
       expect(registered.labels).toEqual({ category: 'test', priority: 'high' });
       expect(registered.annotations).toEqual({ runbook_url: 'https://docs.example.com' });
     });
@@ -587,52 +581,40 @@ describe('AlertsService', () => {
 
     it('should have HighErrorRate alert', () => {
       const alertDefinitions = (service as any).alertDefinitions;
-      const alert = alertDefinitions.find(
-        (a: AlertDefinition) => a.name === 'HighErrorRate',
-      );
+      const alert = alertDefinitions.find((a: AlertDefinition) => a.name === 'HighErrorRate');
       expect(alert).toBeDefined();
       expect(alert.severity).toBe(AlertSeverity.WARNING);
     });
 
     it('should have HighLatency alert', () => {
       const alertDefinitions = (service as any).alertDefinitions;
-      const alert = alertDefinitions.find(
-        (a: AlertDefinition) => a.name === 'HighLatency',
-      );
+      const alert = alertDefinitions.find((a: AlertDefinition) => a.name === 'HighLatency');
       expect(alert).toBeDefined();
       expect(alert.severity).toBe(AlertSeverity.WARNING);
     });
 
     it('should have LowCacheHitRate alert', () => {
       const alertDefinitions = (service as any).alertDefinitions;
-      const alert = alertDefinitions.find(
-        (a: AlertDefinition) => a.name === 'LowCacheHitRate',
-      );
+      const alert = alertDefinitions.find((a: AlertDefinition) => a.name === 'LowCacheHitRate');
       expect(alert).toBeDefined();
     });
 
     it('should have HighMemoryUsage alert', () => {
       const alertDefinitions = (service as any).alertDefinitions;
-      const alert = alertDefinitions.find(
-        (a: AlertDefinition) => a.name === 'HighMemoryUsage',
-      );
+      const alert = alertDefinitions.find((a: AlertDefinition) => a.name === 'HighMemoryUsage');
       expect(alert).toBeDefined();
     });
 
     it('should have DatabaseErrors alert', () => {
       const alertDefinitions = (service as any).alertDefinitions;
-      const alert = alertDefinitions.find(
-        (a: AlertDefinition) => a.name === 'DatabaseErrors',
-      );
+      const alert = alertDefinitions.find((a: AlertDefinition) => a.name === 'DatabaseErrors');
       expect(alert).toBeDefined();
       expect(alert.severity).toBe(AlertSeverity.CRITICAL);
     });
 
     it('should have PaymentFailures alert', () => {
       const alertDefinitions = (service as any).alertDefinitions;
-      const alert = alertDefinitions.find(
-        (a: AlertDefinition) => a.name === 'PaymentFailures',
-      );
+      const alert = alertDefinitions.find((a: AlertDefinition) => a.name === 'PaymentFailures');
       expect(alert).toBeDefined();
       expect(alert.severity).toBe(AlertSeverity.CRITICAL);
     });
@@ -654,9 +636,7 @@ describe('AlertsService', () => {
       });
 
       const alertDefinitions = (service as any).alertDefinitions;
-      const alert = alertDefinitions.find(
-        (a: AlertDefinition) => a.name === 'HighErrorRate',
-      );
+      const alert = alertDefinitions.find((a: AlertDefinition) => a.name === 'HighErrorRate');
 
       const shouldFire = await alert.condition();
       expect(shouldFire).toBe(true);
@@ -669,9 +649,7 @@ describe('AlertsService', () => {
       });
 
       const alertDefinitions = (service as any).alertDefinitions;
-      const alert = alertDefinitions.find(
-        (a: AlertDefinition) => a.name === 'HighErrorRate',
-      );
+      const alert = alertDefinitions.find((a: AlertDefinition) => a.name === 'HighErrorRate');
 
       const shouldFire = await alert.condition();
       expect(shouldFire).toBe(false);
@@ -685,9 +663,7 @@ describe('AlertsService', () => {
       });
 
       const alertDefinitions = (service as any).alertDefinitions;
-      const alert = alertDefinitions.find(
-        (a: AlertDefinition) => a.name === 'HighLatency',
-      );
+      const alert = alertDefinitions.find((a: AlertDefinition) => a.name === 'HighLatency');
 
       const shouldFire = await alert.condition();
       expect(shouldFire).toBe(true);
@@ -701,9 +677,7 @@ describe('AlertsService', () => {
       });
 
       const alertDefinitions = (service as any).alertDefinitions;
-      const alert = alertDefinitions.find(
-        (a: AlertDefinition) => a.name === 'HighLatency',
-      );
+      const alert = alertDefinitions.find((a: AlertDefinition) => a.name === 'HighLatency');
 
       const shouldFire = await alert.condition();
       expect(shouldFire).toBe(false);
@@ -715,9 +689,7 @@ describe('AlertsService', () => {
       });
 
       const alertDefinitions = (service as any).alertDefinitions;
-      const alert = alertDefinitions.find(
-        (a: AlertDefinition) => a.name === 'DatabaseErrors',
-      );
+      const alert = alertDefinitions.find((a: AlertDefinition) => a.name === 'DatabaseErrors');
 
       const shouldFire = await alert.condition();
       expect(shouldFire).toBe(true);
@@ -729,9 +701,7 @@ describe('AlertsService', () => {
       });
 
       const alertDefinitions = (service as any).alertDefinitions;
-      const alert = alertDefinitions.find(
-        (a: AlertDefinition) => a.name === 'DatabaseErrors',
-      );
+      const alert = alertDefinitions.find((a: AlertDefinition) => a.name === 'DatabaseErrors');
 
       const shouldFire = await alert.condition();
       expect(shouldFire).toBe(false);
@@ -756,7 +726,9 @@ describe('AlertsService', () => {
 
     it('should send webhook notification when alert fires', async () => {
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'ALERT_WEBHOOK_URL') return 'https://webhook.example.com';
+        if (key === 'ALERT_WEBHOOK_URL') {
+          return 'https://webhook.example.com';
+        }
         return undefined;
       });
 
@@ -776,14 +748,15 @@ describe('AlertsService', () => {
         expect.objectContaining({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-        }),
+        })
       );
     });
 
     it('should send slack notification when alert fires', async () => {
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'SLACK_ALERT_WEBHOOK')
+        if (key === 'SLACK_ALERT_WEBHOOK') {
           return 'https://hooks.slack.com/services/xxx';
+        }
         return undefined;
       });
 
@@ -803,13 +776,15 @@ describe('AlertsService', () => {
         expect.objectContaining({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-        }),
+        })
       );
     });
 
     it('should not send notification if severity not in channel severities', async () => {
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'ALERT_WEBHOOK_URL') return 'https://webhook.example.com';
+        if (key === 'ALERT_WEBHOOK_URL') {
+          return 'https://webhook.example.com';
+        }
         return undefined;
       });
 
@@ -832,7 +807,9 @@ describe('AlertsService', () => {
       global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
 
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'ALERT_WEBHOOK_URL') return 'https://webhook.example.com';
+        if (key === 'ALERT_WEBHOOK_URL') {
+          return 'https://webhook.example.com';
+        }
         return undefined;
       });
 
@@ -841,6 +818,50 @@ describe('AlertsService', () => {
       service.registerAlert({
         name: 'FailNotificationAlert',
         description: 'Alert that fails notification',
+        severity: AlertSeverity.WARNING,
+        condition: async () => true,
+      });
+
+      // Should not throw
+      await expect(service.evaluateAlerts()).resolves.not.toThrow();
+    });
+
+    it('should handle slack notification failure gracefully', async () => {
+      global.fetch = jest.fn().mockRejectedValue(new Error('Slack API error'));
+
+      mockConfigService.get.mockImplementation((key: string) => {
+        if (key === 'SLACK_ALERT_WEBHOOK') {
+          return 'https://hooks.slack.com/services/xxx';
+        }
+        return undefined;
+      });
+
+      service.onModuleInit();
+
+      service.registerAlert({
+        name: 'FailSlackAlert',
+        description: 'Alert that fails slack notification',
+        severity: AlertSeverity.CRITICAL,
+        condition: async () => true,
+      });
+
+      // Should not throw
+      await expect(service.evaluateAlerts()).resolves.not.toThrow();
+    });
+
+    it('should handle unsupported channel type gracefully', async () => {
+      // Manually add a channel with unsupported type
+      const channels = (service as any).channels;
+      channels.push({
+        name: 'unsupported',
+        type: 'unsupported_type',
+        config: {},
+        severities: [AlertSeverity.WARNING, AlertSeverity.CRITICAL],
+      });
+
+      service.registerAlert({
+        name: 'UnsupportedChannelAlert',
+        description: 'Alert for unsupported channel',
         severity: AlertSeverity.WARNING,
         condition: async () => true,
       });

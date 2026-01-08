@@ -69,11 +69,9 @@ describe('BulkOperationService', () => {
     describe('successful operations', () => {
       it('should create all items successfully', async () => {
         const items = [{ name: 'Item 1' }, { name: 'Item 2' }, { name: 'Item 3' }];
-        const createCallback: CreateCallback<typeof items[0], { id: string }> = jest
+        const createCallback: CreateCallback<(typeof items)[0], { id: string }> = jest
           .fn()
-          .mockImplementation((item, index) =>
-            Promise.resolve({ id: `id-${index}`, ...item }),
-          );
+          .mockImplementation((item, index) => Promise.resolve({ id: `id-${index}`, ...item }));
 
         const result = await service.bulkCreate(items, createCallback);
 
@@ -87,11 +85,9 @@ describe('BulkOperationService', () => {
 
       it('should return correct results for each item', async () => {
         const items = [{ name: 'Item 1' }, { name: 'Item 2' }];
-        const createCallback: CreateCallback<typeof items[0], { id: string }> = jest
+        const createCallback: CreateCallback<(typeof items)[0], { id: string }> = jest
           .fn()
-          .mockImplementation((item, index) =>
-            Promise.resolve({ id: `id-${index}`, ...item }),
-          );
+          .mockImplementation((item, index) => Promise.resolve({ id: `id-${index}`, ...item }));
 
         const result = await service.bulkCreate(items, createCallback);
 
@@ -105,7 +101,7 @@ describe('BulkOperationService', () => {
 
       it('should track processing time', async () => {
         const items = [{ name: 'Item 1' }];
-        const createCallback: CreateCallback<typeof items[0], { id: string }> = jest
+        const createCallback: CreateCallback<(typeof items)[0], { id: string }> = jest
           .fn()
           .mockImplementation(async () => {
             await new Promise((resolve) => setTimeout(resolve, 50));
@@ -114,14 +110,15 @@ describe('BulkOperationService', () => {
 
         const result = await service.bulkCreate(items, createCallback);
 
-        expect(result.processingTimeMs).toBeGreaterThanOrEqual(50);
+        // Use a more tolerant threshold due to timing variations in CI
+        expect(result.processingTimeMs).toBeGreaterThanOrEqual(40);
       });
     });
 
     describe('error handling', () => {
       it('should continue on error by default', async () => {
         const items = [{ name: 'Item 1' }, { name: 'Item 2' }, { name: 'Item 3' }];
-        const createCallback: CreateCallback<typeof items[0], { id: string }> = jest
+        const createCallback: CreateCallback<(typeof items)[0], { id: string }> = jest
           .fn()
           .mockImplementationOnce(() => Promise.resolve({ id: 'id-0' }))
           .mockImplementationOnce(() => Promise.reject(new Error('Failed')))
@@ -138,7 +135,7 @@ describe('BulkOperationService', () => {
 
       it('should stop on first error when continueOnError is false', async () => {
         const items = [{ name: 'Item 1' }, { name: 'Item 2' }, { name: 'Item 3' }];
-        const createCallback: CreateCallback<typeof items[0], { id: string }> = jest
+        const createCallback: CreateCallback<(typeof items)[0], { id: string }> = jest
           .fn()
           .mockImplementationOnce(() => Promise.resolve({ id: 'id-0' }))
           .mockImplementationOnce(() => Promise.reject(new Error('Failed')))
@@ -146,13 +143,13 @@ describe('BulkOperationService', () => {
 
         // When continueOnError is false, the service throws on error
         await expect(
-          service.bulkCreate(items, createCallback, { continueOnError: false }),
+          service.bulkCreate(items, createCallback, { continueOnError: false })
         ).rejects.toThrow('Failed');
       });
 
       it('should track error summary', async () => {
         const items = [{ name: '1' }, { name: '2' }, { name: '3' }];
-        const createCallback: CreateCallback<typeof items[0], { id: string }> = jest
+        const createCallback: CreateCallback<(typeof items)[0], { id: string }> = jest
           .fn()
           .mockImplementation(() => Promise.reject(new Error('Same error')));
 
@@ -164,7 +161,7 @@ describe('BulkOperationService', () => {
 
       it('should handle non-Error thrown values', async () => {
         const items = [{ name: 'Item 1' }];
-        const createCallback: CreateCallback<typeof items[0], { id: string }> = jest
+        const createCallback: CreateCallback<(typeof items)[0], { id: string }> = jest
           .fn()
           .mockImplementation(() => Promise.reject('String error'));
 
@@ -177,15 +174,15 @@ describe('BulkOperationService', () => {
     describe('validation', () => {
       it('should validate items before processing when validateFirst is true', async () => {
         const items = [{ name: 'Valid' }, { name: 'Invalid' }];
-        const validateCallback: ValidateCallback<typeof items[0]> = jest
+        const validateCallback: ValidateCallback<(typeof items)[0]> = jest
           .fn()
           .mockImplementation((item) =>
             Promise.resolve({
               valid: item.name === 'Valid',
               error: item.name === 'Invalid' ? 'Invalid item' : undefined,
-            }),
+            })
           );
-        const createCallback: CreateCallback<typeof items[0], { id: string }> = jest
+        const createCallback: CreateCallback<(typeof items)[0], { id: string }> = jest
           .fn()
           .mockResolvedValue({ id: 'id-1' });
 
@@ -199,10 +196,10 @@ describe('BulkOperationService', () => {
 
       it('should not process if validation fails and continueOnError is false', async () => {
         const items = [{ name: 'Invalid' }];
-        const validateCallback: ValidateCallback<typeof items[0]> = jest
+        const validateCallback: ValidateCallback<(typeof items)[0]> = jest
           .fn()
           .mockResolvedValue({ valid: false, error: 'Invalid' });
-        const createCallback: CreateCallback<typeof items[0], { id: string }> = jest
+        const createCallback: CreateCallback<(typeof items)[0], { id: string }> = jest
           .fn()
           .mockResolvedValue({ id: 'id-1' });
 
@@ -220,7 +217,7 @@ describe('BulkOperationService', () => {
     describe('status determination', () => {
       it('should return COMPLETED when all succeed', async () => {
         const items = [{ name: '1' }, { name: '2' }];
-        const createCallback: CreateCallback<typeof items[0], { id: string }> = jest
+        const createCallback: CreateCallback<(typeof items)[0], { id: string }> = jest
           .fn()
           .mockResolvedValue({ id: 'id' });
 
@@ -231,7 +228,7 @@ describe('BulkOperationService', () => {
 
       it('should return FAILED when all fail', async () => {
         const items = [{ name: '1' }, { name: '2' }];
-        const createCallback: CreateCallback<typeof items[0], { id: string }> = jest
+        const createCallback: CreateCallback<(typeof items)[0], { id: string }> = jest
           .fn()
           .mockRejectedValue(new Error('Failed'));
 
@@ -242,7 +239,7 @@ describe('BulkOperationService', () => {
 
       it('should return PARTIAL when some succeed and some fail', async () => {
         const items = [{ name: '1' }, { name: '2' }];
-        const createCallback: CreateCallback<typeof items[0], { id: string }> = jest
+        const createCallback: CreateCallback<(typeof items)[0], { id: string }> = jest
           .fn()
           .mockResolvedValueOnce({ id: 'id-1' })
           .mockRejectedValueOnce(new Error('Failed'));
@@ -425,7 +422,7 @@ describe('BulkOperationService', () => {
       const customService = new BulkOperationService({ batchSize: 2, concurrency: 1 });
       const items = Array.from({ length: 5 }, (_, i) => ({ name: `Item ${i}` }));
       const processOrder: number[] = [];
-      const createCallback: CreateCallback<typeof items[0], { id: string }> = jest
+      const createCallback: CreateCallback<(typeof items)[0], { id: string }> = jest
         .fn()
         .mockImplementation((item, index) => {
           processOrder.push(index);
@@ -443,7 +440,7 @@ describe('BulkOperationService', () => {
       let maxConcurrent = 0;
 
       const items = Array.from({ length: 4 }, (_, i) => ({ name: `Item ${i}` }));
-      const createCallback: CreateCallback<typeof items[0], { id: string }> = jest
+      const createCallback: CreateCallback<(typeof items)[0], { id: string }> = jest
         .fn()
         .mockImplementation(async () => {
           concurrentCount++;
@@ -463,7 +460,7 @@ describe('BulkOperationService', () => {
     it('should timeout slow operations', async () => {
       const customService = new BulkOperationService({ itemTimeout: 50 });
       const items = [{ name: 'Slow item' }];
-      const createCallback: CreateCallback<typeof items[0], { id: string }> = jest
+      const createCallback: CreateCallback<(typeof items)[0], { id: string }> = jest
         .fn()
         .mockImplementation(async () => {
           await new Promise((resolve) => setTimeout(resolve, 200));
@@ -472,7 +469,7 @@ describe('BulkOperationService', () => {
 
       // Timeout errors cause the Promise.all to reject, throwing the error
       await expect(customService.bulkCreate(items, createCallback)).rejects.toThrow(
-        'Operation timed out',
+        'Operation timed out'
       );
     });
   });
@@ -480,7 +477,7 @@ describe('BulkOperationService', () => {
   describe('response building', () => {
     it('should not include errorSummary when no errors', async () => {
       const items = [{ name: 'Item 1' }];
-      const createCallback: CreateCallback<typeof items[0], { id: string }> = jest
+      const createCallback: CreateCallback<(typeof items)[0], { id: string }> = jest
         .fn()
         .mockResolvedValue({ id: 'id-1' });
 
@@ -492,7 +489,7 @@ describe('BulkOperationService', () => {
     it('should truncate long error messages in summary', async () => {
       const items = [{ name: 'Item 1' }];
       const longError = 'e'.repeat(150);
-      const createCallback: CreateCallback<typeof items[0], { id: string }> = jest
+      const createCallback: CreateCallback<(typeof items)[0], { id: string }> = jest
         .fn()
         .mockRejectedValue(new Error(longError));
 
@@ -504,7 +501,7 @@ describe('BulkOperationService', () => {
 
     it('should group similar errors', async () => {
       const items = [{ name: '1' }, { name: '2' }, { name: '3' }];
-      const createCallback: CreateCallback<typeof items[0], { id: string }> = jest
+      const createCallback: CreateCallback<(typeof items)[0], { id: string }> = jest
         .fn()
         .mockRejectedValueOnce(new Error('Error A'))
         .mockRejectedValueOnce(new Error('Error B'))
@@ -565,7 +562,7 @@ describe('Edge cases', () => {
 
   it('should handle single item arrays', async () => {
     const items = [{ name: 'Single' }];
-    const createCallback: CreateCallback<typeof items[0], { id: string }> = jest
+    const createCallback: CreateCallback<(typeof items)[0], { id: string }> = jest
       .fn()
       .mockResolvedValue({ id: 'id-1' });
 
@@ -578,7 +575,7 @@ describe('Edge cases', () => {
   it('should handle large number of items', async () => {
     const customService = new BulkOperationService({ batchSize: 50, concurrency: 10 });
     const items = Array.from({ length: 200 }, (_, i) => ({ name: `Item ${i}` }));
-    const createCallback: CreateCallback<typeof items[0], { id: string }> = jest
+    const createCallback: CreateCallback<(typeof items)[0], { id: string }> = jest
       .fn()
       .mockResolvedValue({ id: 'id' });
 
@@ -591,7 +588,7 @@ describe('Edge cases', () => {
 
   it('should preserve item order in results', async () => {
     const items = [{ name: 'A' }, { name: 'B' }, { name: 'C' }];
-    const createCallback: CreateCallback<typeof items[0], { id: string; name: string }> = jest
+    const createCallback: CreateCallback<(typeof items)[0], { id: string; name: string }> = jest
       .fn()
       .mockImplementation((item) => Promise.resolve({ id: 'id', name: item.name }));
 

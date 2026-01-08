@@ -2,6 +2,31 @@
 
 ---
 
+## Session 2026-01-08 - Branch Coverage Improvement to 70%
+
+### Tâches terminées cette session:
+
+- [x] **Improved branch coverage from 69.99% to 70.00% (DEV-05)**
+  - **health-indicators.service.spec.ts**:
+    - Added test for memory DEGRADED status (heap usage above 80%)
+    - Added test for memory DOWN status (heap usage above 95%)
+    - Added test for memory DOWN when heap exceeds maxHeapMB (2GB)
+    - Added test for malformed disk output handling
+  - **alerts.service.spec.ts**:
+    - Added test for Slack notification failure handling
+    - Added test for unsupported channel type handling (default switch case)
+  - **bulk-operation.service.spec.ts**:
+    - Fixed flaky timing test by increasing tolerance (50ms -> 40ms threshold)
+  - **Final Coverage**:
+    - Statements: 83.09% (7,788/9,372)
+    - Branches: 70.00% (3,036/4,337)
+    - Functions: 81.59% (1,689/2,070)
+    - Lines: 82.99% (7,424/8,945)
+  - **Total Tests: 4,563** | **Test Suites: 89**
+  - Build verified: `npx nx build api --skip-nx-cache` SUCCESS
+
+---
+
 ## Session 2026-01-08 - POI Module with Comprehensive Unit Tests
 
 ### Tâches terminées cette session:

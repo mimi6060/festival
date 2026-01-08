@@ -13,12 +13,7 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import {
-  HealthIndicatorsService,
-  HealthStatus,
-  HealthIndicatorResult,
-  SystemHealth,
-} from './health-indicators.service';
+import { HealthIndicatorsService, HealthStatus } from './health-indicators.service';
 
 // Mock child_process for disk check
 jest.mock('child_process', () => ({
@@ -47,7 +42,6 @@ jest.mock('@prisma/client', () => {
 
 describe('HealthIndicatorsService', () => {
   let service: HealthIndicatorsService;
-  let configService: jest.Mocked<ConfigService>;
 
   const mockConfigService = {
     get: jest.fn(),
@@ -59,14 +53,10 @@ describe('HealthIndicatorsService', () => {
     mockConfigService.get.mockReturnValue('redis://localhost:6379');
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        HealthIndicatorsService,
-        { provide: ConfigService, useValue: mockConfigService },
-      ],
+      providers: [HealthIndicatorsService, { provide: ConfigService, useValue: mockConfigService }],
     }).compile();
 
     service = module.get<HealthIndicatorsService>(HealthIndicatorsService);
-    configService = module.get(ConfigService);
   });
 
   // ==========================================================================
@@ -247,6 +237,75 @@ describe('HealthIndicatorsService', () => {
       expect(typeof result.details?.heapUsagePercent).toBe('number');
       expect(typeof result.details?.externalMB).toBe('number');
     });
+
+    it('should return DEGRADED status when heap usage is above 80%', async () => {
+      // Arrange - Mock process.memoryUsage to simulate high memory
+      const originalMemoryUsage = process.memoryUsage;
+      process.memoryUsage = jest.fn().mockReturnValue({
+        heapUsed: 850 * 1024 * 1024, // 850MB
+        heapTotal: 1000 * 1024 * 1024, // 1000MB = 85% usage
+        rss: 900 * 1024 * 1024,
+        external: 50 * 1024 * 1024,
+        arrayBuffers: 10 * 1024 * 1024,
+      }) as any;
+
+      // Act
+      const result = await service.checkMemory();
+
+      // Restore
+      process.memoryUsage = originalMemoryUsage;
+
+      // Assert
+      expect(result.name).toBe('memory');
+      expect(result.status).toBe(HealthStatus.DEGRADED);
+      expect(result.error).toContain('Heap usage high');
+    });
+
+    it('should return DOWN status when heap usage is above 95%', async () => {
+      // Arrange - Mock process.memoryUsage to simulate critical memory
+      const originalMemoryUsage = process.memoryUsage;
+      process.memoryUsage = jest.fn().mockReturnValue({
+        heapUsed: 970 * 1024 * 1024, // 970MB
+        heapTotal: 1000 * 1024 * 1024, // 1000MB = 97% usage
+        rss: 1000 * 1024 * 1024,
+        external: 50 * 1024 * 1024,
+        arrayBuffers: 10 * 1024 * 1024,
+      }) as any;
+
+      // Act
+      const result = await service.checkMemory();
+
+      // Restore
+      process.memoryUsage = originalMemoryUsage;
+
+      // Assert
+      expect(result.name).toBe('memory');
+      expect(result.status).toBe(HealthStatus.DOWN);
+      expect(result.error).toContain('Heap usage critical');
+    });
+
+    it('should return DOWN status when heap used exceeds maxHeapMB threshold', async () => {
+      // Arrange - Mock process.memoryUsage to simulate heap exceeding 2GB
+      const originalMemoryUsage = process.memoryUsage;
+      process.memoryUsage = jest.fn().mockReturnValue({
+        heapUsed: 2200 * 1024 * 1024, // 2200MB > 2048MB max
+        heapTotal: 4000 * 1024 * 1024, // 4000MB total = 55% usage but exceeds max
+        rss: 2500 * 1024 * 1024,
+        external: 50 * 1024 * 1024,
+        arrayBuffers: 10 * 1024 * 1024,
+      }) as any;
+
+      // Act
+      const result = await service.checkMemory();
+
+      // Restore
+      process.memoryUsage = originalMemoryUsage;
+
+      // Assert
+      expect(result.name).toBe('memory');
+      expect(result.status).toBe(HealthStatus.DOWN);
+      expect(result.error).toContain('Heap usage critical');
+    });
   });
 
   // ==========================================================================
@@ -311,6 +370,20 @@ describe('HealthIndicatorsService', () => {
       expect(result.name).toBe('disk');
       expect(result.status).toBe(HealthStatus.UP);
       expect(result.details).toHaveProperty('message', 'Disk check not available');
+    });
+
+    it('should handle malformed df output gracefully', async () => {
+      // Arrange - Return output with fewer than 5 parts
+      const { execSync } = require('child_process');
+      execSync.mockReturnValue('malformed output\n');
+
+      // Act
+      const result = await service.checkDiskSpace();
+
+      // Assert
+      expect(result.name).toBe('disk');
+      expect(result.status).toBe(HealthStatus.UP);
+      expect(result.details).toHaveProperty('message', 'Unable to parse disk usage');
     });
   });
 
