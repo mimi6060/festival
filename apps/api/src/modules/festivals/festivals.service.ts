@@ -6,14 +6,25 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CacheService, CacheTag } from '../cache/cache.service';
 import { CreateFestivalDto, UpdateFestivalDto, FestivalQueryDto, FestivalStatus } from './dto';
 import { FestivalStatus as PrismaFestivalStatus } from '@prisma/client';
+
+// Cache TTL constants (in seconds)
+const CACHE_TTL = {
+  FESTIVAL_DETAIL: 300, // 5 minutes
+  FESTIVAL_LIST: 60, // 1 minute
+  TICKET_CATEGORIES: 300, // 5 minutes
+};
 
 @Injectable()
 export class FestivalsService {
   private readonly logger = new Logger(FestivalsService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cacheService: CacheService
+  ) {}
 
   /**
    * Create a new festival
@@ -54,6 +65,17 @@ export class FestivalsService {
    */
   async findAll(query: FestivalQueryDto) {
     const { page = 1, limit = 10, status, search, organizerId } = query;
+
+    // Build cache key from query params
+    const cacheKey = `festivals:list:${status || 'all'}:${page}:${limit}:${search || ''}:${organizerId || ''}`;
+
+    // Try to get from cache
+    const cached = await this.cacheService.get(cacheKey);
+    if (cached) {
+      this.logger.debug(`Cache hit for festivals list: ${cacheKey}`);
+      return cached;
+    }
+
     const skip = (page - 1) * limit;
 
     const where: any = { isDeleted: false };
@@ -94,7 +116,7 @@ export class FestivalsService {
 
     const totalPages = Math.ceil(total / limit);
 
-    return {
+    const result = {
       data: festivals,
       total,
       page,
@@ -103,12 +125,31 @@ export class FestivalsService {
       hasNextPage: page < totalPages,
       hasPreviousPage: page > 1,
     };
+
+    // Cache the result with short TTL (1 minute)
+    await this.cacheService.set(cacheKey, result, {
+      ttl: CACHE_TTL.FESTIVAL_LIST,
+      tags: [CacheTag.FESTIVAL],
+    });
+
+    this.logger.debug(`Cached festivals list: ${cacheKey}`);
+
+    return result;
   }
 
   /**
    * Find a festival by ID
    */
   async findOne(id: string) {
+    const cacheKey = `festival:${id}`;
+
+    // Try to get from cache
+    const cached = await this.cacheService.get(cacheKey);
+    if (cached) {
+      this.logger.debug(`Cache hit for festival: ${id}`);
+      return cached;
+    }
+
     const festival = await this.prisma.festival.findUnique({
       where: { id },
       include: {
@@ -128,6 +169,14 @@ export class FestivalsService {
       throw new NotFoundException(`Festival with ID "${id}" not found`);
     }
 
+    // Cache the result with 5 min TTL
+    await this.cacheService.set(cacheKey, festival, {
+      ttl: CACHE_TTL.FESTIVAL_DETAIL,
+      tags: [CacheTag.FESTIVAL],
+    });
+
+    this.logger.debug(`Cached festival: ${id}`);
+
     return festival;
   }
 
@@ -135,6 +184,15 @@ export class FestivalsService {
    * Find a festival by slug
    */
   async findBySlug(slug: string) {
+    const cacheKey = `festival:slug:${slug}`;
+
+    // Try to get from cache
+    const cached = await this.cacheService.get(cacheKey);
+    if (cached) {
+      this.logger.debug(`Cache hit for festival by slug: ${slug}`);
+      return cached;
+    }
+
     const festival = await this.prisma.festival.findUnique({
       where: { slug },
       include: {
@@ -155,6 +213,14 @@ export class FestivalsService {
       throw new NotFoundException(`Festival with slug "${slug}" not found`);
     }
 
+    // Cache the result with 5 min TTL
+    await this.cacheService.set(cacheKey, festival, {
+      ttl: CACHE_TTL.FESTIVAL_DETAIL,
+      tags: [CacheTag.FESTIVAL],
+    });
+
+    this.logger.debug(`Cached festival by slug: ${slug}`);
+
     return festival;
   }
 
@@ -169,7 +235,7 @@ export class FestivalsService {
       throw new ForbiddenException('You do not have permission to update this festival');
     }
 
-    return this.prisma.festival.update({
+    const updatedFestival = await this.prisma.festival.update({
       where: { id },
       data: {
         name: dto.name,
@@ -185,6 +251,11 @@ export class FestivalsService {
         bannerUrl: dto.bannerUrl,
       },
     });
+
+    // Invalidate festival cache
+    await this.invalidateFestivalCache(id, festival.slug);
+
+    return updatedFestival;
   }
 
   /**
@@ -197,10 +268,15 @@ export class FestivalsService {
       throw new ForbiddenException('You do not have permission to update this festival');
     }
 
-    return this.prisma.festival.update({
+    const updatedFestival = await this.prisma.festival.update({
       where: { id },
       data: { status: status as PrismaFestivalStatus },
     });
+
+    // Invalidate festival cache
+    await this.invalidateFestivalCache(id, festival.slug);
+
+    return updatedFestival;
   }
 
   /**
@@ -213,13 +289,18 @@ export class FestivalsService {
       throw new ForbiddenException('You do not have permission to delete this festival');
     }
 
-    return this.prisma.festival.update({
+    const deletedFestival = await this.prisma.festival.update({
       where: { id },
       data: {
         isDeleted: true,
         deletedAt: new Date(),
       },
     });
+
+    // Invalidate festival cache
+    await this.invalidateFestivalCache(id, festival.slug);
+
+    return deletedFestival;
   }
 
   /**
@@ -260,6 +341,41 @@ export class FestivalsService {
   }
 
   /**
+   * Get ticket categories for a festival (cached)
+   */
+  async getTicketCategories(festivalId: string) {
+    const cacheKey = `festival:${festivalId}:categories`;
+
+    // Try to get from cache
+    const cached = await this.cacheService.get(cacheKey);
+    if (cached) {
+      this.logger.debug(`Cache hit for ticket categories: ${festivalId}`);
+      return cached;
+    }
+
+    // Verify festival exists
+    await this.findOne(festivalId);
+
+    const categories = await this.prisma.ticketCategory.findMany({
+      where: {
+        festivalId,
+        isActive: true,
+      },
+      orderBy: { price: 'asc' },
+    });
+
+    // Cache the result with 5 min TTL
+    await this.cacheService.set(cacheKey, categories, {
+      ttl: CACHE_TTL.TICKET_CATEGORIES,
+      tags: [CacheTag.FESTIVAL, CacheTag.TICKET],
+    });
+
+    this.logger.debug(`Cached ticket categories: ${festivalId}`);
+
+    return categories;
+  }
+
+  /**
    * Generate URL-friendly slug from name
    */
   private generateSlug(name: string): string {
@@ -270,5 +386,26 @@ export class FestivalsService {
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/^-+|-+$/g, '')
       .substring(0, 50);
+  }
+
+  /**
+   * Invalidate all cache entries related to a festival
+   */
+  private async invalidateFestivalCache(festivalId: string, slug?: string): Promise<void> {
+    // Delete specific festival cache entries
+    await this.cacheService.delete(`festival:${festivalId}`);
+    await this.cacheService.delete(`festival:${festivalId}:categories`);
+
+    if (slug) {
+      await this.cacheService.delete(`festival:slug:${slug}`);
+    }
+
+    // Delete all festival list caches (they might contain this festival)
+    await this.cacheService.deletePattern('festivals:list:*');
+
+    // Also invalidate program cache for this festival
+    await this.cacheService.deletePattern(`program:${festivalId}:*`);
+
+    this.logger.debug(`Invalidated cache for festival: ${festivalId}`);
   }
 }

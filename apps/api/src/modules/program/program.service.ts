@@ -8,13 +8,17 @@
  * - User favorites
  */
 
-import {
-  Injectable,
-  NotFoundException,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CacheService, CacheTag } from '../cache/cache.service';
 import { Prisma } from '@prisma/client';
+
+// Cache TTL constants (in seconds)
+const CACHE_TTL = {
+  PROGRAM_SCHEDULE: 600, // 10 minutes
+  ARTISTS: 600, // 10 minutes
+  STAGES: 600, // 10 minutes
+};
 
 // ============================================================================
 // Types
@@ -75,32 +79,49 @@ export interface ProgramEventDto {
 export class ProgramService {
   private readonly logger = new Logger(ProgramService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly cacheService: CacheService
+  ) {}
 
   /**
    * Get all performances for a festival
    */
-  async getProgram(
-    festivalId: string,
-    userId?: string,
-  ): Promise<ProgramEventDto[]> {
-    const performances = await this.prisma.performance.findMany({
-      where: {
-        stage: {
-          festivalId,
-        },
-      },
-      include: {
-        artist: true,
-        stage: true,
-      },
-      orderBy: [
-        { startTime: 'asc' },
-      ],
-    });
+  async getProgram(festivalId: string, userId?: string): Promise<ProgramEventDto[]> {
+    // Cache key without userId (base program is shared)
+    const cacheKey = `program:${festivalId}:all`;
 
-    // Get user favorites if userId is provided
-    let favoriteArtistIds: Set<string> = new Set();
+    // Try to get base program from cache
+    let performances = await this.cacheService.get<any[]>(cacheKey);
+
+    if (!performances) {
+      this.logger.debug(`Cache miss for program: ${festivalId}`);
+      performances = await this.prisma.performance.findMany({
+        where: {
+          stage: {
+            festivalId,
+          },
+        },
+        include: {
+          artist: true,
+          stage: true,
+        },
+        orderBy: [{ startTime: 'asc' }],
+      });
+
+      // Cache the result with 10 min TTL
+      await this.cacheService.set(cacheKey, performances, {
+        ttl: CACHE_TTL.PROGRAM_SCHEDULE,
+        tags: [CacheTag.FESTIVAL],
+      });
+
+      this.logger.debug(`Cached program: ${festivalId}`);
+    } else {
+      this.logger.debug(`Cache hit for program: ${festivalId}`);
+    }
+
+    // Get user favorites if userId is provided (not cached, user-specific)
+    let favoriteArtistIds = new Set<string>();
     if (userId) {
       const favorites = await this.prisma.favoriteArtist.findMany({
         where: {
@@ -111,10 +132,10 @@ export class ProgramService {
           artistId: true,
         },
       });
-      favoriteArtistIds = new Set(favorites.map(f => f.artistId));
+      favoriteArtistIds = new Set(favorites.map((f) => f.artistId));
     }
 
-    return performances.map(perf => this.mapToEventDto(perf, favoriteArtistIds));
+    return performances.map((perf) => this.mapToEventDto(perf, favoriteArtistIds));
   }
 
   /**
@@ -123,34 +144,52 @@ export class ProgramService {
   async getProgramByDay(
     festivalId: string,
     day: string,
-    userId?: string,
+    userId?: string
   ): Promise<ProgramEventDto[]> {
-    // Parse the day and create date range
-    const startOfDay = new Date(day);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(day);
-    endOfDay.setHours(23, 59, 59, 999);
+    // Cache key with day (without userId, base schedule is shared)
+    const cacheKey = `program:${festivalId}:day:${day}`;
 
-    const performances = await this.prisma.performance.findMany({
-      where: {
-        stage: {
-          festivalId,
-        },
-        startTime: {
-          gte: startOfDay,
-          lte: endOfDay,
-        },
-      },
-      include: {
-        artist: true,
-        stage: true,
-      },
-      orderBy: [
-        { startTime: 'asc' },
-      ],
-    });
+    // Try to get from cache
+    let performances = await this.cacheService.get<any[]>(cacheKey);
 
-    let favoriteArtistIds: Set<string> = new Set();
+    if (!performances) {
+      this.logger.debug(`Cache miss for program by day: ${festivalId}/${day}`);
+
+      // Parse the day and create date range
+      const startOfDay = new Date(day);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(day);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      performances = await this.prisma.performance.findMany({
+        where: {
+          stage: {
+            festivalId,
+          },
+          startTime: {
+            gte: startOfDay,
+            lte: endOfDay,
+          },
+        },
+        include: {
+          artist: true,
+          stage: true,
+        },
+        orderBy: [{ startTime: 'asc' }],
+      });
+
+      // Cache the result with 10 min TTL
+      await this.cacheService.set(cacheKey, performances, {
+        ttl: CACHE_TTL.PROGRAM_SCHEDULE,
+        tags: [CacheTag.FESTIVAL],
+      });
+
+      this.logger.debug(`Cached program by day: ${festivalId}/${day}`);
+    } else {
+      this.logger.debug(`Cache hit for program by day: ${festivalId}/${day}`);
+    }
+
+    let favoriteArtistIds = new Set<string>();
     if (userId) {
       const favorites = await this.prisma.favoriteArtist.findMany({
         where: {
@@ -161,16 +200,25 @@ export class ProgramService {
           artistId: true,
         },
       });
-      favoriteArtistIds = new Set(favorites.map(f => f.artistId));
+      favoriteArtistIds = new Set(favorites.map((f) => f.artistId));
     }
 
-    return performances.map(perf => this.mapToEventDto(perf, favoriteArtistIds));
+    return performances.map((perf) => this.mapToEventDto(perf, favoriteArtistIds));
   }
 
   /**
    * Get all artists for a festival
    */
   async getArtists(festivalId: string): Promise<ArtistDto[]> {
+    const cacheKey = `program:${festivalId}:artists`;
+
+    // Try to get from cache
+    const cached = await this.cacheService.get<ArtistDto[]>(cacheKey);
+    if (cached) {
+      this.logger.debug(`Cache hit for artists: ${festivalId}`);
+      return cached;
+    }
+
     const artists = await this.prisma.artist.findMany({
       where: {
         performances: {
@@ -186,7 +234,7 @@ export class ProgramService {
       },
     });
 
-    return artists.map(artist => ({
+    const result = artists.map((artist) => ({
       id: artist.id,
       name: artist.name,
       genre: artist.genre,
@@ -194,12 +242,31 @@ export class ProgramService {
       imageUrl: artist.imageUrl,
       country: artist.country,
     }));
+
+    // Cache the result with 10 min TTL
+    await this.cacheService.set(cacheKey, result, {
+      ttl: CACHE_TTL.ARTISTS,
+      tags: [CacheTag.FESTIVAL],
+    });
+
+    this.logger.debug(`Cached artists: ${festivalId}`);
+
+    return result;
   }
 
   /**
    * Get all stages for a festival
    */
   async getStages(festivalId: string): Promise<StageDto[]> {
+    const cacheKey = `program:${festivalId}:stages`;
+
+    // Try to get from cache
+    const cached = await this.cacheService.get<StageDto[]>(cacheKey);
+    if (cached) {
+      this.logger.debug(`Cache hit for stages: ${festivalId}`);
+      return cached;
+    }
+
     const stages = await this.prisma.stage.findMany({
       where: {
         festivalId,
@@ -209,22 +276,29 @@ export class ProgramService {
       },
     });
 
-    return stages.map(stage => ({
+    const result = stages.map((stage) => ({
       id: stage.id,
       name: stage.name,
       description: stage.description,
       capacity: stage.capacity,
       location: stage.location,
     }));
+
+    // Cache the result with 10 min TTL
+    await this.cacheService.set(cacheKey, result, {
+      ttl: CACHE_TTL.STAGES,
+      tags: [CacheTag.FESTIVAL],
+    });
+
+    this.logger.debug(`Cached stages: ${festivalId}`);
+
+    return result;
   }
 
   /**
    * Get user's favorite artists
    */
-  async getFavorites(
-    userId: string,
-    festivalId: string,
-  ): Promise<string[]> {
+  async getFavorites(userId: string, festivalId: string): Promise<string[]> {
     const favorites = await this.prisma.favoriteArtist.findMany({
       where: {
         userId,
@@ -235,7 +309,7 @@ export class ProgramService {
       },
     });
 
-    return favorites.map(f => f.artistId);
+    return favorites.map((f) => f.artistId);
   }
 
   /**
@@ -244,7 +318,7 @@ export class ProgramService {
   async toggleFavorite(
     userId: string,
     festivalId: string,
-    artistId: string,
+    artistId: string
   ): Promise<{ isFavorite: boolean }> {
     // Check if already favorite
     const existing = await this.prisma.favoriteArtist.findUnique({
@@ -303,10 +377,7 @@ export class ProgramService {
   /**
    * Get performances for an artist
    */
-  async getArtistPerformances(
-    artistId: string,
-    festivalId?: string,
-  ): Promise<PerformanceDto[]> {
+  async getArtistPerformances(artistId: string, festivalId?: string): Promise<PerformanceDto[]> {
     const where: Prisma.PerformanceWhereInput = {
       artistId,
     };
@@ -328,7 +399,7 @@ export class ProgramService {
       },
     });
 
-    return performances.map(perf => ({
+    return performances.map((perf) => ({
       id: perf.id,
       artist: {
         id: perf.artist.id,
@@ -356,10 +427,7 @@ export class ProgramService {
   // Private Methods
   // ============================================================================
 
-  private mapToEventDto(
-    perf: any,
-    favoriteArtistIds: Set<string>,
-  ): ProgramEventDto {
+  private mapToEventDto(perf: any, favoriteArtistIds: Set<string>): ProgramEventDto {
     return {
       id: perf.id,
       artist: {

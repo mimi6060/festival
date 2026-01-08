@@ -2,6 +2,53 @@
 
 ---
 
+## Session 2026-01-08 - Prisma Schema Performance Indexes
+
+### Tâches terminées cette session:
+
+- [x] **Added 50+ performance indexes to Prisma schema**
+  - **TicketCategory**: isActive, festivalId+isActive, festivalId+type+isActive, saleStartDate+saleEndDate
+  - **CashlessAccount**: isActive, balance (for analytics)
+  - **Zone**: isActive, festivalId+isActive
+  - **ZoneAccessLog**: action, zoneId+action+timestamp, performedById
+  - **StaffAssignment**: isActive, festivalId+isActive, festivalId+zoneId+isActive, startTime+endTime, role
+  - **Performance**: isCancelled, stageId+isCancelled+startTime, startTime+endTime
+  - **AuditLog**: entityType+entityId, userId+createdAt, entityType+createdAt
+  - **Notification**: userId+createdAt, userId+type+isRead, festivalId+createdAt
+  - **PushToken**: userId+isActive, platform+isActive
+  - **ScheduledNotification**: status+scheduledFor, festivalId+status
+  - **SupportTicket**: assignedTo, status+priority, status+createdAt, assignedTo+status, festivalId+status
+  - **CampingBooking**: spotId+status, spotId+checkIn+checkOut, userId+status, createdAt
+  - **VendorPayout**: vendorId+status, processedById, status+createdAt
+  - **Session**: userId+isActive, isActive+expiresAt, lastActiveAt
+  - Schema validated: `npx prisma validate` SUCCESS
+  - Migration SQL created: `prisma/migrations/20260108_add_performance_indexes/migration.sql`
+  - Build verified: `npx nx build api --skip-nx-cache` SUCCESS
+
+---
+
+## Session 2026-01-08 - Redis Caching Implementation
+
+### Tâches terminées cette session:
+
+- [x] **Redis caching added to frequently accessed API endpoints**
+  - **Festivals Service** - Added caching with TTL:
+    - `findOne` - 5 min TTL, cache key: `festival:{id}`
+    - `findAll` - 1 min TTL, cache key: `festivals:list:{params...}`
+    - `findBySlug` - 5 min TTL, cache key: `festival:slug:{slug}`
+    - `getTicketCategories` - 5 min TTL (new method), cache key: `festival:{festivalId}:categories`
+    - Cache invalidation on `update`, `updateStatus`, `remove`
+  - **Program Service** - Added caching with TTL:
+    - `getProgram` - 10 min TTL, cache key: `program:{festivalId}:all`
+    - `getProgramByDay` - 10 min TTL, cache key: `program:{festivalId}:day:{day}`
+    - `getArtists` - 10 min TTL, cache key: `program:{festivalId}:artists`
+    - `getStages` - 10 min TTL, cache key: `program:{festivalId}:stages`
+  - Uses existing `CacheService` with Redis support and fallback in-memory
+  - Proper cache tagging for intelligent invalidation
+  - Build verified: `npx nx build api --skip-nx-cache` SUCCESS
+
+---
+
 ## Session 2026-01-08 - Kubernetes Deployment Guide
 
 ### Tâches terminées cette session:
