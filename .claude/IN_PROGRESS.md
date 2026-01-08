@@ -2,6 +2,124 @@
 
 ---
 
+## Session 2026-01-08 - Tests Unitaires Cache Module
+
+### Tâches terminées cette session:
+
+- [x] **Created comprehensive unit tests for Cache Module (87 tests)**
+  - `cache.service.spec.ts` (87 tests):
+    - **initialization** (3 tests):
+      - Service defined
+      - Use in-memory cache when REDIS_URL not configured
+      - Start periodic cleanup interval
+    - **get** (9 tests):
+      - Return null for non-existent key
+      - Return cached value when key exists
+      - Track cache misses/hits
+      - Return null for expired entries
+      - Handle complex data types
+      - Handle null, empty string, array values
+    - **set** (8 tests):
+      - Store value with default TTL
+      - Accept TTL as number or CacheOptions object
+      - Overwrite existing value
+      - Handle tags in options
+      - Serialize objects to JSON
+      - Handle special characters in keys and Unicode values
+    - **delete** (3 tests):
+      - Delete existing key
+      - Not throw when deleting non-existent key
+      - Delete from memory cache
+    - **deletePattern** (3 tests):
+      - Delete all keys matching pattern
+      - Handle pattern with no matches
+      - Support wildcards in middle of pattern
+    - **clear** (2 tests):
+      - Clear all cache entries
+      - Clear tag mappings
+    - **invalidateByTag** (4 tests):
+      - Invalidate all keys with specific tag
+      - Return 0 when no keys have the tag
+      - Handle keys with multiple tags
+      - Support all CacheTag enum values
+    - **invalidateFestivalCache** (2 tests):
+      - Invalidate all festival-related cache patterns
+      - Handle festival with no cached data
+    - **getOrSet (cache-aside)** (6 tests):
+      - Return cached value without calling factory
+      - Call factory and cache result when key not found
+      - Pass options to set operation
+      - Handle factory throwing error
+      - Handle async factory function
+      - Acquire lock to prevent cache stampede
+    - **writeThrough** (3 tests):
+      - Persist data before caching
+      - Not cache if persist fails
+      - Pass options to cache set
+    - **getWithRefreshAhead** (3 tests):
+      - Return cached value
+      - Call factory and cache when key not found
+      - Accept refresh threshold option
+    - **cacheActiveFestivals / getActiveFestivals** (2 tests):
+      - Cache and retrieve active festivals
+      - Return null when no festivals cached
+    - **cacheFestivalConfig / getFestivalConfig** (2 tests):
+      - Cache and retrieve festival config
+      - Return null for non-existent festival config
+    - **cacheSession / getSession** (2 tests):
+      - Cache and retrieve user session
+      - Return null for non-existent session
+    - **cacheRealtimeData / getRealtimeData** (2 tests):
+      - Cache and retrieve realtime data
+      - Expire realtime data quickly (10s TTL)
+    - **acquireLock** (2 tests):
+      - Return true in memory mode
+      - Accept custom TTL
+    - **releaseLock** (2 tests):
+      - Not throw when releasing lock
+      - Not throw when releasing non-existent lock
+    - **getStats** (7 tests):
+      - Return cache statistics
+      - Track hits/misses correctly
+      - Calculate hit rate correctly
+      - Return 0 hit rate when no operations
+      - Return correct key count
+      - Indicate not connected to Redis in memory mode
+    - **resetStats** (1 test):
+      - Reset hit and miss counters
+    - **TTL handling** (3 tests):
+      - Respect custom TTL
+      - Use default TTL when not specified
+      - Handle zero TTL
+    - **memory cache cleanup** (2 tests):
+      - Clean up expired entries periodically
+      - Trigger cleanup when cache exceeds 10000 entries
+    - **error handling** (2 tests):
+      - Handle JSON serialization errors gracefully
+      - Fallback to memory cache on Redis errors
+    - **onModuleDestroy** (1 test):
+      - Clean up resources on destroy
+    - **CacheTag enum** (1 test):
+      - Have all expected tag values
+    - **CacheStrategy enum** (1 test):
+      - Have all expected strategy values
+    - **edge cases** (6 tests):
+      - Handle very long keys
+      - Handle very large values
+      - Handle rapid set/get operations
+      - Handle concurrent getOrSet calls for same key
+      - Handle empty string keys
+      - Handle boolean and number values
+    - **CacheService with Redis** (4 tests):
+      - Attempt to connect to Redis when URL is configured
+      - Handle Redis get operation
+      - Handle Redis connection errors gracefully
+      - Store tags in Redis when connected
+  - Uses Jest with mocks for ConfigService and Redis client
+  - All tests pass: `npx nx test api --testFile=cache.service.spec` SUCCESS (87 tests)
+
+---
+
 ## Session 2026-01-08 - Test Suite Fixes
 
 ### Tâches terminées cette session:
@@ -590,6 +708,84 @@
 ## Session 2026-01-08 - Tests Unitaires Analytics Module
 
 ### Tâches terminées cette session:
+
+- [x] **Created comprehensive unit tests for Analytics Controllers (70 tests)**
+  - `analytics.controller.spec.ts` (70 tests):
+    - **Basic Analytics** (7 tests):
+      - GET /festivals/:festivalId/sales - sales analytics
+      - GET /festivals/:festivalId/dashboard - dashboard KPIs (renamed to getFestivalDashboardKPIs to fix method name collision)
+      - GET /festivals/:festivalId/cashless - cashless analytics
+      - GET /festivals/:festivalId/attendance - attendance analytics
+      - GET /festivals/:festivalId/zones - zone analytics
+      - GET /festivals/:festivalId/vendors - vendor analytics
+    - **Advanced Metrics** (12 tests):
+      - GET /metrics/revenue - revenue metrics with date range
+      - GET /metrics/customers - customer behavior metrics
+      - GET /metrics/performance - operational performance metrics
+      - GET /metrics/fraud - fraud detection metrics
+      - GET /metrics/growth - growth and trend metrics
+      - GET /metrics/forecast - forecast metrics with optional daysAhead
+      - GET /metrics/staff - staff performance metrics
+      - GET /metrics/environmental - environmental metrics
+      - GET /metrics/security - security metrics
+      - GET /metrics/comprehensive - comprehensive analytics
+    - **Custom Reports** (11 tests):
+      - GET /reports - list all reports for a festival
+      - POST /reports - create custom report
+      - GET /reports/:reportId - get specific report
+      - POST /reports/:reportId/execute - execute report with time range
+      - DELETE /reports/:reportId - delete report
+      - GET /comparison - comparison analytics with metrics parsing
+      - GET /cohort - cohort analysis with cohortBy parameter
+      - GET /funnel/:funnelName - funnel analysis
+      - GET /anomalies - anomaly detection
+      - GET /benchmarks - benchmarks
+    - **Realtime Analytics** (4 tests):
+      - GET /realtime - realtime analytics
+      - GET /realtime/live - live festival metrics
+      - GET /realtime/zones - live zone metrics
+      - POST /realtime/sync - sync realtime counters from database
+    - **Exports** (8 tests):
+      - GET /export - generic analytics export
+      - GET /export/sales - sales data export (CSV/XLSX)
+      - GET /export/cashless - cashless data export
+      - GET /export/attendance - attendance data export
+      - GET /export/vendors - vendor data export
+      - GET /export/financial - financial summary export (PDF)
+      - GET /export/comprehensive - comprehensive report export
+      - Default format handling for each export type
+    - **Dashboard Config** (17 tests):
+      - GET /dashboards/templates - available dashboard templates
+      - GET /dashboards/templates/:templateId - specific template
+      - GET /dashboards/widget-types - widget types
+      - GET /dashboards/metrics - available metrics
+      - GET /festivals/:festivalId/dashboards - all dashboards
+      - POST /festivals/:festivalId/dashboards - create dashboard
+      - POST /dashboards/from-template - create from template
+      - GET /dashboards/:dashboardId - get dashboard
+      - PUT /dashboards/:dashboardId - update dashboard
+      - DELETE /dashboards/:dashboardId - delete dashboard
+      - POST /dashboards/:dashboardId/widgets - add widget
+      - PUT /dashboards/:dashboardId/widgets/:widgetId - update widget
+      - DELETE /dashboards/:dashboardId/widgets/:widgetId - remove widget
+      - POST /dashboards/:dashboardId/set-default - set default
+      - POST /dashboards/:dashboardId/clone - clone dashboard
+    - **Error Handling** (3 tests):
+      - NotFoundException propagation from services
+      - Error propagation from advanced metrics service
+      - Error propagation from export service
+    - **Authorization** (2 tests):
+      - Pass user from CurrentUser decorator to createReport
+      - Pass user from CurrentUser decorator to createDashboard
+    - **Edge Cases** (6 tests):
+      - Empty query parameters handling
+      - Default export format values
+      - Optional daysAhead in forecast metrics
+      - Metrics string parsing for comparison
+      - includeCharts option in export
+  - **Fixed controller method name collision**: Renamed `getDashboard` (line 66) to `getFestivalDashboardKPIs` to avoid conflict with `getDashboard` (line 640) which is for dashboard config
+  - Uses Jest with mocks for all 6 services
+  - All tests pass: `npx nx test api --testFile=analytics` SUCCESS (125 tests total - 70 controller + 55 service)
 
 - [x] **Created comprehensive unit tests for Analytics Module (55 tests)**
   - `analytics.service.spec.ts` (55 tests):

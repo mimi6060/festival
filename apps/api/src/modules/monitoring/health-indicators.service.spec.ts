@@ -567,6 +567,14 @@ describe('HealthIndicatorsService', () => {
   // ==========================================================================
 
   describe('checkExternalService', () => {
+    beforeEach(() => {
+      jest.useFakeTimers();
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
     it('should return UP status for reachable service', async () => {
       // Arrange
       global.fetch = jest.fn().mockResolvedValue({
@@ -575,7 +583,9 @@ describe('HealthIndicatorsService', () => {
       }) as jest.Mock;
 
       // Act
-      const result = await service.checkExternalService('api', 'https://api.example.com/health');
+      const resultPromise = service.checkExternalService('api', 'https://api.example.com/health');
+      jest.runAllTimers();
+      const result = await resultPromise;
 
       // Assert
       expect(result.name).toBe('api');
@@ -589,7 +599,9 @@ describe('HealthIndicatorsService', () => {
       global.fetch = jest.fn().mockRejectedValue(new Error('ECONNREFUSED')) as jest.Mock;
 
       // Act
-      const result = await service.checkExternalService('api', 'https://api.example.com/health');
+      const resultPromise = service.checkExternalService('api', 'https://api.example.com/health');
+      jest.runAllTimers();
+      const result = await resultPromise;
 
       // Assert
       expect(result.name).toBe('api');
@@ -605,7 +617,9 @@ describe('HealthIndicatorsService', () => {
       }) as jest.Mock;
 
       // Act
-      const result = await service.checkExternalService('api', 'https://api.example.com/health');
+      const resultPromise = service.checkExternalService('api', 'https://api.example.com/health');
+      jest.runAllTimers();
+      const result = await resultPromise;
 
       // Assert
       expect(result.name).toBe('api');
@@ -621,7 +635,9 @@ describe('HealthIndicatorsService', () => {
       }) as jest.Mock;
 
       // Act
-      const result = await service.checkExternalService('api', 'https://api.example.com/health');
+      const resultPromise = service.checkExternalService('api', 'https://api.example.com/health');
+      jest.runAllTimers();
+      const result = await resultPromise;
 
       // Assert
       expect(result).toHaveProperty('responseTime');
