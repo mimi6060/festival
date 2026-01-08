@@ -227,6 +227,50 @@ export class TransactionLimitExceededException extends BaseException {
   }
 }
 
+export class DailyTransactionLimitExceededException extends BaseException {
+  constructor(
+    dailyLimit: number,
+    currentDailyTotal: number,
+    requestedAmount: number,
+    currency: string
+  ) {
+    super(
+      ErrorCodes.CASHLESS_DAILY_LIMIT_EXCEEDED,
+      `Daily transaction limit exceeded. Limit: ${dailyLimit} ${currency}, current daily total: ${currentDailyTotal} ${currency}, requested: ${requestedAmount} ${currency}`,
+      HttpStatus.BAD_REQUEST,
+      {
+        dailyLimit,
+        currentDailyTotal,
+        requestedAmount,
+        currency,
+        remainingAllowance: dailyLimit - currentDailyTotal,
+      }
+    );
+  }
+}
+
+export class MaxBalanceExceededException extends BaseException {
+  constructor(
+    maxBalance: number,
+    currentBalance: number,
+    requestedTopup: number,
+    currency: string
+  ) {
+    super(
+      ErrorCodes.CASHLESS_MAX_BALANCE_EXCEEDED,
+      `Maximum account balance exceeded. Max: ${maxBalance} ${currency}, current: ${currentBalance} ${currency}, requested: ${requestedTopup} ${currency}`,
+      HttpStatus.BAD_REQUEST,
+      {
+        maxBalance,
+        currentBalance,
+        requestedTopup,
+        currency,
+        maxAllowedTopup: maxBalance - currentBalance,
+      }
+    );
+  }
+}
+
 // ============================================
 // FESTIVAL BUSINESS EXCEPTIONS
 // ============================================

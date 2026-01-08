@@ -9,30 +9,22 @@
  * - Refunds
  */
 
-import {
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import {
-  TransactionType,
-  FestivalStatus,
-  Prisma,
-} from '@prisma/client';
+import { TransactionType, FestivalStatus, Prisma } from '@prisma/client';
 
-import { PaginationDto } from '../../common/dto/pagination.dto';
-import { paginate } from '@festival/utils';
+import { PaginationDto as _PaginationDto } from '../../common/dto/pagination.dto';
+import { paginate as _paginate } from '@festival/utils';
 
 // Import BusinessException pattern
-import {
-  NotFoundException,
-  ConflictException,
-} from '../../common/exceptions/base.exception';
+import { NotFoundException, ConflictException } from '../../common/exceptions/base.exception';
 import {
   InsufficientBalanceException,
   CashlessAccountDisabledException,
   TopupFailedException,
   TransactionLimitExceededException,
+  DailyTransactionLimitExceededException,
+  MaxBalanceExceededException,
   InvalidNFCTagException,
   FestivalCancelledException,
   FestivalNotPublishedException,
@@ -92,15 +84,51 @@ export interface CashlessTransactionEntity {
   createdAt: Date;
 }
 
+/**
+ * Cashless limits configuration per festival
+ * These values can be customized per festival via cashlessLimits JSON field
+ */
+export interface CashlessLimitsConfig {
+  /** Minimum amount for a single top-up (default: 5.00 EUR) */
+  minTopupAmount: number;
+  /** Maximum amount for a single top-up (default: 500.00 EUR) */
+  maxTopupAmount: number;
+  /** Maximum account balance allowed (default: 500.00 EUR) */
+  maxBalance: number;
+  /** Minimum amount for a payment (default: 0.01 EUR) */
+  minPaymentAmount: number;
+  /** Maximum amount for a single transaction (default: 100.00 EUR) */
+  maxSingleTransactionAmount: number;
+  /** Maximum total transaction amount per day (default: 1000.00 EUR) */
+  dailyTransactionLimit: number;
+}
+
 // ============================================================================
 // Configuration
 // ============================================================================
 
+/**
+ * Default cashless limits - used when festival doesn't specify custom limits
+ * Exported for use in tests and documentation
+ */
+export const DEFAULT_CASHLESS_LIMITS: CashlessLimitsConfig = {
+  minTopupAmount: 5.0,
+  maxTopupAmount: 500.0,
+  maxBalance: 500.0, // Default max balance: 500 EUR
+  minPaymentAmount: 0.01,
+  maxSingleTransactionAmount: 100.0, // Default max single transaction: 100 EUR
+  dailyTransactionLimit: 1000.0, // Default daily limit: 1000 EUR
+};
+
+/**
+ * Legacy config for backwards compatibility
+ * @deprecated Use festival-specific limits instead
+ */
 const CASHLESS_CONFIG = {
-  MIN_TOPUP_AMOUNT: 5.0,
-  MAX_TOPUP_AMOUNT: 500.0,
-  MAX_BALANCE: 1000.0,
-  MIN_PAYMENT_AMOUNT: 0.01,
+  MIN_TOPUP_AMOUNT: DEFAULT_CASHLESS_LIMITS.minTopupAmount,
+  MAX_TOPUP_AMOUNT: DEFAULT_CASHLESS_LIMITS.maxTopupAmount,
+  MAX_BALANCE: 1000.0, // Higher limit for backwards compatibility
+  MIN_PAYMENT_AMOUNT: DEFAULT_CASHLESS_LIMITS.minPaymentAmount,
 };
 
 // ============================================================================
@@ -181,26 +209,7 @@ export class CashlessService {
   async topup(userId: string, dto: TopupDto): Promise<CashlessTransactionEntity> {
     const { amount, festivalId, paymentMethod = 'CARD' } = dto;
 
-    // Validate amount
-    if (amount < CASHLESS_CONFIG.MIN_TOPUP_AMOUNT) {
-      throw new TransactionLimitExceededException(
-        CASHLESS_CONFIG.MIN_TOPUP_AMOUNT,
-        amount,
-        'EUR',
-        'single',
-      );
-    }
-
-    if (amount > CASHLESS_CONFIG.MAX_TOPUP_AMOUNT) {
-      throw new TransactionLimitExceededException(
-        CASHLESS_CONFIG.MAX_TOPUP_AMOUNT,
-        amount,
-        'EUR',
-        'single',
-      );
-    }
-
-    // Validate festival
+    // Validate festival first to get limits
     const festival = await this.prisma.festival.findUnique({
       where: { id: festivalId },
     });
@@ -213,6 +222,30 @@ export class CashlessService {
       throw new FestivalCancelledException(festivalId);
     }
 
+    // Get festival-specific limits
+    const limits = this.getFestivalLimits(festival);
+    const currency = festival.currency || 'EUR';
+
+    // Validate minimum topup amount
+    if (amount < limits.minTopupAmount) {
+      throw new TransactionLimitExceededException(
+        limits.minTopupAmount,
+        amount,
+        currency,
+        'single'
+      );
+    }
+
+    // Validate maximum topup amount
+    if (amount > limits.maxTopupAmount) {
+      throw new TransactionLimitExceededException(
+        limits.maxTopupAmount,
+        amount,
+        currency,
+        'single'
+      );
+    }
+
     // Get or create account
     const account = await this.getOrCreateAccount(userId);
 
@@ -220,13 +253,16 @@ export class CashlessService {
       throw new CashlessAccountDisabledException(account.id);
     }
 
-    // Check max balance
-    const newBalance = account.balance + amount;
-    if (newBalance > CASHLESS_CONFIG.MAX_BALANCE) {
-      throw new TopupFailedException(
-        `Maximum account balance is ${CASHLESS_CONFIG.MAX_BALANCE}. Current balance: ${account.balance}`,
-      );
-    }
+    // Validate against festival-specific limits (max balance, single transaction, daily limit)
+    await this.validateTransactionLimits(
+      account.id,
+      festivalId,
+      amount,
+      limits,
+      'topup',
+      account.balance,
+      currency
+    );
 
     // Create transaction in a database transaction
     const result = await this.prisma.$transaction(async (tx) => {
@@ -266,21 +302,11 @@ export class CashlessService {
   async pay(
     userId: string,
     dto: CashlessPaymentDto,
-    performedById?: string,
+    performedById?: string
   ): Promise<CashlessTransactionEntity> {
     const { amount, festivalId, description, vendorId } = dto;
 
-    // Validate amount
-    if (amount < CASHLESS_CONFIG.MIN_PAYMENT_AMOUNT) {
-      throw new TransactionLimitExceededException(
-        CASHLESS_CONFIG.MIN_PAYMENT_AMOUNT,
-        amount,
-        'EUR',
-        'single',
-      );
-    }
-
-    // Validate festival
+    // Validate festival first to get limits
     const festival = await this.prisma.festival.findUnique({
       where: { id: festivalId },
     });
@@ -297,6 +323,20 @@ export class CashlessService {
       throw new FestivalNotPublishedException(festivalId);
     }
 
+    // Get festival-specific limits
+    const limits = this.getFestivalLimits(festival);
+    const currency = festival.currency || 'EUR';
+
+    // Validate minimum payment amount
+    if (amount < limits.minPaymentAmount) {
+      throw new TransactionLimitExceededException(
+        limits.minPaymentAmount,
+        amount,
+        currency,
+        'single'
+      );
+    }
+
     // Get account
     const account = await this.getAccount(userId);
 
@@ -306,8 +346,19 @@ export class CashlessService {
 
     // Check sufficient balance
     if (account.balance < amount) {
-      throw new InsufficientBalanceException(account.balance, amount, 'EUR');
+      throw new InsufficientBalanceException(account.balance, amount, currency);
     }
+
+    // Validate against festival-specific limits (single transaction, daily limit)
+    await this.validateTransactionLimits(
+      account.id,
+      festivalId,
+      amount,
+      limits,
+      'payment',
+      account.balance,
+      currency
+    );
 
     // Create transaction
     const result = await this.prisma.$transaction(async (tx) => {
@@ -346,7 +397,7 @@ export class CashlessService {
   async refund(
     userId: string,
     dto: RefundDto,
-    performedById: string,
+    performedById: string
   ): Promise<CashlessTransactionEntity> {
     const { transactionId, reason } = dto;
 
@@ -435,8 +486,8 @@ export class CashlessService {
   async getTransactionHistory(
     userId: string,
     festivalId?: string,
-    limit: number = 50,
-    offset: number = 0,
+    limit = 50,
+    offset = 0
   ): Promise<CashlessTransactionEntity[]> {
     const account = await this.getAccount(userId);
 
@@ -537,6 +588,115 @@ export class CashlessService {
   // ============================================================================
   // Private Methods
   // ============================================================================
+
+  /**
+   * Get cashless limits configuration for a festival
+   * Merges festival-specific limits with default values
+   */
+  private getFestivalLimits(festival: any): CashlessLimitsConfig {
+    // If festival has custom cashlessLimits configured, merge with defaults
+    const customLimits = festival.cashlessLimits as Partial<CashlessLimitsConfig> | null;
+
+    if (!customLimits) {
+      return { ...DEFAULT_CASHLESS_LIMITS };
+    }
+
+    return {
+      minTopupAmount: customLimits.minTopupAmount ?? DEFAULT_CASHLESS_LIMITS.minTopupAmount,
+      maxTopupAmount: customLimits.maxTopupAmount ?? DEFAULT_CASHLESS_LIMITS.maxTopupAmount,
+      maxBalance: customLimits.maxBalance ?? DEFAULT_CASHLESS_LIMITS.maxBalance,
+      minPaymentAmount: customLimits.minPaymentAmount ?? DEFAULT_CASHLESS_LIMITS.minPaymentAmount,
+      maxSingleTransactionAmount:
+        customLimits.maxSingleTransactionAmount ??
+        DEFAULT_CASHLESS_LIMITS.maxSingleTransactionAmount,
+      dailyTransactionLimit:
+        customLimits.dailyTransactionLimit ?? DEFAULT_CASHLESS_LIMITS.dailyTransactionLimit,
+    };
+  }
+
+  /**
+   * Calculate the total transaction amount for a user on a specific day
+   * Only counts PAYMENT and TOPUP transactions (money spent or added)
+   */
+  private async getDailyTransactionTotal(
+    accountId: string,
+    festivalId: string,
+    date: Date = new Date()
+  ): Promise<number> {
+    // Get start and end of the day in the festival's timezone
+    const startOfDay = new Date(date);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const endOfDay = new Date(date);
+    endOfDay.setHours(23, 59, 59, 999);
+
+    // Get all transactions for the day (payments and topups)
+    const transactions = await this.prisma.cashlessTransaction.findMany({
+      where: {
+        accountId,
+        festivalId,
+        createdAt: {
+          gte: startOfDay,
+          lte: endOfDay,
+        },
+        type: {
+          in: [TransactionType.PAYMENT, TransactionType.TOPUP],
+        },
+      },
+      select: {
+        amount: true,
+        type: true,
+      },
+    });
+
+    // Sum up all transaction amounts
+    return transactions.reduce((total, tx) => total + Number(tx.amount), 0);
+  }
+
+  /**
+   * Validate transaction against festival limits
+   * Throws appropriate exceptions if limits are exceeded
+   */
+  private async validateTransactionLimits(
+    accountId: string,
+    festivalId: string,
+    amount: number,
+    limits: CashlessLimitsConfig,
+    transactionType: 'topup' | 'payment',
+    currentBalance: number,
+    currency = 'EUR'
+  ): Promise<void> {
+    // 1. Validate single transaction amount limit
+    if (amount > limits.maxSingleTransactionAmount) {
+      throw new TransactionLimitExceededException(
+        limits.maxSingleTransactionAmount,
+        amount,
+        currency,
+        'single'
+      );
+    }
+
+    // 2. Validate max balance for topups
+    if (transactionType === 'topup') {
+      const newBalance = currentBalance + amount;
+      if (newBalance > limits.maxBalance) {
+        throw new MaxBalanceExceededException(limits.maxBalance, currentBalance, amount, currency);
+      }
+    }
+
+    // 3. Validate daily transaction limit
+    const dailyTotal = await this.getDailyTransactionTotal(accountId, festivalId);
+    const newDailyTotal = dailyTotal + amount;
+
+    if (newDailyTotal > limits.dailyTransactionLimit) {
+      throw new DailyTransactionLimitExceededException(
+        limits.dailyTransactionLimit,
+        dailyTotal,
+        amount,
+        currency
+      );
+    }
+  }
 
   private mapAccountToEntity(account: any): CashlessAccountEntity {
     return {

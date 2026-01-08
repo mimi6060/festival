@@ -102,6 +102,8 @@ export const ErrorCodes = {
   CASHLESS_NFC_TAG_EXISTS: 'ERR_8005',
   CASHLESS_NFC_TAG_INVALID: 'ERR_8006',
   CASHLESS_LIMIT_EXCEEDED: 'ERR_8007',
+  CASHLESS_DAILY_LIMIT_EXCEEDED: 'ERR_8008',
+  CASHLESS_MAX_BALANCE_EXCEEDED: 'ERR_8009',
 
   // ============================================
   // VENDOR ERRORS (9xxx)
@@ -128,6 +130,27 @@ export const ErrorCodes = {
   FILE_TOO_LARGE: 'ERR_11001',
   FILE_TYPE_NOT_ALLOWED: 'ERR_11002',
   FILE_UPLOAD_FAILED: 'ERR_11003',
+
+  // ============================================
+  // PROGRAM/SCHEDULE ERRORS (12xxx)
+  // ============================================
+  ARTIST_NOT_FOUND: 'ERR_12000',
+  ARTIST_ALREADY_BOOKED: 'ERR_12001',
+  ARTIST_CONTRACT_NOT_SIGNED: 'ERR_12002',
+  ARTIST_CANCELLED: 'ERR_12003',
+  STAGE_NOT_FOUND: 'ERR_12100',
+  STAGE_CLOSED: 'ERR_12101',
+  STAGE_TECHNICAL_ISSUE: 'ERR_12102',
+  STAGE_CAPACITY_EXCEEDED: 'ERR_12103',
+  PERFORMANCE_NOT_FOUND: 'ERR_12200',
+  PERFORMANCE_TIME_CONFLICT: 'ERR_12201',
+  PERFORMANCE_CANCELLED: 'ERR_12202',
+  PERFORMANCE_DELAYED: 'ERR_12203',
+  PERFORMANCE_NOT_STARTED: 'ERR_12204',
+  PERFORMANCE_ALREADY_ENDED: 'ERR_12205',
+  SCHEDULE_CONFLICT: 'ERR_12300',
+  SCHEDULE_LOCKED: 'ERR_12301',
+  SETLIST_NOT_FOUND: 'ERR_12400',
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
@@ -206,11 +229,11 @@ export const ErrorMessages: Record<ErrorCode, { fr: string; en: string }> = {
 
   // Authorization
   [ErrorCodes.FORBIDDEN_ACCESS]: {
-    fr: 'Vous n\'avez pas acces a cette ressource.',
+    fr: "Vous n'avez pas acces a cette ressource.",
     en: 'You do not have access to this resource.',
   },
   [ErrorCodes.FORBIDDEN_ROLE]: {
-    fr: 'Votre role ne vous permet pas d\'effectuer cette action.',
+    fr: "Votre role ne vous permet pas d'effectuer cette action.",
     en: 'Your role does not allow this action.',
   },
   [ErrorCodes.FORBIDDEN_RESOURCE]: {
@@ -218,11 +241,11 @@ export const ErrorMessages: Record<ErrorCode, { fr: string; en: string }> = {
     en: 'Access to this resource denied.',
   },
   [ErrorCodes.FORBIDDEN_TENANT]: {
-    fr: 'Vous n\'appartenez pas a cette organisation.',
+    fr: "Vous n'appartenez pas a cette organisation.",
     en: 'You do not belong to this organization.',
   },
   [ErrorCodes.FORBIDDEN_ACTION]: {
-    fr: 'Cette action n\'est pas autorisee.',
+    fr: "Cette action n'est pas autorisee.",
     en: 'This action is not allowed.',
   },
 
@@ -258,7 +281,7 @@ export const ErrorMessages: Record<ErrorCode, { fr: string; en: string }> = {
     en: 'A festival with this identifier already exists.',
   },
   [ErrorCodes.FESTIVAL_NOT_PUBLISHED]: {
-    fr: 'Ce festival n\'est pas encore publie.',
+    fr: "Ce festival n'est pas encore publie.",
     en: 'This festival is not yet published.',
   },
   [ErrorCodes.FESTIVAL_ENDED]: {
@@ -292,7 +315,7 @@ export const ErrorMessages: Record<ErrorCode, { fr: string; en: string }> = {
     en: 'The maximum number of tickets per person has been reached.',
   },
   [ErrorCodes.TICKET_SALE_NOT_STARTED]: {
-    fr: 'La vente de billets n\'a pas encore commence.',
+    fr: "La vente de billets n'a pas encore commence.",
     en: 'Ticket sales have not started yet.',
   },
   [ErrorCodes.TICKET_SALE_ENDED]: {
@@ -403,6 +426,14 @@ export const ErrorMessages: Record<ErrorCode, { fr: string; en: string }> = {
     fr: 'Limite de transaction atteinte.',
     en: 'Transaction limit exceeded.',
   },
+  [ErrorCodes.CASHLESS_DAILY_LIMIT_EXCEEDED]: {
+    fr: 'Limite quotidienne de transactions atteinte.',
+    en: 'Daily transaction limit exceeded.',
+  },
+  [ErrorCodes.CASHLESS_MAX_BALANCE_EXCEEDED]: {
+    fr: 'Solde maximum du compte atteint.',
+    en: 'Maximum account balance exceeded.',
+  },
 
   // Vendor
   [ErrorCodes.VENDOR_NOT_FOUND]: {
@@ -462,8 +493,78 @@ export const ErrorMessages: Record<ErrorCode, { fr: string; en: string }> = {
     en: 'File type not allowed.',
   },
   [ErrorCodes.FILE_UPLOAD_FAILED]: {
-    fr: 'Echec de l\'envoi du fichier.',
+    fr: "Echec de l'envoi du fichier.",
     en: 'File upload failed.',
+  },
+
+  // Program/Schedule
+  [ErrorCodes.ARTIST_NOT_FOUND]: {
+    fr: 'Artiste non trouve.',
+    en: 'Artist not found.',
+  },
+  [ErrorCodes.ARTIST_ALREADY_BOOKED]: {
+    fr: "L'artiste a deja une performance a cette heure.",
+    en: 'Artist already has a performance at this time.',
+  },
+  [ErrorCodes.ARTIST_CONTRACT_NOT_SIGNED]: {
+    fr: "Le contrat de l'artiste n'est pas signe.",
+    en: 'Artist contract not signed.',
+  },
+  [ErrorCodes.ARTIST_CANCELLED]: {
+    fr: "L'artiste a annule sa participation.",
+    en: 'Artist has cancelled.',
+  },
+  [ErrorCodes.STAGE_NOT_FOUND]: {
+    fr: 'Scene non trouvee.',
+    en: 'Stage not found.',
+  },
+  [ErrorCodes.STAGE_CLOSED]: {
+    fr: 'La scene est fermee.',
+    en: 'Stage is closed.',
+  },
+  [ErrorCodes.STAGE_TECHNICAL_ISSUE]: {
+    fr: 'Probleme technique sur la scene.',
+    en: 'Technical issue on stage.',
+  },
+  [ErrorCodes.STAGE_CAPACITY_EXCEEDED]: {
+    fr: 'Capacite de la scene atteinte.',
+    en: 'Stage capacity exceeded.',
+  },
+  [ErrorCodes.PERFORMANCE_NOT_FOUND]: {
+    fr: 'Performance non trouvee.',
+    en: 'Performance not found.',
+  },
+  [ErrorCodes.PERFORMANCE_TIME_CONFLICT]: {
+    fr: "Conflit d'horaire avec une autre performance.",
+    en: 'Time conflict with another performance.',
+  },
+  [ErrorCodes.PERFORMANCE_CANCELLED]: {
+    fr: 'La performance a ete annulee.',
+    en: 'Performance has been cancelled.',
+  },
+  [ErrorCodes.PERFORMANCE_DELAYED]: {
+    fr: 'La performance a ete retardee.',
+    en: 'Performance has been delayed.',
+  },
+  [ErrorCodes.PERFORMANCE_NOT_STARTED]: {
+    fr: "La performance n'a pas encore commence.",
+    en: 'Performance has not started yet.',
+  },
+  [ErrorCodes.PERFORMANCE_ALREADY_ENDED]: {
+    fr: 'La performance est deja terminee.',
+    en: 'Performance has already ended.',
+  },
+  [ErrorCodes.SCHEDULE_CONFLICT]: {
+    fr: 'Conflits detectes dans le programme.',
+    en: 'Schedule conflicts detected.',
+  },
+  [ErrorCodes.SCHEDULE_LOCKED]: {
+    fr: 'Le programme est verrouille et ne peut pas etre modifie.',
+    en: 'Schedule is locked and cannot be modified.',
+  },
+  [ErrorCodes.SETLIST_NOT_FOUND]: {
+    fr: 'Setlist non trouvee.',
+    en: 'Setlist not found.',
   },
 };
 

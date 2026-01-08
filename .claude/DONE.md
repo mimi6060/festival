@@ -2,6 +2,38 @@
 
 ---
 
+## Session 2026-01-08 - Cashless Account Limits (DEV-25)
+
+### Tâches terminées cette session:
+
+- [x] **Implemented configurable cashless account limits (DEV-25)**
+  - **Files Modified**:
+    - `apps/api/src/modules/cashless/cashless.service.ts` - Added limits validation
+    - `apps/api/src/modules/cashless/cashless.service.spec.ts` - Added 11 new tests
+    - `apps/api/src/common/exceptions/business.exception.ts` - Added new exceptions
+    - `apps/api/src/common/exceptions/error-codes.ts` - Added new error codes
+  - **Features Implemented**:
+    - `CashlessLimitsConfig` interface with all configurable parameters:
+      - `minTopupAmount` - Min amount for single topup (default: 5.00 EUR)
+      - `maxTopupAmount` - Max amount for single topup (default: 500.00 EUR)
+      - `maxBalance` - Maximum account balance (default: 500.00 EUR)
+      - `minPaymentAmount` - Min amount for payment (default: 0.01 EUR)
+      - `maxSingleTransactionAmount` - Max per transaction (default: 100.00 EUR)
+      - `dailyTransactionLimit` - Daily total limit (default: 1000.00 EUR)
+    - Festival-specific limits via `cashlessLimits` JSON field
+    - Daily transaction total calculation
+    - Comprehensive limit validation on topup and payment
+  - **Exceptions Added**:
+    - `DailyTransactionLimitExceededException` with remaining allowance info
+    - `MaxBalanceExceededException` with max allowed topup info
+  - **Error Codes Added**:
+    - `CASHLESS_DAILY_LIMIT_EXCEEDED` (ERR_8008)
+    - `CASHLESS_MAX_BALANCE_EXCEEDED` (ERR_8009)
+  - **Tests**: 45 passing tests in cashless.service.spec.ts
+  - Build verified: `npx nx build api --skip-nx-cache` SUCCESS
+
+---
+
 ## Session 2026-01-08 - Payments E2E Tests (DEV-04)
 
 ### Tâches terminées cette session:

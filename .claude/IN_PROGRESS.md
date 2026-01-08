@@ -311,8 +311,24 @@
 ### DEV-25: Limites de compte cashless
 
 - **Fichier**: `apps/api/src/modules/cashless/cashless.service.ts`
-- **Status**: [ ] À faire
+- **Status**: [x] Terminé
 - **Description**: Limites de solde et transactions configurables
+- **Solution**:
+  - Ajouté `CashlessLimitsConfig` interface avec tous les paramètres configurables:
+    - `minTopupAmount` - Montant minimum pour un rechargement (défaut: 5.00 EUR)
+    - `maxTopupAmount` - Montant maximum pour un rechargement (défaut: 500.00 EUR)
+    - `maxBalance` - Solde maximum du compte (défaut: 500.00 EUR)
+    - `minPaymentAmount` - Montant minimum pour un paiement (défaut: 0.01 EUR)
+    - `maxSingleTransactionAmount` - Montant maximum par transaction (défaut: 100.00 EUR)
+    - `dailyTransactionLimit` - Limite quotidienne de transactions (défaut: 1000.00 EUR)
+  - Ajouté `DailyTransactionLimitExceededException` et `MaxBalanceExceededException` dans business.exception.ts
+  - Ajouté nouveaux codes d'erreur `CASHLESS_DAILY_LIMIT_EXCEEDED` (ERR_8008) et `CASHLESS_MAX_BALANCE_EXCEEDED` (ERR_8009)
+  - Implémenté `getFestivalLimits()` pour charger les limites configurées par festival (via champ JSON `cashlessLimits`)
+  - Implémenté `getDailyTransactionTotal()` pour calculer le total quotidien des transactions
+  - Implémenté `validateTransactionLimits()` pour valider toutes les limites avant chaque transaction
+  - Mis à jour `topup()` et `pay()` pour utiliser les limites spécifiques au festival
+  - Ajouté 11 nouveaux tests unitaires pour la validation des limites
+  - Total: 45 tests passants dans cashless.service.spec.ts
 
 ---
 
