@@ -2,6 +2,119 @@
 
 ---
 
+## Session 2026-01-08 - Tests Unitaires Camping Module
+
+### Tâches terminées cette session:
+
+- [x] **Created comprehensive unit tests for Camping Module (87 tests)**
+  - `camping.service.spec.ts` (87 tests):
+    - **createSpot**: success, NotFoundException (zone), ConflictException (duplicate number), electricity/water hooks, maxVehicleLength
+    - **bulkCreateSpots**: success, NotFoundException (zone), skip duplicates, default startNumber
+    - **getSpots**: pagination, filter by zoneId/festivalId/status/electricityHook/waterHook/isActive, empty results
+    - **getSpot**: success, NotFoundException, include active bookings
+    - **updateSpot**: success, ConflictException (duplicate number), update status/isActive
+    - **deleteSpot**: success, BadRequestException (active bookings), NotFoundException
+    - **getAvailableSpots**: return available spots for date range, filter by zoneId/requireElectricity/requireWater/vehicleLength, calculate correct price, empty results
+    - **createBooking**: success, BadRequestException (checkOut before checkIn), ConflictException (spot not available), calculate total price, generate booking number, NotFoundException
+    - **getBookings**: pagination, filter by festivalId/userId/status/checkInFrom/checkInTo, search by booking number/vehicle plate, sorting
+    - **getBooking**: success, NotFoundException, include spot and user relations
+    - **updateBooking**: success, BadRequestException (cancelled/checked out), recalculate price on date change, ConflictException (conflicting dates), update vehicle info/staff notes
+    - **confirmBooking**: confirm pending, BadRequestException (not pending)
+    - **checkIn**: success, update spot status to OCCUPIED, BadRequestException (not confirmed), override vehicle plate
+    - **checkOut**: success, update spot status to AVAILABLE, BadRequestException (not checked in), record damage report, append checkout notes
+    - **cancelBooking**: cancel pending/confirmed/checked-in, update spot status, BadRequestException (already cancelled/checked out)
+    - **getStatistics**: return stats, calculate occupancy rate, calculate revenue by zone type, return daily occupancy 7 days, handle empty festival
+    - **Date Overlap Logic**: detect overlap (start during, end during, contains, contained by), allow non-overlapping, allow consecutive booking
+  - Created `apps/api/src/test/fixtures/camping.fixture.ts` with:
+    - Zone fixtures: tentZone, caravanZone, glampingZone, inactiveZone
+    - Spot fixtures: availableSpot, occupiedSpot, reservedSpot, maintenanceSpot, caravanSpot, inactiveSpot
+    - Booking fixtures: pendingBooking, confirmedBooking, checkedInBooking, checkedOutBooking, cancelledBooking, caravanBooking
+    - Factory functions: createCampingZoneFixture, createCampingSpotFixture, createCampingBookingFixture
+    - Test input data: validCreateSpotInput, validBulkCreateSpotsInput, validBookingInput, invalidBookingInputs
+    - Spot/Booking with relations for includes
+  - Updated `apps/api/src/test/fixtures/index.ts` to export camping fixtures
+  - Uses Jest with mocks for PrismaService
+  - All tests pass: `npx nx test api --testFile=camping.service.spec` SUCCESS (87 tests)
+
+---
+
+## Session 2026-01-08 - Tests Unitaires Analytics Module
+
+### Tâches terminées cette session:
+
+- [x] **Created comprehensive unit tests for Analytics Module (55 tests)**
+  - `analytics.service.spec.ts` (55 tests):
+    - **getDashboardKPIs** (8 tests):
+      - Return dashboard KPIs for a festival
+      - Return cached data if available
+      - Throw NotFoundException if festival not found
+      - Include trends when includeTrends is true
+      - Not include trends when includeTrends is false
+      - Calculate correct occupancy rate
+      - Handle zero capacity gracefully
+      - Cache the result after computation
+    - **getSalesAnalytics** (7 tests):
+      - Return sales analytics for a festival
+      - Return cached data if available
+      - Throw NotFoundException if festival not found
+      - Calculate average order value correctly
+      - Include comparison data when requested
+      - Group sales by day correctly
+      - Handle refunded tickets correctly
+    - **getCashlessAnalytics** (4 tests):
+      - Return cashless analytics for a festival
+      - Throw NotFoundException if festival not found
+      - Calculate topup distribution correctly
+      - Group transactions by hour correctly
+    - **getAttendanceAnalytics** (6 tests):
+      - Return attendance analytics for a festival
+      - Throw NotFoundException if festival not found
+      - Calculate current occupancy correctly
+      - Include entry/exit flow when requested
+      - Not include entry/exit flow when not requested
+      - Calculate peak times correctly
+    - **getZoneAnalytics** (6 tests):
+      - Return zone analytics for a festival
+      - Throw NotFoundException if festival not found
+      - Filter by zoneId when provided
+      - Calculate zone occupancy rate correctly
+      - Not include heatmap when not requested
+      - Not include transitions when not requested
+    - **getVendorAnalytics** (6 tests):
+      - Return vendor analytics for a festival
+      - Throw NotFoundException if festival not found
+      - Filter by vendorId when provided
+      - Filter by vendorType when provided
+      - Calculate average order value correctly
+      - Respect topLimit parameter
+    - **getRealtimeAnalytics** (10 tests):
+      - Return realtime analytics for a festival
+      - Throw NotFoundException if festival not found
+      - Include alerts when requested
+      - Not include alerts when not requested
+      - Generate capacity warning alert at 80% occupancy
+      - Generate capacity critical alert at 95% occupancy
+      - Generate zone overcrowded alert
+      - Use custom thresholds when provided
+      - Include active zones when requested
+      - Not include zones when not requested
+    - **invalidateCache** (1 test):
+      - Delete all analytics cache patterns for a festival
+    - **Date Range Filtering** (2 tests):
+      - Use festival dates when no date range provided
+      - Use provided date range when specified
+    - **Edge Cases** (5 tests):
+      - Handle festival with no tickets
+      - Handle festival with no cashless activity
+      - Handle festival with no zones
+      - Handle festival with no vendors
+      - Handle null decimal values gracefully
+  - Uses Jest with mocks for PrismaService and CacheService
+  - Tests aggregation queries and date range filtering
+  - All tests pass: `npx nx test api --testFile=analytics.service.spec` SUCCESS (55 tests)
+
+---
+
 ## Session 2026-01-08 - Web App React Component Tests
 
 ### Tâches terminées cette session:
