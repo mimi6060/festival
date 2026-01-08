@@ -2,6 +2,29 @@
 
 ---
 
+## Session 2026-01-08 - API Reference Documentation
+
+### Tâches terminées cette session:
+
+- [x] **Created comprehensive API Reference documentation (docs/api/API_REFERENCE.md)**
+  - 10 modules documented with all endpoints (~1200 lines)
+  - **Authentication** (13 endpoints): register, login, logout, refresh, me, verify-email, forgot-password, reset-password, change-password, OAuth Google/GitHub, providers
+  - **Users** (11 endpoints): CRUD, search, ban/unban, role change, activity
+  - **Festivals** (9 endpoints): CRUD, by-slug, stats, publish, cancel
+  - **Tickets** (8 endpoints): list, get, QR code, purchase, guest-purchase, validate, scan, cancel
+  - **Payments** (20+ endpoints): checkout, intents, Connect, subscriptions, refunds, webhooks
+  - **Cashless/Wallet** (7 endpoints): account, balance, topup, pay, transactions, NFC link, refund
+  - **Zones** (14 endpoints): CRUD, capacity, access check, access log, stats, reset/adjust occupancy
+  - **Staff** (12 endpoints): CRUD, shifts, check-in/out, festival staff list, stats
+  - **Program** (7 endpoints): full program, by day, artists, stages, favorites
+  - **Support** (15 endpoints): FAQ, tickets CRUD, messages, status, assign, statistics
+  - Each endpoint includes: HTTP method, path, auth requirements, roles, request/response examples
+  - Common response formats documented (success, error, paginated)
+  - Error codes reference table (400-500 HTTP codes)
+  - Rate limits reference table by endpoint type
+
+---
+
 ## Session 2026-01-08 - Tests Unitaires Program Module
 
 ### Tâches terminées cette session:
