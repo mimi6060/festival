@@ -2,6 +2,39 @@
 
 ---
 
+## Session 2026-01-08 - Tests Auth Module (Part 2)
+
+### Tests unitaires complets pour le module auth
+
+- [x] **auth.service.spec.ts** (39 tests) - Enhanced
+  - Registration tests (5 tests): success, email normalization, duplicate email, whitespace trimming, optional phone
+  - Login tests (8 tests): success, non-existent email, wrong password, banned user, inactive user, unverified email, lastLoginAt update, email normalization
+  - Logout tests (1 test): token invalidation
+  - Token refresh tests (4 tests): success, invalid token, token mismatch, user not found
+  - Password change tests (4 tests): success, user not found, wrong current password, same password
+  - Get current user tests (2 tests): success, user not found
+  - Validate user tests (4 tests): active user, non-existent, banned, inactive
+  - Forgot password tests (5 tests): success, non-existent email (security), email normalization, token storage, expiry timing
+  - Verify email tests (2 tests): success, invalid token
+  - Reset password tests (4 tests): success, invalid token, expired token, token hashing
+
+- [x] **auth.controller.spec.ts** (37 tests) - NEW
+  - POST /auth/register (4 tests): success, with phone, without phone, duplicate email error
+  - POST /auth/login (6 tests): success with cookies, secure cookies in production, non-secure in dev, invalid credentials, banned user, unverified email
+  - POST /auth/logout (2 tests): success with cookie clearing, correct user ID
+  - POST /auth/refresh (5 tests): token from body, token from cookie, body preferred over cookie, invalid token, expired token
+  - GET /auth/me (3 tests): success, not found, correct structure without sensitive data
+  - POST /auth/verify-email (2 tests): success, invalid token
+  - POST /auth/forgot-password (3 tests): existing email, non-existent email (security), email normalization
+  - POST /auth/reset-password (3 tests): success, invalid token, expired token
+  - POST /auth/change-password (4 tests): success, wrong current password, same password, user not found
+  - POST /auth/resend-verification (1 test): success
+  - GET /auth/providers (4 tests): list providers, Google provider, GitHub provider, config reflection
+
+### Total: 76 auth module tests passing
+
+---
+
 ## Session 2026-01-08 - Audit Complet Production-Ready
 
 ### Résumé

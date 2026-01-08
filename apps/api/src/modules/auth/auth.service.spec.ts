@@ -51,9 +51,6 @@ jest.mock('uuid', () => ({
 
 describe('AuthService', () => {
   let authService: AuthService;
-  let prismaService: jest.Mocked<PrismaService>;
-  let jwtService: jest.Mocked<JwtService>;
-  let configService: jest.Mocked<ConfigService>;
 
   const mockPrismaService = {
     user: {
@@ -80,6 +77,19 @@ describe('AuthService', () => {
       };
       return config[key] ?? defaultValue;
     }),
+    getOrThrow: jest.fn((key: string) => {
+      const config: Record<string, any> = {
+        JWT_ACCESS_SECRET: 'test-access-secret',
+        JWT_REFRESH_SECRET: 'test-refresh-secret',
+        JWT_ACCESS_EXPIRES_IN: 900,
+        JWT_REFRESH_EXPIRES_IN: 604800,
+      };
+      const value = config[key];
+      if (value === undefined) {
+        throw new Error(`Configuration key "${key}" does not exist`);
+      }
+      return value;
+    }),
   };
 
   beforeEach(async () => {
@@ -95,9 +105,6 @@ describe('AuthService', () => {
     }).compile();
 
     authService = module.get<AuthService>(AuthService);
-    prismaService = module.get(PrismaService);
-    jwtService = module.get(JwtService);
-    configService = module.get(ConfigService);
 
     // Default bcrypt mocks
     (bcrypt.hash as jest.Mock).mockResolvedValue(VALID_PASSWORD_HASH);
@@ -176,10 +183,12 @@ describe('AuthService', () => {
       mockPrismaService.user.findUnique.mockResolvedValue(toPrismaUser(regularUser));
 
       // Act & Assert
-      await expect(authService.register({
-        ...validRegistrationInput,
-        email: regularUser.email,
-      })).rejects.toThrow(ConflictException);
+      await expect(
+        authService.register({
+          ...validRegistrationInput,
+          email: regularUser.email,
+        })
+      ).rejects.toThrow(ConflictException);
       expect(mockPrismaService.user.create).not.toHaveBeenCalled();
     });
 
@@ -193,12 +202,14 @@ describe('AuthService', () => {
         phone: '  +33612345678  ',
       };
       mockPrismaService.user.findUnique.mockResolvedValue(null);
-      mockPrismaService.user.create.mockImplementation((args) => Promise.resolve({
-        id: 'new-user-id',
-        ...args.data,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }));
+      mockPrismaService.user.create.mockImplementation((args) =>
+        Promise.resolve({
+          id: 'new-user-id',
+          ...args.data,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+      );
 
       // Act
       await authService.register(inputWithWhitespace);
@@ -212,7 +223,7 @@ describe('AuthService', () => {
             lastName: 'Doe',
             phone: '+33612345678',
           }),
-        }),
+        })
       );
     });
 
@@ -225,12 +236,14 @@ describe('AuthService', () => {
         lastName: 'Phone',
       };
       mockPrismaService.user.findUnique.mockResolvedValue(null);
-      mockPrismaService.user.create.mockImplementation((args) => Promise.resolve({
-        id: 'new-user-id',
-        ...args.data,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }));
+      mockPrismaService.user.create.mockImplementation((args) =>
+        Promise.resolve({
+          id: 'new-user-id',
+          ...args.data,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+      );
 
       // Act
       await authService.register(inputWithoutPhone);
@@ -241,7 +254,7 @@ describe('AuthService', () => {
           data: expect.objectContaining({
             phone: null,
           }),
-        }),
+        })
       );
     });
   });
@@ -274,7 +287,9 @@ describe('AuthService', () => {
       expect(result.tokens.refreshToken).toBe('refresh.token.here');
       expect(result.tokens.tokenType).toBe('Bearer');
       // expiresIn comes from the constructor's config, verify it's a number
-      expect(typeof result.tokens.expiresIn === 'number' || result.tokens.expiresIn === undefined).toBe(true);
+      expect(
+        typeof result.tokens.expiresIn === 'number' || result.tokens.expiresIn === undefined
+      ).toBe(true);
     });
 
     it('should throw UnauthorizedException for non-existent email', async () => {
@@ -282,10 +297,12 @@ describe('AuthService', () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(authService.login({
-        email: 'nonexistent@example.com',
-        password: VALID_PASSWORD,
-      })).rejects.toThrow(UnauthorizedException);
+      await expect(
+        authService.login({
+          email: 'nonexistent@example.com',
+          password: VALID_PASSWORD,
+        })
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException for incorrect password', async () => {
@@ -294,10 +311,12 @@ describe('AuthService', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       // Act & Assert
-      await expect(authService.login({
-        email: regularUser.email,
-        password: 'wrong-password',
-      })).rejects.toThrow(UnauthorizedException);
+      await expect(
+        authService.login({
+          email: regularUser.email,
+          password: 'wrong-password',
+        })
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException for banned user', async () => {
@@ -306,14 +325,18 @@ describe('AuthService', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       // Act & Assert
-      await expect(authService.login({
-        email: bannedUser.email,
-        password: VALID_PASSWORD,
-      })).rejects.toThrow(UnauthorizedException);
-      await expect(authService.login({
-        email: bannedUser.email,
-        password: VALID_PASSWORD,
-      })).rejects.toThrow('Your account has been banned');
+      await expect(
+        authService.login({
+          email: bannedUser.email,
+          password: VALID_PASSWORD,
+        })
+      ).rejects.toThrow(UnauthorizedException);
+      await expect(
+        authService.login({
+          email: bannedUser.email,
+          password: VALID_PASSWORD,
+        })
+      ).rejects.toThrow('Your account has been banned');
     });
 
     it('should throw UnauthorizedException for inactive user', async () => {
@@ -322,14 +345,18 @@ describe('AuthService', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       // Act & Assert
-      await expect(authService.login({
-        email: inactiveUser.email,
-        password: VALID_PASSWORD,
-      })).rejects.toThrow(UnauthorizedException);
-      await expect(authService.login({
-        email: inactiveUser.email,
-        password: VALID_PASSWORD,
-      })).rejects.toThrow('Your account is inactive');
+      await expect(
+        authService.login({
+          email: inactiveUser.email,
+          password: VALID_PASSWORD,
+        })
+      ).rejects.toThrow(UnauthorizedException);
+      await expect(
+        authService.login({
+          email: inactiveUser.email,
+          password: VALID_PASSWORD,
+        })
+      ).rejects.toThrow('Your account is inactive');
     });
 
     it('should throw UnauthorizedException for unverified email', async () => {
@@ -338,14 +365,18 @@ describe('AuthService', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(true);
 
       // Act & Assert
-      await expect(authService.login({
-        email: unverifiedUser.email,
-        password: VALID_PASSWORD,
-      })).rejects.toThrow(UnauthorizedException);
-      await expect(authService.login({
-        email: unverifiedUser.email,
-        password: VALID_PASSWORD,
-      })).rejects.toThrow('Please verify your email');
+      await expect(
+        authService.login({
+          email: unverifiedUser.email,
+          password: VALID_PASSWORD,
+        })
+      ).rejects.toThrow(UnauthorizedException);
+      await expect(
+        authService.login({
+          email: unverifiedUser.email,
+          password: VALID_PASSWORD,
+        })
+      ).rejects.toThrow('Please verify your email');
     });
 
     it('should update lastLoginAt and refreshToken on successful login', async () => {
@@ -373,7 +404,7 @@ describe('AuthService', () => {
             refreshToken: 'refresh.token',
             lastLoginAt: expect.any(Date),
           }),
-        }),
+        })
       );
     });
 
@@ -454,7 +485,7 @@ describe('AuthService', () => {
       expect(mockPrismaService.user.update).toHaveBeenCalledWith(
         expect.objectContaining({
           data: { refreshToken: 'new.refresh.token' },
-        }),
+        })
       );
     });
 
@@ -465,9 +496,11 @@ describe('AuthService', () => {
       });
 
       // Act & Assert
-      await expect(authService.refreshTokens({
-        refreshToken: 'invalid.token',
-      })).rejects.toThrow(UnauthorizedException);
+      await expect(
+        authService.refreshTokens({
+          refreshToken: 'invalid.token',
+        })
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException if refresh token does not match stored token', async () => {
@@ -484,9 +517,11 @@ describe('AuthService', () => {
       mockPrismaService.user.findUnique.mockResolvedValue(user);
 
       // Act & Assert
-      await expect(authService.refreshTokens({
-        refreshToken: 'provided.refresh.token',
-      })).rejects.toThrow(UnauthorizedException);
+      await expect(
+        authService.refreshTokens({
+          refreshToken: 'provided.refresh.token',
+        })
+      ).rejects.toThrow(UnauthorizedException);
     });
 
     it('should throw UnauthorizedException if user not found', async () => {
@@ -499,9 +534,11 @@ describe('AuthService', () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(authService.refreshTokens({
-        refreshToken: 'valid.token',
-      })).rejects.toThrow(UnauthorizedException);
+      await expect(
+        authService.refreshTokens({
+          refreshToken: 'valid.token',
+        })
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 
@@ -515,7 +552,7 @@ describe('AuthService', () => {
       const user = toPrismaUser(regularUser);
       mockPrismaService.user.findUnique.mockResolvedValue(user);
       (bcrypt.compare as jest.Mock)
-        .mockResolvedValueOnce(true)  // Current password check
+        .mockResolvedValueOnce(true) // Current password check
         .mockResolvedValueOnce(false); // New password different check
       (bcrypt.hash as jest.Mock).mockResolvedValue('new.password.hash');
       mockPrismaService.user.update.mockResolvedValue(user);
@@ -540,10 +577,12 @@ describe('AuthService', () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(authService.changePassword('non-existent-id', {
-        currentPassword: VALID_PASSWORD,
-        newPassword: 'NewPassword456!',
-      })).rejects.toThrow(NotFoundException);
+      await expect(
+        authService.changePassword('non-existent-id', {
+          currentPassword: VALID_PASSWORD,
+          newPassword: 'NewPassword456!',
+        })
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if current password is incorrect', async () => {
@@ -552,32 +591,40 @@ describe('AuthService', () => {
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
       // Act & Assert
-      await expect(authService.changePassword(regularUser.id, {
-        currentPassword: 'wrong-password',
-        newPassword: 'NewPassword456!',
-      })).rejects.toThrow(BadRequestException);
-      await expect(authService.changePassword(regularUser.id, {
-        currentPassword: 'wrong-password',
-        newPassword: 'NewPassword456!',
-      })).rejects.toThrow('Current password is incorrect');
+      await expect(
+        authService.changePassword(regularUser.id, {
+          currentPassword: 'wrong-password',
+          newPassword: 'NewPassword456!',
+        })
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        authService.changePassword(regularUser.id, {
+          currentPassword: 'wrong-password',
+          newPassword: 'NewPassword456!',
+        })
+      ).rejects.toThrow('Current password is incorrect');
     });
 
     it('should throw BadRequestException if new password is same as current', async () => {
       // Arrange
       mockPrismaService.user.findUnique.mockResolvedValue(toPrismaUser(regularUser));
       (bcrypt.compare as jest.Mock)
-        .mockResolvedValueOnce(true)  // Current password check
+        .mockResolvedValueOnce(true) // Current password check
         .mockResolvedValueOnce(true); // Same password check
 
       // Act & Assert
-      await expect(authService.changePassword(regularUser.id, {
-        currentPassword: VALID_PASSWORD,
-        newPassword: VALID_PASSWORD,
-      })).rejects.toThrow(BadRequestException);
-      await expect(authService.changePassword(regularUser.id, {
-        currentPassword: VALID_PASSWORD,
-        newPassword: VALID_PASSWORD,
-      })).rejects.toThrow('New password must be different');
+      await expect(
+        authService.changePassword(regularUser.id, {
+          currentPassword: VALID_PASSWORD,
+          newPassword: VALID_PASSWORD,
+        })
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        authService.changePassword(regularUser.id, {
+          currentPassword: VALID_PASSWORD,
+          newPassword: VALID_PASSWORD,
+        })
+      ).rejects.toThrow('New password must be different');
     });
   });
 
@@ -607,7 +654,9 @@ describe('AuthService', () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(authService.getCurrentUser('non-existent-id')).rejects.toThrow(NotFoundException);
+      await expect(authService.getCurrentUser('non-existent-id')).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
@@ -761,7 +810,10 @@ describe('AuthService', () => {
   describe('resetPassword', () => {
     it('should reset password and invalidate sessions', async () => {
       // Arrange
-      const user = toPrismaUser(regularUser);
+      const user = {
+        ...toPrismaUser(regularUser),
+        status: UserStatus.ACTIVE,
+      };
       mockPrismaService.user.findFirst.mockResolvedValue(user);
       (bcrypt.hash as jest.Mock).mockResolvedValue('new.hashed.password');
       mockPrismaService.user.update.mockResolvedValue(user);
@@ -777,20 +829,114 @@ describe('AuthService', () => {
         where: { id: user.id },
         data: {
           passwordHash: 'new.hashed.password',
+          resetToken: null,
+          resetTokenExpiry: null,
           refreshToken: null, // Sessions invalidated
         },
       });
     });
 
-    it('should throw BadRequestException for invalid reset token', async () => {
+    it('should throw UnauthorizedException for invalid reset token', async () => {
       // Arrange
       mockPrismaService.user.findFirst.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(authService.resetPassword({
-        token: 'invalid-token',
+      await expect(
+        authService.resetPassword({
+          token: 'invalid-token',
+          newPassword: 'NewSecurePass123!',
+        })
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should throw UnauthorizedException for expired reset token', async () => {
+      // Arrange
+      mockPrismaService.user.findFirst.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        authService.resetPassword({
+          token: 'expired-token',
+          newPassword: 'NewSecurePass123!',
+        })
+      ).rejects.toThrow(UnauthorizedException);
+      await expect(
+        authService.resetPassword({
+          token: 'expired-token',
+          newPassword: 'NewSecurePass123!',
+        })
+      ).rejects.toThrow('Invalid or expired reset token');
+    });
+
+    it('should hash the token before database lookup', async () => {
+      // Arrange
+      const user = {
+        ...toPrismaUser(regularUser),
+        status: UserStatus.ACTIVE,
+      };
+      mockPrismaService.user.findFirst.mockResolvedValue(user);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new.hashed.password');
+      mockPrismaService.user.update.mockResolvedValue(user);
+
+      // Act
+      await authService.resetPassword({
+        token: 'test-reset-token',
         newPassword: 'NewSecurePass123!',
-      })).rejects.toThrow(BadRequestException);
+      });
+
+      // Assert - the findFirst should be called with a hashed token
+      expect(mockPrismaService.user.findFirst).toHaveBeenCalledWith({
+        where: {
+          resetToken: expect.any(String), // SHA-256 hash
+          resetTokenExpiry: { gt: expect.any(Date) },
+          status: UserStatus.ACTIVE,
+        },
+      });
+    });
+  });
+
+  // ==========================================================================
+  // Forgot Password Tests (additional)
+  // ==========================================================================
+
+  describe('forgotPassword (token generation)', () => {
+    it('should store hashed token and expiry in database', async () => {
+      // Arrange
+      const user = toPrismaUser(regularUser);
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
+      mockPrismaService.user.update.mockResolvedValue(user);
+
+      // Act
+      await authService.forgotPassword(regularUser.email);
+
+      // Assert
+      expect(mockPrismaService.user.update).toHaveBeenCalledWith({
+        where: { id: user.id },
+        data: {
+          resetToken: expect.any(String), // SHA-256 hash
+          resetTokenExpiry: expect.any(Date),
+        },
+      });
+    });
+
+    it('should set token expiry to 1 hour from now', async () => {
+      // Arrange
+      const user = toPrismaUser(regularUser);
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
+      mockPrismaService.user.update.mockResolvedValue(user);
+      const now = Date.now();
+
+      // Act
+      await authService.forgotPassword(regularUser.email);
+
+      // Assert
+      const updateCall = mockPrismaService.user.update.mock.calls[0][0];
+      const expiryDate = updateCall.data.resetTokenExpiry as Date;
+      const expiryTime = expiryDate.getTime();
+
+      // Should be approximately 1 hour from now (with some tolerance)
+      expect(expiryTime).toBeGreaterThan(now + 59 * 60 * 1000);
+      expect(expiryTime).toBeLessThan(now + 61 * 60 * 1000);
     });
   });
 });
