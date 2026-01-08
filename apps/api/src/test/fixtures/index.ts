@@ -12,3 +12,6 @@ export * from './festivals.fixture';
 
 // Ticket, payment, and cashless fixtures
 export * from './tickets.fixture';
+
+// Camping fixtures
+export * from './camping.fixture';

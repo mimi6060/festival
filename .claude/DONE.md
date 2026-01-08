@@ -2,6 +2,81 @@
 
 ---
 
+## Session 2026-01-08 - Tests Unitaires Promo Codes Module
+
+### Unit Tests for PromoCodesService (68 tests)
+
+- [x] **promo-codes.service.spec.ts** - Comprehensive unit tests
+  - **create** (8 tests):
+    - Create promo code successfully
+    - Uppercase the promo code
+    - Throw ConflictException if code already exists
+    - Throw BadRequestException if percentage > 100
+    - Allow percentage of exactly 100
+    - Throw NotFoundException if festival does not exist
+    - Create promo code with festival association
+    - Create FIXED_AMOUNT promo code
+  - **findAll** (7 tests):
+    - Return paginated list of promo codes
+    - Filter by festivalId
+    - Filter by isActive true/false
+    - Apply pagination parameters
+    - Return empty array when no promo codes exist
+    - Order by createdAt desc
+  - **findOne** (3 tests):
+    - Return promo code by ID
+    - Throw NotFoundException if promo code not found
+    - Include festival relation
+  - **findByCode** (2 tests):
+    - Return promo code by code (case insensitive)
+    - Throw NotFoundException if code not found
+  - **update** (7 tests):
+    - Update promo code successfully
+    - Uppercase code when updating
+    - Throw ConflictException if new code already exists
+    - Throw NotFoundException if promo code not found
+    - Throw BadRequestException if percentage > 100 on update
+    - Allow same code to be kept
+    - Update isActive to deactivate
+  - **remove** (2 tests):
+    - Delete promo code successfully
+    - Throw NotFoundException if promo code not found
+  - **validate** (20 tests):
+    - Basic validation: valid result, invalid code, case insensitive
+    - Expiry validation: expired code, code without expiry
+    - Usage limit: exhausted code, unlimited uses, not yet at max
+    - Minimum amount: below minimum, equal to minimum, no requirement
+    - Festival scope: wrong festival, global code, scoped without festivalId
+    - Inactive code validation
+    - Discount calculation PERCENTAGE: correct calculation, 100%, rounding
+    - Discount calculation FIXED_AMOUNT: correct, cap at order, exceed order
+  - **apply** (6 tests):
+    - Apply promo code and increment usage
+    - Return invalid for non-existent code
+    - Return invalid if validation fails
+    - Handle race condition with transaction
+    - Handle transaction error gracefully
+    - Rethrow unexpected errors
+  - **getStats** (8 tests):
+    - Return statistics for promo code
+    - Throw NotFoundException for non-existent code
+    - Correctly identify expired code
+    - Correctly identify exhausted code
+    - Return null remainingUses for unlimited code
+    - Calculate usage rate correctly
+    - Correctly identify inactive code
+    - Return isExpired false for code without expiry
+  - **edge cases** (4 tests):
+    - Handle zero amount validation
+    - Handle very large amounts
+    - Handle decimal amounts
+    - Handle special characters in code search
+- [x] Added DiscountType enum and PromoCode model to Prisma schema
+- [x] Generated Prisma client with new types
+- [x] Build verified: `npx nx build api --skip-nx-cache` SUCCESS
+
+---
+
 ## Session 2026-01-08 - Tests E2E Auth Module avec Supertest et Cookie Support
 
 ### Enhanced E2E Tests for Authentication Flow

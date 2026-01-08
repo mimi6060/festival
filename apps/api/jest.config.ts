@@ -52,6 +52,8 @@ const config: Config = {
     '^@festival/shared/utils$': '<rootDir>/../../libs/shared/utils/src/index.ts',
     '^@festival/shared/(.*)$': '<rootDir>/../../libs/shared/$1/src/index.ts',
     '^@/(.*)$': '<rootDir>/src/$1',
+    // Mock bullmq for testing (not installed in dev dependencies)
+    '^bullmq$': '<rootDir>/src/test/__mocks__/bullmq.ts',
   },
 
   // Setup files to run before tests

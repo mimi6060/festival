@@ -92,6 +92,11 @@ enum PayoutStatus {
   CANCELLED
 }
 
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
 enum VendorPaymentMethod {
   CASHLESS
   CARD
@@ -264,12 +269,37 @@ model Festival {
   campingZones     CampingZone[]
   mapPois          MapPoi[]
   staffMembers     StaffMember[]
+  promoCodes       PromoCode[]
 
   @@index([organizerId])
   @@index([slug])
   @@index([status])
   @@index([startDate, endDate])
   @@index([isDeleted])
+}
+
+// PromoCode model for discount codes
+model PromoCode {
+  id            String       @id @default(uuid())
+  code          String       @unique
+  discountType  DiscountType
+  discountValue Decimal      @db.Decimal(10, 2)
+  maxUses       Int?
+  currentUses   Int          @default(0)
+  minAmount     Decimal?     @db.Decimal(10, 2)
+  expiresAt     DateTime?
+  isActive      Boolean      @default(true)
+  festivalId    String?
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  // Relations
+  festival      Festival?    @relation(fields: [festivalId], references: [id], onDelete: SetNull)
+
+  @@index([code])
+  @@index([festivalId])
+  @@index([isActive])
+  @@index([expiresAt])
 }
 
 model TicketCategory {
@@ -292,8 +322,13 @@ model TicketCategory {
   festival      Festival    @relation(fields: [festivalId], references: [id], onDelete: Cascade)
   tickets       Ticket[]
 
+  // Performance indexes
   @@index([festivalId])
   @@index([type])
+  @@index([isActive])                          // Filter active categories
+  @@index([festivalId, isActive])              // Festival's active categories
+  @@index([festivalId, type, isActive])        // Festival categories by type
+  @@index([saleStartDate, saleEndDate])        // Date range queries for on-sale categories
 }
 
 model Ticket {
@@ -385,7 +420,10 @@ model CashlessAccount {
   user          User        @relation(fields: [userId], references: [id])
   transactions  CashlessTransaction[]
 
+  // Performance indexes
   @@index([nfcTagId])
+  @@index([isActive])                          // Filter active accounts
+  @@index([balance])                           // Balance analytics/reports
 }
 
 model CashlessTransaction {
@@ -437,7 +475,10 @@ model Zone {
   accessLogs    ZoneAccessLog[]
   staffShifts   StaffShift[]
 
+  // Performance indexes
   @@index([festivalId])
+  @@index([isActive])                          // Filter active zones
+  @@index([festivalId, isActive])              // Festival's active zones
 }
 
 enum ZoneAccessAction {
@@ -457,10 +498,14 @@ model ZoneAccessLog {
   zone        Zone             @relation(fields: [zoneId], references: [id], onDelete: Cascade)
   ticket      Ticket           @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
+  // Performance indexes
   @@index([zoneId])
   @@index([ticketId])
   @@index([timestamp])
   @@index([zoneId, timestamp])
+  @@index([action])                            // Filter by entry/exit
+  @@index([zoneId, action, timestamp])         // Zone entry/exit analytics
+  @@index([performedById])                     // Staff activity tracking
 }
 
 model StaffAssignment {
@@ -480,9 +525,15 @@ model StaffAssignment {
   festival      Festival    @relation(fields: [festivalId], references: [id], onDelete: Cascade)
   zone          Zone?       @relation(fields: [zoneId], references: [id])
 
+  // Performance indexes
   @@index([userId])
   @@index([festivalId])
   @@index([zoneId])
+  @@index([isActive])                          // Filter active assignments
+  @@index([festivalId, isActive])              // Festival's active staff
+  @@index([festivalId, zoneId, isActive])      // Zone staff assignments
+  @@index([startTime, endTime])                // Time-based queries
+  @@index([role])                              // Filter by role
 }
 
 model Artist {
@@ -538,10 +589,14 @@ model Performance {
   artist        Artist        @relation(fields: [artistId], references: [id], onDelete: Cascade)
   stage         Stage         @relation(fields: [stageId], references: [id], onDelete: Cascade)
 
+  // Performance indexes
   @@index([artistId])
   @@index([stageId])
   @@index([startTime])
   @@index([stageId, startTime])
+  @@index([isCancelled])                       // Filter cancelled performances
+  @@index([stageId, isCancelled, startTime])   // Active performances by stage
+  @@index([startTime, endTime])                // Time range queries
 }
 
 model AuditLog {
@@ -556,11 +611,15 @@ model AuditLog {
   userAgent   String?
   createdAt   DateTime @default(now())
 
+  // Performance indexes
   @@index([userId])
   @@index([action])
   @@index([entityType])
   @@index([entityId])
   @@index([createdAt])
+  @@index([entityType, entityId])              // Entity lookup
+  @@index([userId, createdAt])                 // User activity history
+  @@index([entityType, createdAt])             // Entity type analytics
 }
 
 // Map POI Types
@@ -620,11 +679,15 @@ model Notification {
   // Relations
   user        User             @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // Performance indexes
   @@index([userId])
   @@index([festivalId])
   @@index([userId, isRead])
   @@index([type])
   @@index([createdAt])
+  @@index([userId, createdAt])                 // User notification history
+  @@index([userId, type, isRead])              // Unread notifications by type
+  @@index([festivalId, createdAt])             // Festival notifications timeline
 }
 
 model PushToken {
@@ -641,11 +704,14 @@ model PushToken {
   // Relations
   user        User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // Performance indexes
   @@unique([userId, token])
   @@index([userId])
   @@index([token])
   @@index([platform])
   @@index([isActive])
+  @@index([userId, isActive])                  // User's active tokens
+  @@index([platform, isActive])                // Active tokens by platform
 }
 
 model NotificationPreference {
@@ -688,10 +754,13 @@ model ScheduledNotification {
   createdAt       DateTime                    @default(now())
   updatedAt       DateTime                    @updatedAt
 
+  // Performance indexes
   @@index([festivalId])
   @@index([status])
   @@index([scheduledFor])
   @@index([createdById])
+  @@index([status, scheduledFor])              // Pending notifications due
+  @@index([festivalId, status])                // Festival notifications by status
 }
 
 model NotificationTemplate {
@@ -874,10 +943,14 @@ model VendorPayout {
   // Relations
   vendor          Vendor        @relation(fields: [vendorId], references: [id], onDelete: Cascade)
 
+  // Performance indexes
   @@index([vendorId])
   @@index([status])
   @@index([periodStart, periodEnd])
   @@index([createdAt])
+  @@index([vendorId, status])                  // Vendor payouts by status
+  @@index([processedById])                     // Admin payout processing
+  @@index([status, createdAt])                 // Pending payouts timeline
 }
 
 // Support & FAQ Enums
@@ -951,11 +1024,17 @@ model SupportTicket {
   user        User                @relation(fields: [userId], references: [id])
   messages    SupportMessage[]
 
+  // Performance indexes
   @@index([userId])
   @@index([festivalId])
   @@index([status])
   @@index([priority])
   @@index([createdAt])
+  @@index([assignedTo])                        // Staff workload
+  @@index([status, priority])                  // Priority queue
+  @@index([status, createdAt])                 // Open tickets timeline
+  @@index([assignedTo, status])                // Staff assigned tickets
+  @@index([festivalId, status])                // Festival tickets by status
 }
 
 model SupportMessage {
@@ -1085,6 +1164,7 @@ model CampingBooking {
   spot            CampingSpot   @relation(fields: [spotId], references: [id], onDelete: Cascade)
   user            User          @relation(fields: [userId], references: [id])
 
+  // Performance indexes
   @@index([spotId])
   @@index([userId])
   @@index([status])
@@ -1092,6 +1172,10 @@ model CampingBooking {
   @@index([bookingNumber])
   @@index([qrCode])
   @@index([vehiclePlate])
+  @@index([spotId, status])                    // Spot availability check
+  @@index([spotId, checkIn, checkOut])         // Spot booking overlap check
+  @@index([userId, status])                    // User bookings by status
+  @@index([createdAt])                         // Time-based queries
 }
 
 // =============================================
@@ -1348,8 +1432,12 @@ model Session {
   // Relations
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // Performance indexes
   @@index([userId])
   @@index([token])
   @@index([isActive])
   @@index([expiresAt])
+  @@index([userId, isActive])                  // User's active sessions
+  @@index([isActive, expiresAt])               // Cleanup expired sessions
+  @@index([lastActiveAt])                      // Session activity tracking
 }
