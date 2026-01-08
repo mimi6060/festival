@@ -11,16 +11,15 @@ interface RequestOptions {
 async function request<T>(endpoint: string, options: RequestOptions = {}): Promise<T> {
   const { method = 'GET', body, headers = {} } = options;
 
-  const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
-
+  // Use httpOnly cookies for authentication - no localStorage tokens needed
   const response = await fetch(`${API_BASE_URL}${endpoint}`, {
     method,
     headers: {
       'Content-Type': 'application/json',
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       ...headers,
     },
     body: body ? JSON.stringify(body) : undefined,
+    credentials: 'include', // Send cookies with request
   });
 
   if (!response.ok) {

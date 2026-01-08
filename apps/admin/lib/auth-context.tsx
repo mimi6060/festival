@@ -9,7 +9,7 @@ interface AuthContextType {
   isLoading: boolean;
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
 }
 
@@ -24,24 +24,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkAuth = useCallback(async () => {
     try {
-      const token = localStorage.getItem('admin_token');
-      if (!token) {
-        setUser(null);
-        setIsLoading(false);
-        return;
-      }
-
-      // Validate token with API
+      // Validate authentication using httpOnly cookies
       const response = await fetch(`${API_BASE_URL}/auth/me`, {
         method: 'GET',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
+        credentials: 'include', // Send cookies with request
       });
 
       if (!response.ok) {
-        throw new Error('Invalid or expired token');
+        throw new Error('Invalid or expired session');
       }
 
       const data = await response.json();
@@ -56,12 +46,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       setUser(userData);
-      localStorage.setItem('admin_user', JSON.stringify(userData));
     } catch (error) {
       console.error('Auth check failed:', error);
       setUser(null);
-      localStorage.removeItem('admin_token');
-      localStorage.removeItem('admin_user');
     } finally {
       setIsLoading(false);
     }
@@ -95,10 +82,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         throw new Error('Acces non autorise. Vous devez etre administrateur ou organisateur.');
       }
 
-      // API returns tokens.accessToken, not token
-      const accessToken = data.tokens?.accessToken || data.token;
-      localStorage.setItem('admin_token', accessToken);
-      localStorage.setItem('admin_user', JSON.stringify(data.user));
+      // Tokens are now stored in httpOnly cookies, we only keep user data in state
       setUser(data.user);
       router.push('/');
     } finally {
@@ -106,9 +90,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const logout = () => {
-    localStorage.removeItem('admin_token');
-    localStorage.removeItem('admin_user');
+  const logout = async () => {
+    try {
+      // Call logout API to clear httpOnly cookies
+      await fetch(`${API_BASE_URL}/auth/logout`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+    } catch {
+      // Ignore errors on logout, we'll clear local state anyway
+    }
+
     setUser(null);
     router.push('/login');
   };

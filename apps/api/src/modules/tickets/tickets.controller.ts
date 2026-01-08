@@ -11,13 +11,12 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { UserRole } from '@prisma/client';
 import { TicketsService } from './tickets.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import {
-  PurchaseTicketsDto,
-  GuestPurchaseDto,
-  ValidateTicketDto,
-} from './dto/tickets.dto';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { PurchaseTicketsDto, GuestPurchaseDto, ValidateTicketDto } from './dto/tickets.dto';
 
 @Controller('api/tickets')
 export class TicketsController {
@@ -25,10 +24,7 @@ export class TicketsController {
 
   @UseGuards(JwtAuthGuard)
   @Get()
-  async getUserTickets(
-    @Request() req,
-    @Query('festivalId') festivalId?: string,
-  ) {
+  async getUserTickets(@Request() req, @Query('festivalId') festivalId?: string) {
     return this.ticketsService.getUserTickets(req.user.id, festivalId);
   }
 
@@ -41,10 +37,7 @@ export class TicketsController {
   @UseGuards(JwtAuthGuard)
   @Get(':id/qrcode')
   async getTicketQrCode(@Request() req, @Param('id') id: string) {
-    const qrCodeImage = await this.ticketsService.getTicketQrCodeImage(
-      id,
-      req.user.id,
-    );
+    const qrCodeImage = await this.ticketsService.getTicketQrCodeImage(id, req.user.id);
     return { qrCode: qrCodeImage };
   }
 
@@ -60,20 +53,19 @@ export class TicketsController {
     return this.ticketsService.guestPurchaseTickets(dto);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.STAFF, UserRole.SECURITY, UserRole.ADMIN, UserRole.ORGANIZER)
   @Post('validate')
   @HttpCode(HttpStatus.OK)
   async validateTicket(@Body() dto: ValidateTicketDto) {
     return this.ticketsService.validateTicket(dto);
   }
 
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.STAFF, UserRole.SECURITY, UserRole.ADMIN, UserRole.ORGANIZER)
   @Post(':id/scan')
   @HttpCode(HttpStatus.OK)
-  async scanTicket(
-    @Request() req,
-    @Param('id') qrCode: string,
-    @Query('zoneId') zoneId?: string,
-  ) {
+  async scanTicket(@Request() req, @Param('id') qrCode: string, @Query('zoneId') zoneId?: string) {
     return this.ticketsService.scanTicket(qrCode, req.user.id, zoneId);
   }
 

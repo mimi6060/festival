@@ -22,6 +22,8 @@ import {
   HttpCode,
   HttpStatus,
   ParseUUIDPipe,
+  UseGuards,
+  ForbiddenException,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -32,6 +34,10 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
+import { UserRole } from '@prisma/client';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Public } from '../auth/decorators/public.decorator';
 import { PaymentsService } from './payments.service';
 import { CheckoutService } from './services/checkout.service';
 import { StripeConnectService } from './services/stripe-connect.service';
@@ -54,21 +60,19 @@ import {
   UpdateSubscriptionDto,
   CancelSubscriptionDto,
 } from './dto/subscription.dto';
-import {
-  CreateRefundDto,
-  PartialRefundDto,
-  BulkRefundDto,
-} from './dto/refund.dto';
+import { CreateRefundDto, PartialRefundDto, BulkRefundDto } from './dto/refund.dto';
 
 @ApiTags('Payments')
 @Controller('payments')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@ApiBearerAuth()
 export class PaymentsController {
   constructor(
     private readonly paymentsService: PaymentsService,
     private readonly checkoutService: CheckoutService,
     private readonly connectService: StripeConnectService,
     private readonly subscriptionService: SubscriptionService,
-    private readonly refundService: RefundService,
+    private readonly refundService: RefundService
   ) {}
 
   // ============================================================================
@@ -76,19 +80,17 @@ export class PaymentsController {
   // ============================================================================
 
   @Post('checkout')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a Stripe Checkout Session' })
   @ApiBody({ type: CreateCheckoutSessionDto })
   @ApiResponse({ status: 201, type: CheckoutSessionResponseDto })
   @ApiResponse({ status: 400, description: 'Invalid request' })
   async createCheckoutSession(
-    @Body() dto: CreateCheckoutSessionDto,
+    @Body() dto: CreateCheckoutSessionDto
   ): Promise<CheckoutSessionResponseDto> {
     return this.checkoutService.createCheckoutSession(dto);
   }
 
   @Get('checkout/:sessionId')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get checkout session status' })
   @ApiParam({ name: 'sessionId', description: 'Stripe session ID' })
   @ApiResponse({ status: 200, description: 'Session status' })
@@ -98,17 +100,13 @@ export class PaymentsController {
 
   @Post('checkout/:sessionId/expire')
   @HttpCode(HttpStatus.NO_CONTENT)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Expire a checkout session' })
   @ApiParam({ name: 'sessionId', description: 'Stripe session ID' })
-  async expireCheckoutSession(
-    @Param('sessionId') sessionId: string,
-  ): Promise<void> {
+  async expireCheckoutSession(@Param('sessionId') sessionId: string): Promise<void> {
     return this.checkoutService.expireCheckoutSession(sessionId);
   }
 
   @Post('checkout/ticket')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create checkout for ticket purchase' })
   @ApiResponse({ status: 201, type: CheckoutSessionResponseDto })
   async createTicketCheckout(
@@ -116,21 +114,20 @@ export class PaymentsController {
     dto: {
       userId: string;
       festivalId: string;
-      tickets: Array<{
+      tickets: {
         categoryId: string;
         name: string;
         price: number;
         quantity: number;
-      }>;
+      }[];
       successUrl: string;
       cancelUrl: string;
-    },
+    }
   ): Promise<CheckoutSessionResponseDto> {
     return this.checkoutService.createTicketCheckout(dto);
   }
 
   @Post('checkout/cashless-topup')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create checkout for cashless top-up' })
   @ApiResponse({ status: 201, type: CheckoutSessionResponseDto })
   async createCashlessTopupCheckout(
@@ -141,7 +138,7 @@ export class PaymentsController {
       amount: number;
       successUrl: string;
       cancelUrl: string;
-    },
+    }
   ): Promise<CheckoutSessionResponseDto> {
     return this.checkoutService.createCashlessTopupCheckout(dto);
   }
@@ -151,7 +148,6 @@ export class PaymentsController {
   // ============================================================================
 
   @Post('intent')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a payment intent' })
   @ApiResponse({ status: 201, description: 'Payment intent created' })
   async createPaymentIntent(
@@ -162,13 +158,12 @@ export class PaymentsController {
       currency?: string;
       description?: string;
       metadata?: Record<string, string>;
-    },
+    }
   ) {
     return this.paymentsService.createPaymentIntent(dto);
   }
 
   @Get(':paymentId')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get payment by ID' })
   @ApiParam({ name: 'paymentId', type: 'string' })
   @ApiResponse({ status: 200, description: 'Payment details' })
@@ -178,23 +173,29 @@ export class PaymentsController {
   }
 
   @Get('user/:userId')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user payment history' })
   @ApiParam({ name: 'userId', type: 'string' })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'offset', required: false, type: Number })
   @ApiResponse({ status: 200, description: 'Payment list' })
+  @ApiResponse({ status: 403, description: 'Access denied' })
   async getUserPayments(
     @Param('userId', ParseUUIDPipe) userId: string,
     @Query('limit') limit?: number,
     @Query('offset') offset?: number,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    @Req() req: any
   ) {
+    // Authorization: user can only access their own payments, unless they are ADMIN
+    const requestingUser = req.user;
+    if (requestingUser.id !== userId && requestingUser.role !== UserRole.ADMIN) {
+      throw new ForbiddenException('You can only access your own payment history');
+    }
     return this.paymentsService.getUserPayments(userId, limit, offset);
   }
 
   @Post(':paymentId/cancel')
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Cancel a pending payment' })
   @ApiParam({ name: 'paymentId', type: 'string' })
   @ApiResponse({ status: 200, description: 'Payment cancelled' })
@@ -207,7 +208,6 @@ export class PaymentsController {
   // ============================================================================
 
   @Post('connect/account')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a Stripe Connect account for a vendor' })
   @ApiBody({ type: CreateConnectAccountDto })
   @ApiResponse({ status: 201, description: 'Connect account created' })
@@ -216,7 +216,6 @@ export class PaymentsController {
   }
 
   @Post('connect/account-link')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create an account link for onboarding' })
   @ApiBody({ type: CreateAccountLinkDto })
   @ApiResponse({ status: 201, description: 'Account link created' })
@@ -225,7 +224,6 @@ export class PaymentsController {
   }
 
   @Get('connect/account/:accountId')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get Connect account details' })
   @ApiParam({ name: 'accountId', description: 'Stripe account ID' })
   @ApiResponse({ status: 200, description: 'Account details' })
@@ -234,7 +232,6 @@ export class PaymentsController {
   }
 
   @Get('connect/account/:accountId/balance')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get Connect account balance' })
   @ApiParam({ name: 'accountId', description: 'Stripe account ID' })
   @ApiResponse({ status: 200, description: 'Account balance' })
@@ -243,7 +240,6 @@ export class PaymentsController {
   }
 
   @Post('connect/transfer')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a transfer to a Connect account' })
   @ApiBody({ type: CreateTransferDto })
   @ApiResponse({ status: 201, description: 'Transfer created' })
@@ -252,7 +248,6 @@ export class PaymentsController {
   }
 
   @Post('connect/payout')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a payout from a Connect account' })
   @ApiBody({ type: CreatePayoutDto })
   @ApiResponse({ status: 201, description: 'Payout created' })
@@ -265,7 +260,6 @@ export class PaymentsController {
   // ============================================================================
 
   @Post('subscriptions/product')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a subscription product' })
   @ApiBody({ type: CreateProductDto })
   @ApiResponse({ status: 201, description: 'Product created' })
@@ -274,7 +268,6 @@ export class PaymentsController {
   }
 
   @Post('subscriptions/price')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a subscription price' })
   @ApiBody({ type: CreatePriceDto })
   @ApiResponse({ status: 201, description: 'Price created' })
@@ -283,19 +276,14 @@ export class PaymentsController {
   }
 
   @Get('subscriptions/products')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'List subscription products' })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   @ApiQuery({ name: 'active', required: false, type: Boolean })
-  async listProducts(
-    @Query('limit') limit?: number,
-    @Query('active') active?: boolean,
-  ) {
+  async listProducts(@Query('limit') limit?: number, @Query('active') active?: boolean) {
     return this.subscriptionService.listProducts(limit, active);
   }
 
   @Get('subscriptions/prices/:productId')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'List prices for a product' })
   @ApiParam({ name: 'productId', description: 'Stripe product ID' })
   async listPrices(@Param('productId') productId: string) {
@@ -303,7 +291,6 @@ export class PaymentsController {
   }
 
   @Post('subscriptions')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a subscription' })
   @ApiBody({ type: CreateSubscriptionDto })
   @ApiResponse({ status: 201, description: 'Subscription created' })
@@ -312,7 +299,6 @@ export class PaymentsController {
   }
 
   @Get('subscriptions/:subscriptionId')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get subscription by ID' })
   @ApiParam({ name: 'subscriptionId', description: 'Stripe subscription ID' })
   async getSubscription(@Param('subscriptionId') subscriptionId: string) {
@@ -320,44 +306,38 @@ export class PaymentsController {
   }
 
   @Get('subscriptions/user/:userId')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'List user subscriptions' })
   @ApiParam({ name: 'userId', type: 'string' })
-  async listUserSubscriptions(
-    @Param('userId', ParseUUIDPipe) userId: string,
-  ) {
+  async listUserSubscriptions(@Param('userId', ParseUUIDPipe) userId: string) {
     return this.subscriptionService.listUserSubscriptions(userId);
   }
 
   @Post('subscriptions/:subscriptionId/update')
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Update a subscription' })
   @ApiParam({ name: 'subscriptionId', description: 'Stripe subscription ID' })
   @ApiBody({ type: UpdateSubscriptionDto })
   async updateSubscription(
     @Param('subscriptionId') subscriptionId: string,
-    @Body() dto: UpdateSubscriptionDto,
+    @Body() dto: UpdateSubscriptionDto
   ) {
     return this.subscriptionService.updateSubscription(subscriptionId, dto);
   }
 
   @Post('subscriptions/:subscriptionId/cancel')
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Cancel a subscription' })
   @ApiParam({ name: 'subscriptionId', description: 'Stripe subscription ID' })
   @ApiBody({ type: CancelSubscriptionDto })
   async cancelSubscription(
     @Param('subscriptionId') subscriptionId: string,
-    @Body() dto: CancelSubscriptionDto,
+    @Body() dto: CancelSubscriptionDto
   ) {
     return this.subscriptionService.cancelSubscription(subscriptionId, dto);
   }
 
   @Post('subscriptions/:subscriptionId/resume')
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Resume a paused subscription' })
   @ApiParam({ name: 'subscriptionId', description: 'Stripe subscription ID' })
   async resumeSubscription(@Param('subscriptionId') subscriptionId: string) {
@@ -365,13 +345,12 @@ export class PaymentsController {
   }
 
   @Get('invoices/user/:userId')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get user invoices' })
   @ApiParam({ name: 'userId', type: 'string' })
   @ApiQuery({ name: 'limit', required: false, type: Number })
   async listUserInvoices(
     @Param('userId', ParseUUIDPipe) userId: string,
-    @Query('limit') limit?: number,
+    @Query('limit') limit?: number
   ) {
     return this.subscriptionService.listUserInvoices(userId, limit);
   }
@@ -381,7 +360,6 @@ export class PaymentsController {
   // ============================================================================
 
   @Post('refunds')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a refund' })
   @ApiBody({ type: CreateRefundDto })
   @ApiResponse({ status: 201, description: 'Refund created' })
@@ -390,7 +368,6 @@ export class PaymentsController {
   }
 
   @Post('refunds/partial')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create a partial refund' })
   @ApiBody({ type: PartialRefundDto })
   @ApiResponse({ status: 201, description: 'Partial refund created' })
@@ -399,7 +376,6 @@ export class PaymentsController {
   }
 
   @Post('refunds/bulk')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Create bulk refunds (e.g., event cancellation)' })
   @ApiBody({ type: BulkRefundDto })
   @ApiResponse({ status: 201, description: 'Bulk refund results' })
@@ -408,29 +384,22 @@ export class PaymentsController {
   }
 
   @Get('refunds/eligibility/:paymentId')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Check refund eligibility for a payment' })
   @ApiParam({ name: 'paymentId', type: 'string' })
   @ApiResponse({ status: 200, description: 'Refund eligibility' })
-  async checkRefundEligibility(
-    @Param('paymentId', ParseUUIDPipe) paymentId: string,
-  ) {
+  async checkRefundEligibility(@Param('paymentId', ParseUUIDPipe) paymentId: string) {
     return this.refundService.checkRefundEligibility(paymentId);
   }
 
   @Get('refunds/history/:paymentId')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get refund history for a payment' })
   @ApiParam({ name: 'paymentId', type: 'string' })
   @ApiResponse({ status: 200, description: 'Refund history' })
-  async getRefundHistory(
-    @Param('paymentId', ParseUUIDPipe) paymentId: string,
-  ) {
+  async getRefundHistory(@Param('paymentId', ParseUUIDPipe) paymentId: string) {
     return this.refundService.getRefundHistory(paymentId);
   }
 
   @Get('refunds/:refundId')
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Get refund by ID' })
   @ApiParam({ name: 'refundId', description: 'Stripe refund ID' })
   @ApiResponse({ status: 200, description: 'Refund details' })
@@ -440,7 +409,6 @@ export class PaymentsController {
 
   @Post('refunds/:refundId/cancel')
   @HttpCode(HttpStatus.OK)
-  @ApiBearerAuth()
   @ApiOperation({ summary: 'Cancel a pending refund' })
   @ApiParam({ name: 'refundId', description: 'Stripe refund ID' })
   async cancelRefund(@Param('refundId') refundId: string) {
@@ -452,6 +420,7 @@ export class PaymentsController {
   // ============================================================================
 
   @Post('webhook')
+  @Public() // Stripe webhooks must be accessible without authentication
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Handle Stripe webhook events' })
   @ApiResponse({ status: 200, description: 'Webhook processed' })
@@ -459,7 +428,7 @@ export class PaymentsController {
   async handleWebhook(
     @Headers('stripe-signature') signature: string,
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    @Req() req: any,
+    @Req() req: any
   ): Promise<void> {
     const payload = req.rawBody as Buffer | undefined;
     if (!payload) {
