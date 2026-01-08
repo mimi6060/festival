@@ -2,6 +2,246 @@
 
 ---
 
+## Session 2026-01-08 - Tests Unitaires WebSocket Gateways
+
+### Tâches terminées cette session:
+
+- [x] **Created comprehensive unit tests for WebSocket Gateways (186 tests)**
+  - `events.gateway.spec.ts` (49 tests):
+    - **afterInit**: Initialize gateway, auth middleware, token validation
+    - **handleConnection**: Client tracking, room joining, count tracking
+    - **handleDisconnect**: Client removal, room cleanup
+    - **handleAuthenticate**: Token validation, user ID extraction
+    - **handleJoinRoom/handleLeaveRoom**: Room management with festival scope
+    - **Server-side emit methods**: sendToUser, sendToFestival, sendToZone, broadcast, notifyUser
+    - **Utility methods**: getConnectedCount, getRoomCount, getOnlineUsers
+    - **Edge cases**: Rapid connection/disconnection, multi-socket users, special characters
+    - **Token verification**: JWT_ACCESS_SECRET from config, sub/id priority
+  - `zones.gateway.spec.ts` (71 tests):
+    - **afterInit**: Auth middleware, token validation
+    - **handleConnection/handleDisconnect**: Client management, staff position tracking
+    - **handleSubscribeZone/handleUnsubscribeZone**: Zone subscription management
+    - **handleGetAllOccupancy/handleGetAlerts**: Zone and alert queries
+    - **handleAcknowledgeAlert**: Role-based alert acknowledgment (staff/admin/security)
+    - **handleUpdatePosition/handleGetStaffPositions**: Staff position tracking
+    - **recordEntry/recordExit**: Occupancy management, capacity alerts
+    - **updateZoneStatus**: Zone status changes (open/closed/emergency)
+    - **initializeZone/getZoneOccupancy/getAllZonesForFestival**: Zone management
+    - **Zone status calculations**: Status thresholds (75%/90%/98%)
+    - **Alert deduplication**: Prevent duplicate alerts within 1 minute
+    - **Edge cases**: Zero capacity, unicode, large occupancy numbers
+    - **Hourly stats**: Entry/exit tracking per hour
+  - `presence.gateway.spec.ts` (66 tests):
+    - **afterInit**: Auth middleware, displayName extraction
+    - **handleConnection**: Presence init, room joining, first connection broadcast
+    - **handleDisconnect**: Offline marking, lastSeen update, invisible handling
+    - **handleUpdateStatus**: Status updates, festivalId/zoneId/deviceType updates
+    - **handleActivity**: Activity tracking, away-to-online transition
+    - **handleTypingStart/handleTypingStop**: Typing indicators
+    - **handleGetPresence**: Presence queries with filters
+    - **handleSubscribePresence/handleUnsubscribePresence**: Presence subscription
+    - **Server-side methods**: getOnlineCount, getOnlineUsersForFestival, forceUserOffline
+    - **Activity timeout**: 5-minute inactivity detection, timeout reset
+    - **Edge cases**: Multi-socket users, rapid status changes, unicode
+  - Uses Jest with Socket.io mocks
+  - All tests pass: `npx nx test api --testFile=gateway` SUCCESS (186 tests)
+  - API build verified: `npx nx build api --skip-nx-cache` SUCCESS
+
+---
+
+## Session 2026-01-08 - Tests Unitaires Guards et Decorators
+
+### Tâches terminées cette session:
+
+- [x] **Created comprehensive unit tests for Guards and Decorators (139 tests)**
+  - `jwt-auth.guard.spec.ts` (22 tests):
+    - **constructor** (2 tests): guard defined, reflector injected
+    - **canActivate - public routes** (3 tests):
+      - Return true for routes marked with @Public()
+      - Check both handler and class for public decorator
+      - Return true when class is marked @Public()
+    - **canActivate - protected routes** (3 tests):
+      - Call parent canActivate for non-public routes
+      - Call parent when @Public() is not set
+      - Call parent when @Public() is explicitly false
+    - **handleRequest** (9 tests):
+      - Return user when user exists and no error
+      - Return user with all properties
+      - Throw UnauthorizedException when error provided
+      - Throw provided error as-is when Error instance
+      - Throw UnauthorizedException when user is null/undefined/false
+      - Specific error message for missing user
+      - Prefer error over user when both provided
+      - Handle info parameter correctly
+    - **integration with passport** (1 test): extend AuthGuard with jwt strategy
+    - **edge cases** (4 tests): empty user object, extra properties, error without message
+  - `roles.guard.spec.ts` (34 tests):
+    - **constructor** (2 tests): guard defined, reflector injected
+    - **canActivate - no roles required** (4 tests):
+      - Return true when undefined/null/empty roles
+      - Allow unauthenticated users when no roles required
+    - **canActivate - roles required - single role** (2 tests): match/no match
+    - **canActivate - roles required - multiple roles** (4 tests):
+      - Return true when user has one of required roles
+      - Return false when user role not in required roles
+    - **canActivate - user authentication** (3 tests): null, undefined, no user property
+    - **canActivate - all roles** (6 tests): ADMIN, ORGANIZER, STAFF, CASHIER, SECURITY, USER
+    - **reflector integration** (3 tests): ROLES_KEY, handler and class, class-level decorator
+    - **edge cases** (5 tests): empty role, invalid role, missing role property, null role, case sensitivity
+    - **common authorization scenarios** (5 tests): admin-only, organizer, staff/cashier/security
+  - `rate-limit.guard.spec.ts` (41 tests):
+    - **constructor** (3 tests): guard defined, reflector injected, in-memory limiter
+    - **canActivate - skip rate limit** (2 tests): @SkipRateLimit() handling
+    - **canActivate - rate limit config** (4 tests): decorator config, plan-based, anonymous, FREE default
+    - **canActivate - rate limit exceeded** (4 tests): HttpException, 429 status, custom message, retryAfter
+    - **rate limit headers** (6 tests): X-RateLimit-Limit/Remaining/Reset/Window, Retry-After, IETF draft headers
+    - **key generation** (5 tests): user ID, IP, x-forwarded-for, x-real-ip, key prefix
+    - **weighted rate limiting** (1 test): cost multiplier
+    - **window reset** (1 test): reset count after window expires
+    - **with Redis** (3 tests): Redis limiter, sliding window algorithm, fail open on Redis errors
+    - **endpoint-specific rate limits** (3 tests): login, register, payment endpoints
+    - **plan-based rate limits** (5 tests): FREE, PREMIUM, ENTERPRISE, INTERNAL, anonymous
+    - **onModuleDestroy** (1 test): clear cleanup interval
+    - **edge cases** (3 tests): missing IP, array x-forwarded-for, zero limit
+  - `decorators.spec.ts` (42 tests):
+    - **@Public() Decorator** (8 tests):
+      - Set IS_PUBLIC_KEY metadata to true
+      - Export IS_PUBLIC_KEY constant
+      - Work as method decorator
+      - Work as class decorator
+      - Not set metadata on non-decorated methods
+      - Usage for health check, webhook, OAuth callback endpoints
+    - **@Roles() Decorator** (20 tests):
+      - Set ROLES_KEY metadata with provided roles
+      - Export ROLES_KEY constant
+      - Accept multiple roles
+      - Accept all UserRole enum values
+      - Work as class decorator
+      - Accept empty roles array
+      - Not set metadata on non-decorated methods
+      - Usage for admin-only, organizer, staff, cashier, security endpoints
+      - Role combinations: ADMIN+ORGANIZER, STAFF+CASHIER+SECURITY, USER
+    - **@CurrentUser() Decorator** (12 tests):
+      - Return full user object when no data key provided
+      - Return null when user not present/undefined
+      - Property extraction: id, email, role, firstName, lastName
+      - Return undefined for non-existent property
+      - Edge cases: empty object, null properties, extra properties
+    - **Decorator Composition** (2 tests):
+      - @Public() with @Roles() on same method
+      - Class and method level decorator interaction
+  - Uses Jest with mocks for Reflector, ExecutionContext, Redis
+  - All tests pass: `npx nx test api --testFile="guards|decorators"` SUCCESS (139 tests)
+  - Build verified: `npx nx build api --skip-nx-cache` SUCCESS
+
+---
+
+## Session 2026-01-08 - Tests Unitaires PDF Module
+
+### Tâches terminées cette session:
+
+- [x] **Created comprehensive unit tests for PDF Module (91 tests)**
+  - `pdf.service.spec.ts` (91 tests):
+    - **generateTicketPdf** (8 tests):
+      - Generate ticket PDF successfully
+      - Throw NotFoundException when ticket not found
+      - Include QR code data in the ticket PDF
+      - Include festival information
+      - Include user information
+      - Handle VIP ticket type
+      - Handle ticket with all optional festival fields
+      - Handle ticket with null optional fields
+    - **generateInvoicePdf** (10 tests):
+      - Generate invoice PDF successfully
+      - Throw NotFoundException when payment not found
+      - Include company information (SIRET, TVA)
+      - Calculate VAT correctly (20%)
+      - Group identical ticket categories
+      - Handle multiple different ticket categories
+      - Include customer billing information
+      - Generate unique invoice number based on payment ID
+      - Handle payment with empty tickets array
+    - **generateReportPdf** (12 tests):
+      - Generate financial report PDF successfully
+      - Throw NotFoundException when festival not found
+      - Allow organizer to generate report for their festival
+      - Throw NotFoundException when non-admin/non-organizer tries to access
+      - Calculate ticket revenue correctly
+      - Calculate cashless statistics correctly
+      - Calculate vendor sales and commission
+      - Calculate camping revenue (confirmed and checked-in only)
+      - Include refund statistics
+      - Handle festival with no transactions
+      - Include tax summary (20% VAT)
+      - Include generated by information
+    - **generateBadgePdf** (14 tests):
+      - Generate staff badge PDF successfully
+      - Throw NotFoundException when assignment not found
+      - Generate badge with ADMIN/ORGANIZER/SECURITY/CASHIER role styling
+      - Include zone assignment in badge
+      - Handle badge without zone assignment
+      - Include QR code with staff information
+      - Accept optional photo buffer
+      - Show placeholder when no photo provided
+      - Include access level based on role
+      - Include validity dates
+      - Generate unique badge number from assignment ID
+    - **generateReceiptPdf** (6 tests):
+      - Generate receipt PDF successfully
+      - Throw NotFoundException when payment not found
+      - Include all purchased tickets
+      - Include receipt number and payment date
+      - Use createdAt if paidAt is null
+    - **generateProgramPdf** (10 tests):
+      - Generate program PDF successfully
+      - Throw NotFoundException when festival not found
+      - Exclude cancelled performances
+      - Group performances by day
+      - Handle festival with no stages
+      - Handle stage with no performances
+      - Include artist genre when available
+      - Handle artist without genre
+      - Include/handle festival description
+    - **generateCampingVoucherPdf** (7 tests):
+      - Generate camping voucher PDF successfully
+      - Throw NotFoundException when booking not found
+      - Include QR code with booking information
+      - Include check-in/check-out dates
+      - Include spot and zone information
+      - Include total price and user information
+    - **generateRefundConfirmationPdf** (8 tests):
+      - Generate refund confirmation PDF successfully
+      - Throw NotFoundException when payment not found or not refunded
+      - Include refund reference number
+      - Include only refunded tickets
+      - Include beneficiary information
+      - Include refund date (use current date if null)
+    - **generateFinancialReportPdf** (5 tests):
+      - Generate financial report PDF successfully
+      - Include revenue breakdown by category
+      - Include cashless/vendor commission calculation
+      - Include total revenue summary
+    - **Edge cases** (6 tests):
+      - Handle special characters in festival name
+      - Handle unicode characters in user names
+      - Handle very long text content
+      - Handle zero amount payment
+      - Handle multiple pages in program PDF
+      - Handle QR code generation failure gracefully
+    - **Company info configuration** (2 tests):
+      - Use default company name when not configured
+      - Use QR secret from configuration
+    - **Date formatting** (3 tests):
+      - Format dates in French locale
+      - Format time correctly
+      - Format datetime correctly
+  - Created `apps/api/src/test/__mocks__/pdfkit.ts` for PDFKit mocking
+  - Updated `apps/api/jest.config.ts` to include pdfkit mock mapping
+  - Uses Jest with mocks for PrismaService, ConfigService, PDFKit, and QRCode
+  - All tests pass: `npx nx test api --testFile=pdf.service.spec` SUCCESS (91 tests)
+
+---
+
 ## Session 2026-01-08 - Documentation Troubleshooting
 
 ### Tâches terminées cette session:
