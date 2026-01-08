@@ -9,7 +9,6 @@ import {
   Query,
   Res,
   UseGuards,
-  HttpStatus,
 } from '@nestjs/common';
 import { Response } from 'express';
 import {
@@ -41,6 +40,7 @@ import {
   VendorQueryDto,
   RealtimeQueryDto,
   ExportQueryDto,
+  BulkExportDto,
 } from '../dto/analytics-query.dto';
 
 @ApiTags('Analytics')
@@ -54,7 +54,7 @@ export class AnalyticsController {
     private readonly customReportsService: CustomReportsService,
     private readonly realtimeService: RealtimeAggregationService,
     private readonly exportService: ExportService,
-    private readonly dashboardConfigService: DashboardConfigService,
+    private readonly dashboardConfigService: DashboardConfigService
   ) {}
 
   // ============== Basic Analytics ==============
@@ -65,7 +65,7 @@ export class AnalyticsController {
   @ApiParam({ name: 'festivalId', description: 'Festival ID' })
   async getFestivalDashboardKPIs(
     @Param('festivalId') festivalId: string,
-    @Query() query: DashboardQueryDto,
+    @Query() query: DashboardQueryDto
   ) {
     return this.analyticsService.getDashboardKPIs(festivalId, query);
   }
@@ -73,10 +73,7 @@ export class AnalyticsController {
   @Get('festivals/:festivalId/sales')
   @Roles('ADMIN', 'ORGANIZER')
   @ApiOperation({ summary: 'Get sales analytics for a festival' })
-  async getSalesAnalytics(
-    @Param('festivalId') festivalId: string,
-    @Query() query: SalesQueryDto,
-  ) {
+  async getSalesAnalytics(@Param('festivalId') festivalId: string, @Query() query: SalesQueryDto) {
     return this.analyticsService.getSalesAnalytics(festivalId, query);
   }
 
@@ -85,7 +82,7 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Get cashless analytics for a festival' })
   async getCashlessAnalytics(
     @Param('festivalId') festivalId: string,
-    @Query() query: CashlessQueryDto,
+    @Query() query: CashlessQueryDto
   ) {
     return this.analyticsService.getCashlessAnalytics(festivalId, query);
   }
@@ -95,7 +92,7 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Get attendance analytics for a festival' })
   async getAttendanceAnalytics(
     @Param('festivalId') festivalId: string,
-    @Query() query: AttendanceQueryDto,
+    @Query() query: AttendanceQueryDto
   ) {
     return this.analyticsService.getAttendanceAnalytics(festivalId, query);
   }
@@ -103,10 +100,7 @@ export class AnalyticsController {
   @Get('festivals/:festivalId/zones')
   @Roles('ADMIN', 'ORGANIZER')
   @ApiOperation({ summary: 'Get zone analytics for a festival' })
-  async getZoneAnalytics(
-    @Param('festivalId') festivalId: string,
-    @Query() query: ZoneQueryDto,
-  ) {
+  async getZoneAnalytics(@Param('festivalId') festivalId: string, @Query() query: ZoneQueryDto) {
     return this.analyticsService.getZoneAnalytics(festivalId, query);
   }
 
@@ -115,7 +109,7 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Get vendor analytics for a festival' })
   async getVendorAnalytics(
     @Param('festivalId') festivalId: string,
-    @Query() query: VendorQueryDto,
+    @Query() query: VendorQueryDto
   ) {
     return this.analyticsService.getVendorAnalytics(festivalId, query);
   }
@@ -128,12 +122,12 @@ export class AnalyticsController {
   async getRevenueMetrics(
     @Param('festivalId') festivalId: string,
     @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
+    @Query('endDate') endDate: string
   ) {
     return this.advancedMetricsService.getRevenueMetrics(
       festivalId,
       new Date(startDate),
-      new Date(endDate),
+      new Date(endDate)
     );
   }
 
@@ -143,12 +137,12 @@ export class AnalyticsController {
   async getCustomerMetrics(
     @Param('festivalId') festivalId: string,
     @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
+    @Query('endDate') endDate: string
   ) {
     return this.advancedMetricsService.getCustomerMetrics(
       festivalId,
       new Date(startDate),
-      new Date(endDate),
+      new Date(endDate)
     );
   }
 
@@ -158,12 +152,12 @@ export class AnalyticsController {
   async getPerformanceMetrics(
     @Param('festivalId') festivalId: string,
     @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
+    @Query('endDate') endDate: string
   ) {
     return this.advancedMetricsService.getPerformanceMetrics(
       festivalId,
       new Date(startDate),
-      new Date(endDate),
+      new Date(endDate)
     );
   }
 
@@ -173,12 +167,12 @@ export class AnalyticsController {
   async getFraudMetrics(
     @Param('festivalId') festivalId: string,
     @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
+    @Query('endDate') endDate: string
   ) {
     return this.advancedMetricsService.getFraudMetrics(
       festivalId,
       new Date(startDate),
-      new Date(endDate),
+      new Date(endDate)
     );
   }
 
@@ -188,12 +182,12 @@ export class AnalyticsController {
   async getGrowthMetrics(
     @Param('festivalId') festivalId: string,
     @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
+    @Query('endDate') endDate: string
   ) {
     return this.advancedMetricsService.getGrowthMetrics(
       festivalId,
       new Date(startDate),
-      new Date(endDate),
+      new Date(endDate)
     );
   }
 
@@ -203,7 +197,7 @@ export class AnalyticsController {
   @ApiQuery({ name: 'daysAhead', required: false, description: 'Number of days to forecast' })
   async getForecastMetrics(
     @Param('festivalId') festivalId: string,
-    @Query('daysAhead') daysAhead?: number,
+    @Query('daysAhead') daysAhead?: number
   ) {
     return this.advancedMetricsService.getForecastMetrics(festivalId, daysAhead);
   }
@@ -214,12 +208,12 @@ export class AnalyticsController {
   async getStaffMetrics(
     @Param('festivalId') festivalId: string,
     @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
+    @Query('endDate') endDate: string
   ) {
     return this.advancedMetricsService.getStaffMetrics(
       festivalId,
       new Date(startDate),
-      new Date(endDate),
+      new Date(endDate)
     );
   }
 
@@ -229,12 +223,12 @@ export class AnalyticsController {
   async getEnvironmentalMetrics(
     @Param('festivalId') festivalId: string,
     @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
+    @Query('endDate') endDate: string
   ) {
     return this.advancedMetricsService.getEnvironmentalMetrics(
       festivalId,
       new Date(startDate),
-      new Date(endDate),
+      new Date(endDate)
     );
   }
 
@@ -244,12 +238,12 @@ export class AnalyticsController {
   async getSecurityMetrics(
     @Param('festivalId') festivalId: string,
     @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
+    @Query('endDate') endDate: string
   ) {
     return this.advancedMetricsService.getSecurityMetrics(
       festivalId,
       new Date(startDate),
-      new Date(endDate),
+      new Date(endDate)
     );
   }
 
@@ -259,12 +253,12 @@ export class AnalyticsController {
   async getComprehensiveAnalytics(
     @Param('festivalId') festivalId: string,
     @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
+    @Query('endDate') endDate: string
   ) {
     return this.advancedMetricsService.getComprehensiveAnalytics(
       festivalId,
       new Date(startDate),
-      new Date(endDate),
+      new Date(endDate)
     );
   }
 
@@ -283,7 +277,7 @@ export class AnalyticsController {
   async createReport(
     @Param('festivalId') festivalId: string,
     @CurrentUser() user: { id: string },
-    @Body() body: { name: string; description?: string; metrics: string[]; format: string },
+    @Body() body: { name: string; description?: string; metrics: string[]; format: string }
   ) {
     return this.customReportsService.createReport(festivalId, user.id, body as any);
   }
@@ -300,11 +294,12 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Execute a custom report' })
   async executeReport(
     @Param('reportId') reportId: string,
-    @Body() body: { startDate?: string; endDate?: string },
+    @Body() body: { startDate?: string; endDate?: string }
   ) {
-    const timeRange = body.startDate && body.endDate
-      ? { startDate: new Date(body.startDate), endDate: new Date(body.endDate) }
-      : undefined;
+    const timeRange =
+      body.startDate && body.endDate
+        ? { startDate: new Date(body.startDate), endDate: new Date(body.endDate) }
+        : undefined;
     return this.customReportsService.executeReport(reportId, timeRange);
   }
 
@@ -325,13 +320,13 @@ export class AnalyticsController {
     @Query('currentEnd') currentEnd: string,
     @Query('previousStart') previousStart: string,
     @Query('previousEnd') previousEnd: string,
-    @Query('metrics') metrics: string,
+    @Query('metrics') metrics: string
   ) {
     return this.customReportsService.getComparisonAnalytics(
       festivalId,
       { startDate: new Date(currentStart), endDate: new Date(currentEnd) },
       { startDate: new Date(previousStart), endDate: new Date(previousEnd) },
-      metrics.split(','),
+      metrics.split(',')
     );
   }
 
@@ -342,13 +337,12 @@ export class AnalyticsController {
     @Param('festivalId') festivalId: string,
     @Query('cohortType') cohortType: 'acquisition_date' | 'ticket_type' | 'first_purchase',
     @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
+    @Query('endDate') endDate: string
   ) {
-    return this.customReportsService.getCohortAnalysis(
-      festivalId,
-      cohortType,
-      { startDate: new Date(startDate), endDate: new Date(endDate) },
-    );
+    return this.customReportsService.getCohortAnalysis(festivalId, cohortType, {
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+    });
   }
 
   @Get('festivals/:festivalId/funnel/:funnelName')
@@ -356,7 +350,7 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Get funnel analysis' })
   async getFunnelAnalysis(
     @Param('festivalId') festivalId: string,
-    @Param('funnelName') funnelName: string,
+    @Param('funnelName') funnelName: string
   ) {
     return this.customReportsService.getFunnelAnalysis(festivalId, funnelName);
   }
@@ -368,13 +362,12 @@ export class AnalyticsController {
     @Param('festivalId') festivalId: string,
     @Query('metric') metric: string,
     @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
+    @Query('endDate') endDate: string
   ) {
-    return this.customReportsService.detectAnomalies(
-      festivalId,
-      metric,
-      { startDate: new Date(startDate), endDate: new Date(endDate) },
-    );
+    return this.customReportsService.detectAnomalies(festivalId, metric, {
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+    });
   }
 
   @Get('festivals/:festivalId/benchmarks')
@@ -391,7 +384,7 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Get realtime analytics' })
   async getRealtimeAnalytics(
     @Param('festivalId') festivalId: string,
-    @Query() query: RealtimeQueryDto,
+    @Query() query: RealtimeQueryDto
   ) {
     return this.analyticsService.getRealtimeAnalytics(festivalId, query);
   }
@@ -420,19 +413,60 @@ export class AnalyticsController {
 
   // ============== Exports ==============
 
+  @Post('export')
+  @Roles('ADMIN', 'ORGANIZER')
+  @ApiOperation({
+    summary: 'Bulk export analytics data',
+    description:
+      'Export multiple metrics in a single request. Supports CSV, PDF, and XLSX formats. Includes festival statistics, sales, attendance, cashless transactions, and vendor data.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Export file generated successfully',
+    content: {
+      'text/csv': { schema: { type: 'string', format: 'binary' } },
+      'application/pdf': { schema: { type: 'string', format: 'binary' } },
+      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': {
+        schema: { type: 'string', format: 'binary' },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Invalid export parameters' })
+  @ApiResponse({ status: 401, description: 'Unauthorized - JWT token required' })
+  @ApiResponse({ status: 403, description: 'Forbidden - Requires ADMIN or ORGANIZER role' })
+  @ApiResponse({ status: 404, description: 'Festival not found' })
+  async bulkExport(@Body() dto: BulkExportDto, @Res() res: Response) {
+    const result = await this.exportService.exportBulk(dto.festivalId, {
+      format: dto.format,
+      metrics: dto.metrics,
+      timeRange: {
+        startDate: new Date(dto.startDate),
+        endDate: new Date(dto.endDate),
+      },
+      includeRawData: dto.includeRawData ?? true,
+      includeCharts: dto.includeCharts ?? false,
+    });
+
+    res.setHeader('Content-Type', result.mimeType);
+    res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+    res.send(result.data);
+  }
+
   @Get('festivals/:festivalId/export')
   @Roles('ADMIN', 'ORGANIZER')
   @ApiOperation({ summary: 'Export analytics data' })
   async exportAnalytics(
     @Param('festivalId') festivalId: string,
     @Query() query: ExportQueryDto,
-    @Res() res: Response,
+    @Res() res: Response
   ) {
     const result = await this.exportService.exportData(festivalId, {
       format: query.format,
       metrics: [query.dataType],
       timeRange: {
-        startDate: query.startDate ? new Date(query.startDate) : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
+        startDate: query.startDate
+          ? new Date(query.startDate)
+          : new Date(Date.now() - 30 * 24 * 60 * 60 * 1000),
         endDate: query.endDate ? new Date(query.endDate) : new Date(),
       },
       includeRawData: true,
@@ -452,12 +486,12 @@ export class AnalyticsController {
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
     @Query('format') format: 'csv' | 'xlsx' = 'csv',
-    @Res() res: Response,
+    @Res() res: Response
   ) {
     const result = await this.exportService.exportSalesData(
       festivalId,
       { startDate: new Date(startDate), endDate: new Date(endDate) },
-      format,
+      format
     );
 
     res.setHeader('Content-Type', result.mimeType);
@@ -473,12 +507,12 @@ export class AnalyticsController {
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
     @Query('format') format: 'csv' | 'xlsx' = 'csv',
-    @Res() res: Response,
+    @Res() res: Response
   ) {
     const result = await this.exportService.exportCashlessData(
       festivalId,
       { startDate: new Date(startDate), endDate: new Date(endDate) },
-      format,
+      format
     );
 
     res.setHeader('Content-Type', result.mimeType);
@@ -494,12 +528,12 @@ export class AnalyticsController {
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
     @Query('format') format: 'csv' | 'xlsx' = 'csv',
-    @Res() res: Response,
+    @Res() res: Response
   ) {
     const result = await this.exportService.exportAttendanceData(
       festivalId,
       { startDate: new Date(startDate), endDate: new Date(endDate) },
-      format,
+      format
     );
 
     res.setHeader('Content-Type', result.mimeType);
@@ -515,12 +549,12 @@ export class AnalyticsController {
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
     @Query('format') format: 'csv' | 'xlsx' = 'csv',
-    @Res() res: Response,
+    @Res() res: Response
   ) {
     const result = await this.exportService.exportVendorData(
       festivalId,
       { startDate: new Date(startDate), endDate: new Date(endDate) },
-      format,
+      format
     );
 
     res.setHeader('Content-Type', result.mimeType);
@@ -536,12 +570,12 @@ export class AnalyticsController {
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
     @Query('format') format: 'pdf' | 'xlsx' = 'pdf',
-    @Res() res: Response,
+    @Res() res: Response
   ) {
     const result = await this.exportService.exportFinancialSummary(
       festivalId,
       { startDate: new Date(startDate), endDate: new Date(endDate) },
-      format,
+      format
     );
 
     res.setHeader('Content-Type', result.mimeType);
@@ -557,12 +591,12 @@ export class AnalyticsController {
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
     @Query('format') format: 'pdf' | 'xlsx' = 'pdf',
-    @Res() res: Response,
+    @Res() res: Response
   ) {
     const result = await this.exportService.exportComprehensiveReport(
       festivalId,
       { startDate: new Date(startDate), endDate: new Date(endDate) },
-      format,
+      format
     );
 
     res.setHeader('Content-Type', result.mimeType);
@@ -613,7 +647,7 @@ export class AnalyticsController {
   async createDashboard(
     @Param('festivalId') festivalId: string,
     @CurrentUser() user: { id: string },
-    @Body() body: { name: string; description?: string },
+    @Body() body: { name: string; description?: string }
   ) {
     return this.dashboardConfigService.createDashboard(festivalId, user.id, body);
   }
@@ -624,13 +658,13 @@ export class AnalyticsController {
   async createFromTemplate(
     @Param('festivalId') festivalId: string,
     @CurrentUser() user: { id: string },
-    @Body() body: { templateId: string; customName?: string },
+    @Body() body: { templateId: string; customName?: string }
   ) {
     return this.dashboardConfigService.createFromTemplate(
       festivalId,
       user.id,
       body.templateId,
-      body.customName,
+      body.customName
     );
   }
 
@@ -646,7 +680,7 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Update a dashboard' })
   async updateDashboard(
     @Param('dashboardId') dashboardId: string,
-    @Body() body: { name?: string; description?: string; refreshInterval?: number },
+    @Body() body: { name?: string; description?: string; refreshInterval?: number }
   ) {
     return this.dashboardConfigService.updateDashboard(dashboardId, body);
   }
@@ -664,7 +698,13 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Add a widget to a dashboard' })
   async addWidget(
     @Param('dashboardId') dashboardId: string,
-    @Body() widget: { type: string; title: string; metric: string; position: { x: number; y: number; width: number; height: number } },
+    @Body()
+    widget: {
+      type: string;
+      title: string;
+      metric: string;
+      position: { x: number; y: number; width: number; height: number };
+    }
   ) {
     return this.dashboardConfigService.addWidget(dashboardId, widget as any);
   }
@@ -675,7 +715,7 @@ export class AnalyticsController {
   async updateWidget(
     @Param('dashboardId') dashboardId: string,
     @Param('widgetId') widgetId: string,
-    @Body() updates: { title?: string; config?: Record<string, unknown> },
+    @Body() updates: { title?: string; config?: Record<string, unknown> }
   ) {
     return this.dashboardConfigService.updateWidget(dashboardId, widgetId, updates as any);
   }
@@ -685,7 +725,7 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Remove a widget from a dashboard' })
   async removeWidget(
     @Param('dashboardId') dashboardId: string,
-    @Param('widgetId') widgetId: string,
+    @Param('widgetId') widgetId: string
   ) {
     return this.dashboardConfigService.removeWidget(dashboardId, widgetId);
   }
@@ -702,12 +742,12 @@ export class AnalyticsController {
   @ApiOperation({ summary: 'Clone a dashboard' })
   async cloneDashboard(
     @Param('dashboardId') dashboardId: string,
-    @Body() body: { newName: string; targetFestivalId?: string },
+    @Body() body: { newName: string; targetFestivalId?: string }
   ) {
     return this.dashboardConfigService.cloneDashboard(
       dashboardId,
       body.newName,
-      body.targetFestivalId,
+      body.targetFestivalId
     );
   }
 }

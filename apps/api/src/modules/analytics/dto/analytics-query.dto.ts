@@ -264,6 +264,76 @@ export class ExportQueryDto extends AnalyticsTimeRangeDto {
 }
 
 /**
+ * Bulk export analytics data via POST
+ */
+export class BulkExportDto {
+  @ApiProperty({
+    description: 'Festival ID to export analytics for',
+    example: 'festival-uuid-123',
+  })
+  @IsString()
+  festivalId!: string;
+
+  @ApiProperty({
+    description: 'Export format',
+    enum: ['csv', 'pdf', 'xlsx'],
+    example: 'csv',
+  })
+  @IsEnum(['csv', 'pdf', 'xlsx'])
+  format!: 'csv' | 'pdf' | 'xlsx';
+
+  @ApiProperty({
+    description: 'Start date for the export period (ISO 8601)',
+    example: '2024-07-01T00:00:00Z',
+  })
+  @IsDateString()
+  startDate!: string;
+
+  @ApiProperty({
+    description: 'End date for the export period (ISO 8601)',
+    example: '2024-07-07T23:59:59Z',
+  })
+  @IsDateString()
+  endDate!: string;
+
+  @ApiProperty({
+    description: 'Metrics to include in the export',
+    example: ['sales', 'attendance', 'cashless'],
+    isArray: true,
+    enum: [
+      'dashboard',
+      'sales',
+      'cashless',
+      'attendance',
+      'zones',
+      'vendors',
+      'revenue',
+      'comprehensive',
+    ],
+  })
+  @IsString({ each: true })
+  metrics!: string[];
+
+  @ApiPropertyOptional({
+    description: 'Include raw data in the export',
+    default: true,
+  })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true' || value === true)
+  includeRawData?: boolean = true;
+
+  @ApiPropertyOptional({
+    description: 'Include charts in PDF/XLSX export',
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  @Transform(({ value }) => value === 'true' || value === true)
+  includeCharts?: boolean = false;
+}
+
+/**
  * Alert threshold configuration
  */
 export class AlertThresholdsDto {

@@ -1,13 +1,9 @@
-import { Injectable, Logger, BadRequestException } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService } from '../../cache/cache.service';
 import { AnalyticsService } from './analytics.service';
 import { AdvancedMetricsService } from './advanced-metrics.service';
-import {
-  ExportConfig,
-  ExportResult,
-  TimeRange,
-} from '../interfaces/analytics.interfaces';
+import { ExportConfig, ExportResult, TimeRange } from '../interfaces/analytics.interfaces';
 import { ComprehensiveAnalytics } from '../interfaces/advanced-metrics.interfaces';
 import * as PDFDocument from 'pdfkit';
 import { Decimal } from '@prisma/client/runtime/library';
@@ -33,16 +29,13 @@ export class ExportService {
     private readonly prisma: PrismaService,
     private readonly cacheService: CacheService,
     private readonly analyticsService: AnalyticsService,
-    private readonly advancedMetricsService: AdvancedMetricsService,
+    private readonly advancedMetricsService: AdvancedMetricsService
   ) {}
 
   /**
    * Export analytics data in the specified format
    */
-  async exportData(
-    festivalId: string,
-    config: ExportConfig,
-  ): Promise<ExportResult> {
+  async exportData(festivalId: string, config: ExportConfig): Promise<ExportResult> {
     this.logger.log(`Exporting analytics for festival ${festivalId} in ${config.format} format`);
 
     // Gather data based on requested metrics
@@ -71,17 +64,92 @@ export class ExportService {
   }
 
   /**
+   * Bulk export analytics data - combines multiple metrics into a single export
+   * This is the main entry point for the POST /analytics/export endpoint
+   */
+  async exportBulk(
+    festivalId: string,
+    config: Omit<ExportConfig, 'chartOptions' | 'compression' | 'filters'>
+  ): Promise<ExportResult> {
+    // Validate festival exists
+    const festival = await this.prisma.festival.findUnique({
+      where: { id: festivalId },
+      select: { id: true, name: true },
+    });
+
+    if (!festival) {
+      throw new NotFoundException(`Festival ${festivalId} not found`);
+    }
+
+    // Validate metrics
+    const validMetrics = [
+      'dashboard',
+      'sales',
+      'cashless',
+      'attendance',
+      'zones',
+      'vendors',
+      'revenue',
+      'comprehensive',
+    ];
+    const invalidMetrics = config.metrics.filter((m) => !validMetrics.includes(m));
+    if (invalidMetrics.length > 0) {
+      throw new BadRequestException(
+        `Invalid metrics: ${invalidMetrics.join(', ')}. Valid metrics are: ${validMetrics.join(', ')}`
+      );
+    }
+
+    // Validate format
+    const validFormats = ['csv', 'pdf', 'xlsx'];
+    if (!validFormats.includes(config.format)) {
+      throw new BadRequestException(
+        `Invalid format: ${config.format}. Valid formats are: ${validFormats.join(', ')}`
+      );
+    }
+
+    // Validate date range
+    if (config.timeRange.startDate > config.timeRange.endDate) {
+      throw new BadRequestException('Start date must be before end date');
+    }
+
+    this.logger.log(
+      `Bulk exporting analytics for festival ${festivalId}: metrics=${config.metrics.join(',')} format=${config.format}`
+    );
+
+    // Build full config
+    const fullConfig: ExportConfig = {
+      format: config.format as 'csv' | 'pdf' | 'xlsx' | 'json',
+      metrics: config.metrics,
+      timeRange: config.timeRange,
+      includeRawData: config.includeRawData,
+      includeCharts: config.includeCharts,
+    };
+
+    // If comprehensive is requested, use the dedicated method
+    if (config.metrics.includes('comprehensive') && config.metrics.length === 1) {
+      return this.exportComprehensiveReport(
+        festivalId,
+        config.timeRange,
+        config.format === 'csv' ? 'xlsx' : (config.format as 'pdf' | 'xlsx')
+      );
+    }
+
+    // Gather and export data
+    return this.exportData(festivalId, fullConfig);
+  }
+
+  /**
    * Export comprehensive analytics report
    */
   async exportComprehensiveReport(
     festivalId: string,
     timeRange: TimeRange,
-    format: 'pdf' | 'xlsx' = 'pdf',
+    format: 'pdf' | 'xlsx' = 'pdf'
   ): Promise<ExportResult> {
     const analytics = await this.advancedMetricsService.getComprehensiveAnalytics(
       festivalId,
       timeRange.startDate,
-      timeRange.endDate,
+      timeRange.endDate
     );
 
     const exportData = this.transformComprehensiveToExport(analytics);
@@ -111,7 +179,7 @@ export class ExportService {
   async exportSalesData(
     festivalId: string,
     timeRange: TimeRange,
-    format: 'csv' | 'xlsx' = 'csv',
+    format: 'csv' | 'xlsx' = 'csv'
   ): Promise<ExportResult> {
     const tickets = await this.prisma.ticket.findMany({
       where: {
@@ -140,7 +208,7 @@ export class ExportService {
           { key: 'paymentStatus', label: 'Payment Status' },
           { key: 'paymentProvider', label: 'Payment Provider' },
         ],
-        data: tickets.map(t => ({
+        data: tickets.map((t) => ({
           id: t.id,
           purchaseDate: t.createdAt,
           category: t.category.name,
@@ -162,8 +230,20 @@ export class ExportService {
     };
 
     return format === 'csv'
-      ? this.exportToCsv(exportData, { format, metrics: ['sales'], timeRange, includeRawData: true, includeCharts: false })
-      : this.exportToXlsx(exportData, { format, metrics: ['sales'], timeRange, includeRawData: true, includeCharts: false });
+      ? this.exportToCsv(exportData, {
+          format,
+          metrics: ['sales'],
+          timeRange,
+          includeRawData: true,
+          includeCharts: false,
+        })
+      : this.exportToXlsx(exportData, {
+          format,
+          metrics: ['sales'],
+          timeRange,
+          includeRawData: true,
+          includeCharts: false,
+        });
   }
 
   /**
@@ -172,7 +252,7 @@ export class ExportService {
   async exportCashlessData(
     festivalId: string,
     timeRange: TimeRange,
-    format: 'csv' | 'xlsx' = 'csv',
+    format: 'csv' | 'xlsx' = 'csv'
   ): Promise<ExportResult> {
     const transactions = await this.prisma.cashlessTransaction.findMany({
       where: {
@@ -198,7 +278,7 @@ export class ExportService {
           { key: 'email', label: 'Account Email' },
           { key: 'description', label: 'Description' },
         ],
-        data: transactions.map(t => ({
+        data: transactions.map((t) => ({
           id: t.id,
           date: t.createdAt,
           type: t.type,
@@ -219,8 +299,20 @@ export class ExportService {
     };
 
     return format === 'csv'
-      ? this.exportToCsv(exportData, { format, metrics: ['cashless'], timeRange, includeRawData: true, includeCharts: false })
-      : this.exportToXlsx(exportData, { format, metrics: ['cashless'], timeRange, includeRawData: true, includeCharts: false });
+      ? this.exportToCsv(exportData, {
+          format,
+          metrics: ['cashless'],
+          timeRange,
+          includeRawData: true,
+          includeCharts: false,
+        })
+      : this.exportToXlsx(exportData, {
+          format,
+          metrics: ['cashless'],
+          timeRange,
+          includeRawData: true,
+          includeCharts: false,
+        });
   }
 
   /**
@@ -229,7 +321,7 @@ export class ExportService {
   async exportAttendanceData(
     festivalId: string,
     timeRange: TimeRange,
-    format: 'csv' | 'xlsx' = 'csv',
+    format: 'csv' | 'xlsx' = 'csv'
   ): Promise<ExportResult> {
     const accessLogs = await this.prisma.zoneAccessLog.findMany({
       where: {
@@ -259,7 +351,7 @@ export class ExportService {
           { key: 'ticketType', label: 'Ticket Type' },
           { key: 'email', label: 'Email' },
         ],
-        data: accessLogs.map(log => ({
+        data: accessLogs.map((log) => ({
           timestamp: log.timestamp,
           zone: log.zone.name,
           action: log.action,
@@ -278,8 +370,20 @@ export class ExportService {
     };
 
     return format === 'csv'
-      ? this.exportToCsv(exportData, { format, metrics: ['attendance'], timeRange, includeRawData: true, includeCharts: false })
-      : this.exportToXlsx(exportData, { format, metrics: ['attendance'], timeRange, includeRawData: true, includeCharts: false });
+      ? this.exportToCsv(exportData, {
+          format,
+          metrics: ['attendance'],
+          timeRange,
+          includeRawData: true,
+          includeCharts: false,
+        })
+      : this.exportToXlsx(exportData, {
+          format,
+          metrics: ['attendance'],
+          timeRange,
+          includeRawData: true,
+          includeCharts: false,
+        });
   }
 
   /**
@@ -288,7 +392,7 @@ export class ExportService {
   async exportVendorData(
     festivalId: string,
     timeRange: TimeRange,
-    format: 'csv' | 'xlsx' = 'csv',
+    format: 'csv' | 'xlsx' = 'csv'
   ): Promise<ExportResult> {
     const orders = await this.prisma.vendorOrder.findMany({
       where: {
@@ -315,7 +419,7 @@ export class ExportService {
           { key: 'status', label: 'Status' },
           { key: 'email', label: 'Customer Email' },
         ],
-        data: orders.map(o => ({
+        data: orders.map((o) => ({
           id: o.id,
           date: o.createdAt,
           vendor: o.vendor.name,
@@ -336,8 +440,20 @@ export class ExportService {
     };
 
     return format === 'csv'
-      ? this.exportToCsv(exportData, { format, metrics: ['vendors'], timeRange, includeRawData: true, includeCharts: false })
-      : this.exportToXlsx(exportData, { format, metrics: ['vendors'], timeRange, includeRawData: true, includeCharts: false });
+      ? this.exportToCsv(exportData, {
+          format,
+          metrics: ['vendors'],
+          timeRange,
+          includeRawData: true,
+          includeCharts: false,
+        })
+      : this.exportToXlsx(exportData, {
+          format,
+          metrics: ['vendors'],
+          timeRange,
+          includeRawData: true,
+          includeCharts: false,
+        });
   }
 
   /**
@@ -346,12 +462,12 @@ export class ExportService {
   async exportFinancialSummary(
     festivalId: string,
     timeRange: TimeRange,
-    format: 'pdf' | 'xlsx' = 'pdf',
+    format: 'pdf' | 'xlsx' = 'pdf'
   ): Promise<ExportResult> {
     const revenueMetrics = await this.advancedMetricsService.getRevenueMetrics(
       festivalId,
       timeRange.startDate,
-      timeRange.endDate,
+      timeRange.endDate
     );
 
     const sections: ExportSection[] = [
@@ -363,10 +479,26 @@ export class ExportService {
           { key: 'percentage', label: 'Percentage', format: 'percentage' },
         ],
         data: [
-          { category: 'Tickets', amount: revenueMetrics.breakdown.tickets.amount, percentage: revenueMetrics.breakdown.tickets.percentage },
-          { category: 'Cashless Topups', amount: revenueMetrics.breakdown.cashless.amount, percentage: revenueMetrics.breakdown.cashless.percentage },
-          { category: 'Vendor Revenue', amount: revenueMetrics.breakdown.vendors.amount, percentage: revenueMetrics.breakdown.vendors.percentage },
-          { category: 'Camping', amount: revenueMetrics.breakdown.camping.amount, percentage: revenueMetrics.breakdown.camping.percentage },
+          {
+            category: 'Tickets',
+            amount: revenueMetrics.breakdown.tickets.amount,
+            percentage: revenueMetrics.breakdown.tickets.percentage,
+          },
+          {
+            category: 'Cashless Topups',
+            amount: revenueMetrics.breakdown.cashless.amount,
+            percentage: revenueMetrics.breakdown.cashless.percentage,
+          },
+          {
+            category: 'Vendor Revenue',
+            amount: revenueMetrics.breakdown.vendors.amount,
+            percentage: revenueMetrics.breakdown.vendors.percentage,
+          },
+          {
+            category: 'Camping',
+            amount: revenueMetrics.breakdown.camping.amount,
+            percentage: revenueMetrics.breakdown.camping.percentage,
+          },
           { category: 'Gross Total', amount: revenueMetrics.grossRevenue, percentage: 100 },
           { category: 'Refunds', amount: -revenueMetrics.refundedAmount, percentage: 0 },
           { category: 'Net Revenue', amount: revenueMetrics.netRevenue, percentage: 0 },
@@ -383,7 +515,10 @@ export class ExportService {
           { metric: 'Total Tickets Sold', value: revenueMetrics.breakdown.tickets.count },
           { metric: 'Refund Count', value: revenueMetrics.refundCount },
           { metric: 'Profit Margin', value: `${revenueMetrics.profitMargin.toFixed(2)}%` },
-          { metric: 'Average Revenue Per Attendee', value: `${revenueMetrics.averageRevenuePerAttendee.toFixed(2)}` },
+          {
+            metric: 'Average Revenue Per Attendee',
+            value: `${revenueMetrics.averageRevenuePerAttendee.toFixed(2)}`,
+          },
         ],
       },
     ];
@@ -416,10 +551,7 @@ export class ExportService {
 
   // Private export methods
 
-  private async gatherExportData(
-    festivalId: string,
-    config: ExportConfig,
-  ): Promise<ExportData> {
+  private async gatherExportData(festivalId: string, config: ExportConfig): Promise<ExportData> {
     const sections: ExportSection[] = [];
 
     for (const metric of config.metrics) {
@@ -428,7 +560,7 @@ export class ExportService {
         if (section) {
           sections.push(section);
         }
-      } catch (error) {
+      } catch {
         this.logger.warn(`Failed to get data for metric ${metric}`);
       }
     }
@@ -444,10 +576,10 @@ export class ExportService {
   private async getMetricSection(
     festivalId: string,
     metric: string,
-    timeRange: TimeRange,
+    timeRange: TimeRange
   ): Promise<ExportSection | null> {
     switch (metric) {
-      case 'dashboard':
+      case 'dashboard': {
         const dashboard = await this.analyticsService.getDashboardKPIs(festivalId, {
           startDate: timeRange.startDate.toISOString(),
           endDate: timeRange.endDate.toISOString(),
@@ -462,12 +594,16 @@ export class ExportService {
             { metric: 'Total Tickets Sold', value: dashboard.ticketing.totalSold },
             { metric: 'Total Revenue', value: dashboard.revenue.totalRevenue },
             { metric: 'Current Attendance', value: dashboard.attendance.currentAttendees },
-            { metric: 'Occupancy Rate', value: `${dashboard.attendance.occupancyRate.toFixed(1)}%` },
+            {
+              metric: 'Occupancy Rate',
+              value: `${dashboard.attendance.occupancyRate.toFixed(1)}%`,
+            },
             { metric: 'Active Cashless Accounts', value: dashboard.cashless.activeAccounts },
           ],
         };
+      }
 
-      case 'sales':
+      case 'sales': {
         const sales = await this.analyticsService.getSalesAnalytics(festivalId, {
           startDate: timeRange.startDate.toISOString(),
           endDate: timeRange.endDate.toISOString(),
@@ -480,40 +616,183 @@ export class ExportService {
             { key: 'revenue', label: 'Revenue', format: 'currency' },
             { key: 'refunds', label: 'Refunds', format: 'number' },
           ],
-          data: sales.salesByDay.map(d => ({
+          data: sales.salesByDay.map((d) => ({
             date: d.date,
             ticketsSold: d.ticketsSold,
             revenue: d.revenue,
             refunds: d.refunds,
           })),
         };
+      }
+
+      case 'cashless': {
+        const cashless = await this.analyticsService.getCashlessAnalytics(festivalId, {
+          startDate: timeRange.startDate.toISOString(),
+          endDate: timeRange.endDate.toISOString(),
+        });
+        return {
+          name: 'Cashless Summary',
+          columns: [
+            { key: 'metric', label: 'Metric' },
+            { key: 'value', label: 'Value' },
+          ],
+          data: [
+            { metric: 'Total Topups', value: cashless.summary.totalTopups },
+            { metric: 'Total Topup Amount', value: cashless.summary.totalTopupAmount },
+            { metric: 'Total Payments', value: cashless.summary.totalPayments },
+            { metric: 'Total Payment Amount', value: cashless.summary.totalPaymentAmount },
+            { metric: 'Total Transfers', value: cashless.summary.totalTransfers },
+            { metric: 'Total Refunds', value: cashless.summary.totalRefunds },
+            { metric: 'Average Topup Amount', value: cashless.summary.averageTopupAmount },
+            { metric: 'Average Payment Amount', value: cashless.summary.averagePaymentAmount },
+            { metric: 'Average Balance', value: cashless.summary.averageBalance },
+            { metric: 'Active Accounts', value: cashless.summary.totalActiveAccounts },
+          ],
+        };
+      }
+
+      case 'attendance': {
+        const attendance = await this.analyticsService.getAttendanceAnalytics(festivalId, {
+          startDate: timeRange.startDate.toISOString(),
+          endDate: timeRange.endDate.toISOString(),
+        });
+        return {
+          name: 'Attendance Summary',
+          columns: [
+            { key: 'date', label: 'Date', format: 'date' },
+            { key: 'uniqueVisitors', label: 'Unique Visitors', format: 'number' },
+            { key: 'totalEntries', label: 'Total Entries', format: 'number' },
+            { key: 'totalExits', label: 'Total Exits', format: 'number' },
+            { key: 'peakOccupancy', label: 'Peak Occupancy', format: 'number' },
+          ],
+          data: attendance.dailyAttendance.map((d) => ({
+            date: d.date,
+            uniqueVisitors: d.uniqueVisitors,
+            totalEntries: d.totalEntries,
+            totalExits: d.totalExits,
+            peakOccupancy: d.peakOccupancy,
+          })),
+        };
+      }
+
+      case 'zones': {
+        const zones = await this.analyticsService.getZoneAnalytics(festivalId, {
+          startDate: timeRange.startDate.toISOString(),
+          endDate: timeRange.endDate.toISOString(),
+        });
+        return {
+          name: 'Zone Statistics',
+          columns: [
+            { key: 'zoneName', label: 'Zone Name' },
+            { key: 'capacity', label: 'Capacity', format: 'number' },
+            { key: 'currentOccupancy', label: 'Current Occupancy', format: 'number' },
+            { key: 'occupancyRate', label: 'Occupancy Rate', format: 'percentage' },
+            { key: 'totalVisits', label: 'Total Visits', format: 'number' },
+            { key: 'uniqueVisitors', label: 'Unique Visitors', format: 'number' },
+          ],
+          data: zones.zones.map((z) => ({
+            zoneName: z.zoneName,
+            capacity: z.capacity,
+            currentOccupancy: z.currentOccupancy,
+            occupancyRate: z.occupancyRate,
+            totalVisits: z.totalVisits,
+            uniqueVisitors: z.uniqueVisitors,
+          })),
+        };
+      }
+
+      case 'vendors': {
+        const vendors = await this.analyticsService.getVendorAnalytics(festivalId, {
+          startDate: timeRange.startDate.toISOString(),
+          endDate: timeRange.endDate.toISOString(),
+        });
+        return {
+          name: 'Vendor Statistics',
+          columns: [
+            { key: 'vendorName', label: 'Vendor Name' },
+            { key: 'vendorType', label: 'Type' },
+            { key: 'totalOrders', label: 'Total Orders', format: 'number' },
+            { key: 'totalRevenue', label: 'Total Revenue', format: 'currency' },
+            { key: 'averageOrderValue', label: 'Avg Order Value', format: 'currency' },
+            { key: 'completionRate', label: 'Completion Rate', format: 'percentage' },
+          ],
+          data: vendors.topVendors.map((v) => ({
+            vendorName: v.vendorName,
+            vendorType: v.vendorType,
+            totalOrders: v.totalOrders,
+            totalRevenue: v.totalRevenue,
+            averageOrderValue: v.averageOrderValue,
+            completionRate: v.completionRate,
+          })),
+        };
+      }
+
+      case 'revenue': {
+        const revenueData = await this.advancedMetricsService.getRevenueMetrics(
+          festivalId,
+          timeRange.startDate,
+          timeRange.endDate
+        );
+        return {
+          name: 'Revenue Breakdown',
+          columns: [
+            { key: 'category', label: 'Category' },
+            { key: 'amount', label: 'Amount', format: 'currency' },
+            { key: 'percentage', label: 'Percentage', format: 'percentage' },
+          ],
+          data: [
+            {
+              category: 'Tickets',
+              amount: revenueData.breakdown.tickets.amount,
+              percentage: revenueData.breakdown.tickets.percentage,
+            },
+            {
+              category: 'Cashless Topups',
+              amount: revenueData.breakdown.cashless.amount,
+              percentage: revenueData.breakdown.cashless.percentage,
+            },
+            {
+              category: 'Vendor Revenue',
+              amount: revenueData.breakdown.vendors.amount,
+              percentage: revenueData.breakdown.vendors.percentage,
+            },
+            {
+              category: 'Camping',
+              amount: revenueData.breakdown.camping.amount,
+              percentage: revenueData.breakdown.camping.percentage,
+            },
+            { category: 'Gross Total', amount: revenueData.grossRevenue, percentage: 100 },
+            { category: 'Refunds', amount: -revenueData.refundedAmount, percentage: 0 },
+            { category: 'Net Revenue', amount: revenueData.netRevenue, percentage: 0 },
+          ],
+        };
+      }
 
       default:
         return null;
     }
   }
 
-  private async exportToCsv(
-    data: ExportData,
-    _config: ExportConfig,
-  ): Promise<ExportResult> {
+  private async exportToCsv(data: ExportData, _config: ExportConfig): Promise<ExportResult> {
     const lines: string[] = [];
 
     // Add header
     lines.push(`# ${data.title}`);
     lines.push(`# Generated: ${data.generatedAt.toISOString()}`);
-    lines.push(`# Period: ${data.period.startDate.toISOString()} to ${data.period.endDate.toISOString()}`);
+    lines.push(
+      `# Period: ${data.period.startDate.toISOString()} to ${data.period.endDate.toISOString()}`
+    );
     lines.push('');
 
     for (const section of data.sections) {
       lines.push(`## ${section.name}`);
 
       // Header row
-      lines.push(section.columns.map(c => c.label).join(','));
+      lines.push(section.columns.map((c) => c.label).join(','));
 
       // Data rows
       for (const row of section.data) {
-        const values = section.columns.map(col => {
+        const values = section.columns.map((col) => {
           const value = row[col.key];
           return this.formatCsvValue(value, col.format);
         });
@@ -546,10 +825,7 @@ export class ExportService {
     };
   }
 
-  private async exportToPdf(
-    data: ExportData,
-    config: ExportConfig,
-  ): Promise<ExportResult> {
+  private async exportToPdf(data: ExportData, _config: ExportConfig): Promise<ExportResult> {
     return new Promise((resolve, reject) => {
       try {
         const chunks: Buffer[] = [];
@@ -571,7 +847,10 @@ export class ExportService {
         doc.fontSize(24).text(data.title, { align: 'center' });
         doc.moveDown();
         doc.fontSize(12).text(`Generated: ${data.generatedAt.toISOString()}`, { align: 'center' });
-        doc.text(`Period: ${data.period.startDate.toISOString().split('T')[0]} to ${data.period.endDate.toISOString().split('T')[0]}`, { align: 'center' });
+        doc.text(
+          `Period: ${data.period.startDate.toISOString().split('T')[0]} to ${data.period.endDate.toISOString().split('T')[0]}`,
+          { align: 'center' }
+        );
         doc.moveDown(2);
 
         // Content sections
@@ -646,10 +925,7 @@ export class ExportService {
     doc.y = currentY;
   }
 
-  private async exportToXlsx(
-    data: ExportData,
-    _config: ExportConfig,
-  ): Promise<ExportResult> {
+  private async exportToXlsx(data: ExportData, _config: ExportConfig): Promise<ExportResult> {
     // Create a simple XML-based xlsx (simplified implementation)
     // In production, use a library like exceljs
 
@@ -661,7 +937,7 @@ export class ExportService {
 
       // Header row
       ws += '<row>';
-      section.columns.forEach((col, i) => {
+      section.columns.forEach((col) => {
         ws += `<c t="inlineStr"><is><t>${this.escapeXml(col.label)}</t></is></c>`;
       });
       ws += '</row>';
@@ -686,9 +962,7 @@ export class ExportService {
     return this.exportToCsv(data, _config);
   }
 
-  private transformComprehensiveToExport(
-    analytics: ComprehensiveAnalytics,
-  ): ExportData {
+  private transformComprehensiveToExport(analytics: ComprehensiveAnalytics): ExportData {
     return {
       title: 'Comprehensive Analytics Report',
       generatedAt: analytics.generatedAt,
@@ -717,8 +991,14 @@ export class ExportService {
             { metric: 'Total Customers', value: analytics.customers.totalUniqueCustomers },
             { metric: 'New Customers', value: analytics.customers.newCustomers },
             { metric: 'Returning Customers', value: analytics.customers.returningCustomers },
-            { metric: 'Repeat Purchase Rate', value: `${analytics.customers.repeatPurchaseRate.toFixed(1)}%` },
-            { metric: 'Avg Spending', value: analytics.customers.averageSpendingPerCustomer.toFixed(2) },
+            {
+              metric: 'Repeat Purchase Rate',
+              value: `${analytics.customers.repeatPurchaseRate.toFixed(1)}%`,
+            },
+            {
+              metric: 'Avg Spending',
+              value: analytics.customers.averageSpendingPerCustomer.toFixed(2),
+            },
             { metric: 'Customer LTV', value: analytics.customers.customerLifetimeValue.toFixed(2) },
           ],
         },
@@ -730,9 +1010,18 @@ export class ExportService {
           ],
           data: [
             { metric: 'Ticket Scan Throughput', value: analytics.performance.ticketScanThroughput },
-            { metric: 'Avg Order Fulfillment (min)', value: analytics.performance.averageOrderFulfillmentTime.toFixed(1) },
-            { metric: 'Cashless Success Rate', value: `${analytics.performance.cashlessSuccessRate}%` },
-            { metric: 'Support Resolution Time (h)', value: analytics.performance.supportTicketResolutionTime.toFixed(1) },
+            {
+              metric: 'Avg Order Fulfillment (min)',
+              value: analytics.performance.averageOrderFulfillmentTime.toFixed(1),
+            },
+            {
+              metric: 'Cashless Success Rate',
+              value: `${analytics.performance.cashlessSuccessRate}%`,
+            },
+            {
+              metric: 'Support Resolution Time (h)',
+              value: analytics.performance.supportTicketResolutionTime.toFixed(1),
+            },
             { metric: 'System Uptime', value: `${analytics.performance.systemUptime}%` },
           ],
         },
@@ -760,7 +1049,10 @@ export class ExportService {
             { metric: 'Total Staff', value: analytics.staff.totalStaff },
             { metric: 'Active Staff', value: analytics.staff.activeStaff },
             { metric: 'Attendance Rate', value: `${analytics.staff.attendanceRate.toFixed(1)}%` },
-            { metric: 'Total Scheduled Hours', value: analytics.staff.totalScheduledHours.toFixed(1) },
+            {
+              metric: 'Total Scheduled Hours',
+              value: analytics.staff.totalScheduledHours.toFixed(1),
+            },
             { metric: 'Total Worked Hours', value: analytics.staff.totalWorkedHours.toFixed(1) },
             { metric: 'Overtime Hours', value: analytics.staff.overtimeHours.toFixed(1) },
           ],
@@ -775,8 +1067,14 @@ export class ExportService {
             { metric: 'Access Denials', value: analytics.security.totalAccessDenials },
             { metric: 'Security Incidents', value: analytics.security.securityIncidents },
             { metric: 'Security Staff', value: analytics.security.securityStaffCount },
-            { metric: 'Staff:Attendee Ratio', value: `1:${analytics.security.securityToAttendeeRatio.toFixed(0)}` },
-            { metric: 'Emergency Readiness', value: `${analytics.security.emergencyResponseReadiness}%` },
+            {
+              metric: 'Staff:Attendee Ratio',
+              value: `1:${analytics.security.securityToAttendeeRatio.toFixed(0)}`,
+            },
+            {
+              metric: 'Emergency Readiness',
+              value: `${analytics.security.emergencyResponseReadiness}%`,
+            },
           ],
         },
         {
@@ -786,9 +1084,18 @@ export class ExportService {
             { key: 'value', label: 'Value' },
           ],
           data: [
-            { metric: 'Carbon Footprint (kg CO2)', value: analytics.environmental.estimatedCarbonFootprint.toFixed(0) },
-            { metric: 'Per Attendee (kg CO2)', value: analytics.environmental.carbonPerAttendee.toFixed(1) },
-            { metric: 'Digital Ticket Rate', value: `${analytics.environmental.digitalTicketRate.toFixed(1)}%` },
+            {
+              metric: 'Carbon Footprint (kg CO2)',
+              value: analytics.environmental.estimatedCarbonFootprint.toFixed(0),
+            },
+            {
+              metric: 'Per Attendee (kg CO2)',
+              value: analytics.environmental.carbonPerAttendee.toFixed(1),
+            },
+            {
+              metric: 'Digital Ticket Rate',
+              value: `${analytics.environmental.digitalTicketRate.toFixed(1)}%`,
+            },
             { metric: 'Paper Saved (kg)', value: analytics.environmental.paperSaved.toFixed(2) },
             { metric: 'Sustainability Score', value: analytics.environmental.sustainabilityScore },
           ],
@@ -801,9 +1108,11 @@ export class ExportService {
 
   private formatCsvValue(
     value: unknown,
-    format?: 'number' | 'currency' | 'percentage' | 'date',
+    format?: 'number' | 'currency' | 'percentage' | 'date'
   ): string {
-    if (value === null || value === undefined) return '';
+    if (value === null || value === undefined) {
+      return '';
+    }
 
     switch (format) {
       case 'currency':
@@ -817,21 +1126,24 @@ export class ExportService {
         return String(value);
       case 'number':
         return typeof value === 'number' ? String(value) : String(value);
-      default:
+      default: {
         // Escape commas and quotes
         const str = String(value);
         if (str.includes(',') || str.includes('"')) {
           return `"${str.replace(/"/g, '""')}"`;
         }
         return str;
+      }
     }
   }
 
   private formatPdfValue(
     value: unknown,
-    format?: 'number' | 'currency' | 'percentage' | 'date',
+    format?: 'number' | 'currency' | 'percentage' | 'date'
   ): string {
-    if (value === null || value === undefined) return '-';
+    if (value === null || value === undefined) {
+      return '-';
+    }
 
     switch (format) {
       case 'currency':
@@ -852,7 +1164,7 @@ export class ExportService {
 
   private formatXlsxValue(
     value: unknown,
-    format?: 'number' | 'currency' | 'percentage' | 'date',
+    format?: 'number' | 'currency' | 'percentage' | 'date'
   ): string {
     return this.formatCsvValue(value, format);
   }
