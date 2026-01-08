@@ -54,6 +54,8 @@ const config: Config = {
     '^@/(.*)$': '<rootDir>/src/$1',
     // Mock bullmq for testing (not installed in dev dependencies)
     '^bullmq$': '<rootDir>/src/test/__mocks__/bullmq.ts',
+    // Mock pdfkit for testing
+    '^pdfkit$': '<rootDir>/src/test/__mocks__/pdfkit.ts',
   },
 
   // Setup files to run before tests
