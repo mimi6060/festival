@@ -2,6 +2,197 @@
 
 ---
 
+## Session 2026-01-08 - POI Module with Comprehensive Unit Tests
+
+### Tâches terminées cette session:
+
+- [x] **Created POI (Points of Interest) Module with comprehensive unit tests (129 tests)**
+  - **Module Structure**:
+    - `poi.module.ts` - NestJS module with controllers and service
+    - `poi.service.ts` - Service with CRUD operations, festival-scoped queries, proximity search
+    - `poi.controller.ts` - Two controllers (FestivalPoiController, PoiController)
+  - **DTOs Created**:
+    - `create-poi.dto.ts` - Validated DTO for POI creation with coordinates, type, metadata
+    - `update-poi.dto.ts` - Partial DTO extending create DTO
+    - `poi-query.dto.ts` - Query DTO with pagination, filtering, proximity search params
+  - **Entities**:
+    - `poi.entity.ts` - Entity classes for API documentation (PoiEntity, PoiWithFestivalEntity, PoiCategoryCountEntity)
+  - **`poi.service.spec.ts` (69 tests)**:
+    - **create** (8 tests): organizer/admin access, NotFoundException, ForbiddenException, metadata, isActive default, all POI types
+    - **findAllByFestival** (7 tests): pagination, NotFoundException, type filter, active filter, empty results, ordering
+    - **findOne** (2 tests): return with festival relation, NotFoundException
+    - **update** (9 tests): organizer/admin access, NotFoundException, ForbiddenException, partial updates, coordinates, type, isActive, metadata
+    - **remove** (5 tests): organizer/admin access, NotFoundException, ForbiddenException
+    - **findByType** (4 tests): return by type, NotFoundException, empty array, active only
+    - **getCategoryCounts** (5 tests): grouped counts, NotFoundException, empty array, active only, ordering
+    - **findNearby** (8 tests): default radius, sorted by distance, custom radius, NotFoundException, empty results, active only, large radius, zero distance
+    - **bulkCreate** (6 tests): success, NotFoundException, ForbiddenException, admin access, empty array, isActive default
+    - **toggleActive** (5 tests): true to false, false to true, NotFoundException, ForbiddenException, admin access
+    - **Edge Cases** (6 tests): null optional fields, special characters, unicode, boundary coordinates, negative coordinates, complex metadata
+    - **POI Type Coverage** (1 test): all 13 POI types (STAGE, FOOD, DRINK, TOILET, MEDICAL, INFO, ATM, PARKING, CAMPING, ENTRANCE, EXIT, CHARGING, LOCKER)
+    - **Authorization** (3 tests): ADMIN for all ops, deny STAFF, deny USER
+  - **`poi.controller.spec.ts` (60 tests)**:
+    - **FestivalPoiController**:
+      - **create** (4 tests): success, NotFoundException, ForbiddenException, user passing
+      - **bulkCreate** (3 tests): success, NotFoundException, empty array
+      - **findAll** (5 tests): paginated, query params, empty, totalPages calculation, NotFoundException
+      - **getCategoryCounts** (3 tests): success, empty, NotFoundException
+      - **findByType** (3 tests): success, empty, all POI types
+      - **findNearby** (4 tests): success with distances, custom radius, empty, string param conversion
+    - **PoiController**:
+      - **findOne** (3 tests): success with festival, NotFoundException, festival relation
+      - **update** (5 tests): success, NotFoundException, ForbiddenException, user passing, partial updates
+      - **remove** (4 tests): success, NotFoundException, ForbiddenException, user passing
+      - **toggleActive** (5 tests): to inactive, to active, NotFoundException, ForbiddenException, user passing
+      - **Response Format** (3 tests): consistent format for findOne, update, toggleActive
+      - **POI Type Handling** (1 test): all types in update
+      - **Edge Cases** (2 tests): empty update DTO, full update
+    - **Controller Integration** (2 tests): create via FestivalPoiController, retrieve via PoiController; list and update flow
+  - **API Endpoints Created**:
+    - `POST /festivals/:festivalId/pois` - Create POI
+    - `POST /festivals/:festivalId/pois/bulk` - Bulk create POIs
+    - `GET /festivals/:festivalId/pois` - List POIs with pagination/filtering
+    - `GET /festivals/:festivalId/pois/categories` - Get POI category counts
+    - `GET /festivals/:festivalId/pois/type/:type` - Get POIs by type
+    - `GET /festivals/:festivalId/pois/nearby` - Find POIs near location
+    - `GET /pois/:id` - Get single POI
+    - `PATCH /pois/:id` - Update POI
+    - `DELETE /pois/:id` - Delete POI
+    - `POST /pois/:id/toggle-active` - Toggle POI active status
+  - **Features Implemented**:
+    - Festival-scoped POI queries
+    - Authorization (ADMIN/ORGANIZER for write, public for read)
+    - Proximity search using Haversine formula
+    - POI category grouping and counts
+    - Bulk POI creation
+    - Active/inactive toggle
+    - Complete error handling (NotFoundException, ForbiddenException)
+  - Module registered in `app.module.ts`
+  - All tests pass: `npx nx test api --testFile=poi --skip-nx-cache` SUCCESS (129 tests, 2 suites)
+  - Build verified: `npx nx build api --skip-nx-cache` SUCCESS
+
+---
+
+## Session 2026-01-08 - Tests Unitaires Cache Module Extended Coverage
+
+### Tâches terminées cette session:
+
+- [x] **Added comprehensive unit tests for Cache Module (345 new tests, 432 total)**
+  - **Created `lru-cache.spec.ts` (130 tests)**:
+    - **constructor** (5 tests): maxSize, updateOnGet default, updateOnGet option, defaultTtl option, onEvict callback
+    - **get** (9 tests): undefined for non-existent, return value, track misses, track hits, expired entries, update lastAccessed, increment accessCount, move to MRU position
+    - **set** (11 tests): store value, optional TTL, defaultTtl usage, null expiry, overwrite, onEvict on replace, evict LRU, SIZE_LIMIT reason, accessCount init, createdAt, size estimation
+    - **has** (4 tests): false for non-existent, true for existing, false for expired, no order update
+    - **peek** (4 tests): undefined for non-existent, value without order update, undefined for expired, no accessCount increment
+    - **delete** (7 tests): delete existing, return false for non-existent, MANUAL reason, EXPIRED reason, SIZE_LIMIT evictions counter, EXPIRED evictions counter, no REPLACED callback
+    - **clear** (3 tests): remove all, onEvict for each, reset statistics
+    - **keys/values/entries** (7 tests): empty array, all keys, LRU order, all values, exclude expired, entries with metadata
+    - **size** (4 tests): 0 for empty, correct count, update after delete, not exceed maxSize
+    - **getStats** (5 tests): initial stats, hitRate calculation, avgAccessCount, oldest/newest keys, evictions tracking
+    - **resetStats** (1 test): reset all counters
+    - **prune** (3 tests): remove expired, return 0 when none, EXPIRED reason callback
+    - **resize** (3 tests): update maxSize, evict when smaller, evict LRU
+    - **getTtl** (4 tests): null for non-existent, null for no TTL, remaining TTL, 0 when expired
+    - **touch** (5 tests): false for non-existent, update lastAccessed, move to MRU, update TTL, return true
+    - **edge cases** (7 tests): empty string key/value, special characters, complex objects, circular references, maxSize of 1
+    - **PatternLRUCache** (22 tests):
+      - **deletePattern** (7 tests): delete matching, no matches, wildcards at end/beginning/middle, multiple wildcards, exact match
+      - **keysMatching** (4 tests): return matching, empty for no matches, various patterns
+      - **getMatching** (4 tests): return values, empty for no matches, skip undefined, update access order
+      - **inheritance** (2 tests): LRUCache functionality, LRU eviction
+    - **EvictionReason enum** (1 test): all expected values
+
+  - **Created `cache-invalidation.service.spec.ts` (67 tests)**:
+    - **initialization** (7 tests): defined, default dependencies (festival, user, ticketCategory, zone, cashlessTransaction)
+    - **registerDependency** (4 tests): new dependency, add to existing, cascade depth, condition
+    - **removeDependency** (2 tests): remove existing, not throw for non-existent
+    - **onEntityChange** (12 tests): process event, invalidate targets, resolve template variables, respect conditions, cascade invalidation, context handling, changedFields, metrics tracking, no matching dependencies, create/delete types
+    - **invalidateByTag** (4 tests): invalidate by tag, return result, all CacheTag values, track duration
+    - **invalidateByFestival** (4 tests): all festival patterns, FESTIVAL tag, return result, all patterns in keys
+    - **invalidateByUser** (3 tests): all user patterns, return result, track duration
+    - **batchInvalidate** (6 tests): multiple events, pattern for large groups (>10), individual for small, empty array, cascade tracking, group by type
+    - **smartInvalidate** (14 tests): field-based invalidation, context resolution, fallback, festival status/name/dates/capacity, user email/role/status, ticket status/usedAt, cashlessAccount balance/status, multiple fields, duration tracking, no cascade
+    - **getMetrics** (4 tests): return metrics, track totalInvalidations, track keysInvalidated, return copy
+    - **resetMetrics** (1 test): reset all to zero
+    - **getDependencies** (3 tests): return Map, return copy, include defaults
+    - **CacheDependencyType enum** (1 test): all expected values
+    - **edge cases** (5 tests): special characters, empty context, undefined context values, long IDs, concurrent invalidations
+    - **pattern matching** (1 test): wildcard pattern matching
+    - **template resolution** (2 tests): resolve ${id}, context variables
+
+  - **Created `cache.interceptor.spec.ts` (50 tests)**:
+    - **CacheInterceptor** (30 tests):
+      - **initialization** (1 test): defined
+      - **no decorators** (1 test): pass through
+      - **@Cacheable** (7 tests): cache hit, cache miss, sync mode, condition option, unless option, tags
+      - **@CacheEvict** (6 tests): evict by key, pattern, tags, allEntries, beforeInvocation, condition
+      - **@CachePut** (4 tests): execute and update, condition, unless, tags
+      - **@InvalidateTags** (2 tests): invalidate tags, empty array
+      - **cache key generation** (2 tests): string template, default key
+    - **MultiLevelCacheInterceptor** (8 tests):
+      - **initialization** (1 test): defined
+      - **no decorator** (1 test): pass through
+      - **L1/L2 caching** (4 tests): check L1 first, populate L1 from L2, set in both, respect maxSize
+    - **SWRCacheInterceptor** (7 tests):
+      - **initialization** (1 test): defined
+      - **no decorator** (1 test): pass through
+      - **stale-while-revalidate** (3 tests): fresh data on miss, cached when valid, stale with background refresh
+    - **BatchCacheInterceptor** (5 tests):
+      - **initialization** (1 test): defined
+      - **no decorator** (1 test): pass through
+      - **non-array argument** (1 test): pass through
+      - **batch operations** (2 tests): return cached, fetch missing
+
+  - **Created `cache.controller.spec.ts` (55 tests)**:
+    - **initialization** (1 test): defined
+    - **GET /cache/dashboard** (5 tests): return data, stats, invalidation metrics, health, memory breakdown
+    - **GET /cache/stats** (1 test): return statistics
+    - **GET /cache/stats/detailed** (3 tests): detailed stats, cache, invalidation, hotKeys
+    - **POST /cache/stats/reset** (2 tests): reset all, return void
+    - **GET /cache/keys** (4 tests): list keys, filter by pattern, limit results, default limit
+    - **GET /cache/key/:key** (5 tests): exists true, exists false, string type, number type, boolean type
+    - **DELETE /cache/key/:key** (2 tests): delete key, return void
+    - **POST /cache/clear** (2 tests): clear all, return void
+    - **POST /cache/invalidate/tag** (2 tests): invalidate by tag, all cache tags
+    - **POST /cache/invalidate/pattern** (2 tests): invalidate by pattern, complex patterns
+    - **POST /cache/invalidate/festival** (1 test): invalidate festival
+    - **POST /cache/invalidate/user** (1 test): invalidate user
+    - **POST /cache/invalidate/entity** (4 tests): invalidate entity, changedFields, context, delete type
+    - **GET /cache/health** (5 tests): return status, healthy, details, unhealthy, degraded
+    - **GET /cache/health/latency** (3 tests): measure latency, call operations, ms unit
+    - **GET /cache/dependencies** (3 tests): return array, source and targets, flatten nested
+    - **GET /cache/tags** (2 tests): all tags, all enum values
+    - **edge cases** (5 tests): empty pattern, special characters, long keys, cache errors, empty dependencies
+    - **pattern matching** (2 tests): simple pattern, complex pattern
+    - **concurrent operations** (2 tests): concurrent stats, concurrent invalidations
+
+  - **Created `cache.decorators.spec.ts` (43 tests)**:
+    - **generateCacheKey** (22 tests):
+      - **no key options** (4 tests): default key, different args, same args, no args
+      - **string template** (5 tests): ${0} placeholder, multiple, missing values, out of range, numbers
+      - **CacheKeyOptions** (8 tests): prefix, includeClass, includeMethod, paramIndices, keyGenerator, combination, stringify objects, filter undefined
+      - **hash function** (5 tests): null, undefined, objects, circular references
+    - **metadata key constants** (5 tests): all 5 constants exported
+    - **@Cacheable** (8 tests): key, options, CACHE_ASIDE default, condition, unless, sync, CacheKeyOptions, empty options
+    - **@CacheEvict** (7 tests): key, tags, pattern, allEntries, beforeInvocation, condition, empty
+    - **@CachePut** (6 tests): key, ttl, tags, condition, unless, empty
+    - **@InvalidateTags** (4 tests): tags array, single tag, empty array, all tags
+    - **@MultiLevelCache** (3 tests): metadata, L1 maxSize, L2 tags
+    - **@BatchCacheable** (2 tests): metadata, tags
+    - **@StaleWhileRevalidate** (2 tests): metadata, tags
+    - **@CacheLock** (3 tests): metadata, waitTimeout, retryDelay
+    - **@ConditionalCache** (2 tests): metadata, tags
+    - **@CacheConfig** (3 tests): class metadata, tags, partial options
+    - **InjectCache** (2 tests): function, return decorator
+    - **edge cases** (3 tests): multiple decorators, special chars, complex conditions
+
+  - **Final Coverage Results for cache module**:
+    - All 6 test suites pass: `npx nx test api --testFile=cache` SUCCESS
+    - 432 total tests (87 existing + 345 new)
+    - Comprehensive coverage of LRU cache, invalidation service, interceptors, controller, and decorators
+
+---
+
 ## Session 2026-01-08 - Tests Unitaires Vendors Module Coverage Improvement
 
 ### Tâches terminées cette session:

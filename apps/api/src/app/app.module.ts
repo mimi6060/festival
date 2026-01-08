@@ -25,6 +25,7 @@ import { CampingModule } from '../modules/camping';
 import { TicketsModule } from '../modules/tickets';
 import { CashlessModule } from '../modules/cashless';
 import { ProgramModule } from '../modules/program';
+import { PoiModule } from '../modules/poi';
 
 // Service modules
 import { EmailModule } from '../modules/email';
@@ -67,6 +68,7 @@ import { RateLimitGuard } from '../common/guards';
     TicketsModule,
     CashlessModule,
     ProgramModule,
+    PoiModule,
 
     // Service modules
     EmailModule,
