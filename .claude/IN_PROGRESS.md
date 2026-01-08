@@ -151,8 +151,15 @@
 ### DEV-14: Implémenter le cache Redis pour les artistes
 
 - **Fichier**: `apps/api/src/modules/program/program.service.ts`
-- **Status**: [ ] À faire
+- **Status**: [x] Terminé
 - **Description**: Cache les données artistes avec TTL 1 heure
+- **Implémentation**:
+  - Ajout de cache tags `ARTIST` et `PROGRAM` dans `CacheService`
+  - Cache sur `getArtists()` avec TTL 1 heure et tags `[ARTIST, FESTIVAL]`
+  - Cache sur `getArtistById()` avec TTL 1 heure et tag `[ARTIST]`
+  - Cache sur `getArtistPerformances()` avec TTL 1 heure et tags `[ARTIST, PROGRAM]` (ou `[ARTIST, PROGRAM, FESTIVAL]` si festivalId fourni)
+  - Ajout de méthodes d'invalidation de cache: `invalidateArtistCache()`, `invalidateArtistListCache()`, `invalidateProgramCache()`
+  - Tests unitaires complets pour toutes les nouvelles fonctionnalités de cache
 
 ### DEV-15: Prévenir les requêtes N+1
 

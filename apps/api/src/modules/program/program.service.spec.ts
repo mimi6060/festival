@@ -148,6 +148,7 @@ describe('ProgramService', () => {
     set: jest.fn(),
     delete: jest.fn(),
     deletePattern: jest.fn(),
+    invalidateByTag: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -158,6 +159,7 @@ describe('ProgramService', () => {
     mockCacheService.set.mockResolvedValue(undefined);
     mockCacheService.delete.mockResolvedValue(undefined);
     mockCacheService.deletePattern.mockResolvedValue(undefined);
+    mockCacheService.invalidateByTag.mockResolvedValue(0);
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -503,6 +505,7 @@ describe('ProgramService', () => {
       // Assert
       expect(result).toEqual(cachedArtists);
       expect(mockPrismaService.artist.findMany).not.toHaveBeenCalled();
+      expect(mockCacheService.get).toHaveBeenCalledWith(`artists:festival:${mockFestivalId}:list`);
     });
 
     it('should cache artists after fetching from database', async () => {
@@ -514,7 +517,7 @@ describe('ProgramService', () => {
 
       // Assert
       expect(mockCacheService.set).toHaveBeenCalledWith(
-        `program:${mockFestivalId}:artists`,
+        `artists:festival:${mockFestivalId}:list`,
         expect.arrayContaining([
           expect.objectContaining({
             id: mockArtistId,
@@ -522,8 +525,8 @@ describe('ProgramService', () => {
           }),
         ]),
         {
-          ttl: 600,
-          tags: [CacheTag.FESTIVAL],
+          ttl: 3600, // 1 hour
+          tags: [CacheTag.ARTIST, CacheTag.FESTIVAL],
         }
       );
     });
@@ -628,6 +631,59 @@ describe('ProgramService', () => {
         imageUrl: mockArtist.imageUrl,
         country: mockArtist.country,
       });
+    });
+
+    it('should return cached artist when available', async () => {
+      // Arrange
+      const cachedArtist = {
+        id: mockArtistId,
+        name: 'Test Artist',
+        genre: 'Electronic',
+        bio: 'A talented electronic artist',
+        imageUrl: 'https://example.com/artist.jpg',
+        country: 'France',
+      };
+      mockCacheService.get.mockResolvedValue(cachedArtist);
+
+      // Act
+      const result = await programService.getArtistById(mockArtistId);
+
+      // Assert
+      expect(result).toEqual(cachedArtist);
+      expect(mockPrismaService.artist.findUnique).not.toHaveBeenCalled();
+      expect(mockCacheService.get).toHaveBeenCalledWith(`artists:detail:${mockArtistId}`);
+    });
+
+    it('should cache artist after fetching from database', async () => {
+      // Arrange
+      mockPrismaService.artist.findUnique.mockResolvedValue(mockArtist);
+
+      // Act
+      await programService.getArtistById(mockArtistId);
+
+      // Assert
+      expect(mockCacheService.set).toHaveBeenCalledWith(
+        `artists:detail:${mockArtistId}`,
+        expect.objectContaining({
+          id: mockArtistId,
+          name: 'Test Artist',
+        }),
+        {
+          ttl: 3600, // 1 hour
+          tags: [CacheTag.ARTIST],
+        }
+      );
+    });
+
+    it('should not cache when artist is not found', async () => {
+      // Arrange
+      mockPrismaService.artist.findUnique.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(programService.getArtistById('non-existent-id')).rejects.toThrow(
+        NotFoundException
+      );
+      expect(mockCacheService.set).not.toHaveBeenCalled();
     });
   });
 
@@ -737,6 +793,92 @@ describe('ProgramService', () => {
 
       // Assert
       expect(result).toHaveLength(2);
+    });
+
+    it('should return cached performances when available (without festivalId)', async () => {
+      // Arrange
+      const cachedPerformances = [
+        {
+          id: 'performance-uuid-001',
+          artist: mockArtist,
+          stage: mockStage,
+          startTime: '2026-07-15T20:00:00.000Z',
+          endTime: '2026-07-15T22:00:00.000Z',
+          day: 'Mercredi',
+          status: 'SCHEDULED',
+        },
+      ];
+      mockCacheService.get.mockResolvedValue(cachedPerformances);
+
+      // Act
+      const result = await programService.getArtistPerformances(mockArtistId);
+
+      // Assert
+      expect(result).toEqual(cachedPerformances);
+      expect(mockPrismaService.performance.findMany).not.toHaveBeenCalled();
+      expect(mockCacheService.get).toHaveBeenCalledWith(`artists:${mockArtistId}:performances:all`);
+    });
+
+    it('should return cached performances when available (with festivalId)', async () => {
+      // Arrange
+      const cachedPerformances = [
+        {
+          id: 'performance-uuid-001',
+          artist: mockArtist,
+          stage: mockStage,
+          startTime: '2026-07-15T20:00:00.000Z',
+          endTime: '2026-07-15T22:00:00.000Z',
+          day: 'Mercredi',
+          status: 'SCHEDULED',
+        },
+      ];
+      mockCacheService.get.mockResolvedValue(cachedPerformances);
+
+      // Act
+      const result = await programService.getArtistPerformances(mockArtistId, mockFestivalId);
+
+      // Assert
+      expect(result).toEqual(cachedPerformances);
+      expect(mockPrismaService.performance.findMany).not.toHaveBeenCalled();
+      expect(mockCacheService.get).toHaveBeenCalledWith(
+        `artists:${mockArtistId}:performances:festival:${mockFestivalId}`
+      );
+    });
+
+    it('should cache performances after fetching from database (without festivalId)', async () => {
+      // Arrange
+      mockPrismaService.performance.findMany.mockResolvedValue([mockPerformance]);
+
+      // Act
+      await programService.getArtistPerformances(mockArtistId);
+
+      // Assert
+      expect(mockCacheService.set).toHaveBeenCalledWith(
+        `artists:${mockArtistId}:performances:all`,
+        expect.any(Array),
+        {
+          ttl: 3600, // 1 hour
+          tags: [CacheTag.ARTIST, CacheTag.PROGRAM],
+        }
+      );
+    });
+
+    it('should cache performances with FESTIVAL tag when festivalId is provided', async () => {
+      // Arrange
+      mockPrismaService.performance.findMany.mockResolvedValue([mockPerformance]);
+
+      // Act
+      await programService.getArtistPerformances(mockArtistId, mockFestivalId);
+
+      // Assert
+      expect(mockCacheService.set).toHaveBeenCalledWith(
+        `artists:${mockArtistId}:performances:festival:${mockFestivalId}`,
+        expect.any(Array),
+        {
+          ttl: 3600, // 1 hour
+          tags: [CacheTag.ARTIST, CacheTag.PROGRAM, CacheTag.FESTIVAL],
+        }
+      );
     });
   });
 
@@ -1021,7 +1163,7 @@ describe('ProgramService', () => {
       await programService.getArtists(mockFestivalId);
 
       // Assert
-      expect(mockCacheService.get).toHaveBeenCalledWith(`program:${mockFestivalId}:artists`);
+      expect(mockCacheService.get).toHaveBeenCalledWith(`artists:festival:${mockFestivalId}:list`);
     });
 
     it('should use correct cache key for getStages', async () => {
@@ -1035,7 +1177,7 @@ describe('ProgramService', () => {
       expect(mockCacheService.get).toHaveBeenCalledWith(`program:${mockFestivalId}:stages`);
     });
 
-    it('should use FESTIVAL tag for all cached items', async () => {
+    it('should use appropriate tags for all cached items', async () => {
       // Arrange
       mockPrismaService.performance.findMany.mockResolvedValue([mockPerformance]);
       mockPrismaService.artist.findMany.mockResolvedValue([mockArtist]);
@@ -1046,9 +1188,27 @@ describe('ProgramService', () => {
       await programService.getArtists(mockFestivalId);
       await programService.getStages(mockFestivalId);
 
-      // Assert - all cache sets should use FESTIVAL tag
+      // Assert - program uses FESTIVAL tag
       expect(mockCacheService.set).toHaveBeenCalledWith(
-        expect.any(String),
+        `program:${mockFestivalId}:all`,
+        expect.any(Array),
+        expect.objectContaining({
+          tags: [CacheTag.FESTIVAL],
+        })
+      );
+
+      // Assert - artists use ARTIST and FESTIVAL tags
+      expect(mockCacheService.set).toHaveBeenCalledWith(
+        `artists:festival:${mockFestivalId}:list`,
+        expect.any(Array),
+        expect.objectContaining({
+          tags: [CacheTag.ARTIST, CacheTag.FESTIVAL],
+        })
+      );
+
+      // Assert - stages use FESTIVAL tag
+      expect(mockCacheService.set).toHaveBeenCalledWith(
+        `program:${mockFestivalId}:stages`,
         expect.any(Array),
         expect.objectContaining({
           tags: [CacheTag.FESTIVAL],
@@ -1234,6 +1394,88 @@ describe('ProgramService', () => {
 
       // Assert
       expect(result[0].startTime).toMatch(/^\d{2}:\d{2}$/);
+    });
+  });
+
+  // ==========================================================================
+  // Cache Invalidation Tests
+  // ==========================================================================
+
+  describe('invalidateArtistCache', () => {
+    it('should delete artist detail cache', async () => {
+      // Act
+      await programService.invalidateArtistCache(mockArtistId);
+
+      // Assert
+      expect(mockCacheService.delete).toHaveBeenCalledWith(`artists:detail:${mockArtistId}`);
+    });
+
+    it('should delete artist performances pattern', async () => {
+      // Act
+      await programService.invalidateArtistCache(mockArtistId);
+
+      // Assert
+      expect(mockCacheService.deletePattern).toHaveBeenCalledWith(
+        `artists:${mockArtistId}:performances:*`
+      );
+    });
+
+    it('should invalidate by ARTIST tag', async () => {
+      // Act
+      await programService.invalidateArtistCache(mockArtistId);
+
+      // Assert
+      expect(mockCacheService.invalidateByTag).toHaveBeenCalledWith(CacheTag.ARTIST);
+    });
+  });
+
+  describe('invalidateArtistListCache', () => {
+    it('should delete artist list cache for specific festival', async () => {
+      // Act
+      await programService.invalidateArtistListCache(mockFestivalId);
+
+      // Assert
+      expect(mockCacheService.delete).toHaveBeenCalledWith(
+        `artists:festival:${mockFestivalId}:list`
+      );
+    });
+  });
+
+  describe('invalidateProgramCache', () => {
+    it('should delete program schedule pattern', async () => {
+      // Act
+      await programService.invalidateProgramCache(mockFestivalId);
+
+      // Assert
+      expect(mockCacheService.deletePattern).toHaveBeenCalledWith(`program:${mockFestivalId}:*`);
+    });
+
+    it('should delete artist list for festival', async () => {
+      // Act
+      await programService.invalidateProgramCache(mockFestivalId);
+
+      // Assert
+      expect(mockCacheService.delete).toHaveBeenCalledWith(
+        `artists:festival:${mockFestivalId}:list`
+      );
+    });
+
+    it('should delete artist performances pattern for festival', async () => {
+      // Act
+      await programService.invalidateProgramCache(mockFestivalId);
+
+      // Assert
+      expect(mockCacheService.deletePattern).toHaveBeenCalledWith(
+        `artists:*:performances:festival:${mockFestivalId}`
+      );
+    });
+
+    it('should delete stages cache for festival', async () => {
+      // Act
+      await programService.invalidateProgramCache(mockFestivalId);
+
+      // Assert
+      expect(mockCacheService.delete).toHaveBeenCalledWith(`program:${mockFestivalId}:stages`);
     });
   });
 });

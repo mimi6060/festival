@@ -16,7 +16,9 @@ import { Prisma } from '@prisma/client';
 // Cache TTL constants (in seconds)
 const CACHE_TTL = {
   PROGRAM_SCHEDULE: 600, // 10 minutes
-  ARTISTS: 600, // 10 minutes
+  ARTISTS: 3600, // 1 hour (artist data changes infrequently)
+  ARTIST_DETAIL: 3600, // 1 hour
+  ARTIST_PERFORMANCES: 3600, // 1 hour
   STAGES: 600, // 10 minutes
 };
 
@@ -208,9 +210,10 @@ export class ProgramService {
 
   /**
    * Get all artists for a festival
+   * Cached with 1-hour TTL for performance optimization
    */
   async getArtists(festivalId: string): Promise<ArtistDto[]> {
-    const cacheKey = `program:${festivalId}:artists`;
+    const cacheKey = `artists:festival:${festivalId}:list`;
 
     // Try to get from cache
     const cached = await this.cacheService.get<ArtistDto[]>(cacheKey);
@@ -218,6 +221,8 @@ export class ProgramService {
       this.logger.debug(`Cache hit for artists: ${festivalId}`);
       return cached;
     }
+
+    this.logger.debug(`Cache miss for artists: ${festivalId}`);
 
     const artists = await this.prisma.artist.findMany({
       where: {
@@ -243,13 +248,13 @@ export class ProgramService {
       country: artist.country,
     }));
 
-    // Cache the result with 10 min TTL
+    // Cache the result with 1 hour TTL
     await this.cacheService.set(cacheKey, result, {
       ttl: CACHE_TTL.ARTISTS,
-      tags: [CacheTag.FESTIVAL],
+      tags: [CacheTag.ARTIST, CacheTag.FESTIVAL],
     });
 
-    this.logger.debug(`Cached artists: ${festivalId}`);
+    this.logger.debug(`Cached artists list for festival: ${festivalId}`);
 
     return result;
   }
@@ -354,8 +359,20 @@ export class ProgramService {
 
   /**
    * Get artist by ID
+   * Cached with 1-hour TTL for performance optimization
    */
   async getArtistById(artistId: string): Promise<ArtistDto> {
+    const cacheKey = `artists:detail:${artistId}`;
+
+    // Try to get from cache
+    const cached = await this.cacheService.get<ArtistDto>(cacheKey);
+    if (cached) {
+      this.logger.debug(`Cache hit for artist detail: ${artistId}`);
+      return cached;
+    }
+
+    this.logger.debug(`Cache miss for artist detail: ${artistId}`);
+
     const artist = await this.prisma.artist.findUnique({
       where: { id: artistId },
     });
@@ -364,7 +381,7 @@ export class ProgramService {
       throw new NotFoundException('Artist not found');
     }
 
-    return {
+    const result: ArtistDto = {
       id: artist.id,
       name: artist.name,
       genre: artist.genre,
@@ -372,12 +389,36 @@ export class ProgramService {
       imageUrl: artist.imageUrl,
       country: artist.country,
     };
+
+    // Cache the result with 1 hour TTL
+    await this.cacheService.set(cacheKey, result, {
+      ttl: CACHE_TTL.ARTIST_DETAIL,
+      tags: [CacheTag.ARTIST],
+    });
+
+    this.logger.debug(`Cached artist detail: ${artistId}`);
+
+    return result;
   }
 
   /**
    * Get performances for an artist
+   * Cached with 1-hour TTL for performance optimization
    */
   async getArtistPerformances(artistId: string, festivalId?: string): Promise<PerformanceDto[]> {
+    const cacheKey = festivalId
+      ? `artists:${artistId}:performances:festival:${festivalId}`
+      : `artists:${artistId}:performances:all`;
+
+    // Try to get from cache
+    const cached = await this.cacheService.get<PerformanceDto[]>(cacheKey);
+    if (cached) {
+      this.logger.debug(`Cache hit for artist performances: ${artistId}`);
+      return cached;
+    }
+
+    this.logger.debug(`Cache miss for artist performances: ${artistId}`);
+
     const where: Prisma.PerformanceWhereInput = {
       artistId,
     };
@@ -399,7 +440,7 @@ export class ProgramService {
       },
     });
 
-    return performances.map((perf) => ({
+    const result = performances.map((perf) => ({
       id: perf.id,
       artist: {
         id: perf.artist.id,
@@ -421,6 +462,77 @@ export class ProgramService {
       day: this.getDayName(perf.startTime),
       status: perf.status,
     }));
+
+    // Cache the result with 1 hour TTL
+    const tags = festivalId
+      ? [CacheTag.ARTIST, CacheTag.PROGRAM, CacheTag.FESTIVAL]
+      : [CacheTag.ARTIST, CacheTag.PROGRAM];
+
+    await this.cacheService.set(cacheKey, result, {
+      ttl: CACHE_TTL.ARTIST_PERFORMANCES,
+      tags,
+    });
+
+    this.logger.debug(`Cached artist performances: ${artistId}`);
+
+    return result;
+  }
+
+  // ============================================================================
+  // Cache Invalidation Methods
+  // ============================================================================
+
+  /**
+   * Invalidate all artist-related caches
+   * Call this when an artist is created, updated, or deleted
+   */
+  async invalidateArtistCache(artistId: string): Promise<void> {
+    this.logger.log(`Invalidating cache for artist: ${artistId}`);
+
+    // Invalidate individual artist detail cache
+    await this.cacheService.delete(`artists:detail:${artistId}`);
+
+    // Invalidate artist performances cache (all festivals)
+    await this.cacheService.deletePattern(`artists:${artistId}:performances:*`);
+
+    // Invalidate by tag for broader cleanup
+    await this.cacheService.invalidateByTag(CacheTag.ARTIST);
+
+    this.logger.log(`Cache invalidated for artist: ${artistId}`);
+  }
+
+  /**
+   * Invalidate artist list cache for a specific festival
+   * Call this when artists are added/removed from a festival
+   */
+  async invalidateArtistListCache(festivalId: string): Promise<void> {
+    this.logger.log(`Invalidating artist list cache for festival: ${festivalId}`);
+
+    await this.cacheService.delete(`artists:festival:${festivalId}:list`);
+
+    this.logger.log(`Artist list cache invalidated for festival: ${festivalId}`);
+  }
+
+  /**
+   * Invalidate all program-related caches for a festival
+   * Call this when significant program changes occur
+   */
+  async invalidateProgramCache(festivalId: string): Promise<void> {
+    this.logger.log(`Invalidating program cache for festival: ${festivalId}`);
+
+    // Invalidate program schedule
+    await this.cacheService.deletePattern(`program:${festivalId}:*`);
+
+    // Invalidate artist list for this festival
+    await this.cacheService.delete(`artists:festival:${festivalId}:list`);
+
+    // Invalidate artist performances for this festival
+    await this.cacheService.deletePattern(`artists:*:performances:festival:${festivalId}`);
+
+    // Invalidate stages for this festival
+    await this.cacheService.delete(`program:${festivalId}:stages`);
+
+    this.logger.log(`Program cache invalidated for festival: ${festivalId}`);
   }
 
   // ============================================================================

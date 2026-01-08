@@ -28,6 +28,8 @@ export enum CacheTag {
   ANALYTICS = 'analytics',
   CONFIG = 'config',
   SESSION = 'session',
+  ARTIST = 'artist',
+  PROGRAM = 'program',
 }
 
 /**
@@ -257,7 +259,9 @@ export class CacheService implements OnModuleDestroy {
         }
       }
     } catch (error) {
-      this.logger.error(`Cache deletePattern error for pattern ${pattern}: ${(error as Error).message}`);
+      this.logger.error(
+        `Cache deletePattern error for pattern ${pattern}: ${(error as Error).message}`
+      );
     }
   }
 
@@ -330,11 +334,7 @@ export class CacheService implements OnModuleDestroy {
   /**
    * Get or set with cache-aside pattern (lazy loading)
    */
-  async getOrSet<T>(
-    key: string,
-    factory: () => Promise<T>,
-    options?: CacheOptions,
-  ): Promise<T> {
+  async getOrSet<T>(key: string, factory: () => Promise<T>, options?: CacheOptions): Promise<T> {
     // Try to get from cache
     const cached = await this.get<T>(key);
     if (cached !== null) {
@@ -369,7 +369,7 @@ export class CacheService implements OnModuleDestroy {
     key: string,
     value: T,
     persistFn: (value: T) => Promise<void>,
-    options?: CacheOptions,
+    options?: CacheOptions
   ): Promise<void> {
     // Write to persistent storage first
     await persistFn(value);
@@ -383,7 +383,7 @@ export class CacheService implements OnModuleDestroy {
   async getWithRefreshAhead<T>(
     key: string,
     factory: () => Promise<T>,
-    options?: CacheOptions & { refreshThreshold?: number },
+    options?: CacheOptions & { refreshThreshold?: number }
   ): Promise<T | null> {
     const ttl = options?.ttl || this.DEFAULT_TTL;
     const refreshThreshold = options?.refreshThreshold || 0.2; // 20% of TTL remaining
@@ -411,7 +411,7 @@ export class CacheService implements OnModuleDestroy {
   private async backgroundRefresh<T>(
     key: string,
     factory: () => Promise<T>,
-    options?: CacheOptions,
+    options?: CacheOptions
   ): Promise<void> {
     // Fire and forget
     setImmediate(async () => {
