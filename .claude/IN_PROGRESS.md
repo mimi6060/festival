@@ -2,6 +2,37 @@
 
 ---
 
+## Session 2026-01-08 - Kubernetes Deployment Guide
+
+### Tâches terminées cette session:
+
+- [x] **Documentation Kubernetes complète**
+  - Created `docs/KUBERNETES_DEPLOYMENT.md` (comprehensive guide)
+  - Prerequisites: kubectl, helm, kustomize, cluster setup (EKS/GKE/local)
+  - Secrets Setup: kubectl direct, Sealed Secrets, External Secrets Operator
+  - Database Setup: PostgreSQL in K8s or managed (RDS/Cloud SQL), migrations via Job
+  - Deployment Steps: step-by-step with all manifests, kustomize overlays
+  - Scaling: HPA configuration, resource requests/limits, VPA, PDB
+  - Monitoring: Prometheus metrics, health endpoints, log aggregation, Grafana dashboards
+  - Troubleshooting: common issues and solutions, debug commands, recovery procedures
+  - References all existing k8s/ manifests in the project
+
+---
+
+## Session 2026-01-08 - Architecture Documentation with Mermaid
+
+### Tâches terminées:
+
+- [x] **Documentation architecture avec diagrammes Mermaid**
+  - System Overview diagram
+  - Authentication Flow diagram
+  - Payment Flow diagram (Stripe)
+  - Ticket Purchase Flow diagram
+  - Cashless Payment Flow diagram
+  - Data Model ER diagram
+
+---
+
 ## Session 2026-01-08 - Security Fix PaymentsController
 
 ### Tâches terminées cette session:
