@@ -12,6 +12,12 @@ import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService, CacheTag } from '../cache/cache.service';
 import { Prisma } from '@prisma/client';
+import {
+  ProgramSearchDto,
+  ProgramSearchResultDto,
+  PaginatedProgramSearchResponse,
+  ProgramSortBy,
+} from './dto/program-search.dto';
 
 // Cache TTL constants (in seconds)
 const CACHE_TTL = {
@@ -73,6 +79,42 @@ export interface ProgramEventDto {
   isFavorite?: boolean;
 }
 
+/**
+ * Types for schedule conflict detection
+ */
+export interface ScheduleConflict {
+  type: 'ARTIST_OVERLAP' | 'STAGE_OVERLAP';
+  performanceId: string;
+  stageId: string;
+  stageName: string;
+  artistId: string;
+  artistName: string;
+  conflictingStartTime: string;
+  conflictingEndTime: string;
+  message: string;
+}
+
+export interface ScheduleConflictResult {
+  hasConflicts: boolean;
+  conflicts: ScheduleConflict[];
+}
+
+export interface CreatePerformanceDto {
+  artistId: string;
+  stageId: string;
+  startTime: Date;
+  endTime: Date;
+  description?: string;
+}
+
+export interface UpdatePerformanceDto {
+  artistId?: string;
+  stageId?: string;
+  startTime?: Date;
+  endTime?: Date;
+  description?: string;
+}
+
 // ============================================================================
 // Service
 // ============================================================================
@@ -104,9 +146,26 @@ export class ProgramService {
             festivalId,
           },
         },
-        include: {
-          artist: true,
-          stage: true,
+        select: {
+          id: true,
+          startTime: true,
+          endTime: true,
+          artist: {
+            select: {
+              id: true,
+              name: true,
+              genre: true,
+              imageUrl: true,
+            },
+          },
+          stage: {
+            select: {
+              id: true,
+              name: true,
+              location: true,
+              capacity: true,
+            },
+          },
         },
         orderBy: [{ startTime: 'asc' }],
       });
@@ -173,9 +232,26 @@ export class ProgramService {
             lte: endOfDay,
           },
         },
-        include: {
-          artist: true,
-          stage: true,
+        select: {
+          id: true,
+          startTime: true,
+          endTime: true,
+          artist: {
+            select: {
+              id: true,
+              name: true,
+              genre: true,
+              imageUrl: true,
+            },
+          },
+          stage: {
+            select: {
+              id: true,
+              name: true,
+              location: true,
+              capacity: true,
+            },
+          },
         },
         orderBy: [{ startTime: 'asc' }],
       });
@@ -234,6 +310,13 @@ export class ProgramService {
           },
         },
       },
+      select: {
+        id: true,
+        name: true,
+        genre: true,
+        bio: true,
+        imageUrl: true,
+      },
       orderBy: {
         name: 'asc',
       },
@@ -245,7 +328,7 @@ export class ProgramService {
       genre: artist.genre,
       bio: artist.bio,
       imageUrl: artist.imageUrl,
-      country: artist.country,
+      country: null, // Country field not in schema, kept for API compatibility
     }));
 
     // Cache the result with 1 hour TTL
@@ -275,6 +358,13 @@ export class ProgramService {
     const stages = await this.prisma.stage.findMany({
       where: {
         festivalId,
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        capacity: true,
+        location: true,
       },
       orderBy: {
         name: 'asc',
@@ -375,6 +465,13 @@ export class ProgramService {
 
     const artist = await this.prisma.artist.findUnique({
       where: { id: artistId },
+      select: {
+        id: true,
+        name: true,
+        genre: true,
+        bio: true,
+        imageUrl: true,
+      },
     });
 
     if (!artist) {
@@ -387,7 +484,7 @@ export class ProgramService {
       genre: artist.genre,
       bio: artist.bio,
       imageUrl: artist.imageUrl,
-      country: artist.country,
+      country: null, // Country field not in schema, kept for API compatibility
     };
 
     // Cache the result with 1 hour TTL
@@ -431,9 +528,29 @@ export class ProgramService {
 
     const performances = await this.prisma.performance.findMany({
       where,
-      include: {
-        artist: true,
-        stage: true,
+      select: {
+        id: true,
+        startTime: true,
+        endTime: true,
+        isCancelled: true,
+        artist: {
+          select: {
+            id: true,
+            name: true,
+            genre: true,
+            bio: true,
+            imageUrl: true,
+          },
+        },
+        stage: {
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            capacity: true,
+            location: true,
+          },
+        },
       },
       orderBy: {
         startTime: 'asc',
@@ -448,7 +565,7 @@ export class ProgramService {
         genre: perf.artist.genre,
         bio: perf.artist.bio,
         imageUrl: perf.artist.imageUrl,
-        country: perf.artist.country,
+        country: null, // Country field not in schema, kept for API compatibility
       },
       stage: {
         id: perf.stage.id,
@@ -460,7 +577,7 @@ export class ProgramService {
       startTime: perf.startTime.toISOString(),
       endTime: perf.endTime.toISOString(),
       day: this.getDayName(perf.startTime),
-      status: perf.status,
+      status: perf.isCancelled ? 'CANCELLED' : 'SCHEDULED', // Derived from isCancelled field
     }));
 
     // Cache the result with 1 hour TTL
@@ -476,6 +593,173 @@ export class ProgramService {
     this.logger.debug(`Cached artist performances: ${artistId}`);
 
     return result;
+  }
+
+  // ============================================================================
+  // Search Methods
+  // ============================================================================
+
+  /**
+   * Search the festival program with multiple filters
+   * Supports filtering by query string, genre, date, and stage
+   * Returns paginated results
+   */
+  async searchProgram(
+    searchDto: ProgramSearchDto,
+    userId?: string
+  ): Promise<PaginatedProgramSearchResponse> {
+    const { festivalId, q, genre, date, stageId, page, sortBy, sortOrder } = searchDto;
+    const skip = searchDto.skip;
+    const take = searchDto.take;
+
+    this.logger.debug(
+      `Searching program for festival ${festivalId} with filters: q=${q}, genre=${genre}, date=${date}, stageId=${stageId}`
+    );
+
+    // Build the where clause with all filters
+    const where: Prisma.PerformanceWhereInput = {
+      stage: {
+        festivalId,
+      },
+    };
+
+    // Filter by stage if provided
+    if (stageId) {
+      where.stageId = stageId;
+    }
+
+    // Filter by date if provided
+    if (date) {
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      where.startTime = {
+        gte: startOfDay,
+        lte: endOfDay,
+      };
+    }
+
+    // Filter by query string (artist name or description) and/or genre
+    if (q || genre) {
+      where.artist = {};
+
+      if (q) {
+        where.artist.OR = [
+          { name: { contains: q, mode: 'insensitive' } },
+          { bio: { contains: q, mode: 'insensitive' } },
+        ];
+      }
+
+      if (genre) {
+        where.artist.genre = { contains: genre, mode: 'insensitive' };
+      }
+    }
+
+    // Build orderBy based on sortBy parameter
+    let orderBy: Prisma.PerformanceOrderByWithRelationInput[];
+    switch (sortBy) {
+      case ProgramSortBy.ARTIST_NAME:
+        orderBy = [{ artist: { name: sortOrder } }];
+        break;
+      case ProgramSortBy.STAGE_NAME:
+        orderBy = [{ stage: { name: sortOrder } }];
+        break;
+      case ProgramSortBy.START_TIME:
+      default:
+        orderBy = [{ startTime: sortOrder }];
+        break;
+    }
+
+    // Execute count and find queries in parallel for efficiency
+    const [total, performances] = await Promise.all([
+      this.prisma.performance.count({ where }),
+      this.prisma.performance.findMany({
+        where,
+        select: {
+          id: true,
+          startTime: true,
+          endTime: true,
+          description: true,
+          isCancelled: true,
+          artist: {
+            select: {
+              id: true,
+              name: true,
+              genre: true,
+              imageUrl: true,
+            },
+          },
+          stage: {
+            select: {
+              id: true,
+              name: true,
+              location: true,
+              capacity: true,
+            },
+          },
+        },
+        orderBy,
+        skip,
+        take,
+      }),
+    ]);
+
+    // Get user favorites if userId is provided
+    let favoriteArtistIds = new Set<string>();
+    if (userId) {
+      const favorites = await this.prisma.favoriteArtist.findMany({
+        where: {
+          userId,
+          festivalId,
+        },
+        select: {
+          artistId: true,
+        },
+      });
+      favoriteArtistIds = new Set(favorites.map((f) => f.artistId));
+    }
+
+    // Map results to DTOs
+    const data: ProgramSearchResultDto[] = performances.map((perf) => ({
+      id: perf.id,
+      artist: {
+        id: perf.artist.id,
+        name: perf.artist.name,
+        genre: perf.artist.genre,
+        imageUrl: perf.artist.imageUrl,
+      },
+      stage: {
+        id: perf.stage.id,
+        name: perf.stage.name,
+        location: perf.stage.location,
+        capacity: perf.stage.capacity,
+      },
+      startTime: perf.startTime.toISOString(),
+      endTime: perf.endTime.toISOString(),
+      description: perf.description,
+      day: this.getDayName(perf.startTime),
+      isCancelled: perf.isCancelled,
+      isFavorite: favoriteArtistIds.has(perf.artist.id),
+    }));
+
+    const totalPages = Math.ceil(total / take);
+    const currentPage = page || 1;
+
+    this.logger.debug(`Found ${total} performances matching search criteria`);
+
+    return {
+      data,
+      meta: {
+        total,
+        page: currentPage,
+        limit: take,
+        totalPages,
+        hasNextPage: currentPage < totalPages,
+        hasPrevPage: currentPage > 1,
+      },
+    };
   }
 
   // ============================================================================

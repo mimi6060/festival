@@ -149,8 +149,27 @@
 ### DEV-09: Ajouter la recherche dans le Programme
 
 - **Fichier**: `apps/api/src/modules/program/program.controller.ts`
-- **Status**: [ ] À faire
+- **Status**: [x] Terminé
 - **Description**: GET /program/search?q=&genre=&date=&stage=
+- **Solution**:
+  - Créé `ProgramSearchDto` avec validation pour tous les filtres:
+    - `festivalId` (requis) - ID du festival
+    - `q` (optionnel) - Recherche dans le nom et bio de l'artiste
+    - `genre` (optionnel) - Filtre par genre (recherche partielle, insensible à la casse)
+    - `date` (optionnel) - Filtre par date (format YYYY-MM-DD)
+    - `stageId` (optionnel) - Filtre par scène
+    - Pagination: `page`, `limit` (max 100)
+    - Tri: `sortBy` (startTime, artistName, stageName), `sortOrder` (asc, desc)
+  - Créé `PaginatedProgramSearchResponse` avec métadonnées de pagination
+  - Ajouté méthode `searchProgram()` dans `ProgramService`:
+    - Construction dynamique des filtres Prisma
+    - Exécution parallèle de count et findMany pour performance
+    - Support des favoris utilisateur optionnel
+    - Mapping vers DTOs avec toutes les infos pertinentes
+  - Ajouté endpoint `GET /api/program/search` dans `ProgramController`:
+    - Documentation Swagger complète
+    - Rate limiting (100 req/min)
+    - Support authentification optionnelle pour les favoris
 
 ### DEV-10: Implémenter l'export bulk pour Analytics
 

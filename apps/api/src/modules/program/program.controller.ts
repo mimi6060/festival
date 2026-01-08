@@ -9,13 +9,46 @@ import {
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ProgramService } from './program.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RateLimit } from '../../common/guards/rate-limit.guard';
+import { ProgramSearchDto, PaginatedProgramSearchResponse } from './dto/program-search.dto';
 
+@ApiTags('Program')
 @Controller('api/program')
 export class ProgramController {
   constructor(private readonly programService: ProgramService) {}
+
+  /**
+   * Search the festival program
+   * Supports filtering by query string, genre, date, and stage
+   */
+  @Get('search')
+  @ApiOperation({
+    summary: 'Search festival program',
+    description:
+      'Search performances with multiple filters including artist name, genre, date, and stage. Returns paginated results.',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Paginated search results',
+    type: PaginatedProgramSearchResponse,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid search parameters' })
+  @RateLimit({
+    limit: 100,
+    windowSeconds: 60, // 100 requests per minute
+    keyPrefix: 'program:search',
+    errorMessage: 'Too many search requests. Please try again later.',
+  })
+  async searchProgram(
+    @Query() searchDto: ProgramSearchDto,
+    @Request() req
+  ): Promise<PaginatedProgramSearchResponse> {
+    const userId = req.user?.id;
+    return this.programService.searchProgram(searchDto, userId);
+  }
 
   /**
    * Get full program for a festival
