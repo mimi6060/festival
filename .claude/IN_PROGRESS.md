@@ -62,9 +62,26 @@
 
 ### DEV-04: Ajouter des tests E2E pour les paiements
 
-- **Fichier**: `apps/api-e2e/src/payments.e2e-spec.ts`
-- **Status**: [ ] À faire
-- **Description**: Aucun test E2E pour le module de paiement critique
+- **Fichier**: `apps/api-e2e/src/api/payments.e2e-spec.ts`
+- **Status**: [x] Terminé
+- **Description**: Tests E2E complets pour le module de paiement
+- **Solution**:
+  - Créé `payments.e2e-spec.ts` avec tests pour tous les endpoints principaux:
+    - POST /payments/checkout - Create checkout session
+    - GET /payments/checkout/:sessionId - Get checkout status
+    - POST /payments/checkout/ticket - Ticket purchase checkout
+    - POST /payments/checkout/cashless-topup - Cashless topup checkout
+    - POST /payments/intent - Create payment intent
+    - GET /payments/:paymentId - Get payment by ID
+    - GET /payments/user/:userId - Get user payment history
+    - POST /payments/:paymentId/cancel - Cancel payment
+    - POST /payments/refunds - Create refund
+    - GET /payments/refunds/eligibility/:paymentId - Check refund eligibility
+  - Tests de validation pour les champs requis et formats invalides
+  - Tests d'autorisation (401 sans authentification, 403 pour accès non autorisé)
+  - Tests de flux complet (checkout lifecycle, ticket purchase, cashless topup)
+  - Tests de rate limiting
+  - Tests de gestion d'erreurs
 
 ### DEV-05: Améliorer la couverture de branches (70%+)
 
@@ -101,8 +118,27 @@
 ### DEV-07: Ajouter les endpoints de gestion des subscriptions
 
 - **Fichier**: `apps/api/src/modules/payments/payments.controller.ts`
-- **Status**: [ ] À faire
+- **Status**: [x] Terminé
 - **Description**: SubscriptionService existe mais pas exposé en REST
+- **Solution**:
+  - Endpoints REST pour la gestion des abonnements:
+    - `POST /payments/subscriptions` - Créer un abonnement
+    - `GET /payments/subscriptions/:id` - Récupérer un abonnement
+    - `GET /payments/subscriptions/user/:userId` - Lister les abonnements d'un utilisateur
+    - `PATCH /payments/subscriptions/:id` - Mettre à jour un abonnement (plan, pause, coupon)
+    - `DELETE /payments/subscriptions/:id` - Annuler un abonnement
+    - `POST /payments/subscriptions/:id/resume` - Reprendre un abonnement en pause
+  - Endpoints pour les produits et prix:
+    - `POST /payments/subscriptions/product` - Créer un produit
+    - `POST /payments/subscriptions/price` - Créer un prix
+    - `GET /payments/subscriptions/products` - Lister les produits
+    - `GET /payments/subscriptions/prices/:productId` - Lister les prix d'un produit
+  - Endpoints pour les factures:
+    - `GET /payments/invoices/user/:userId` - Lister les factures d'un utilisateur
+  - Documentation Swagger complète avec types de réponse (ProductResponseDto, PriceResponseDto, SubscriptionResponseDto, InvoiceResponseDto)
+  - Protection par `JwtAuthGuard` sur tous les endpoints
+  - Utilisation des méthodes HTTP RESTful (PATCH pour update, DELETE pour cancel)
+  - Tests unitaires complets (25 nouveaux tests)
 
 ### DEV-08: Implémenter les endpoints Stripe Connect
 

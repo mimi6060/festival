@@ -14,6 +14,8 @@ import {
   Controller,
   Get,
   Post,
+  Patch,
+  Delete,
   Body,
   Param,
   Query,
@@ -60,6 +62,10 @@ import {
   CreateSubscriptionDto,
   UpdateSubscriptionDto,
   CancelSubscriptionDto,
+  ProductResponseDto,
+  PriceResponseDto,
+  SubscriptionResponseDto,
+  InvoiceResponseDto,
 } from './dto/subscription.dto';
 import { CreateRefundDto, PartialRefundDto, BulkRefundDto } from './dto/refund.dto';
 
@@ -291,96 +297,159 @@ export class PaymentsController {
   @Post('subscriptions/product')
   @ApiOperation({ summary: 'Create a subscription product' })
   @ApiBody({ type: CreateProductDto })
-  @ApiResponse({ status: 201, description: 'Product created' })
-  async createProduct(@Body() dto: CreateProductDto) {
+  @ApiResponse({ status: 201, description: 'Product created', type: ProductResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async createProduct(@Body() dto: CreateProductDto): Promise<ProductResponseDto> {
     return this.subscriptionService.createProduct(dto);
   }
 
   @Post('subscriptions/price')
   @ApiOperation({ summary: 'Create a subscription price' })
   @ApiBody({ type: CreatePriceDto })
-  @ApiResponse({ status: 201, description: 'Price created' })
-  async createPrice(@Body() dto: CreatePriceDto) {
+  @ApiResponse({ status: 201, description: 'Price created', type: PriceResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async createPrice(@Body() dto: CreatePriceDto): Promise<PriceResponseDto> {
     return this.subscriptionService.createPrice(dto);
   }
 
   @Get('subscriptions/products')
   @ApiOperation({ summary: 'List subscription products' })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
-  @ApiQuery({ name: 'active', required: false, type: Boolean })
-  async listProducts(@Query('limit') limit?: number, @Query('active') active?: boolean) {
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Maximum number of products to return',
+  })
+  @ApiQuery({
+    name: 'active',
+    required: false,
+    type: Boolean,
+    description: 'Filter by active status',
+  })
+  @ApiResponse({ status: 200, description: 'List of products', type: [ProductResponseDto] })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async listProducts(
+    @Query('limit') limit?: number,
+    @Query('active') active?: boolean
+  ): Promise<ProductResponseDto[]> {
     return this.subscriptionService.listProducts(limit, active);
   }
 
   @Get('subscriptions/prices/:productId')
   @ApiOperation({ summary: 'List prices for a product' })
   @ApiParam({ name: 'productId', description: 'Stripe product ID' })
-  async listPrices(@Param('productId') productId: string) {
+  @ApiResponse({ status: 200, description: 'List of prices', type: [PriceResponseDto] })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async listPrices(@Param('productId') productId: string): Promise<PriceResponseDto[]> {
     return this.subscriptionService.listPrices(productId);
   }
 
   @Post('subscriptions')
-  @ApiOperation({ summary: 'Create a subscription' })
+  @ApiOperation({ summary: 'Create a subscription for a user' })
   @ApiBody({ type: CreateSubscriptionDto })
-  @ApiResponse({ status: 201, description: 'Subscription created' })
-  async createSubscription(@Body() dto: CreateSubscriptionDto) {
+  @ApiResponse({ status: 201, description: 'Subscription created', type: SubscriptionResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async createSubscription(@Body() dto: CreateSubscriptionDto): Promise<SubscriptionResponseDto> {
     return this.subscriptionService.createSubscription(dto);
+  }
+
+  @Get('subscriptions/user/:userId')
+  @ApiOperation({ summary: 'List all subscriptions for a user' })
+  @ApiParam({ name: 'userId', type: 'string', description: 'User UUID' })
+  @ApiResponse({
+    status: 200,
+    description: 'List of user subscriptions',
+    type: [SubscriptionResponseDto],
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async listUserSubscriptions(
+    @Param('userId', ParseUUIDPipe) userId: string
+  ): Promise<SubscriptionResponseDto[]> {
+    return this.subscriptionService.listUserSubscriptions(userId);
   }
 
   @Get('subscriptions/:subscriptionId')
   @ApiOperation({ summary: 'Get subscription by ID' })
-  @ApiParam({ name: 'subscriptionId', description: 'Stripe subscription ID' })
-  async getSubscription(@Param('subscriptionId') subscriptionId: string) {
+  @ApiParam({ name: 'subscriptionId', description: 'Stripe subscription ID (e.g., sub_xxx)' })
+  @ApiResponse({ status: 200, description: 'Subscription details', type: SubscriptionResponseDto })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Subscription not found' })
+  async getSubscription(
+    @Param('subscriptionId') subscriptionId: string
+  ): Promise<SubscriptionResponseDto> {
     return this.subscriptionService.getSubscription(subscriptionId);
   }
 
-  @Get('subscriptions/user/:userId')
-  @ApiOperation({ summary: 'List user subscriptions' })
-  @ApiParam({ name: 'userId', type: 'string' })
-  async listUserSubscriptions(@Param('userId', ParseUUIDPipe) userId: string) {
-    return this.subscriptionService.listUserSubscriptions(userId);
-  }
-
-  @Post('subscriptions/:subscriptionId/update')
-  @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Update a subscription' })
-  @ApiParam({ name: 'subscriptionId', description: 'Stripe subscription ID' })
+  @Patch('subscriptions/:subscriptionId')
+  @ApiOperation({ summary: 'Update a subscription (change plan, pause, apply coupon)' })
+  @ApiParam({ name: 'subscriptionId', description: 'Stripe subscription ID (e.g., sub_xxx)' })
   @ApiBody({ type: UpdateSubscriptionDto })
+  @ApiResponse({ status: 200, description: 'Subscription updated', type: SubscriptionResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Subscription not found' })
   async updateSubscription(
     @Param('subscriptionId') subscriptionId: string,
     @Body() dto: UpdateSubscriptionDto
-  ) {
+  ): Promise<SubscriptionResponseDto> {
     return this.subscriptionService.updateSubscription(subscriptionId, dto);
   }
 
-  @Post('subscriptions/:subscriptionId/cancel')
+  @Delete('subscriptions/:subscriptionId')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Cancel a subscription' })
-  @ApiParam({ name: 'subscriptionId', description: 'Stripe subscription ID' })
-  @ApiBody({ type: CancelSubscriptionDto })
+  @ApiParam({ name: 'subscriptionId', description: 'Stripe subscription ID (e.g., sub_xxx)' })
+  @ApiBody({ type: CancelSubscriptionDto, required: false })
+  @ApiResponse({
+    status: 200,
+    description: 'Subscription cancelled',
+    type: SubscriptionResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid request' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Subscription not found' })
   async cancelSubscription(
     @Param('subscriptionId') subscriptionId: string,
-    @Body() dto: CancelSubscriptionDto
-  ) {
+    @Body() dto: CancelSubscriptionDto = {}
+  ): Promise<SubscriptionResponseDto> {
     return this.subscriptionService.cancelSubscription(subscriptionId, dto);
   }
 
   @Post('subscriptions/:subscriptionId/resume')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Resume a paused subscription' })
-  @ApiParam({ name: 'subscriptionId', description: 'Stripe subscription ID' })
-  async resumeSubscription(@Param('subscriptionId') subscriptionId: string) {
+  @ApiParam({ name: 'subscriptionId', description: 'Stripe subscription ID (e.g., sub_xxx)' })
+  @ApiResponse({ status: 200, description: 'Subscription resumed', type: SubscriptionResponseDto })
+  @ApiResponse({ status: 400, description: 'Invalid request or subscription not paused' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Subscription not found' })
+  async resumeSubscription(
+    @Param('subscriptionId') subscriptionId: string
+  ): Promise<SubscriptionResponseDto> {
     return this.subscriptionService.resumeSubscription(subscriptionId);
   }
 
   @Get('invoices/user/:userId')
   @ApiOperation({ summary: 'Get user invoices' })
-  @ApiParam({ name: 'userId', type: 'string' })
-  @ApiQuery({ name: 'limit', required: false, type: Number })
+  @ApiParam({ name: 'userId', type: 'string', description: 'User UUID' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Maximum number of invoices to return',
+  })
+  @ApiResponse({ status: 200, description: 'List of invoices', type: [InvoiceResponseDto] })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'User not found' })
   async listUserInvoices(
     @Param('userId', ParseUUIDPipe) userId: string,
     @Query('limit') limit?: number
-  ) {
+  ): Promise<InvoiceResponseDto[]> {
     return this.subscriptionService.listUserInvoices(userId, limit);
   }
 
