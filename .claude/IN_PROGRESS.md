@@ -2,6 +2,114 @@
 
 ---
 
+## Session 2026-01-08 - Tests Unitaires GDPR Module
+
+### Tâches terminées cette session:
+
+- [x] **Created comprehensive unit tests for GDPR Module (83 tests)**
+  - `gdpr.service.spec.ts` (83 tests):
+    - **getUserConsents** (4 tests):
+      - Return all consent types with their status
+      - Return default values for missing consents (ESSENTIAL defaults to true)
+      - Query consents ordered by type
+      - Include ipAddress and userAgent in response
+    - **updateConsent** (6 tests):
+      - Successfully grant a consent
+      - Successfully revoke a consent
+      - Throw BadRequestException when revoking essential consent
+      - Allow granting essential consent
+      - Use upsert to create or update consent
+      - Log consent changes to audit log
+    - **updateConsents (bulk)** (2 tests):
+      - Update multiple consents at once
+      - Fail if any consent update is invalid
+    - **getConsentHistory** (3 tests):
+      - Return GDPR audit logs for user
+      - Order logs by createdAt descending
+      - Limit results to 100
+    - **createDataRequest** (7 tests):
+      - Create a data access request
+      - Create a data deletion request
+      - Throw BadRequestException when pending request already exists
+      - Throw BadRequestException when in_progress request exists
+      - Allow creating request if previous one was completed
+      - Log request creation to audit log
+      - Use default format JSON when not specified
+    - **getUserRequests** (3 tests):
+      - Return all requests for user
+      - Order requests by createdAt descending
+      - Return empty array when no requests
+    - **getRequest** (5 tests):
+      - Return request when found
+      - Throw NotFoundException when request not found
+      - Throw ForbiddenException when user accesses other user request
+      - Allow user to access own request
+      - Allow admin to access any request
+    - **getAllRequests (admin)** (6 tests):
+      - Return paginated requests
+      - Filter by status/type/userId
+      - Calculate correct pagination values
+      - Use default page and limit
+    - **processRequest** (5 tests):
+      - Approve a data access request
+      - Reject a request with reason
+      - Throw BadRequestException when rejecting without reason
+      - Throw BadRequestException when processing non-pending request
+      - Log request processing to audit log
+    - **exportUserData** (3 tests):
+      - Generate data export in JSON format
+      - Collect all user data for export
+      - Set download expiration to 7 days
+    - **downloadExport** (4 tests):
+      - Return export data when valid token
+      - Throw NotFoundException when export not found
+      - Throw BadRequestException when export link expired
+      - Generate correct filename based on format
+    - **deleteUserData (Right to be Forgotten)** (8 tests):
+      - Anonymize user data
+      - Delete push tokens, user consents, notifications, sessions
+      - Set user status to INACTIVE
+      - Clear password hash
+      - Set anonymous email with unique identifier
+    - **anonymizeUser** (3 tests):
+      - Replace firstName with "Deleted"
+      - Replace lastName with "User"
+      - Clear phone number
+    - **executeConsentWithdrawal** (3 tests):
+      - Revoke all non-essential consents
+      - Not revoke essential consent
+      - Log consent withdrawal to audit log
+    - **createRectificationRequest** (3 tests):
+      - Create rectification request
+      - Store corrections in details field as JSON
+      - Log rectification request to audit log
+    - **getDataProcessingLog** (2 tests):
+      - Return all GDPR-related audit entries
+      - Filter by GDPR\_ action prefix
+    - **getStatistics** (5 tests):
+      - Return comprehensive statistics
+      - Return requests by type and status
+      - Return 10 most recent requests
+      - Handle zero requests
+    - **Data export format** (3 tests):
+      - Include all required user data fields
+      - Include ticket data with festival info
+      - Include payment data
+    - **Complete deletion verification** (3 tests):
+      - Delete all personal data in a transaction
+      - Use transaction to ensure atomic deletion
+      - Retain anonymized records for legal compliance
+    - **Edge cases** (5 tests):
+      - Handle user with no consents
+      - Handle user with no data to export
+      - Handle multiple pending requests of different types
+      - Handle special characters in user data for export
+      - Handle concurrent consent updates
+  - Uses Jest with mocks for PrismaService
+  - All tests pass: `npx nx test api --testFile=gdpr.service.spec` SUCCESS (83 tests)
+
+---
+
 ## Session 2026-01-08 - Tests Unitaires Camping Module
 
 ### Tâches terminées cette session:
