@@ -18,6 +18,12 @@ import {
   PaginatedProgramSearchResponse,
   ProgramSortBy,
 } from './dto/program-search.dto';
+import {
+  ScheduleConflictException,
+  StageNotFoundException,
+  ArtistNotFoundException,
+  PerformanceNotFoundException,
+} from '../../common/exceptions/program.exception';
 
 // Cache TTL constants (in seconds)
 const CACHE_TTL = {
@@ -817,6 +823,443 @@ export class ProgramService {
     await this.cacheService.delete(`program:${festivalId}:stages`);
 
     this.logger.log(`Program cache invalidated for festival: ${festivalId}`);
+  }
+
+  // ============================================================================
+  // Schedule Conflict Detection Methods
+  // ============================================================================
+
+  /**
+   * Detect schedule conflicts for a performance
+   *
+   * Checks for:
+   * 1. Same artist performing at overlapping times (across any stage)
+   * 2. Same stage with overlapping performances
+   *
+   * @param performance - The performance data to check
+   * @param excludePerformanceId - Optional ID to exclude (for updates)
+   * @returns ScheduleConflictResult with conflict details
+   */
+  async detectScheduleConflicts(
+    performance: {
+      artistId: string;
+      stageId: string;
+      startTime: Date;
+      endTime: Date;
+    },
+    excludePerformanceId?: string
+  ): Promise<ScheduleConflictResult> {
+    const { artistId, stageId, startTime, endTime } = performance;
+    const conflicts: ScheduleConflict[] = [];
+
+    this.logger.debug(
+      `Checking schedule conflicts for artist ${artistId} on stage ${stageId} from ${startTime.toISOString()} to ${endTime.toISOString()}`
+    );
+
+    // Build the base exclusion filter
+    const excludeFilter = excludePerformanceId ? { NOT: { id: excludePerformanceId } } : {};
+
+    // Check for artist time conflicts (same artist, overlapping time, any stage)
+    const artistConflicts = await this.prisma.performance.findMany({
+      where: {
+        artistId,
+        isCancelled: false,
+        ...excludeFilter,
+        OR: [
+          // New performance starts during existing performance
+          {
+            startTime: { lte: startTime },
+            endTime: { gt: startTime },
+          },
+          // New performance ends during existing performance
+          {
+            startTime: { lt: endTime },
+            endTime: { gte: endTime },
+          },
+          // New performance completely contains existing performance
+          {
+            startTime: { gte: startTime },
+            endTime: { lte: endTime },
+          },
+        ],
+      },
+      include: {
+        stage: true,
+        artist: true,
+      },
+    });
+
+    for (const conflict of artistConflicts) {
+      conflicts.push({
+        type: 'ARTIST_OVERLAP',
+        performanceId: conflict.id,
+        stageId: conflict.stageId,
+        stageName: conflict.stage.name,
+        artistId: conflict.artistId,
+        artistName: conflict.artist.name,
+        conflictingStartTime: conflict.startTime.toISOString(),
+        conflictingEndTime: conflict.endTime.toISOString(),
+        message: `Artist "${conflict.artist.name}" already has a performance on "${conflict.stage.name}" from ${this.formatTime(conflict.startTime)} to ${this.formatTime(conflict.endTime)}`,
+      });
+    }
+
+    // Check for stage time conflicts (same stage, overlapping time, any artist)
+    const stageConflicts = await this.prisma.performance.findMany({
+      where: {
+        stageId,
+        isCancelled: false,
+        ...excludeFilter,
+        OR: [
+          // New performance starts during existing performance
+          {
+            startTime: { lte: startTime },
+            endTime: { gt: startTime },
+          },
+          // New performance ends during existing performance
+          {
+            startTime: { lt: endTime },
+            endTime: { gte: endTime },
+          },
+          // New performance completely contains existing performance
+          {
+            startTime: { gte: startTime },
+            endTime: { lte: endTime },
+          },
+        ],
+      },
+      include: {
+        stage: true,
+        artist: true,
+      },
+    });
+
+    for (const conflict of stageConflicts) {
+      // Skip if this is the same conflict we already found (same performance)
+      if (conflicts.some((c) => c.performanceId === conflict.id)) {
+        continue;
+      }
+
+      conflicts.push({
+        type: 'STAGE_OVERLAP',
+        performanceId: conflict.id,
+        stageId: conflict.stageId,
+        stageName: conflict.stage.name,
+        artistId: conflict.artistId,
+        artistName: conflict.artist.name,
+        conflictingStartTime: conflict.startTime.toISOString(),
+        conflictingEndTime: conflict.endTime.toISOString(),
+        message: `Stage "${conflict.stage.name}" already has a performance by "${conflict.artist.name}" from ${this.formatTime(conflict.startTime)} to ${this.formatTime(conflict.endTime)}`,
+      });
+    }
+
+    const hasConflicts = conflicts.length > 0;
+
+    if (hasConflicts) {
+      this.logger.warn(
+        `Found ${conflicts.length} schedule conflict(s) for artist ${artistId} on stage ${stageId}`
+      );
+    } else {
+      this.logger.debug('No schedule conflicts detected');
+    }
+
+    return {
+      hasConflicts,
+      conflicts,
+    };
+  }
+
+  // ============================================================================
+  // Performance CRUD Methods with Conflict Detection
+  // ============================================================================
+
+  /**
+   * Create a new performance with schedule conflict detection
+   *
+   * @param data - Performance creation data
+   * @throws ScheduleConflictException if conflicts are detected
+   * @throws StageNotFoundException if stage doesn't exist
+   * @throws ArtistNotFoundException if artist doesn't exist
+   */
+  async createPerformance(data: CreatePerformanceDto): Promise<PerformanceDto> {
+    const { artistId, stageId, startTime, endTime, description } = data;
+
+    this.logger.log(`Creating performance for artist ${artistId} on stage ${stageId}`);
+
+    // Verify stage exists and get festival ID
+    const stage = await this.prisma.stage.findUnique({
+      where: { id: stageId },
+    });
+
+    if (!stage) {
+      throw new StageNotFoundException(stageId);
+    }
+
+    // Verify artist exists
+    const artist = await this.prisma.artist.findUnique({
+      where: { id: artistId },
+    });
+
+    if (!artist) {
+      throw new ArtistNotFoundException(artistId);
+    }
+
+    // Check for schedule conflicts
+    const conflictResult = await this.detectScheduleConflicts({
+      artistId,
+      stageId,
+      startTime,
+      endTime,
+    });
+
+    if (conflictResult.hasConflicts) {
+      throw new ScheduleConflictException(
+        conflictResult.conflicts.map((c) => ({
+          stageId: c.stageId,
+          performanceId: c.performanceId,
+          time: `${c.conflictingStartTime} - ${c.conflictingEndTime}`,
+        }))
+      );
+    }
+
+    // Create the performance
+    const performance = await this.prisma.performance.create({
+      data: {
+        artistId,
+        stageId,
+        startTime,
+        endTime,
+        description,
+      },
+      include: {
+        artist: true,
+        stage: true,
+      },
+    });
+
+    // Invalidate relevant caches
+    await this.invalidateProgramCache(stage.festivalId);
+
+    this.logger.log(`Performance created with ID: ${performance.id}`);
+
+    return {
+      id: performance.id,
+      artist: {
+        id: performance.artist.id,
+        name: performance.artist.name,
+        genre: performance.artist.genre,
+        bio: performance.artist.bio,
+        imageUrl: performance.artist.imageUrl,
+        country: performance.artist.country,
+      },
+      stage: {
+        id: performance.stage.id,
+        name: performance.stage.name,
+        description: performance.stage.description,
+        capacity: performance.stage.capacity,
+        location: performance.stage.location,
+      },
+      startTime: performance.startTime.toISOString(),
+      endTime: performance.endTime.toISOString(),
+      day: this.getDayName(performance.startTime),
+      status: performance.status,
+    };
+  }
+
+  /**
+   * Update an existing performance with schedule conflict detection
+   *
+   * @param performanceId - ID of the performance to update
+   * @param data - Update data
+   * @throws PerformanceNotFoundException if performance doesn't exist
+   * @throws ScheduleConflictException if conflicts are detected
+   * @throws StageNotFoundException if new stage doesn't exist
+   * @throws ArtistNotFoundException if new artist doesn't exist
+   */
+  async updatePerformance(
+    performanceId: string,
+    data: UpdatePerformanceDto
+  ): Promise<PerformanceDto> {
+    this.logger.log(`Updating performance ${performanceId}`);
+
+    // Get existing performance
+    const existingPerformance = await this.prisma.performance.findUnique({
+      where: { id: performanceId },
+      include: {
+        stage: true,
+        artist: true,
+      },
+    });
+
+    if (!existingPerformance) {
+      throw new PerformanceNotFoundException(performanceId);
+    }
+
+    // Determine final values (use existing if not provided)
+    const artistId = data.artistId ?? existingPerformance.artistId;
+    const stageId = data.stageId ?? existingPerformance.stageId;
+    const startTime = data.startTime ?? existingPerformance.startTime;
+    const endTime = data.endTime ?? existingPerformance.endTime;
+
+    // Verify new stage exists if changed
+    if (data.stageId && data.stageId !== existingPerformance.stageId) {
+      const stage = await this.prisma.stage.findUnique({
+        where: { id: data.stageId },
+      });
+
+      if (!stage) {
+        throw new StageNotFoundException(data.stageId);
+      }
+    }
+
+    // Verify new artist exists if changed
+    if (data.artistId && data.artistId !== existingPerformance.artistId) {
+      const artist = await this.prisma.artist.findUnique({
+        where: { id: data.artistId },
+      });
+
+      if (!artist) {
+        throw new ArtistNotFoundException(data.artistId);
+      }
+    }
+
+    // Check for schedule conflicts (excluding the current performance)
+    const conflictResult = await this.detectScheduleConflicts(
+      {
+        artistId,
+        stageId,
+        startTime,
+        endTime,
+      },
+      performanceId
+    );
+
+    if (conflictResult.hasConflicts) {
+      throw new ScheduleConflictException(
+        conflictResult.conflicts.map((c) => ({
+          stageId: c.stageId,
+          performanceId: c.performanceId,
+          time: `${c.conflictingStartTime} - ${c.conflictingEndTime}`,
+        }))
+      );
+    }
+
+    // Update the performance
+    const performance = await this.prisma.performance.update({
+      where: { id: performanceId },
+      data: {
+        artistId,
+        stageId,
+        startTime,
+        endTime,
+        description: data.description,
+      },
+      include: {
+        artist: true,
+        stage: true,
+      },
+    });
+
+    // Invalidate relevant caches for both old and new festivals if stage changed
+    await this.invalidateProgramCache(existingPerformance.stage.festivalId);
+    if (data.stageId && data.stageId !== existingPerformance.stageId) {
+      const newStage = await this.prisma.stage.findUnique({
+        where: { id: data.stageId },
+        select: { festivalId: true },
+      });
+      if (newStage && newStage.festivalId !== existingPerformance.stage.festivalId) {
+        await this.invalidateProgramCache(newStage.festivalId);
+      }
+    }
+
+    this.logger.log(`Performance updated: ${performanceId}`);
+
+    return {
+      id: performance.id,
+      artist: {
+        id: performance.artist.id,
+        name: performance.artist.name,
+        genre: performance.artist.genre,
+        bio: performance.artist.bio,
+        imageUrl: performance.artist.imageUrl,
+        country: performance.artist.country,
+      },
+      stage: {
+        id: performance.stage.id,
+        name: performance.stage.name,
+        description: performance.stage.description,
+        capacity: performance.stage.capacity,
+        location: performance.stage.location,
+      },
+      startTime: performance.startTime.toISOString(),
+      endTime: performance.endTime.toISOString(),
+      day: this.getDayName(performance.startTime),
+      status: performance.status,
+    };
+  }
+
+  /**
+   * Get a single performance by ID
+   */
+  async getPerformanceById(performanceId: string): Promise<PerformanceDto> {
+    const performance = await this.prisma.performance.findUnique({
+      where: { id: performanceId },
+      include: {
+        artist: true,
+        stage: true,
+      },
+    });
+
+    if (!performance) {
+      throw new PerformanceNotFoundException(performanceId);
+    }
+
+    return {
+      id: performance.id,
+      artist: {
+        id: performance.artist.id,
+        name: performance.artist.name,
+        genre: performance.artist.genre,
+        bio: performance.artist.bio,
+        imageUrl: performance.artist.imageUrl,
+        country: performance.artist.country,
+      },
+      stage: {
+        id: performance.stage.id,
+        name: performance.stage.name,
+        description: performance.stage.description,
+        capacity: performance.stage.capacity,
+        location: performance.stage.location,
+      },
+      startTime: performance.startTime.toISOString(),
+      endTime: performance.endTime.toISOString(),
+      day: this.getDayName(performance.startTime),
+      status: performance.status,
+    };
+  }
+
+  /**
+   * Delete a performance
+   */
+  async deletePerformance(performanceId: string): Promise<void> {
+    const performance = await this.prisma.performance.findUnique({
+      where: { id: performanceId },
+      include: {
+        stage: true,
+      },
+    });
+
+    if (!performance) {
+      throw new PerformanceNotFoundException(performanceId);
+    }
+
+    await this.prisma.performance.delete({
+      where: { id: performanceId },
+    });
+
+    // Invalidate relevant caches
+    await this.invalidateProgramCache(performance.stage.festivalId);
+
+    this.logger.log(`Performance deleted: ${performanceId}`);
   }
 
   // ============================================================================

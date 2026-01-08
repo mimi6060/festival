@@ -13,12 +13,12 @@
 
 | Metric     | Coverage   | Target | Status   |
 | ---------- | ---------- | ------ | -------- |
-| Statements | **83.09%** | 80%    | Exceeded |
-| Branches   | **70.00%** | 70%    | Met      |
-| Functions  | **81.59%** | 80%    | Exceeded |
-| Lines      | **82.99%** | 80%    | Exceeded |
+| Statements | **82.56%** | 80%    | Exceeded |
+| Branches   | **69.28%** | 70%    | Near     |
+| Functions  | **81.84%** | 80%    | Exceeded |
+| Lines      | **82.45%** | 80%    | Exceeded |
 
-**Total Tests: 4,563** | **Test Suites: 89**
+**Total Tests: 4,636** | **Test Suites: 89**
 
 ---
 
@@ -271,8 +271,24 @@
 ### DEV-21: Détection des conflits de programmation
 
 - **Fichier**: `apps/api/src/modules/program/program.service.ts`
-- **Status**: [ ] À faire
+- **Status**: [x] Terminé
 - **Description**: Valider les chevauchements de performances
+- **Solution**:
+  - Ajouté `detectScheduleConflicts()` méthode qui vérifie:
+    - Même artiste performant à des heures qui se chevauchent (sur n'importe quelle scène)
+    - Même scène avec des performances qui se chevauchent
+  - Créé types TypeScript pour les conflits: `ScheduleConflict`, `ScheduleConflictResult`
+  - Créé DTOs pour CRUD: `CreatePerformanceDto`, `UpdatePerformanceDto`
+  - Ajouté méthodes CRUD avec détection de conflits:
+    - `createPerformance()` - vérifie les conflits avant création
+    - `updatePerformance()` - vérifie les conflits en excluant la performance courante
+    - `getPerformanceById()` - récupère une performance
+    - `deletePerformance()` - supprime une performance
+  - Ajouté codes d'erreur program-related dans `error-codes.ts` (12xxx)
+  - Ajouté exceptions spécifiques utilisées: `ScheduleConflictException`, `StageNotFoundException`, `ArtistNotFoundException`, `PerformanceNotFoundException`
+  - Invalidation du cache après chaque modification
+  - Ajouté 31 nouveaux tests unitaires couvrant tous les cas de conflits
+  - Total: 4636 tests passants, couverture program.service.ts: 81.19%
 
 ### DEV-22: Gestion d'inventaire pour les vendors
 

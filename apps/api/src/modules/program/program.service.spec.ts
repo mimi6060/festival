@@ -126,6 +126,9 @@ describe('ProgramService', () => {
     performance: {
       findMany: jest.fn(),
       findUnique: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      delete: jest.fn(),
     },
     artist: {
       findMany: jest.fn(),
@@ -1571,6 +1574,553 @@ describe('ProgramService', () => {
 
       // Assert
       expect(mockCacheService.delete).toHaveBeenCalledWith(`program:${mockFestivalId}:stages`);
+    });
+  });
+
+  // ==========================================================================
+  // Schedule Conflict Detection Tests
+  // ==========================================================================
+
+  describe('detectScheduleConflicts', () => {
+    const baseStartTime = new Date('2026-07-15T20:00:00.000Z');
+    const baseEndTime = new Date('2026-07-15T22:00:00.000Z');
+
+    it('should return no conflicts when schedule is clear', async () => {
+      // Arrange
+      mockPrismaService.performance.findMany.mockResolvedValue([]);
+
+      // Act
+      const result = await programService.detectScheduleConflicts({
+        artistId: mockArtistId,
+        stageId: mockStageId,
+        startTime: baseStartTime,
+        endTime: baseEndTime,
+      });
+
+      // Assert
+      expect(result.hasConflicts).toBe(false);
+      expect(result.conflicts).toHaveLength(0);
+    });
+
+    it('should detect artist time conflict (same artist, overlapping time)', async () => {
+      // Arrange - First query for artist conflicts returns a conflict
+      const conflictingPerformance = {
+        id: 'conflict-perf-id',
+        artistId: mockArtistId,
+        stageId: 'other-stage-id',
+        startTime: new Date('2026-07-15T21:00:00.000Z'),
+        endTime: new Date('2026-07-15T23:00:00.000Z'),
+        artist: mockArtist,
+        stage: { ...mockStage, id: 'other-stage-id', name: 'Other Stage' },
+      };
+      mockPrismaService.performance.findMany
+        .mockResolvedValueOnce([conflictingPerformance]) // Artist conflicts
+        .mockResolvedValueOnce([]); // Stage conflicts
+
+      // Act
+      const result = await programService.detectScheduleConflicts({
+        artistId: mockArtistId,
+        stageId: mockStageId,
+        startTime: baseStartTime,
+        endTime: baseEndTime,
+      });
+
+      // Assert
+      expect(result.hasConflicts).toBe(true);
+      expect(result.conflicts).toHaveLength(1);
+      expect(result.conflicts[0].type).toBe('ARTIST_OVERLAP');
+      expect(result.conflicts[0].artistId).toBe(mockArtistId);
+      expect(result.conflicts[0].message).toContain('Test Artist');
+    });
+
+    it('should detect stage time conflict (same stage, different artist)', async () => {
+      // Arrange
+      const conflictingPerformance = {
+        id: 'conflict-perf-id',
+        artistId: 'other-artist-id',
+        stageId: mockStageId,
+        startTime: new Date('2026-07-15T21:00:00.000Z'),
+        endTime: new Date('2026-07-15T23:00:00.000Z'),
+        artist: { ...mockArtist, id: 'other-artist-id', name: 'Other Artist' },
+        stage: mockStage,
+      };
+      mockPrismaService.performance.findMany
+        .mockResolvedValueOnce([]) // Artist conflicts
+        .mockResolvedValueOnce([conflictingPerformance]); // Stage conflicts
+
+      // Act
+      const result = await programService.detectScheduleConflicts({
+        artistId: mockArtistId,
+        stageId: mockStageId,
+        startTime: baseStartTime,
+        endTime: baseEndTime,
+      });
+
+      // Assert
+      expect(result.hasConflicts).toBe(true);
+      expect(result.conflicts).toHaveLength(1);
+      expect(result.conflicts[0].type).toBe('STAGE_OVERLAP');
+      expect(result.conflicts[0].stageId).toBe(mockStageId);
+      expect(result.conflicts[0].message).toContain('Main Stage');
+    });
+
+    it('should detect multiple conflicts (both artist and stage)', async () => {
+      // Arrange
+      const artistConflict = {
+        id: 'artist-conflict-id',
+        artistId: mockArtistId,
+        stageId: 'other-stage-id',
+        startTime: new Date('2026-07-15T21:00:00.000Z'),
+        endTime: new Date('2026-07-15T23:00:00.000Z'),
+        artist: mockArtist,
+        stage: { ...mockStage, id: 'other-stage-id', name: 'Other Stage' },
+      };
+      const stageConflict = {
+        id: 'stage-conflict-id',
+        artistId: 'other-artist-id',
+        stageId: mockStageId,
+        startTime: new Date('2026-07-15T21:30:00.000Z'),
+        endTime: new Date('2026-07-15T23:30:00.000Z'),
+        artist: { ...mockArtist, id: 'other-artist-id', name: 'Other Artist' },
+        stage: mockStage,
+      };
+      mockPrismaService.performance.findMany
+        .mockResolvedValueOnce([artistConflict])
+        .mockResolvedValueOnce([stageConflict]);
+
+      // Act
+      const result = await programService.detectScheduleConflicts({
+        artistId: mockArtistId,
+        stageId: mockStageId,
+        startTime: baseStartTime,
+        endTime: baseEndTime,
+      });
+
+      // Assert
+      expect(result.hasConflicts).toBe(true);
+      expect(result.conflicts).toHaveLength(2);
+      expect(result.conflicts.map((c) => c.type)).toContain('ARTIST_OVERLAP');
+      expect(result.conflicts.map((c) => c.type)).toContain('STAGE_OVERLAP');
+    });
+
+    it('should exclude specified performance ID when checking conflicts', async () => {
+      // Arrange
+      mockPrismaService.performance.findMany.mockResolvedValue([]);
+      const excludeId = 'exclude-this-id';
+
+      // Act
+      await programService.detectScheduleConflicts(
+        {
+          artistId: mockArtistId,
+          stageId: mockStageId,
+          startTime: baseStartTime,
+          endTime: baseEndTime,
+        },
+        excludeId
+      );
+
+      // Assert - Verify the exclusion filter was applied
+      expect(mockPrismaService.performance.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            NOT: { id: excludeId },
+          }),
+        })
+      );
+    });
+
+    it('should not duplicate conflicts when same performance conflicts on both artist and stage', async () => {
+      // Arrange - Same performance appears in both queries
+      const sameConflict = {
+        id: 'same-conflict-id',
+        artistId: mockArtistId,
+        stageId: mockStageId,
+        startTime: new Date('2026-07-15T21:00:00.000Z'),
+        endTime: new Date('2026-07-15T23:00:00.000Z'),
+        artist: mockArtist,
+        stage: mockStage,
+      };
+      mockPrismaService.performance.findMany
+        .mockResolvedValueOnce([sameConflict])
+        .mockResolvedValueOnce([sameConflict]);
+
+      // Act
+      const result = await programService.detectScheduleConflicts({
+        artistId: mockArtistId,
+        stageId: mockStageId,
+        startTime: baseStartTime,
+        endTime: baseEndTime,
+      });
+
+      // Assert - Should only have one conflict, not duplicated
+      expect(result.hasConflicts).toBe(true);
+      expect(result.conflicts).toHaveLength(1);
+    });
+
+    it('should detect conflict when new performance starts during existing performance', async () => {
+      // Arrange - Existing: 19:00-21:00, New: 20:00-22:00
+      const existingPerformance = {
+        id: 'existing-id',
+        artistId: mockArtistId,
+        stageId: 'other-stage-id',
+        startTime: new Date('2026-07-15T19:00:00.000Z'),
+        endTime: new Date('2026-07-15T21:00:00.000Z'),
+        artist: mockArtist,
+        stage: { ...mockStage, id: 'other-stage-id', name: 'Other Stage' },
+      };
+      mockPrismaService.performance.findMany
+        .mockResolvedValueOnce([existingPerformance])
+        .mockResolvedValueOnce([]);
+
+      // Act
+      const result = await programService.detectScheduleConflicts({
+        artistId: mockArtistId,
+        stageId: mockStageId,
+        startTime: baseStartTime, // 20:00
+        endTime: baseEndTime, // 22:00
+      });
+
+      // Assert
+      expect(result.hasConflicts).toBe(true);
+    });
+
+    it('should detect conflict when new performance ends during existing performance', async () => {
+      // Arrange - Existing: 21:00-23:00, New: 20:00-22:00
+      const existingPerformance = {
+        id: 'existing-id',
+        artistId: mockArtistId,
+        stageId: 'other-stage-id',
+        startTime: new Date('2026-07-15T21:00:00.000Z'),
+        endTime: new Date('2026-07-15T23:00:00.000Z'),
+        artist: mockArtist,
+        stage: { ...mockStage, id: 'other-stage-id', name: 'Other Stage' },
+      };
+      mockPrismaService.performance.findMany
+        .mockResolvedValueOnce([existingPerformance])
+        .mockResolvedValueOnce([]);
+
+      // Act
+      const result = await programService.detectScheduleConflicts({
+        artistId: mockArtistId,
+        stageId: mockStageId,
+        startTime: baseStartTime, // 20:00
+        endTime: baseEndTime, // 22:00
+      });
+
+      // Assert
+      expect(result.hasConflicts).toBe(true);
+    });
+
+    it('should detect conflict when new performance completely contains existing', async () => {
+      // Arrange - Existing: 20:30-21:30, New: 20:00-22:00
+      const existingPerformance = {
+        id: 'existing-id',
+        artistId: mockArtistId,
+        stageId: 'other-stage-id',
+        startTime: new Date('2026-07-15T20:30:00.000Z'),
+        endTime: new Date('2026-07-15T21:30:00.000Z'),
+        artist: mockArtist,
+        stage: { ...mockStage, id: 'other-stage-id', name: 'Other Stage' },
+      };
+      mockPrismaService.performance.findMany
+        .mockResolvedValueOnce([existingPerformance])
+        .mockResolvedValueOnce([]);
+
+      // Act
+      const result = await programService.detectScheduleConflicts({
+        artistId: mockArtistId,
+        stageId: mockStageId,
+        startTime: baseStartTime, // 20:00
+        endTime: baseEndTime, // 22:00
+      });
+
+      // Assert
+      expect(result.hasConflicts).toBe(true);
+    });
+
+    it('should not detect conflict for adjacent performances (no overlap)', async () => {
+      // Arrange - Existing ends exactly when new starts: 18:00-20:00, New: 20:00-22:00
+      mockPrismaService.performance.findMany.mockResolvedValue([]);
+
+      // Act
+      const result = await programService.detectScheduleConflicts({
+        artistId: mockArtistId,
+        stageId: mockStageId,
+        startTime: baseStartTime, // 20:00
+        endTime: baseEndTime, // 22:00
+      });
+
+      // Assert
+      expect(result.hasConflicts).toBe(false);
+    });
+
+    it('should skip cancelled performances', async () => {
+      // Arrange - The query filters out cancelled performances
+      mockPrismaService.performance.findMany.mockResolvedValue([]);
+
+      // Act
+      await programService.detectScheduleConflicts({
+        artistId: mockArtistId,
+        stageId: mockStageId,
+        startTime: baseStartTime,
+        endTime: baseEndTime,
+      });
+
+      // Assert - Verify isCancelled: false filter was applied
+      expect(mockPrismaService.performance.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            isCancelled: false,
+          }),
+        })
+      );
+    });
+  });
+
+  // ==========================================================================
+  // Performance CRUD Tests
+  // ==========================================================================
+
+  describe('createPerformance', () => {
+    const createData = {
+      artistId: mockArtistId,
+      stageId: mockStageId,
+      startTime: new Date('2026-07-15T20:00:00.000Z'),
+      endTime: new Date('2026-07-15T22:00:00.000Z'),
+      description: 'Test performance',
+    };
+
+    it('should create a performance when no conflicts exist', async () => {
+      // Arrange
+      mockPrismaService.stage.findUnique.mockResolvedValue(mockStage);
+      mockPrismaService.artist.findUnique.mockResolvedValue(mockArtist);
+      mockPrismaService.performance.findMany.mockResolvedValue([]);
+      mockPrismaService.performance.create.mockResolvedValue({
+        ...mockPerformance,
+        description: createData.description,
+      });
+
+      // Act
+      const result = await programService.createPerformance(createData);
+
+      // Assert
+      expect(result.id).toBe(mockPerformance.id);
+      expect(mockPrismaService.performance.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            artistId: createData.artistId,
+            stageId: createData.stageId,
+          }),
+        })
+      );
+    });
+
+    it('should throw StageNotFoundException when stage does not exist', async () => {
+      // Arrange
+      mockPrismaService.stage.findUnique.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(programService.createPerformance(createData)).rejects.toThrow();
+    });
+
+    it('should throw ArtistNotFoundException when artist does not exist', async () => {
+      // Arrange
+      mockPrismaService.stage.findUnique.mockResolvedValue(mockStage);
+      mockPrismaService.artist.findUnique.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(programService.createPerformance(createData)).rejects.toThrow();
+    });
+
+    it('should throw ScheduleConflictException when conflicts are detected', async () => {
+      // Arrange
+      mockPrismaService.stage.findUnique.mockResolvedValue(mockStage);
+      mockPrismaService.artist.findUnique.mockResolvedValue(mockArtist);
+
+      const conflictingPerformance = {
+        id: 'conflict-id',
+        artistId: mockArtistId,
+        stageId: 'other-stage',
+        startTime: new Date('2026-07-15T21:00:00.000Z'),
+        endTime: new Date('2026-07-15T23:00:00.000Z'),
+        artist: mockArtist,
+        stage: { ...mockStage, id: 'other-stage', name: 'Other Stage' },
+      };
+      mockPrismaService.performance.findMany
+        .mockResolvedValueOnce([conflictingPerformance])
+        .mockResolvedValueOnce([]);
+
+      // Act & Assert
+      await expect(programService.createPerformance(createData)).rejects.toThrow();
+    });
+
+    it('should invalidate program cache after creating performance', async () => {
+      // Arrange
+      mockPrismaService.stage.findUnique.mockResolvedValue(mockStage);
+      mockPrismaService.artist.findUnique.mockResolvedValue(mockArtist);
+      mockPrismaService.performance.findMany.mockResolvedValue([]);
+      mockPrismaService.performance.create.mockResolvedValue(mockPerformance);
+
+      // Act
+      await programService.createPerformance(createData);
+
+      // Assert
+      expect(mockCacheService.deletePattern).toHaveBeenCalledWith(`program:${mockFestivalId}:*`);
+    });
+  });
+
+  describe('updatePerformance', () => {
+    const performanceId = 'perf-to-update';
+    const updateData = {
+      startTime: new Date('2026-07-15T21:00:00.000Z'),
+      endTime: new Date('2026-07-15T23:00:00.000Z'),
+    };
+
+    it('should update a performance when no conflicts exist', async () => {
+      // Arrange
+      const existingPerformance = {
+        ...mockPerformance,
+        id: performanceId,
+      };
+      mockPrismaService.performance.findUnique.mockResolvedValueOnce(existingPerformance);
+      mockPrismaService.performance.findMany.mockResolvedValue([]);
+      mockPrismaService.performance.update.mockResolvedValue({
+        ...existingPerformance,
+        ...updateData,
+      });
+
+      // Act
+      const result = await programService.updatePerformance(performanceId, updateData);
+
+      // Assert
+      expect(result.id).toBe(performanceId);
+      expect(mockPrismaService.performance.update).toHaveBeenCalled();
+    });
+
+    it('should throw PerformanceNotFoundException when performance does not exist', async () => {
+      // Arrange
+      mockPrismaService.performance.findUnique.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(programService.updatePerformance('non-existent', updateData)).rejects.toThrow();
+    });
+
+    it('should throw ScheduleConflictException when update creates conflicts', async () => {
+      // Arrange
+      const existingPerformance = {
+        ...mockPerformance,
+        id: performanceId,
+      };
+      mockPrismaService.performance.findUnique.mockResolvedValueOnce(existingPerformance);
+
+      const conflictingPerformance = {
+        id: 'other-perf',
+        artistId: mockArtistId,
+        stageId: 'other-stage',
+        startTime: new Date('2026-07-15T22:00:00.000Z'),
+        endTime: new Date('2026-07-15T23:30:00.000Z'),
+        artist: mockArtist,
+        stage: { ...mockStage, id: 'other-stage', name: 'Other Stage' },
+      };
+      mockPrismaService.performance.findMany
+        .mockResolvedValueOnce([conflictingPerformance])
+        .mockResolvedValueOnce([]);
+
+      // Act & Assert
+      await expect(programService.updatePerformance(performanceId, updateData)).rejects.toThrow();
+    });
+
+    it('should exclude current performance when checking conflicts during update', async () => {
+      // Arrange
+      const existingPerformance = {
+        ...mockPerformance,
+        id: performanceId,
+      };
+      mockPrismaService.performance.findUnique.mockResolvedValueOnce(existingPerformance);
+      mockPrismaService.performance.findMany.mockResolvedValue([]);
+      mockPrismaService.performance.update.mockResolvedValue({
+        ...existingPerformance,
+        ...updateData,
+      });
+
+      // Act
+      await programService.updatePerformance(performanceId, updateData);
+
+      // Assert
+      expect(mockPrismaService.performance.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            NOT: { id: performanceId },
+          }),
+        })
+      );
+    });
+
+    it('should verify new stage exists when stageId is updated', async () => {
+      // Arrange
+      const existingPerformance = {
+        ...mockPerformance,
+        id: performanceId,
+      };
+      mockPrismaService.performance.findUnique
+        .mockResolvedValueOnce(existingPerformance)
+        .mockResolvedValueOnce(existingPerformance);
+      mockPrismaService.stage.findUnique.mockResolvedValue(null);
+
+      const updateWithNewStage = { stageId: 'new-stage-id' };
+
+      // Act & Assert
+      await expect(
+        programService.updatePerformance(performanceId, updateWithNewStage)
+      ).rejects.toThrow();
+    });
+  });
+
+  describe('getPerformanceById', () => {
+    it('should return performance when found', async () => {
+      // Arrange
+      mockPrismaService.performance.findUnique.mockResolvedValue(mockPerformance);
+
+      // Act
+      const result = await programService.getPerformanceById(mockPerformance.id);
+
+      // Assert
+      expect(result.id).toBe(mockPerformance.id);
+      expect(result.artist.name).toBe(mockArtist.name);
+      expect(result.stage.name).toBe(mockStage.name);
+    });
+
+    it('should throw PerformanceNotFoundException when not found', async () => {
+      // Arrange
+      mockPrismaService.performance.findUnique.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(programService.getPerformanceById('non-existent')).rejects.toThrow();
+    });
+  });
+
+  describe('deletePerformance', () => {
+    it('should delete performance and invalidate cache', async () => {
+      // Arrange
+      mockPrismaService.performance.findUnique.mockResolvedValue(mockPerformance);
+      mockPrismaService.performance.delete.mockResolvedValue(mockPerformance);
+
+      // Act
+      await programService.deletePerformance(mockPerformance.id);
+
+      // Assert
+      expect(mockPrismaService.performance.delete).toHaveBeenCalledWith({
+        where: { id: mockPerformance.id },
+      });
+      expect(mockCacheService.deletePattern).toHaveBeenCalledWith(`program:${mockFestivalId}:*`);
+    });
+
+    it('should throw PerformanceNotFoundException when performance does not exist', async () => {
+      // Arrange
+      mockPrismaService.performance.findUnique.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(programService.deletePerformance('non-existent')).rejects.toThrow();
     });
   });
 });
