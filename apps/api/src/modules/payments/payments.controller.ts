@@ -34,6 +34,7 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
+import { RateLimit, SkipRateLimit } from '../../common/guards/rate-limit.guard';
 import { UserRole } from '@prisma/client';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -80,6 +81,13 @@ export class PaymentsController {
   // ============================================================================
 
   @Post('checkout')
+  @RateLimit({
+    limit: 10,
+    windowSeconds: 60, // 10 requests per minute
+    keyPrefix: 'payment:checkout',
+    perUser: true,
+    errorMessage: 'Too many checkout requests. Please wait before trying again.',
+  })
   @ApiOperation({ summary: 'Create a Stripe Checkout Session' })
   @ApiBody({ type: CreateCheckoutSessionDto })
   @ApiResponse({ status: 201, type: CheckoutSessionResponseDto })
@@ -107,6 +115,13 @@ export class PaymentsController {
   }
 
   @Post('checkout/ticket')
+  @RateLimit({
+    limit: 10,
+    windowSeconds: 60, // 10 requests per minute
+    keyPrefix: 'payment:ticket-checkout',
+    perUser: true,
+    errorMessage: 'Too many ticket purchase attempts. Please wait before trying again.',
+  })
   @ApiOperation({ summary: 'Create checkout for ticket purchase' })
   @ApiResponse({ status: 201, type: CheckoutSessionResponseDto })
   async createTicketCheckout(
@@ -128,6 +143,13 @@ export class PaymentsController {
   }
 
   @Post('checkout/cashless-topup')
+  @RateLimit({
+    limit: 10,
+    windowSeconds: 60, // 10 requests per minute
+    keyPrefix: 'payment:cashless-topup',
+    perUser: true,
+    errorMessage: 'Too many top-up requests. Please wait before trying again.',
+  })
   @ApiOperation({ summary: 'Create checkout for cashless top-up' })
   @ApiResponse({ status: 201, type: CheckoutSessionResponseDto })
   async createCashlessTopupCheckout(
@@ -148,6 +170,13 @@ export class PaymentsController {
   // ============================================================================
 
   @Post('intent')
+  @RateLimit({
+    limit: 10,
+    windowSeconds: 60, // 10 requests per minute
+    keyPrefix: 'payment:intent',
+    perUser: true,
+    errorMessage: 'Too many payment intent requests. Please wait before trying again.',
+  })
   @ApiOperation({ summary: 'Create a payment intent' })
   @ApiResponse({ status: 201, description: 'Payment intent created' })
   async createPaymentIntent(
@@ -360,6 +389,13 @@ export class PaymentsController {
   // ============================================================================
 
   @Post('refunds')
+  @RateLimit({
+    limit: 10,
+    windowSeconds: 60, // 10 requests per minute
+    keyPrefix: 'payment:refund',
+    perUser: true,
+    errorMessage: 'Too many refund requests. Please wait before trying again.',
+  })
   @ApiOperation({ summary: 'Create a refund' })
   @ApiBody({ type: CreateRefundDto })
   @ApiResponse({ status: 201, description: 'Refund created' })
@@ -368,6 +404,13 @@ export class PaymentsController {
   }
 
   @Post('refunds/partial')
+  @RateLimit({
+    limit: 10,
+    windowSeconds: 60, // 10 requests per minute
+    keyPrefix: 'payment:partial-refund',
+    perUser: true,
+    errorMessage: 'Too many refund requests. Please wait before trying again.',
+  })
   @ApiOperation({ summary: 'Create a partial refund' })
   @ApiBody({ type: PartialRefundDto })
   @ApiResponse({ status: 201, description: 'Partial refund created' })
@@ -376,6 +419,13 @@ export class PaymentsController {
   }
 
   @Post('refunds/bulk')
+  @RateLimit({
+    limit: 5,
+    windowSeconds: 60, // 5 requests per minute (heavy operation)
+    keyPrefix: 'payment:bulk-refund',
+    perUser: true,
+    errorMessage: 'Too many bulk refund requests. Please wait before trying again.',
+  })
   @ApiOperation({ summary: 'Create bulk refunds (e.g., event cancellation)' })
   @ApiBody({ type: BulkRefundDto })
   @ApiResponse({ status: 201, description: 'Bulk refund results' })
@@ -421,6 +471,7 @@ export class PaymentsController {
 
   @Post('webhook')
   @Public() // Stripe webhooks must be accessible without authentication
+  @SkipRateLimit() // Webhooks are already protected by Stripe signature verification
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Handle Stripe webhook events' })
   @ApiResponse({ status: 200, description: 'Webhook processed' })

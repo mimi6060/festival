@@ -16,7 +16,13 @@ import { TicketsService } from './tickets.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { PurchaseTicketsDto, GuestPurchaseDto, ValidateTicketDto } from './dto/tickets.dto';
+import { RateLimit } from '../../common/guards/rate-limit.guard';
+import {
+  PurchaseTicketsDto,
+  GuestPurchaseDto,
+  ValidateTicketDto,
+  TransferTicketDto,
+} from './dto/tickets.dto';
 
 @Controller('api/tickets')
 export class TicketsController {
@@ -48,6 +54,12 @@ export class TicketsController {
   }
 
   @Post('guest-purchase')
+  @RateLimit({
+    limit: 10,
+    windowSeconds: 60, // 10 requests per minute
+    keyPrefix: 'tickets:guest-purchase',
+    errorMessage: 'Too many purchase attempts. Please try again later.',
+  })
   @HttpCode(HttpStatus.CREATED)
   async guestPurchaseTickets(@Body() dto: GuestPurchaseDto) {
     return this.ticketsService.guestPurchaseTickets(dto);
@@ -55,6 +67,13 @@ export class TicketsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.STAFF, UserRole.SECURITY, UserRole.ADMIN, UserRole.ORGANIZER)
+  @RateLimit({
+    limit: 120,
+    windowSeconds: 60, // 120 requests per minute (2 per second for scanning)
+    keyPrefix: 'tickets:validate',
+    perUser: true,
+    errorMessage: 'Too many validation requests. Please slow down.',
+  })
   @Post('validate')
   @HttpCode(HttpStatus.OK)
   async validateTicket(@Body() dto: ValidateTicketDto) {
@@ -63,6 +82,13 @@ export class TicketsController {
 
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.STAFF, UserRole.SECURITY, UserRole.ADMIN, UserRole.ORGANIZER)
+  @RateLimit({
+    limit: 120,
+    windowSeconds: 60, // 120 requests per minute (2 per second for scanning)
+    keyPrefix: 'tickets:scan',
+    perUser: true,
+    errorMessage: 'Too many scan requests. Please slow down.',
+  })
   @Post(':id/scan')
   @HttpCode(HttpStatus.OK)
   async scanTicket(@Request() req, @Param('id') qrCode: string, @Query('zoneId') zoneId?: string) {
@@ -73,5 +99,12 @@ export class TicketsController {
   @Delete(':id')
   async cancelTicket(@Request() req, @Param('id') id: string) {
     return this.ticketsService.cancelTicket(id, req.user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post(':id/transfer')
+  @HttpCode(HttpStatus.OK)
+  async transferTicket(@Request() req, @Param('id') id: string, @Body() dto: TransferTicketDto) {
+    return this.ticketsService.transferTicket(id, req.user.id, dto.recipientEmail);
   }
 }

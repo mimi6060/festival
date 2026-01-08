@@ -43,9 +43,22 @@
 ### DEV-03: Activer le Rate Limiting sur les controllers
 
 - **Fichier**: Tous les controllers publics
-- **Status**: [ ] À faire
+- **Status**: [x] Terminé
 - **Description**: Le guard existe mais n'est appliqué nulle part
 - **Impact**: HIGH - Vulnérabilité DDoS
+- **Solution**:
+  - Ajouté `@RateLimit()` sur tous les endpoints publics de `AuthController` (5 req/min):
+    - register, login, forgot-password, reset-password, verify-email, resend-verification
+  - Ajouté `@RateLimit()` sur `PaymentsController` (10 req/min):
+    - checkout, checkout/ticket, checkout/cashless-topup, intent, refunds, refunds/partial
+    - bulk-refund (5 req/min car operation lourde)
+    - `@SkipRateLimit()` sur webhook (protege par signature Stripe)
+  - Ajouté `@RateLimit()` sur `FestivalsController` (100 req/min):
+    - findAll, findOne, findBySlug
+  - Ajouté `@RateLimit()` sur `TicketsController`:
+    - guest-purchase (10 req/min), validate/scan (120 req/min pour scanning)
+  - Ajouté `@RateLimit()` sur `ProgramController` (100 req/min):
+    - getProgram, getProgramByDay, getArtists, getStages
 
 ### DEV-04: Ajouter des tests E2E pour les paiements
 

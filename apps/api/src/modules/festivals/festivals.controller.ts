@@ -27,6 +27,7 @@ import {
   ApiConflictResponse,
   ApiResponse,
 } from '@nestjs/swagger';
+import { RateLimit } from '../../common/guards/rate-limit.guard';
 import { FestivalsService } from './festivals.service';
 import {
   CreateFestivalDto,
@@ -45,6 +46,7 @@ import {
 } from '../../common/dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Public } from '../auth/decorators/public.decorator';
+import { Cacheable, CacheEvict, CacheTag } from '../cache';
 
 /**
  * Paginated festivals response
@@ -75,6 +77,7 @@ export class FestivalsController {
    */
   @Post()
   @UseGuards(JwtAuthGuard)
+  @CacheEvict({ tags: [CacheTag.FESTIVAL] })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Create a new festival',
@@ -112,6 +115,17 @@ export class FestivalsController {
    */
   @Get()
   @Public()
+  @RateLimit({
+    limit: 100,
+    windowSeconds: 60, // 100 requests per minute
+    keyPrefix: 'festivals:list',
+    errorMessage: 'Too many requests. Please try again later.',
+  })
+  @Cacheable({
+    key: { prefix: 'festivals:list', paramIndices: [0] },
+    ttl: 300, // 5 minutes
+    tags: [CacheTag.FESTIVAL],
+  })
   @ApiOperation({
     summary: 'List festivals',
     description: 'Returns a paginated list of published festivals. Public endpoint.',
@@ -133,6 +147,12 @@ export class FestivalsController {
    */
   @Get(':id')
   @Public()
+  @RateLimit({
+    limit: 100,
+    windowSeconds: 60, // 100 requests per minute
+    keyPrefix: 'festivals:get',
+    errorMessage: 'Too many requests. Please try again later.',
+  })
   @ApiOperation({
     summary: 'Get festival by ID',
     description: 'Returns detailed information about a specific festival.',
@@ -159,6 +179,12 @@ export class FestivalsController {
    */
   @Get('by-slug/:slug')
   @Public()
+  @RateLimit({
+    limit: 100,
+    windowSeconds: 60, // 100 requests per minute
+    keyPrefix: 'festivals:get-by-slug',
+    errorMessage: 'Too many requests. Please try again later.',
+  })
   @ApiOperation({
     summary: 'Get festival by slug',
     description: 'Returns festival information using its URL-friendly slug. Public endpoint.',
@@ -185,6 +211,7 @@ export class FestivalsController {
    */
   @Put(':id')
   @UseGuards(JwtAuthGuard)
+  @CacheEvict({ tags: [CacheTag.FESTIVAL] })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Update festival',
@@ -229,6 +256,7 @@ export class FestivalsController {
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   @UseGuards(JwtAuthGuard)
+  @CacheEvict({ tags: [CacheTag.FESTIVAL] })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Delete festival',
@@ -302,6 +330,7 @@ export class FestivalsController {
    */
   @Post(':id/publish')
   @UseGuards(JwtAuthGuard)
+  @CacheEvict({ tags: [CacheTag.FESTIVAL] })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Publish festival',
@@ -341,6 +370,7 @@ export class FestivalsController {
    */
   @Post(':id/cancel')
   @UseGuards(JwtAuthGuard)
+  @CacheEvict({ tags: [CacheTag.FESTIVAL] })
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
     summary: 'Cancel festival',

@@ -24,6 +24,7 @@ import {
   ApiTooManyRequestsResponse,
   ApiExcludeEndpoint,
 } from '@nestjs/swagger';
+import { RateLimit } from '../../common/guards/rate-limit.guard';
 import {
   RegisterDto,
   LoginDto,
@@ -78,6 +79,12 @@ export class AuthController {
    */
   @Post('register')
   @Public()
+  @RateLimit({
+    limit: 5,
+    windowSeconds: 60, // 5 requests per minute
+    keyPrefix: 'auth:register',
+    errorMessage: 'Too many registration attempts. Please try again later.',
+  })
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({
     summary: 'Register a new user',
@@ -155,6 +162,12 @@ Creates a new user account with the provided information.
    */
   @Post('login')
   @Public()
+  @RateLimit({
+    limit: 5,
+    windowSeconds: 60, // 5 requests per minute
+    keyPrefix: 'auth:login',
+    errorMessage: 'Too many login attempts. Please try again later.',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Login with email and password',
@@ -400,6 +413,12 @@ Returns the profile information of the currently authenticated user.
    */
   @Post('verify-email')
   @Public()
+  @RateLimit({
+    limit: 5,
+    windowSeconds: 60, // 5 requests per minute
+    keyPrefix: 'auth:verify-email',
+    errorMessage: 'Too many verification attempts. Please try again later.',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Verify email address',
@@ -450,6 +469,12 @@ Verifies a user's email address using the token received via email.
    */
   @Post('forgot-password')
   @Public()
+  @RateLimit({
+    limit: 5,
+    windowSeconds: 60, // 5 requests per minute
+    keyPrefix: 'auth:forgot-password',
+    errorMessage: 'Too many password reset requests. Please try again later.',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Request password reset',
@@ -502,6 +527,12 @@ Initiates the password reset flow by sending an email with a reset link.
    */
   @Post('reset-password')
   @Public()
+  @RateLimit({
+    limit: 5,
+    windowSeconds: 60, // 5 requests per minute
+    keyPrefix: 'auth:reset-password',
+    errorMessage: 'Too many password reset attempts. Please try again later.',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Reset password with token',
@@ -614,6 +645,12 @@ Changes the password for the currently authenticated user.
    */
   @Post('resend-verification')
   @Public()
+  @RateLimit({
+    limit: 5,
+    windowSeconds: 60, // 5 requests per minute
+    keyPrefix: 'auth:resend-verification',
+    errorMessage: 'Too many requests. Please try again later.',
+  })
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Resend verification email',

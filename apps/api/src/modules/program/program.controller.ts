@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ProgramService } from './program.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { PaginationDto } from '../../common/dto/pagination.dto';
+import { RateLimit } from '../../common/guards/rate-limit.guard';
 
 @Controller('api/program')
 export class ProgramController {
@@ -21,10 +21,13 @@ export class ProgramController {
    * Get full program for a festival
    */
   @Get()
-  async getProgram(
-    @Query('festivalId') festivalId: string,
-    @Request() req,
-  ) {
+  @RateLimit({
+    limit: 100,
+    windowSeconds: 60, // 100 requests per minute
+    keyPrefix: 'program:list',
+    errorMessage: 'Too many requests. Please try again later.',
+  })
+  async getProgram(@Query('festivalId') festivalId: string, @Request() req) {
     const userId = req.user?.id;
     return this.programService.getProgram(festivalId, userId);
   }
@@ -33,10 +36,16 @@ export class ProgramController {
    * Get program for a specific day
    */
   @Get('day/:day')
+  @RateLimit({
+    limit: 100,
+    windowSeconds: 60, // 100 requests per minute
+    keyPrefix: 'program:day',
+    errorMessage: 'Too many requests. Please try again later.',
+  })
   async getProgramByDay(
     @Query('festivalId') festivalId: string,
     @Param('day') day: string,
-    @Request() req,
+    @Request() req
   ) {
     const userId = req.user?.id;
     return this.programService.getProgramByDay(festivalId, day, userId);
@@ -46,6 +55,12 @@ export class ProgramController {
    * Get all artists for a festival
    */
   @Get('artists')
+  @RateLimit({
+    limit: 100,
+    windowSeconds: 60, // 100 requests per minute
+    keyPrefix: 'program:artists',
+    errorMessage: 'Too many requests. Please try again later.',
+  })
   async getArtists(@Query('festivalId') festivalId: string) {
     return this.programService.getArtists(festivalId);
   }
@@ -62,10 +77,7 @@ export class ProgramController {
    * Get performances for an artist
    */
   @Get('artists/:id/performances')
-  async getArtistPerformances(
-    @Param('id') id: string,
-    @Query('festivalId') festivalId?: string,
-  ) {
+  async getArtistPerformances(@Param('id') id: string, @Query('festivalId') festivalId?: string) {
     return this.programService.getArtistPerformances(id, festivalId);
   }
 
@@ -73,6 +85,12 @@ export class ProgramController {
    * Get all stages for a festival
    */
   @Get('stages')
+  @RateLimit({
+    limit: 100,
+    windowSeconds: 60, // 100 requests per minute
+    keyPrefix: 'program:stages',
+    errorMessage: 'Too many requests. Please try again later.',
+  })
   async getStages(@Query('festivalId') festivalId: string) {
     return this.programService.getStages(festivalId);
   }
@@ -82,10 +100,7 @@ export class ProgramController {
    */
   @UseGuards(JwtAuthGuard)
   @Get('favorites')
-  async getFavorites(
-    @Request() req,
-    @Query('festivalId') festivalId: string,
-  ) {
+  async getFavorites(@Request() req, @Query('festivalId') festivalId: string) {
     return this.programService.getFavorites(req.user.id, festivalId);
   }
 
@@ -98,7 +113,7 @@ export class ProgramController {
   async toggleFavorite(
     @Request() req,
     @Query('festivalId') festivalId: string,
-    @Param('artistId') artistId: string,
+    @Param('artistId') artistId: string
   ) {
     return this.programService.toggleFavorite(req.user.id, festivalId, artistId);
   }
