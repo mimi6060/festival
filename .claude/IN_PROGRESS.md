@@ -71,8 +71,19 @@
 ### DEV-06: Créer le controller REST pour les notifications
 
 - **Fichier**: `apps/api/src/modules/notifications/notifications.controller.ts`
-- **Status**: [ ] À faire
+- **Status**: [x] Terminé
 - **Description**: Le service existe mais pas d'endpoints HTTP
+- **Solution**:
+  - Créé `NotificationsController` avec endpoints REST complets
+  - GET /notifications - Liste paginée des notifications de l'utilisateur
+  - GET /notifications/unread-count - Compteur de notifications non lues
+  - GET /notifications/:id - Récupérer une notification par ID
+  - PATCH /notifications/read-all - Marquer toutes comme lues
+  - PATCH /notifications/:id/read - Marquer une notification comme lue
+  - DELETE /notifications/:id - Supprimer une notification
+  - Ajouté `NotificationEntity` et `PaginatedNotificationsResponse` pour Swagger
+  - Ajouté méthode `findOne` au service pour lecture seule
+  - Protection par `JwtAuthGuard` sur tous les endpoints
 
 ### DEV-07: Ajouter les endpoints de gestion des subscriptions
 

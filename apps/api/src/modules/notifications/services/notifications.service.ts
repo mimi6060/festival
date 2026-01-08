@@ -34,14 +34,14 @@ export class NotificationsService {
     private readonly prisma: PrismaService,
     private readonly fcmService: FcmService,
     private readonly templateService: NotificationTemplateService,
-    private readonly eventEmitter: EventEmitter2,
+    private readonly eventEmitter: EventEmitter2
   ) {}
 
   // ============== User Methods ==============
 
   async getUserNotifications(
     userId: string,
-    query: GetNotificationsQueryDto,
+    query: GetNotificationsQueryDto
   ): Promise<{ notifications: Notification[]; total: number; unreadCount: number }> {
     const { isRead, type, festivalId, page = 1, limit = 20 } = query;
     const skip = (page - 1) * limit;
@@ -111,6 +111,18 @@ export class NotificationsService {
     return this.prisma.notification.count({
       where: { userId, isRead: false },
     });
+  }
+
+  async findOne(userId: string, notificationId: string): Promise<Notification> {
+    const notification = await this.prisma.notification.findFirst({
+      where: { id: notificationId, userId },
+    });
+
+    if (!notification) {
+      throw new NotFoundException('Notification not found');
+    }
+
+    return notification;
   }
 
   // ============== Push Token Management ==============
@@ -199,7 +211,7 @@ export class NotificationsService {
 
   async updatePreferences(
     userId: string,
-    dto: UpdateNotificationPreferencesDto,
+    dto: UpdateNotificationPreferencesDto
   ): Promise<NotificationPreference> {
     return this.prisma.notificationPreference.upsert({
       where: { userId },
@@ -260,24 +272,22 @@ export class NotificationsService {
         try {
           await this.fcmService.sendToTokens(
             tokens.map((t) => t.token),
-            payload,
+            payload
           );
           await this.prisma.notification.update({
             where: { id: notification.id },
             data: { sentAt: new Date() },
           });
         } catch (error) {
-          this.logger.error(`Failed to send push notification: ${error instanceof Error ? error.message : String(error)}`);
+          this.logger.error(
+            `Failed to send push notification: ${error instanceof Error ? error.message : String(error)}`
+          );
         }
       }
     }
 
     // Send email notification if enabled
-    if (
-      sendEmail &&
-      preferences.emailEnabled &&
-      preferences.enabledCategories.includes(category)
-    ) {
+    if (sendEmail && preferences.emailEnabled && preferences.enabledCategories.includes(category)) {
       this.eventEmitter.emit('notification.email', {
         userId,
         notification,
@@ -305,9 +315,7 @@ export class NotificationsService {
       const batch = userIds.slice(i, i + batchSize);
 
       const results = await Promise.allSettled(
-        batch.map((userId) =>
-          this.sendNotification({ userId, payload, sendPush, sendEmail }),
-        ),
+        batch.map((userId) => this.sendNotification({ userId, payload, sendPush, sendEmail }))
       );
 
       results.forEach((result) => {
@@ -329,15 +337,8 @@ export class NotificationsService {
     successCount: number;
     failedCount: number;
   }> {
-    const {
-      festivalId,
-      targetAll,
-      targetRoles,
-      targetTicketTypes,
-      payload,
-      sendPush,
-      sendEmail,
-    } = options;
+    const { festivalId, targetAll, targetRoles, targetTicketTypes, payload, sendPush, sendEmail } =
+      options;
 
     // Build user query based on targeting
     const userIds = await this.getTargetedUserIds({
@@ -365,7 +366,7 @@ export class NotificationsService {
     templateName: string,
     userIds: string[],
     variables: Record<string, unknown>,
-    options: { sendPush?: boolean; sendEmail?: boolean } = {},
+    options: { sendPush?: boolean; sendEmail?: boolean } = {}
   ): Promise<{ successCount: number; failedCount: number }> {
     const template = await this.templateService.getByName(templateName);
     if (!template) {
@@ -396,16 +397,17 @@ export class NotificationsService {
   async getAnalytics(
     festivalId?: string,
     startDate?: Date,
-    endDate?: Date,
+    endDate?: Date
   ): Promise<NotificationAnalytics> {
     const where: Prisma.NotificationWhereInput = {
       ...(festivalId && { festivalId }),
-      ...(startDate && endDate && {
-        createdAt: {
-          gte: startDate,
-          lte: endDate,
-        },
-      }),
+      ...(startDate &&
+        endDate && {
+          createdAt: {
+            gte: startDate,
+            lte: endDate,
+          },
+        }),
     };
 
     const [totalSent, totalRead, byTypeData, byDayData] = await Promise.all([
@@ -416,7 +418,7 @@ export class NotificationsService {
         where,
         _count: { id: true },
       }),
-      this.prisma.$queryRaw<Array<{ date: string; sent: number; read: number }>>`
+      this.prisma.$queryRaw<{ date: string; sent: number; read: number }[]>`
         SELECT
           DATE("createdAt") as date,
           COUNT(*)::int as sent,
@@ -438,9 +440,7 @@ export class NotificationsService {
       _count: { id: true },
     });
 
-    const readByTypeMap = new Map(
-      readByType.map((r) => [r.type, r._count.id]),
-    );
+    const readByTypeMap = new Map(readByType.map((r) => [r.type, r._count.id]));
 
     const byType = Object.values(NotificationType).reduce(
       (acc, type) => {
@@ -451,7 +451,7 @@ export class NotificationsService {
         };
         return acc;
       },
-      {} as Record<NotificationType, { sent: number; read: number }>,
+      {} as Record<NotificationType, { sent: number; read: number }>
     );
 
     return {
