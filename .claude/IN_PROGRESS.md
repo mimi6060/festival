@@ -2,6 +2,97 @@
 
 ---
 
+## Session 2026-01-08 - Web App React Component Tests
+
+### Tâches terminées cette session:
+
+- [x] **Added React component tests for the web app (150 tests)**
+  - **Testing dependencies installed:**
+    - @testing-library/react
+    - @testing-library/jest-dom
+    - jest-environment-jsdom
+    - @testing-library/user-event
+  - **Jest configuration for React:**
+    - `apps/web/jest.config.ts` - ts-jest with jsdom environment
+    - `apps/web/jest.setup.tsx` - Testing Library setup, Next.js mocks
+    - `apps/web/tsconfig.spec.json` - TypeScript config for tests
+    - `apps/web/__mocks__/styleMock.js` - CSS mock
+    - `apps/web/__mocks__/fileMock.js` - Static file mock
+    - `apps/web/project.json` - test target added
+  - **Button.test.tsx (36 tests):**
+    - Rendering: children text, button element, link mode, icons, loading spinner
+    - Variants: primary, secondary, accent, ghost, danger
+    - Sizes: sm, md, lg
+    - User interactions: onClick, disabled, loading, keyboard
+    - Props: fullWidth, className, disabled, type, data attributes
+    - Accessibility: focus styles, disabled styles, focusable
+    - Link mode: href, styles, icons
+  - **Card.test.tsx (45 tests):**
+    - Rendering: children, div default, link mode, nested components
+    - Variants: default, glow, solid, gradient
+    - Padding: none, sm, md, lg
+    - User interactions: onClick, cursor-pointer
+    - Props: className, combined styles
+    - Link mode: href, styles
+    - Sub-components: CardHeader, CardTitle, CardDescription, CardContent, CardFooter
+    - Integration tests: complete card with all sub-components
+  - **PromoCodeInput.test.tsx (35 tests):**
+    - Rendering: input field, apply button, currency
+    - Input behavior: uppercase conversion, disabled when applied, Enter key
+    - Button states: disabled when empty, enabled with text, loading, remove button
+    - Valid promo code: success message, discount amount, new total, applied code summary
+    - Invalid promo code: error message, default error, input not disabled, exception handling
+    - Remove code: clear code, clear input, call onApply with empty, hide messages
+    - Currency: custom currency, default EUR
+    - Edge cases: whitespace-only, zero discount, 100% discount
+  - **auth.store.test.ts (34 tests):**
+    - Initial state: null user, not authenticated, not loading, not initialized, no error
+    - setUser: set user, clear user
+    - Login: success, loading state, failure, network error, fetch params, clear previous error
+    - Register: success, failure, fetch params
+    - Logout: clear state, clear on API fail, call API
+    - UpdateProfile: update profile, multiple updates, no user
+    - ClearError: clear error, not affect other state
+    - Initialize: set initialized, authenticate if valid
+    - CheckAuth: set user, clear user, network error, fetch params
+    - Selectors: selectUser, selectIsAuthenticated, selectIsLoading, selectAuthError, selectUserRole
+    - Edge cases: concurrent login, login after logout, empty error message
+  - All 150 tests pass: `npx nx test web` SUCCESS
+  - API build verified: `npx nx build api --skip-nx-cache` SUCCESS
+
+---
+
+## Session 2026-01-08 - Tests Unitaires Vendors Module
+
+### Tâches terminées cette session:
+
+- [x] **Created comprehensive unit tests for Vendors Module (76 tests)**
+  - `vendors.service.spec.ts` (76 tests):
+    - **createVendor**: success for FOOD/DRINK/MERCHANDISE types, NotFoundException (festival), default commission rate 10%, unique QR menu code generation
+    - **findAllVendors (getVendorsByFestival)**: paginated list, filter by festivalId, filter by type (FOOD/DRINK/MERCHANDISE), filter by isOpen status, search by name, empty results, pagination handling, only active vendors
+    - **findVendorById (getVendorById)**: return vendor with products, NotFoundException, include festival information
+    - **updateVendor**: success for owner, success for admin, ForbiddenException for unauthorized user, NotFoundException (vendor/user), partial updates
+    - **deleteVendor**: soft delete for owner, ForbiddenException, NotFoundException
+    - **getVendorStats**: comprehensive statistics (orders, revenue, commission, avg order value), top products, revenue by payment method, orders by status, date range filtering (startDate/endDate), zero revenue handling, ForbiddenException
+    - **createProduct**: success for vendor owner, default empty allergens, ForbiddenException, NotFoundException
+    - **updateProduct**: success, NotFoundException (product), ForbiddenException
+    - **createOrder (processPayment)**: cashless payment success, vendor closed error, NotFoundException (vendor), product not available, insufficient stock, no cashless account, insufficient balance, unlimited stock product, commission calculation
+    - **updateOrderStatus**: PENDING→CONFIRMED→PREPARING→READY→DELIVERED transitions, invalid transition errors, cancel with cashless refund, NotFoundException
+    - **createPayout**: success, ConflictException (overlapping period), BadRequestException (no orders), ForbiddenException
+    - **findPayouts**: list payouts, ForbiddenException
+    - **findVendorByQrCode**: success, NotFoundException
+    - **regenerateQrMenuCode**: success with new QR code
+    - **deleteProduct**: success, NotFoundException
+    - **findAllProducts**: return products, NotFoundException
+    - **findProductById**: success, NotFoundException
+    - **updateProductStock**: update stock, set null for unlimited
+    - **exportVendorData**: export orders for date range
+  - Uses Jest with mocks for PrismaService
+  - All tests pass: `npx nx test api --testFile=vendors.service.spec` SUCCESS (76 tests)
+  - Vendors module coverage: **87.31%** statements, **90%** functions
+
+---
+
 ## Session 2026-01-08 - API Reference Documentation
 
 ### Tâches terminées cette session:
