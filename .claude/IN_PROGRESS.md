@@ -185,8 +185,37 @@
 ### DEV-10: Implémenter l'export bulk pour Analytics
 
 - **Fichier**: `apps/api/src/modules/analytics/`
-- **Status**: [ ] À faire
+- **Status**: [x] Terminé
 - **Description**: POST /analytics/export avec génération CSV/PDF
+- **Solution**:
+  - Créé `BulkExportDto` dans `analytics-query.dto.ts` avec:
+    - `festivalId` (requis) - ID du festival
+    - `format` (requis) - Format d'export: 'csv', 'pdf', 'xlsx'
+    - `startDate`/`endDate` (requis) - Période d'export
+    - `metrics` (requis) - Métriques à inclure: 'dashboard', 'sales', 'cashless', 'attendance', 'zones', 'vendors', 'revenue', 'comprehensive'
+    - `includeRawData` (optionnel) - Inclure les données brutes
+    - `includeCharts` (optionnel) - Inclure les graphiques (PDF/XLSX)
+  - Ajouté méthode `exportBulk()` dans `ExportService`:
+    - Validation du festival (NotFoundException si inexistant)
+    - Validation des métriques (BadRequestException si invalides)
+    - Validation des dates (BadRequestException si startDate > endDate)
+    - Support de tous les formats: CSV, PDF, XLSX
+    - Délégation à `exportComprehensiveReport()` pour le metric 'comprehensive'
+  - Étendu `getMetricSection()` pour supporter tous les types de métriques:
+    - 'cashless' - Statistiques des transactions cashless
+    - 'attendance' - Statistiques de fréquentation par jour
+    - 'zones' - Statistiques des zones (occupation, visiteurs)
+    - 'vendors' - Statistiques des vendeurs (commandes, revenus)
+    - 'revenue' - Breakdown des revenus par catégorie
+  - Ajouté endpoint `POST /analytics/export` dans `AnalyticsController`:
+    - Protection par `JwtAuthGuard` et `RolesGuard` (ADMIN/ORGANIZER uniquement)
+    - Documentation Swagger complète avec exemples
+    - Réponses binaires pour tous les formats
+  - Ajouté 16 nouveaux tests unitaires dans `export.service.spec.ts`:
+    - Tests de validation (festival inexistant, métriques invalides, dates invalides)
+    - Tests pour chaque type de métrique
+    - Tests pour tous les formats (CSV, PDF, XLSX)
+    - Tests pour l'export multiple métriques
 
 ---
 

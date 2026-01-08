@@ -1,5 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsString, IsNumber, IsOptional, IsUUID, Min } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsUUID, Min, IsArray } from 'class-validator';
 
 export class ValidatePromoCodeDto {
   @ApiProperty({
@@ -51,4 +51,15 @@ export class ApplyPromoCodeDto {
   @IsOptional()
   @IsUUID()
   festivalId?: string;
+
+  @ApiProperty({
+    description: 'Liste des IDs des codes promo deja appliques a cet achat',
+    example: ['promo-uuid-123', 'promo-uuid-456'],
+    required: false,
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsUUID('4', { each: true })
+  appliedPromoCodeIds?: string[];
 }

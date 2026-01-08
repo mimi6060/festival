@@ -42,7 +42,7 @@ export class CreatePromoCodeDto {
   discountValue!: number;
 
   @ApiProperty({
-    description: 'Nombre maximum d\'utilisations (null = illimité)',
+    description: "Nombre maximum d'utilisations (null = illimité)",
     example: 100,
     required: false,
   })
@@ -62,7 +62,7 @@ export class CreatePromoCodeDto {
   minAmount?: number;
 
   @ApiProperty({
-    description: 'Date d\'expiration du code',
+    description: "Date d'expiration du code",
     example: '2026-12-31T23:59:59Z',
     required: false,
   })
@@ -87,4 +87,13 @@ export class CreatePromoCodeDto {
   @IsOptional()
   @IsUUID()
   festivalId?: string;
+
+  @ApiProperty({
+    description: "Indique si ce code peut etre combine avec d'autres codes promo",
+    example: false,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  stackable?: boolean;
 }

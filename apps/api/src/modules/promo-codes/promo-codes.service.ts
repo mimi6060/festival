@@ -20,6 +20,7 @@ export interface PromoCodeValidationResult {
     code: string;
     discountType: DiscountType;
     discountValue: number;
+    stackable: boolean;
   };
   discountAmount?: number;
   finalAmount?: number;
@@ -37,9 +38,7 @@ export class PromoCodesService {
     });
 
     if (existing) {
-      throw new ConflictException(
-        `Le code promo "${createPromoCodeDto.code}" existe déjà`
-      );
+      throw new ConflictException(`Le code promo "${createPromoCodeDto.code}" existe déjà`);
     }
 
     // Validation de la valeur de réduction
@@ -47,9 +46,7 @@ export class PromoCodesService {
       createPromoCodeDto.discountType === DiscountType.PERCENTAGE &&
       createPromoCodeDto.discountValue > 100
     ) {
-      throw new BadRequestException(
-        'La réduction en pourcentage ne peut pas dépasser 100%'
-      );
+      throw new BadRequestException('La réduction en pourcentage ne peut pas dépasser 100%');
     }
 
     // Vérifier que le festival existe si spécifié
@@ -69,9 +66,7 @@ export class PromoCodesService {
       data: {
         ...createPromoCodeDto,
         code: createPromoCodeDto.code.toUpperCase(),
-        expiresAt: createPromoCodeDto.expiresAt
-          ? new Date(createPromoCodeDto.expiresAt)
-          : null,
+        expiresAt: createPromoCodeDto.expiresAt ? new Date(createPromoCodeDto.expiresAt) : null,
       },
       include: {
         festival: {
@@ -190,9 +185,7 @@ export class PromoCodesService {
       });
 
       if (existing) {
-        throw new ConflictException(
-          `Le code promo "${updatePromoCodeDto.code}" existe déjà`
-        );
+        throw new ConflictException(`Le code promo "${updatePromoCodeDto.code}" existe déjà`);
       }
     }
 
@@ -202,18 +195,14 @@ export class PromoCodesService {
       updatePromoCodeDto.discountValue &&
       updatePromoCodeDto.discountValue > 100
     ) {
-      throw new BadRequestException(
-        'La réduction en pourcentage ne peut pas dépasser 100%'
-      );
+      throw new BadRequestException('La réduction en pourcentage ne peut pas dépasser 100%');
     }
 
     return this.prisma.promoCode.update({
       where: { id },
       data: {
         ...updatePromoCodeDto,
-        code: updatePromoCodeDto.code
-          ? updatePromoCodeDto.code.toUpperCase()
-          : undefined,
+        code: updatePromoCodeDto.code ? updatePromoCodeDto.code.toUpperCase() : undefined,
         expiresAt: updatePromoCodeDto.expiresAt
           ? new Date(updatePromoCodeDto.expiresAt)
           : undefined,
@@ -241,9 +230,7 @@ export class PromoCodesService {
   /**
    * Valide un code promo sans l'appliquer
    */
-  async validate(
-    validateDto: ValidatePromoCodeDto
-  ): Promise<PromoCodeValidationResult> {
+  async validate(validateDto: ValidatePromoCodeDto): Promise<PromoCodeValidationResult> {
     const promoCode = await this.prisma.promoCode.findUnique({
       where: { code: validateDto.code.toUpperCase() },
     });
@@ -258,7 +245,7 @@ export class PromoCodesService {
     if (!promoCode.isActive) {
       return {
         valid: false,
-        error: 'Ce code promo n\'est plus actif',
+        error: "Ce code promo n'est plus actif",
       };
     }
 
@@ -269,13 +256,10 @@ export class PromoCodesService {
       };
     }
 
-    if (
-      promoCode.maxUses !== null &&
-      promoCode.currentUses >= promoCode.maxUses
-    ) {
+    if (promoCode.maxUses !== null && promoCode.currentUses >= promoCode.maxUses) {
       return {
         valid: false,
-        error: 'Ce code promo a atteint son nombre maximum d\'utilisations',
+        error: "Ce code promo a atteint son nombre maximum d'utilisations",
       };
     }
 
@@ -286,14 +270,11 @@ export class PromoCodesService {
     ) {
       return {
         valid: false,
-        error: 'Ce code promo n\'est pas valable pour ce festival',
+        error: "Ce code promo n'est pas valable pour ce festival",
       };
     }
 
-    if (
-      promoCode.minAmount !== null &&
-      validateDto.amount < Number(promoCode.minAmount)
-    ) {
+    if (promoCode.minAmount !== null && validateDto.amount < Number(promoCode.minAmount)) {
       return {
         valid: false,
         error: `Montant minimum de ${promoCode.minAmount}€ requis`,
@@ -303,8 +284,7 @@ export class PromoCodesService {
     // Calculer la réduction
     let discountAmount = 0;
     if (promoCode.discountType === DiscountType.PERCENTAGE) {
-      discountAmount =
-        (validateDto.amount * Number(promoCode.discountValue)) / 100;
+      discountAmount = (validateDto.amount * Number(promoCode.discountValue)) / 100;
     } else {
       discountAmount = Number(promoCode.discountValue);
     }
@@ -321,6 +301,7 @@ export class PromoCodesService {
         code: promoCode.code,
         discountType: promoCode.discountType,
         discountValue: Number(promoCode.discountValue),
+        stackable: promoCode.stackable,
       },
       discountAmount: Math.round(discountAmount * 100) / 100,
       finalAmount: Math.round(finalAmount * 100) / 100,
@@ -330,15 +311,34 @@ export class PromoCodesService {
   /**
    * Applique un code promo et incrémente le compteur d'utilisation
    * Utilise une transaction pour éviter les race conditions
+   *
+   * Stacking rules:
+   * - By default, promo codes cannot be stacked (stackable = false)
+   * - If appliedPromoCodeIds contains any codes, we check stacking permissions
+   * - Both the new code AND all previously applied codes must be stackable for stacking to be allowed
    */
-  async apply(
-    applyDto: ApplyPromoCodeDto
-  ): Promise<PromoCodeValidationResult> {
+  async apply(applyDto: ApplyPromoCodeDto): Promise<PromoCodeValidationResult> {
     // D'abord valider le code
     const validation = await this.validate(applyDto);
 
     if (!validation.valid || !validation.promoCode) {
       return validation;
+    }
+
+    // Vérifier les règles de cumul si des codes sont déjà appliqués
+    if (applyDto.appliedPromoCodeIds && applyDto.appliedPromoCodeIds.length > 0) {
+      const stackingValidation = await this.validateStacking(
+        validation.promoCode.id,
+        validation.promoCode.stackable,
+        applyDto.appliedPromoCodeIds
+      );
+
+      if (!stackingValidation.valid) {
+        return {
+          valid: false,
+          error: stackingValidation.error,
+        };
+      }
     }
 
     // Appliquer le code dans une transaction pour éviter les race conditions
@@ -354,12 +354,9 @@ export class PromoCodesService {
         }
 
         // Vérifier à nouveau le nombre d'utilisations avec les données verrouillées
-        if (
-          promoCode.maxUses !== null &&
-          promoCode.currentUses >= promoCode.maxUses
-        ) {
+        if (promoCode.maxUses !== null && promoCode.currentUses >= promoCode.maxUses) {
           throw new BadRequestException(
-            'Ce code promo a atteint son nombre maximum d\'utilisations'
+            "Ce code promo a atteint son nombre maximum d'utilisations"
           );
         }
 
@@ -376,10 +373,7 @@ export class PromoCodesService {
 
       return validation;
     } catch (error) {
-      if (
-        error instanceof NotFoundException ||
-        error instanceof BadRequestException
-      ) {
+      if (error instanceof NotFoundException || error instanceof BadRequestException) {
         return {
           valid: false,
           error: error.message,
@@ -390,23 +384,73 @@ export class PromoCodesService {
   }
 
   /**
+   * Valide les règles de cumul des codes promo
+   *
+   * @param newCodeId - ID du nouveau code à appliquer
+   * @param newCodeStackable - Si le nouveau code est cumulable
+   * @param appliedPromoCodeIds - Liste des IDs des codes déjà appliqués
+   * @returns Résultat de validation avec message d'erreur si non valide
+   */
+  async validateStacking(
+    newCodeId: string,
+    newCodeStackable: boolean,
+    appliedPromoCodeIds: string[]
+  ): Promise<{ valid: boolean; error?: string }> {
+    // Vérifier si le nouveau code a déjà été appliqué
+    if (appliedPromoCodeIds.includes(newCodeId)) {
+      return {
+        valid: false,
+        error: 'Ce code promo a déjà été appliqué à cet achat',
+      };
+    }
+
+    // Si le nouveau code n'est pas cumulable, interdire l'application
+    if (!newCodeStackable) {
+      return {
+        valid: false,
+        error:
+          "Ce code promo ne peut pas être cumulé avec d'autres codes. Veuillez retirer les codes existants avant d'appliquer celui-ci.",
+      };
+    }
+
+    // Récupérer les codes déjà appliqués pour vérifier s'ils sont cumulables
+    const appliedCodes = await this.prisma.promoCode.findMany({
+      where: {
+        id: { in: appliedPromoCodeIds },
+      },
+      select: {
+        id: true,
+        code: true,
+        stackable: true,
+      },
+    });
+
+    // Vérifier que tous les codes appliqués sont cumulables
+    const nonStackableCodes = appliedCodes.filter((code) => !code.stackable);
+
+    if (nonStackableCodes.length > 0) {
+      const nonStackableCodeNames = nonStackableCodes.map((c) => c.code).join(', ');
+      return {
+        valid: false,
+        error: `Le(s) code(s) promo suivant(s) ne peuvent pas être cumulés avec d'autres codes: ${nonStackableCodeNames}. Veuillez les retirer avant d'ajouter un nouveau code.`,
+      };
+    }
+
+    return { valid: true };
+  }
+
+  /**
    * Obtenir les statistiques d'utilisation d'un code promo
    */
   async getStats(id: string) {
     const promoCode = await this.findOne(id);
 
     const usageRate =
-      promoCode.maxUses !== null
-        ? (promoCode.currentUses / promoCode.maxUses) * 100
-        : 0;
+      promoCode.maxUses !== null ? (promoCode.currentUses / promoCode.maxUses) * 100 : 0;
 
-    const isExpired = promoCode.expiresAt
-      ? new Date() > promoCode.expiresAt
-      : false;
+    const isExpired = promoCode.expiresAt ? new Date() > promoCode.expiresAt : false;
 
-    const isExhausted =
-      promoCode.maxUses !== null &&
-      promoCode.currentUses >= promoCode.maxUses;
+    const isExhausted = promoCode.maxUses !== null && promoCode.currentUses >= promoCode.maxUses;
 
     return {
       id: promoCode.id,
@@ -418,9 +462,7 @@ export class PromoCodesService {
       isExpired,
       isExhausted,
       remainingUses:
-        promoCode.maxUses !== null
-          ? Math.max(0, promoCode.maxUses - promoCode.currentUses)
-          : null,
+        promoCode.maxUses !== null ? Math.max(0, promoCode.maxUses - promoCode.currentUses) : null,
     };
   }
 }

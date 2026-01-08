@@ -290,6 +290,7 @@ model PromoCode {
   minAmount     Decimal?     @db.Decimal(10, 2)
   expiresAt     DateTime?
   isActive      Boolean      @default(true)
+  stackable     Boolean      @default(false) // Whether this code can be combined with other codes
   festivalId    String?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt

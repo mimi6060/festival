@@ -6,6 +6,7 @@
  * - Promo code retrieval (by ID, code, list)
  * - Promo code validation (expiry, usage limit, min amount, festival scope)
  * - Promo code application
+ * - Promo code stacking rules
  * - Promo code deactivation
  * - Promo code statistics
  * - Discount types (PERCENTAGE, FIXED_AMOUNT)
@@ -14,11 +15,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PromoCodesService } from './promo-codes.service';
 import { PrismaService } from '../prisma/prisma.service';
-import {
-  BadRequestException,
-  NotFoundException,
-  ConflictException,
-} from '@nestjs/common';
+import { BadRequestException, NotFoundException, ConflictException } from '@nestjs/common';
 
 // Define DiscountType enum locally for tests (matches Prisma schema)
 enum DiscountType {
@@ -46,6 +43,7 @@ const mockPromoCode = {
   minAmount: 50,
   expiresAt: new Date('2026-12-31T23:59:59Z'),
   isActive: true,
+  stackable: false,
   festivalId: mockFestival.id,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
@@ -62,6 +60,7 @@ const mockFixedPromoCode = {
   minAmount: null,
   expiresAt: null,
   isActive: true,
+  stackable: false,
   festivalId: null,
   createdAt: new Date('2026-01-01'),
   updatedAt: new Date('2026-01-01'),
@@ -96,6 +95,7 @@ const mockInactivePromoCode = {
 
 describe('PromoCodesService', () => {
   let service: PromoCodesService;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   let prismaService: jest.Mocked<PrismaService>;
 
   const mockPrismaService = {
@@ -118,10 +118,7 @@ describe('PromoCodesService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        PromoCodesService,
-        { provide: PrismaService, useValue: mockPrismaService },
-      ],
+      providers: [PromoCodesService, { provide: PrismaService, useValue: mockPrismaService }],
     }).compile();
 
     service = module.get<PromoCodesService>(PromoCodesService);
@@ -241,9 +238,7 @@ describe('PromoCodesService', () => {
       mockPrismaService.promoCode.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.create(createDto)).rejects.toThrow(
-        BadRequestException
-      );
+      await expect(service.create(createDto)).rejects.toThrow(BadRequestException);
       await expect(service.create(createDto)).rejects.toThrow(
         'La réduction en pourcentage ne peut pas dépasser 100%'
       );
@@ -366,10 +361,7 @@ describe('PromoCodesService', () => {
   describe('findAll', () => {
     it('should return paginated list of promo codes', async () => {
       // Arrange
-      mockPrismaService.promoCode.findMany.mockResolvedValue([
-        mockPromoCode,
-        mockFixedPromoCode,
-      ]);
+      mockPrismaService.promoCode.findMany.mockResolvedValue([mockPromoCode, mockFixedPromoCode]);
       mockPrismaService.promoCode.count.mockResolvedValue(2);
 
       // Act
@@ -421,9 +413,7 @@ describe('PromoCodesService', () => {
 
     it('should filter by isActive false', async () => {
       // Arrange
-      mockPrismaService.promoCode.findMany.mockResolvedValue([
-        mockInactivePromoCode,
-      ]);
+      mockPrismaService.promoCode.findMany.mockResolvedValue([mockInactivePromoCode]);
       mockPrismaService.promoCode.count.mockResolvedValue(1);
 
       // Act
@@ -512,9 +502,7 @@ describe('PromoCodesService', () => {
       mockPrismaService.promoCode.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.findOne('non-existent-id')).rejects.toThrow(
-        NotFoundException
-      );
+      await expect(service.findOne('non-existent-id')).rejects.toThrow(NotFoundException);
     });
 
     it('should include festival relation', async () => {
@@ -554,9 +542,7 @@ describe('PromoCodesService', () => {
       mockPrismaService.promoCode.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.findByCode('INVALID')).rejects.toThrow(
-        NotFoundException
-      );
+      await expect(service.findByCode('INVALID')).rejects.toThrow(NotFoundException);
       await expect(service.findByCode('INVALID')).rejects.toThrow(
         'Code promo "INVALID" non trouvé'
       );
@@ -608,9 +594,7 @@ describe('PromoCodesService', () => {
       mockPrismaService.promoCode.findFirst.mockResolvedValue(mockFixedPromoCode);
 
       // Act & Assert
-      await expect(
-        service.update(mockPromoCode.id, updateDto)
-      ).rejects.toThrow(ConflictException);
+      await expect(service.update(mockPromoCode.id, updateDto)).rejects.toThrow(ConflictException);
     });
 
     it('should throw NotFoundException if promo code not found', async () => {
@@ -618,9 +602,9 @@ describe('PromoCodesService', () => {
       mockPrismaService.promoCode.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        service.update('non-existent', { discountValue: 10 })
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.update('non-existent', { discountValue: 10 })).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw BadRequestException if percentage > 100 on update', async () => {
@@ -632,9 +616,9 @@ describe('PromoCodesService', () => {
       mockPrismaService.promoCode.findUnique.mockResolvedValue(mockPromoCode);
 
       // Act & Assert
-      await expect(
-        service.update(mockPromoCode.id, updateDto)
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.update(mockPromoCode.id, updateDto)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should allow same code to be kept', async () => {
@@ -693,9 +677,7 @@ describe('PromoCodesService', () => {
       mockPrismaService.promoCode.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.remove('non-existent')).rejects.toThrow(
-        NotFoundException
-      );
+      await expect(service.remove('non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -760,9 +742,7 @@ describe('PromoCodesService', () => {
     describe('expiry validation', () => {
       it('should return invalid for expired code', async () => {
         // Arrange
-        mockPrismaService.promoCode.findUnique.mockResolvedValue(
-          mockExpiredPromoCode
-        );
+        mockPrismaService.promoCode.findUnique.mockResolvedValue(mockExpiredPromoCode);
 
         // Act
         const result = await service.validate({
@@ -777,9 +757,7 @@ describe('PromoCodesService', () => {
 
       it('should accept code without expiry date', async () => {
         // Arrange
-        mockPrismaService.promoCode.findUnique.mockResolvedValue(
-          mockFixedPromoCode
-        );
+        mockPrismaService.promoCode.findUnique.mockResolvedValue(mockFixedPromoCode);
 
         // Act
         const result = await service.validate({
@@ -795,9 +773,7 @@ describe('PromoCodesService', () => {
     describe('usage limit validation', () => {
       it('should return invalid for exhausted code', async () => {
         // Arrange
-        mockPrismaService.promoCode.findUnique.mockResolvedValue(
-          mockExhaustedPromoCode
-        );
+        mockPrismaService.promoCode.findUnique.mockResolvedValue(mockExhaustedPromoCode);
 
         // Act
         const result = await service.validate({
@@ -812,9 +788,7 @@ describe('PromoCodesService', () => {
 
       it('should accept code with unlimited uses', async () => {
         // Arrange
-        mockPrismaService.promoCode.findUnique.mockResolvedValue(
-          mockFixedPromoCode
-        );
+        mockPrismaService.promoCode.findUnique.mockResolvedValue(mockFixedPromoCode);
 
         // Act
         const result = await service.validate({
@@ -881,9 +855,7 @@ describe('PromoCodesService', () => {
 
       it('should accept code without minimum amount requirement', async () => {
         // Arrange
-        mockPrismaService.promoCode.findUnique.mockResolvedValue(
-          mockFixedPromoCode
-        );
+        mockPrismaService.promoCode.findUnique.mockResolvedValue(mockFixedPromoCode);
 
         // Act
         const result = await service.validate({
@@ -915,9 +887,7 @@ describe('PromoCodesService', () => {
 
       it('should accept global code for any festival', async () => {
         // Arrange
-        mockPrismaService.promoCode.findUnique.mockResolvedValue(
-          mockFixedPromoCode
-        );
+        mockPrismaService.promoCode.findUnique.mockResolvedValue(mockFixedPromoCode);
 
         // Act
         const result = await service.validate({
@@ -949,9 +919,7 @@ describe('PromoCodesService', () => {
     describe('inactive code validation', () => {
       it('should return invalid for inactive code', async () => {
         // Arrange
-        mockPrismaService.promoCode.findUnique.mockResolvedValue(
-          mockInactivePromoCode
-        );
+        mockPrismaService.promoCode.findUnique.mockResolvedValue(mockInactivePromoCode);
 
         // Act
         const result = await service.validate({
@@ -988,9 +956,7 @@ describe('PromoCodesService', () => {
           ...mockPromoCode,
           discountValue: 100,
         };
-        mockPrismaService.promoCode.findUnique.mockResolvedValue(
-          fullDiscountCode
-        );
+        mockPrismaService.promoCode.findUnique.mockResolvedValue(fullDiscountCode);
 
         // Act
         const result = await service.validate({
@@ -1028,9 +994,7 @@ describe('PromoCodesService', () => {
     describe('discount calculation - FIXED_AMOUNT', () => {
       it('should calculate fixed amount discount correctly', async () => {
         // Arrange
-        mockPrismaService.promoCode.findUnique.mockResolvedValue(
-          mockFixedPromoCode
-        );
+        mockPrismaService.promoCode.findUnique.mockResolvedValue(mockFixedPromoCode);
 
         // Act
         const result = await service.validate({
@@ -1125,9 +1089,7 @@ describe('PromoCodesService', () => {
 
     it('should return invalid if validation fails', async () => {
       // Arrange
-      mockPrismaService.promoCode.findUnique.mockResolvedValue(
-        mockExpiredPromoCode
-      );
+      mockPrismaService.promoCode.findUnique.mockResolvedValue(mockExpiredPromoCode);
 
       // Act
       const result = await service.apply({
@@ -1197,9 +1159,7 @@ describe('PromoCodesService', () => {
     it('should rethrow unexpected errors', async () => {
       // Arrange
       mockPrismaService.promoCode.findUnique.mockResolvedValue(mockPromoCode);
-      mockPrismaService.$transaction.mockRejectedValue(
-        new Error('Database connection failed')
-      );
+      mockPrismaService.$transaction.mockRejectedValue(new Error('Database connection failed'));
 
       // Act & Assert
       await expect(
@@ -1209,6 +1169,261 @@ describe('PromoCodesService', () => {
           festivalId: mockFestival.id,
         })
       ).rejects.toThrow('Database connection failed');
+    });
+
+    // ========================================================================
+    // Promo Code Stacking Tests
+    // ========================================================================
+
+    describe('stacking rules', () => {
+      const mockStackableCode = {
+        ...mockPromoCode,
+        id: 'promo-stackable-uuid',
+        code: 'STACKABLE10',
+        stackable: true,
+      };
+
+      const mockStackableCode2 = {
+        ...mockPromoCode,
+        id: 'promo-stackable-uuid-2',
+        code: 'STACKABLE20',
+        stackable: true,
+      };
+
+      const mockNonStackableCode = {
+        ...mockPromoCode,
+        id: 'promo-non-stackable-uuid',
+        code: 'NONSTACKABLE',
+        stackable: false,
+      };
+
+      it('should allow applying first promo code without any applied codes', async () => {
+        // Arrange
+        mockPrismaService.promoCode.findUnique.mockResolvedValue(mockPromoCode);
+        mockPrismaService.promoCode.update.mockResolvedValue({
+          ...mockPromoCode,
+          currentUses: 51,
+        });
+
+        // Act
+        const result = await service.apply({
+          code: 'SUMMER20',
+          amount: 100,
+          festivalId: mockFestival.id,
+          appliedPromoCodeIds: [],
+        });
+
+        // Assert
+        expect(result.valid).toBe(true);
+      });
+
+      it('should reject applying same code twice', async () => {
+        // Arrange
+        mockPrismaService.promoCode.findUnique.mockResolvedValue(mockStackableCode);
+
+        // Act
+        const result = await service.apply({
+          code: 'STACKABLE10',
+          amount: 100,
+          festivalId: mockFestival.id,
+          appliedPromoCodeIds: [mockStackableCode.id],
+        });
+
+        // Assert
+        expect(result.valid).toBe(false);
+        expect(result.error).toContain('déjà été appliqué');
+      });
+
+      it('should reject non-stackable code when other codes are already applied', async () => {
+        // Arrange
+        mockPrismaService.promoCode.findUnique.mockResolvedValue(mockNonStackableCode);
+        mockPrismaService.promoCode.findMany.mockResolvedValue([mockStackableCode]);
+
+        // Act
+        const result = await service.apply({
+          code: 'NONSTACKABLE',
+          amount: 100,
+          festivalId: mockFestival.id,
+          appliedPromoCodeIds: [mockStackableCode.id],
+        });
+
+        // Assert
+        expect(result.valid).toBe(false);
+        expect(result.error).toContain('ne peut pas être cumulé');
+        expect(result.error).toContain('Veuillez retirer les codes existants');
+      });
+
+      it('should reject stackable code when a non-stackable code is already applied', async () => {
+        // Arrange
+        mockPrismaService.promoCode.findUnique.mockResolvedValue(mockStackableCode);
+        mockPrismaService.promoCode.findMany.mockResolvedValue([mockNonStackableCode]);
+
+        // Act
+        const result = await service.apply({
+          code: 'STACKABLE10',
+          amount: 100,
+          festivalId: mockFestival.id,
+          appliedPromoCodeIds: [mockNonStackableCode.id],
+        });
+
+        // Assert
+        expect(result.valid).toBe(false);
+        expect(result.error).toContain('NONSTACKABLE');
+        expect(result.error).toContain('ne peuvent pas être cumulés');
+      });
+
+      it('should allow stacking multiple stackable codes', async () => {
+        // Arrange
+        mockPrismaService.promoCode.findUnique.mockResolvedValue(mockStackableCode2);
+        mockPrismaService.promoCode.findMany.mockResolvedValue([mockStackableCode]);
+        mockPrismaService.promoCode.update.mockResolvedValue({
+          ...mockStackableCode2,
+          currentUses: 51,
+        });
+
+        // Act
+        const result = await service.apply({
+          code: 'STACKABLE20',
+          amount: 100,
+          festivalId: mockFestival.id,
+          appliedPromoCodeIds: [mockStackableCode.id],
+        });
+
+        // Assert
+        expect(result.valid).toBe(true);
+        expect(mockPrismaService.$transaction).toHaveBeenCalled();
+      });
+
+      it('should include stackable field in validation result', async () => {
+        // Arrange
+        mockPrismaService.promoCode.findUnique.mockResolvedValue(mockStackableCode);
+
+        // Act
+        const result = await service.validate({
+          code: 'STACKABLE10',
+          amount: 100,
+          festivalId: mockFestival.id,
+        });
+
+        // Assert
+        expect(result.valid).toBe(true);
+        expect(result.promoCode?.stackable).toBe(true);
+      });
+
+      it('should reject when multiple non-stackable codes would be combined', async () => {
+        // Arrange
+        mockPrismaService.promoCode.findUnique.mockResolvedValue(mockNonStackableCode);
+
+        // Act
+        const result = await service.apply({
+          code: 'NONSTACKABLE',
+          amount: 100,
+          festivalId: mockFestival.id,
+          appliedPromoCodeIds: ['other-promo-uuid'],
+        });
+
+        // Assert
+        expect(result.valid).toBe(false);
+        expect(result.error).toContain('ne peut pas être cumulé');
+      });
+    });
+  });
+
+  // ==========================================================================
+  // Validate Stacking Tests
+  // ==========================================================================
+
+  describe('validateStacking', () => {
+    const mockStackableCode = {
+      id: 'stackable-1',
+      code: 'STACK1',
+      stackable: true,
+    };
+
+    const mockStackableCode2 = {
+      id: 'stackable-2',
+      code: 'STACK2',
+      stackable: true,
+    };
+
+    const mockNonStackableCode = {
+      id: 'non-stackable-1',
+      code: 'NOSTACK',
+      stackable: false,
+    };
+
+    it('should return invalid if code is already applied', async () => {
+      // Act
+      const result = await service.validateStacking('code-id-123', true, [
+        'code-id-123',
+        'other-code-id',
+      ]);
+
+      // Assert
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('déjà été appliqué');
+    });
+
+    it('should return invalid if new code is not stackable', async () => {
+      // Act
+      const result = await service.validateStacking('new-code-id', false, ['applied-code-id']);
+
+      // Assert
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('ne peut pas être cumulé');
+    });
+
+    it('should return invalid if any applied code is not stackable', async () => {
+      // Arrange
+      mockPrismaService.promoCode.findMany.mockResolvedValue([
+        mockStackableCode,
+        mockNonStackableCode,
+      ]);
+
+      // Act
+      const result = await service.validateStacking('new-stackable-code', true, [
+        mockStackableCode.id,
+        mockNonStackableCode.id,
+      ]);
+
+      // Assert
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('NOSTACK');
+    });
+
+    it('should return valid when all codes are stackable', async () => {
+      // Arrange
+      mockPrismaService.promoCode.findMany.mockResolvedValue([
+        mockStackableCode,
+        mockStackableCode2,
+      ]);
+
+      // Act
+      const result = await service.validateStacking('new-stackable-code', true, [
+        mockStackableCode.id,
+        mockStackableCode2.id,
+      ]);
+
+      // Assert
+      expect(result.valid).toBe(true);
+      expect(result.error).toBeUndefined();
+    });
+
+    it('should list all non-stackable codes in error message', async () => {
+      // Arrange
+      const multipleNonStackable = [
+        { id: 'ns-1', code: 'CODE1', stackable: false },
+        { id: 'ns-2', code: 'CODE2', stackable: false },
+      ];
+      mockPrismaService.promoCode.findMany.mockResolvedValue(multipleNonStackable);
+
+      // Act
+      const result = await service.validateStacking('new-code', true, ['ns-1', 'ns-2']);
+
+      // Assert
+      expect(result.valid).toBe(false);
+      expect(result.error).toContain('CODE1');
+      expect(result.error).toContain('CODE2');
     });
   });
 
@@ -1241,16 +1456,12 @@ describe('PromoCodesService', () => {
       mockPrismaService.promoCode.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.getStats('non-existent')).rejects.toThrow(
-        NotFoundException
-      );
+      await expect(service.getStats('non-existent')).rejects.toThrow(NotFoundException);
     });
 
     it('should correctly identify expired code', async () => {
       // Arrange
-      mockPrismaService.promoCode.findUnique.mockResolvedValue(
-        mockExpiredPromoCode
-      );
+      mockPrismaService.promoCode.findUnique.mockResolvedValue(mockExpiredPromoCode);
 
       // Act
       const result = await service.getStats(mockExpiredPromoCode.id);
@@ -1261,9 +1472,7 @@ describe('PromoCodesService', () => {
 
     it('should correctly identify exhausted code', async () => {
       // Arrange
-      mockPrismaService.promoCode.findUnique.mockResolvedValue(
-        mockExhaustedPromoCode
-      );
+      mockPrismaService.promoCode.findUnique.mockResolvedValue(mockExhaustedPromoCode);
 
       // Act
       const result = await service.getStats(mockExhaustedPromoCode.id);
@@ -1275,9 +1484,7 @@ describe('PromoCodesService', () => {
 
     it('should return null remainingUses for unlimited code', async () => {
       // Arrange
-      mockPrismaService.promoCode.findUnique.mockResolvedValue(
-        mockFixedPromoCode
-      );
+      mockPrismaService.promoCode.findUnique.mockResolvedValue(mockFixedPromoCode);
 
       // Act
       const result = await service.getStats(mockFixedPromoCode.id);
@@ -1307,9 +1514,7 @@ describe('PromoCodesService', () => {
 
     it('should correctly identify inactive code', async () => {
       // Arrange
-      mockPrismaService.promoCode.findUnique.mockResolvedValue(
-        mockInactivePromoCode
-      );
+      mockPrismaService.promoCode.findUnique.mockResolvedValue(mockInactivePromoCode);
 
       // Act
       const result = await service.getStats(mockInactivePromoCode.id);
@@ -1320,9 +1525,7 @@ describe('PromoCodesService', () => {
 
     it('should return isExpired false for code without expiry', async () => {
       // Arrange
-      mockPrismaService.promoCode.findUnique.mockResolvedValue(
-        mockFixedPromoCode
-      );
+      mockPrismaService.promoCode.findUnique.mockResolvedValue(mockFixedPromoCode);
 
       // Act
       const result = await service.getStats(mockFixedPromoCode.id);
