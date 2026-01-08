@@ -96,7 +96,7 @@ export function Cacheable(options: CacheableOptions = {}): MethodDecorator {
       condition: options.condition,
       unless: options.unless,
       sync: options.sync,
-    }),
+    })
   );
 }
 
@@ -132,7 +132,7 @@ export function CacheEvict(options: CacheEvictOptions = {}): MethodDecorator {
       allEntries: options.allEntries,
       beforeInvocation: options.beforeInvocation,
       condition: options.condition,
-    }),
+    })
   );
 }
 
@@ -158,7 +158,7 @@ export function CachePut(options: CachePutOptions = {}): MethodDecorator {
       tags: options.tags,
       condition: options.condition,
       unless: options.unless,
-    }),
+    })
   );
 }
 
@@ -186,7 +186,7 @@ export function generateCacheKey(
   keyOptions: string | CacheKeyOptions | undefined,
   target: any,
   methodName: string,
-  args: any[],
+  args: any[]
 ): string {
   if (!keyOptions) {
     // Default key generation
@@ -233,27 +233,71 @@ export function generateCacheKey(
 }
 
 /**
+ * Check if an object is an HTTP Request/Response (has circular references)
+ */
+function isHttpObject(arg: any): boolean {
+  if (!arg || typeof arg !== 'object') {
+    return false;
+  }
+  // Check for common HTTP Request/Response properties
+  return (
+    'socket' in arg ||
+    'httpVersion' in arg ||
+    '_readableState' in arg ||
+    '_writableState' in arg ||
+    ('statusCode' in arg && 'setHeader' in arg) ||
+    ('method' in arg && 'url' in arg && 'headers' in arg && 'socket' in arg)
+  );
+}
+
+/**
+ * Safely stringify an object, handling circular references
+ */
+function safeStringify(obj: any): string {
+  const seen = new WeakSet();
+  return JSON.stringify(obj, (key, value) => {
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return '[Circular]';
+      }
+      seen.add(value);
+    }
+    return value;
+  });
+}
+
+/**
  * Hash arguments for cache key
  */
 function hashArgs(args: any[]): string {
-  const str = args.map((arg) => {
-    if (arg === null) return 'null';
-    if (arg === undefined) return 'undefined';
-    if (typeof arg === 'object') {
-      try {
-        return JSON.stringify(arg);
-      } catch {
-        return String(arg);
+  const str = args
+    .map((arg) => {
+      if (arg === null) {
+        return 'null';
       }
-    }
-    return String(arg);
-  }).join('|');
+      if (arg === undefined) {
+        return 'undefined';
+      }
+      if (typeof arg === 'object') {
+        // Skip HTTP Request/Response objects
+        if (isHttpObject(arg)) {
+          return 'http-object';
+        }
+        try {
+          return safeStringify(arg);
+        } catch {
+          return String(arg);
+        }
+      }
+      return String(arg);
+    })
+    .join('|');
 
   // Simple hash function
   let hash = 0;
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
+    hash = (hash << 5) - hash + char;
     hash = hash & hash; // Convert to 32bit integer
   }
   return Math.abs(hash).toString(36);
@@ -306,9 +350,7 @@ export function MultiLevelCache(options: {
   l1?: { ttl: number; maxSize?: number };
   l2?: { ttl: number; tags?: CacheTag[] };
 }): MethodDecorator {
-  return applyDecorators(
-    SetMetadata('cache:multi_level', options),
-  );
+  return applyDecorators(SetMetadata('cache:multi_level', options));
 }
 
 /**
@@ -333,9 +375,7 @@ export function BatchCacheable<T>(options: {
   ttl?: number;
   tags?: CacheTag[];
 }): MethodDecorator {
-  return applyDecorators(
-    SetMetadata('cache:batch', options),
-  );
+  return applyDecorators(SetMetadata('cache:batch', options));
 }
 
 /**
@@ -360,9 +400,7 @@ export function StaleWhileRevalidate(options: {
   maxAge: number;
   tags?: CacheTag[];
 }): MethodDecorator {
-  return applyDecorators(
-    SetMetadata('cache:swr', options),
-  );
+  return applyDecorators(SetMetadata('cache:swr', options));
 }
 
 /**
@@ -383,9 +421,7 @@ export function CacheLock(options: {
   waitTimeout?: number;
   retryDelay?: number;
 }): MethodDecorator {
-  return applyDecorators(
-    SetMetadata('cache:lock', options),
-  );
+  return applyDecorators(SetMetadata('cache:lock', options));
 }
 
 /**
@@ -409,7 +445,5 @@ export function ConditionalCache(options: {
   ttl?: number;
   tags?: CacheTag[];
 }): MethodDecorator {
-  return applyDecorators(
-    SetMetadata('cache:conditional', options),
-  );
+  return applyDecorators(SetMetadata('cache:conditional', options));
 }

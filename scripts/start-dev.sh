@@ -173,11 +173,11 @@ fi
 
 # Check Web and Admin (they usually start faster)
 sleep 5
-WEB_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4200 2>/dev/null || echo "000")
+WEB_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4202 2>/dev/null || echo "000")
 ADMIN_CODE=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4201 2>/dev/null || echo "000")
 
 if [ "$WEB_CODE" != "000" ]; then
-    log_success "Web app is ready at http://localhost:4200"
+    log_success "Web app is ready at http://localhost:4202"
 fi
 if [ "$ADMIN_CODE" != "000" ]; then
     log_success "Admin app is ready at http://localhost:4201"
@@ -193,7 +193,7 @@ echo "=============================================="
 echo ""
 echo "Services:"
 echo "  - API:      http://localhost:3001/api"
-echo "  - Web:      http://localhost:4200"
+echo "  - Web:      http://localhost:4202"
 echo "  - Admin:    http://localhost:4201"
 echo ""
 echo "Infrastructure:"

@@ -7,13 +7,16 @@ const publicRoutes = ['/login', '/forgot-password', '/reset-password'];
 const publicApiRoutes = ['/api/auth/login', '/api/auth/register', '/api/auth/forgot-password'];
 
 // Content-Security-Policy directives
+const isDev = process.env.NODE_ENV === 'development';
+const apiUrls = isDev ? 'http://localhost:3000 http://localhost:3001 http://localhost:3333' : '';
+
 const cspDirectives = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://cdn.jsdelivr.net https://unpkg.com",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "img-src 'self' data: blob: https:",
   "font-src 'self' https://fonts.gstatic.com",
-  "connect-src 'self' https://api.stripe.com wss:",
+  `connect-src 'self' https://api.stripe.com wss: ws: ${apiUrls}`.trim(),
   "frame-ancestors 'self'",
   "form-action 'self'",
   "base-uri 'self'",

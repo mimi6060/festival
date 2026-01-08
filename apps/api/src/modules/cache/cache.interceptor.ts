@@ -1,10 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Logger } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Observable, of, from } from 'rxjs';
 import { tap, switchMap } from 'rxjs/operators';
@@ -38,7 +32,7 @@ export class CacheInterceptor implements NestInterceptor {
 
   constructor(
     private readonly cacheService: CacheService,
-    private readonly reflector: Reflector,
+    private readonly reflector: Reflector
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
@@ -47,25 +41,27 @@ export class CacheInterceptor implements NestInterceptor {
 
     // Check for cache decorators
     const cacheKeyMeta = this.reflector.get(CACHE_KEY_METADATA, handler);
-    const cacheOptions = this.reflector.get<CacheableOptions>(
-      CACHE_OPTIONS_METADATA,
-      handler,
-    );
-    const evictOptions = this.reflector.get<CacheEvictOptions>(
-      CACHE_EVICT_METADATA,
-      handler,
-    );
-    const putOptions = this.reflector.get<CachePutOptions>(
-      CACHE_PUT_METADATA,
-      handler,
-    );
-    const invalidateTags = this.reflector.get<CacheTag[]>(
-      CACHE_INVALIDATE_TAGS_METADATA,
-      handler,
-    );
+    const cacheOptions = this.reflector.get<CacheableOptions>(CACHE_OPTIONS_METADATA, handler);
+    const evictOptions = this.reflector.get<CacheEvictOptions>(CACHE_EVICT_METADATA, handler);
+    const putOptions = this.reflector.get<CachePutOptions>(CACHE_PUT_METADATA, handler);
+    const invalidateTags = this.reflector.get<CacheTag[]>(CACHE_INVALIDATE_TAGS_METADATA, handler);
 
-    // Get method arguments
-    const args = context.getArgs();
+    // Get method arguments - filter out HTTP Request/Response objects
+    const rawArgs = context.getArgs();
+    const args = rawArgs.filter((arg) => {
+      if (!arg || typeof arg !== 'object') {
+        return true;
+      }
+      // Filter out HTTP Request/Response objects (they have socket, httpVersion, etc.)
+      if ('socket' in arg || 'httpVersion' in arg || '_readableState' in arg) {
+        return false;
+      }
+      // Filter out Express Response objects
+      if ('statusCode' in arg && 'setHeader' in arg && 'send' in arg) {
+        return false;
+      }
+      return true;
+    });
     const methodName = handler.name;
 
     // Handle @CacheEvict with beforeInvocation
@@ -81,39 +77,28 @@ export class CacheInterceptor implements NestInterceptor {
         target.prototype,
         methodName,
         args,
-        next,
+        next
       );
     }
 
     // Handle @CachePut (always execute and cache)
     if (putOptions) {
-      return this.handleCachePut(
-        putOptions,
-        target.prototype,
-        methodName,
-        args,
-        next,
-      );
+      return this.handleCachePut(putOptions, target.prototype, methodName, args, next);
     }
 
     // Execute method
     return next.handle().pipe(
-      tap(async (result) => {
+      tap(async (_result) => {
         // Handle @CacheEvict after invocation
         if (evictOptions && !evictOptions.beforeInvocation) {
-          await this.handleEviction(
-            evictOptions,
-            target.prototype,
-            methodName,
-            args,
-          );
+          await this.handleEviction(evictOptions, target.prototype, methodName, args);
         }
 
         // Handle @InvalidateTags
         if (invalidateTags && invalidateTags.length > 0) {
           await this.handleTagInvalidation(invalidateTags);
         }
-      }),
+      })
     );
   }
 
@@ -126,7 +111,7 @@ export class CacheInterceptor implements NestInterceptor {
     target: any,
     methodName: string,
     args: any[],
-    next: CallHandler,
+    next: CallHandler
   ): Observable<any> {
     const cacheKey = generateCacheKey(keyMeta || options.key, target, methodName, args);
 
@@ -152,8 +137,8 @@ export class CacheInterceptor implements NestInterceptor {
               {
                 ttl: options.ttl,
                 tags: options.tags,
-              },
-            ),
+              }
+            )
           );
         }
 
@@ -166,7 +151,7 @@ export class CacheInterceptor implements NestInterceptor {
             }
 
             // Check unless condition
-            if (options.unless && options.unless(result, ...args)) {
+            if (options.unless?.(result, ...args)) {
               return;
             }
 
@@ -177,9 +162,9 @@ export class CacheInterceptor implements NestInterceptor {
             });
 
             this.logger.debug(`Cached result for key: ${cacheKey}`);
-          }),
+          })
         );
-      }),
+      })
     );
   }
 
@@ -191,7 +176,7 @@ export class CacheInterceptor implements NestInterceptor {
     target: any,
     methodName: string,
     args: any[],
-    next: CallHandler,
+    next: CallHandler
   ): Observable<any> {
     const cacheKey = generateCacheKey(options.key, target, methodName, args);
 
@@ -203,7 +188,7 @@ export class CacheInterceptor implements NestInterceptor {
         }
 
         // Check unless condition
-        if (options.unless && options.unless(result, ...args)) {
+        if (options.unless?.(result, ...args)) {
           return;
         }
 
@@ -214,7 +199,7 @@ export class CacheInterceptor implements NestInterceptor {
         });
 
         this.logger.debug(`Updated cache for key: ${cacheKey}`);
-      }),
+      })
     );
   }
 
@@ -225,7 +210,7 @@ export class CacheInterceptor implements NestInterceptor {
     options: CacheEvictOptions,
     target: any,
     methodName: string,
-    args: any[],
+    args: any[]
   ): Promise<void> {
     // Check condition
     if (options.condition && !options.condition(...args)) {
@@ -284,7 +269,7 @@ export class MultiLevelCacheInterceptor implements NestInterceptor {
 
   constructor(
     private readonly cacheService: CacheService,
-    private readonly reflector: Reflector,
+    private readonly reflector: Reflector
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
@@ -298,12 +283,7 @@ export class MultiLevelCacheInterceptor implements NestInterceptor {
     const target = context.getClass();
     const args = context.getArgs();
     const methodName = handler.name;
-    const cacheKey = generateCacheKey(
-      options.key,
-      target.prototype,
-      methodName,
-      args,
-    );
+    const cacheKey = generateCacheKey(options.key, target.prototype, methodName, args);
 
     return from(this.getFromL1OrL2(cacheKey, options)).pipe(
       switchMap((cachedValue) => {
@@ -314,9 +294,9 @@ export class MultiLevelCacheInterceptor implements NestInterceptor {
         return next.handle().pipe(
           tap(async (result) => {
             await this.setInL1AndL2(cacheKey, result, options);
-          }),
+          })
         );
-      }),
+      })
     );
   }
 
@@ -389,7 +369,7 @@ export class SWRCacheInterceptor implements NestInterceptor {
 
   constructor(
     private readonly cacheService: CacheService,
-    private readonly reflector: Reflector,
+    private readonly reflector: Reflector
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
@@ -403,12 +383,7 @@ export class SWRCacheInterceptor implements NestInterceptor {
     const target = context.getClass();
     const args = context.getArgs();
     const methodName = handler.name;
-    const cacheKey = generateCacheKey(
-      options.key,
-      target.prototype,
-      methodName,
-      args,
-    );
+    const cacheKey = generateCacheKey(options.key, target.prototype, methodName, args);
     const metaKey = `${cacheKey}:meta`;
 
     return from(this.handleSWR(cacheKey, metaKey, options, next));
@@ -418,7 +393,7 @@ export class SWRCacheInterceptor implements NestInterceptor {
     cacheKey: string,
     metaKey: string,
     options: any,
-    next: CallHandler,
+    next: CallHandler
   ): Promise<any> {
     const [cachedValue, meta] = await Promise.all([
       this.cacheService.get(cacheKey),
@@ -461,16 +436,20 @@ export class SWRCacheInterceptor implements NestInterceptor {
     cacheKey: string,
     metaKey: string,
     value: any,
-    options: any,
+    options: any
   ): Promise<void> {
     await Promise.all([
       this.cacheService.set(cacheKey, value, {
         ttl: options.maxAge,
         tags: options.tags,
       }),
-      this.cacheService.set(metaKey, { timestamp: Date.now() }, {
-        ttl: options.maxAge,
-      }),
+      this.cacheService.set(
+        metaKey,
+        { timestamp: Date.now() },
+        {
+          ttl: options.maxAge,
+        }
+      ),
     ]);
   }
 }
@@ -487,7 +466,7 @@ export class BatchCacheInterceptor implements NestInterceptor {
 
   constructor(
     private readonly cacheService: CacheService,
-    private readonly reflector: Reflector,
+    private readonly reflector: Reflector
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
@@ -508,12 +487,8 @@ export class BatchCacheInterceptor implements NestInterceptor {
     return from(this.handleBatch(ids, options, next));
   }
 
-  private async handleBatch(
-    ids: string[],
-    options: any,
-    next: CallHandler,
-  ): Promise<any[]> {
-    const cached: Map<string, any> = new Map();
+  private async handleBatch(ids: string[], options: any, next: CallHandler): Promise<any[]> {
+    const cached = new Map<string, any>();
     const missing: string[] = [];
 
     // Check cache for each ID
@@ -526,12 +501,10 @@ export class BatchCacheInterceptor implements NestInterceptor {
         } else {
           missing.push(id);
         }
-      }),
+      })
     );
 
-    this.logger.debug(
-      `Batch cache: ${cached.size} hits, ${missing.length} misses`,
-    );
+    this.logger.debug(`Batch cache: ${cached.size} hits, ${missing.length} misses`);
 
     // If all found in cache, return immediately
     if (missing.length === 0) {
@@ -541,7 +514,7 @@ export class BatchCacheInterceptor implements NestInterceptor {
     // Fetch missing items
     // Temporarily modify first argument to only fetch missing
     const originalIds = ids;
-    const args = [missing];
+    const _args = [missing]; // TODO: Use this to modify context in future implementation
 
     // This is a simplified version - in practice you'd need to modify the context
     const freshItems = await next.handle().toPromise();
@@ -556,7 +529,7 @@ export class BatchCacheInterceptor implements NestInterceptor {
           tags: options.tags,
         });
         cached.set(id, item);
-      }),
+      })
     );
 
     // Return in original order
