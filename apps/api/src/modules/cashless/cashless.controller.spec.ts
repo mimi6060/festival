@@ -85,7 +85,7 @@ describe('CashlessController', () => {
     }).compile();
 
     controller = module.get<CashlessController>(CashlessController);
-    cashlessService = module.get(CashlessService);
+    _cashlessService = module.get(CashlessService);
   });
 
   // ==========================================================================

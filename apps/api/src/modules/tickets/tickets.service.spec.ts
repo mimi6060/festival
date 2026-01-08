@@ -130,7 +130,7 @@ describe('TicketsService', () => {
     }).compile();
 
     ticketsService = module.get<TicketsService>(TicketsService);
-    prismaService = module.get(PrismaService);
+    _prismaService = module.get(PrismaService);
 
     // Default transaction implementation
     mockPrismaService.$transaction.mockImplementation(async (callback) => {

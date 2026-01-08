@@ -80,7 +80,7 @@ describe('CashlessService', () => {
     }).compile();
 
     cashlessService = module.get<CashlessService>(CashlessService);
-    prismaService = module.get(PrismaService);
+    _prismaService = module.get(PrismaService);
 
     // Default transaction implementation
     mockPrismaService.$transaction.mockImplementation(async (callback) => {

@@ -108,9 +108,9 @@ describe('PaymentsController', () => {
     }).compile();
 
     controller = module.get<PaymentsController>(PaymentsController);
-    paymentsService = module.get(PaymentsService);
-    checkoutService = module.get(CheckoutService);
-    refundService = module.get(RefundService);
+    _paymentsService = module.get(PaymentsService);
+    _checkoutService = module.get(CheckoutService);
+    _refundService = module.get(RefundService);
   });
 
   // ==========================================================================
@@ -292,6 +292,9 @@ describe('PaymentsController', () => {
   // ==========================================================================
 
   describe('GET /payments/user/:userId - getUserPayments', () => {
+    const mockReq = { user: { id: regularUser.id, role: 'USER' } };
+    const mockAdminReq = { user: { id: 'admin-id', role: 'ADMIN' } };
+
     it('should return user payment history', async () => {
       // Arrange
       const payments = [
@@ -301,7 +304,7 @@ describe('PaymentsController', () => {
       mockPaymentsService.getUserPayments.mockResolvedValue(payments);
 
       // Act
-      const result = await controller.getUserPayments(regularUser.id);
+      const result = await controller.getUserPayments(regularUser.id, undefined, undefined, mockReq);
 
       // Assert
       expect(result).toHaveLength(2);
@@ -317,7 +320,7 @@ describe('PaymentsController', () => {
       mockPaymentsService.getUserPayments.mockResolvedValue([]);
 
       // Act
-      await controller.getUserPayments(regularUser.id, 20, 10);
+      await controller.getUserPayments(regularUser.id, 20, 10, mockReq);
 
       // Assert
       expect(mockPaymentsService.getUserPayments).toHaveBeenCalledWith(
@@ -330,9 +333,10 @@ describe('PaymentsController', () => {
     it('should return empty array for user with no payments', async () => {
       // Arrange
       mockPaymentsService.getUserPayments.mockResolvedValue([]);
+      const reqWithUser = { user: { id: 'user-no-payments', role: 'USER' } };
 
       // Act
-      const result = await controller.getUserPayments('user-no-payments');
+      const result = await controller.getUserPayments('user-no-payments', undefined, undefined, reqWithUser);
 
       // Assert
       expect(result).toHaveLength(0);
@@ -344,13 +348,28 @@ describe('PaymentsController', () => {
       mockPaymentsService.getUserPayments.mockResolvedValue([]);
 
       // Act
-      await controller.getUserPayments(regularUser.id, 10, 1000);
+      await controller.getUserPayments(regularUser.id, 10, 1000, mockReq);
 
       // Assert
       expect(mockPaymentsService.getUserPayments).toHaveBeenCalledWith(
         regularUser.id,
         10,
         1000,
+      );
+    });
+
+    it('should allow admin to access other user payments', async () => {
+      // Arrange
+      mockPaymentsService.getUserPayments.mockResolvedValue([]);
+
+      // Act
+      await controller.getUserPayments(regularUser.id, undefined, undefined, mockAdminReq);
+
+      // Assert
+      expect(mockPaymentsService.getUserPayments).toHaveBeenCalledWith(
+        regularUser.id,
+        undefined,
+        undefined,
       );
     });
   });

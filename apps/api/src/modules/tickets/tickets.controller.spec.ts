@@ -111,7 +111,7 @@ describe('TicketsController', () => {
       .compile();
 
     controller = module.get<TicketsController>(TicketsController);
-    ticketsService = module.get(TicketsService);
+    _ticketsService = module.get(TicketsService);
   });
 
   describe('getUserTickets', () => {
