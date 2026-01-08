@@ -2,6 +2,90 @@
 
 ---
 
+## Session 2026-01-08 - Tests E2E Auth Module avec Supertest et Cookie Support
+
+### Enhanced E2E Tests for Authentication Flow
+
+- [x] **auth.e2e-spec.ts** - Complete rewrite with supertest (60+ tests)
+  - **POST /auth/register** (10 tests):
+    - Success with user and tokens in response
+    - Register with optional phone number
+    - Return 400 for missing email/password/firstName/lastName
+    - Return 400 for invalid email format or weak password
+    - Return 409 for duplicate email
+    - Normalize email to lowercase and trim whitespace
+  - **POST /auth/login** (7 tests):
+    - Login successfully and set httpOnly cookies
+    - Verify cookies have httpOnly attribute
+    - Return 401 for invalid email or password
+    - Return 400 for missing credentials
+    - Return JWT tokens with correct format (3 parts)
+  - **GET /auth/me** (6 tests):
+    - Return current user with Bearer token
+    - Return current user with cookie authentication
+    - Return 401 without token, with invalid token, or malformed token
+    - Not expose sensitive fields (passwordHash, refreshToken)
+  - **POST /auth/refresh** (6 tests):
+    - Refresh access token with body refreshToken
+    - Refresh access token using cookie
+    - Set new cookies after refresh
+    - Return 400/401 for missing or invalid refresh token
+    - Prefer body token over cookie token
+  - **POST /auth/logout** (5 tests):
+    - Logout successfully with Bearer token
+    - Logout successfully with cookie authentication
+    - Clear cookies on logout
+    - Invalidate refresh token after logout
+    - Return 401 without authentication
+  - **POST /auth/forgot-password** (5 tests):
+    - Accept valid email for password reset
+    - Return same response for non-existent email (prevents enumeration)
+    - Return 400 for missing or invalid email
+    - Normalize email before processing
+  - **POST /auth/reset-password** (5 tests):
+    - Return 400 for missing token or password
+    - Return 401 for invalid/expired token
+    - Validate password strength requirements
+  - **POST /auth/change-password** (4 tests):
+    - Change password successfully and verify login with new password
+    - Return 401 for wrong current password or no authentication
+    - Return 400 for weak new password
+  - **POST /auth/verify-email** (2 tests):
+    - Return 400 for missing token
+    - Return error for invalid token
+  - **POST /auth/resend-verification** (2 tests):
+    - Accept resend request for registered email
+    - Return 400 for missing email
+  - **GET /auth/providers** (2 tests):
+    - Return list of OAuth providers (google, github)
+    - Include enabled status and URL for each provider
+  - **Complete Auth Flow Integration** (2 tests):
+    - Full auth lifecycle with cookies (register, me, refresh, logout, login)
+    - Maintain session with cookie-based authentication
+  - **Security Tests** (4 tests):
+    - Not expose password hash in any response
+    - Not expose refresh token in user object
+    - Reject requests with invalid Authorization header format
+    - Be timing-safe against password brute force
+
+### Technical Changes
+
+- Migrated from axios to supertest for proper HTTP cookie handling
+- Updated import syntax for supertest compatibility
+- Created jest.config.js from jest.config.cts for NX compatibility
+- Updated project.json to use jest.config.js
+- All tests support both Bearer token and cookie-based authentication
+- Build verified: `npx nx build api --skip-nx-cache` SUCCESS
+- TypeScript type-checking: 0 errors in auth.e2e-spec.ts
+
+### Files Modified/Created
+
+- `apps/api-e2e/src/api/auth.e2e-spec.ts` - Complete rewrite (~1100 lines)
+- `apps/api-e2e/jest.config.js` - New JS config file
+- `apps/api-e2e/project.json` - Updated jestConfig path
+
+---
+
 ## Session 2026-01-08 - Architecture Documentation with Mermaid Diagrams
 
 ### Documentation complète avec diagrammes Mermaid
