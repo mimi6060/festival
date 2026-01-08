@@ -304,9 +304,22 @@
 
 ### DEV-17: Tests pour les templates de notification
 
-- **Fichier**: `apps/api/src/modules/notifications/services/`
-- **Status**: [ ] À faire
+- **Fichier**: `apps/api/src/modules/notifications/services/notification-template.service.spec.ts`
+- **Status**: [x] Terminé
 - **Description**: Tester le rendu des templates
+- **Solution**:
+  - Ajouté 54 nouveaux tests de rendu de templates Handlebars:
+    - **Email Template Rendering (3 tests)**: Tickets, paiements, reset password
+    - **Push Notification Template Rendering (5 tests)**: Artist reminder, cashless topup, schedule change, vendor order, security alert
+    - **SMS Template Rendering (3 tests)**: Ticket validation, payment confirmation, emergency SMS
+    - **Missing Variables Handling (6 tests)**: Missing, undefined, null variables, nested missing variables
+    - **Edge Cases - Empty Data (6 tests)**: Empty strings, empty template, zero values, false values
+    - **Edge Cases - Special Characters (10 tests)**: HTML escaping, XSS prevention, accents, emoji, newlines, Unicode, long values
+    - **Template Type Specific Rendering (10 tests)**: All 10 notification types (TICKET_PURCHASED, PAYMENT_SUCCESS, PAYMENT_FAILED, CASHLESS_TOPUP, ARTIST_REMINDER, SCHEDULE_CHANGE, FESTIVAL_UPDATE, SECURITY_ALERT, VENDOR_ORDER, PROMO)
+    - **Complex Variable Scenarios (6 tests)**: Multiple occurrences, numeric variables, array access, nested objects, mixed types, dates
+    - **Error Handling (3 tests)**: Malformed syntax, triple braces (unescaped), bracket notation
+    - **Performance Edge Cases (2 tests)**: 100 variables, 1000 iterations
+  - Total tests dans notification-template.service.spec.ts: 112 (58 existants + 54 nouveaux)
 
 ### DEV-18: Tests GDPR pour l'export de données
 
