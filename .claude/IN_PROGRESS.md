@@ -289,8 +289,14 @@
 ### DEV-15: Prévenir les requêtes N+1
 
 - **Fichier**: Services Prisma
-- **Status**: [ ] À faire
+- **Status**: [x] Terminé
 - **Description**: Ajouter `include` et batch queries
+- **Solution**:
+  - **VendorsService.createOrder**: Remplacé boucle for sequentielle par `Promise.all()` pour mise à jour stock produits
+  - **VendorsService.verifyVendorOwnership**: Parallélisé fetch vendor et user avec `Promise.all()`
+  - **VendorsService.refundCashlessPayment**: Parallélisé fetch cashlessAccount et vendor avec `Promise.all()`
+  - **ZonesService.logAccess**: Parallélisé fetch zone et ticket avec `Promise.all()`
+  - Tests: 4772 tests passants, build API OK
 
 ---
 
@@ -442,14 +448,75 @@
 ### DEV-26: Ajouter le versioning API
 
 - **Fichier**: `apps/api/src/common/versioning/`
-- **Status**: [ ] À faire
+- **Status**: [x] Terminé
 - **Description**: Appliquer le versioning à tous les controllers
+- **Solution**:
+  - Activé le versioning global dans `main.ts`:
+    - Ajouté `ApiVersionGuard` pour valider les versions demandées
+    - Ajouté `ApiVersionHeaderInterceptor` pour inclure `X-API-Version` dans toutes les réponses
+    - Ajouté documentation versioning dans Swagger (`X-API-Version` header global)
+  - Appliqué le versioning aux controllers principaux:
+    - `AuthController` - `@AllVersions()` + `@ApiHeader(X-API-Version)`
+    - `UsersController` - `@AllVersions()` + `@ApiHeader(X-API-Version)`
+    - `FestivalsController` - `@AllVersions()` + `@ApiHeader(X-API-Version)`
+    - `TicketsController` - `@AllVersions()` + `@ApiHeader(X-API-Version)`
+  - Documentation Swagger mise à jour:
+    - Section "API Versioning" ajoutée à la description
+    - Header global `X-API-Version` avec enum v1/v2 et default v1
+  - Méthodes de spécification de version supportées:
+    - Header: `X-API-Version: v1` ou `X-API-Version: v2`
+    - Query parameter: `?api-version=1` ou `?api-version=2`
+    - URL path: `/api/v1/...` ou `/api/v2/...`
+  - Version par défaut: v1 (pour compatibilité descendante)
+  - Tous les tests passent (4772 tests)
 
 ### DEV-27: Refactorer les méthodes longues
 
 - **Fichier**: Services avec méthodes 100+ lignes
-- **Status**: [ ] À faire
+- **Status**: [x] Terminé
 - **Description**: Extraire en méthodes helper
+- **Solution**:
+  - Refactorisé `TicketsService.purchaseTickets()` (~140 lignes -> ~30 lignes):
+    - `validatePurchaseQuantity()` - Valide que quantity >= 1
+    - `fetchFestivalAndCategory()` - Récupère festival et catégorie en parallèle
+    - `validateFestivalForPurchase()` - Valide le statut du festival
+    - `validateCategoryForPurchase()` - Valide la catégorie et son appartenance
+    - `validateSalePeriod()` - Valide les dates de vente
+    - `validateTicketAvailability()` - Valide la disponibilité des tickets
+    - `validateUserQuota()` - Valide le quota utilisateur
+    - `createTicketsInTransaction()` - Crée les tickets en transaction
+    - `generateTicketDataArray()` - Génère les données de tickets pour insertion
+  - Refactorisé `TicketsService.transferTicket()` (~140 lignes -> ~25 lignes):
+    - `fetchTicketForTransfer()` - Récupère le ticket avec relations
+    - `validateTicketOwnership()` - Valide la propriété du ticket
+    - `validateTicketStatusForTransfer()` - Valide le statut du ticket
+    - `validateFestivalStatusForTransfer()` - Valide le statut du festival
+    - `validateNotSelfTransfer()` - Empêche l'auto-transfert
+    - `findOrCreateRecipient()` - Trouve ou crée le destinataire
+    - `validateRecipientQuota()` - Valide le quota du destinataire
+    - `executeTicketTransfer()` - Exécute le transfert
+    - `sendTransferNotification()` - Envoie la notification email
+  - Refactorisé `VendorsService.createOrder()` (~180 lignes -> ~35 lignes):
+    - `fetchAndValidateVendor()` - Récupère et valide le vendor
+    - `fetchAndValidateProducts()` - Récupère et valide les produits
+    - `calculateOrderTotals()` - Calcule les totaux et valide le stock
+    - `calculateCommission()` - Calcule la commission
+    - `processCashlessPaymentIfNeeded()` - Traite le paiement cashless
+    - `createOrderInTransaction()` - Crée la commande en transaction
+  - Refactorisé `CheckoutService.createCheckoutSession()` (~160 lignes -> ~45 lignes):
+    - `validateUser()` - Valide que l'utilisateur existe
+    - `calculateTotalsWithPromo()` - Calcule les totaux avec code promo
+    - `buildStripeLineItems()` - Construit les line items Stripe
+    - `buildSessionParams()` - Construit les paramètres de session
+    - `buildConnectOptions()` - Construit les options Stripe Connect
+    - `createPaymentRecord()` - Crée l'enregistrement de paiement
+  - Refactorisé `RefundService.checkRefundEligibility()` (~115 lignes -> ~40 lignes):
+    - `fetchPaymentWithTickets()` - Récupère le paiement avec tickets
+    - `checkBasicEligibility()` - Vérifie l'éligibilité de base
+    - `calculateEventBasedEligibility()` - Calcule l'éligibilité basée sur l'événement
+    - `buildFinalEligibility()` - Construit la réponse finale
+  - API publique préservée (aucune modification des signatures de méthodes publiques)
+  - 4772 tests passants (aucune régression)
 
 ### DEV-28: Ajouter le logging request/response
 
