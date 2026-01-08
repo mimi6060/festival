@@ -6,15 +6,11 @@
  * - QR code validation
  * - Ticket scanning
  * - Access control
+ * - Edge cases and error handling
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  BadRequestException,
-  NotFoundException,
-  ConflictException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { TicketsService, PurchaseTicketDto } from './tickets.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TicketStatus, TicketType, FestivalStatus } from '@prisma/client';
@@ -36,21 +32,34 @@ import {
   mainStageZone,
   vipLounge,
 } from '../../test/fixtures';
+import {
+  NotFoundException,
+  ForbiddenException,
+  ValidationException,
+} from '../../common/exceptions/base.exception';
+import {
+  TicketSoldOutException,
+  TicketQuotaExceededException,
+  TicketSaleNotStartedException,
+  TicketSaleEndedException,
+  TicketAlreadyUsedException,
+  FestivalCancelledException,
+  FestivalEndedException,
+} from '../../common/exceptions/business.exception';
 
 // ============================================================================
 // Mock Setup
 // ============================================================================
 
-// Mock QRCode
-jest.mock('qrcode', () => ({
-  toDataURL: jest.fn().mockResolvedValue('data:image/png;base64,mockQRCode'),
-}));
+// Mock QRCode - need to require the mock to reset in beforeEach
+jest.mock('qrcode');
+const QRCode = require('qrcode');
 
-// Mock uuid - use spyOn to properly mock v4
+// Mock uuid
+jest.mock('uuid');
 const uuid = require('uuid');
-jest.spyOn(uuid, 'v4').mockReturnValue('mocked-uuid-ticket-123');
 
-// Mock crypto - use actual module with spied methods
+// Mock crypto
 const crypto = require('crypto');
 const mockHmac = {
   update: jest.fn().mockReturnThis(),
@@ -60,7 +69,7 @@ jest.spyOn(crypto, 'createHmac').mockReturnValue(mockHmac);
 
 describe('TicketsService', () => {
   let ticketsService: TicketsService;
-  let prismaService: jest.Mocked<PrismaService>;
+  let _prismaService: jest.Mocked<PrismaService>;
 
   const mockPrismaService = {
     festival: {
@@ -68,12 +77,16 @@ describe('TicketsService', () => {
     },
     ticketCategory: {
       findUnique: jest.fn(),
+      findMany: jest.fn(),
+      create: jest.fn(),
       update: jest.fn(),
+      delete: jest.fn(),
     },
     ticket: {
       findUnique: jest.fn(),
       findMany: jest.fn(),
       create: jest.fn(),
+      createMany: jest.fn(),
       update: jest.fn(),
       count: jest.fn(),
     },
@@ -87,13 +100,32 @@ describe('TicketsService', () => {
     $transaction: jest.fn(),
   };
 
+  const QR_CODE_SECRET = 'this-is-a-very-secure-qr-code-secret-key-32chars';
+
+  const mockConfigService = {
+    getOrThrow: jest.fn().mockReturnValue(QR_CODE_SECRET),
+  };
+
   beforeEach(async () => {
+    // Reset mocks but restore the config service return value
     jest.clearAllMocks();
+    mockConfigService.getOrThrow.mockReturnValue(QR_CODE_SECRET);
+
+    // Reset QRCode mock
+    QRCode.toDataURL.mockResolvedValue('data:image/png;base64,mockQRCode');
+
+    // Reset uuid mock
+    uuid.v4.mockReturnValue('mocked-uuid-ticket-123');
+
+    // Reset crypto mock
+    mockHmac.update.mockReturnThis();
+    mockHmac.digest.mockReturnValue('mockedsignature12345678');
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TicketsService,
         { provide: PrismaService, useValue: mockPrismaService },
+        { provide: ConfigService, useValue: mockConfigService },
       ],
     }).compile();
 
@@ -102,7 +134,32 @@ describe('TicketsService', () => {
 
     // Default transaction implementation
     mockPrismaService.$transaction.mockImplementation(async (callback) => {
-      return callback(mockPrismaService);
+      if (typeof callback === 'function') {
+        return callback(mockPrismaService);
+      }
+      return callback;
+    });
+  });
+
+  // ==========================================================================
+  // Constructor Tests
+  // ==========================================================================
+
+  describe('constructor', () => {
+    it('should throw error if QR_CODE_SECRET is less than 32 characters', async () => {
+      const shortSecretConfigService = {
+        getOrThrow: jest.fn().mockReturnValue('short-secret'),
+      };
+
+      await expect(
+        Test.createTestingModule({
+          providers: [
+            TicketsService,
+            { provide: PrismaService, useValue: mockPrismaService },
+            { provide: ConfigService, useValue: shortSecretConfigService },
+          ],
+        }).compile()
+      ).rejects.toThrow('QR_CODE_SECRET must be at least 32 characters for security');
     });
   });
 
@@ -126,7 +183,8 @@ describe('TicketsService', () => {
       mockPrismaService.ticketCategory.findUnique.mockResolvedValue(standardCategory);
       mockPrismaService.ticket.count.mockResolvedValue(0);
       mockPrismaService.ticketCategory.update.mockResolvedValue(standardCategory);
-      mockPrismaService.ticket.create.mockResolvedValue({
+      mockPrismaService.ticket.createMany.mockResolvedValue({ count: 1 });
+      mockPrismaService.ticket.findMany.mockResolvedValue([{
         id: 'mocked-uuid-ticket-123',
         festivalId: publishedFestival.id,
         categoryId: standardCategory.id,
@@ -140,7 +198,7 @@ describe('TicketsService', () => {
         updatedAt: new Date(),
         festival: { id: publishedFestival.id, name: publishedFestival.name, startDate: publishedFestival.startDate, endDate: publishedFestival.endDate },
         category: { id: standardCategory.id, name: standardCategory.name, type: standardCategory.type },
-      });
+      }]);
 
       // Act
       const result = await ticketsService.purchaseTickets(regularUser.id, validPurchaseDto);
@@ -162,21 +220,54 @@ describe('TicketsService', () => {
       mockPrismaService.ticketCategory.findUnique.mockResolvedValue(standardCategory);
       mockPrismaService.ticket.count.mockResolvedValue(0);
       mockPrismaService.ticketCategory.update.mockResolvedValue(standardCategory);
-      mockPrismaService.ticket.create.mockResolvedValue({
-        id: 'ticket-id',
-        festivalId: publishedFestival.id,
-        categoryId: standardCategory.id,
-        userId: regularUser.id,
-        qrCode: 'QR-CODE',
-        qrCodeData: '{}',
-        status: TicketStatus.SOLD,
-        purchasePrice: standardCategory.price,
-        usedAt: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        festival: { id: publishedFestival.id, name: publishedFestival.name, startDate: publishedFestival.startDate, endDate: publishedFestival.endDate },
-        category: { id: standardCategory.id, name: standardCategory.name, type: standardCategory.type },
-      });
+      mockPrismaService.ticket.createMany.mockResolvedValue({ count: 3 });
+      mockPrismaService.ticket.findMany.mockResolvedValue([
+        {
+          id: 'ticket-1',
+          festivalId: publishedFestival.id,
+          categoryId: standardCategory.id,
+          userId: regularUser.id,
+          qrCode: 'QR-CODE-1',
+          qrCodeData: '{}',
+          status: TicketStatus.SOLD,
+          purchasePrice: standardCategory.price,
+          usedAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          festival: { id: publishedFestival.id, name: publishedFestival.name, startDate: publishedFestival.startDate, endDate: publishedFestival.endDate },
+          category: { id: standardCategory.id, name: standardCategory.name, type: standardCategory.type },
+        },
+        {
+          id: 'ticket-2',
+          festivalId: publishedFestival.id,
+          categoryId: standardCategory.id,
+          userId: regularUser.id,
+          qrCode: 'QR-CODE-2',
+          qrCodeData: '{}',
+          status: TicketStatus.SOLD,
+          purchasePrice: standardCategory.price,
+          usedAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          festival: { id: publishedFestival.id, name: publishedFestival.name, startDate: publishedFestival.startDate, endDate: publishedFestival.endDate },
+          category: { id: standardCategory.id, name: standardCategory.name, type: standardCategory.type },
+        },
+        {
+          id: 'ticket-3',
+          festivalId: publishedFestival.id,
+          categoryId: standardCategory.id,
+          userId: regularUser.id,
+          qrCode: 'QR-CODE-3',
+          qrCodeData: '{}',
+          status: TicketStatus.SOLD,
+          purchasePrice: standardCategory.price,
+          usedAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          festival: { id: publishedFestival.id, name: publishedFestival.name, startDate: publishedFestival.startDate, endDate: publishedFestival.endDate },
+          category: { id: standardCategory.id, name: standardCategory.name, type: standardCategory.type },
+        },
+      ]);
 
       // Act
       const result = await ticketsService.purchaseTickets(regularUser.id, {
@@ -186,20 +277,20 @@ describe('TicketsService', () => {
 
       // Assert
       expect(result).toHaveLength(3);
-      expect(mockPrismaService.ticket.create).toHaveBeenCalledTimes(3);
+      expect(mockPrismaService.ticket.createMany).toHaveBeenCalledTimes(1);
     });
 
-    it('should throw BadRequestException for quantity less than 1', async () => {
+    it('should throw ValidationException for quantity less than 1', async () => {
       // Act & Assert
       await expect(ticketsService.purchaseTickets(regularUser.id, {
         ...validPurchaseDto,
         quantity: 0,
-      })).rejects.toThrow(BadRequestException);
+      })).rejects.toThrow(ValidationException);
 
       await expect(ticketsService.purchaseTickets(regularUser.id, {
         ...validPurchaseDto,
         quantity: -1,
-      })).rejects.toThrow(BadRequestException);
+      })).rejects.toThrow(ValidationException);
     });
 
     it('should throw NotFoundException if festival not found', async () => {
@@ -211,7 +302,7 @@ describe('TicketsService', () => {
         .rejects.toThrow(NotFoundException);
     });
 
-    it('should throw BadRequestException if festival is deleted', async () => {
+    it('should throw FestivalCancelledException if festival is deleted', async () => {
       // Arrange
       mockPrismaService.festival.findUnique.mockResolvedValue({
         ...publishedFestival,
@@ -220,27 +311,33 @@ describe('TicketsService', () => {
 
       // Act & Assert
       await expect(ticketsService.purchaseTickets(regularUser.id, validPurchaseDto))
-        .rejects.toThrow(BadRequestException);
+        .rejects.toThrow(FestivalCancelledException);
     });
 
-    it('should throw BadRequestException if festival is cancelled', async () => {
+    it('should throw FestivalCancelledException if festival is cancelled', async () => {
       // Arrange
-      mockPrismaService.festival.findUnique.mockResolvedValue(cancelledFestival);
+      mockPrismaService.festival.findUnique.mockResolvedValue({
+        ...cancelledFestival,
+        isDeleted: false,
+      });
       mockPrismaService.ticketCategory.findUnique.mockResolvedValue(standardCategory);
 
       // Act & Assert
       await expect(ticketsService.purchaseTickets(regularUser.id, validPurchaseDto))
-        .rejects.toThrow(BadRequestException);
+        .rejects.toThrow(FestivalCancelledException);
     });
 
-    it('should throw BadRequestException if festival has ended', async () => {
+    it('should throw FestivalEndedException if festival has ended', async () => {
       // Arrange
-      mockPrismaService.festival.findUnique.mockResolvedValue(completedFestival);
+      mockPrismaService.festival.findUnique.mockResolvedValue({
+        ...completedFestival,
+        isDeleted: false,
+      });
       mockPrismaService.ticketCategory.findUnique.mockResolvedValue(standardCategory);
 
       // Act & Assert
       await expect(ticketsService.purchaseTickets(regularUser.id, validPurchaseDto))
-        .rejects.toThrow(BadRequestException);
+        .rejects.toThrow(FestivalEndedException);
     });
 
     it('should throw NotFoundException if category not found', async () => {
@@ -256,7 +353,7 @@ describe('TicketsService', () => {
         .rejects.toThrow(NotFoundException);
     });
 
-    it('should throw BadRequestException if category belongs to different festival', async () => {
+    it('should throw ValidationException if category belongs to different festival', async () => {
       // Arrange
       mockPrismaService.festival.findUnique.mockResolvedValue({
         ...publishedFestival,
@@ -269,10 +366,10 @@ describe('TicketsService', () => {
 
       // Act & Assert
       await expect(ticketsService.purchaseTickets(regularUser.id, validPurchaseDto))
-        .rejects.toThrow(BadRequestException);
+        .rejects.toThrow(ValidationException);
     });
 
-    it('should throw BadRequestException if category is inactive', async () => {
+    it('should throw TicketSoldOutException if category is inactive', async () => {
       // Arrange
       mockPrismaService.festival.findUnique.mockResolvedValue({
         ...publishedFestival,
@@ -284,10 +381,10 @@ describe('TicketsService', () => {
       await expect(ticketsService.purchaseTickets(regularUser.id, {
         ...validPurchaseDto,
         categoryId: inactiveCategory.id,
-      })).rejects.toThrow(BadRequestException);
+      })).rejects.toThrow(TicketSoldOutException);
     });
 
-    it('should throw BadRequestException if sale has not started', async () => {
+    it('should throw TicketSaleNotStartedException if sale has not started', async () => {
       // Arrange
       const futureCategory = {
         ...standardCategory,
@@ -301,10 +398,10 @@ describe('TicketsService', () => {
 
       // Act & Assert
       await expect(ticketsService.purchaseTickets(regularUser.id, validPurchaseDto))
-        .rejects.toThrow(BadRequestException);
+        .rejects.toThrow(TicketSaleNotStartedException);
     });
 
-    it('should throw BadRequestException if sale has ended', async () => {
+    it('should throw TicketSaleEndedException if sale has ended', async () => {
       // Arrange
       mockPrismaService.festival.findUnique.mockResolvedValue({
         ...publishedFestival,
@@ -316,10 +413,10 @@ describe('TicketsService', () => {
       await expect(ticketsService.purchaseTickets(regularUser.id, {
         ...validPurchaseDto,
         categoryId: expiredSaleCategory.id,
-      })).rejects.toThrow(BadRequestException);
+      })).rejects.toThrow(TicketSaleEndedException);
     });
 
-    it('should throw ConflictException if tickets are sold out', async () => {
+    it('should throw TicketSoldOutException if tickets are sold out', async () => {
       // Arrange
       mockPrismaService.festival.findUnique.mockResolvedValue({
         ...publishedFestival,
@@ -331,10 +428,10 @@ describe('TicketsService', () => {
       await expect(ticketsService.purchaseTickets(regularUser.id, {
         ...validPurchaseDto,
         categoryId: soldOutCategory.id,
-      })).rejects.toThrow(ConflictException);
+      })).rejects.toThrow(TicketSoldOutException);
     });
 
-    it('should throw ConflictException if not enough tickets available', async () => {
+    it('should throw TicketQuotaExceededException if not enough tickets available', async () => {
       // Arrange
       const limitedCategory = {
         ...standardCategory,
@@ -351,10 +448,10 @@ describe('TicketsService', () => {
       await expect(ticketsService.purchaseTickets(regularUser.id, {
         ...validPurchaseDto,
         quantity: 2,
-      })).rejects.toThrow(ConflictException);
+      })).rejects.toThrow(TicketQuotaExceededException);
     });
 
-    it('should throw BadRequestException if exceeds max per user', async () => {
+    it('should throw TicketQuotaExceededException if exceeds max per user', async () => {
       // Arrange
       mockPrismaService.festival.findUnique.mockResolvedValue({
         ...publishedFestival,
@@ -370,7 +467,63 @@ describe('TicketsService', () => {
       await expect(ticketsService.purchaseTickets(regularUser.id, {
         ...validPurchaseDto,
         quantity: 2, // Would exceed limit of 4
-      })).rejects.toThrow(BadRequestException);
+      })).rejects.toThrow(TicketQuotaExceededException);
+    });
+
+    it('should correctly calculate remaining user quota', async () => {
+      // Arrange
+      mockPrismaService.festival.findUnique.mockResolvedValue({
+        ...publishedFestival,
+        isDeleted: false,
+      });
+      mockPrismaService.ticketCategory.findUnique.mockResolvedValue({
+        ...standardCategory,
+        maxPerUser: 4,
+      });
+      mockPrismaService.ticket.count.mockResolvedValue(2); // Already has 2 tickets, can buy 2 more
+      mockPrismaService.ticketCategory.update.mockResolvedValue(standardCategory);
+      mockPrismaService.ticket.createMany.mockResolvedValue({ count: 2 });
+      mockPrismaService.ticket.findMany.mockResolvedValue([
+        {
+          id: 'ticket-1',
+          festivalId: publishedFestival.id,
+          categoryId: standardCategory.id,
+          userId: regularUser.id,
+          qrCode: 'QR-CODE-1',
+          qrCodeData: '{}',
+          status: TicketStatus.SOLD,
+          purchasePrice: standardCategory.price,
+          usedAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          festival: { id: publishedFestival.id, name: publishedFestival.name, startDate: publishedFestival.startDate, endDate: publishedFestival.endDate },
+          category: { id: standardCategory.id, name: standardCategory.name, type: standardCategory.type },
+        },
+        {
+          id: 'ticket-2',
+          festivalId: publishedFestival.id,
+          categoryId: standardCategory.id,
+          userId: regularUser.id,
+          qrCode: 'QR-CODE-2',
+          qrCodeData: '{}',
+          status: TicketStatus.SOLD,
+          purchasePrice: standardCategory.price,
+          usedAt: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          festival: { id: publishedFestival.id, name: publishedFestival.name, startDate: publishedFestival.startDate, endDate: publishedFestival.endDate },
+          category: { id: standardCategory.id, name: standardCategory.name, type: standardCategory.type },
+        },
+      ]);
+
+      // Act
+      const result = await ticketsService.purchaseTickets(regularUser.id, {
+        ...validPurchaseDto,
+        quantity: 2,
+      });
+
+      // Assert
+      expect(result).toHaveLength(2);
     });
   });
 
@@ -562,6 +715,49 @@ describe('TicketsService', () => {
       expect(result.accessGranted).toBe(false);
       expect(result.message).toContain('full capacity');
     });
+
+    it('should return invalid if zone not found', async () => {
+      // Arrange
+      mockPrismaService.ticket.findUnique.mockResolvedValue({
+        ...soldTicket,
+        festival: { ...ongoingFestival, status: FestivalStatus.ONGOING },
+        category: standardCategory,
+      });
+      mockPrismaService.zone.findUnique.mockResolvedValue(null);
+
+      // Act
+      const result = await ticketsService.validateTicket({
+        qrCode: soldTicket.qrCode,
+        zoneId: 'non-existent-zone',
+      });
+
+      // Assert
+      expect(result.valid).toBe(false);
+      expect(result.message).toContain('Invalid zone');
+    });
+
+    it('should allow VIP ticket type to access VIP zone', async () => {
+      // Arrange
+      mockPrismaService.ticket.findUnique.mockResolvedValue({
+        ...soldTicket,
+        festival: { ...ongoingFestival, status: FestivalStatus.ONGOING },
+        category: { ...standardCategory, type: TicketType.VIP },
+      });
+      mockPrismaService.zone.findUnique.mockResolvedValue({
+        ...vipLounge,
+        requiresTicketType: [TicketType.VIP, TicketType.BACKSTAGE],
+      });
+
+      // Act
+      const result = await ticketsService.validateTicket({
+        qrCode: soldTicket.qrCode,
+        zoneId: vipLounge.id,
+      });
+
+      // Assert
+      expect(result.valid).toBe(true);
+      expect(result.accessGranted).toBe(true);
+    });
   });
 
   // ==========================================================================
@@ -656,6 +852,28 @@ describe('TicketsService', () => {
       expect(result.valid).toBe(false);
       expect(mockPrismaService.ticket.update).not.toHaveBeenCalled();
     });
+
+    it('should not mark ticket as used if access is not granted', async () => {
+      // Arrange
+      mockPrismaService.ticket.findUnique.mockResolvedValue({
+        ...soldTicket,
+        festival: { ...ongoingFestival, status: FestivalStatus.ONGOING },
+        category: { ...standardCategory, type: TicketType.STANDARD },
+        user: regularUser,
+      });
+      mockPrismaService.zone.findUnique.mockResolvedValue({
+        ...vipLounge,
+        requiresTicketType: [TicketType.VIP, TicketType.BACKSTAGE],
+      });
+
+      // Act
+      const result = await ticketsService.scanTicket(soldTicket.qrCode, staffUser.id, vipLounge.id);
+
+      // Assert
+      expect(result.valid).toBe(true);
+      expect(result.accessGranted).toBe(false);
+      expect(mockPrismaService.ticket.update).not.toHaveBeenCalled();
+    });
   });
 
   // ==========================================================================
@@ -702,6 +920,37 @@ describe('TicketsService', () => {
         }),
       );
     });
+
+    it('should return empty array if user has no tickets', async () => {
+      // Arrange
+      mockPrismaService.ticket.findMany.mockResolvedValue([]);
+
+      // Act
+      const result = await ticketsService.getUserTickets('user-with-no-tickets');
+
+      // Assert
+      expect(result).toEqual([]);
+    });
+
+    it('should include festival and category information', async () => {
+      // Arrange
+      mockPrismaService.ticket.findMany.mockResolvedValue([
+        {
+          ...soldTicket,
+          festival: { id: publishedFestival.id, name: publishedFestival.name, startDate: publishedFestival.startDate, endDate: publishedFestival.endDate },
+          category: { id: standardCategory.id, name: standardCategory.name, type: standardCategory.type },
+        },
+      ]);
+
+      // Act
+      const result = await ticketsService.getUserTickets(regularUser.id);
+
+      // Assert
+      expect(result[0].festival).toBeDefined();
+      expect(result[0].festival?.name).toBe(publishedFestival.name);
+      expect(result[0].category).toBeDefined();
+      expect(result[0].category?.name).toBe(standardCategory.name);
+    });
   });
 
   // ==========================================================================
@@ -745,6 +994,38 @@ describe('TicketsService', () => {
       // Act & Assert
       await expect(ticketsService.getTicketById(soldTicket.id, regularUser.id))
         .rejects.toThrow(ForbiddenException);
+    });
+
+    it('should allow access if userId matches', async () => {
+      // Arrange
+      mockPrismaService.ticket.findUnique.mockResolvedValue({
+        ...soldTicket,
+        userId: regularUser.id,
+        festival: { id: publishedFestival.id, name: publishedFestival.name, startDate: publishedFestival.startDate, endDate: publishedFestival.endDate },
+        category: { id: standardCategory.id, name: standardCategory.name, type: standardCategory.type },
+      });
+
+      // Act
+      const result = await ticketsService.getTicketById(soldTicket.id, regularUser.id);
+
+      // Assert
+      expect(result.id).toBe(soldTicket.id);
+    });
+
+    it('should allow access without userId check if no userId provided', async () => {
+      // Arrange - ticket belongs to different user, but no userId provided
+      mockPrismaService.ticket.findUnique.mockResolvedValue({
+        ...soldTicket,
+        userId: 'some-other-user',
+        festival: { id: publishedFestival.id, name: publishedFestival.name, startDate: publishedFestival.startDate, endDate: publishedFestival.endDate },
+        category: { id: standardCategory.id, name: standardCategory.name, type: standardCategory.type },
+      });
+
+      // Act - no userId provided
+      const result = await ticketsService.getTicketById(soldTicket.id);
+
+      // Assert
+      expect(result.id).toBe(soldTicket.id);
     });
   });
 
@@ -804,7 +1085,7 @@ describe('TicketsService', () => {
         .rejects.toThrow(ForbiddenException);
     });
 
-    it('should throw BadRequestException if ticket already used', async () => {
+    it('should throw TicketAlreadyUsedException if ticket already used', async () => {
       // Arrange
       mockPrismaService.ticket.findUnique.mockResolvedValue({
         ...usedTicket,
@@ -815,10 +1096,10 @@ describe('TicketsService', () => {
 
       // Act & Assert
       await expect(ticketsService.cancelTicket(usedTicket.id, regularUser.id))
-        .rejects.toThrow(BadRequestException);
+        .rejects.toThrow(TicketAlreadyUsedException);
     });
 
-    it('should throw BadRequestException if festival has started', async () => {
+    it('should throw TicketSaleEndedException if festival has started', async () => {
       // Arrange
       const pastDate = new Date();
       pastDate.setDate(pastDate.getDate() - 1);
@@ -832,7 +1113,36 @@ describe('TicketsService', () => {
 
       // Act & Assert
       await expect(ticketsService.cancelTicket(soldTicket.id, regularUser.id))
-        .rejects.toThrow(BadRequestException);
+        .rejects.toThrow(TicketSaleEndedException);
+    });
+
+    it('should decrement category soldCount on cancellation', async () => {
+      // Arrange
+      const futureDate = new Date();
+      futureDate.setDate(futureDate.getDate() + 30);
+
+      mockPrismaService.ticket.findUnique.mockResolvedValue({
+        ...soldTicket,
+        userId: regularUser.id,
+        festival: { ...publishedFestival, startDate: futureDate },
+        category: standardCategory,
+      });
+      // Mock $transaction to return array with cancelled ticket as first element
+      mockPrismaService.$transaction.mockResolvedValue([
+        {
+          ...soldTicket,
+          status: TicketStatus.CANCELLED,
+          festival: { id: publishedFestival.id, name: publishedFestival.name, startDate: futureDate, endDate: publishedFestival.endDate },
+          category: { id: standardCategory.id, name: standardCategory.name, type: standardCategory.type },
+        },
+        { ...standardCategory, soldCount: standardCategory.soldCount - 1 },
+      ]);
+
+      // Act
+      await ticketsService.cancelTicket(soldTicket.id, regularUser.id);
+
+      // Assert
+      expect(mockPrismaService.$transaction).toHaveBeenCalled();
     });
   });
 
@@ -864,6 +1174,20 @@ describe('TicketsService', () => {
       // Act & Assert
       await expect(ticketsService.getTicketQrCodeImage('non-existent-id'))
         .rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException if user does not own the ticket', async () => {
+      // Arrange
+      mockPrismaService.ticket.findUnique.mockResolvedValue({
+        ...soldTicket,
+        userId: 'different-user-id',
+        festival: { id: publishedFestival.id, name: publishedFestival.name, startDate: publishedFestival.startDate, endDate: publishedFestival.endDate },
+        category: { id: standardCategory.id, name: standardCategory.name, type: standardCategory.type },
+      });
+
+      // Act & Assert
+      await expect(ticketsService.getTicketQrCodeImage(soldTicket.id, regularUser.id))
+        .rejects.toThrow(ForbiddenException);
     });
   });
 });

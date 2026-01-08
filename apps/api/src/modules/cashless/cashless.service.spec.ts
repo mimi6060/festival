@@ -10,12 +10,6 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  BadRequestException,
-  NotFoundException,
-  ConflictException,
-  ForbiddenException,
-} from '@nestjs/common';
 import { CashlessService } from './cashless.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TransactionType, FestivalStatus } from '@prisma/client';
@@ -31,6 +25,19 @@ import {
   topupTransaction,
   paymentTransaction,
 } from '../../test/fixtures';
+import {
+  NotFoundException,
+  ConflictException,
+} from '../../common/exceptions/base.exception';
+import {
+  TransactionLimitExceededException,
+  FestivalCancelledException,
+  CashlessAccountDisabledException,
+  TopupFailedException,
+  InsufficientBalanceException,
+  FestivalNotPublishedException,
+  InvalidNFCTagException,
+} from '../../common/exceptions/business.exception';
 
 // ============================================================================
 // Mock Setup
@@ -42,7 +49,7 @@ jest.mock('uuid', () => ({
 
 describe('CashlessService', () => {
   let cashlessService: CashlessService;
-  let prismaService: jest.Mocked<PrismaService>;
+  let _prismaService: jest.Mocked<PrismaService>;
 
   const mockPrismaService = {
     cashlessAccount: {
@@ -238,20 +245,20 @@ describe('CashlessService', () => {
       expect(result.balanceAfter).toBe(activeCashlessAccount.balance + topupAmount);
     });
 
-    it('should throw BadRequestException for amount below minimum', async () => {
+    it('should throw TransactionLimitExceededException for amount below minimum', async () => {
       // Act & Assert
       await expect(cashlessService.topup(regularUser.id, {
         amount: 2, // Below minimum of 5
         festivalId: ongoingFestival.id,
-      })).rejects.toThrow(BadRequestException);
+      })).rejects.toThrow(TransactionLimitExceededException);
     });
 
-    it('should throw BadRequestException for amount above maximum', async () => {
+    it('should throw TransactionLimitExceededException for amount above maximum', async () => {
       // Act & Assert
       await expect(cashlessService.topup(regularUser.id, {
         amount: 600, // Above maximum of 500
         festivalId: ongoingFestival.id,
-      })).rejects.toThrow(BadRequestException);
+      })).rejects.toThrow(TransactionLimitExceededException);
     });
 
     it('should throw NotFoundException if festival not found', async () => {
@@ -265,7 +272,7 @@ describe('CashlessService', () => {
       })).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw BadRequestException if festival is cancelled', async () => {
+    it('should throw FestivalCancelledException if festival is cancelled', async () => {
       // Arrange
       mockPrismaService.festival.findUnique.mockResolvedValue(cancelledFestival);
 
@@ -273,10 +280,10 @@ describe('CashlessService', () => {
       await expect(cashlessService.topup(regularUser.id, {
         amount: 50,
         festivalId: cancelledFestival.id,
-      })).rejects.toThrow(BadRequestException);
+      })).rejects.toThrow(FestivalCancelledException);
     });
 
-    it('should throw ForbiddenException if account is deactivated', async () => {
+    it('should throw CashlessAccountDisabledException if account is deactivated', async () => {
       // Arrange
       mockPrismaService.festival.findUnique.mockResolvedValue(ongoingFestival);
       mockPrismaService.cashlessAccount.findUnique.mockResolvedValue(inactiveCashlessAccount);
@@ -285,10 +292,10 @@ describe('CashlessService', () => {
       await expect(cashlessService.topup(regularUser.id, {
         amount: 50,
         festivalId: ongoingFestival.id,
-      })).rejects.toThrow(ForbiddenException);
+      })).rejects.toThrow(CashlessAccountDisabledException);
     });
 
-    it('should throw BadRequestException if balance would exceed maximum', async () => {
+    it('should throw TopupFailedException if balance would exceed maximum', async () => {
       // Arrange
       const highBalanceAccount = {
         ...activeCashlessAccount,
@@ -301,7 +308,7 @@ describe('CashlessService', () => {
       await expect(cashlessService.topup(regularUser.id, {
         amount: 50, // Would bring to 1030, above 1000
         festivalId: ongoingFestival.id,
-      })).rejects.toThrow(BadRequestException);
+      })).rejects.toThrow(TopupFailedException);
     });
   });
 
@@ -347,17 +354,17 @@ describe('CashlessService', () => {
       expect(result.balanceAfter).toBe(activeCashlessAccount.balance - paymentAmount);
     });
 
-    it('should throw BadRequestException for zero or negative amount', async () => {
+    it('should throw TransactionLimitExceededException for zero or negative amount', async () => {
       // Act & Assert
       await expect(cashlessService.pay(regularUser.id, {
         amount: 0,
         festivalId: ongoingFestival.id,
-      })).rejects.toThrow(BadRequestException);
+      })).rejects.toThrow(TransactionLimitExceededException);
 
       await expect(cashlessService.pay(regularUser.id, {
         amount: -10,
         festivalId: ongoingFestival.id,
-      })).rejects.toThrow(BadRequestException);
+      })).rejects.toThrow(TransactionLimitExceededException);
     });
 
     it('should throw NotFoundException if festival not found', async () => {
@@ -371,7 +378,7 @@ describe('CashlessService', () => {
       })).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw BadRequestException if festival is not ongoing', async () => {
+    it('should throw FestivalNotPublishedException if festival is not ongoing', async () => {
       // Arrange
       mockPrismaService.festival.findUnique.mockResolvedValue({
         ...publishedFestival,
@@ -382,10 +389,10 @@ describe('CashlessService', () => {
       await expect(cashlessService.pay(regularUser.id, {
         amount: 10,
         festivalId: publishedFestival.id,
-      })).rejects.toThrow(BadRequestException);
+      })).rejects.toThrow(FestivalNotPublishedException);
     });
 
-    it('should throw ForbiddenException if account is deactivated', async () => {
+    it('should throw CashlessAccountDisabledException if account is deactivated', async () => {
       // Arrange
       mockPrismaService.festival.findUnique.mockResolvedValue({
         ...ongoingFestival,
@@ -397,10 +404,10 @@ describe('CashlessService', () => {
       await expect(cashlessService.pay('user-inactive', {
         amount: 10,
         festivalId: ongoingFestival.id,
-      })).rejects.toThrow(ForbiddenException);
+      })).rejects.toThrow(CashlessAccountDisabledException);
     });
 
-    it('should throw BadRequestException for insufficient balance', async () => {
+    it('should throw InsufficientBalanceException for insufficient balance', async () => {
       // Arrange
       mockPrismaService.festival.findUnique.mockResolvedValue({
         ...ongoingFestival,
@@ -415,7 +422,7 @@ describe('CashlessService', () => {
       await expect(cashlessService.pay(regularUser.id, {
         amount: 50, // More than available balance
         festivalId: ongoingFestival.id,
-      })).rejects.toThrow(BadRequestException);
+      })).rejects.toThrow(InsufficientBalanceException);
     });
   });
 
@@ -477,7 +484,7 @@ describe('CashlessService', () => {
       )).rejects.toThrow(NotFoundException);
     });
 
-    it('should throw BadRequestException if transaction is not a payment', async () => {
+    it('should throw TopupFailedException if transaction is not a payment', async () => {
       // Arrange
       mockPrismaService.cashlessTransaction.findUnique.mockResolvedValue({
         ...topupTransaction,
@@ -490,7 +497,7 @@ describe('CashlessService', () => {
         regularUser.id,
         { transactionId: topupTransaction.id },
         staffUser.id,
-      )).rejects.toThrow(BadRequestException);
+      )).rejects.toThrow(TopupFailedException);
     });
 
     it('should throw ConflictException if already refunded', async () => {
@@ -516,7 +523,7 @@ describe('CashlessService', () => {
       )).rejects.toThrow(ConflictException);
     });
 
-    it('should throw ForbiddenException for other users transaction', async () => {
+    it('should throw CashlessAccountDisabledException for other users transaction', async () => {
       // Arrange
       mockPrismaService.cashlessTransaction.findUnique.mockResolvedValue({
         ...paymentTransaction,
@@ -533,7 +540,7 @@ describe('CashlessService', () => {
         regularUser.id,
         { transactionId: paymentTransaction.id },
         staffUser.id,
-      )).rejects.toThrow(ForbiddenException);
+      )).rejects.toThrow(CashlessAccountDisabledException);
     });
   });
 
@@ -670,13 +677,13 @@ describe('CashlessService', () => {
       expect(result.id).toBe(activeCashlessAccount.id);
     });
 
-    it('should throw NotFoundException for unknown NFC tag', async () => {
+    it('should throw InvalidNFCTagException for unknown NFC tag', async () => {
       // Arrange
       mockPrismaService.cashlessAccount.findUnique.mockResolvedValue(null);
 
       // Act & Assert
       await expect(cashlessService.findAccountByNfcTag('UNKNOWN-NFC-TAG'))
-        .rejects.toThrow(NotFoundException);
+        .rejects.toThrow(InvalidNFCTagException);
     });
   });
 
