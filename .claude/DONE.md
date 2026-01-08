@@ -2,6 +2,39 @@
 
 ---
 
+## Session 2026-01-08 - Payments E2E Tests (DEV-04)
+
+### Tâches terminées cette session:
+
+- [x] **Created comprehensive E2E tests for payments module (DEV-04)**
+  - **File**: `apps/api-e2e/src/api/payments.e2e-spec.ts`
+  - **Endpoints Tested**:
+    - `POST /payments/checkout` - Create Stripe checkout session
+    - `GET /payments/checkout/:sessionId` - Get checkout session status
+    - `POST /payments/checkout/ticket` - Ticket purchase checkout
+    - `POST /payments/checkout/cashless-topup` - Cashless topup checkout
+    - `POST /payments/intent` - Create payment intent
+    - `GET /payments/:paymentId` - Get payment by ID
+    - `GET /payments/user/:userId` - Get user payment history
+    - `POST /payments/:paymentId/cancel` - Cancel payment
+    - `POST /payments/refunds` - Create refund
+    - `POST /payments/refunds/partial` - Create partial refund
+    - `GET /payments/refunds/eligibility/:paymentId` - Check refund eligibility
+    - `GET /payments/refunds/history/:paymentId` - Get refund history
+    - `POST /payments/checkout/:sessionId/expire` - Expire checkout session
+    - `POST /payments/webhook` - Webhook handling
+  - **Test Categories**:
+    - **Validation Tests**: Missing required fields, invalid field formats, invalid UUIDs
+    - **Authorization Tests**: 401 without authentication, 403 for unauthorized access
+    - **Complete Flow Tests**: Full checkout lifecycle, ticket purchase flow, cashless topup flow
+    - **Rate Limiting Tests**: Multiple rapid requests to checkout endpoint
+    - **Error Handling Tests**: Malformed JSON, meaningful error messages
+  - **Test Helpers Used**: createTestUser, createTestFestival, createTestTicketCategory, authenticatedRequest
+  - **Pattern**: Follows existing E2E test patterns from auth.e2e-spec.ts, tickets.e2e-spec.ts, cashless.e2e-spec.ts
+  - Build verified: `npx nx build api --skip-nx-cache` SUCCESS
+
+---
+
 ## Session 2026-01-08 - Branch Coverage Improvement to 70%
 
 ### Tâches terminées cette session:
