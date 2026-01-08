@@ -2,6 +2,45 @@
 
 ---
 
+## Session 2026-01-08 - Documentation Troubleshooting
+
+### Tâches terminées cette session:
+
+- [x] **Created comprehensive troubleshooting documentation (docs/TROUBLESHOOTING.md)**
+  - Completely rewrote and expanded the troubleshooting guide (~1650 lines)
+  - **Development Setup** section:
+    - Node version issues (nvm, volta installation)
+    - npm/pnpm install failures (EACCES, ERESOLVE, gyp errors)
+    - Prisma generate errors (module not found, schema validation, env variables)
+    - Docker not starting (daemon, ports, disk space, compose)
+  - **Database Issues** section:
+    - Connection refused (diagnostic steps, solutions)
+    - Migration failures (P3009, P3006, P3014 errors)
+    - Prisma client not generated
+  - **Authentication Issues** section:
+    - JWT token errors (invalid, expired, not provided)
+    - Cookie not being set (same-site, CORS, credentials)
+    - OAuth redirect issues (redirect_uri_mismatch, credentials)
+  - **Build Issues** section:
+    - TypeScript errors (TS2307, TS18046, TS2339)
+    - Missing dependencies
+    - Nx cache issues
+  - **Runtime Issues** section:
+    - API not responding (diagnostic steps)
+    - WebSocket connection failed
+    - Stripe webhooks not working (CLI, endpoint config)
+  - **Testing Issues** section:
+    - Tests failing (modules, Prisma, timeout, pollution)
+    - Mock issues (spying, not called, hoisting)
+  - **Docker Issues** section (container, image size)
+  - **Kubernetes Issues** section (CrashLoopBackOff, service)
+  - **Performance Issues** section (slow responses, memory leak)
+  - **Logs and Debugging** section (VS Code, SQL queries)
+  - Quick reference command cheat sheet
+  - Links to all related documentation
+
+---
+
 ## Session 2026-01-08 - Tests Unitaires GDPR Module
 
 ### Tâches terminées cette session:
