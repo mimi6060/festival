@@ -62,7 +62,7 @@ export class RefundService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {
     const stripeSecretKey = this.configService.get<string>('STRIPE_SECRET_KEY');
 
@@ -88,7 +88,7 @@ export class RefundService {
     const eligibility = await this.checkRefundEligibility(dto.paymentId);
     if (!eligibility.eligible) {
       throw new BadRequestException(
-        eligibility.ineligibilityReason || 'Payment is not eligible for refund',
+        eligibility.ineligibilityReason || 'Payment is not eligible for refund'
       );
     }
 
@@ -97,13 +97,13 @@ export class RefundService {
 
     if (refundAmount > eligibility.maxRefundAmount) {
       throw new BadRequestException(
-        `Refund amount exceeds maximum allowed (${eligibility.maxRefundAmount / 100} ${payment.currency})`,
+        `Refund amount exceeds maximum allowed (${eligibility.maxRefundAmount / 100} ${payment.currency})`
       );
     }
 
     if (refundAmount < this.defaultPolicy.minimumRefundAmount) {
       throw new BadRequestException(
-        `Refund amount is below minimum (${this.defaultPolicy.minimumRefundAmount / 100} EUR)`,
+        `Refund amount is below minimum (${this.defaultPolicy.minimumRefundAmount / 100} EUR)`
       );
     }
 
@@ -137,15 +137,10 @@ export class RefundService {
 
       // Update payment record
       const isFullRefund = refundAmount >= Number(payment.amount) * 100;
-      await this.updatePaymentAfterRefund(
-        dto.paymentId,
-        refundAmount,
-        isFullRefund,
-        refund.id,
-      );
+      await this.updatePaymentAfterRefund(dto.paymentId, refundAmount, isFullRefund, refund.id);
 
       this.logger.log(
-        `Refund ${refund.id} created for payment ${dto.paymentId}: ${refundAmount} cents`,
+        `Refund ${refund.id} created for payment ${dto.paymentId}: ${refundAmount} cents`
       );
 
       return this.mapRefundToResponse(refund, dto.paymentId);
@@ -221,9 +216,7 @@ export class RefundService {
       }
     }
 
-    this.logger.log(
-      `Bulk refund completed: ${successCount} succeeded, ${failedCount} failed`,
-    );
+    this.logger.log(`Bulk refund completed: ${successCount} succeeded, ${failedCount} failed`);
 
     return {
       totalRequested: dto.paymentIds.length,
@@ -238,134 +231,54 @@ export class RefundService {
    * Check if a payment is eligible for refund
    */
   async checkRefundEligibility(paymentId: string): Promise<RefundEligibilityDto> {
-    const payment = await this.prisma.payment.findUnique({
-      where: { id: paymentId },
-      include: {
-        tickets: {
-          include: {
-            festival: true,
-          },
-        },
-      },
-    });
-
-    if (!payment) {
-      throw new NotFoundException('Payment not found');
-    }
-
+    const payment = await this.fetchPaymentWithTickets(paymentId);
     const policy = this.defaultPolicy;
-    const originalAmount = Number(payment.amount) * 100; // Convert to cents
+    const originalAmount = Number(payment.amount) * 100;
     const refundedAmount = await this.getRefundedAmount(paymentId);
 
-    // Check basic eligibility
-    if (!policy.refundsAllowed) {
+    const basicEligibility = this.checkBasicEligibility(
+      payment,
+      policy,
+      originalAmount,
+      refundedAmount
+    );
+    if (basicEligibility) {
+      return basicEligibility;
+    }
+
+    const { daysUntilEvent, refundPercentage, eventIneligibility } =
+      this.calculateEventBasedEligibility(payment.tickets, policy);
+
+    if (eventIneligibility) {
       return {
-        eligible: false,
-        maxRefundAmount: 0,
-        refundPercentage: 0,
-        ineligibilityReason: 'Refunds are not allowed for this payment',
+        ...eventIneligibility,
         originalAmount,
         refundedAmount,
+        daysUntilEvent,
         policy,
       };
     }
 
-    if (payment.status !== PaymentStatus.COMPLETED) {
-      return {
-        eligible: false,
-        maxRefundAmount: 0,
-        refundPercentage: 0,
-        ineligibilityReason: 'Only completed payments can be refunded',
-        originalAmount,
-        refundedAmount,
-        policy,
-      };
-    }
-
-    if (refundedAmount >= originalAmount) {
-      return {
-        eligible: false,
-        maxRefundAmount: 0,
-        refundPercentage: 0,
-        ineligibilityReason: 'Payment has already been fully refunded',
-        originalAmount,
-        refundedAmount,
-        policy,
-      };
-    }
-
-    // Calculate days until event
-    let daysUntilEvent: number | undefined;
-    let refundPercentage = policy.fullRefundPercentage;
-
-    if (payment.tickets && payment.tickets.length > 0) {
-      const earliestFestival = payment.tickets
-        .map((t) => t.festival)
-        .filter((f) => f)
-        .sort((a, b) =>
-          new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
-        )[0];
-
-      if (earliestFestival) {
-        const now = new Date();
-        const eventDate = new Date(earliestFestival.startDate);
-        daysUntilEvent = Math.ceil(
-          (eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24),
-        );
-
-        // Apply time-based policy
-        if (daysUntilEvent < 0) {
-          return {
-            eligible: false,
-            maxRefundAmount: 0,
-            refundPercentage: 0,
-            ineligibilityReason: 'Event has already started or passed',
-            originalAmount,
-            refundedAmount,
-            daysUntilEvent,
-            policy,
-          };
-        }
-
-        if (daysUntilEvent < policy.daysBeforeEventLimit) {
-          refundPercentage = policy.partialRefundPercentage;
-        }
-      }
-    }
-
-    const maxRefundableAmount = originalAmount - refundedAmount;
-    const maxRefundAmount = Math.floor(
-      (maxRefundableAmount * refundPercentage) / 100,
-    ) - policy.processingFeeRetained;
-
-    return {
-      eligible: maxRefundAmount >= policy.minimumRefundAmount,
-      maxRefundAmount: Math.max(0, maxRefundAmount),
-      refundPercentage,
+    return this.buildFinalEligibility(
       originalAmount,
       refundedAmount,
+      refundPercentage,
       daysUntilEvent,
-      policy,
-      ineligibilityReason:
-        maxRefundAmount < policy.minimumRefundAmount
-          ? 'Refund amount is below minimum threshold'
-          : undefined,
-    };
+      policy
+    );
   }
 
   /**
    * Get refund history for a payment
    */
-  async getRefundHistory(
-    paymentId: string,
-  ): Promise<RefundResponseDto[]> {
+  async getRefundHistory(paymentId: string): Promise<RefundResponseDto[]> {
     this.ensureStripeConfigured();
 
     const payment = await this.prisma.payment.findUnique({
       where: { id: paymentId },
     });
 
-    if (!payment || !payment.providerPaymentId) {
+    if (!payment?.providerPaymentId) {
       throw new NotFoundException('Payment not found');
     }
 
@@ -441,19 +354,12 @@ export class RefundService {
       case 'refund.updated':
         this.logger.log(`Refund updated: ${refund.id} - Status: ${refund.status}`);
         if (paymentId && refund.status === 'succeeded') {
-          await this.updatePaymentAfterRefund(
-            paymentId,
-            refund.amount,
-            false,
-            refund.id,
-          );
+          await this.updatePaymentAfterRefund(paymentId, refund.amount, false, refund.id);
         }
         break;
 
       case 'refund.failed':
-        this.logger.error(
-          `Refund failed: ${refund.id} - Reason: ${refund.failure_reason}`,
-        );
+        this.logger.error(`Refund failed: ${refund.id} - Reason: ${refund.failure_reason}`);
         // Could notify support team here
         break;
 
@@ -504,7 +410,7 @@ export class RefundService {
       where: { id: paymentId },
     });
 
-    if (!payment || !payment.providerPaymentId || !this.stripe) {
+    if (!payment?.providerPaymentId || !this.stripe) {
       return 0;
     }
 
@@ -525,13 +431,15 @@ export class RefundService {
     paymentId: string,
     refundAmount: number,
     isFullRefund: boolean,
-    stripeRefundId: string,
+    stripeRefundId: string
   ): Promise<void> {
     const payment = await this.prisma.payment.findUnique({
       where: { id: paymentId },
     });
 
-    if (!payment) return;
+    if (!payment) {
+      return;
+    }
 
     const providerData = (payment.providerData as Record<string, unknown>) || {};
 
@@ -550,8 +458,7 @@ export class RefundService {
               createdAt: new Date().toISOString(),
             },
           ],
-          totalRefunded:
-            ((providerData.totalRefunded as number) || 0) + refundAmount,
+          totalRefunded: ((providerData.totalRefunded as number) || 0) + refundAmount,
         } as unknown as Prisma.InputJsonValue,
       },
     });
@@ -565,9 +472,7 @@ export class RefundService {
     }
   }
 
-  private mapRefundReason(
-    reason: RefundReason,
-  ): Stripe.RefundCreateParams.Reason {
+  private mapRefundReason(reason: RefundReason): Stripe.RefundCreateParams.Reason {
     const reasonMap: Record<RefundReason, Stripe.RefundCreateParams.Reason> = {
       [RefundReason.DUPLICATE]: 'duplicate',
       [RefundReason.FRAUDULENT]: 'fraudulent',
@@ -581,10 +486,7 @@ export class RefundService {
     return reasonMap[reason];
   }
 
-  private mapRefundToResponse(
-    refund: Stripe.Refund,
-    paymentId: string,
-  ): RefundResponseDto {
+  private mapRefundToResponse(refund: Stripe.Refund, paymentId: string): RefundResponseDto {
     return {
       refundId: refund.metadata?.paymentId || paymentId,
       stripeRefundId: refund.id,
@@ -595,6 +497,166 @@ export class RefundService {
       reason: refund.reason || 'requested_by_customer',
       failureReason: refund.failure_reason || undefined,
       createdAt: new Date(refund.created * 1000),
+    };
+  }
+
+  // ============================================================================
+  // Refund Eligibility Helper Methods
+  // ============================================================================
+
+  /**
+   * Fetch payment with associated tickets and festivals
+   */
+  private async fetchPaymentWithTickets(paymentId: string): Promise<any> {
+    const payment = await this.prisma.payment.findUnique({
+      where: { id: paymentId },
+      include: {
+        tickets: {
+          include: {
+            festival: true,
+          },
+        },
+      },
+    });
+
+    if (!payment) {
+      throw new NotFoundException('Payment not found');
+    }
+
+    return payment;
+  }
+
+  /**
+   * Check basic eligibility conditions (policy, status, already refunded)
+   */
+  private checkBasicEligibility(
+    payment: any,
+    policy: RefundPolicyDto,
+    originalAmount: number,
+    refundedAmount: number
+  ): RefundEligibilityDto | null {
+    if (!policy.refundsAllowed) {
+      return {
+        eligible: false,
+        maxRefundAmount: 0,
+        refundPercentage: 0,
+        ineligibilityReason: 'Refunds are not allowed for this payment',
+        originalAmount,
+        refundedAmount,
+        policy,
+      };
+    }
+
+    if (payment.status !== PaymentStatus.COMPLETED) {
+      return {
+        eligible: false,
+        maxRefundAmount: 0,
+        refundPercentage: 0,
+        ineligibilityReason: 'Only completed payments can be refunded',
+        originalAmount,
+        refundedAmount,
+        policy,
+      };
+    }
+
+    if (refundedAmount >= originalAmount) {
+      return {
+        eligible: false,
+        maxRefundAmount: 0,
+        refundPercentage: 0,
+        ineligibilityReason: 'Payment has already been fully refunded',
+        originalAmount,
+        refundedAmount,
+        policy,
+      };
+    }
+
+    return null;
+  }
+
+  /**
+   * Calculate event-based eligibility (days until event, refund percentage)
+   */
+  private calculateEventBasedEligibility(
+    tickets: any[] | undefined,
+    policy: RefundPolicyDto
+  ): {
+    daysUntilEvent: number | undefined;
+    refundPercentage: number;
+    eventIneligibility: Partial<RefundEligibilityDto> | null;
+  } {
+    if (!tickets || tickets.length === 0) {
+      return {
+        daysUntilEvent: undefined,
+        refundPercentage: policy.fullRefundPercentage,
+        eventIneligibility: null,
+      };
+    }
+
+    const earliestFestival = tickets
+      .map((t) => t.festival)
+      .filter((f) => f)
+      .sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];
+
+    if (!earliestFestival) {
+      return {
+        daysUntilEvent: undefined,
+        refundPercentage: policy.fullRefundPercentage,
+        eventIneligibility: null,
+      };
+    }
+
+    const now = new Date();
+    const eventDate = new Date(earliestFestival.startDate);
+    const daysUntilEvent = Math.ceil((eventDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+
+    if (daysUntilEvent < 0) {
+      return {
+        daysUntilEvent,
+        refundPercentage: 0,
+        eventIneligibility: {
+          eligible: false,
+          maxRefundAmount: 0,
+          refundPercentage: 0,
+          ineligibilityReason: 'Event has already started or passed',
+        },
+      };
+    }
+
+    const refundPercentage =
+      daysUntilEvent < policy.daysBeforeEventLimit
+        ? policy.partialRefundPercentage
+        : policy.fullRefundPercentage;
+
+    return { daysUntilEvent, refundPercentage, eventIneligibility: null };
+  }
+
+  /**
+   * Build the final eligibility response
+   */
+  private buildFinalEligibility(
+    originalAmount: number,
+    refundedAmount: number,
+    refundPercentage: number,
+    daysUntilEvent: number | undefined,
+    policy: RefundPolicyDto
+  ): RefundEligibilityDto {
+    const maxRefundableAmount = originalAmount - refundedAmount;
+    const maxRefundAmount =
+      Math.floor((maxRefundableAmount * refundPercentage) / 100) - policy.processingFeeRetained;
+
+    return {
+      eligible: maxRefundAmount >= policy.minimumRefundAmount,
+      maxRefundAmount: Math.max(0, maxRefundAmount),
+      refundPercentage,
+      originalAmount,
+      refundedAmount,
+      daysUntilEvent,
+      policy,
+      ineligibilityReason:
+        maxRefundAmount < policy.minimumRefundAmount
+          ? 'Refund amount is below minimum threshold'
+          : undefined,
     };
   }
 }

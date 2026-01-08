@@ -26,6 +26,7 @@ import {
   ApiNotFoundResponse,
   ApiConflictResponse,
   ApiResponse,
+  ApiHeader,
 } from '@nestjs/swagger';
 import { RateLimit } from '../../common/guards/rate-limit.guard';
 import { FestivalsService } from './festivals.service';
@@ -47,6 +48,7 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { Public } from '../auth/decorators/public.decorator';
 import { Cacheable, CacheEvict, CacheTag } from '../cache';
+import { AllVersions, API_VERSION_HEADER } from '../../common/versioning';
 
 /**
  * Paginated festivals response
@@ -69,6 +71,13 @@ class PaginatedFestivalsResponseDto {
  */
 @ApiTags('Festivals')
 @Controller('festivals')
+@AllVersions()
+@ApiHeader({
+  name: API_VERSION_HEADER,
+  description: 'API Version (v1 or v2)',
+  required: false,
+  schema: { type: 'string', enum: ['v1', 'v2'], default: 'v1' },
+})
 export class FestivalsController {
   constructor(private readonly festivalsService: FestivalsService) {}
 

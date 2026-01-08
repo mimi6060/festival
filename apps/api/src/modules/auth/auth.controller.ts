@@ -23,8 +23,10 @@ import {
   ApiCreatedResponse,
   ApiTooManyRequestsResponse,
   ApiExcludeEndpoint,
+  ApiHeader,
 } from '@nestjs/swagger';
 import { RateLimit } from '../../common/guards/rate-limit.guard';
+import { AllVersions, API_VERSION_HEADER } from '../../common/versioning';
 import {
   RegisterDto,
   LoginDto,
@@ -65,6 +67,13 @@ import { CurrentUser } from './decorators/current-user.decorator';
 @ApiTags('Auth')
 @Controller('auth')
 @UseGuards(JwtAuthGuard)
+@AllVersions()
+@ApiHeader({
+  name: API_VERSION_HEADER,
+  description: 'API Version (v1 or v2)',
+  required: false,
+  schema: { type: 'string', enum: ['v1', 'v2'], default: 'v1' },
+})
 export class AuthController {
   constructor(
     private readonly authService: AuthService,

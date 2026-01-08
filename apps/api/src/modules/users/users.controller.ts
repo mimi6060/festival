@@ -14,6 +14,7 @@ import {
 import {
   ApiBearerAuth,
   ApiBody,
+  ApiHeader,
   ApiOperation,
   ApiParam,
   ApiQuery,
@@ -36,6 +37,7 @@ import {
   SortOrder,
 } from './dto';
 import { Cacheable, CacheEvict, CacheTag } from '../cache';
+import { AllVersions, API_VERSION_HEADER } from '../../common/versioning';
 
 // Import decorators - adjust paths as needed for your project structure
 // These should come from a common/shared module
@@ -64,6 +66,13 @@ const CurrentUser = () => {
 @ApiTags('Users')
 @ApiBearerAuth()
 @Controller('users')
+@AllVersions()
+@ApiHeader({
+  name: API_VERSION_HEADER,
+  description: 'API Version (v1 or v2)',
+  required: false,
+  schema: { type: 'string', enum: ['v1', 'v2'], default: 'v1' },
+})
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
