@@ -198,7 +198,7 @@ export class VendorsService {
     });
   }
 
-  async findAllProducts(vendorId: string) {
+  async findAllProducts(vendorId: string, options?: { page?: number; limit?: number }) {
     const vendor = await this.prisma.vendor.findUnique({
       where: { id: vendorId },
     });
@@ -207,10 +207,33 @@ export class VendorsService {
       throw new NotFoundException('Vendor not found');
     }
 
-    return this.prisma.vendorProduct.findMany({
-      where: { vendorId },
-      orderBy: [{ sortOrder: 'asc' }, { category: 'asc' }, { name: 'asc' }],
-    });
+    const page = options?.page ?? 1;
+    const limit = Math.min(options?.limit ?? 20, 100);
+    const skip = (page - 1) * limit;
+
+    const [products, total] = await Promise.all([
+      this.prisma.vendorProduct.findMany({
+        where: { vendorId },
+        orderBy: [{ sortOrder: 'asc' }, { category: 'asc' }, { name: 'asc' }],
+        skip,
+        take: limit,
+      }),
+      this.prisma.vendorProduct.count({ where: { vendorId } }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: products,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    };
   }
 
   async findProductById(vendorId: string, productId: string) {
@@ -225,12 +248,7 @@ export class VendorsService {
     return product;
   }
 
-  async updateProduct(
-    vendorId: string,
-    productId: string,
-    userId: string,
-    dto: UpdateProductDto,
-  ) {
+  async updateProduct(vendorId: string, productId: string, userId: string, dto: UpdateProductDto) {
     await this.verifyVendorOwnership(vendorId, userId);
 
     const product = await this.prisma.vendorProduct.findFirst({
@@ -267,7 +285,7 @@ export class VendorsService {
     vendorId: string,
     productId: string,
     userId: string,
-    stock: number | null,
+    stock: number | null
   ) {
     await this.verifyVendorOwnership(vendorId, userId);
 
@@ -330,7 +348,7 @@ export class VendorsService {
       // Check stock
       if (product.stock !== null && product.stock < item.quantity) {
         throw new BadRequestException(
-          `Insufficient stock for ${product.name}. Available: ${product.stock}`,
+          `Insufficient stock for ${product.name}. Available: ${product.stock}`
         );
       }
 
@@ -369,7 +387,7 @@ export class VendorsService {
 
       if (Number(cashlessAccount.balance) < totalAmount) {
         throw new BadRequestException(
-          `Insufficient cashless balance. Required: ${totalAmount}, Available: ${cashlessAccount.balance}`,
+          `Insufficient cashless balance. Required: ${totalAmount}, Available: ${cashlessAccount.balance}`
         );
       }
 
@@ -568,7 +586,7 @@ export class VendorsService {
     vendorId: string,
     orderId: string,
     userId: string,
-    dto: UpdateOrderStatusDto,
+    dto: UpdateOrderStatusDto
   ) {
     await this.verifyVendorOwnership(vendorId, userId);
 
@@ -591,9 +609,7 @@ export class VendorsService {
     };
 
     if (!validTransitions[order.status]?.includes(dto.status)) {
-      throw new BadRequestException(
-        `Cannot transition from ${order.status} to ${dto.status}`,
-      );
+      throw new BadRequestException(`Cannot transition from ${order.status} to ${dto.status}`);
     }
 
     const updateData: Prisma.VendorOrderUpdateInput = {
@@ -638,20 +654,26 @@ export class VendorsService {
     cashlessTransactionId: string | null;
     vendorId: string;
   }) {
-    if (!order.cashlessTransactionId) return;
+    if (!order.cashlessTransactionId) {
+      return;
+    }
 
     const cashlessAccount = await this.prisma.cashlessAccount.findUnique({
       where: { userId: order.userId },
     });
 
-    if (!cashlessAccount) return;
+    if (!cashlessAccount) {
+      return;
+    }
 
     const vendor = await this.prisma.vendor.findUnique({
       where: { id: order.vendorId },
       select: { festivalId: true, name: true },
     });
 
-    if (!vendor) return;
+    if (!vendor) {
+      return;
+    }
 
     const refundAmount = Number(order.totalAmount);
     const balanceBefore = Number(cashlessAccount.balance);
@@ -779,45 +801,76 @@ export class VendorsService {
     };
   }
 
-  async exportVendorData(vendorId: string, userId: string, startDate: string, endDate: string) {
+  async exportVendorData(
+    vendorId: string,
+    userId: string,
+    startDate: string,
+    endDate: string,
+    options?: { page?: number; limit?: number }
+  ) {
     await this.verifyVendorOwnership(vendorId, userId);
 
-    const orders = await this.prisma.vendorOrder.findMany({
-      where: {
-        vendorId,
-        createdAt: {
-          gte: new Date(startDate),
-          lte: new Date(endDate),
-        },
+    const page = options?.page ?? 1;
+    // Export can have higher limit (1000) for bulk data export
+    const limit = Math.min(options?.limit ?? 100, 1000);
+    const skip = (page - 1) * limit;
+
+    const where = {
+      vendorId,
+      createdAt: {
+        gte: new Date(startDate),
+        lte: new Date(endDate),
       },
-      include: {
-        items: true,
-        user: {
-          select: { firstName: true, lastName: true, email: true },
+    };
+
+    const [orders, total] = await Promise.all([
+      this.prisma.vendorOrder.findMany({
+        where,
+        include: {
+          items: true,
+          user: {
+            select: { firstName: true, lastName: true, email: true },
+          },
         },
-      },
-      orderBy: { createdAt: 'asc' },
-    });
+        orderBy: { createdAt: 'asc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.vendorOrder.count({ where }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
 
     // Format for export (CSV-ready)
-    return orders.map((order) => ({
-      orderNumber: order.orderNumber,
-      date: order.createdAt.toISOString(),
-      customerName: `${order.user.firstName} ${order.user.lastName}`,
-      customerEmail: order.user.email,
-      status: order.status,
-      paymentMethod: order.paymentMethod,
-      itemCount: order.items.length,
-      subtotal: Number(order.subtotal),
-      commission: Number(order.commission),
-      total: Number(order.totalAmount),
-      items: order.items.map((item) => ({
-        product: item.productName,
-        quantity: item.quantity,
-        unitPrice: Number(item.unitPrice),
-        total: Number(item.totalPrice),
+    return {
+      data: orders.map((order) => ({
+        orderNumber: order.orderNumber,
+        date: order.createdAt.toISOString(),
+        customerName: `${order.user.firstName} ${order.user.lastName}`,
+        customerEmail: order.user.email,
+        status: order.status,
+        paymentMethod: order.paymentMethod,
+        itemCount: order.items.length,
+        subtotal: Number(order.subtotal),
+        commission: Number(order.commission),
+        total: Number(order.totalAmount),
+        items: order.items.map((item) => ({
+          product: item.productName,
+          quantity: item.quantity,
+          unitPrice: Number(item.unitPrice),
+          total: Number(item.totalPrice),
+        })),
       })),
-    }));
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+        dateRange: { startDate, endDate },
+      },
+    };
   }
 
   // ==================== PAYOUTS ====================
@@ -902,13 +955,36 @@ export class VendorsService {
     });
   }
 
-  async findPayouts(vendorId: string, userId: string) {
+  async findPayouts(vendorId: string, userId: string, options?: { page?: number; limit?: number }) {
     await this.verifyVendorOwnership(vendorId, userId);
 
-    return this.prisma.vendorPayout.findMany({
-      where: { vendorId },
-      orderBy: { createdAt: 'desc' },
-    });
+    const page = options?.page ?? 1;
+    const limit = Math.min(options?.limit ?? 20, 100);
+    const skip = (page - 1) * limit;
+
+    const [payouts, total] = await Promise.all([
+      this.prisma.vendorPayout.findMany({
+        where: { vendorId },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+      this.prisma.vendorPayout.count({ where: { vendorId } }),
+    ]);
+
+    const totalPages = Math.ceil(total / limit);
+
+    return {
+      data: payouts,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    };
   }
 
   async findPayoutById(vendorId: string, payoutId: string, userId: string) {
@@ -923,6 +999,480 @@ export class VendorsService {
     }
 
     return payout;
+  }
+
+  // ==================== INVENTORY MANAGEMENT ====================
+
+  /**
+   * Default low stock threshold when not specified per product
+   */
+  private readonly DEFAULT_LOW_STOCK_THRESHOLD = 10;
+
+  /**
+   * Check stock availability for a product
+   * @param productId - The product ID
+   * @param quantity - The requested quantity
+   * @returns Object with availability status, available stock, and product info
+   */
+  async checkStockAvailability(
+    productId: string,
+    quantity: number
+  ): Promise<{
+    available: boolean;
+    currentStock: number | null;
+    requestedQuantity: number;
+    product: { id: string; name: string; vendorId: string };
+    isUnlimitedStock: boolean;
+  }> {
+    const product = await this.prisma.vendorProduct.findUnique({
+      where: { id: productId },
+      select: { id: true, name: true, stock: true, vendorId: true, isAvailable: true },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    if (!product.isAvailable) {
+      throw new BadRequestException(`Product ${product.name} is not available`);
+    }
+
+    // null stock means unlimited
+    const isUnlimitedStock = product.stock === null;
+    const available = isUnlimitedStock || (product.stock !== null && product.stock >= quantity);
+
+    return {
+      available,
+      currentStock: product.stock,
+      requestedQuantity: quantity,
+      product: { id: product.id, name: product.name, vendorId: product.vendorId },
+      isUnlimitedStock,
+    };
+  }
+
+  /**
+   * Decrement stock for a product after a successful purchase
+   * @param productId - The product ID
+   * @param quantity - The quantity to decrement
+   * @returns Updated product with new stock level and low stock alert info
+   */
+  async decrementStock(
+    productId: string,
+    quantity: number
+  ): Promise<{
+    product: { id: string; name: string; stock: number | null; vendorId: string };
+    previousStock: number | null;
+    newStock: number | null;
+    lowStockAlert: boolean;
+    lowStockThreshold: number;
+  }> {
+    const product = await this.prisma.vendorProduct.findUnique({
+      where: { id: productId },
+      select: { id: true, name: true, stock: true, vendorId: true, isAvailable: true },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    // Unlimited stock - no decrement needed
+    if (product.stock === null) {
+      return {
+        product: { id: product.id, name: product.name, stock: null, vendorId: product.vendorId },
+        previousStock: null,
+        newStock: null,
+        lowStockAlert: false,
+        lowStockThreshold: this.DEFAULT_LOW_STOCK_THRESHOLD,
+      };
+    }
+
+    // Check if sufficient stock
+    if (product.stock < quantity) {
+      throw new BadRequestException(
+        `Insufficient stock for ${product.name}. Available: ${product.stock}, Requested: ${quantity}`
+      );
+    }
+
+    const previousStock = product.stock;
+    const newStock = previousStock - quantity;
+
+    // Update stock
+    const updatedProduct = await this.prisma.vendorProduct.update({
+      where: { id: productId },
+      data: {
+        stock: newStock,
+        soldCount: { increment: quantity },
+      },
+      select: { id: true, name: true, stock: true, vendorId: true },
+    });
+
+    const lowStockAlert = newStock <= this.DEFAULT_LOW_STOCK_THRESHOLD && newStock > 0;
+
+    return {
+      product: updatedProduct,
+      previousStock,
+      newStock,
+      lowStockAlert,
+      lowStockThreshold: this.DEFAULT_LOW_STOCK_THRESHOLD,
+    };
+  }
+
+  /**
+   * Bulk check stock availability for multiple products (used in order creation)
+   * @param items - Array of product IDs and quantities
+   * @returns Validation result with detailed stock info per product
+   */
+  async validateOrderStock(items: { productId: string; quantity: number }[]): Promise<{
+    valid: boolean;
+    errors: {
+      productId: string;
+      productName: string;
+      requestedQuantity: number;
+      availableStock: number | null;
+      reason: 'OUT_OF_STOCK' | 'INSUFFICIENT_STOCK' | 'NOT_AVAILABLE' | 'NOT_FOUND';
+    }[];
+    validItems: {
+      productId: string;
+      productName: string;
+      quantity: number;
+      currentStock: number | null;
+    }[];
+  }> {
+    const errors: {
+      productId: string;
+      productName: string;
+      requestedQuantity: number;
+      availableStock: number | null;
+      reason: 'OUT_OF_STOCK' | 'INSUFFICIENT_STOCK' | 'NOT_AVAILABLE' | 'NOT_FOUND';
+    }[] = [];
+
+    const validItems: {
+      productId: string;
+      productName: string;
+      quantity: number;
+      currentStock: number | null;
+    }[] = [];
+
+    // Fetch all products in one query
+    const productIds = items.map((item) => item.productId);
+    const products = await this.prisma.vendorProduct.findMany({
+      where: { id: { in: productIds } },
+      select: { id: true, name: true, stock: true, isAvailable: true },
+    });
+
+    const productMap = new Map(products.map((p) => [p.id, p]));
+
+    for (const item of items) {
+      const product = productMap.get(item.productId);
+
+      if (!product) {
+        errors.push({
+          productId: item.productId,
+          productName: 'Unknown',
+          requestedQuantity: item.quantity,
+          availableStock: null,
+          reason: 'NOT_FOUND',
+        });
+        continue;
+      }
+
+      if (!product.isAvailable) {
+        errors.push({
+          productId: item.productId,
+          productName: product.name,
+          requestedQuantity: item.quantity,
+          availableStock: product.stock,
+          reason: 'NOT_AVAILABLE',
+        });
+        continue;
+      }
+
+      // Unlimited stock
+      if (product.stock === null) {
+        validItems.push({
+          productId: product.id,
+          productName: product.name,
+          quantity: item.quantity,
+          currentStock: null,
+        });
+        continue;
+      }
+
+      // Out of stock
+      if (product.stock === 0) {
+        errors.push({
+          productId: item.productId,
+          productName: product.name,
+          requestedQuantity: item.quantity,
+          availableStock: 0,
+          reason: 'OUT_OF_STOCK',
+        });
+        continue;
+      }
+
+      // Insufficient stock
+      if (product.stock < item.quantity) {
+        errors.push({
+          productId: item.productId,
+          productName: product.name,
+          requestedQuantity: item.quantity,
+          availableStock: product.stock,
+          reason: 'INSUFFICIENT_STOCK',
+        });
+        continue;
+      }
+
+      // Valid item
+      validItems.push({
+        productId: product.id,
+        productName: product.name,
+        quantity: item.quantity,
+        currentStock: product.stock,
+      });
+    }
+
+    return {
+      valid: errors.length === 0,
+      errors,
+      validItems,
+    };
+  }
+
+  /**
+   * Get products with low stock for a vendor
+   * @param vendorId - The vendor ID
+   * @param threshold - Stock threshold (defaults to DEFAULT_LOW_STOCK_THRESHOLD)
+   * @returns Array of products with stock at or below threshold
+   */
+  async getLowStockProducts(
+    vendorId: string,
+    threshold?: number
+  ): Promise<
+    {
+      id: string;
+      name: string;
+      stock: number;
+      threshold: number;
+      percentRemaining: number;
+      category: string | null;
+    }[]
+  > {
+    const stockThreshold = threshold ?? this.DEFAULT_LOW_STOCK_THRESHOLD;
+
+    const products = await this.prisma.vendorProduct.findMany({
+      where: {
+        vendorId,
+        isAvailable: true,
+        stock: {
+          not: null,
+          lte: stockThreshold,
+        },
+      },
+      select: {
+        id: true,
+        name: true,
+        stock: true,
+        category: true,
+        soldCount: true,
+      },
+      orderBy: { stock: 'asc' },
+    });
+
+    return products.map((product) => ({
+      id: product.id,
+      name: product.name,
+      stock: product.stock!,
+      threshold: stockThreshold,
+      percentRemaining: Math.round(((product.stock ?? 0) / stockThreshold) * 100),
+      category: product.category,
+    }));
+  }
+
+  /**
+   * Get all out of stock products for a vendor
+   * @param vendorId - The vendor ID
+   * @returns Array of out of stock products
+   */
+  async getOutOfStockProducts(vendorId: string): Promise<
+    {
+      id: string;
+      name: string;
+      category: string | null;
+      soldCount: number;
+    }[]
+  > {
+    const products = await this.prisma.vendorProduct.findMany({
+      where: {
+        vendorId,
+        isAvailable: true,
+        stock: 0,
+      },
+      select: {
+        id: true,
+        name: true,
+        category: true,
+        soldCount: true,
+      },
+      orderBy: { name: 'asc' },
+    });
+
+    return products;
+  }
+
+  /**
+   * Restore stock for a product (e.g., after order cancellation)
+   * @param productId - The product ID
+   * @param quantity - The quantity to restore
+   * @returns Updated product with new stock level
+   */
+  async restoreStock(
+    productId: string,
+    quantity: number
+  ): Promise<{
+    product: { id: string; name: string; stock: number | null };
+    previousStock: number | null;
+    newStock: number | null;
+  }> {
+    const product = await this.prisma.vendorProduct.findUnique({
+      where: { id: productId },
+      select: { id: true, name: true, stock: true },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    // Unlimited stock - no restore needed
+    if (product.stock === null) {
+      return {
+        product: { id: product.id, name: product.name, stock: null },
+        previousStock: null,
+        newStock: null,
+      };
+    }
+
+    const previousStock = product.stock;
+    const newStock = previousStock + quantity;
+
+    const updatedProduct = await this.prisma.vendorProduct.update({
+      where: { id: productId },
+      data: {
+        stock: newStock,
+        soldCount: { decrement: quantity },
+      },
+      select: { id: true, name: true, stock: true },
+    });
+
+    return {
+      product: updatedProduct,
+      previousStock,
+      newStock,
+    };
+  }
+
+  /**
+   * Set stock level for a product (manual inventory update)
+   * @param productId - The product ID
+   * @param stock - New stock level (null for unlimited)
+   * @returns Updated product
+   */
+  async setStock(
+    vendorId: string,
+    productId: string,
+    userId: string,
+    stock: number | null
+  ): Promise<{
+    product: { id: string; name: string; stock: number | null };
+    previousStock: number | null;
+    lowStockAlert: boolean;
+  }> {
+    await this.verifyVendorOwnership(vendorId, userId);
+
+    const product = await this.prisma.vendorProduct.findFirst({
+      where: { id: productId, vendorId },
+      select: { id: true, name: true, stock: true },
+    });
+
+    if (!product) {
+      throw new NotFoundException('Product not found');
+    }
+
+    const previousStock = product.stock;
+
+    const updatedProduct = await this.prisma.vendorProduct.update({
+      where: { id: productId },
+      data: { stock },
+      select: { id: true, name: true, stock: true },
+    });
+
+    const lowStockAlert = stock !== null && stock <= this.DEFAULT_LOW_STOCK_THRESHOLD && stock > 0;
+
+    return {
+      product: updatedProduct,
+      previousStock,
+      lowStockAlert,
+    };
+  }
+
+  /**
+   * Get inventory summary for a vendor
+   * @param vendorId - The vendor ID
+   * @returns Inventory summary statistics
+   */
+  async getInventorySummary(vendorId: string): Promise<{
+    totalProducts: number;
+    productsWithStock: number;
+    productsWithUnlimitedStock: number;
+    outOfStockCount: number;
+    lowStockCount: number;
+    totalStockValue: number;
+    lowStockThreshold: number;
+  }> {
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { id: vendorId },
+    });
+
+    if (!vendor) {
+      throw new NotFoundException('Vendor not found');
+    }
+
+    const [totalProducts, outOfStock, lowStock, unlimitedStock, stockedProducts] =
+      await Promise.all([
+        this.prisma.vendorProduct.count({
+          where: { vendorId, isAvailable: true },
+        }),
+        this.prisma.vendorProduct.count({
+          where: { vendorId, isAvailable: true, stock: 0 },
+        }),
+        this.prisma.vendorProduct.count({
+          where: {
+            vendorId,
+            isAvailable: true,
+            stock: { not: null, gt: 0, lte: this.DEFAULT_LOW_STOCK_THRESHOLD },
+          },
+        }),
+        this.prisma.vendorProduct.count({
+          where: { vendorId, isAvailable: true, stock: null },
+        }),
+        this.prisma.vendorProduct.findMany({
+          where: { vendorId, isAvailable: true, stock: { not: null } },
+          select: { stock: true, price: true },
+        }),
+      ]);
+
+    const totalStockValue = stockedProducts.reduce((sum, p) => {
+      return sum + (p.stock ?? 0) * Number(p.price);
+    }, 0);
+
+    return {
+      totalProducts,
+      productsWithStock: totalProducts - unlimitedStock,
+      productsWithUnlimitedStock: unlimitedStock,
+      outOfStockCount: outOfStock,
+      lowStockCount: lowStock,
+      totalStockValue: Math.round(totalStockValue * 100) / 100,
+      lowStockThreshold: this.DEFAULT_LOW_STOCK_THRESHOLD,
+    };
   }
 
   // ==================== HELPERS ====================
@@ -957,14 +1507,20 @@ export class VendorsService {
   }
 
   private generateOrderNumber(vendorName: string): string {
-    const prefix = vendorName.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, 'X');
+    const prefix = vendorName
+      .substring(0, 3)
+      .toUpperCase()
+      .replace(/[^A-Z]/g, 'X');
     const timestamp = Date.now().toString(36).toUpperCase();
     const random = randomBytes(2).toString('hex').toUpperCase();
     return `${prefix}-${timestamp}-${random}`;
   }
 
   private generatePayoutReference(vendorName: string): string {
-    const prefix = vendorName.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, 'X');
+    const prefix = vendorName
+      .substring(0, 3)
+      .toUpperCase()
+      .replace(/[^A-Z]/g, 'X');
     const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
     const random = randomBytes(4).toString('hex').toUpperCase();
     return `PAY-${prefix}-${date}-${random}`;

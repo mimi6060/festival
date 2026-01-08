@@ -333,8 +333,22 @@
 ### DEV-22: Gestion d'inventaire pour les vendors
 
 - **Fichier**: `apps/api/src/modules/vendors/vendors.service.ts`
-- **Status**: [ ] À faire
+- **Status**: [x] Terminé
 - **Description**: Tracking du stock, prévention overselling
+- **Solution**:
+  - Ajouté `checkStockAvailability(productId, quantity)` - Vérifie la disponibilité du stock avant achat
+  - Ajouté `decrementStock(productId, quantity)` - Décrémente le stock après achat avec alerte stock faible
+  - Ajouté `validateOrderStock(items)` - Validation en masse du stock pour commande multi-produits
+  - Ajouté `getLowStockProducts(vendorId, threshold?)` - Liste les produits en rupture de stock imminente
+  - Ajouté `getOutOfStockProducts(vendorId)` - Liste les produits en rupture totale
+  - Ajouté `restoreStock(productId, quantity)` - Restaure le stock (annulation commande)
+  - Ajouté `setStock(vendorId, productId, userId, stock)` - Mise à jour manuelle du stock
+  - Ajouté `getInventorySummary(vendorId)` - Résumé de l'inventaire (total, ruptures, alertes)
+  - Ajouté codes d'erreur: `VENDOR_INSUFFICIENT_STOCK` (ERR_9005), `VENDOR_OUT_OF_STOCK` (ERR_9006), `VENDOR_LOW_STOCK_ALERT` (ERR_9007)
+  - Ajouté exceptions: `InsufficientStockException`, `OutOfStockException`, `LowStockAlertException`
+  - Seuil d'alerte stock faible par défaut: 10 unités
+  - Support stock illimité (null = unlimited)
+  - 29 nouveaux tests unitaires couvrant tous les cas d'inventaire
 
 ### DEV-23: Règles de cumul des codes promo
 

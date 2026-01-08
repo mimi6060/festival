@@ -386,6 +386,53 @@ export class VendorOrderFailedException extends BaseException {
   }
 }
 
+export class InsufficientStockException extends BaseException {
+  constructor(
+    productId: string,
+    productName: string,
+    requestedQuantity: number,
+    availableStock: number
+  ) {
+    super(
+      ErrorCodes.VENDOR_INSUFFICIENT_STOCK,
+      `Insufficient stock for ${productName}. Requested: ${requestedQuantity}, Available: ${availableStock}`,
+      HttpStatus.CONFLICT,
+      { productId, productName, requestedQuantity, availableStock }
+    );
+  }
+}
+
+export class OutOfStockException extends BaseException {
+  constructor(productId: string, productName: string) {
+    super(
+      ErrorCodes.VENDOR_OUT_OF_STOCK,
+      `Product ${productName} is out of stock`,
+      HttpStatus.CONFLICT,
+      { productId, productName }
+    );
+  }
+}
+
+export interface LowStockAlertData {
+  productId: string;
+  productName: string;
+  vendorId: string;
+  vendorName: string;
+  currentStock: number;
+  threshold: number;
+}
+
+export class LowStockAlertException extends BaseException {
+  constructor(alertData: LowStockAlertData) {
+    super(
+      ErrorCodes.VENDOR_LOW_STOCK_ALERT,
+      `Low stock alert: ${alertData.productName} has only ${alertData.currentStock} units (threshold: ${alertData.threshold})`,
+      HttpStatus.OK, // This is informational, not an error
+      alertData
+    );
+  }
+}
+
 // ============================================
 // FILE BUSINESS EXCEPTIONS
 // ============================================

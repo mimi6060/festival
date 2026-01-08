@@ -228,11 +228,13 @@ describe('VendorsService', () => {
       count: jest.fn(),
     },
     vendorProduct: {
+      findUnique: jest.fn(),
       findMany: jest.fn(),
       findFirst: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+      count: jest.fn(),
     },
     vendorOrder: {
       findFirst: jest.fn(),
@@ -2642,6 +2644,656 @@ describe('VendorsService', () => {
 
       // Assert - The service builds filters with both dates
       expect(mockPrismaService.vendorOrder.aggregate).toHaveBeenCalled();
+    });
+  });
+
+  // ==========================================================================
+  // INVENTORY MANAGEMENT TESTS
+  // ==========================================================================
+
+  describe('checkStockAvailability', () => {
+    it('should return available=true when sufficient stock exists', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findUnique.mockResolvedValue({
+        ...testProduct,
+        stock: 100,
+        isAvailable: true,
+      });
+
+      // Act
+      const result = await vendorsService.checkStockAvailability(testProduct.id, 10);
+
+      // Assert
+      expect(result.available).toBe(true);
+      expect(result.currentStock).toBe(100);
+      expect(result.requestedQuantity).toBe(10);
+      expect(result.isUnlimitedStock).toBe(false);
+    });
+
+    it('should return available=true for unlimited stock products', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findUnique.mockResolvedValue({
+        ...unlimitedStockProduct,
+        stock: null,
+        isAvailable: true,
+      });
+
+      // Act
+      const result = await vendorsService.checkStockAvailability(unlimitedStockProduct.id, 1000);
+
+      // Assert
+      expect(result.available).toBe(true);
+      expect(result.currentStock).toBeNull();
+      expect(result.isUnlimitedStock).toBe(true);
+    });
+
+    it('should return available=false when insufficient stock', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findUnique.mockResolvedValue({
+        ...testProduct,
+        stock: 5,
+        isAvailable: true,
+      });
+
+      // Act
+      const result = await vendorsService.checkStockAvailability(testProduct.id, 10);
+
+      // Assert
+      expect(result.available).toBe(false);
+      expect(result.currentStock).toBe(5);
+      expect(result.requestedQuantity).toBe(10);
+    });
+
+    it('should throw NotFoundException when product does not exist', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findUnique.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(vendorsService.checkStockAvailability('non-existent-id', 1)).rejects.toThrow(
+        NotFoundException
+      );
+    });
+
+    it('should throw BadRequestException when product is not available', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findUnique.mockResolvedValue({
+        ...testProduct,
+        isAvailable: false,
+      });
+
+      // Act & Assert
+      await expect(vendorsService.checkStockAvailability(testProduct.id, 1)).rejects.toThrow(
+        BadRequestException
+      );
+    });
+  });
+
+  describe('decrementStock', () => {
+    it('should decrement stock successfully and not trigger low stock alert', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findUnique.mockResolvedValue({
+        ...testProduct,
+        stock: 100,
+        isAvailable: true,
+      });
+      mockPrismaService.vendorProduct.update.mockResolvedValue({
+        id: testProduct.id,
+        name: testProduct.name,
+        stock: 90,
+        vendorId: testProduct.vendorId,
+      });
+
+      // Act
+      const result = await vendorsService.decrementStock(testProduct.id, 10);
+
+      // Assert
+      expect(result.previousStock).toBe(100);
+      expect(result.newStock).toBe(90);
+      expect(result.lowStockAlert).toBe(false);
+      expect(mockPrismaService.vendorProduct.update).toHaveBeenCalledWith({
+        where: { id: testProduct.id },
+        data: {
+          stock: 90,
+          soldCount: { increment: 10 },
+        },
+        select: { id: true, name: true, stock: true, vendorId: true },
+      });
+    });
+
+    it('should trigger low stock alert when stock falls below threshold', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findUnique.mockResolvedValue({
+        ...testProduct,
+        stock: 15,
+        isAvailable: true,
+      });
+      mockPrismaService.vendorProduct.update.mockResolvedValue({
+        id: testProduct.id,
+        name: testProduct.name,
+        stock: 5,
+        vendorId: testProduct.vendorId,
+      });
+
+      // Act
+      const result = await vendorsService.decrementStock(testProduct.id, 10);
+
+      // Assert
+      expect(result.previousStock).toBe(15);
+      expect(result.newStock).toBe(5);
+      expect(result.lowStockAlert).toBe(true);
+      expect(result.lowStockThreshold).toBe(10);
+    });
+
+    it('should not decrement stock for unlimited stock products', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findUnique.mockResolvedValue({
+        ...unlimitedStockProduct,
+        stock: null,
+        isAvailable: true,
+      });
+
+      // Act
+      const result = await vendorsService.decrementStock(unlimitedStockProduct.id, 100);
+
+      // Assert
+      expect(result.previousStock).toBeNull();
+      expect(result.newStock).toBeNull();
+      expect(result.lowStockAlert).toBe(false);
+      expect(mockPrismaService.vendorProduct.update).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when insufficient stock', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findUnique.mockResolvedValue({
+        ...testProduct,
+        stock: 5,
+        isAvailable: true,
+      });
+
+      // Act & Assert
+      await expect(vendorsService.decrementStock(testProduct.id, 10)).rejects.toThrow(
+        BadRequestException
+      );
+    });
+
+    it('should throw NotFoundException when product does not exist', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findUnique.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(vendorsService.decrementStock('non-existent-id', 1)).rejects.toThrow(
+        NotFoundException
+      );
+    });
+
+    it('should not trigger low stock alert when stock reaches exactly zero', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findUnique.mockResolvedValue({
+        ...testProduct,
+        stock: 10,
+        isAvailable: true,
+      });
+      mockPrismaService.vendorProduct.update.mockResolvedValue({
+        id: testProduct.id,
+        name: testProduct.name,
+        stock: 0,
+        vendorId: testProduct.vendorId,
+      });
+
+      // Act
+      const result = await vendorsService.decrementStock(testProduct.id, 10);
+
+      // Assert
+      expect(result.newStock).toBe(0);
+      expect(result.lowStockAlert).toBe(false); // Low stock alert only for stock > 0
+    });
+  });
+
+  describe('validateOrderStock', () => {
+    it('should validate all items successfully when stock is available', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findMany.mockResolvedValue([
+        { id: testProduct.id, name: testProduct.name, stock: 100, isAvailable: true },
+        { id: testProduct2.id, name: testProduct2.name, stock: 50, isAvailable: true },
+      ]);
+
+      // Act
+      const result = await vendorsService.validateOrderStock([
+        { productId: testProduct.id, quantity: 5 },
+        { productId: testProduct2.id, quantity: 3 },
+      ]);
+
+      // Assert
+      expect(result.valid).toBe(true);
+      expect(result.errors).toHaveLength(0);
+      expect(result.validItems).toHaveLength(2);
+    });
+
+    it('should return errors for out of stock items', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findMany.mockResolvedValue([
+        { id: testProduct.id, name: testProduct.name, stock: 0, isAvailable: true },
+      ]);
+
+      // Act
+      const result = await vendorsService.validateOrderStock([
+        { productId: testProduct.id, quantity: 5 },
+      ]);
+
+      // Assert
+      expect(result.valid).toBe(false);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0].reason).toBe('OUT_OF_STOCK');
+      expect(result.errors[0].availableStock).toBe(0);
+    });
+
+    it('should return errors for insufficient stock', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findMany.mockResolvedValue([
+        { id: testProduct.id, name: testProduct.name, stock: 3, isAvailable: true },
+      ]);
+
+      // Act
+      const result = await vendorsService.validateOrderStock([
+        { productId: testProduct.id, quantity: 10 },
+      ]);
+
+      // Assert
+      expect(result.valid).toBe(false);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0].reason).toBe('INSUFFICIENT_STOCK');
+      expect(result.errors[0].availableStock).toBe(3);
+      expect(result.errors[0].requestedQuantity).toBe(10);
+    });
+
+    it('should return errors for unavailable products', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findMany.mockResolvedValue([
+        { id: testProduct.id, name: testProduct.name, stock: 100, isAvailable: false },
+      ]);
+
+      // Act
+      const result = await vendorsService.validateOrderStock([
+        { productId: testProduct.id, quantity: 5 },
+      ]);
+
+      // Assert
+      expect(result.valid).toBe(false);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0].reason).toBe('NOT_AVAILABLE');
+    });
+
+    it('should return errors for non-existent products', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findMany.mockResolvedValue([]);
+
+      // Act
+      const result = await vendorsService.validateOrderStock([
+        { productId: 'non-existent-id', quantity: 5 },
+      ]);
+
+      // Assert
+      expect(result.valid).toBe(false);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0].reason).toBe('NOT_FOUND');
+      expect(result.errors[0].productName).toBe('Unknown');
+    });
+
+    it('should allow unlimited stock products', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findMany.mockResolvedValue([
+        {
+          id: unlimitedStockProduct.id,
+          name: unlimitedStockProduct.name,
+          stock: null,
+          isAvailable: true,
+        },
+      ]);
+
+      // Act
+      const result = await vendorsService.validateOrderStock([
+        { productId: unlimitedStockProduct.id, quantity: 1000 },
+      ]);
+
+      // Assert
+      expect(result.valid).toBe(true);
+      expect(result.validItems).toHaveLength(1);
+      expect(result.validItems[0].currentStock).toBeNull();
+    });
+
+    it('should handle mixed valid and invalid items', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findMany.mockResolvedValue([
+        { id: testProduct.id, name: testProduct.name, stock: 100, isAvailable: true },
+        { id: testProduct2.id, name: testProduct2.name, stock: 2, isAvailable: true },
+      ]);
+
+      // Act
+      const result = await vendorsService.validateOrderStock([
+        { productId: testProduct.id, quantity: 5 },
+        { productId: testProduct2.id, quantity: 10 },
+      ]);
+
+      // Assert
+      expect(result.valid).toBe(false);
+      expect(result.validItems).toHaveLength(1);
+      expect(result.errors).toHaveLength(1);
+      expect(result.errors[0].productId).toBe(testProduct2.id);
+    });
+  });
+
+  describe('getLowStockProducts', () => {
+    it('should return products with low stock', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findMany.mockResolvedValue([
+        {
+          id: testProduct.id,
+          name: testProduct.name,
+          stock: 5,
+          category: 'Burgers',
+          soldCount: 95,
+        },
+        {
+          id: testProduct2.id,
+          name: testProduct2.name,
+          stock: 8,
+          category: 'Burgers',
+          soldCount: 42,
+        },
+      ]);
+
+      // Act
+      const result = await vendorsService.getLowStockProducts(foodVendor.id);
+
+      // Assert
+      expect(result).toHaveLength(2);
+      expect(result[0].stock).toBe(5);
+      expect(result[0].threshold).toBe(10);
+      expect(result[0].percentRemaining).toBe(50);
+    });
+
+    it('should use custom threshold when provided', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findMany.mockResolvedValue([]);
+
+      // Act
+      await vendorsService.getLowStockProducts(foodVendor.id, 20);
+
+      // Assert
+      expect(mockPrismaService.vendorProduct.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            stock: { not: null, lte: 20 },
+          }),
+        })
+      );
+    });
+
+    it('should return empty array when no low stock products', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findMany.mockResolvedValue([]);
+
+      // Act
+      const result = await vendorsService.getLowStockProducts(foodVendor.id);
+
+      // Assert
+      expect(result).toHaveLength(0);
+    });
+  });
+
+  describe('getOutOfStockProducts', () => {
+    it('should return out of stock products', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findMany.mockResolvedValue([
+        { id: testProduct.id, name: testProduct.name, category: 'Burgers', soldCount: 100 },
+      ]);
+
+      // Act
+      const result = await vendorsService.getOutOfStockProducts(foodVendor.id);
+
+      // Assert
+      expect(result).toHaveLength(1);
+      expect(result[0].id).toBe(testProduct.id);
+      expect(result[0].soldCount).toBe(100);
+    });
+
+    it('should only query products with stock = 0', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findMany.mockResolvedValue([]);
+
+      // Act
+      await vendorsService.getOutOfStockProducts(foodVendor.id);
+
+      // Assert
+      expect(mockPrismaService.vendorProduct.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            vendorId: foodVendor.id,
+            isAvailable: true,
+            stock: 0,
+          }),
+        })
+      );
+    });
+  });
+
+  describe('restoreStock', () => {
+    it('should restore stock successfully', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findUnique.mockResolvedValue({
+        id: testProduct.id,
+        name: testProduct.name,
+        stock: 90,
+      });
+      mockPrismaService.vendorProduct.update.mockResolvedValue({
+        id: testProduct.id,
+        name: testProduct.name,
+        stock: 100,
+      });
+
+      // Act
+      const result = await vendorsService.restoreStock(testProduct.id, 10);
+
+      // Assert
+      expect(result.previousStock).toBe(90);
+      expect(result.newStock).toBe(100);
+      expect(mockPrismaService.vendorProduct.update).toHaveBeenCalledWith({
+        where: { id: testProduct.id },
+        data: {
+          stock: 100,
+          soldCount: { decrement: 10 },
+        },
+        select: { id: true, name: true, stock: true },
+      });
+    });
+
+    it('should not restore stock for unlimited stock products', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findUnique.mockResolvedValue({
+        id: unlimitedStockProduct.id,
+        name: unlimitedStockProduct.name,
+        stock: null,
+      });
+
+      // Act
+      const result = await vendorsService.restoreStock(unlimitedStockProduct.id, 10);
+
+      // Assert
+      expect(result.previousStock).toBeNull();
+      expect(result.newStock).toBeNull();
+      expect(mockPrismaService.vendorProduct.update).not.toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException when product does not exist', async () => {
+      // Arrange
+      mockPrismaService.vendorProduct.findUnique.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(vendorsService.restoreStock('non-existent-id', 10)).rejects.toThrow(
+        NotFoundException
+      );
+    });
+  });
+
+  describe('setStock', () => {
+    it('should set stock level successfully', async () => {
+      // Arrange
+      mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
+      mockPrismaService.user.findUnique.mockResolvedValue(organizerUser);
+      mockPrismaService.vendorProduct.findFirst.mockResolvedValue({
+        id: testProduct.id,
+        name: testProduct.name,
+        stock: 100,
+      });
+      mockPrismaService.vendorProduct.update.mockResolvedValue({
+        id: testProduct.id,
+        name: testProduct.name,
+        stock: 50,
+      });
+
+      // Act
+      const result = await vendorsService.setStock(
+        foodVendor.id,
+        testProduct.id,
+        organizerUser.id,
+        50
+      );
+
+      // Assert
+      expect(result.previousStock).toBe(100);
+      expect(result.product.stock).toBe(50);
+      expect(result.lowStockAlert).toBe(false);
+    });
+
+    it('should trigger low stock alert when setting low stock', async () => {
+      // Arrange
+      mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
+      mockPrismaService.user.findUnique.mockResolvedValue(organizerUser);
+      mockPrismaService.vendorProduct.findFirst.mockResolvedValue({
+        id: testProduct.id,
+        name: testProduct.name,
+        stock: 100,
+      });
+      mockPrismaService.vendorProduct.update.mockResolvedValue({
+        id: testProduct.id,
+        name: testProduct.name,
+        stock: 5,
+      });
+
+      // Act
+      const result = await vendorsService.setStock(
+        foodVendor.id,
+        testProduct.id,
+        organizerUser.id,
+        5
+      );
+
+      // Assert
+      expect(result.lowStockAlert).toBe(true);
+    });
+
+    it('should allow setting stock to null for unlimited', async () => {
+      // Arrange
+      mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
+      mockPrismaService.user.findUnique.mockResolvedValue(organizerUser);
+      mockPrismaService.vendorProduct.findFirst.mockResolvedValue({
+        id: testProduct.id,
+        name: testProduct.name,
+        stock: 100,
+      });
+      mockPrismaService.vendorProduct.update.mockResolvedValue({
+        id: testProduct.id,
+        name: testProduct.name,
+        stock: null,
+      });
+
+      // Act
+      const result = await vendorsService.setStock(
+        foodVendor.id,
+        testProduct.id,
+        organizerUser.id,
+        null
+      );
+
+      // Assert
+      expect(result.product.stock).toBeNull();
+      expect(result.lowStockAlert).toBe(false);
+    });
+
+    it('should throw ForbiddenException for unauthorized user', async () => {
+      // Arrange
+      mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
+      mockPrismaService.user.findUnique.mockResolvedValue(regularUser);
+
+      // Act & Assert
+      await expect(
+        vendorsService.setStock(foodVendor.id, testProduct.id, regularUser.id, 50)
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw NotFoundException when product does not exist', async () => {
+      // Arrange
+      mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
+      mockPrismaService.user.findUnique.mockResolvedValue(organizerUser);
+      mockPrismaService.vendorProduct.findFirst.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        vendorsService.setStock(foodVendor.id, 'non-existent-id', organizerUser.id, 50)
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('getInventorySummary', () => {
+    it('should return complete inventory summary', async () => {
+      // Arrange
+      mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
+      mockPrismaService.vendorProduct.count
+        .mockResolvedValueOnce(10) // totalProducts
+        .mockResolvedValueOnce(2) // outOfStock
+        .mockResolvedValueOnce(3) // lowStock
+        .mockResolvedValueOnce(2); // unlimitedStock
+      mockPrismaService.vendorProduct.findMany.mockResolvedValue([
+        { stock: 100, price: new Prisma.Decimal(10) },
+        { stock: 50, price: new Prisma.Decimal(15) },
+        { stock: 20, price: new Prisma.Decimal(5) },
+      ]);
+
+      // Act
+      const result = await vendorsService.getInventorySummary(foodVendor.id);
+
+      // Assert
+      expect(result.totalProducts).toBe(10);
+      expect(result.outOfStockCount).toBe(2);
+      expect(result.lowStockCount).toBe(3);
+      expect(result.productsWithUnlimitedStock).toBe(2);
+      expect(result.productsWithStock).toBe(8); // totalProducts - unlimitedStock
+      expect(result.totalStockValue).toBe(1850); // 100*10 + 50*15 + 20*5
+      expect(result.lowStockThreshold).toBe(10);
+    });
+
+    it('should throw NotFoundException when vendor does not exist', async () => {
+      // Arrange
+      mockPrismaService.vendor.findUnique.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(vendorsService.getInventorySummary('non-existent-id')).rejects.toThrow(
+        NotFoundException
+      );
+    });
+
+    it('should handle vendor with no products', async () => {
+      // Arrange
+      mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
+      mockPrismaService.vendorProduct.count.mockResolvedValue(0);
+      mockPrismaService.vendorProduct.findMany.mockResolvedValue([]);
+
+      // Act
+      const result = await vendorsService.getInventorySummary(foodVendor.id);
+
+      // Assert
+      expect(result.totalProducts).toBe(0);
+      expect(result.totalStockValue).toBe(0);
     });
   });
 });

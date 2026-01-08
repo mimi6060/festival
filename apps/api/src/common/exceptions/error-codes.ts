@@ -113,6 +113,9 @@ export const ErrorCodes = {
   VENDOR_PRODUCT_UNAVAILABLE: 'ERR_9002',
   VENDOR_ORDER_FAILED: 'ERR_9003',
   VENDOR_CLOSED: 'ERR_9004',
+  VENDOR_INSUFFICIENT_STOCK: 'ERR_9005',
+  VENDOR_OUT_OF_STOCK: 'ERR_9006',
+  VENDOR_LOW_STOCK_ALERT: 'ERR_9007',
 
   // ============================================
   // ZONE/ACCESS ERRORS (10xxx)
@@ -455,6 +458,18 @@ export const ErrorMessages: Record<ErrorCode, { fr: string; en: string }> = {
   [ErrorCodes.VENDOR_CLOSED]: {
     fr: 'Ce stand est actuellement ferme.',
     en: 'This stand is currently closed.',
+  },
+  [ErrorCodes.VENDOR_INSUFFICIENT_STOCK]: {
+    fr: 'Stock insuffisant pour ce produit.',
+    en: 'Insufficient stock for this product.',
+  },
+  [ErrorCodes.VENDOR_OUT_OF_STOCK]: {
+    fr: 'Ce produit est en rupture de stock.',
+    en: 'This product is out of stock.',
+  },
+  [ErrorCodes.VENDOR_LOW_STOCK_ALERT]: {
+    fr: 'Stock faible pour ce produit.',
+    en: 'Low stock alert for this product.',
   },
 
   // Zone
