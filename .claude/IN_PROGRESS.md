@@ -650,6 +650,28 @@
 
 ---
 
+## Session 2026-01-08 - Documentation Database Seeding
+
+### Tâches terminées cette session:
+
+- [x] **Created comprehensive Database Seeding documentation (docs/DATABASE_SEEDING.md)**
+  - **Quick Start**: How to run seed, what data is created
+  - **Seed Data Overview**: Statistics table with entity counts
+  - **Demo Accounts**: All 6 demo accounts with emails, passwords, and roles
+  - **Festivals Created**: 4 festivals (COMPLETED, ONGOING, PUBLISHED) with details
+  - **Data Structure Details**:
+    - 15 Ticket Categories (STANDARD, VIP, BACKSTAGE, CAMPING, PARKING, COMBO)
+    - 15 Zones per festival
+    - 25 Artists (French electro, pop, rap)
+    - 15 Vendors with 6 products each
+    - 27 POIs per festival
+    - FAQ categories and items
+  - **Customizing Seeds**: CONFIG constants, adding data, environment-specific seeding
+  - **Production Considerations**: Never run in production, manual admin creation (3 methods)
+  - **Troubleshooting**: Common issues and solutions
+
+---
+
 ## Prochaines étapes suggérées
 
 - [ ] Enable OAuth providers with real credentials (Google Console, GitHub Developer)
