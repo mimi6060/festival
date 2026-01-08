@@ -194,8 +194,16 @@
 ### DEV-12: Optimiser les requêtes Program avec sélection de champs
 
 - **Fichier**: `apps/api/src/modules/program/program.service.ts`
-- **Status**: [ ] À faire
+- **Status**: [x] Terminé
 - **Description**: Ajouter `select` explicite aux requêtes
+- **Implémentation**:
+  - Ajouté `select` explicite à `getProgram()` et `getProgramByDay()` pour ne charger que id, startTime, endTime
+  - Optimisation des relations artist/stage avec sous-select des champs nécessaires uniquement
+  - Ajouté `select` explicite à `getArtists()` pour charger uniquement id, name, genre, bio, imageUrl
+  - Ajouté `select` explicite à `getStages()` pour charger uniquement id, name, description, capacity, location
+  - Ajouté `select` explicite à `getArtistById()` avec les champs du DTO
+  - Ajouté `select` explicite à `getArtistPerformances()` avec isCancelled pour dériver le status
+  - Tests unitaires mis à jour pour valider les nouvelles structures de requête (76 tests passants)
 
 ### DEV-13: Ajouter la pagination partout
 
