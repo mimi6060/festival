@@ -468,3 +468,28 @@ export class FileUploadFailedException extends BaseException {
     );
   }
 }
+
+// ============================================
+// PROMO CODE BUSINESS EXCEPTIONS
+// ============================================
+export class PromoCodeNotStackableException extends BaseException {
+  constructor(promoCode: string, appliedCodesCount: number) {
+    super(
+      ErrorCodes.PROMO_CODE_NOT_STACKABLE,
+      `Promo code "${promoCode}" cannot be stacked with ${appliedCodesCount} other code(s)`,
+      HttpStatus.BAD_REQUEST,
+      { promoCode, appliedCodesCount }
+    );
+  }
+}
+
+export class PromoCodeAlreadyAppliedException extends BaseException {
+  constructor(promoCode: string, promoCodeId: string) {
+    super(
+      ErrorCodes.PROMO_CODE_ALREADY_APPLIED,
+      `Promo code "${promoCode}" has already been applied to this purchase`,
+      HttpStatus.CONFLICT,
+      { promoCode, promoCodeId }
+    );
+  }
+}

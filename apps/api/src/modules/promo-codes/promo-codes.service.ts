@@ -12,6 +12,11 @@ import {
   ApplyPromoCodeDto,
 } from './dto';
 import { DiscountType, Prisma } from '@prisma/client';
+import { ErrorCodes } from '../../common/exceptions/error-codes';
+import {
+  PromoCodeNotStackableException,
+  PromoCodeAlreadyAppliedException,
+} from '../../common/exceptions/business.exception';
 
 export interface PromoCodeValidationResult {
   valid: boolean;
@@ -25,6 +30,7 @@ export interface PromoCodeValidationResult {
   discountAmount?: number;
   finalAmount?: number;
   error?: string;
+  errorCode?: string;
 }
 
 @Injectable()
@@ -337,6 +343,7 @@ export class PromoCodesService {
         return {
           valid: false,
           error: stackingValidation.error,
+          errorCode: stackingValidation.errorCode,
         };
       }
     }
@@ -389,18 +396,19 @@ export class PromoCodesService {
    * @param newCodeId - ID du nouveau code à appliquer
    * @param newCodeStackable - Si le nouveau code est cumulable
    * @param appliedPromoCodeIds - Liste des IDs des codes déjà appliqués
-   * @returns Résultat de validation avec message d'erreur si non valide
+   * @returns Résultat de validation avec message d'erreur et code d'erreur si non valide
    */
   async validateStacking(
     newCodeId: string,
     newCodeStackable: boolean,
     appliedPromoCodeIds: string[]
-  ): Promise<{ valid: boolean; error?: string }> {
+  ): Promise<{ valid: boolean; error?: string; errorCode?: string }> {
     // Vérifier si le nouveau code a déjà été appliqué
     if (appliedPromoCodeIds.includes(newCodeId)) {
       return {
         valid: false,
         error: 'Ce code promo a déjà été appliqué à cet achat',
+        errorCode: ErrorCodes.PROMO_CODE_ALREADY_APPLIED,
       };
     }
 
@@ -410,6 +418,7 @@ export class PromoCodesService {
         valid: false,
         error:
           "Ce code promo ne peut pas être cumulé avec d'autres codes. Veuillez retirer les codes existants avant d'appliquer celui-ci.",
+        errorCode: ErrorCodes.PROMO_CODE_NOT_STACKABLE,
       };
     }
 
@@ -433,10 +442,58 @@ export class PromoCodesService {
       return {
         valid: false,
         error: `Le(s) code(s) promo suivant(s) ne peuvent pas être cumulés avec d'autres codes: ${nonStackableCodeNames}. Veuillez les retirer avant d'ajouter un nouveau code.`,
+        errorCode: ErrorCodes.PROMO_CODE_NOT_STACKABLE,
       };
     }
 
     return { valid: true };
+  }
+
+  /**
+   * Valide les règles de cumul des codes promo et lance une exception si non valide
+   *
+   * @param newCodeId - ID du nouveau code à appliquer
+   * @param newCode - Code promo à appliquer
+   * @param newCodeStackable - Si le nouveau code est cumulable
+   * @param appliedPromoCodeIds - Liste des IDs des codes déjà appliqués
+   * @throws PromoCodeAlreadyAppliedException - Si le code a déjà été appliqué
+   * @throws PromoCodeNotStackableException - Si le code ne peut pas être cumulé
+   */
+  async validateStackingOrThrow(
+    newCodeId: string,
+    newCode: string,
+    newCodeStackable: boolean,
+    appliedPromoCodeIds: string[]
+  ): Promise<void> {
+    // Vérifier si le nouveau code a déjà été appliqué
+    if (appliedPromoCodeIds.includes(newCodeId)) {
+      throw new PromoCodeAlreadyAppliedException(newCode, newCodeId);
+    }
+
+    // Si le nouveau code n'est pas cumulable, interdire l'application
+    if (!newCodeStackable) {
+      throw new PromoCodeNotStackableException(newCode, appliedPromoCodeIds.length);
+    }
+
+    // Récupérer les codes déjà appliqués pour vérifier s'ils sont cumulables
+    const appliedCodes = await this.prisma.promoCode.findMany({
+      where: {
+        id: { in: appliedPromoCodeIds },
+      },
+      select: {
+        id: true,
+        code: true,
+        stackable: true,
+      },
+    });
+
+    // Vérifier que tous les codes appliqués sont cumulables
+    const nonStackableCodes = appliedCodes.filter((code) => !code.stackable);
+
+    if (nonStackableCodes.length > 0) {
+      const nonStackableCodeNames = nonStackableCodes.map((c) => c.code).join(', ');
+      throw new PromoCodeNotStackableException(nonStackableCodeNames, appliedPromoCodeIds.length);
+    }
   }
 
   /**

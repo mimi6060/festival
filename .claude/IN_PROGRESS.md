@@ -2,12 +2,18 @@
 
 ---
 
-## CTO Mission - COMPLETED
+## DEV-23 - Règles de cumul des codes promo - COMPLETED
 
 **Date de fin**: 2026-01-08
-**Résultat**: 30/30 développeurs ont terminé leurs tâches
+**Résultat**: Implementation complete avec tests
 
-Toutes les tâches ont été déplacées vers `DONE.md`.
+### Travail effectué:
+
+1. Ajout des codes d'erreur `PROMO_CODE_NOT_STACKABLE` (ERR_13001) et `PROMO_CODE_ALREADY_APPLIED` (ERR_13002)
+2. Création des exceptions `PromoCodeNotStackableException` et `PromoCodeAlreadyAppliedException`
+3. Mise à jour du service `validateStacking()` avec retour des codes d'erreur
+4. Ajout de la méthode `validateStackingOrThrow()` pour lever des exceptions
+5. Ajout de 10+ tests unitaires pour les règles de cumul
 
 ---
 
@@ -20,7 +26,7 @@ Toutes les tâches ont été déplacées vers `DONE.md`.
 | Functions  | **84.22%** | 80%    | Exceeded |
 | Lines      | **86.06%** | 80%    | Exceeded |
 
-**Total Tests: 5,050+** | **Test Suites: 96+**
+**Total Tests: 5,061+** | **Test Suites: 96+**
 
 ---
 

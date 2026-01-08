@@ -154,6 +154,13 @@ export const ErrorCodes = {
   SCHEDULE_CONFLICT: 'ERR_12300',
   SCHEDULE_LOCKED: 'ERR_12301',
   SETLIST_NOT_FOUND: 'ERR_12400',
+
+  // ============================================
+  // PROMO CODE ERRORS (13xxx)
+  // ============================================
+  PROMO_CODE_NOT_FOUND: 'ERR_13000',
+  PROMO_CODE_NOT_STACKABLE: 'ERR_13001',
+  PROMO_CODE_ALREADY_APPLIED: 'ERR_13002',
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
@@ -580,6 +587,20 @@ export const ErrorMessages: Record<ErrorCode, { fr: string; en: string }> = {
   [ErrorCodes.SETLIST_NOT_FOUND]: {
     fr: 'Setlist non trouvee.',
     en: 'Setlist not found.',
+  },
+
+  // Promo Code
+  [ErrorCodes.PROMO_CODE_NOT_FOUND]: {
+    fr: 'Code promo non trouve.',
+    en: 'Promo code not found.',
+  },
+  [ErrorCodes.PROMO_CODE_NOT_STACKABLE]: {
+    fr: "Ce code promo ne peut pas etre cumule avec d'autres codes.",
+    en: 'This promo code cannot be combined with other codes.',
+  },
+  [ErrorCodes.PROMO_CODE_ALREADY_APPLIED]: {
+    fr: 'Ce code promo a deja ete applique a cet achat.',
+    en: 'This promo code has already been applied to this purchase.',
   },
 };
 

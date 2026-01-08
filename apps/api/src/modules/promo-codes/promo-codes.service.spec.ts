@@ -1326,6 +1326,40 @@ describe('PromoCodesService', () => {
         expect(result.valid).toBe(false);
         expect(result.error).toContain('ne peut pas être cumulé');
       });
+
+      it('should include error code when stacking validation fails', async () => {
+        // Arrange
+        mockPrismaService.promoCode.findUnique.mockResolvedValue(mockNonStackableCode);
+
+        // Act
+        const result = await service.apply({
+          code: 'NONSTACKABLE',
+          amount: 100,
+          festivalId: mockFestival.id,
+          appliedPromoCodeIds: ['other-promo-uuid'],
+        });
+
+        // Assert
+        expect(result.valid).toBe(false);
+        expect(result.errorCode).toBe('ERR_13001');
+      });
+
+      it('should include error code when code already applied', async () => {
+        // Arrange
+        mockPrismaService.promoCode.findUnique.mockResolvedValue(mockStackableCode);
+
+        // Act
+        const result = await service.apply({
+          code: 'STACKABLE10',
+          amount: 100,
+          festivalId: mockFestival.id,
+          appliedPromoCodeIds: [mockStackableCode.id],
+        });
+
+        // Assert
+        expect(result.valid).toBe(false);
+        expect(result.errorCode).toBe('ERR_13002');
+      });
     });
   });
 
@@ -1424,6 +1458,137 @@ describe('PromoCodesService', () => {
       expect(result.valid).toBe(false);
       expect(result.error).toContain('CODE1');
       expect(result.error).toContain('CODE2');
+    });
+
+    it('should return PROMO_CODE_ALREADY_APPLIED error code when code already applied', async () => {
+      // Act
+      const result = await service.validateStacking('code-id-123', true, [
+        'code-id-123',
+        'other-code-id',
+      ]);
+
+      // Assert
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe('ERR_13002');
+    });
+
+    it('should return PROMO_CODE_NOT_STACKABLE error code when code is not stackable', async () => {
+      // Act
+      const result = await service.validateStacking('new-code-id', false, ['applied-code-id']);
+
+      // Assert
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe('ERR_13001');
+    });
+
+    it('should return PROMO_CODE_NOT_STACKABLE error code when applied code is not stackable', async () => {
+      // Arrange
+      mockPrismaService.promoCode.findMany.mockResolvedValue([
+        { id: 'non-stackable-1', code: 'NOSTACK', stackable: false },
+      ]);
+
+      // Act
+      const result = await service.validateStacking('new-stackable-code', true, [
+        'non-stackable-1',
+      ]);
+
+      // Assert
+      expect(result.valid).toBe(false);
+      expect(result.errorCode).toBe('ERR_13001');
+    });
+
+    it('should not return error code when validation succeeds', async () => {
+      // Arrange
+      mockPrismaService.promoCode.findMany.mockResolvedValue([
+        { id: 'stackable-1', code: 'STACK1', stackable: true },
+      ]);
+
+      // Act
+      const result = await service.validateStacking('new-stackable-code', true, ['stackable-1']);
+
+      // Assert
+      expect(result.valid).toBe(true);
+      expect(result.errorCode).toBeUndefined();
+    });
+  });
+
+  // ==========================================================================
+  // Validate Stacking Or Throw Tests
+  // ==========================================================================
+
+  describe('validateStackingOrThrow', () => {
+    const mockStackableCode = {
+      id: 'stackable-1',
+      code: 'STACK1',
+      stackable: true,
+    };
+
+    const mockNonStackableCode = {
+      id: 'non-stackable-1',
+      code: 'NOSTACK',
+      stackable: false,
+    };
+
+    it('should throw PromoCodeAlreadyAppliedException when code already applied', async () => {
+      // Act & Assert
+      // The user message is in French: "Ce code promo a deja ete applique a cet achat."
+      await expect(
+        service.validateStackingOrThrow('code-id-123', 'MYCODE', true, [
+          'code-id-123',
+          'other-code-id',
+        ])
+      ).rejects.toThrow('Ce code promo a deja ete applique a cet achat');
+    });
+
+    it('should throw PromoCodeNotStackableException when new code is not stackable', async () => {
+      // Act & Assert
+      // The user message is in French: "Ce code promo ne peut pas etre cumule avec d'autres codes."
+      await expect(
+        service.validateStackingOrThrow('new-code-id', 'NONSTACKCODE', false, ['applied-code-id'])
+      ).rejects.toThrow("Ce code promo ne peut pas etre cumule avec d'autres codes");
+    });
+
+    it('should throw PromoCodeNotStackableException when applied code is not stackable', async () => {
+      // Arrange
+      mockPrismaService.promoCode.findMany.mockResolvedValue([mockNonStackableCode]);
+
+      // Act & Assert
+      // The user message is in French: "Ce code promo ne peut pas etre cumule avec d'autres codes."
+      await expect(
+        service.validateStackingOrThrow('new-stackable-code', 'NEWCODE', true, [
+          mockNonStackableCode.id,
+        ])
+      ).rejects.toThrow("Ce code promo ne peut pas etre cumule avec d'autres codes");
+    });
+
+    it('should not throw when all codes are stackable', async () => {
+      // Arrange
+      mockPrismaService.promoCode.findMany.mockResolvedValue([mockStackableCode]);
+
+      // Act & Assert
+      await expect(
+        service.validateStackingOrThrow('new-stackable-code', 'NEWCODE', true, [
+          mockStackableCode.id,
+        ])
+      ).resolves.not.toThrow();
+    });
+
+    it('should throw exception with correct error code when non-stackable codes exist', async () => {
+      // Arrange
+      const multipleNonStackable = [
+        { id: 'ns-1', code: 'CODE1', stackable: false },
+        { id: 'ns-2', code: 'CODE2', stackable: false },
+      ];
+      mockPrismaService.promoCode.findMany.mockResolvedValue(multipleNonStackable);
+
+      // Act & Assert
+      // The exception contains the error code ERR_13001 (PROMO_CODE_NOT_STACKABLE)
+      try {
+        await service.validateStackingOrThrow('new-code', 'NEWCODE', true, ['ns-1', 'ns-2']);
+        fail('Expected exception to be thrown');
+      } catch (error: unknown) {
+        expect((error as { errorCode?: string }).errorCode).toBe('ERR_13001');
+      }
     });
   });
 
