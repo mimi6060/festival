@@ -33,6 +33,7 @@ import {
   validLoginInput,
   toPrismaUser,
 } from '../../test/fixtures';
+import { EmailService } from '../email/email.service';
 
 // ============================================================================
 // Mock Setup
@@ -64,6 +65,7 @@ describe('AuthService', () => {
 
   const mockJwtService = {
     signAsync: jest.fn(),
+    sign: jest.fn().mockReturnValue('mocked.verification.token'),
     verify: jest.fn(),
   };
 
@@ -92,6 +94,16 @@ describe('AuthService', () => {
     }),
   };
 
+  const mockEmailService = {
+    sendPasswordResetEmail: jest
+      .fn()
+      .mockResolvedValue({ success: true, messageId: 'test-message-id' }),
+    sendVerificationEmail: jest
+      .fn()
+      .mockResolvedValue({ success: true, messageId: 'test-message-id' }),
+    sendWelcomeEmail: jest.fn().mockResolvedValue({ success: true, messageId: 'test-message-id' }),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -101,6 +113,7 @@ describe('AuthService', () => {
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: JwtService, useValue: mockJwtService },
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: EmailService, useValue: mockEmailService },
       ],
     }).compile();
 
@@ -938,6 +951,48 @@ describe('AuthService', () => {
       expect(expiryTime).toBeGreaterThan(now + 59 * 60 * 1000);
       expect(expiryTime).toBeLessThan(now + 61 * 60 * 1000);
     });
+
+    it('should send password reset email to user', async () => {
+      // Arrange
+      const user = toPrismaUser(regularUser);
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
+      mockPrismaService.user.update.mockResolvedValue(user);
+
+      // Act
+      await authService.forgotPassword(regularUser.email);
+
+      // Assert
+      expect(mockEmailService.sendPasswordResetEmail).toHaveBeenCalledWith(
+        user.email,
+        expect.objectContaining({
+          firstName: user.firstName,
+          resetUrl: expect.stringContaining('/reset-password?token='),
+          expiresIn: '1 hour',
+        })
+      );
+    });
+
+    it('should not send email for non-existent user', async () => {
+      // Arrange
+      mockPrismaService.user.findUnique.mockResolvedValue(null);
+
+      // Act
+      await authService.forgotPassword('nonexistent@example.com');
+
+      // Assert
+      expect(mockEmailService.sendPasswordResetEmail).not.toHaveBeenCalled();
+    });
+
+    it('should handle email sending failure gracefully', async () => {
+      // Arrange
+      const user = toPrismaUser(regularUser);
+      mockPrismaService.user.findUnique.mockResolvedValue(user);
+      mockPrismaService.user.update.mockResolvedValue(user);
+      mockEmailService.sendPasswordResetEmail.mockRejectedValue(new Error('SMTP error'));
+
+      // Act & Assert - should not throw despite email failure
+      await expect(authService.forgotPassword(regularUser.email)).resolves.toBeUndefined();
+    });
   });
 
   // ==========================================================================
@@ -1456,12 +1511,12 @@ describe('AuthService', () => {
       });
 
       // Act & Assert
-      await expect(
-        authService.refreshTokens({ refreshToken: 'any.token' })
-      ).rejects.toThrow(UnauthorizedException);
-      await expect(
-        authService.refreshTokens({ refreshToken: 'any.token' })
-      ).rejects.toThrow('Custom unauthorized message');
+      await expect(authService.refreshTokens({ refreshToken: 'any.token' })).rejects.toThrow(
+        UnauthorizedException
+      );
+      await expect(authService.refreshTokens({ refreshToken: 'any.token' })).rejects.toThrow(
+        'Custom unauthorized message'
+      );
     });
 
     it('should wrap non-UnauthorizedException errors', async () => {
@@ -1471,12 +1526,12 @@ describe('AuthService', () => {
       });
 
       // Act & Assert
-      await expect(
-        authService.refreshTokens({ refreshToken: 'expired.token' })
-      ).rejects.toThrow(UnauthorizedException);
-      await expect(
-        authService.refreshTokens({ refreshToken: 'expired.token' })
-      ).rejects.toThrow('Invalid or expired refresh token');
+      await expect(authService.refreshTokens({ refreshToken: 'expired.token' })).rejects.toThrow(
+        UnauthorizedException
+      );
+      await expect(authService.refreshTokens({ refreshToken: 'expired.token' })).rejects.toThrow(
+        'Invalid or expired refresh token'
+      );
     });
   });
 });

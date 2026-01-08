@@ -8,19 +8,21 @@
  * - User ticket management
  */
 
-import {
-  Injectable,
-  Logger,
-} from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
-import { TicketStatus, TicketType, FestivalStatus, Prisma } from '@prisma/client';
+import { EmailService } from '../email/email.service';
+import {
+  TicketStatus,
+  TicketType,
+  FestivalStatus,
+  Prisma,
+  UserRole,
+  UserStatus,
+} from '@prisma/client';
 import * as QRCode from 'qrcode';
 import { v4 as uuidv4 } from 'uuid';
 import * as crypto from 'crypto';
-
-import { PaginationDto } from '../../common/dto/pagination.dto';
-import { paginate } from '@festival/utils';
 
 // Import BusinessException pattern
 import {
@@ -34,11 +36,9 @@ import {
   TicketSaleNotStartedException,
   TicketSaleEndedException,
   TicketAlreadyUsedException,
-  InvalidQRCodeException,
+  TicketTransferFailedException,
   FestivalCancelledException,
   FestivalEndedException,
-  ZoneCapacityReachedException,
-  ZoneAccessDeniedException,
 } from '../../common/exceptions/business.exception';
 // ============================================================================
 // Types
@@ -97,7 +97,8 @@ export class TicketsService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly emailService: EmailService
   ) {
     // Validate QR code secret is configured and meets minimum security requirements
     const qrSecret = this.configService.getOrThrow<string>('QR_CODE_SECRET');
@@ -154,7 +155,11 @@ export class TicketsService {
 
     if (category.festivalId !== festivalId) {
       throw new ValidationException('Category does not belong to this festival', [
-        { field: 'categoryId', message: 'Category does not belong to this festival', value: categoryId },
+        {
+          field: 'categoryId',
+          message: 'Category does not belong to this festival',
+          value: categoryId,
+        },
       ]);
     }
 
@@ -527,6 +532,152 @@ export class TicketsService {
     ]);
 
     this.logger.log(`Ticket ${ticketId} cancelled by user ${userId}`);
+
+    return this.mapToEntity(updatedTicket);
+  }
+
+  /**
+   * Transfer a ticket to another user
+   */
+  async transferTicket(
+    ticketId: string,
+    fromUserId: string,
+    toUserEmail: string
+  ): Promise<TicketEntity> {
+    const normalizedEmail = toUserEmail.toLowerCase().trim();
+
+    // Validate ticket exists and belongs to the sender
+    const ticket = await this.prisma.ticket.findUnique({
+      where: { id: ticketId },
+      include: {
+        festival: true,
+        category: true,
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+    });
+
+    if (!ticket) {
+      throw NotFoundException.ticket(ticketId);
+    }
+
+    if (ticket.userId !== fromUserId) {
+      throw ForbiddenException.resourceForbidden(`ticket:${ticketId}`);
+    }
+
+    // Validate ticket is not already used
+    if (ticket.status === TicketStatus.USED) {
+      throw new TicketAlreadyUsedException(ticketId, ticket.usedAt || new Date());
+    }
+
+    // Validate ticket is not cancelled or refunded
+    if (ticket.status === TicketStatus.CANCELLED) {
+      throw new TicketTransferFailedException(ticketId, 'Ticket has been cancelled');
+    }
+
+    if (ticket.status === TicketStatus.REFUNDED) {
+      throw new TicketTransferFailedException(ticketId, 'Ticket has been refunded');
+    }
+
+    // Validate the festival is not ended or cancelled
+    if (ticket.festival.status === FestivalStatus.CANCELLED) {
+      throw new FestivalCancelledException(ticket.festivalId);
+    }
+
+    if (ticket.festival.status === FestivalStatus.COMPLETED) {
+      throw new FestivalEndedException(ticket.festivalId, ticket.festival.endDate);
+    }
+
+    // Prevent self-transfer
+    if (ticket.user.email.toLowerCase() === normalizedEmail) {
+      throw new TicketTransferFailedException(ticketId, 'Cannot transfer ticket to yourself');
+    }
+
+    // Find or create the recipient user
+    let recipientUser = await this.prisma.user.findUnique({
+      where: { email: normalizedEmail },
+    });
+
+    if (!recipientUser) {
+      // Create a new user with pending verification status
+      recipientUser = await this.prisma.user.create({
+        data: {
+          email: normalizedEmail,
+          passwordHash: '', // Will need to set password on first login
+          firstName: '',
+          lastName: '',
+          role: UserRole.USER,
+          status: UserStatus.PENDING_VERIFICATION,
+          emailVerified: false,
+        },
+      });
+
+      this.logger.log(`Created new user ${normalizedEmail} for ticket transfer`);
+    }
+
+    // Check recipient's ticket quota for this category
+    const recipientTicketCount = await this.prisma.ticket.count({
+      where: {
+        userId: recipientUser.id,
+        categoryId: ticket.categoryId,
+        status: { in: [TicketStatus.SOLD, TicketStatus.RESERVED] },
+      },
+    });
+
+    if (recipientTicketCount >= ticket.category.maxPerUser) {
+      throw new TicketTransferFailedException(
+        ticketId,
+        `Recipient has reached maximum tickets for this category (${ticket.category.maxPerUser})`
+      );
+    }
+
+    // Transfer the ticket
+    const updatedTicket = await this.prisma.ticket.update({
+      where: { id: ticketId },
+      data: {
+        userId: recipientUser.id,
+        transferredFromUserId: fromUserId,
+        transferredAt: new Date(),
+      },
+      include: {
+        festival: {
+          select: { id: true, name: true, startDate: true, endDate: true, location: true },
+        },
+        category: {
+          select: { id: true, name: true, type: true },
+        },
+      },
+    });
+
+    this.logger.log(
+      `Ticket ${ticketId} transferred from ${ticket.user.email} to ${normalizedEmail}`
+    );
+
+    // Send notification email to the recipient
+    try {
+      await this.emailService.sendTicketTransferEmail(normalizedEmail, {
+        recipientFirstName: recipientUser.firstName || undefined,
+        senderFirstName: ticket.user.firstName,
+        senderLastName: ticket.user.lastName,
+        senderEmail: ticket.user.email,
+        festivalName: ticket.festival.name,
+        ticketType: ticket.category.name,
+        ticketCode: ticket.qrCode,
+        eventDate: ticket.festival.startDate,
+        eventLocation: ticket.festival.location || undefined,
+      });
+    } catch (error) {
+      // Log the error but don't fail the transfer
+      this.logger.warn(
+        `Failed to send transfer notification email to ${normalizedEmail}: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
 
     return this.mapToEntity(updatedTicket);
   }

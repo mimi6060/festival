@@ -226,8 +226,24 @@
 ### DEV-24: Transfert de tickets
 
 - **Fichier**: `apps/api/src/modules/tickets/tickets.service.ts`
-- **Status**: [ ] À faire
+- **Status**: [x] Terminé
 - **Description**: POST /tickets/:id/transfer
+- **Solution**:
+  - Ajouté `TransferTicketDto` avec validation email dans `tickets.dto.ts`
+  - Ajouté `TicketTransferFailedException` dans `business.exception.ts`
+  - Ajouté méthode `transferTicket()` dans TicketsService avec:
+    - Validation que le ticket appartient à l'expéditeur
+    - Validation que le ticket n'est pas utilisé/annulé/remboursé
+    - Validation que le festival n'est pas terminé/annulé
+    - Prévention de l'auto-transfert
+    - Création automatique du destinataire si inexistant
+    - Vérification des quotas du destinataire
+    - Mise à jour des champs `transferredFromUserId` et `transferredAt`
+  - Ajouté endpoint `POST /tickets/:id/transfer` dans TicketsController
+  - Ajouté `sendTicketTransferEmail()` dans EmailService
+  - Mis à jour le schéma Prisma avec les champs `transferredFromUserId`, `transferredAt` et la relation `TicketTransfers`
+  - Ajouté index sur `transferredFromUserId` pour les requêtes performantes
+  - Mis à jour les tests unitaires avec mock EmailService
 
 ### DEV-25: Limites de compte cashless
 

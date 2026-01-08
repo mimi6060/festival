@@ -21,11 +21,11 @@ export interface SendEmailOptions {
   subject: string;
   template: string;
   context: Record<string, unknown>;
-  attachments?: Array<{
+  attachments?: {
     filename: string;
     content: Buffer | string;
     contentType?: string;
-  }>;
+  }[];
   cc?: string | string[];
   bcc?: string | string[];
   replyTo?: string;
@@ -46,7 +46,7 @@ export interface SendEmailOptions {
 export class EmailService implements OnModuleInit {
   private readonly logger = new Logger(EmailService.name);
   private transporter: nodemailer.Transporter | null = null;
-  private templates: Map<string, HandlebarsTemplateDelegate> = new Map();
+  private templates = new Map<string, HandlebarsTemplateDelegate>();
   private readonly templateDir: string;
   private readonly config: EmailConfig;
   private isEnabled = false;
@@ -54,7 +54,9 @@ export class EmailService implements OnModuleInit {
   constructor(private readonly configService: ConfigService) {
     this.templateDir = path.join(__dirname, 'templates');
     this.config = {
-      from: this.configService.get<string>('SMTP_FROM') || 'Festival Platform <noreply@festival-platform.com>',
+      from:
+        this.configService.get<string>('SMTP_FROM') ||
+        'Festival Platform <noreply@festival-platform.com>',
       replyTo: this.configService.get<string>('SMTP_REPLY_TO'),
     };
   }
@@ -93,7 +95,9 @@ export class EmailService implements OnModuleInit {
       this.isEnabled = true;
       this.logger.log('Email transporter initialized successfully');
     } catch (error) {
-      this.logger.error(`Failed to initialize email transporter: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Failed to initialize email transporter: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -114,10 +118,7 @@ export class EmailService implements OnModuleInit {
         partialFiles.forEach((file) => {
           if (file.endsWith('.hbs')) {
             const partialName = file.replace('.hbs', '');
-            const partialContent = fs.readFileSync(
-              path.join(partialsDir, file),
-              'utf-8',
-            );
+            const partialContent = fs.readFileSync(path.join(partialsDir, file), 'utf-8');
             handlebars.registerPartial(partialName, partialContent);
             this.logger.debug(`Loaded partial: ${partialName}`);
           }
@@ -131,10 +132,7 @@ export class EmailService implements OnModuleInit {
         layoutFiles.forEach((file) => {
           if (file.endsWith('.hbs')) {
             const layoutName = `layout-${file.replace('.hbs', '')}`;
-            const layoutContent = fs.readFileSync(
-              path.join(layoutsDir, file),
-              'utf-8',
-            );
+            const layoutContent = fs.readFileSync(path.join(layoutsDir, file), 'utf-8');
             handlebars.registerPartial(layoutName, layoutContent);
             this.logger.debug(`Loaded layout: ${layoutName}`);
           }
@@ -146,10 +144,7 @@ export class EmailService implements OnModuleInit {
       templateFiles.forEach((file) => {
         if (file.endsWith('.hbs')) {
           const templateName = file.replace('.hbs', '');
-          const templateContent = fs.readFileSync(
-            path.join(this.templateDir, file),
-            'utf-8',
-          );
+          const templateContent = fs.readFileSync(path.join(this.templateDir, file), 'utf-8');
           this.templates.set(templateName, handlebars.compile(templateContent));
           this.logger.debug(`Loaded template: ${templateName}`);
         }
@@ -157,7 +152,9 @@ export class EmailService implements OnModuleInit {
 
       this.logger.log(`Loaded ${this.templates.size} email templates`);
     } catch (error) {
-      this.logger.error(`Failed to load email templates: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `Failed to load email templates: ${error instanceof Error ? error.message : String(error)}`
+      );
     }
   }
 
@@ -167,7 +164,9 @@ export class EmailService implements OnModuleInit {
   private registerHelpers(): void {
     // Format date helper
     handlebars.registerHelper('formatDate', (date: Date, format: string) => {
-      if (!date) return '';
+      if (!date) {
+        return '';
+      }
       const d = new Date(date);
 
       switch (format) {
@@ -193,8 +192,10 @@ export class EmailService implements OnModuleInit {
     });
 
     // Format currency helper
-    handlebars.registerHelper('formatCurrency', (amount: number, currency: string = 'EUR') => {
-      if (amount === undefined || amount === null) return '';
+    handlebars.registerHelper('formatCurrency', (amount: number, currency = 'EUR') => {
+      if (amount === undefined || amount === null) {
+        return '';
+      }
       return new Intl.NumberFormat('fr-FR', {
         style: 'currency',
         currency,
@@ -202,9 +203,12 @@ export class EmailService implements OnModuleInit {
     });
 
     // Conditional helper
-    handlebars.registerHelper('ifEquals', function (this: unknown, arg1: unknown, arg2: unknown, options: Handlebars.HelperOptions) {
-      return arg1 === arg2 ? options.fn(this) : options.inverse(this);
-    });
+    handlebars.registerHelper(
+      'ifEquals',
+      function (this: unknown, arg1: unknown, arg2: unknown, options: Handlebars.HelperOptions) {
+        return arg1 === arg2 ? options.fn(this) : options.inverse(this);
+      }
+    );
 
     // Uppercase helper
     handlebars.registerHelper('uppercase', (str: string) => {
@@ -223,8 +227,12 @@ export class EmailService implements OnModuleInit {
 
     // Truncate helper
     handlebars.registerHelper('truncate', (str: string, length: number) => {
-      if (!str) return '';
-      if (str.length <= length) return str;
+      if (!str) {
+        return '';
+      }
+      if (str.length <= length) {
+        return str;
+      }
       return str.substring(0, length) + '...';
     });
 
@@ -241,7 +249,9 @@ export class EmailService implements OnModuleInit {
   /**
    * Send an email using a template
    */
-  async sendEmail(options: SendEmailOptions): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  async sendEmail(
+    options: SendEmailOptions
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     if (!this.isEnabled || !this.transporter) {
       this.logger.warn('Email sending is disabled');
       return { success: false, error: 'Email service is not configured' };
@@ -258,7 +268,8 @@ export class EmailService implements OnModuleInit {
         ...options.context,
         currentYear: new Date().getFullYear(),
         companyName: this.configService.get<string>('COMPANY_NAME') || 'Festival Platform',
-        websiteUrl: this.configService.get<string>('WEBSITE_URL') || 'https://festival-platform.com',
+        websiteUrl:
+          this.configService.get<string>('WEBSITE_URL') || 'https://festival-platform.com',
       });
 
       // Generate plain text version (basic HTML stripping)
@@ -299,7 +310,10 @@ export class EmailService implements OnModuleInit {
   /**
    * Send a welcome email
    */
-  async sendWelcomeEmail(to: string, context: { firstName: string; lastName: string; email: string }): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  async sendWelcomeEmail(
+    to: string,
+    context: { firstName: string; lastName: string; email: string }
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     return this.sendEmail({
       to,
       subject: 'Bienvenue sur Festival Platform!',
@@ -311,7 +325,10 @@ export class EmailService implements OnModuleInit {
   /**
    * Send a verification email
    */
-  async sendVerificationEmail(to: string, context: { firstName: string; verificationUrl: string; expiresIn: string }): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  async sendVerificationEmail(
+    to: string,
+    context: { firstName: string; verificationUrl: string; expiresIn: string }
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     return this.sendEmail({
       to,
       subject: 'Verifiez votre adresse email',
@@ -323,7 +340,10 @@ export class EmailService implements OnModuleInit {
   /**
    * Send a password reset email
    */
-  async sendPasswordResetEmail(to: string, context: { firstName: string; resetUrl: string; expiresIn: string }): Promise<{ success: boolean; messageId?: string; error?: string }> {
+  async sendPasswordResetEmail(
+    to: string,
+    context: { firstName: string; resetUrl: string; expiresIn: string }
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     return this.sendEmail({
       to,
       subject: 'Reinitialisation de votre mot de passe',
@@ -348,7 +368,7 @@ export class EmailService implements OnModuleInit {
       purchasePrice: number;
       currency: string;
     },
-    ticketPdf?: Buffer,
+    ticketPdf?: Buffer
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     const attachments = ticketPdf
       ? [
@@ -381,10 +401,10 @@ export class EmailService implements OnModuleInit {
       amount: number;
       currency: string;
       paymentMethod: string;
-      items: Array<{ name: string; quantity: number; price: number }>;
+      items: { name: string; quantity: number; price: number }[];
       festivalName?: string;
     },
-    invoicePdf?: Buffer,
+    invoicePdf?: Buffer
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     const attachments = invoicePdf
       ? [
@@ -421,7 +441,7 @@ export class EmailService implements OnModuleInit {
       currency: string;
       reason?: string;
       festivalName?: string;
-    },
+    }
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     return this.sendEmail({
       to,
@@ -442,7 +462,7 @@ export class EmailService implements OnModuleInit {
       currency: string;
       newBalance: number;
       festivalName: string;
-    },
+    }
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     return this.sendEmail({
       to,
@@ -466,7 +486,7 @@ export class EmailService implements OnModuleInit {
       startDate: Date;
       endDate: Date;
       zone?: string;
-    },
+    }
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     return this.sendEmail({
       to,
@@ -487,12 +507,37 @@ export class EmailService implements OnModuleInit {
       ticketSubject: string;
       responseMessage: string;
       staffName?: string;
-    },
+    }
   ): Promise<{ success: boolean; messageId?: string; error?: string }> {
     return this.sendEmail({
       to,
       subject: `Re: ${context.ticketSubject}`,
       template: 'support-response',
+      context,
+    });
+  }
+
+  /**
+   * Send a ticket transfer notification email to the recipient
+   */
+  async sendTicketTransferEmail(
+    to: string,
+    context: {
+      recipientFirstName?: string;
+      senderFirstName: string;
+      senderLastName: string;
+      senderEmail: string;
+      festivalName: string;
+      ticketType: string;
+      ticketCode: string;
+      eventDate: Date;
+      eventLocation?: string;
+    }
+  ): Promise<{ success: boolean; messageId?: string; error?: string }> {
+    return this.sendEmail({
+      to,
+      subject: `Un billet vous a ete transfere pour ${context.festivalName}`,
+      template: 'ticket-transfer',
       context,
     });
   }
@@ -510,7 +555,9 @@ export class EmailService implements OnModuleInit {
       this.logger.log('SMTP connection verified successfully');
       return true;
     } catch (error) {
-      this.logger.error(`SMTP verification failed: ${error instanceof Error ? error.message : String(error)}`);
+      this.logger.error(
+        `SMTP verification failed: ${error instanceof Error ? error.message : String(error)}`
+      );
       return false;
     }
   }

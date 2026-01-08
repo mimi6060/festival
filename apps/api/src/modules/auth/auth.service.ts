@@ -24,6 +24,7 @@ import * as crypto from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserRole, UserStatus, User, AuthProvider } from '@prisma/client';
 import { RegisterDto, LoginDto, RefreshTokenDto, ResetPasswordDto, ChangePasswordDto } from './dto';
+import { EmailService } from '../email/email.service';
 
 // OAuth user data interface
 export interface OAuthUserData {
@@ -91,7 +92,8 @@ export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwtService: JwtService,
-    private readonly configService: ConfigService
+    private readonly configService: ConfigService,
+    private readonly emailService: EmailService
   ) {
     // Token expiration in seconds - fail fast if not configured
     this.accessTokenExpiresIn = this.configService.getOrThrow<number>('JWT_ACCESS_EXPIRES_IN');
@@ -145,7 +147,8 @@ export class AuthService {
 
     this.logger.log(`New user registered: ${normalizedEmail}`);
 
-    // TODO: Send verification email
+    // Send verification email
+    await this.sendVerificationEmailToUser(user);
 
     return {
       user: this.sanitizeUser(user),
@@ -324,8 +327,33 @@ export class AuthService {
       },
     });
 
-    // TODO: Send email with resetToken (unhashed) to user
-    // The resetToken should be sent in the email as a link: /reset-password?token={resetToken}
+    // Build password reset URL
+    const websiteUrl =
+      this.configService.get<string>('WEBSITE_URL') || 'https://festival-platform.com';
+    const resetUrl = `${websiteUrl}/reset-password?token=${resetToken}`;
+
+    // Send password reset email
+    try {
+      const result = await this.emailService.sendPasswordResetEmail(user.email, {
+        firstName: user.firstName,
+        resetUrl,
+        expiresIn: '1 hour',
+      });
+
+      if (result.success) {
+        this.logger.log(`Password reset email sent to: ${normalizedEmail}`);
+      } else {
+        this.logger.warn(
+          `Failed to send password reset email to ${normalizedEmail}: ${result.error}`
+        );
+      }
+    } catch (error) {
+      // Log the error but don't throw - we don't want to expose whether the email exists
+      this.logger.error(
+        `Error sending password reset email to ${normalizedEmail}: ${error instanceof Error ? error.message : String(error)}`
+      );
+    }
+
     this.logger.log(`Password reset token generated for: ${normalizedEmail}`);
   }
 
@@ -576,5 +604,47 @@ export class AuthService {
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
+  }
+
+  /**
+   * Generate email verification token
+   * Uses JWT with a dedicated secret and 24-hour expiration
+   */
+  private generateVerificationToken(userId: string, email: string): string {
+    return this.jwtService.sign(
+      { sub: userId, email, type: 'email_verification' },
+      {
+        secret: this.configService.getOrThrow<string>('JWT_ACCESS_SECRET'),
+        expiresIn: '24h',
+      }
+    );
+  }
+
+  /**
+   * Send verification email to newly registered user
+   * Gracefully handles errors to not block registration
+   */
+  private async sendVerificationEmailToUser(user: User): Promise<void> {
+    try {
+      const verificationToken = this.generateVerificationToken(user.id, user.email);
+      const baseUrl = this.configService.get<string>('FRONTEND_URL') || 'http://localhost:3000';
+      const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
+
+      const result = await this.emailService.sendVerificationEmail(user.email, {
+        firstName: user.firstName,
+        verificationUrl,
+        expiresIn: '24 heures',
+      });
+
+      if (result.success) {
+        this.logger.log(`Verification email sent to: ${user.email}`);
+      } else {
+        this.logger.warn(`Failed to send verification email to ${user.email}: ${result.error}`);
+      }
+    } catch (error) {
+      // Log the error but don't fail the registration
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      this.logger.error(`Error sending verification email to ${user.email}: ${errorMessage}`);
+    }
   }
 }

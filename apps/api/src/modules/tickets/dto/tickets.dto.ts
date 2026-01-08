@@ -53,3 +53,9 @@ export class ValidateTicketDto {
   @IsOptional()
   zoneId?: string;
 }
+
+export class TransferTicketDto {
+  @IsEmail()
+  @IsNotEmpty()
+  recipientEmail: string;
+}
