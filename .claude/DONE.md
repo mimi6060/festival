@@ -2,6 +2,40 @@
 
 ---
 
+## Session 2026-01-08 - Tests Unitaires Vendors Module Coverage Improvement
+
+### Improved Vendors Module Test Coverage (170 tests total)
+
+- [x] **Created `vendors.controller.spec.ts` (72 tests)**:
+  - VendorsController: Comprehensive tests for all endpoints
+    - CRUD operations: create, findAll, findOne, update, remove
+    - Product management: createProduct, findAllProducts, findProduct, updateProduct, deleteProduct, updateStock
+    - Order management: createOrder, findVendorOrders, findOrder, updateOrderStatus
+    - Statistics: getStats, exportData
+    - Payouts: createPayout, findPayouts, findPayout
+    - QR code: getMenuByQrCode, regenerateQrCode
+  - UserOrdersController: findMyOrders tests
+  - Edge cases: dev-user-id fallback, error propagation
+
+- [x] **Expanded `vendors.service.spec.ts` (+22 tests)**:
+  - findOrdersByVendor: paginated, filters (status, userId, startDate, endDate), authorization
+  - findUserOrders: paginated, filters, empty array, pagination handling
+  - findOrderById: with details, NotFoundException, search criteria
+  - findPayoutById: success, NotFoundException, ForbiddenException
+  - updateOrderStatus - additional branches: estimatedReadyAt, cancellation without cashless, cancelReason
+  - refundCashlessPayment edge cases: no account, vendor not found during refund
+  - createOrder - additional branches: options and notes in items, multiple items
+  - verifyVendorOwnership - ORGANIZER role: ORGANIZER can access vendor they don't own
+  - getVendorStats - additional edge cases: both startDate and endDate
+
+- [x] **Final Coverage Results**:
+  - Statement coverage: **98.82%** (target: 85%+)
+  - Branch coverage: **87.65%** (target: 75%+)
+  - Function coverage: **100%**
+  - Line coverage: **99.19%**
+
+---
+
 ## Session 2026-01-08 - Tests Unitaires Promo Codes Module
 
 ### Unit Tests for PromoCodesService (68 tests)

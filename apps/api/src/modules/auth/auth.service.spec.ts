@@ -939,4 +939,544 @@ describe('AuthService', () => {
       expect(expiryTime).toBeLessThan(now + 61 * 60 * 1000);
     });
   });
+
+  // ==========================================================================
+  // OAuth User Validation Tests
+  // ==========================================================================
+
+  describe('validateOAuthUser', () => {
+    const oauthData = {
+      email: 'oauth@example.com',
+      firstName: 'OAuth',
+      lastName: 'User',
+      avatarUrl: 'https://example.com/avatar.jpg',
+      provider: 'google',
+      providerId: 'google-123456',
+    };
+
+    it('should create new user for first-time OAuth login', async () => {
+      // Arrange
+      mockPrismaService.user.findUnique.mockResolvedValue(null);
+      const createdUser = {
+        id: 'new-oauth-user-id',
+        email: oauthData.email,
+        firstName: oauthData.firstName,
+        lastName: oauthData.lastName,
+        avatarUrl: oauthData.avatarUrl,
+        phone: null,
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
+        emailVerified: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      mockPrismaService.user.create.mockResolvedValue(createdUser);
+
+      // Act
+      const result = await authService.validateOAuthUser(oauthData);
+
+      // Assert
+      expect(result.email).toBe(oauthData.email);
+      expect(result.firstName).toBe(oauthData.firstName);
+      expect(mockPrismaService.user.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          email: oauthData.email,
+          firstName: oauthData.firstName,
+          lastName: oauthData.lastName,
+          avatarUrl: oauthData.avatarUrl,
+          authProvider: 'GOOGLE',
+          oauthProviderId: oauthData.providerId,
+          passwordHash: null,
+          role: UserRole.USER,
+          status: UserStatus.ACTIVE,
+          emailVerified: true,
+        }),
+      });
+    });
+
+    it('should update existing user on OAuth login with same provider', async () => {
+      // Arrange
+      const existingUser = {
+        id: 'existing-user-id',
+        email: oauthData.email,
+        firstName: 'Existing',
+        lastName: 'User',
+        avatarUrl: null,
+        phone: '+33612345678',
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
+        emailVerified: false,
+        authProvider: 'GOOGLE',
+        oauthProviderId: 'old-google-id',
+        passwordHash: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      mockPrismaService.user.findUnique.mockResolvedValue(existingUser);
+      mockPrismaService.user.update.mockResolvedValue({
+        ...existingUser,
+        avatarUrl: oauthData.avatarUrl,
+        emailVerified: true,
+        status: UserStatus.ACTIVE,
+      });
+
+      // Act
+      const result = await authService.validateOAuthUser(oauthData);
+
+      // Assert
+      expect(result.id).toBe(existingUser.id);
+      expect(mockPrismaService.user.update).toHaveBeenCalledWith({
+        where: { id: existingUser.id },
+        data: expect.objectContaining({
+          authProvider: 'GOOGLE',
+          oauthProviderId: oauthData.providerId,
+          emailVerified: true,
+          status: UserStatus.ACTIVE,
+        }),
+      });
+    });
+
+    it('should update existing LOCAL user to OAuth provider', async () => {
+      // Arrange
+      const localUser = {
+        id: 'local-user-id',
+        email: oauthData.email,
+        firstName: 'Local',
+        lastName: 'User',
+        avatarUrl: null,
+        phone: '+33612345678',
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
+        emailVerified: true,
+        authProvider: 'LOCAL',
+        oauthProviderId: null,
+        passwordHash: VALID_PASSWORD_HASH,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      mockPrismaService.user.findUnique.mockResolvedValue(localUser);
+      mockPrismaService.user.update.mockResolvedValue({
+        ...localUser,
+        authProvider: 'GOOGLE',
+        oauthProviderId: oauthData.providerId,
+      });
+
+      // Act
+      const result = await authService.validateOAuthUser(oauthData);
+
+      // Assert
+      expect(result.id).toBe(localUser.id);
+      expect(mockPrismaService.user.update).toHaveBeenCalledWith({
+        where: { id: localUser.id },
+        data: expect.objectContaining({
+          authProvider: 'GOOGLE',
+          oauthProviderId: oauthData.providerId,
+        }),
+      });
+    });
+
+    it('should not update user if using different OAuth provider', async () => {
+      // Arrange - User registered with GitHub, trying to login with Google
+      const githubUser = {
+        id: 'github-user-id',
+        email: oauthData.email,
+        firstName: 'GitHub',
+        lastName: 'User',
+        avatarUrl: 'https://github.com/avatar.jpg',
+        phone: null,
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
+        emailVerified: true,
+        authProvider: 'GITHUB',
+        oauthProviderId: 'github-123',
+        passwordHash: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      mockPrismaService.user.findUnique.mockResolvedValue(githubUser);
+
+      // Act
+      const result = await authService.validateOAuthUser(oauthData);
+
+      // Assert - Should return the user without updating
+      expect(result.id).toBe(githubUser.id);
+      expect(mockPrismaService.user.update).not.toHaveBeenCalled();
+    });
+
+    it('should normalize email to lowercase', async () => {
+      // Arrange
+      const upperCaseEmailData = {
+        ...oauthData,
+        email: 'OAUTH@EXAMPLE.COM',
+      };
+      mockPrismaService.user.findUnique.mockResolvedValue(null);
+      mockPrismaService.user.create.mockResolvedValue({
+        id: 'new-user-id',
+        email: 'oauth@example.com',
+        firstName: oauthData.firstName,
+        lastName: oauthData.lastName,
+        avatarUrl: oauthData.avatarUrl,
+        phone: null,
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
+        emailVerified: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await authService.validateOAuthUser(upperCaseEmailData);
+
+      // Assert
+      expect(mockPrismaService.user.findUnique).toHaveBeenCalledWith({
+        where: { email: 'oauth@example.com' },
+      });
+    });
+
+    it('should handle GitHub provider', async () => {
+      // Arrange
+      const githubOAuthData = {
+        ...oauthData,
+        provider: 'github',
+        providerId: 'github-789',
+      };
+      mockPrismaService.user.findUnique.mockResolvedValue(null);
+      mockPrismaService.user.create.mockResolvedValue({
+        id: 'new-github-user-id',
+        email: oauthData.email,
+        firstName: oauthData.firstName,
+        lastName: oauthData.lastName,
+        avatarUrl: oauthData.avatarUrl,
+        phone: null,
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
+        emailVerified: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await authService.validateOAuthUser(githubOAuthData);
+
+      // Assert
+      expect(mockPrismaService.user.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          authProvider: 'GITHUB',
+          oauthProviderId: 'github-789',
+        }),
+      });
+    });
+
+    it('should handle Facebook provider', async () => {
+      // Arrange
+      const facebookOAuthData = {
+        ...oauthData,
+        provider: 'facebook',
+        providerId: 'facebook-123',
+      };
+      mockPrismaService.user.findUnique.mockResolvedValue(null);
+      mockPrismaService.user.create.mockResolvedValue({
+        id: 'new-facebook-user-id',
+        email: oauthData.email,
+        firstName: oauthData.firstName,
+        lastName: oauthData.lastName,
+        avatarUrl: oauthData.avatarUrl,
+        phone: null,
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
+        emailVerified: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await authService.validateOAuthUser(facebookOAuthData);
+
+      // Assert
+      expect(mockPrismaService.user.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          authProvider: 'FACEBOOK',
+        }),
+      });
+    });
+
+    it('should handle Apple provider', async () => {
+      // Arrange
+      const appleOAuthData = {
+        ...oauthData,
+        provider: 'apple',
+        providerId: 'apple-123',
+      };
+      mockPrismaService.user.findUnique.mockResolvedValue(null);
+      mockPrismaService.user.create.mockResolvedValue({
+        id: 'new-apple-user-id',
+        email: oauthData.email,
+        firstName: oauthData.firstName,
+        lastName: oauthData.lastName,
+        avatarUrl: oauthData.avatarUrl,
+        phone: null,
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
+        emailVerified: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await authService.validateOAuthUser(appleOAuthData);
+
+      // Assert
+      expect(mockPrismaService.user.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          authProvider: 'APPLE',
+        }),
+      });
+    });
+
+    it('should default to LOCAL for unknown provider', async () => {
+      // Arrange
+      const unknownProviderData = {
+        ...oauthData,
+        provider: 'unknown-provider',
+        providerId: 'unknown-123',
+      };
+      mockPrismaService.user.findUnique.mockResolvedValue(null);
+      mockPrismaService.user.create.mockResolvedValue({
+        id: 'new-unknown-user-id',
+        email: oauthData.email,
+        firstName: oauthData.firstName,
+        lastName: oauthData.lastName,
+        avatarUrl: oauthData.avatarUrl,
+        phone: null,
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
+        emailVerified: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await authService.validateOAuthUser(unknownProviderData);
+
+      // Assert
+      expect(mockPrismaService.user.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          authProvider: 'LOCAL',
+        }),
+      });
+    });
+
+    it('should preserve existing avatar when OAuth avatar is null', async () => {
+      // Arrange
+      const noAvatarOAuthData = {
+        ...oauthData,
+        avatarUrl: null,
+      };
+      const existingUser = {
+        id: 'existing-user-id',
+        email: oauthData.email,
+        firstName: 'Existing',
+        lastName: 'User',
+        avatarUrl: 'https://existing-avatar.com/photo.jpg',
+        phone: null,
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
+        emailVerified: true,
+        authProvider: 'GOOGLE',
+        oauthProviderId: 'old-google-id',
+        passwordHash: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      mockPrismaService.user.findUnique.mockResolvedValue(existingUser);
+      mockPrismaService.user.update.mockResolvedValue(existingUser);
+
+      // Act
+      await authService.validateOAuthUser(noAvatarOAuthData);
+
+      // Assert
+      expect(mockPrismaService.user.update).toHaveBeenCalledWith({
+        where: { id: existingUser.id },
+        data: expect.objectContaining({
+          avatarUrl: existingUser.avatarUrl, // Should preserve existing
+        }),
+      });
+    });
+  });
+
+  // ==========================================================================
+  // Login OAuth Tests
+  // ==========================================================================
+
+  describe('loginOAuth', () => {
+    it('should generate tokens and update user for OAuth login', async () => {
+      // Arrange
+      const oauthUser = {
+        id: 'oauth-user-id',
+        email: 'oauth@example.com',
+        firstName: 'OAuth',
+        lastName: 'User',
+        phone: null,
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
+        emailVerified: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('oauth.access.token')
+        .mockResolvedValueOnce('oauth.refresh.token');
+      mockPrismaService.user.update.mockResolvedValue(oauthUser);
+
+      // Act
+      const result = await authService.loginOAuth(oauthUser);
+
+      // Assert
+      expect(result.user).toEqual(oauthUser);
+      expect(result.tokens.accessToken).toBe('oauth.access.token');
+      expect(result.tokens.refreshToken).toBe('oauth.refresh.token');
+      expect(result.tokens.tokenType).toBe('Bearer');
+    });
+
+    it('should update lastLoginAt and refreshToken on OAuth login', async () => {
+      // Arrange
+      const oauthUser = {
+        id: 'oauth-user-id',
+        email: 'oauth@example.com',
+        firstName: 'OAuth',
+        lastName: 'User',
+        phone: null,
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
+        emailVerified: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      mockJwtService.signAsync
+        .mockResolvedValueOnce('access.token')
+        .mockResolvedValueOnce('refresh.token');
+      mockPrismaService.user.update.mockResolvedValue(oauthUser);
+
+      // Act
+      await authService.loginOAuth(oauthUser);
+
+      // Assert
+      expect(mockPrismaService.user.update).toHaveBeenCalledWith({
+        where: { id: oauthUser.id },
+        data: {
+          refreshToken: 'refresh.token',
+          lastLoginAt: expect.any(Date),
+        },
+      });
+    });
+
+    it('should generate tokens with correct payload', async () => {
+      // Arrange
+      const adminOAuthUser = {
+        id: 'admin-oauth-id',
+        email: 'admin@example.com',
+        firstName: 'Admin',
+        lastName: 'User',
+        phone: null,
+        role: UserRole.ADMIN,
+        status: UserStatus.ACTIVE,
+        emailVerified: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      mockJwtService.signAsync.mockResolvedValue('mock.token');
+      mockPrismaService.user.update.mockResolvedValue(adminOAuthUser);
+
+      // Act
+      await authService.loginOAuth(adminOAuthUser);
+
+      // Assert - Verify the correct payload was passed to signAsync
+      expect(mockJwtService.signAsync).toHaveBeenCalledTimes(2);
+      expect(mockJwtService.signAsync).toHaveBeenNthCalledWith(
+        1,
+        {
+          sub: adminOAuthUser.id,
+          email: adminOAuthUser.email,
+          role: adminOAuthUser.role,
+        },
+        expect.any(Object)
+      );
+    });
+  });
+
+  // ==========================================================================
+  // Login Edge Cases
+  // ==========================================================================
+
+  describe('login edge cases', () => {
+    it('should allow login for verified user with ACTIVE status', async () => {
+      // Arrange - User is verified (emailVerified: true) and ACTIVE
+      const verifiedActiveUser = {
+        ...toPrismaUser(regularUser),
+        status: UserStatus.ACTIVE,
+        emailVerified: true,
+      };
+      mockPrismaService.user.findUnique.mockResolvedValue(verifiedActiveUser);
+      mockPrismaService.user.update.mockResolvedValue(verifiedActiveUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      mockJwtService.signAsync.mockResolvedValue('mock.token');
+
+      // Act & Assert - Should not throw
+      await expect(authService.login(validLoginInput)).resolves.toBeDefined();
+    });
+
+    it('should allow login when user is verified but status is not PENDING_VERIFICATION', async () => {
+      // Arrange - emailVerified is false but status is ACTIVE (not PENDING_VERIFICATION)
+      // This tests the condition: !user.emailVerified && user.status === UserStatus.PENDING_VERIFICATION
+      const activeUnverifiedUser = {
+        ...toPrismaUser(regularUser),
+        status: UserStatus.ACTIVE,
+        emailVerified: false, // Not verified but active
+      };
+      mockPrismaService.user.findUnique.mockResolvedValue(activeUnverifiedUser);
+      mockPrismaService.user.update.mockResolvedValue(activeUnverifiedUser);
+      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+      mockJwtService.signAsync.mockResolvedValue('mock.token');
+
+      // Act & Assert - Should allow login (verification check only applies to PENDING_VERIFICATION status)
+      await expect(authService.login(validLoginInput)).resolves.toBeDefined();
+    });
+  });
+
+  // ==========================================================================
+  // Refresh Tokens Edge Cases
+  // ==========================================================================
+
+  describe('refreshTokens edge cases', () => {
+    it('should re-throw UnauthorizedException directly', async () => {
+      // Arrange - verify throws UnauthorizedException
+      const unauthorizedError = new UnauthorizedException('Custom unauthorized message');
+      mockJwtService.verify.mockImplementation(() => {
+        throw unauthorizedError;
+      });
+
+      // Act & Assert
+      await expect(
+        authService.refreshTokens({ refreshToken: 'any.token' })
+      ).rejects.toThrow(UnauthorizedException);
+      await expect(
+        authService.refreshTokens({ refreshToken: 'any.token' })
+      ).rejects.toThrow('Custom unauthorized message');
+    });
+
+    it('should wrap non-UnauthorizedException errors', async () => {
+      // Arrange - verify throws a generic error
+      mockJwtService.verify.mockImplementation(() => {
+        throw new Error('Token expired');
+      });
+
+      // Act & Assert
+      await expect(
+        authService.refreshTokens({ refreshToken: 'expired.token' })
+      ).rejects.toThrow(UnauthorizedException);
+      await expect(
+        authService.refreshTokens({ refreshToken: 'expired.token' })
+      ).rejects.toThrow('Invalid or expired refresh token');
+    });
+  });
 });

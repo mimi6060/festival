@@ -780,5 +780,308 @@ describe('AuthController', () => {
       expect(googleProvider?.enabled).toBe(true);
       expect(githubProvider?.enabled).toBe(false);
     });
+
+    it('should return false for disabled providers (undefined config value)', () => {
+      // Arrange - Config returns undefined for OAuth settings
+      mockConfigService.get.mockImplementation((key: string) => {
+        if (key === 'GOOGLE_OAUTH_ENABLED') {
+          return undefined;
+        }
+        if (key === 'GITHUB_OAUTH_ENABLED') {
+          return undefined;
+        }
+        return undefined;
+      });
+
+      // Act
+      const result = controller.getOAuthProviders();
+
+      // Assert - Should default to false when undefined
+      const googleProvider = result.providers.find((p: { name: string }) => p.name === 'google');
+      const githubProvider = result.providers.find((p: { name: string }) => p.name === 'github');
+      expect(googleProvider?.enabled).toBe(false);
+      expect(githubProvider?.enabled).toBe(false);
+    });
+  });
+
+  // ==========================================================================
+  // OAuth Callback Tests
+  // ==========================================================================
+
+  describe('OAuth Callbacks', () => {
+    describe('GET /auth/google/callback', () => {
+      it('should handle Google OAuth callback and set cookies', async () => {
+        // Arrange
+        const req = mockRequest() as Request;
+        req.user = mockAuthenticatedUser;
+        const res = mockResponse() as Response;
+        mockAuthService.loginOAuth.mockResolvedValue(mockLoginResult);
+        mockConfigService.get.mockImplementation((key: string) => {
+          if (key === 'NODE_ENV') {
+            return 'test';
+          }
+          if (key === 'APP_URL') {
+            return 'http://localhost:3000';
+          }
+          return undefined;
+        });
+
+        // Act
+        await controller.googleAuthCallback(req, res);
+
+        // Assert
+        expect(mockAuthService.loginOAuth).toHaveBeenCalledWith(mockAuthenticatedUser);
+        expect(res.cookie).toHaveBeenCalledWith(
+          'access_token',
+          mockTokens.accessToken,
+          expect.objectContaining({
+            httpOnly: true,
+            path: '/',
+          })
+        );
+        expect(res.cookie).toHaveBeenCalledWith(
+          'refresh_token',
+          mockTokens.refreshToken,
+          expect.objectContaining({
+            httpOnly: true,
+            path: '/',
+          })
+        );
+        expect(res.redirect).toHaveBeenCalledWith('http://localhost:3000/auth/callback?success=true');
+      });
+
+      it('should set secure cookies in production for Google callback', async () => {
+        // Arrange
+        const req = mockRequest() as Request;
+        req.user = mockAuthenticatedUser;
+        const res = mockResponse() as Response;
+        mockAuthService.loginOAuth.mockResolvedValue(mockLoginResult);
+        mockConfigService.get.mockImplementation((key: string) => {
+          if (key === 'NODE_ENV') {
+            return 'production';
+          }
+          if (key === 'APP_URL') {
+            return 'https://myapp.com';
+          }
+          return undefined;
+        });
+
+        // Act
+        await controller.googleAuthCallback(req, res);
+
+        // Assert
+        expect(res.cookie).toHaveBeenCalledWith(
+          'access_token',
+          mockTokens.accessToken,
+          expect.objectContaining({
+            httpOnly: true,
+            secure: true,
+            sameSite: 'strict',
+          })
+        );
+      });
+
+      it('should use default APP_URL when not configured', async () => {
+        // Arrange
+        const req = mockRequest() as Request;
+        req.user = mockAuthenticatedUser;
+        const res = mockResponse() as Response;
+        mockAuthService.loginOAuth.mockResolvedValue(mockLoginResult);
+        mockConfigService.get.mockImplementation((key: string) => {
+          if (key === 'NODE_ENV') {
+            return 'test';
+          }
+          if (key === 'APP_URL') {
+            return undefined; // Not configured
+          }
+          return undefined;
+        });
+
+        // Act
+        await controller.googleAuthCallback(req, res);
+
+        // Assert
+        expect(res.redirect).toHaveBeenCalledWith('http://localhost:3000/auth/callback?success=true');
+      });
+    });
+
+    describe('GET /auth/github/callback', () => {
+      it('should handle GitHub OAuth callback and set cookies', async () => {
+        // Arrange
+        const req = mockRequest() as Request;
+        req.user = mockAuthenticatedUser;
+        const res = mockResponse() as Response;
+        mockAuthService.loginOAuth.mockResolvedValue(mockLoginResult);
+        mockConfigService.get.mockImplementation((key: string) => {
+          if (key === 'NODE_ENV') {
+            return 'test';
+          }
+          if (key === 'APP_URL') {
+            return 'http://localhost:3000';
+          }
+          return undefined;
+        });
+
+        // Act
+        await controller.githubAuthCallback(req, res);
+
+        // Assert
+        expect(mockAuthService.loginOAuth).toHaveBeenCalledWith(mockAuthenticatedUser);
+        expect(res.cookie).toHaveBeenCalledWith(
+          'access_token',
+          mockTokens.accessToken,
+          expect.objectContaining({
+            httpOnly: true,
+            path: '/',
+          })
+        );
+        expect(res.redirect).toHaveBeenCalledWith('http://localhost:3000/auth/callback?success=true');
+      });
+
+      it('should set secure cookies in production for GitHub callback', async () => {
+        // Arrange
+        const req = mockRequest() as Request;
+        req.user = mockAuthenticatedUser;
+        const res = mockResponse() as Response;
+        mockAuthService.loginOAuth.mockResolvedValue(mockLoginResult);
+        mockConfigService.get.mockImplementation((key: string) => {
+          if (key === 'NODE_ENV') {
+            return 'production';
+          }
+          if (key === 'APP_URL') {
+            return 'https://myapp.com';
+          }
+          return undefined;
+        });
+
+        // Act
+        await controller.githubAuthCallback(req, res);
+
+        // Assert
+        expect(res.cookie).toHaveBeenCalledWith(
+          'access_token',
+          mockTokens.accessToken,
+          expect.objectContaining({
+            httpOnly: true,
+            secure: true,
+            sameSite: 'strict',
+          })
+        );
+        expect(res.redirect).toHaveBeenCalledWith('https://myapp.com/auth/callback?success=true');
+      });
+    });
+
+    describe('GET /auth/google', () => {
+      it('should be defined (guard handles redirect)', async () => {
+        // Act & Assert - The method exists and can be called (guard handles the actual redirect)
+        await expect(controller.googleAuth()).resolves.toBeUndefined();
+      });
+    });
+
+    describe('GET /auth/github', () => {
+      it('should be defined (guard handles redirect)', async () => {
+        // Act & Assert - The method exists and can be called (guard handles the actual redirect)
+        await expect(controller.githubAuth()).resolves.toBeUndefined();
+      });
+    });
+  });
+
+  // ==========================================================================
+  // Refresh Token Edge Cases
+  // ==========================================================================
+
+  describe('POST /auth/refresh edge cases', () => {
+    it('should use undefined when no token in body or cookie', async () => {
+      // Arrange
+      const req = mockRequest({}) as Request; // No cookies
+      const res = mockResponse() as Response;
+      mockAuthService.refreshTokens.mockResolvedValue(mockTokens);
+
+      // Act
+      await controller.refresh({ refreshToken: '' }, req, res);
+
+      // Assert - should pass undefined from empty cookie
+      expect(mockAuthService.refreshTokens).toHaveBeenCalledWith({
+        refreshToken: undefined,
+      });
+    });
+
+    it('should handle missing cookies object', async () => {
+      // Arrange
+      const req = { cookies: undefined } as unknown as Request;
+      const res = mockResponse() as Response;
+      mockAuthService.refreshTokens.mockResolvedValue(mockTokens);
+
+      // Act
+      await controller.refresh({ refreshToken: '' }, req, res);
+
+      // Assert
+      expect(mockAuthService.refreshTokens).toHaveBeenCalledWith({
+        refreshToken: undefined,
+      });
+    });
+
+    it('should set cookies in production mode during refresh', async () => {
+      // Arrange
+      const req = mockRequest() as Request;
+      const res = mockResponse() as Response;
+      mockAuthService.refreshTokens.mockResolvedValue(mockTokens);
+      mockConfigService.get.mockImplementation((key: string) => {
+        if (key === 'NODE_ENV') {
+          return 'production';
+        }
+        return undefined;
+      });
+
+      // Act
+      await controller.refresh({ refreshToken: 'valid.token' }, req, res);
+
+      // Assert
+      expect(res.cookie).toHaveBeenCalledWith(
+        'access_token',
+        mockTokens.accessToken,
+        expect.objectContaining({
+          httpOnly: true,
+          secure: true,
+          sameSite: 'strict',
+        })
+      );
+      expect(res.cookie).toHaveBeenCalledWith(
+        'refresh_token',
+        mockTokens.refreshToken,
+        expect.objectContaining({
+          httpOnly: true,
+          secure: true,
+          sameSite: 'strict',
+        })
+      );
+    });
+
+    it('should set lax cookies in non-production mode during refresh', async () => {
+      // Arrange
+      const req = mockRequest() as Request;
+      const res = mockResponse() as Response;
+      mockAuthService.refreshTokens.mockResolvedValue(mockTokens);
+      mockConfigService.get.mockImplementation((key: string) => {
+        if (key === 'NODE_ENV') {
+          return 'development';
+        }
+        return undefined;
+      });
+
+      // Act
+      await controller.refresh({ refreshToken: 'valid.token' }, req, res);
+
+      // Assert
+      expect(res.cookie).toHaveBeenCalledWith(
+        'access_token',
+        mockTokens.accessToken,
+        expect.objectContaining({
+          httpOnly: true,
+          secure: false,
+          sameSite: 'lax',
+        })
+      );
+    });
   });
 });

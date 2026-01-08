@@ -1931,4 +1931,717 @@ describe('VendorsService', () => {
       expect(result[0].customerName).toBe('John Doe');
     });
   });
+
+  // ==========================================================================
+  // findOrdersByVendor Tests
+  // ==========================================================================
+
+  describe('findOrdersByVendor', () => {
+    it('should return paginated orders for vendor', async () => {
+      // Arrange
+      mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
+      mockPrismaService.user.findUnique.mockResolvedValue(organizerUser);
+      mockPrismaService.vendorOrder.findMany.mockResolvedValue([testOrder]);
+      mockPrismaService.vendorOrder.count.mockResolvedValue(1);
+
+      // Act
+      const result = await vendorsService.findOrdersByVendor(foodVendor.id, organizerUser.id, {
+        page: 1,
+        limit: 20,
+      });
+
+      // Assert
+      expect(result.data).toHaveLength(1);
+      expect(result.meta.total).toBe(1);
+      expect(result.meta.page).toBe(1);
+    });
+
+    it('should filter by order status', async () => {
+      // Arrange
+      mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
+      mockPrismaService.user.findUnique.mockResolvedValue(organizerUser);
+      mockPrismaService.vendorOrder.findMany.mockResolvedValue([deliveredOrder]);
+      mockPrismaService.vendorOrder.count.mockResolvedValue(1);
+
+      // Act
+      await vendorsService.findOrdersByVendor(foodVendor.id, organizerUser.id, {
+        status: 'DELIVERED',
+      });
+
+      // Assert
+      expect(mockPrismaService.vendorOrder.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: 'DELIVERED',
+          }),
+        })
+      );
+    });
+
+    it('should filter by userId', async () => {
+      // Arrange
+      mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
+      mockPrismaService.user.findUnique.mockResolvedValue(organizerUser);
+      mockPrismaService.vendorOrder.findMany.mockResolvedValue([testOrder]);
+      mockPrismaService.vendorOrder.count.mockResolvedValue(1);
+
+      // Act
+      await vendorsService.findOrdersByVendor(foodVendor.id, organizerUser.id, {
+        userId: regularUser.id,
+      });
+
+      // Assert
+      expect(mockPrismaService.vendorOrder.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            userId: regularUser.id,
+          }),
+        })
+      );
+    });
+
+    it('should filter by startDate only', async () => {
+      // Arrange
+      mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
+      mockPrismaService.user.findUnique.mockResolvedValue(organizerUser);
+      mockPrismaService.vendorOrder.findMany.mockResolvedValue([testOrder]);
+      mockPrismaService.vendorOrder.count.mockResolvedValue(1);
+
+      // Act
+      await vendorsService.findOrdersByVendor(foodVendor.id, organizerUser.id, {
+        startDate: '2026-06-01',
+      });
+
+      // Assert
+      expect(mockPrismaService.vendorOrder.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            createdAt: expect.objectContaining({
+              gte: new Date('2026-06-01'),
+            }),
+          }),
+        })
+      );
+    });
+
+    it('should filter by endDate only', async () => {
+      // Arrange
+      mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
+      mockPrismaService.user.findUnique.mockResolvedValue(organizerUser);
+      mockPrismaService.vendorOrder.findMany.mockResolvedValue([testOrder]);
+      mockPrismaService.vendorOrder.count.mockResolvedValue(1);
+
+      // Act
+      await vendorsService.findOrdersByVendor(foodVendor.id, organizerUser.id, {
+        endDate: '2026-06-30',
+      });
+
+      // Assert
+      expect(mockPrismaService.vendorOrder.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            createdAt: expect.objectContaining({
+              lte: new Date('2026-06-30'),
+            }),
+          }),
+        })
+      );
+    });
+
+    it('should throw ForbiddenException for unauthorized user', async () => {
+      // Arrange
+      mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
+      mockPrismaService.user.findUnique.mockResolvedValue(regularUser);
+
+      // Act & Assert
+      await expect(
+        vendorsService.findOrdersByVendor(foodVendor.id, regularUser.id, {})
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  // ==========================================================================
+  // findUserOrders Tests
+  // ==========================================================================
+
+  describe('findUserOrders', () => {
+    it('should return paginated orders for user', async () => {
+      // Arrange
+      mockPrismaService.vendorOrder.findMany.mockResolvedValue([testOrder]);
+      mockPrismaService.vendorOrder.count.mockResolvedValue(1);
+
+      // Act
+      const result = await vendorsService.findUserOrders(regularUser.id, { page: 1, limit: 20 });
+
+      // Assert
+      expect(result.data).toHaveLength(1);
+      expect(result.meta.total).toBe(1);
+      expect(mockPrismaService.vendorOrder.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            userId: regularUser.id,
+          }),
+        })
+      );
+    });
+
+    it('should filter by status', async () => {
+      // Arrange
+      mockPrismaService.vendorOrder.findMany.mockResolvedValue([deliveredOrder]);
+      mockPrismaService.vendorOrder.count.mockResolvedValue(1);
+
+      // Act
+      await vendorsService.findUserOrders(regularUser.id, { status: 'DELIVERED' });
+
+      // Assert
+      expect(mockPrismaService.vendorOrder.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            status: 'DELIVERED',
+          }),
+        })
+      );
+    });
+
+    it('should filter by startDate only', async () => {
+      // Arrange
+      mockPrismaService.vendorOrder.findMany.mockResolvedValue([]);
+      mockPrismaService.vendorOrder.count.mockResolvedValue(0);
+
+      // Act
+      await vendorsService.findUserOrders(regularUser.id, {
+        startDate: '2026-06-01',
+      });
+
+      // Assert
+      expect(mockPrismaService.vendorOrder.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            createdAt: expect.objectContaining({
+              gte: new Date('2026-06-01'),
+            }),
+          }),
+        })
+      );
+    });
+
+    it('should filter by endDate only', async () => {
+      // Arrange
+      mockPrismaService.vendorOrder.findMany.mockResolvedValue([]);
+      mockPrismaService.vendorOrder.count.mockResolvedValue(0);
+
+      // Act
+      await vendorsService.findUserOrders(regularUser.id, {
+        endDate: '2026-06-30',
+      });
+
+      // Assert
+      expect(mockPrismaService.vendorOrder.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            createdAt: expect.objectContaining({
+              lte: new Date('2026-06-30'),
+            }),
+          }),
+        })
+      );
+    });
+
+    it('should return empty array when no orders exist', async () => {
+      // Arrange
+      mockPrismaService.vendorOrder.findMany.mockResolvedValue([]);
+      mockPrismaService.vendorOrder.count.mockResolvedValue(0);
+
+      // Act
+      const result = await vendorsService.findUserOrders(regularUser.id, {});
+
+      // Assert
+      expect(result.data).toHaveLength(0);
+      expect(result.meta.total).toBe(0);
+    });
+
+    it('should handle pagination correctly', async () => {
+      // Arrange
+      mockPrismaService.vendorOrder.findMany.mockResolvedValue([testOrder]);
+      mockPrismaService.vendorOrder.count.mockResolvedValue(25);
+
+      // Act
+      const result = await vendorsService.findUserOrders(regularUser.id, { page: 2, limit: 10 });
+
+      // Assert
+      expect(mockPrismaService.vendorOrder.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          skip: 10,
+          take: 10,
+        })
+      );
+      expect(result.meta.totalPages).toBe(3);
+    });
+  });
+
+  // ==========================================================================
+  // findOrderById Tests
+  // ==========================================================================
+
+  describe('findOrderById', () => {
+    it('should return order with details', async () => {
+      // Arrange
+      const orderWithDetails = {
+        ...testOrder,
+        items: [
+          {
+            ...testProduct,
+            quantity: 2,
+            product: testProduct,
+          },
+        ],
+        user: {
+          id: regularUser.id,
+          firstName: 'John',
+          lastName: 'Doe',
+          email: 'john@test.com',
+        },
+        vendor: {
+          id: foodVendor.id,
+          name: foodVendor.name,
+          location: 'Zone A',
+        },
+      };
+      mockPrismaService.vendorOrder.findFirst.mockResolvedValue(orderWithDetails);
+
+      // Act
+      const result = await vendorsService.findOrderById(foodVendor.id, testOrder.id);
+
+      // Assert
+      expect(result.id).toBe(testOrder.id);
+      expect(result.user).toBeDefined();
+      expect(result.vendor).toBeDefined();
+    });
+
+    it('should throw NotFoundException when order not found', async () => {
+      // Arrange
+      mockPrismaService.vendorOrder.findFirst.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(vendorsService.findOrderById(foodVendor.id, 'non-existent')).rejects.toThrow(
+        NotFoundException
+      );
+    });
+
+    it('should search by vendorId and orderId', async () => {
+      // Arrange
+      mockPrismaService.vendorOrder.findFirst.mockResolvedValue(testOrder);
+
+      // Act
+      await vendorsService.findOrderById(foodVendor.id, testOrder.id);
+
+      // Assert
+      expect(mockPrismaService.vendorOrder.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: testOrder.id, vendorId: foodVendor.id },
+        })
+      );
+    });
+  });
+
+  // ==========================================================================
+  // findPayoutById Tests
+  // ==========================================================================
+
+  describe('findPayoutById', () => {
+    it('should return payout by ID', async () => {
+      // Arrange
+      mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
+      mockPrismaService.user.findUnique.mockResolvedValue(organizerUser);
+      mockPrismaService.vendorPayout.findFirst.mockResolvedValue(testPayout);
+
+      // Act
+      const result = await vendorsService.findPayoutById(
+        foodVendor.id,
+        testPayout.id,
+        organizerUser.id
+      );
+
+      // Assert
+      expect(result.id).toBe(testPayout.id);
+      expect(result.netAmount).toEqual(new Prisma.Decimal(900));
+    });
+
+    it('should throw NotFoundException when payout not found', async () => {
+      // Arrange
+      mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
+      mockPrismaService.user.findUnique.mockResolvedValue(organizerUser);
+      mockPrismaService.vendorPayout.findFirst.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        vendorsService.findPayoutById(foodVendor.id, 'non-existent', organizerUser.id)
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ForbiddenException for unauthorized user', async () => {
+      // Arrange
+      mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
+      mockPrismaService.user.findUnique.mockResolvedValue(regularUser);
+
+      // Act & Assert
+      await expect(
+        vendorsService.findPayoutById(foodVendor.id, testPayout.id, regularUser.id)
+      ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  // ==========================================================================
+  // updateOrderStatus additional branches
+  // ==========================================================================
+
+  describe('updateOrderStatus - additional branches', () => {
+    it('should set estimatedReadyAt when status is CONFIRMED and estimatedReadyAt is provided', async () => {
+      // Arrange
+      mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
+      mockPrismaService.user.findUnique.mockResolvedValue(organizerUser);
+      mockPrismaService.vendorOrder.findFirst.mockResolvedValue(testOrder);
+      mockPrismaService.vendorOrder.update.mockResolvedValue({
+        ...testOrder,
+        status: OrderStatus.CONFIRMED,
+        estimatedReadyAt: new Date('2026-07-01T12:30:00'),
+        items: [],
+      });
+
+      // Act
+      const result = await vendorsService.updateOrderStatus(
+        foodVendor.id,
+        testOrder.id,
+        organizerUser.id,
+        {
+          status: OrderStatus.CONFIRMED,
+          estimatedReadyAt: '2026-07-01T12:30:00',
+        }
+      );
+
+      // Assert
+      expect(result.status).toBe(OrderStatus.CONFIRMED);
+      expect(mockPrismaService.vendorOrder.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: OrderStatus.CONFIRMED,
+            estimatedReadyAt: expect.any(Date),
+          }),
+        })
+      );
+    });
+
+    it('should handle cancellation without cashless transaction', async () => {
+      // Arrange
+      const orderWithoutCashless = {
+        ...testOrder,
+        cashlessTransactionId: null,
+        paymentMethod: 'CASH',
+      };
+      mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
+      mockPrismaService.user.findUnique.mockResolvedValue(organizerUser);
+      mockPrismaService.vendorOrder.findFirst.mockResolvedValue(orderWithoutCashless);
+      mockPrismaService.vendorOrder.update.mockResolvedValue({
+        ...orderWithoutCashless,
+        status: OrderStatus.CANCELLED,
+        cancelledAt: new Date(),
+        items: [],
+      });
+
+      // Act
+      const result = await vendorsService.updateOrderStatus(
+        foodVendor.id,
+        testOrder.id,
+        organizerUser.id,
+        { status: OrderStatus.CANCELLED }
+      );
+
+      // Assert
+      expect(result.status).toBe(OrderStatus.CANCELLED);
+      // Should not try to refund since no cashless transaction
+      expect(mockPrismaService.cashlessAccount.findUnique).not.toHaveBeenCalled();
+    });
+
+    it('should set cancelReason when provided', async () => {
+      // Arrange
+      mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
+      mockPrismaService.user.findUnique.mockResolvedValue(organizerUser);
+      mockPrismaService.vendorOrder.findFirst.mockResolvedValue({
+        ...testOrder,
+        cashlessTransactionId: null,
+      });
+      mockPrismaService.vendorOrder.update.mockResolvedValue({
+        ...testOrder,
+        status: OrderStatus.CANCELLED,
+        cancelledAt: new Date(),
+        cancelReason: 'Customer request',
+        items: [],
+      });
+
+      // Act
+      await vendorsService.updateOrderStatus(foodVendor.id, testOrder.id, organizerUser.id, {
+        status: OrderStatus.CANCELLED,
+        cancelReason: 'Customer request',
+      });
+
+      // Assert
+      expect(mockPrismaService.vendorOrder.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            cancelReason: 'Customer request',
+          }),
+        })
+      );
+    });
+  });
+
+  // ==========================================================================
+  // refundCashlessPayment edge cases
+  // ==========================================================================
+
+  describe('refundCashlessPayment edge cases', () => {
+    it('should handle refund when cashless account not found', async () => {
+      // Arrange
+      const orderWithCashless = {
+        ...testOrder,
+        status: 'PENDING' as const,
+        cashlessTransactionId: 'tx-123',
+      };
+      mockPrismaService.vendor.findUnique
+        .mockResolvedValueOnce(foodVendor)
+        .mockResolvedValueOnce({ festivalId: testFestival.id, name: foodVendor.name });
+      mockPrismaService.user.findUnique.mockResolvedValue(organizerUser);
+      mockPrismaService.vendorOrder.findFirst.mockResolvedValue(orderWithCashless);
+      mockPrismaService.cashlessAccount.findUnique.mockResolvedValue(null); // No account
+      mockPrismaService.vendorOrder.update.mockResolvedValue({
+        ...orderWithCashless,
+        status: OrderStatus.CANCELLED,
+        items: [],
+      });
+
+      // Act - should not throw, just skip refund
+      const result = await vendorsService.updateOrderStatus(
+        foodVendor.id,
+        testOrder.id,
+        organizerUser.id,
+        { status: OrderStatus.CANCELLED }
+      );
+
+      // Assert
+      expect(result.status).toBe(OrderStatus.CANCELLED);
+      // Transaction should not be called since no account
+      expect(mockPrismaService.$transaction).not.toHaveBeenCalledWith(
+        expect.arrayContaining([expect.anything()])
+      );
+    });
+
+    it('should handle refund when vendor not found during refund', async () => {
+      // Arrange
+      const orderWithCashless = {
+        ...testOrder,
+        status: 'PENDING' as const,
+        cashlessTransactionId: 'tx-123',
+      };
+      mockPrismaService.vendor.findUnique
+        .mockResolvedValueOnce(foodVendor) // First call for ownership
+        .mockResolvedValueOnce(null); // Second call during refund - vendor not found
+      mockPrismaService.user.findUnique.mockResolvedValue(organizerUser);
+      mockPrismaService.vendorOrder.findFirst.mockResolvedValue(orderWithCashless);
+      mockPrismaService.cashlessAccount.findUnique.mockResolvedValue(testCashlessAccount);
+      mockPrismaService.vendorOrder.update.mockResolvedValue({
+        ...orderWithCashless,
+        status: OrderStatus.CANCELLED,
+        items: [],
+      });
+
+      // Act
+      const result = await vendorsService.updateOrderStatus(
+        foodVendor.id,
+        testOrder.id,
+        organizerUser.id,
+        { status: OrderStatus.CANCELLED }
+      );
+
+      // Assert
+      expect(result.status).toBe(OrderStatus.CANCELLED);
+    });
+  });
+
+  // ==========================================================================
+  // createOrder additional branches
+  // ==========================================================================
+
+  describe('createOrder - additional branches', () => {
+    it('should include options and notes in order items', async () => {
+      // Arrange
+      const createOrderDto = {
+        items: [
+          {
+            productId: testProduct.id,
+            quantity: 1,
+            options: { size: 'large', extra: 'cheese' },
+            notes: 'No onions please',
+          },
+        ],
+        paymentMethod: VendorPaymentMethod.CASH,
+        notes: 'Deliver to table 5',
+      };
+
+      mockPrismaService.vendor.findUnique.mockResolvedValue({
+        ...foodVendor,
+        festival: testFestival,
+      });
+      mockPrismaService.vendorProduct.findMany.mockResolvedValue([testProduct]);
+
+      const createdOrder = {
+        id: 'order-new',
+        vendorId: foodVendor.id,
+        userId: regularUser.id,
+        subtotal: new Prisma.Decimal(12.5),
+        totalAmount: new Prisma.Decimal(12.5),
+        paymentMethod: VendorPaymentMethod.CASH,
+        status: 'PENDING',
+        notes: createOrderDto.notes,
+        items: [
+          {
+            productId: testProduct.id,
+            productName: testProduct.name,
+            quantity: 1,
+            options: createOrderDto.items[0].options,
+            notes: createOrderDto.items[0].notes,
+          },
+        ],
+        vendor: { id: foodVendor.id, name: foodVendor.name },
+        createdAt: new Date(),
+      };
+
+      mockPrismaService.$transaction.mockImplementation(async (callback) => {
+        if (typeof callback === 'function') {
+          mockPrismaService.vendorOrder = {
+            ...mockPrismaService.vendorOrder,
+            create: jest.fn().mockResolvedValue(createdOrder),
+          };
+          mockPrismaService.vendorProduct.update = jest.fn().mockResolvedValue(testProduct);
+          return callback(mockPrismaService);
+        }
+        return Promise.all(callback);
+      });
+
+      // Act
+      const result = await vendorsService.createOrder(
+        foodVendor.id,
+        regularUser.id,
+        createOrderDto
+      );
+
+      // Assert
+      expect(result).toBeDefined();
+      expect(result.notes).toBe('Deliver to table 5');
+    });
+
+    it('should handle multiple items in order', async () => {
+      // Arrange
+      const createOrderDto = {
+        items: [
+          { productId: testProduct.id, quantity: 2 },
+          { productId: testProduct2.id, quantity: 1 },
+        ],
+        paymentMethod: VendorPaymentMethod.CASH,
+      };
+
+      mockPrismaService.vendor.findUnique.mockResolvedValue({
+        ...foodVendor,
+        festival: testFestival,
+      });
+      mockPrismaService.vendorProduct.findMany.mockResolvedValue([testProduct, testProduct2]);
+
+      const createdOrder = {
+        id: 'order-multi',
+        vendorId: foodVendor.id,
+        userId: regularUser.id,
+        subtotal: new Prisma.Decimal(36), // 2 * 12.5 + 1 * 11 = 36
+        totalAmount: new Prisma.Decimal(36),
+        paymentMethod: VendorPaymentMethod.CASH,
+        status: 'PENDING',
+        items: [],
+        vendor: { id: foodVendor.id, name: foodVendor.name },
+        createdAt: new Date(),
+      };
+
+      mockPrismaService.$transaction.mockImplementation(async (callback) => {
+        if (typeof callback === 'function') {
+          mockPrismaService.vendorOrder = {
+            ...mockPrismaService.vendorOrder,
+            create: jest.fn().mockResolvedValue(createdOrder),
+          };
+          mockPrismaService.vendorProduct.update = jest.fn().mockResolvedValue(testProduct);
+          return callback(mockPrismaService);
+        }
+        return Promise.all(callback);
+      });
+
+      // Act
+      const result = await vendorsService.createOrder(
+        foodVendor.id,
+        regularUser.id,
+        createOrderDto
+      );
+
+      // Assert
+      expect(result).toBeDefined();
+    });
+  });
+
+  // ==========================================================================
+  // verifyVendorOwnership - ORGANIZER role
+  // ==========================================================================
+
+  describe('verifyVendorOwnership - ORGANIZER role', () => {
+    it('should allow ORGANIZER to access vendor they do not own', async () => {
+      // Arrange
+      const otherOwnerVendor = { ...foodVendor, ownerId: 'other-user-id' };
+      mockPrismaService.vendor.findUnique.mockResolvedValue(otherOwnerVendor);
+      mockPrismaService.user.findUnique.mockResolvedValue(organizerUser);
+      mockPrismaService.vendorPayout.findMany.mockResolvedValue([testPayout]);
+
+      // Act
+      const result = await vendorsService.findPayouts(otherOwnerVendor.id, organizerUser.id);
+
+      // Assert
+      expect(result).toHaveLength(1);
+    });
+  });
+
+  // ==========================================================================
+  // Edge cases for getVendorStats with groupBy
+  // ==========================================================================
+
+  describe('getVendorStats - additional edge cases', () => {
+    it('should handle stats with both startDate and endDate', async () => {
+      // Arrange
+      const startDate = '2026-06-01';
+      const endDate = '2026-06-30';
+
+      mockPrismaService.vendor.findUnique.mockResolvedValue(foodVendor);
+      mockPrismaService.user.findUnique.mockResolvedValue(organizerUser);
+
+      mockPrismaService.vendorOrder.aggregate.mockResolvedValue({
+        _sum: { totalAmount: null, commission: null, subtotal: null },
+        _count: { id: 0 },
+        _avg: { totalAmount: null },
+      });
+
+      mockPrismaService.vendorOrderItem.groupBy.mockResolvedValue([]);
+      mockPrismaService.vendorOrder.groupBy.mockResolvedValue([]);
+
+      // Act
+      await vendorsService.getVendorStats(foodVendor.id, organizerUser.id, {
+        startDate,
+        endDate,
+      });
+
+      // Assert - The service builds filters with both dates
+      expect(mockPrismaService.vendorOrder.aggregate).toHaveBeenCalled();
+    });
+  });
 });

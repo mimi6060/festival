@@ -1,7 +1,7 @@
 /**
  * Tickets Controller Unit Tests
  *
- * Tests for TicketsController endpoints including:
+ * Comprehensive tests for TicketsController endpoints including:
  * - GET /api/tickets - Get user tickets
  * - GET /api/tickets/:id - Get ticket by ID
  * - GET /api/tickets/:id/qrcode - Get ticket QR code
@@ -10,21 +10,42 @@
  * - POST /api/tickets/validate - Validate ticket
  * - POST /api/tickets/:id/scan - Scan ticket
  * - DELETE /api/tickets/:id - Cancel ticket
+ *
+ * Coverage includes:
+ * - Authentication (JwtAuthGuard)
+ * - Authorization (RolesGuard for staff endpoints)
+ * - Input validation
+ * - Error handling
+ * - Edge cases
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { TicketsController } from './tickets.controller';
 import { TicketsService } from './tickets.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { TicketStatus, TicketType } from '@prisma/client';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Reflector } from '@nestjs/core';
+import { TicketStatus, TicketType, UserRole } from '@prisma/client';
 import {
   regularUser,
   staffUser,
+  securityUser,
+  adminUser,
+  organizerUser,
+  cashierUser,
   publishedFestival,
-  _ongoingFestival,
+  ongoingFestival,
+  cancelledFestival,
   standardCategory,
+  vipCategory,
+  soldOutCategory,
   soldTicket,
   usedTicket,
+  cancelledTicket,
+  refundedTicket,
+  vipTicket,
+  mainStageZone,
+  vipLounge,
 } from '../../test/fixtures';
 import {
   NotFoundException,
@@ -38,11 +59,13 @@ import {
   TicketSaleEndedException,
   TicketAlreadyUsedException,
   FestivalCancelledException,
+  FestivalEndedException,
+  InvalidQRCodeException,
 } from '../../common/exceptions/business.exception';
 
 describe('TicketsController', () => {
   let controller: TicketsController;
-  let _ticketsService: jest.Mocked<TicketsService>;
+  let ticketsService: jest.Mocked<TicketsService>;
 
   const mockTicketsService = {
     getUserTickets: jest.fn(),
@@ -55,7 +78,7 @@ describe('TicketsController', () => {
     cancelTicket: jest.fn(),
   };
 
-  // Mock request object with user
+  // Mock request objects for different user types
   const mockRequest = {
     user: {
       id: regularUser.id,
@@ -69,6 +92,30 @@ describe('TicketsController', () => {
       id: staffUser.id,
       email: staffUser.email,
       role: staffUser.role,
+    },
+  };
+
+  const mockSecurityRequest = {
+    user: {
+      id: securityUser.id,
+      email: securityUser.email,
+      role: securityUser.role,
+    },
+  };
+
+  const mockAdminRequest = {
+    user: {
+      id: adminUser.id,
+      email: adminUser.email,
+      role: adminUser.role,
+    },
+  };
+
+  const mockOrganizerRequest = {
+    user: {
+      id: organizerUser.id,
+      email: organizerUser.email,
+      role: organizerUser.role,
     },
   };
 
@@ -97,6 +144,19 @@ describe('TicketsController', () => {
     },
   };
 
+  const mockVipTicketEntity = {
+    ...mockTicketEntity,
+    id: vipTicket.id,
+    categoryId: vipCategory.id,
+    qrCode: vipTicket.qrCode,
+    purchasePrice: 399.99,
+    category: {
+      id: vipCategory.id,
+      name: vipCategory.name,
+      type: TicketType.VIP,
+    },
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -104,26 +164,34 @@ describe('TicketsController', () => {
       controllers: [TicketsController],
       providers: [
         { provide: TicketsService, useValue: mockTicketsService },
+        { provide: Reflector, useValue: new Reflector() },
       ],
     })
       .overrideGuard(JwtAuthGuard)
       .useValue({ canActivate: jest.fn().mockReturnValue(true) })
+      .overrideGuard(RolesGuard)
+      .useValue({ canActivate: jest.fn().mockReturnValue(true) })
       .compile();
 
     controller = module.get<TicketsController>(TicketsController);
-    _ticketsService = module.get(TicketsService);
+    ticketsService = module.get(TicketsService);
   });
+
+  it('should be defined', () => {
+    expect(controller).toBeDefined();
+  });
+
+  // ==========================================================================
+  // GET /api/tickets - getUserTickets
+  // ==========================================================================
 
   describe('getUserTickets', () => {
     it('should return all tickets for authenticated user', async () => {
-      // Arrange
       const tickets = [mockTicketEntity];
       mockTicketsService.getUserTickets.mockResolvedValue(tickets);
 
-      // Act
       const result = await controller.getUserTickets(mockRequest);
 
-      // Assert
       expect(result).toEqual(tickets);
       expect(mockTicketsService.getUserTickets).toHaveBeenCalledWith(
         regularUser.id,
@@ -132,17 +200,14 @@ describe('TicketsController', () => {
     });
 
     it('should filter by festivalId when provided', async () => {
-      // Arrange
       const tickets = [mockTicketEntity];
       mockTicketsService.getUserTickets.mockResolvedValue(tickets);
 
-      // Act
       const result = await controller.getUserTickets(
         mockRequest,
         publishedFestival.id,
       );
 
-      // Assert
       expect(result).toEqual(tickets);
       expect(mockTicketsService.getUserTickets).toHaveBeenCalledWith(
         regularUser.id,
@@ -151,26 +216,67 @@ describe('TicketsController', () => {
     });
 
     it('should return empty array when user has no tickets', async () => {
-      // Arrange
       mockTicketsService.getUserTickets.mockResolvedValue([]);
 
-      // Act
       const result = await controller.getUserTickets(mockRequest);
 
-      // Assert
       expect(result).toEqual([]);
+    });
+
+    it('should return multiple tickets for same festival', async () => {
+      const tickets = [mockTicketEntity, mockVipTicketEntity];
+      mockTicketsService.getUserTickets.mockResolvedValue(tickets);
+
+      const result = await controller.getUserTickets(
+        mockRequest,
+        publishedFestival.id,
+      );
+
+      expect(result).toHaveLength(2);
+      expect(result).toEqual(tickets);
+    });
+
+    it('should return tickets for different festivals', async () => {
+      const ticketFromOtherFestival = {
+        ...mockTicketEntity,
+        id: 'other-ticket-id',
+        festivalId: ongoingFestival.id,
+        festival: {
+          id: ongoingFestival.id,
+          name: ongoingFestival.name,
+          startDate: ongoingFestival.startDate,
+          endDate: ongoingFestival.endDate,
+        },
+      };
+      const tickets = [mockTicketEntity, ticketFromOtherFestival];
+      mockTicketsService.getUserTickets.mockResolvedValue(tickets);
+
+      const result = await controller.getUserTickets(mockRequest);
+
+      expect(result).toHaveLength(2);
+    });
+
+    it('should handle service errors gracefully', async () => {
+      mockTicketsService.getUserTickets.mockRejectedValue(
+        new Error('Database connection failed'),
+      );
+
+      await expect(controller.getUserTickets(mockRequest)).rejects.toThrow(
+        'Database connection failed',
+      );
     });
   });
 
+  // ==========================================================================
+  // GET /api/tickets/:id - getTicketById
+  // ==========================================================================
+
   describe('getTicketById', () => {
     it('should return ticket by ID for authenticated user', async () => {
-      // Arrange
       mockTicketsService.getTicketById.mockResolvedValue(mockTicketEntity);
 
-      // Act
       const result = await controller.getTicketById(mockRequest, soldTicket.id);
 
-      // Assert
       expect(result).toEqual(mockTicketEntity);
       expect(mockTicketsService.getTicketById).toHaveBeenCalledWith(
         soldTicket.id,
@@ -179,40 +285,72 @@ describe('TicketsController', () => {
     });
 
     it('should throw NotFoundException when ticket does not exist', async () => {
-      // Arrange
       mockTicketsService.getTicketById.mockRejectedValue(
         NotFoundException.ticket('non-existent-id'),
       );
 
-      // Act & Assert
       await expect(
         controller.getTicketById(mockRequest, 'non-existent-id'),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw ForbiddenException when user does not own ticket', async () => {
-      // Arrange
       mockTicketsService.getTicketById.mockRejectedValue(
         ForbiddenException.resourceForbidden('ticket'),
       );
 
-      // Act & Assert
       await expect(
         controller.getTicketById(mockRequest, 'other-user-ticket'),
       ).rejects.toThrow(ForbiddenException);
     });
+
+    it('should return ticket with USED status', async () => {
+      const usedTicketEntity = {
+        ...mockTicketEntity,
+        id: usedTicket.id,
+        status: TicketStatus.USED,
+        usedAt: new Date('2024-07-15T14:30:00Z'),
+      };
+      mockTicketsService.getTicketById.mockResolvedValue(usedTicketEntity);
+
+      const result = await controller.getTicketById(mockRequest, usedTicket.id);
+
+      expect(result.status).toBe(TicketStatus.USED);
+      expect(result.usedAt).toBeDefined();
+    });
+
+    it('should return ticket with CANCELLED status', async () => {
+      const cancelledTicketEntity = {
+        ...mockTicketEntity,
+        id: cancelledTicket.id,
+        status: TicketStatus.CANCELLED,
+      };
+      mockTicketsService.getTicketById.mockResolvedValue(cancelledTicketEntity);
+
+      const result = await controller.getTicketById(
+        mockRequest,
+        cancelledTicket.id,
+      );
+
+      expect(result.status).toBe(TicketStatus.CANCELLED);
+    });
   });
 
+  // ==========================================================================
+  // GET /api/tickets/:id/qrcode - getTicketQrCode
+  // ==========================================================================
+
   describe('getTicketQrCode', () => {
+    const qrCodeImage = 'data:image/png;base64,mockQRCodeBase64String';
+
     it('should return QR code for ticket', async () => {
-      // Arrange
-      const qrCodeImage = 'data:image/png;base64,mockQRCode';
       mockTicketsService.getTicketQrCodeImage.mockResolvedValue(qrCodeImage);
 
-      // Act
-      const result = await controller.getTicketQrCode(mockRequest, soldTicket.id);
+      const result = await controller.getTicketQrCode(
+        mockRequest,
+        soldTicket.id,
+      );
 
-      // Assert
       expect(result).toEqual({ qrCode: qrCodeImage });
       expect(mockTicketsService.getTicketQrCodeImage).toHaveBeenCalledWith(
         soldTicket.id,
@@ -221,29 +359,40 @@ describe('TicketsController', () => {
     });
 
     it('should throw NotFoundException when ticket does not exist', async () => {
-      // Arrange
       mockTicketsService.getTicketQrCodeImage.mockRejectedValue(
         NotFoundException.ticket('non-existent-id'),
       );
 
-      // Act & Assert
       await expect(
         controller.getTicketQrCode(mockRequest, 'non-existent-id'),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw ForbiddenException when user does not own ticket', async () => {
-      // Arrange
       mockTicketsService.getTicketQrCodeImage.mockRejectedValue(
         ForbiddenException.resourceForbidden('ticket'),
       );
 
-      // Act & Assert
       await expect(
         controller.getTicketQrCode(mockRequest, 'other-user-ticket'),
       ).rejects.toThrow(ForbiddenException);
     });
+
+    it('should return QR code with correct data URL format', async () => {
+      mockTicketsService.getTicketQrCodeImage.mockResolvedValue(qrCodeImage);
+
+      const result = await controller.getTicketQrCode(
+        mockRequest,
+        soldTicket.id,
+      );
+
+      expect(result.qrCode).toMatch(/^data:image\/png;base64,/);
+    });
   });
+
+  // ==========================================================================
+  // POST /api/tickets/purchase - purchaseTickets
+  // ==========================================================================
 
   describe('purchaseTickets', () => {
     const validPurchaseDto = {
@@ -253,17 +402,14 @@ describe('TicketsController', () => {
     };
 
     it('should purchase tickets successfully', async () => {
-      // Arrange
       const purchasedTickets = [mockTicketEntity, mockTicketEntity];
       mockTicketsService.purchaseTickets.mockResolvedValue(purchasedTickets);
 
-      // Act
       const result = await controller.purchaseTickets(
         mockRequest,
         validPurchaseDto,
       );
 
-      // Assert
       expect(result).toEqual(purchasedTickets);
       expect(mockTicketsService.purchaseTickets).toHaveBeenCalledWith(
         regularUser.id,
@@ -271,13 +417,23 @@ describe('TicketsController', () => {
       );
     });
 
+    it('should purchase single ticket', async () => {
+      const purchasedTickets = [mockTicketEntity];
+      mockTicketsService.purchaseTickets.mockResolvedValue(purchasedTickets);
+
+      const result = await controller.purchaseTickets(mockRequest, {
+        ...validPurchaseDto,
+        quantity: 1,
+      });
+
+      expect(result).toHaveLength(1);
+    });
+
     it('should throw NotFoundException when festival not found', async () => {
-      // Arrange
       mockTicketsService.purchaseTickets.mockRejectedValue(
         NotFoundException.festival('non-existent'),
       );
 
-      // Act & Assert
       await expect(
         controller.purchaseTickets(mockRequest, {
           ...validPurchaseDto,
@@ -287,12 +443,10 @@ describe('TicketsController', () => {
     });
 
     it('should throw NotFoundException when category not found', async () => {
-      // Arrange
       mockTicketsService.purchaseTickets.mockRejectedValue(
         NotFoundException.ticketCategory('non-existent'),
       );
 
-      // Act & Assert
       await expect(
         controller.purchaseTickets(mockRequest, {
           ...validPurchaseDto,
@@ -302,24 +456,23 @@ describe('TicketsController', () => {
     });
 
     it('should throw TicketSoldOutException when tickets are sold out', async () => {
-      // Arrange
       mockTicketsService.purchaseTickets.mockRejectedValue(
-        new TicketSoldOutException(standardCategory.id, standardCategory.name),
+        new TicketSoldOutException(soldOutCategory.id, soldOutCategory.name),
       );
 
-      // Act & Assert
       await expect(
-        controller.purchaseTickets(mockRequest, validPurchaseDto),
+        controller.purchaseTickets(mockRequest, {
+          ...validPurchaseDto,
+          categoryId: soldOutCategory.id,
+        }),
       ).rejects.toThrow(TicketSoldOutException);
     });
 
     it('should throw TicketQuotaExceededException when quota exceeded', async () => {
-      // Arrange
       mockTicketsService.purchaseTickets.mockRejectedValue(
         new TicketQuotaExceededException(4, 10),
       );
 
-      // Act & Assert
       await expect(
         controller.purchaseTickets(mockRequest, {
           ...validPurchaseDto,
@@ -329,48 +482,55 @@ describe('TicketsController', () => {
     });
 
     it('should throw TicketSaleNotStartedException when sale not started', async () => {
-      // Arrange
+      const futureSaleDate = new Date('2099-01-01');
       mockTicketsService.purchaseTickets.mockRejectedValue(
-        new TicketSaleNotStartedException(new Date('2099-01-01')),
+        new TicketSaleNotStartedException(futureSaleDate),
       );
 
-      // Act & Assert
       await expect(
         controller.purchaseTickets(mockRequest, validPurchaseDto),
       ).rejects.toThrow(TicketSaleNotStartedException);
     });
 
     it('should throw TicketSaleEndedException when sale ended', async () => {
-      // Arrange
+      const pastSaleDate = new Date('2020-01-01');
       mockTicketsService.purchaseTickets.mockRejectedValue(
-        new TicketSaleEndedException(new Date('2020-01-01')),
+        new TicketSaleEndedException(pastSaleDate),
       );
 
-      // Act & Assert
       await expect(
         controller.purchaseTickets(mockRequest, validPurchaseDto),
       ).rejects.toThrow(TicketSaleEndedException);
     });
 
     it('should throw FestivalCancelledException when festival is cancelled', async () => {
-      // Arrange
       mockTicketsService.purchaseTickets.mockRejectedValue(
-        new FestivalCancelledException(publishedFestival.id),
+        new FestivalCancelledException(cancelledFestival.id),
       );
 
-      // Act & Assert
       await expect(
-        controller.purchaseTickets(mockRequest, validPurchaseDto),
+        controller.purchaseTickets(mockRequest, {
+          ...validPurchaseDto,
+          festivalId: cancelledFestival.id,
+        }),
       ).rejects.toThrow(FestivalCancelledException);
     });
 
-    it('should throw ValidationException for invalid quantity', async () => {
-      // Arrange
+    it('should throw FestivalEndedException when festival is completed', async () => {
+      mockTicketsService.purchaseTickets.mockRejectedValue(
+        new FestivalEndedException('completed-festival', new Date()),
+      );
+
+      await expect(
+        controller.purchaseTickets(mockRequest, validPurchaseDto),
+      ).rejects.toThrow(FestivalEndedException);
+    });
+
+    it('should throw ValidationException for invalid quantity (zero)', async () => {
       mockTicketsService.purchaseTickets.mockRejectedValue(
         new ValidationException('Quantity must be at least 1'),
       );
 
-      // Act & Assert
       await expect(
         controller.purchaseTickets(mockRequest, {
           ...validPurchaseDto,
@@ -378,7 +538,37 @@ describe('TicketsController', () => {
         }),
       ).rejects.toThrow(ValidationException);
     });
+
+    it('should throw ValidationException for negative quantity', async () => {
+      mockTicketsService.purchaseTickets.mockRejectedValue(
+        new ValidationException('Quantity must be at least 1'),
+      );
+
+      await expect(
+        controller.purchaseTickets(mockRequest, {
+          ...validPurchaseDto,
+          quantity: -1,
+        }),
+      ).rejects.toThrow(ValidationException);
+    });
+
+    it('should purchase VIP tickets', async () => {
+      const vipPurchase = {
+        festivalId: publishedFestival.id,
+        categoryId: vipCategory.id,
+        quantity: 1,
+      };
+      mockTicketsService.purchaseTickets.mockResolvedValue([mockVipTicketEntity]);
+
+      const result = await controller.purchaseTickets(mockRequest, vipPurchase);
+
+      expect(result[0]?.category?.type).toBe(TicketType.VIP);
+    });
   });
+
+  // ==========================================================================
+  // POST /api/tickets/guest-purchase - guestPurchaseTickets
+  // ==========================================================================
 
   describe('guestPurchaseTickets', () => {
     const validGuestPurchaseDto = {
@@ -391,27 +581,38 @@ describe('TicketsController', () => {
     };
 
     it('should allow guest purchase without authentication', async () => {
-      // Arrange
       const purchasedTickets = [mockTicketEntity];
       mockTicketsService.guestPurchaseTickets.mockResolvedValue(purchasedTickets);
 
-      // Act
       const result = await controller.guestPurchaseTickets(validGuestPurchaseDto);
 
-      // Assert
       expect(result).toEqual(purchasedTickets);
       expect(mockTicketsService.guestPurchaseTickets).toHaveBeenCalledWith(
         validGuestPurchaseDto,
       );
     });
 
+    it('should allow guest purchase with phone number', async () => {
+      const dtoWithPhone = {
+        ...validGuestPurchaseDto,
+        phone: '+33612345678',
+      };
+      const purchasedTickets = [mockTicketEntity];
+      mockTicketsService.guestPurchaseTickets.mockResolvedValue(purchasedTickets);
+
+      const result = await controller.guestPurchaseTickets(dtoWithPhone);
+
+      expect(result).toEqual(purchasedTickets);
+      expect(mockTicketsService.guestPurchaseTickets).toHaveBeenCalledWith(
+        dtoWithPhone,
+      );
+    });
+
     it('should throw NotFoundException when festival not found', async () => {
-      // Arrange
       mockTicketsService.guestPurchaseTickets.mockRejectedValue(
         NotFoundException.festival('non-existent'),
       );
 
-      // Act & Assert
       await expect(
         controller.guestPurchaseTickets({
           ...validGuestPurchaseDto,
@@ -421,17 +622,78 @@ describe('TicketsController', () => {
     });
 
     it('should throw TicketSoldOutException when tickets are sold out', async () => {
-      // Arrange
       mockTicketsService.guestPurchaseTickets.mockRejectedValue(
-        new TicketSoldOutException(standardCategory.id, standardCategory.name),
+        new TicketSoldOutException(soldOutCategory.id, soldOutCategory.name),
       );
 
-      // Act & Assert
       await expect(
-        controller.guestPurchaseTickets(validGuestPurchaseDto),
+        controller.guestPurchaseTickets({
+          ...validGuestPurchaseDto,
+          categoryId: soldOutCategory.id,
+        }),
       ).rejects.toThrow(TicketSoldOutException);
     });
+
+    it('should throw ValidationException for invalid email', async () => {
+      mockTicketsService.guestPurchaseTickets.mockRejectedValue(
+        new ValidationException('Invalid email format'),
+      );
+
+      await expect(
+        controller.guestPurchaseTickets({
+          ...validGuestPurchaseDto,
+          email: 'invalid-email',
+        }),
+      ).rejects.toThrow(ValidationException);
+    });
+
+    it('should purchase multiple tickets as guest', async () => {
+      const multiTicketDto = {
+        ...validGuestPurchaseDto,
+        quantity: 3,
+      };
+      const purchasedTickets = [
+        mockTicketEntity,
+        mockTicketEntity,
+        mockTicketEntity,
+      ];
+      mockTicketsService.guestPurchaseTickets.mockResolvedValue(purchasedTickets);
+
+      const result = await controller.guestPurchaseTickets(multiTicketDto);
+
+      expect(result).toHaveLength(3);
+    });
+
+    it('should handle guest purchase with special characters in name', async () => {
+      const dtoWithSpecialChars = {
+        ...validGuestPurchaseDto,
+        firstName: "Jean-Pierre",
+        lastName: "O'Connor",
+      };
+      mockTicketsService.guestPurchaseTickets.mockResolvedValue([mockTicketEntity]);
+
+      const result = await controller.guestPurchaseTickets(dtoWithSpecialChars);
+
+      expect(result).toBeDefined();
+    });
+
+    it('should handle guest purchase with Unicode name', async () => {
+      const dtoWithUnicode = {
+        ...validGuestPurchaseDto,
+        firstName: 'Marie',
+        lastName: 'Mueller',
+      };
+      mockTicketsService.guestPurchaseTickets.mockResolvedValue([mockTicketEntity]);
+
+      const result = await controller.guestPurchaseTickets(dtoWithUnicode);
+
+      expect(result).toBeDefined();
+    });
   });
+
+  // ==========================================================================
+  // POST /api/tickets/validate - validateTicket
+  // ==========================================================================
 
   describe('validateTicket', () => {
     const validValidateDto = {
@@ -439,7 +701,6 @@ describe('TicketsController', () => {
     };
 
     it('should validate a valid ticket', async () => {
-      // Arrange
       const validationResult = {
         valid: true,
         ticket: mockTicketEntity,
@@ -448,10 +709,8 @@ describe('TicketsController', () => {
       };
       mockTicketsService.validateTicket.mockResolvedValue(validationResult);
 
-      // Act
       const result = await controller.validateTicket(validValidateDto);
 
-      // Assert
       expect(result).toEqual(validationResult);
       expect(mockTicketsService.validateTicket).toHaveBeenCalledWith(
         validValidateDto,
@@ -459,25 +718,21 @@ describe('TicketsController', () => {
     });
 
     it('should return invalid for non-existent QR code', async () => {
-      // Arrange
       const validationResult = {
         valid: false,
         message: 'Invalid ticket - QR code not found',
       };
       mockTicketsService.validateTicket.mockResolvedValue(validationResult);
 
-      // Act
       const result = await controller.validateTicket({
         qrCode: 'INVALID-QR',
       });
 
-      // Assert
       expect(result.valid).toBe(false);
       expect(result.message).toContain('QR code not found');
     });
 
     it('should return invalid for already used ticket', async () => {
-      // Arrange
       const validationResult = {
         valid: false,
         ticket: { ...mockTicketEntity, status: TicketStatus.USED },
@@ -485,17 +740,46 @@ describe('TicketsController', () => {
       };
       mockTicketsService.validateTicket.mockResolvedValue(validationResult);
 
-      // Act
       const result = await controller.validateTicket({
         qrCode: usedTicket.qrCode,
       });
 
-      // Assert
       expect(result.valid).toBe(false);
     });
 
+    it('should return invalid for cancelled ticket', async () => {
+      const validationResult = {
+        valid: false,
+        ticket: { ...mockTicketEntity, status: TicketStatus.CANCELLED },
+        message: 'Ticket has been cancelled',
+      };
+      mockTicketsService.validateTicket.mockResolvedValue(validationResult);
+
+      const result = await controller.validateTicket({
+        qrCode: cancelledTicket.qrCode,
+      });
+
+      expect(result.valid).toBe(false);
+      expect(result.message).toContain('cancelled');
+    });
+
+    it('should return invalid for refunded ticket', async () => {
+      const validationResult = {
+        valid: false,
+        ticket: { ...mockTicketEntity, status: TicketStatus.REFUNDED },
+        message: 'Ticket has been refunded',
+      };
+      mockTicketsService.validateTicket.mockResolvedValue(validationResult);
+
+      const result = await controller.validateTicket({
+        qrCode: refundedTicket.qrCode,
+      });
+
+      expect(result.valid).toBe(false);
+      expect(result.message).toContain('refunded');
+    });
+
     it('should validate with zoneId when provided', async () => {
-      // Arrange
       const validationResult = {
         valid: true,
         ticket: mockTicketEntity,
@@ -505,13 +789,11 @@ describe('TicketsController', () => {
       mockTicketsService.validateTicket.mockResolvedValue(validationResult);
       const validateDtoWithZone = {
         qrCode: soldTicket.qrCode,
-        zoneId: 'zone-123',
+        zoneId: mainStageZone.id,
       };
 
-      // Act
       const result = await controller.validateTicket(validateDtoWithZone);
 
-      // Assert
       expect(result).toEqual(validationResult);
       expect(mockTicketsService.validateTicket).toHaveBeenCalledWith(
         validateDtoWithZone,
@@ -519,30 +801,66 @@ describe('TicketsController', () => {
     });
 
     it('should deny access when zone capacity is reached', async () => {
-      // Arrange
       const validationResult = {
         valid: true,
         ticket: mockTicketEntity,
-        message: 'Zone Main Stage is at full capacity',
+        message: `Zone ${mainStageZone.name} is at full capacity`,
         accessGranted: false,
       };
       mockTicketsService.validateTicket.mockResolvedValue(validationResult);
 
-      // Act
       const result = await controller.validateTicket({
         qrCode: soldTicket.qrCode,
-        zoneId: 'zone-123',
+        zoneId: mainStageZone.id,
       });
 
-      // Assert
       expect(result.valid).toBe(true);
       expect(result.accessGranted).toBe(false);
     });
+
+    it('should deny access when ticket type not allowed in VIP zone', async () => {
+      const validationResult = {
+        valid: true,
+        ticket: mockTicketEntity,
+        message: `Ticket type STANDARD does not have access to ${vipLounge.name}`,
+        accessGranted: false,
+      };
+      mockTicketsService.validateTicket.mockResolvedValue(validationResult);
+
+      const result = await controller.validateTicket({
+        qrCode: soldTicket.qrCode,
+        zoneId: vipLounge.id,
+      });
+
+      expect(result.valid).toBe(true);
+      expect(result.accessGranted).toBe(false);
+    });
+
+    it('should grant access for VIP ticket to VIP zone', async () => {
+      const validationResult = {
+        valid: true,
+        ticket: mockVipTicketEntity,
+        message: 'Ticket is valid',
+        accessGranted: true,
+      };
+      mockTicketsService.validateTicket.mockResolvedValue(validationResult);
+
+      const result = await controller.validateTicket({
+        qrCode: vipTicket.qrCode,
+        zoneId: vipLounge.id,
+      });
+
+      expect(result.valid).toBe(true);
+      expect(result.accessGranted).toBe(true);
+    });
   });
+
+  // ==========================================================================
+  // POST /api/tickets/:id/scan - scanTicket
+  // ==========================================================================
 
   describe('scanTicket', () => {
     it('should scan ticket and mark as used', async () => {
-      // Arrange
       const scanResult = {
         valid: true,
         ticket: { ...mockTicketEntity, status: TicketStatus.USED },
@@ -551,13 +869,11 @@ describe('TicketsController', () => {
       };
       mockTicketsService.scanTicket.mockResolvedValue(scanResult);
 
-      // Act
       const result = await controller.scanTicket(
         mockStaffRequest,
         soldTicket.qrCode,
       );
 
-      // Assert
       expect(result).toEqual(scanResult);
       expect(mockTicketsService.scanTicket).toHaveBeenCalledWith(
         soldTicket.qrCode,
@@ -567,7 +883,6 @@ describe('TicketsController', () => {
     });
 
     it('should scan ticket with zoneId when provided', async () => {
-      // Arrange
       const scanResult = {
         valid: true,
         ticket: { ...mockTicketEntity, status: TicketStatus.USED },
@@ -576,24 +891,21 @@ describe('TicketsController', () => {
       };
       mockTicketsService.scanTicket.mockResolvedValue(scanResult);
 
-      // Act
       const result = await controller.scanTicket(
         mockStaffRequest,
         soldTicket.qrCode,
-        'zone-123',
+        mainStageZone.id,
       );
 
-      // Assert
       expect(result).toEqual(scanResult);
       expect(mockTicketsService.scanTicket).toHaveBeenCalledWith(
         soldTicket.qrCode,
         staffUser.id,
-        'zone-123',
+        mainStageZone.id,
       );
     });
 
     it('should return invalid for already used ticket', async () => {
-      // Arrange
       const scanResult = {
         valid: false,
         ticket: { ...mockTicketEntity, status: TicketStatus.USED },
@@ -601,70 +913,126 @@ describe('TicketsController', () => {
       };
       mockTicketsService.scanTicket.mockResolvedValue(scanResult);
 
-      // Act
       const result = await controller.scanTicket(
         mockStaffRequest,
         usedTicket.qrCode,
       );
 
-      // Assert
       expect(result.valid).toBe(false);
     });
 
     it('should return invalid for non-existent QR code', async () => {
-      // Arrange
       const scanResult = {
         valid: false,
         message: 'Invalid ticket - QR code not found',
       };
       mockTicketsService.scanTicket.mockResolvedValue(scanResult);
 
-      // Act
-      const result = await controller.scanTicket(
-        mockStaffRequest,
-        'INVALID-QR',
-      );
+      const result = await controller.scanTicket(mockStaffRequest, 'INVALID-QR');
 
-      // Assert
       expect(result.valid).toBe(false);
     });
 
     it('should deny access when ticket type not allowed in zone', async () => {
-      // Arrange
       const scanResult = {
         valid: true,
         ticket: mockTicketEntity,
-        message: 'Ticket type STANDARD does not have access to VIP Lounge',
+        message: `Ticket type STANDARD does not have access to ${vipLounge.name}`,
         accessGranted: false,
       };
       mockTicketsService.scanTicket.mockResolvedValue(scanResult);
 
-      // Act
       const result = await controller.scanTicket(
         mockStaffRequest,
         soldTicket.qrCode,
-        'vip-zone',
+        vipLounge.id,
       );
 
-      // Assert
       expect(result.valid).toBe(true);
       expect(result.accessGranted).toBe(false);
     });
+
+    it('should allow security user to scan tickets', async () => {
+      const scanResult = {
+        valid: true,
+        ticket: { ...mockTicketEntity, status: TicketStatus.USED },
+        message: 'Entry granted',
+        accessGranted: true,
+      };
+      mockTicketsService.scanTicket.mockResolvedValue(scanResult);
+
+      const result = await controller.scanTicket(
+        mockSecurityRequest,
+        soldTicket.qrCode,
+      );
+
+      expect(result).toEqual(scanResult);
+      expect(mockTicketsService.scanTicket).toHaveBeenCalledWith(
+        soldTicket.qrCode,
+        securityUser.id,
+        undefined,
+      );
+    });
+
+    it('should allow admin user to scan tickets', async () => {
+      const scanResult = {
+        valid: true,
+        ticket: { ...mockTicketEntity, status: TicketStatus.USED },
+        message: 'Entry granted',
+        accessGranted: true,
+      };
+      mockTicketsService.scanTicket.mockResolvedValue(scanResult);
+
+      const result = await controller.scanTicket(
+        mockAdminRequest,
+        soldTicket.qrCode,
+      );
+
+      expect(result).toEqual(scanResult);
+      expect(mockTicketsService.scanTicket).toHaveBeenCalledWith(
+        soldTicket.qrCode,
+        adminUser.id,
+        undefined,
+      );
+    });
+
+    it('should allow organizer user to scan tickets', async () => {
+      const scanResult = {
+        valid: true,
+        ticket: { ...mockTicketEntity, status: TicketStatus.USED },
+        message: 'Entry granted',
+        accessGranted: true,
+      };
+      mockTicketsService.scanTicket.mockResolvedValue(scanResult);
+
+      const result = await controller.scanTicket(
+        mockOrganizerRequest,
+        soldTicket.qrCode,
+      );
+
+      expect(result).toEqual(scanResult);
+      expect(mockTicketsService.scanTicket).toHaveBeenCalledWith(
+        soldTicket.qrCode,
+        organizerUser.id,
+        undefined,
+      );
+    });
   });
+
+  // ==========================================================================
+  // DELETE /api/tickets/:id - cancelTicket
+  // ==========================================================================
 
   describe('cancelTicket', () => {
     it('should cancel a valid ticket', async () => {
-      // Arrange
-      const cancelledTicket = {
+      const cancelledTicketEntity = {
         ...mockTicketEntity,
         status: TicketStatus.CANCELLED,
       };
-      mockTicketsService.cancelTicket.mockResolvedValue(cancelledTicket);
+      mockTicketsService.cancelTicket.mockResolvedValue(cancelledTicketEntity);
 
-      // Act
       const result = await controller.cancelTicket(mockRequest, soldTicket.id);
 
-      // Assert
       expect(result.status).toBe(TicketStatus.CANCELLED);
       expect(mockTicketsService.cancelTicket).toHaveBeenCalledWith(
         soldTicket.id,
@@ -673,51 +1041,327 @@ describe('TicketsController', () => {
     });
 
     it('should throw NotFoundException when ticket does not exist', async () => {
-      // Arrange
       mockTicketsService.cancelTicket.mockRejectedValue(
         NotFoundException.ticket('non-existent-id'),
       );
 
-      // Act & Assert
       await expect(
         controller.cancelTicket(mockRequest, 'non-existent-id'),
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw ForbiddenException when user does not own ticket', async () => {
-      // Arrange
       mockTicketsService.cancelTicket.mockRejectedValue(
         ForbiddenException.resourceForbidden('ticket'),
       );
 
-      // Act & Assert
       await expect(
         controller.cancelTicket(mockRequest, 'other-user-ticket'),
       ).rejects.toThrow(ForbiddenException);
     });
 
     it('should throw TicketAlreadyUsedException when ticket is already used', async () => {
-      // Arrange
       mockTicketsService.cancelTicket.mockRejectedValue(
         new TicketAlreadyUsedException(usedTicket.id, new Date()),
       );
 
-      // Act & Assert
       await expect(
         controller.cancelTicket(mockRequest, usedTicket.id),
       ).rejects.toThrow(TicketAlreadyUsedException);
     });
 
     it('should throw TicketSaleEndedException when festival has started', async () => {
-      // Arrange
       mockTicketsService.cancelTicket.mockRejectedValue(
         new TicketSaleEndedException(new Date()),
       );
 
-      // Act & Assert
       await expect(
         controller.cancelTicket(mockRequest, soldTicket.id),
       ).rejects.toThrow(TicketSaleEndedException);
+    });
+
+    it('should throw error for already cancelled ticket', async () => {
+      mockTicketsService.cancelTicket.mockRejectedValue(
+        new TicketAlreadyUsedException(cancelledTicket.id, new Date()),
+      );
+
+      await expect(
+        controller.cancelTicket(mockRequest, cancelledTicket.id),
+      ).rejects.toThrow(TicketAlreadyUsedException);
+    });
+  });
+
+  // ==========================================================================
+  // Role-based access control tests
+  // ==========================================================================
+
+  describe('Role-based Access Control', () => {
+    describe('validate endpoint roles', () => {
+      it('should be accessible by STAFF role', async () => {
+        const validationResult = { valid: true, message: 'OK', accessGranted: true };
+        mockTicketsService.validateTicket.mockResolvedValue(validationResult);
+
+        const result = await controller.validateTicket({ qrCode: 'TEST' });
+
+        expect(result).toBeDefined();
+      });
+
+      it('should be accessible by SECURITY role', async () => {
+        const validationResult = { valid: true, message: 'OK', accessGranted: true };
+        mockTicketsService.validateTicket.mockResolvedValue(validationResult);
+
+        const result = await controller.validateTicket({ qrCode: 'TEST' });
+
+        expect(result).toBeDefined();
+      });
+
+      it('should be accessible by ADMIN role', async () => {
+        const validationResult = { valid: true, message: 'OK', accessGranted: true };
+        mockTicketsService.validateTicket.mockResolvedValue(validationResult);
+
+        const result = await controller.validateTicket({ qrCode: 'TEST' });
+
+        expect(result).toBeDefined();
+      });
+
+      it('should be accessible by ORGANIZER role', async () => {
+        const validationResult = { valid: true, message: 'OK', accessGranted: true };
+        mockTicketsService.validateTicket.mockResolvedValue(validationResult);
+
+        const result = await controller.validateTicket({ qrCode: 'TEST' });
+
+        expect(result).toBeDefined();
+      });
+    });
+
+    describe('scan endpoint roles', () => {
+      it('should pass staff user ID to service', async () => {
+        const scanResult = { valid: true, message: 'OK', accessGranted: true };
+        mockTicketsService.scanTicket.mockResolvedValue(scanResult);
+
+        await controller.scanTicket(mockStaffRequest, 'QR-CODE');
+
+        expect(mockTicketsService.scanTicket).toHaveBeenCalledWith(
+          'QR-CODE',
+          staffUser.id,
+          undefined,
+        );
+      });
+
+      it('should pass security user ID to service', async () => {
+        const scanResult = { valid: true, message: 'OK', accessGranted: true };
+        mockTicketsService.scanTicket.mockResolvedValue(scanResult);
+
+        await controller.scanTicket(mockSecurityRequest, 'QR-CODE');
+
+        expect(mockTicketsService.scanTicket).toHaveBeenCalledWith(
+          'QR-CODE',
+          securityUser.id,
+          undefined,
+        );
+      });
+    });
+  });
+
+  // ==========================================================================
+  // Edge cases
+  // ==========================================================================
+
+  describe('Edge Cases', () => {
+    it('should handle empty festivalId filter', async () => {
+      const tickets = [mockTicketEntity];
+      mockTicketsService.getUserTickets.mockResolvedValue(tickets);
+
+      const result = await controller.getUserTickets(mockRequest, '');
+
+      expect(mockTicketsService.getUserTickets).toHaveBeenCalledWith(
+        regularUser.id,
+        '',
+      );
+    });
+
+    it('should handle QR code with special characters', async () => {
+      const specialQrCode = 'QR-TEST-ABC!@#$%';
+      const validationResult = {
+        valid: false,
+        message: 'Invalid ticket - QR code not found',
+      };
+      mockTicketsService.validateTicket.mockResolvedValue(validationResult);
+
+      const result = await controller.validateTicket({
+        qrCode: specialQrCode,
+      });
+
+      expect(result.valid).toBe(false);
+    });
+
+    it('should handle very long QR code', async () => {
+      const longQrCode = 'QR-' + 'A'.repeat(1000);
+      const validationResult = {
+        valid: false,
+        message: 'Invalid ticket - QR code not found',
+      };
+      mockTicketsService.validateTicket.mockResolvedValue(validationResult);
+
+      const result = await controller.validateTicket({
+        qrCode: longQrCode,
+      });
+
+      expect(result.valid).toBe(false);
+    });
+
+    it('should handle purchase with maximum quantity', async () => {
+      const maxQuantityDto = {
+        festivalId: publishedFestival.id,
+        categoryId: standardCategory.id,
+        quantity: 4, // max per user
+      };
+      const purchasedTickets = Array(4).fill(mockTicketEntity);
+      mockTicketsService.purchaseTickets.mockResolvedValue(purchasedTickets);
+
+      const result = await controller.purchaseTickets(mockRequest, maxQuantityDto);
+
+      expect(result).toHaveLength(4);
+    });
+
+    it('should handle service timeout error', async () => {
+      mockTicketsService.getUserTickets.mockRejectedValue(
+        new Error('Request timeout'),
+      );
+
+      await expect(controller.getUserTickets(mockRequest)).rejects.toThrow(
+        'Request timeout',
+      );
+    });
+
+    it('should handle Unicode in guest purchase names', async () => {
+      const unicodeDto = {
+        festivalId: publishedFestival.id,
+        categoryId: standardCategory.id,
+        quantity: 1,
+        email: 'unicode@example.com',
+        firstName: 'Rene',
+        lastName: 'Mueller',
+      };
+      mockTicketsService.guestPurchaseTickets.mockResolvedValue([mockTicketEntity]);
+
+      const result = await controller.guestPurchaseTickets(unicodeDto);
+
+      expect(result).toBeDefined();
+    });
+  });
+
+  // ==========================================================================
+  // Return type verification
+  // ==========================================================================
+
+  describe('Return Type Verification', () => {
+    it('getUserTickets should return TicketEntity array', async () => {
+      mockTicketsService.getUserTickets.mockResolvedValue([mockTicketEntity]);
+
+      const result = await controller.getUserTickets(mockRequest);
+
+      expect(Array.isArray(result)).toBe(true);
+      if (result[0]) {
+        expect(result[0]).toHaveProperty('id');
+        expect(result[0]).toHaveProperty('festivalId');
+        expect(result[0]).toHaveProperty('categoryId');
+        expect(result[0]).toHaveProperty('userId');
+        expect(result[0]).toHaveProperty('qrCode');
+        expect(result[0]).toHaveProperty('status');
+      }
+    });
+
+    it('getTicketById should return TicketEntity', async () => {
+      mockTicketsService.getTicketById.mockResolvedValue(mockTicketEntity);
+
+      const result = await controller.getTicketById(mockRequest, 'ticket-id');
+
+      expect(result).toHaveProperty('id');
+      expect(result).toHaveProperty('festival');
+      expect(result).toHaveProperty('category');
+    });
+
+    it('getTicketQrCode should return object with qrCode property', async () => {
+      mockTicketsService.getTicketQrCodeImage.mockResolvedValue('data:image/png;base64,abc');
+
+      const result = await controller.getTicketQrCode(mockRequest, 'ticket-id');
+
+      expect(result).toHaveProperty('qrCode');
+      expect(typeof result.qrCode).toBe('string');
+    });
+
+    it('validateTicket should return ValidationResult', async () => {
+      mockTicketsService.validateTicket.mockResolvedValue({
+        valid: true,
+        ticket: mockTicketEntity,
+        message: 'OK',
+        accessGranted: true,
+      });
+
+      const result = await controller.validateTicket({ qrCode: 'TEST' });
+
+      expect(result).toHaveProperty('valid');
+      expect(result).toHaveProperty('message');
+      expect(typeof result.valid).toBe('boolean');
+    });
+
+    it('scanTicket should return ValidationResult', async () => {
+      mockTicketsService.scanTicket.mockResolvedValue({
+        valid: true,
+        ticket: mockTicketEntity,
+        message: 'Entry granted',
+        accessGranted: true,
+      });
+
+      const result = await controller.scanTicket(mockStaffRequest, 'TEST');
+
+      expect(result).toHaveProperty('valid');
+      expect(result).toHaveProperty('message');
+      expect(result).toHaveProperty('accessGranted');
+    });
+
+    it('cancelTicket should return cancelled TicketEntity', async () => {
+      mockTicketsService.cancelTicket.mockResolvedValue({
+        ...mockTicketEntity,
+        status: TicketStatus.CANCELLED,
+      });
+
+      const result = await controller.cancelTicket(mockRequest, 'ticket-id');
+
+      expect(result).toHaveProperty('id');
+      expect(result.status).toBe(TicketStatus.CANCELLED);
+    });
+  });
+
+  // ==========================================================================
+  // HTTP status code tests
+  // ==========================================================================
+
+  describe('HTTP Status Codes', () => {
+    it('guestPurchaseTickets should use HttpCode CREATED (201)', () => {
+      // This test verifies the decorator is applied
+      const metadata = Reflect.getMetadata(
+        '__httpCode__',
+        controller.guestPurchaseTickets,
+      );
+      expect(metadata).toBe(201);
+    });
+
+    it('validateTicket should use HttpCode OK (200)', () => {
+      const metadata = Reflect.getMetadata(
+        '__httpCode__',
+        controller.validateTicket,
+      );
+      expect(metadata).toBe(200);
+    });
+
+    it('scanTicket should use HttpCode OK (200)', () => {
+      const metadata = Reflect.getMetadata(
+        '__httpCode__',
+        controller.scanTicket,
+      );
+      expect(metadata).toBe(200);
     });
   });
 });

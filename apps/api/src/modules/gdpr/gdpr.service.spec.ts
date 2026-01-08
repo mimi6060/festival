@@ -2247,4 +2247,316 @@ describe('GdprService', () => {
       expect(result).toHaveLength(3);
     });
   });
+
+  // ==========================================================================
+  // EXECUTE REQUEST (Private Method) Tests via processRequest
+  // ==========================================================================
+
+  describe('executeRequest (via processRequest)', () => {
+    it('should execute DATA_DELETION request', async () => {
+      // Arrange
+      mockPrismaService.gdprRequest.findUnique.mockResolvedValue({
+        id: mockRequestId,
+        userId: mockUserId,
+        type: GdprRequestType.DATA_DELETION,
+        status: GdprRequestStatus.PENDING,
+      });
+      const mockTx = {
+        user: { update: jest.fn() },
+        pushToken: { deleteMany: jest.fn() },
+        userConsent: { deleteMany: jest.fn() },
+        notification: { deleteMany: jest.fn() },
+        session: { deleteMany: jest.fn() },
+      };
+      mockPrismaService.$transaction.mockImplementation(async (callback) => {
+        await callback(mockTx);
+        return mockTx;
+      });
+      mockPrismaService.gdprRequest.update.mockResolvedValue({
+        id: mockRequestId,
+        status: GdprRequestStatus.COMPLETED,
+      });
+
+      // Act
+      await gdprService.processRequest(mockRequestId, { action: 'APPROVE' }, mockAdminId);
+
+      // Assert
+      expect(mockPrismaService.$transaction).toHaveBeenCalled();
+      expect(mockTx.user.update).toHaveBeenCalled();
+    });
+
+    it('should execute CONSENT_WITHDRAWAL request', async () => {
+      // Arrange
+      mockPrismaService.gdprRequest.findUnique.mockResolvedValue({
+        id: mockRequestId,
+        userId: mockUserId,
+        type: GdprRequestType.CONSENT_WITHDRAWAL,
+        status: GdprRequestStatus.PENDING,
+      });
+      mockPrismaService.userConsent.updateMany.mockResolvedValue({ count: 4 });
+      mockPrismaService.gdprRequest.update.mockResolvedValue({
+        id: mockRequestId,
+        status: GdprRequestStatus.COMPLETED,
+      });
+
+      // Act
+      await gdprService.processRequest(mockRequestId, { action: 'APPROVE' }, mockAdminId);
+
+      // Assert
+      expect(mockPrismaService.userConsent.updateMany).toHaveBeenCalledWith({
+        where: {
+          userId: mockUserId,
+          type: { not: ConsentType.ESSENTIAL },
+        },
+        data: {
+          granted: false,
+          revokedAt: expect.any(Date),
+        },
+      });
+    });
+
+    it('should execute DATA_PORTABILITY request (same as DATA_ACCESS)', async () => {
+      // Arrange
+      mockPrismaService.gdprRequest.findUnique.mockResolvedValue({
+        id: mockRequestId,
+        userId: mockUserId,
+        type: GdprRequestType.DATA_PORTABILITY,
+        status: GdprRequestStatus.PENDING,
+        format: ExportFormat.JSON,
+      });
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: mockUserId,
+        email: 'test@test.com',
+        firstName: 'Test',
+        lastName: 'User',
+        phone: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        lastLoginAt: null,
+      });
+      mockPrismaService.ticket.findMany.mockResolvedValue([]);
+      mockPrismaService.payment.findMany.mockResolvedValue([]);
+      mockPrismaService.cashlessTransaction.findMany.mockResolvedValue([]);
+      mockPrismaService.supportTicket.findMany.mockResolvedValue([]);
+      mockPrismaService.userConsent.findMany.mockResolvedValue([]);
+      mockPrismaService.notification.findMany.mockResolvedValue([]);
+      mockPrismaService.gdprRequest.update.mockResolvedValue({
+        id: mockRequestId,
+        status: GdprRequestStatus.COMPLETED,
+      });
+
+      // Act
+      await gdprService.processRequest(mockRequestId, { action: 'APPROVE' }, mockAdminId);
+
+      // Assert - should have generated export
+      expect(mockPrismaService.gdprRequest.update).toHaveBeenCalledWith({
+        where: { id: mockRequestId },
+        data: expect.objectContaining({
+          downloadUrl: expect.stringContaining('/api/gdpr/download/'),
+        }),
+      });
+    });
+
+    it('should handle DATA_RECTIFICATION request (no additional processing)', async () => {
+      // Arrange
+      mockPrismaService.gdprRequest.findUnique.mockResolvedValue({
+        id: mockRequestId,
+        userId: mockUserId,
+        type: GdprRequestType.DATA_RECTIFICATION,
+        status: GdprRequestStatus.PENDING,
+        details: JSON.stringify([{ field: 'firstName', currentValue: 'Jon', correctValue: 'John' }]),
+      });
+      mockPrismaService.gdprRequest.update.mockResolvedValue({
+        id: mockRequestId,
+        status: GdprRequestStatus.COMPLETED,
+      });
+
+      // Act
+      await gdprService.processRequest(mockRequestId, { action: 'APPROVE' }, mockAdminId);
+
+      // Assert - should just update status, rectification is handled manually
+      expect(mockPrismaService.gdprRequest.update).toHaveBeenCalledWith({
+        where: { id: mockRequestId },
+        data: expect.objectContaining({
+          status: GdprRequestStatus.COMPLETED,
+          processedBy: mockAdminId,
+        }),
+      });
+    });
+  });
+
+  // ==========================================================================
+  // FORMAT EXPORT DATA Tests (via generateDataExport)
+  // ==========================================================================
+
+  describe('formatExportData (via generateDataExport)', () => {
+    it('should format data as CSV when requested', async () => {
+      // Arrange
+      const mockRequest = {
+        id: mockRequestId,
+        userId: mockUserId,
+        format: ExportFormat.CSV,
+      };
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: mockUserId,
+        email: 'test@test.com',
+        firstName: 'Test',
+        lastName: 'User',
+        phone: '+33612345678',
+        createdAt: new Date('2024-01-01'),
+        updatedAt: new Date('2024-01-02'),
+        lastLoginAt: new Date('2024-01-03'),
+      });
+      mockPrismaService.ticket.findMany.mockResolvedValue([
+        { id: 'ticket-1', qrCode: 'QR1', status: 'VALID' },
+      ]);
+      mockPrismaService.payment.findMany.mockResolvedValue([]);
+      mockPrismaService.cashlessTransaction.findMany.mockResolvedValue([]);
+      mockPrismaService.supportTicket.findMany.mockResolvedValue([]);
+      mockPrismaService.userConsent.findMany.mockResolvedValue([]);
+      mockPrismaService.notification.findMany.mockResolvedValue([]);
+      mockPrismaService.gdprRequest.update.mockResolvedValue({});
+
+      // Act
+      const result = await gdprService.generateDataExport(mockRequest);
+
+      // Assert
+      expect(result.downloadToken).toBeDefined();
+      expect(result.expiresAt).toBeDefined();
+    });
+
+    it('should format data as PDF (falls back to JSON structure)', async () => {
+      // Arrange
+      const mockRequest = {
+        id: mockRequestId,
+        userId: mockUserId,
+        format: ExportFormat.PDF,
+      };
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: mockUserId,
+        email: 'test@test.com',
+        firstName: 'Test',
+        lastName: 'User',
+        phone: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        lastLoginAt: null,
+      });
+      mockPrismaService.ticket.findMany.mockResolvedValue([]);
+      mockPrismaService.payment.findMany.mockResolvedValue([]);
+      mockPrismaService.cashlessTransaction.findMany.mockResolvedValue([]);
+      mockPrismaService.supportTicket.findMany.mockResolvedValue([]);
+      mockPrismaService.userConsent.findMany.mockResolvedValue([]);
+      mockPrismaService.notification.findMany.mockResolvedValue([]);
+      mockPrismaService.gdprRequest.update.mockResolvedValue({});
+
+      // Act
+      const result = await gdprService.generateDataExport(mockRequest);
+
+      // Assert
+      expect(result.downloadToken).toBeDefined();
+    });
+
+    it('should use default JSON format when format is undefined', async () => {
+      // Arrange
+      const mockRequest = {
+        id: mockRequestId,
+        userId: mockUserId,
+        format: undefined,
+      };
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: mockUserId,
+        email: 'test@test.com',
+        firstName: 'Test',
+        lastName: 'User',
+        phone: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        lastLoginAt: null,
+      });
+      mockPrismaService.ticket.findMany.mockResolvedValue([]);
+      mockPrismaService.payment.findMany.mockResolvedValue([]);
+      mockPrismaService.cashlessTransaction.findMany.mockResolvedValue([]);
+      mockPrismaService.supportTicket.findMany.mockResolvedValue([]);
+      mockPrismaService.userConsent.findMany.mockResolvedValue([]);
+      mockPrismaService.notification.findMany.mockResolvedValue([]);
+      mockPrismaService.gdprRequest.update.mockResolvedValue({});
+
+      // Act
+      const result = await gdprService.generateDataExport(mockRequest);
+
+      // Assert
+      expect(result.downloadToken).toBeDefined();
+    });
+  });
+
+  // ==========================================================================
+  // DOWNLOAD EXPORT EDGE CASES Tests
+  // ==========================================================================
+
+  describe('downloadExport edge cases', () => {
+    it('should handle export with no expiresAt set', async () => {
+      // Arrange
+      const downloadToken = 'no-expiry-token';
+      mockPrismaService.gdprRequest.findFirst.mockResolvedValue({
+        id: mockRequestId,
+        userId: mockUserId,
+        format: ExportFormat.JSON,
+        downloadUrl: `/api/gdpr/download/${downloadToken}`,
+        status: GdprRequestStatus.COMPLETED,
+        expiresAt: null, // No expiry set
+      });
+
+      // Act
+      const result = await gdprService.downloadExport(downloadToken);
+
+      // Assert
+      expect(result.format).toBe(ExportFormat.JSON);
+    });
+
+    it('should handle export with undefined format', async () => {
+      // Arrange
+      const downloadToken = 'no-format-token';
+      mockPrismaService.gdprRequest.findFirst.mockResolvedValue({
+        id: mockRequestId,
+        userId: mockUserId,
+        format: undefined,
+        downloadUrl: `/api/gdpr/download/${downloadToken}`,
+        status: GdprRequestStatus.COMPLETED,
+        expiresAt: new Date(Date.now() + 86400000),
+      });
+
+      // Act
+      const result = await gdprService.downloadExport(downloadToken);
+
+      // Assert
+      expect(result.filename).toContain('.json');
+    });
+  });
+
+  // ==========================================================================
+  // AUDIT LOGS WITH ADMIN USER Tests
+  // ==========================================================================
+
+  describe('getAuditLogs with adminUserId', () => {
+    it('should return logs for specified user when admin requests', async () => {
+      // Arrange
+      mockPrismaService.auditLog.findMany.mockResolvedValue([
+        {
+          id: 'log-1',
+          userId: mockUserId,
+          action: 'GDPR_CONSENT_UPDATE',
+          entityType: 'GDPR',
+          createdAt: new Date(),
+        },
+      ]);
+
+      // Act
+      const result = await gdprService.getAuditLogs(mockUserId, mockAdminId);
+
+      // Assert
+      expect(result).toHaveLength(1);
+      expect(mockPrismaService.auditLog.findMany).toHaveBeenCalled();
+    });
+  });
 });
