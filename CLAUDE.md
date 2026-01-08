@@ -61,8 +61,14 @@ npm run build:all                   # Build everything
 
 # Testing
 npx nx test api                     # API tests
+npx nx test api --testPathPattern=auth        # Single module tests
+npx nx test api --testPathPattern=auth.service.spec  # Single file
 npm run test:all                    # All tests
 npm run test:coverage               # With coverage
+
+# E2E Testing
+npx nx e2e api-e2e                  # Run all E2E tests
+npx nx e2e api-e2e --spec=**/auth*  # Single E2E spec
 
 # Linting & Formatting
 npm run lint:all
@@ -130,21 +136,33 @@ modules/
 ├── users/       # User management, RBAC
 ├── festivals/   # Multi-tenant festivals
 ├── tickets/     # Categories, QR codes, validation
-├── payments/    # Stripe integration
-├── cashless/    # Digital wallet, NFC
+├── payments/    # Stripe integration, subscriptions, Connect
+├── cashless/    # Digital wallet, NFC, configurable limits
 ├── zones/       # Access control, capacity
 ├── staff/       # Shifts, badges
-├── program/     # Artists, stages, performances
-├── vendors/     # Food, merchandise
+├── program/     # Artists, stages, performances, conflict detection
+├── vendors/     # Food, merchandise, inventory management
 ├── camping/     # Accommodation booking
-├── notifications/ # Push, email, SMS
-└── analytics/   # KPIs, real-time stats
+├── notifications/ # Push (FCM), email, SMS, templates
+├── promo-codes/ # Discount codes, stacking rules
+├── analytics/   # KPIs, real-time stats, bulk export
+└── gdpr/        # Data export, right to be forgotten
+
+gateways/        # WebSocket real-time communication
+├── events.gateway.ts      # General events, notifications
+├── presence.gateway.ts    # User online status, typing
+├── zones.gateway.ts       # Zone occupancy, alerts
+├── broadcast.gateway.ts   # Announcements, emergencies
+└── support-chat.gateway.ts # Support ticket messaging
 
 common/
-├── guards/      # JwtAuthGuard, RolesGuard
-├── decorators/  # @Public(), @Roles(), @User()
+├── guards/      # JwtAuthGuard, RolesGuard, RateLimitGuard
+├── decorators/  # @Public(), @Roles(), @User(), @RateLimit()
 ├── dto/         # Shared DTOs
-└── interceptors/
+├── exceptions/  # Business exceptions, error codes (ERR_XXXX)
+├── interceptors/ # Logging, caching, versioning
+├── middleware/  # Soft delete filtering
+└── services/    # SoftDeleteService, RetryService, RateLimitService
 ```
 
 ## Backend Patterns
@@ -154,6 +172,10 @@ common/
 - **DTOs**: Use class-validator + class-transformer
 - **Multi-tenant**: All queries scoped to festivalId
 - **Auth**: JWT in httpOnly cookies, validate via JwtStrategy
+- **Soft Delete**: Critical models use `isDeleted`/`deletedAt` fields (auto-filtered via middleware)
+- **Error Codes**: Standardized format `ERR_XXXX` (1xxx=general, 2xxx=auth, 3xxx=authz, etc.)
+- **Rate Limiting**: Use `@RateLimit(limit, window)` decorator on public endpoints
+- **API Versioning**: `X-API-Version` header, defaults to v1
 
 ## Frontend Patterns (Next.js)
 
@@ -167,6 +189,8 @@ common/
 Core models: User, Festival, Ticket, Payment, CashlessAccount, Zone, Staff, Artist, Stage, Performance, Vendor, Notification
 
 User roles: ADMIN, ORGANIZER, STAFF, CASHIER, SECURITY, USER
+
+Soft-deletable models: User, Festival, Ticket, TicketCategory, Payment, Artist, Vendor, VendorOrder
 
 ## Security Requirements
 
