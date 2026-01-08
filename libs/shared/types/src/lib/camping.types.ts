@@ -564,10 +564,9 @@ export function isSpotAvailable(spot: CampingSpot): boolean {
  * Check if reservation is active
  */
 export function isReservationActive(reservation: CampingReservation): boolean {
-  return [
-    CampingReservationStatus.CONFIRMED,
-    CampingReservationStatus.CHECKED_IN,
-  ].includes(reservation.status);
+  return [CampingReservationStatus.CONFIRMED, CampingReservationStatus.CHECKED_IN].includes(
+    reservation.status
+  );
 }
 
 // ============================================================================
@@ -656,16 +655,17 @@ export function calculateNights(checkIn: string, checkOut: string): number {
 export function calculateCampingPrice(
   nightlyRate: number,
   nights: number,
-  spotSurcharge: number = 0,
-  amenitiesCost: number = 0,
-  vehiclesFee: number = 0,
-  petsFee: number = 0,
-  extraGuestsFee: number = 0,
-  discount: number = 0,
-  taxRate: number = 0
+  spotSurcharge = 0,
+  amenitiesCost = 0,
+  vehiclesFee = 0,
+  petsFee = 0,
+  extraGuestsFee = 0,
+  discount = 0,
+  taxRate = 0
 ): CampingPricing {
   const basePrice = nightlyRate * nights;
-  const subtotal = basePrice + spotSurcharge + amenitiesCost + vehiclesFee + petsFee + extraGuestsFee - discount;
+  const subtotal =
+    basePrice + spotSurcharge + amenitiesCost + vehiclesFee + petsFee + extraGuestsFee - discount;
   const taxAmount = subtotal * (taxRate / 100);
   const total = subtotal + taxAmount;
 
@@ -690,10 +690,7 @@ export function calculateCampingPrice(
 /**
  * Generate reservation number
  */
-export function generateCampingReservationNumber(
-  festivalPrefix: string,
-  sequence: number
-): string {
+export function generateCampingReservationNumber(festivalPrefix: string, sequence: number): string {
   const year = new Date().getFullYear();
   const paddedSequence = sequence.toString().padStart(5, '0');
   return `${festivalPrefix}-CAMP-${year}-${paddedSequence}`;

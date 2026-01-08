@@ -730,7 +730,9 @@ export function isTicketUrgent(ticket: SupportTicket): boolean {
  * Check if SLA is breached
  */
 export function isSLABreached(ticket: SupportTicket): boolean {
-  if (!ticket.sla) return false;
+  if (!ticket.sla) {
+    return false;
+  }
   return ticket.sla.firstResponseBreached || ticket.sla.resolutionBreached;
 }
 
@@ -934,16 +936,22 @@ export function calculateSLARemainingTime(dueDate: string): {
  * Format file size
  */
 export function formatFileSize(bytes: number): string {
-  if (bytes < 1024) return `${bytes} B`;
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024) {
+    return `${bytes} B`;
+  }
+  if (bytes < 1024 * 1024) {
+    return `${(bytes / 1024).toFixed(1)} KB`;
+  }
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
 }
 
 /**
  * Get message preview
  */
-export function getMessagePreview(content: string, maxLength: number = 100): string {
-  if (content.length <= maxLength) return content;
+export function getMessagePreview(content: string, maxLength = 100): string {
+  if (content.length <= maxLength) {
+    return content;
+  }
   return content.substring(0, maxLength).trim() + '...';
 }
 
@@ -951,16 +959,16 @@ export function getMessagePreview(content: string, maxLength: number = 100): str
  * Count unread messages
  */
 export function countUnreadMessages(messages: SupportMessage[], userId: string): number {
-  return messages.filter(
-    (m) => !m.readAt && m.senderId !== userId && !m.isInternal
-  ).length;
+  return messages.filter((m) => !m.readAt && m.senderId !== userId && !m.isInternal).length;
 }
 
 /**
  * Get last message
  */
 export function getLastMessage(ticket: SupportTicket): SupportMessage | undefined {
-  if (ticket.messages.length === 0) return undefined;
+  if (ticket.messages.length === 0) {
+    return undefined;
+  }
   return ticket.messages[ticket.messages.length - 1];
 }
 

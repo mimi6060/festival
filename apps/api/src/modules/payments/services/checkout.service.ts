@@ -64,144 +64,29 @@ export class CheckoutService {
   async createCheckoutSession(dto: CreateCheckoutSessionDto): Promise<CheckoutSessionResponseDto> {
     this.ensureStripeConfigured();
 
-    // Validate user exists
-    const user = await this.prisma.user.findUnique({
-      where: { id: dto.userId },
-    });
-
-    if (!user) {
-      throw new NotFoundException('User not found');
-    }
+    const user = await this.validateUser(dto.userId);
 
     try {
-      // Calculate total amount
-      let totalAmount = dto.lineItems.reduce(
-        (sum, item) => sum + item.unitAmount * item.quantity,
-        0
+      const { totalAmount, discountAmount, promoCodeData } = await this.calculateTotalsWithPromo(
+        dto.lineItems,
+        dto.promoCode,
+        dto.festivalId,
+        dto.currency
       );
 
-      // Apply promo code if provided
-      let promoCodeData = null;
-      let discountAmount = 0;
-      if (dto.promoCode) {
-        const promoValidation = await this.promoCodesService.apply({
-          code: dto.promoCode,
-          amount: totalAmount / 100, // Convert cents to currency units
-          festivalId: dto.festivalId,
-        });
-
-        if (!promoValidation.valid) {
-          throw new BadRequestException(promoValidation.error || 'Code promo invalide');
-        }
-
-        discountAmount = Math.round((promoValidation.discountAmount || 0) * 100);
-        totalAmount = Math.round((promoValidation.finalAmount || 0) * 100);
-        promoCodeData = promoValidation.promoCode;
-
-        this.logger.log(
-          `Promo code ${dto.promoCode} applied: -${discountAmount / 100} ${dto.currency || 'EUR'}`
-        );
-      }
-
-      // Build line items for Stripe
-      const stripeLineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = dto.lineItems.map(
-        (item) => ({
-          price_data: {
-            currency: dto.currency || 'eur',
-            product_data: {
-              name: item.name,
-              description: item.description,
-              images: item.images,
-              metadata: item.metadata,
-            },
-            unit_amount: item.unitAmount,
-            ...(dto.mode === CheckoutMode.SUBSCRIPTION && {
-              recurring: { interval: 'month' as const },
-            }),
-          },
-          quantity: item.quantity,
-        })
-      );
-
-      // Build checkout session params
-      const sessionParams: Stripe.Checkout.SessionCreateParams = {
-        mode: dto.mode,
-        line_items: stripeLineItems,
-        success_url: dto.successUrl,
-        cancel_url: dto.cancelUrl,
-        customer_email: dto.customerEmail || user.email,
-        allow_promotion_codes: dto.allowPromotionCodes ?? true,
-        metadata: {
-          userId: dto.userId,
-          festivalId: dto.festivalId || '',
-          ...dto.metadata,
-        },
-        payment_intent_data:
-          dto.mode === CheckoutMode.PAYMENT
-            ? {
-                metadata: {
-                  userId: dto.userId,
-                  festivalId: dto.festivalId || '',
-                },
-              }
-            : undefined,
-      };
-
-      // Set expiration
-      if (dto.expiresAfterMinutes) {
-        sessionParams.expires_at = Math.floor(Date.now() / 1000) + dto.expiresAfterMinutes * 60;
-      }
-
-      // Stripe Connect: Direct charge to connected account
-      let stripeOptions: Stripe.RequestOptions | undefined;
-      if (dto.connectedAccountId) {
-        stripeOptions = { stripeAccount: dto.connectedAccountId };
-
-        if (dto.applicationFeeAmount && dto.mode === CheckoutMode.PAYMENT) {
-          sessionParams.payment_intent_data = {
-            ...sessionParams.payment_intent_data,
-            application_fee_amount: dto.applicationFeeAmount,
-          };
-        }
-      }
+      const stripeLineItems = this.buildStripeLineItems(dto.lineItems, dto.currency, dto.mode);
+      const sessionParams = this.buildSessionParams(dto, user.email, stripeLineItems);
+      const stripeOptions = this.buildConnectOptions(dto, sessionParams);
 
       const session = await this.stripe!.checkout.sessions.create(sessionParams, stripeOptions);
 
-      // Create payment record in database
-      const payment = await this.prisma.payment.create({
-        data: {
-          userId: dto.userId,
-          amount: totalAmount / 100, // Convert cents to currency units
-          currency: (dto.currency || 'eur').toUpperCase(),
-          status: PaymentStatus.PENDING,
-          provider: PaymentProvider.STRIPE,
-          providerPaymentId: session.id, // Store session ID temporarily
-          providerData: {
-            sessionId: session.id,
-            mode: dto.mode,
-            checkoutUrl: session.url,
-            expiresAt: session.expires_at,
-            connectedAccountId: dto.connectedAccountId,
-            applicationFeeAmount: dto.applicationFeeAmount,
-            ...(promoCodeData && {
-              promoCode: promoCodeData.code,
-              promoCodeId: promoCodeData.id,
-              originalAmount: (totalAmount + discountAmount) / 100,
-              discountAmount: discountAmount / 100,
-            }),
-          },
-          description: `Checkout: ${dto.lineItems.map((i) => i.name).join(', ')}${
-            promoCodeData ? ` (Promo: ${promoCodeData.code})` : ''
-          }`,
-          metadata: {
-            ...dto.metadata,
-            ...(promoCodeData && {
-              promoCode: promoCodeData.code,
-              promoCodeId: promoCodeData.id,
-            }),
-          },
-        },
-      });
+      const payment = await this.createPaymentRecord(
+        dto,
+        session,
+        totalAmount,
+        discountAmount,
+        promoCodeData
+      );
 
       this.logger.log(`Checkout session created: ${session.id} for user ${dto.userId}`);
 
@@ -535,5 +420,203 @@ export class CheckoutService {
     if (!this.stripe) {
       throw new InternalServerErrorException('Stripe is not configured');
     }
+  }
+
+  // ============================================================================
+  // Checkout Session Helper Methods
+  // ============================================================================
+
+  /**
+   * Validate user exists
+   */
+  private async validateUser(userId: string): Promise<{ email: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new NotFoundException('User not found');
+    }
+
+    return user;
+  }
+
+  /**
+   * Calculate total amount and apply promo code if provided
+   */
+  private async calculateTotalsWithPromo(
+    lineItems: { unitAmount: number; quantity: number }[],
+    promoCode: string | undefined,
+    festivalId: string | undefined,
+    currency: string | undefined
+  ): Promise<{
+    totalAmount: number;
+    discountAmount: number;
+    promoCodeData: any;
+  }> {
+    let totalAmount = lineItems.reduce((sum, item) => sum + item.unitAmount * item.quantity, 0);
+
+    let promoCodeData = null;
+    let discountAmount = 0;
+
+    if (promoCode) {
+      const promoValidation = await this.promoCodesService.apply({
+        code: promoCode,
+        amount: totalAmount / 100,
+        festivalId,
+      });
+
+      if (!promoValidation.valid) {
+        throw new BadRequestException(promoValidation.error || 'Code promo invalide');
+      }
+
+      discountAmount = Math.round((promoValidation.discountAmount || 0) * 100);
+      totalAmount = Math.round((promoValidation.finalAmount || 0) * 100);
+      promoCodeData = promoValidation.promoCode;
+
+      this.logger.log(
+        `Promo code ${promoCode} applied: -${discountAmount / 100} ${currency || 'EUR'}`
+      );
+    }
+
+    return { totalAmount, discountAmount, promoCodeData };
+  }
+
+  /**
+   * Build Stripe line items from DTO
+   */
+  private buildStripeLineItems(
+    lineItems: {
+      name: string;
+      description?: string;
+      images?: string[];
+      metadata?: Record<string, string>;
+      unitAmount: number;
+      quantity: number;
+    }[],
+    currency: string | undefined,
+    mode: CheckoutMode
+  ): Stripe.Checkout.SessionCreateParams.LineItem[] {
+    return lineItems.map((item) => ({
+      price_data: {
+        currency: currency || 'eur',
+        product_data: {
+          name: item.name,
+          description: item.description,
+          images: item.images,
+          metadata: item.metadata,
+        },
+        unit_amount: item.unitAmount,
+        ...(mode === CheckoutMode.SUBSCRIPTION && {
+          recurring: { interval: 'month' as const },
+        }),
+      },
+      quantity: item.quantity,
+    }));
+  }
+
+  /**
+   * Build session parameters for Stripe
+   */
+  private buildSessionParams(
+    dto: CreateCheckoutSessionDto,
+    userEmail: string,
+    stripeLineItems: Stripe.Checkout.SessionCreateParams.LineItem[]
+  ): Stripe.Checkout.SessionCreateParams {
+    const sessionParams: Stripe.Checkout.SessionCreateParams = {
+      mode: dto.mode,
+      line_items: stripeLineItems,
+      success_url: dto.successUrl,
+      cancel_url: dto.cancelUrl,
+      customer_email: dto.customerEmail || userEmail,
+      allow_promotion_codes: dto.allowPromotionCodes ?? true,
+      metadata: {
+        userId: dto.userId,
+        festivalId: dto.festivalId || '',
+        ...dto.metadata,
+      },
+      payment_intent_data:
+        dto.mode === CheckoutMode.PAYMENT
+          ? {
+              metadata: {
+                userId: dto.userId,
+                festivalId: dto.festivalId || '',
+              },
+            }
+          : undefined,
+    };
+
+    if (dto.expiresAfterMinutes) {
+      sessionParams.expires_at = Math.floor(Date.now() / 1000) + dto.expiresAfterMinutes * 60;
+    }
+
+    return sessionParams;
+  }
+
+  /**
+   * Build Stripe Connect options if applicable
+   */
+  private buildConnectOptions(
+    dto: CreateCheckoutSessionDto,
+    sessionParams: Stripe.Checkout.SessionCreateParams
+  ): Stripe.RequestOptions | undefined {
+    if (!dto.connectedAccountId) {
+      return undefined;
+    }
+
+    if (dto.applicationFeeAmount && dto.mode === CheckoutMode.PAYMENT) {
+      sessionParams.payment_intent_data = {
+        ...sessionParams.payment_intent_data,
+        application_fee_amount: dto.applicationFeeAmount,
+      };
+    }
+
+    return { stripeAccount: dto.connectedAccountId };
+  }
+
+  /**
+   * Create payment record in database
+   */
+  private async createPaymentRecord(
+    dto: CreateCheckoutSessionDto,
+    session: Stripe.Checkout.Session,
+    totalAmount: number,
+    discountAmount: number,
+    promoCodeData: any
+  ): Promise<{ id: string }> {
+    return this.prisma.payment.create({
+      data: {
+        userId: dto.userId,
+        amount: totalAmount / 100,
+        currency: (dto.currency || 'eur').toUpperCase(),
+        status: PaymentStatus.PENDING,
+        provider: PaymentProvider.STRIPE,
+        providerPaymentId: session.id,
+        providerData: {
+          sessionId: session.id,
+          mode: dto.mode,
+          checkoutUrl: session.url,
+          expiresAt: session.expires_at,
+          connectedAccountId: dto.connectedAccountId,
+          applicationFeeAmount: dto.applicationFeeAmount,
+          ...(promoCodeData && {
+            promoCode: promoCodeData.code,
+            promoCodeId: promoCodeData.id,
+            originalAmount: (totalAmount + discountAmount) / 100,
+            discountAmount: discountAmount / 100,
+          }),
+        },
+        description: `Checkout: ${dto.lineItems.map((i) => i.name).join(', ')}${
+          promoCodeData ? ` (Promo: ${promoCodeData.code})` : ''
+        }`,
+        metadata: {
+          ...dto.metadata,
+          ...(promoCodeData && {
+            promoCode: promoCodeData.code,
+            promoCodeId: promoCodeData.id,
+          }),
+        },
+      },
+    });
   }
 }
