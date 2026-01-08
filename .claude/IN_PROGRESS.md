@@ -352,9 +352,23 @@
 
 ### DEV-18: Tests GDPR pour l'export de données
 
-- **Fichier**: `apps/api/src/modules/gdpr/gdpr.service.ts`
-- **Status**: [ ] À faire
+- **Fichier**: `apps/api/src/modules/gdpr/gdpr.service.spec.ts`
+- **Status**: [x] Terminé
 - **Description**: Tester l'export complet des données utilisateur
+- **Solution**:
+  - Ajouté 31 nouveaux tests couvrant les fonctionnalités GDPR d'export de données:
+    - **GDPR user data export structure (8 tests)**: Export des données utilisateur, tickets, paiements, cashless, support tickets, consents, notifications avec timestamps
+    - **Right to be forgotten - comprehensive deletion (7 tests)**: Anonymisation avec email unique, rétention des tickets pour compliance financière, suppression des sessions, status INACTIVE, effacement du mot de passe, audit log
+    - **CSV export format (2 tests)**: Génération CSV avec header, gestion des arrays
+    - **Consent management - comprehensive scenarios (4 tests)**: Timestamps grant/revoke séparés, IP address pour audit trail, tous les types de consent
+    - **Data request lifecycle (3 tests)**: Cycle de vie complet, prévention des doublons, différents types de requêtes
+  - Tests couvrent:
+    - Export JSON structuré avec toutes les données utilisateur (user, tickets, payments, cashless, supportTickets, consents, notifications)
+    - Format de l'export avec exportDate et expiration 7 jours
+    - Droit à l'oubli (anonymisation vs suppression hard pour compliance légale)
+    - Gestion du consentement avec audit trail complet
+    - Export CSV avec conversion des données
+  - Total: 117 tests dans gdpr.service.spec.ts (tous passants)
 
 ### DEV-19: Tests de charge pour la validation de tickets
 
