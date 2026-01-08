@@ -196,6 +196,8 @@ model User {
   resetToken        String?       // Hashed password reset token
   resetTokenExpiry  DateTime?     // Token expiration timestamp
   lastLoginAt       DateTime?
+  isDeleted         Boolean       @default(false)  // Soft delete flag for GDPR compliance
+  deletedAt         DateTime?     // Timestamp when user was soft deleted
   createdAt         DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 
@@ -223,6 +225,7 @@ model User {
   @@index([role, status])
   @@index([createdAt])
   @@index([lastLoginAt])
+  @@index([isDeleted])               // Soft delete filter for GDPR compliance
 }
 
 model Festival {

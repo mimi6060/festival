@@ -2,14 +2,35 @@
 
 ---
 
-## Session 2026-01-08 - Tests Auth Module
+## Session 2026-01-08 - Security Fix PaymentsController
 
 ### Tâches terminées cette session:
 
-- [x] Comprehensive unit tests for auth module
-  - auth.service.spec.ts: 39 tests passing
-  - auth.controller.spec.ts: 37 tests passing (NEW)
-  - Total: 76 auth module tests
+- [x] **CRITICAL SECURITY FIX: PaymentsController authentication guards**
+  - Added `@UseGuards(JwtAuthGuard, RolesGuard)` at controller level
+  - Added `@Public()` decorator to webhook endpoint (required for Stripe access)
+  - Added authorization check on `/payments/user/:userId` endpoint (user can only access own payments or ADMIN)
+  - Cleaned up duplicate `@ApiBearerAuth()` decorators (now only at controller level)
+  - Build verified: `npx nx build api --skip-nx-cache` SUCCESS
+
+---
+
+## Session 2026-01-08 - Tests Unitaires Cashless Module
+
+### Tâches terminées cette session:
+
+- [x] Revue et amélioration des tests `cashless.service.spec.ts` existants
+  - Correction des types d'exceptions pour utiliser BusinessException pattern
+  - 45+ tests pour le service cashless
+- [x] Création de `cashless.controller.spec.ts` (NEW - 39 tests)
+  - Tests GET /api/wallet/account et balance
+  - Tests POST /api/wallet/topup (success, errors, validation)
+  - Tests POST /api/wallet/pay (success, errors, validation)
+  - Tests GET /api/wallet/transactions (pagination, filtering)
+  - Tests POST /api/wallet/nfc/link
+  - Tests POST /api/wallet/refund
+  - Tests error handling et authentication
+- [x] Coverage cashless module: **98.48%** statements, **100%** functions
 
 ---
 

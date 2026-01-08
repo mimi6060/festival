@@ -2,16 +2,16 @@
 
 import { use, useState } from 'react';
 import Link from 'next/link';
-import { mockFestivals } from '../../../../lib/mock-data';
-import { formatCurrency, formatNumber, cn } from '../../../../lib/utils';
-import ConfirmModal from '../../../../components/modals/ConfirmModal';
+import { mockFestivals } from '@/lib/mock-data';
+import { formatCurrency, formatNumber, cn } from '@/lib/utils';
+import ConfirmModal from '@/components/modals/ConfirmModal';
 import {
   useCampingZones,
   useCreateCampingZone,
   useUpdateCampingZone,
   useDeleteCampingZone,
-} from '../../../../hooks';
-import type { CampingZone, CreateCampingZoneDto, UpdateCampingZoneDto } from '../../../../types';
+} from '@/hooks';
+import type { CampingZone, CreateCampingZoneDto, UpdateCampingZoneDto } from '@/types';
 
 interface CampingPageProps {
   params: Promise<{ id: string }>;

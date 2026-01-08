@@ -2,7 +2,7 @@
 
 import { use, useState, useMemo } from 'react';
 import Link from 'next/link';
-import { mockFestivals } from '../../../../lib/mock-data';
+import { mockFestivals } from '@/lib/mock-data';
 import {
   useLineup,
   useStages,
@@ -10,8 +10,8 @@ import {
   useCreatePerformance,
   useUpdatePerformance,
   useDeletePerformance,
-} from '../../../../hooks';
-import type { Performance, CreatePerformanceDto, Artist, Stage } from '../../../../types';
+} from '@/hooks';
+import type { Performance, CreatePerformanceDto, Artist, Stage } from '@/types';
 
 interface FestivalLineupPageProps {
   params: Promise<{ id: string }>;

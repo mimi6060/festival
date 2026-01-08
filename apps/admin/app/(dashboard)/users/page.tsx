@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import DataTable from '../../components/tables/DataTable';
-import { mockUsers } from '../../lib/mock-data';
-import { formatDateTime, getInitials, cn } from '../../lib/utils';
-import type { User, TableColumn } from '../../types';
+import DataTable from '@/components/tables/DataTable';
+import { mockUsers } from '@/lib/mock-data';
+import { formatDateTime, getInitials, cn } from '@/lib/utils';
+import type { User, TableColumn } from '@/types';
 
 export default function UsersPage() {
   const [roleFilter, setRoleFilter] = useState<string>('all');

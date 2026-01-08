@@ -2,9 +2,9 @@
 
 import { use, useState, useRef } from 'react';
 import Link from 'next/link';
-import { mockFestivals, mockTicketCategories } from '../../../../lib/mock-data';
-import { formatCurrency, formatDate, formatNumber, formatPercentage } from '../../../../lib/utils';
-import type { TicketCategory } from '../../../../types';
+import { mockFestivals, mockTicketCategories } from '@/lib/mock-data';
+import { formatCurrency, formatDate, formatNumber, formatPercentage } from '@/lib/utils';
+import type { TicketCategory } from '@/types';
 
 interface TicketsPageProps {
   params: Promise<{ id: string }>;

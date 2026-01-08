@@ -2,10 +2,10 @@
 
 import { use, useMemo } from 'react';
 import Link from 'next/link';
-import { mockFestivals, mockTicketCategories, generateRevenueChartData, generateTicketSalesChartData } from '../../../../lib/mock-data';
-import { formatCurrency, formatNumber, formatPercentage } from '../../../../lib/utils';
-import RevenueChart from '../../../../components/dashboard/RevenueChart';
-import TicketSalesChart from '../../../../components/dashboard/TicketSalesChart';
+import { mockFestivals, mockTicketCategories, generateRevenueChartData, generateTicketSalesChartData } from '@/lib/mock-data';
+import { formatCurrency, formatNumber, formatPercentage } from '@/lib/utils';
+import RevenueChart from '@/components/dashboard/RevenueChart';
+import TicketSalesChart from '@/components/dashboard/TicketSalesChart';
 import {
   PieChart,
   Pie,

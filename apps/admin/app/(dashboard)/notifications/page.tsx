@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { cn, formatDateTime } from '../../lib/utils';
+import { cn, formatDateTime } from '@/lib/utils';
 
 // Types
 interface AdminNotification {

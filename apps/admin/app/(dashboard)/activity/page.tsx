@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { cn, formatDateTime } from '../../lib/utils';
-import { ExportButton } from '../../components/export';
-import type { ExportColumn } from '../../lib/export';
+import { cn, formatDateTime } from '@/lib/utils';
+import { ExportButton } from '@/components/export';
+import type { ExportColumn } from '@/lib/export';
 
 // Types
 interface ActivityLog {

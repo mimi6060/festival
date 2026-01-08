@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import DataTable from '../../components/tables/DataTable';
-import ConfirmModal from '../../components/modals/ConfirmModal';
-import { cn } from '../../lib/utils';
-import type { TableColumn } from '../../types';
+import DataTable from '@/components/tables/DataTable';
+import ConfirmModal from '@/components/modals/ConfirmModal';
+import { cn } from '@/lib/utils';
+import type { TableColumn } from '@/types';
 
 interface Zone {
   id: string;

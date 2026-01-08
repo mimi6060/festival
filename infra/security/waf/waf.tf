@@ -39,15 +39,33 @@ variable "project_name" {
 }
 
 variable "waf_mode" {
-  description = "WAF mode: COUNT for testing, BLOCK for production"
+  description = "WAF mode: COUNT for testing/monitoring, BLOCK for production"
   type        = string
-  default     = "COUNT"
+  default     = null # When null, mode is automatically determined by environment
 
   validation {
-    condition     = contains(["COUNT", "BLOCK"], var.waf_mode)
-    error_message = "WAF mode must be COUNT or BLOCK."
+    condition     = var.waf_mode == null || contains(["COUNT", "BLOCK"], var.waf_mode)
+    error_message = "WAF mode must be COUNT, BLOCK, or null (auto-detect from environment)."
   }
 }
+
+# =============================================================================
+# WAF Mode Configuration
+# =============================================================================
+# COUNT mode: Logs matching requests but does NOT block them.
+#             Use this mode for testing new rules or monitoring traffic patterns.
+#             Recommended for: dev, staging, or when first deploying WAF.
+#
+# BLOCK mode: Actively blocks requests that match WAF rules.
+#             Use this mode in production to enforce security policies.
+#             Recommended for: production environments.
+#
+# The effective WAF mode is determined as follows:
+# 1. If waf_mode variable is explicitly set, use that value
+# 2. Otherwise, auto-detect based on environment:
+#    - production -> BLOCK
+#    - dev, staging -> COUNT
+# =============================================================================
 
 variable "enable_logging" {
   description = "Enable WAF logging to CloudWatch, S3, and Kinesis"
@@ -134,8 +152,15 @@ locals {
     Component   = "waf"
   })
 
-  # WAF action based on mode
-  waf_action = var.waf_mode == "BLOCK" ? "block" : "count"
+  # Effective WAF mode: use explicit variable if set, otherwise auto-detect from environment
+  # Production uses BLOCK mode by default, other environments use COUNT mode for safe testing
+  effective_waf_mode = coalesce(
+    var.waf_mode,
+    var.environment == "production" ? "BLOCK" : "COUNT"
+  )
+
+  # WAF action based on effective mode
+  waf_action = local.effective_waf_mode == "BLOCK" ? "block" : "count"
 
   # Log group name (must start with aws-waf-logs-)
   log_group_name = "aws-waf-logs-${local.name_prefix}"
@@ -384,7 +409,7 @@ resource "aws_wafv2_web_acl" "main" {
 
     action {
       dynamic "block" {
-        for_each = var.waf_mode == "BLOCK" ? [1] : []
+        for_each = local.effective_waf_mode == "BLOCK" ? [1] : []
         content {
           custom_response {
             response_code = 429
@@ -396,7 +421,7 @@ resource "aws_wafv2_web_acl" "main" {
         }
       }
       dynamic "count" {
-        for_each = var.waf_mode == "COUNT" ? [1] : []
+        for_each = local.effective_waf_mode == "COUNT" ? [1] : []
         content {}
       }
     }
@@ -457,7 +482,7 @@ resource "aws_wafv2_web_acl" "main" {
 
     action {
       dynamic "block" {
-        for_each = var.waf_mode == "BLOCK" ? [1] : []
+        for_each = local.effective_waf_mode == "BLOCK" ? [1] : []
         content {
           custom_response {
             response_code = 429
@@ -465,7 +490,7 @@ resource "aws_wafv2_web_acl" "main" {
         }
       }
       dynamic "count" {
-        for_each = var.waf_mode == "COUNT" ? [1] : []
+        for_each = local.effective_waf_mode == "COUNT" ? [1] : []
         content {}
       }
     }
@@ -495,7 +520,7 @@ resource "aws_wafv2_web_acl" "main" {
 
     action {
       dynamic "block" {
-        for_each = var.waf_mode == "BLOCK" ? [1] : []
+        for_each = local.effective_waf_mode == "BLOCK" ? [1] : []
         content {
           custom_response {
             response_code = 429
@@ -503,7 +528,7 @@ resource "aws_wafv2_web_acl" "main" {
         }
       }
       dynamic "count" {
-        for_each = var.waf_mode == "COUNT" ? [1] : []
+        for_each = local.effective_waf_mode == "COUNT" ? [1] : []
         content {}
       }
     }
@@ -520,11 +545,11 @@ resource "aws_wafv2_web_acl" "main" {
 
     override_action {
       dynamic "none" {
-        for_each = var.waf_mode == "BLOCK" ? [1] : []
+        for_each = local.effective_waf_mode == "BLOCK" ? [1] : []
         content {}
       }
       dynamic "count" {
-        for_each = var.waf_mode == "COUNT" ? [1] : []
+        for_each = local.effective_waf_mode == "COUNT" ? [1] : []
         content {}
       }
     }
@@ -565,11 +590,11 @@ resource "aws_wafv2_web_acl" "main" {
 
     override_action {
       dynamic "none" {
-        for_each = var.waf_mode == "BLOCK" ? [1] : []
+        for_each = local.effective_waf_mode == "BLOCK" ? [1] : []
         content {}
       }
       dynamic "count" {
-        for_each = var.waf_mode == "COUNT" ? [1] : []
+        for_each = local.effective_waf_mode == "COUNT" ? [1] : []
         content {}
       }
     }
@@ -595,11 +620,11 @@ resource "aws_wafv2_web_acl" "main" {
 
     override_action {
       dynamic "none" {
-        for_each = var.waf_mode == "BLOCK" ? [1] : []
+        for_each = local.effective_waf_mode == "BLOCK" ? [1] : []
         content {}
       }
       dynamic "count" {
-        for_each = var.waf_mode == "COUNT" ? [1] : []
+        for_each = local.effective_waf_mode == "COUNT" ? [1] : []
         content {}
       }
     }
@@ -625,11 +650,11 @@ resource "aws_wafv2_web_acl" "main" {
 
     override_action {
       dynamic "none" {
-        for_each = var.waf_mode == "BLOCK" ? [1] : []
+        for_each = local.effective_waf_mode == "BLOCK" ? [1] : []
         content {}
       }
       dynamic "count" {
-        for_each = var.waf_mode == "COUNT" ? [1] : []
+        for_each = local.effective_waf_mode == "COUNT" ? [1] : []
         content {}
       }
     }
@@ -655,11 +680,11 @@ resource "aws_wafv2_web_acl" "main" {
 
     override_action {
       dynamic "none" {
-        for_each = var.waf_mode == "BLOCK" ? [1] : []
+        for_each = local.effective_waf_mode == "BLOCK" ? [1] : []
         content {}
       }
       dynamic "count" {
-        for_each = var.waf_mode == "COUNT" ? [1] : []
+        for_each = local.effective_waf_mode == "COUNT" ? [1] : []
         content {}
       }
     }
@@ -685,11 +710,11 @@ resource "aws_wafv2_web_acl" "main" {
 
     override_action {
       dynamic "none" {
-        for_each = var.waf_mode == "BLOCK" ? [1] : []
+        for_each = local.effective_waf_mode == "BLOCK" ? [1] : []
         content {}
       }
       dynamic "count" {
-        for_each = var.waf_mode == "COUNT" ? [1] : []
+        for_each = local.effective_waf_mode == "COUNT" ? [1] : []
         content {}
       }
     }
@@ -796,11 +821,11 @@ resource "aws_wafv2_web_acl" "main" {
 
     action {
       dynamic "block" {
-        for_each = var.waf_mode == "BLOCK" ? [1] : []
+        for_each = local.effective_waf_mode == "BLOCK" ? [1] : []
         content {}
       }
       dynamic "count" {
-        for_each = var.waf_mode == "COUNT" ? [1] : []
+        for_each = local.effective_waf_mode == "COUNT" ? [1] : []
         content {}
       }
     }
@@ -840,11 +865,11 @@ resource "aws_wafv2_web_acl" "main" {
 
     action {
       dynamic "block" {
-        for_each = var.waf_mode == "BLOCK" ? [1] : []
+        for_each = local.effective_waf_mode == "BLOCK" ? [1] : []
         content {}
       }
       dynamic "count" {
-        for_each = var.waf_mode == "COUNT" ? [1] : []
+        for_each = local.effective_waf_mode == "COUNT" ? [1] : []
         content {}
       }
     }
@@ -883,11 +908,11 @@ resource "aws_wafv2_web_acl" "main" {
 
     action {
       dynamic "block" {
-        for_each = var.waf_mode == "BLOCK" ? [1] : []
+        for_each = local.effective_waf_mode == "BLOCK" ? [1] : []
         content {}
       }
       dynamic "count" {
-        for_each = var.waf_mode == "COUNT" ? [1] : []
+        for_each = local.effective_waf_mode == "COUNT" ? [1] : []
         content {}
       }
     }
@@ -964,7 +989,7 @@ resource "aws_wafv2_web_acl" "main" {
 
     action {
       dynamic "block" {
-        for_each = var.waf_mode == "BLOCK" ? [1] : []
+        for_each = local.effective_waf_mode == "BLOCK" ? [1] : []
         content {
           custom_response {
             response_code = 403
@@ -976,7 +1001,7 @@ resource "aws_wafv2_web_acl" "main" {
         }
       }
       dynamic "count" {
-        for_each = var.waf_mode == "COUNT" ? [1] : []
+        for_each = local.effective_waf_mode == "COUNT" ? [1] : []
         content {}
       }
     }
@@ -1044,4 +1069,9 @@ output "whitelisted_ip_set_arn" {
 output "blocked_ip_set_arn" {
   description = "ARN of the blocked IP set"
   value       = aws_wafv2_ip_set.blocked_ips.arn
+}
+
+output "effective_waf_mode" {
+  description = "The effective WAF mode (COUNT or BLOCK) - useful to verify the active mode"
+  value       = local.effective_waf_mode
 }

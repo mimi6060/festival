@@ -1,3 +1,17 @@
+/**
+ * @deprecated This compression interceptor is deprecated. Use the Express compression()
+ * middleware in main.ts instead. The middleware approach is more efficient for production
+ * as it properly handles streaming, chunked encoding, and integrates better with Express.
+ *
+ * The Express compression middleware is already configured in main.ts:
+ * ```
+ * import compression from 'compression';
+ * app.use(compression({ threshold: 1024, level: 6 }));
+ * ```
+ *
+ * This file is kept for backward compatibility but should not be used for new code.
+ */
+
 import {
   Injectable,
   NestInterceptor,
@@ -76,6 +90,8 @@ const DEFAULT_OPTIONS: CompressionOptions = {
  * @UseInterceptors(new CompressionInterceptor({ level: 9 }))
  * @Controller('api')
  * export class ApiController {}
+ *
+ * @deprecated Use Express compression() middleware in main.ts instead.
  */
 @Injectable()
 export class CompressionInterceptor implements NestInterceptor {
@@ -230,6 +246,8 @@ export const SkipCompression = () => SetMetadata(SKIP_COMPRESSION_KEY, true);
  * Enhanced Compression Interceptor with metadata support
  *
  * This version checks for @SkipCompression() decorator
+ *
+ * @deprecated Use Express compression() middleware in main.ts instead.
  */
 @Injectable()
 export class EnhancedCompressionInterceptor extends CompressionInterceptor {

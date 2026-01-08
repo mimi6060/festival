@@ -11,10 +11,6 @@
 
 import {
   Injectable,
-  BadRequestException,
-  NotFoundException,
-  ConflictException,
-  ForbiddenException,
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -26,6 +22,21 @@ import {
 
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { paginate } from '@festival/utils';
+
+// Import BusinessException pattern
+import {
+  NotFoundException,
+  ConflictException,
+} from '../../common/exceptions/base.exception';
+import {
+  InsufficientBalanceException,
+  CashlessAccountDisabledException,
+  TopupFailedException,
+  TransactionLimitExceededException,
+  InvalidNFCTagException,
+  FestivalCancelledException,
+  FestivalNotPublishedException,
+} from '../../common/exceptions/business.exception';
 // ============================================================================
 // Types
 // ============================================================================
@@ -122,7 +133,7 @@ export class CashlessService {
       });
 
       if (existingNfc) {
-        throw new ConflictException('NFC tag is already registered to another account');
+        throw ConflictException.nfcTagExists(dto.nfcTagId);
       }
     }
 
@@ -150,7 +161,7 @@ export class CashlessService {
     });
 
     if (!account) {
-      throw new NotFoundException('Cashless account not found');
+      throw NotFoundException.cashless(userId);
     }
 
     return this.mapAccountToEntity(account);
@@ -172,14 +183,20 @@ export class CashlessService {
 
     // Validate amount
     if (amount < CASHLESS_CONFIG.MIN_TOPUP_AMOUNT) {
-      throw new BadRequestException(
-        `Minimum top-up amount is ${CASHLESS_CONFIG.MIN_TOPUP_AMOUNT}`,
+      throw new TransactionLimitExceededException(
+        CASHLESS_CONFIG.MIN_TOPUP_AMOUNT,
+        amount,
+        'EUR',
+        'single',
       );
     }
 
     if (amount > CASHLESS_CONFIG.MAX_TOPUP_AMOUNT) {
-      throw new BadRequestException(
-        `Maximum top-up amount is ${CASHLESS_CONFIG.MAX_TOPUP_AMOUNT}`,
+      throw new TransactionLimitExceededException(
+        CASHLESS_CONFIG.MAX_TOPUP_AMOUNT,
+        amount,
+        'EUR',
+        'single',
       );
     }
 
@@ -189,24 +206,24 @@ export class CashlessService {
     });
 
     if (!festival) {
-      throw new NotFoundException('Festival not found');
+      throw NotFoundException.festival(festivalId);
     }
 
     if (festival.status === FestivalStatus.CANCELLED) {
-      throw new BadRequestException('Festival has been cancelled');
+      throw new FestivalCancelledException(festivalId);
     }
 
     // Get or create account
     const account = await this.getOrCreateAccount(userId);
 
     if (!account.isActive) {
-      throw new ForbiddenException('Cashless account is deactivated');
+      throw new CashlessAccountDisabledException(account.id);
     }
 
     // Check max balance
     const newBalance = account.balance + amount;
     if (newBalance > CASHLESS_CONFIG.MAX_BALANCE) {
-      throw new BadRequestException(
+      throw new TopupFailedException(
         `Maximum account balance is ${CASHLESS_CONFIG.MAX_BALANCE}. Current balance: ${account.balance}`,
       );
     }
@@ -255,7 +272,12 @@ export class CashlessService {
 
     // Validate amount
     if (amount < CASHLESS_CONFIG.MIN_PAYMENT_AMOUNT) {
-      throw new BadRequestException('Payment amount must be positive');
+      throw new TransactionLimitExceededException(
+        CASHLESS_CONFIG.MIN_PAYMENT_AMOUNT,
+        amount,
+        'EUR',
+        'single',
+      );
     }
 
     // Validate festival
@@ -264,29 +286,27 @@ export class CashlessService {
     });
 
     if (!festival) {
-      throw new NotFoundException('Festival not found');
+      throw NotFoundException.festival(festivalId);
     }
 
     if (festival.status === FestivalStatus.CANCELLED) {
-      throw new BadRequestException('Festival has been cancelled');
+      throw new FestivalCancelledException(festivalId);
     }
 
     if (festival.status !== FestivalStatus.ONGOING) {
-      throw new BadRequestException('Payments are only allowed during the festival');
+      throw new FestivalNotPublishedException(festivalId);
     }
 
     // Get account
     const account = await this.getAccount(userId);
 
     if (!account.isActive) {
-      throw new ForbiddenException('Cashless account is deactivated');
+      throw new CashlessAccountDisabledException(account.id);
     }
 
     // Check sufficient balance
     if (account.balance < amount) {
-      throw new BadRequestException(
-        `Insufficient balance. Available: ${account.balance}, Required: ${amount}`,
-      );
+      throw new InsufficientBalanceException(account.balance, amount, 'EUR');
     }
 
     // Create transaction
@@ -339,11 +359,11 @@ export class CashlessService {
     });
 
     if (!originalTransaction) {
-      throw new NotFoundException('Original transaction not found');
+      throw NotFoundException.payment(transactionId);
     }
 
     if (originalTransaction.type !== TransactionType.PAYMENT) {
-      throw new BadRequestException('Can only refund payment transactions');
+      throw new TopupFailedException('Can only refund payment transactions');
     }
 
     // Check if already refunded
@@ -358,12 +378,12 @@ export class CashlessService {
     });
 
     if (existingRefund) {
-      throw new ConflictException('Transaction has already been refunded');
+      throw ConflictException.paymentDuplicate(transactionId);
     }
 
     // Verify account ownership
     if (originalTransaction.account.userId !== userId) {
-      throw new ForbiddenException('Cannot refund transactions from other users');
+      throw new CashlessAccountDisabledException(originalTransaction.account.id);
     }
 
     const account = originalTransaction.account;
@@ -372,7 +392,7 @@ export class CashlessService {
     // Check max balance after refund
     const newBalance = Number(account.balance) + refundAmount;
     if (newBalance > CASHLESS_CONFIG.MAX_BALANCE) {
-      throw new BadRequestException('Refund would exceed maximum account balance');
+      throw new TopupFailedException('Refund would exceed maximum account balance');
     }
 
     // Process refund
@@ -450,7 +470,7 @@ export class CashlessService {
     });
 
     if (existingNfc && existingNfc.id !== account.id) {
-      throw new ConflictException('NFC tag is already registered to another account');
+      throw ConflictException.nfcTagExists(nfcTagId);
     }
 
     const updatedAccount = await this.prisma.cashlessAccount.update({
@@ -472,7 +492,7 @@ export class CashlessService {
     });
 
     if (!account) {
-      throw new NotFoundException('No account found for this NFC tag');
+      throw new InvalidNFCTagException(nfcTagId);
     }
 
     return this.mapAccountToEntity(account);
@@ -501,7 +521,7 @@ export class CashlessService {
     });
 
     if (!account) {
-      throw new NotFoundException('Cashless account not found');
+      throw NotFoundException.cashless(userId);
     }
 
     const updatedAccount = await this.prisma.cashlessAccount.update({

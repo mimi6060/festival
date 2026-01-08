@@ -3,9 +3,9 @@
 import { use } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { mockFestivals, mockTicketCategories } from '../../../lib/mock-data';
-import { formatCurrency, formatDate, formatNumber, formatPercentage, getStatusColor, getStatusLabel } from '../../../lib/utils';
-import StatCard from '../../../components/dashboard/StatCard';
+import { mockFestivals, mockTicketCategories } from '@/lib/mock-data';
+import { formatCurrency, formatDate, formatNumber, formatPercentage, getStatusColor, getStatusLabel } from '@/lib/utils';
+import StatCard from '@/components/dashboard/StatCard';
 
 interface FestivalDetailPageProps {
   params: Promise<{ id: string }>;

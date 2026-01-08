@@ -7,8 +7,21 @@ import {
 } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
-import { ErrorResponse } from '../exceptions/base.exception';
-import { ErrorCodes, getErrorMessage } from '../exceptions/error-codes';
+import { ErrorCodes, getErrorMessage, ErrorCode } from '../exceptions/error-codes';
+
+/**
+ * Flat error response format for API consumers
+ * This is the standardized format used across all endpoints
+ */
+interface FlatErrorResponse {
+  statusCode: number;
+  errorCode: ErrorCode;
+  message: string;
+  timestamp: string;
+  path: string;
+  requestId?: string;
+  details?: Record<string, unknown>;
+}
 
 /**
  * Prisma Error Codes
@@ -27,6 +40,15 @@ const PrismaErrorCodes = {
  * All Exceptions Filter
  * Catches all unhandled exceptions (non-HTTP) and formats them consistently
  * Handles Prisma errors, TypeError, RangeError, etc.
+ *
+ * Output format:
+ * {
+ *   "statusCode": 500,
+ *   "errorCode": "ERR_1000",
+ *   "message": "Une erreur interne est survenue.",
+ *   "timestamp": "2024-01-07T12:00:00.000Z",
+ *   "path": "/api/endpoint"
+ * }
  */
 @Catch()
 export class AllExceptionsFilter implements ExceptionFilter {
@@ -72,10 +94,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
     exception: Prisma.PrismaClientKnownRequestError | Prisma.PrismaClientUnknownRequestError | Prisma.PrismaClientInitializationError,
     request: Request,
     requestId: string,
-  ): { status: HttpStatus; errorResponse: ErrorResponse } {
+  ): { status: HttpStatus; errorResponse: FlatErrorResponse } {
     const lang = this.getLanguageFromRequest(request);
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let errorCode = ErrorCodes.INTERNAL_ERROR;
+    let errorCode: ErrorCode = ErrorCodes.INTERNAL_ERROR;
     let message = getErrorMessage(ErrorCodes.INTERNAL_ERROR, lang);
     let details: Record<string, unknown> = {};
 
@@ -131,23 +153,26 @@ export class AllExceptionsFilter implements ExceptionFilter {
         : 'Database unavailable.';
     }
 
+    const flatResponse: FlatErrorResponse = {
+      statusCode: status,
+      errorCode,
+      message,
+      timestamp: new Date().toISOString(),
+      path: request.url,
+      requestId,
+    };
+
+    if (Object.keys(details).length > 0) {
+      flatResponse.details = details;
+    }
+
     return {
       status,
-      errorResponse: {
-        success: false,
-        error: {
-          code: errorCode,
-          message,
-          details: Object.keys(details).length > 0 ? details : undefined,
-          timestamp: new Date().toISOString(),
-          path: request.url,
-          requestId,
-        },
-      },
+      errorResponse: flatResponse,
     };
   }
 
-  private getConflictErrorCode(meta?: Record<string, unknown>): string {
+  private getConflictErrorCode(meta?: Record<string, unknown>): ErrorCode {
     const target = meta?.target as string[] | undefined;
     if (!target) return ErrorCodes.INTERNAL_ERROR;
 
@@ -164,10 +189,10 @@ export class AllExceptionsFilter implements ExceptionFilter {
     exception: Error,
     request: Request,
     requestId: string,
-  ): { status: HttpStatus; errorResponse: ErrorResponse } {
+  ): { status: HttpStatus; errorResponse: FlatErrorResponse } {
     const lang = this.getLanguageFromRequest(request);
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
-    let errorCode = ErrorCodes.INTERNAL_ERROR;
+    let errorCode: ErrorCode = ErrorCodes.INTERNAL_ERROR;
     let message = getErrorMessage(ErrorCodes.INTERNAL_ERROR, lang);
     const details: Record<string, unknown> = {};
 
@@ -197,19 +222,22 @@ export class AllExceptionsFilter implements ExceptionFilter {
       details.errorMessage = exception.message;
     }
 
+    const flatResponse: FlatErrorResponse = {
+      statusCode: status,
+      errorCode,
+      message,
+      timestamp: new Date().toISOString(),
+      path: request.url,
+      requestId,
+    };
+
+    if (Object.keys(details).length > 0) {
+      flatResponse.details = details;
+    }
+
     return {
       status,
-      errorResponse: {
-        success: false,
-        error: {
-          code: errorCode,
-          message,
-          details: Object.keys(details).length > 0 ? details : undefined,
-          timestamp: new Date().toISOString(),
-          path: request.url,
-          requestId,
-        },
-      },
+      errorResponse: flatResponse,
     };
   }
 
@@ -217,22 +245,23 @@ export class AllExceptionsFilter implements ExceptionFilter {
     exception: unknown,
     request: Request,
     requestId: string,
-  ): ErrorResponse {
+  ): FlatErrorResponse {
     const lang = this.getLanguageFromRequest(request);
 
-    return {
-      success: false,
-      error: {
-        code: ErrorCodes.INTERNAL_ERROR,
-        message: getErrorMessage(ErrorCodes.INTERNAL_ERROR, lang),
-        details: process.env.NODE_ENV === 'development'
-          ? { raw: String(exception) }
-          : undefined,
-        timestamp: new Date().toISOString(),
-        path: request.url,
-        requestId,
-      },
+    const flatResponse: FlatErrorResponse = {
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      errorCode: ErrorCodes.INTERNAL_ERROR,
+      message: getErrorMessage(ErrorCodes.INTERNAL_ERROR, lang),
+      timestamp: new Date().toISOString(),
+      path: request.url,
+      requestId,
     };
+
+    if (process.env.NODE_ENV === 'development') {
+      flatResponse.details = { raw: String(exception) };
+    }
+
+    return flatResponse;
   }
 
   private getLanguageFromRequest(request: Request): 'fr' | 'en' {

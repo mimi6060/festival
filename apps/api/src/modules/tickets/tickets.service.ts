@@ -10,10 +10,6 @@
 
 import {
   Injectable,
-  BadRequestException,
-  NotFoundException,
-  ConflictException,
-  ForbiddenException,
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
@@ -25,6 +21,25 @@ import * as crypto from 'crypto';
 
 import { PaginationDto } from '../../common/dto/pagination.dto';
 import { paginate } from '@festival/utils';
+
+// Import BusinessException pattern
+import {
+  NotFoundException,
+  ForbiddenException,
+  ValidationException,
+} from '../../common/exceptions/base.exception';
+import {
+  TicketSoldOutException,
+  TicketQuotaExceededException,
+  TicketSaleNotStartedException,
+  TicketSaleEndedException,
+  TicketAlreadyUsedException,
+  InvalidQRCodeException,
+  FestivalCancelledException,
+  FestivalEndedException,
+  ZoneCapacityReachedException,
+  ZoneAccessDeniedException,
+} from '../../common/exceptions/business.exception';
 // ============================================================================
 // Types
 // ============================================================================
@@ -102,7 +117,9 @@ export class TicketsService {
 
     // Validate quantity
     if (quantity < 1) {
-      throw new BadRequestException('Quantity must be at least 1');
+      throw new ValidationException('Quantity must be at least 1', [
+        { field: 'quantity', message: 'Quantity must be at least 1', value: quantity },
+      ]);
     }
 
     // Get festival and category
@@ -116,50 +133,52 @@ export class TicketsService {
     ]);
 
     if (!festival) {
-      throw new NotFoundException('Festival not found');
+      throw NotFoundException.festival(festivalId);
     }
 
     if (festival.isDeleted) {
-      throw new BadRequestException('Festival is no longer available');
+      throw new FestivalCancelledException(festivalId);
     }
 
     if (festival.status === FestivalStatus.CANCELLED) {
-      throw new BadRequestException('Festival has been cancelled');
+      throw new FestivalCancelledException(festivalId);
     }
 
     if (festival.status === FestivalStatus.COMPLETED) {
-      throw new BadRequestException('Festival has already ended');
+      throw new FestivalEndedException(festivalId, festival.endDate);
     }
 
     if (!category) {
-      throw new NotFoundException('Ticket category not found');
+      throw NotFoundException.ticketCategory(categoryId);
     }
 
     if (category.festivalId !== festivalId) {
-      throw new BadRequestException('Category does not belong to this festival');
+      throw new ValidationException('Category does not belong to this festival', [
+        { field: 'categoryId', message: 'Category does not belong to this festival', value: categoryId },
+      ]);
     }
 
     if (!category.isActive) {
-      throw new BadRequestException('Ticket category is not available');
+      throw new TicketSoldOutException(categoryId, category.name);
     }
 
     // Check sale dates
     const now = new Date();
     if (now < category.saleStartDate) {
-      throw new BadRequestException('Ticket sales have not started yet');
+      throw new TicketSaleNotStartedException(category.saleStartDate);
     }
 
     if (now > category.saleEndDate) {
-      throw new BadRequestException('Ticket sales have ended');
+      throw new TicketSaleEndedException(category.saleEndDate);
     }
 
     // Check availability
     const availableTickets = category.quota - category.soldCount;
     if (availableTickets < quantity) {
       if (availableTickets === 0) {
-        throw new ConflictException('Tickets are sold out');
+        throw new TicketSoldOutException(categoryId, category.name);
       }
-      throw new ConflictException(`Only ${availableTickets} tickets available`);
+      throw new TicketQuotaExceededException(availableTickets, quantity);
     }
 
     // Check max per user
@@ -172,9 +191,7 @@ export class TicketsService {
     });
 
     if (userTicketCount + quantity > category.maxPerUser) {
-      throw new BadRequestException(
-        `Maximum ${category.maxPerUser} tickets per user for this category`
-      );
+      throw new TicketQuotaExceededException(category.maxPerUser, userTicketCount + quantity);
     }
 
     // Create tickets in a transaction
@@ -449,11 +466,11 @@ export class TicketsService {
     });
 
     if (!ticket) {
-      throw new NotFoundException('Ticket not found');
+      throw NotFoundException.ticket(ticketId);
     }
 
     if (userId && ticket.userId !== userId) {
-      throw new ForbiddenException('You can only access your own tickets');
+      throw ForbiddenException.resourceForbidden(`ticket:${ticketId}`);
     }
 
     return this.mapToEntity(ticket);
@@ -472,21 +489,21 @@ export class TicketsService {
     });
 
     if (!ticket) {
-      throw new NotFoundException('Ticket not found');
+      throw NotFoundException.ticket(ticketId);
     }
 
     if (ticket.userId !== userId) {
-      throw new ForbiddenException('You can only cancel your own tickets');
+      throw ForbiddenException.resourceForbidden(`ticket:${ticketId}`);
     }
 
     if (ticket.status !== TicketStatus.SOLD) {
-      throw new BadRequestException('Only unused tickets can be cancelled');
+      throw new TicketAlreadyUsedException(ticketId, ticket.usedAt || new Date());
     }
 
     // Check if cancellation is allowed (e.g., before festival starts)
     const now = new Date();
     if (now >= ticket.festival.startDate) {
-      throw new BadRequestException('Cannot cancel tickets after festival has started');
+      throw new TicketSaleEndedException(ticket.festival.startDate);
     }
 
     // Cancel ticket and update category sold count

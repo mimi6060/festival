@@ -2,9 +2,9 @@
 
 import { use, useState } from 'react';
 import Link from 'next/link';
-import { mockFestivals } from '../../../../lib/mock-data';
-import { usePois, useCreatePoi, useUpdatePoi, useDeletePoi } from '../../../../hooks';
-import type { Poi, PoiType, CreatePoiDto, UpdatePoiDto } from '../../../../types';
+import { mockFestivals } from '@/lib/mock-data';
+import { usePois, useCreatePoi, useUpdatePoi, useDeletePoi } from '@/hooks';
+import type { Poi, PoiType, CreatePoiDto, UpdatePoiDto } from '@/types';
 
 interface PoisPageProps {
   params: Promise<{ id: string }>;

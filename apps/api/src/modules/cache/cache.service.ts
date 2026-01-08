@@ -92,8 +92,29 @@ export class CacheService implements OnModuleDestroy {
   private readonly LOCK_PREFIX = 'lock:';
   private readonly LOCK_TTL = 10000; // 10 seconds
 
+  // Cleanup interval for in-memory cache (5 minutes)
+  private readonly CLEANUP_INTERVAL = 5 * 60 * 1000;
+  private cleanupIntervalId: NodeJS.Timeout | null = null;
+
   constructor(private readonly configService: ConfigService) {
     this.initializeRedis();
+    this.startPeriodicCleanup();
+  }
+
+  /**
+   * Start periodic cleanup of expired entries in memory cache
+   */
+  private startPeriodicCleanup(): void {
+    this.cleanupIntervalId = setInterval(() => {
+      this.cleanupMemoryCache();
+    }, this.CLEANUP_INTERVAL);
+
+    // Ensure the interval doesn't prevent Node.js from exiting
+    if (this.cleanupIntervalId.unref) {
+      this.cleanupIntervalId.unref();
+    }
+
+    this.logger.log('Started periodic memory cache cleanup (every 5 minutes)');
   }
 
   /**
@@ -135,6 +156,13 @@ export class CacheService implements OnModuleDestroy {
    * Cleanup on module destroy
    */
   async onModuleDestroy(): Promise<void> {
+    // Stop the periodic cleanup interval
+    if (this.cleanupIntervalId) {
+      clearInterval(this.cleanupIntervalId);
+      this.cleanupIntervalId = null;
+      this.logger.log('Stopped periodic memory cache cleanup');
+    }
+
     if (this.redis) {
       await this.redis.quit();
     }

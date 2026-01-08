@@ -2,6 +2,44 @@
 
 ---
 
+## Session 2026-01-08 - Tests Unitaires Cashless Module
+
+### Tests complets pour le module cashless
+
+- [x] **cashless.service.spec.ts** (45+ tests) - Enhanced
+  - Correction des types d'exceptions (BusinessException pattern)
+  - createAccount tests: success, duplicate user/festival
+  - getBalance tests
+  - topUp tests: success, amount below min (TransactionLimitExceededException), amount above max, festival not found, festival cancelled (FestivalCancelledException), account disabled (CashlessAccountDisabledException), max balance exceeded (TopupFailedException)
+  - pay tests: success, zero/negative amount, festival not found, festival not ongoing (FestivalNotPublishedException), account disabled, insufficient balance (InsufficientBalanceException)
+  - refund tests: success, transaction not found, not a payment (TopupFailedException), already refunded (ConflictException), other user's transaction
+  - getTransactionHistory tests: success, pagination, filtering
+  - linkNFCTag tests: success, tag already linked (ConflictException)
+  - findAccountByNfcTag tests: success, unknown tag (InvalidNFCTagException)
+
+- [x] **cashless.controller.spec.ts** (39 tests) - NEW
+  - GET /api/wallet/account (2 tests): return or create account, create new if not exists
+  - GET /api/wallet/balance (2 tests): correct structure, zero balance
+  - POST /api/wallet/topup (8 tests): success, params validation, amount limits, festival errors, account disabled, max balance
+  - POST /api/wallet/pay (7 tests): success, amount validation, festival errors, account disabled, insufficient balance
+  - GET /api/wallet/transactions (6 tests): history, filtering by festivalId, pagination, defaults, empty array, not found
+  - POST /api/wallet/nfc/link (4 tests): success, conflict, not found, relink same tag
+  - POST /api/wallet/refund (6 tests): success, not found, not payment, already refunded, other user, performer ID
+  - Error handling (3 tests): BusinessException, NotFoundException, ConflictException propagation
+  - Authentication (1 test): user ID extraction from request
+
+### Coverage cashless module
+
+| File                    | Statements | Branches | Functions | Lines   |
+| ----------------------- | ---------- | -------- | --------- | ------- |
+| cashless.controller.ts  | 100%       | 66.66%   | 100%      | 100%    |
+| cashless.service.ts     | 98.31%     | 85%      | 100%      | 98.3%   |
+| **Module Total**        | **98.48%** | **80.76%** | **100%** | **98.47%** |
+
+### Total: 84+ cashless module tests passing
+
+---
+
 ## Session 2026-01-08 - Tests Auth Module (Part 2)
 
 ### Tests unitaires complets pour le module auth

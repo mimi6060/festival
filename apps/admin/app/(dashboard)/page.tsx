@@ -2,15 +2,15 @@
 
 import { useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import StatCard from '../components/dashboard/StatCard';
-import RecentActivity from '../components/dashboard/RecentActivity';
-import TopFestivals from '../components/dashboard/TopFestivals';
+import StatCard from '@/components/dashboard/StatCard';
+import RecentActivity from '@/components/dashboard/RecentActivity';
+import TopFestivals from '@/components/dashboard/TopFestivals';
 import {
   mockDashboardStats,
   mockFestivals,
   generateRevenueChartData,
   generateTicketSalesChartData,
-} from '../lib/mock-data';
+} from '@/lib/mock-data';
 
 const ChartSkeleton = () => (
   <div className="bg-white dark:bg-gray-800 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-gray-700">
@@ -21,12 +21,12 @@ const ChartSkeleton = () => (
   </div>
 );
 
-const RevenueChart = dynamic(() => import('../components/dashboard/RevenueChart'), {
+const RevenueChart = dynamic(() => import('@/components/dashboard/RevenueChart'), {
   loading: () => <ChartSkeleton />,
   ssr: false,
 });
 
-const TicketSalesChart = dynamic(() => import('../components/dashboard/TicketSalesChart'), {
+const TicketSalesChart = dynamic(() => import('@/components/dashboard/TicketSalesChart'), {
   loading: () => <ChartSkeleton />,
   ssr: false,
 });

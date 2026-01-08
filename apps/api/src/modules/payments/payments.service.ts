@@ -10,15 +10,25 @@
 
 import {
   Injectable,
-  BadRequestException,
-  NotFoundException,
-  InternalServerErrorException,
   Logger,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PaymentStatus, PaymentProvider } from '@prisma/client';
+
+// Import BusinessException pattern
+import {
+  NotFoundException,
+  ValidationException,
+  ServiceUnavailableException,
+} from '../../common/exceptions/base.exception';
+import {
+  PaymentFailedException,
+  RefundFailedException,
+  AlreadyRefundedException,
+  InvalidWebhookException,
+} from '../../common/exceptions/business.exception';
 
 // ============================================================================
 // Types
@@ -98,14 +108,16 @@ export class PaymentsService {
 
     // Validate amount
     if (amount <= 0) {
-      throw new BadRequestException('Amount must be positive');
+      throw new ValidationException('Amount must be positive', [
+        { field: 'amount', message: 'Amount must be positive', value: amount },
+      ]);
     }
 
     // Convert to cents for Stripe
     const amountInCents = Math.round(amount * 100);
 
     if (!this.stripe) {
-      throw new InternalServerErrorException('Payment provider not configured');
+      throw new ServiceUnavailableException('Stripe');
     }
 
     try {
@@ -150,7 +162,7 @@ export class PaymentsService {
       };
     } catch (error) {
       this.logger.error(`Failed to create payment intent: ${error}`);
-      throw new InternalServerErrorException('Failed to create payment');
+      throw new PaymentFailedException('Failed to create payment intent');
     }
   }
 
@@ -159,7 +171,7 @@ export class PaymentsService {
    */
   async handleWebhook(signature: string, payload: Buffer): Promise<void> {
     if (!this.stripe) {
-      throw new InternalServerErrorException('Payment provider not configured');
+      throw new ServiceUnavailableException('Stripe');
     }
 
     let event: Stripe.Event;
@@ -172,7 +184,7 @@ export class PaymentsService {
       );
     } catch (error) {
       this.logger.error(`Webhook signature verification failed: ${error}`);
-      throw new BadRequestException('Invalid webhook signature');
+      throw new InvalidWebhookException('Invalid webhook signature');
     }
 
     this.logger.log(`Processing webhook event: ${event.type}`);
@@ -204,23 +216,23 @@ export class PaymentsService {
     });
 
     if (!payment) {
-      throw new NotFoundException('Payment not found');
+      throw NotFoundException.payment(paymentId);
     }
 
     if (payment.status === PaymentStatus.REFUNDED) {
-      throw new BadRequestException('Payment has already been refunded');
+      throw new AlreadyRefundedException(paymentId);
     }
 
     if (payment.status !== PaymentStatus.COMPLETED) {
-      throw new BadRequestException('Only completed payments can be refunded');
+      throw new RefundFailedException(paymentId, 'Only completed payments can be refunded');
     }
 
     if (!payment.providerPaymentId) {
-      throw new BadRequestException('No provider payment ID available');
+      throw new RefundFailedException(paymentId, 'No provider payment ID available');
     }
 
     if (!this.stripe) {
-      throw new InternalServerErrorException('Payment provider not configured');
+      throw new ServiceUnavailableException('Stripe');
     }
 
     try {
@@ -258,7 +270,7 @@ export class PaymentsService {
       };
     } catch (error) {
       this.logger.error(`Failed to process refund: ${error}`);
-      throw new InternalServerErrorException('Failed to process refund');
+      throw new RefundFailedException(paymentId, 'Stripe refund request failed');
     }
   }
 
@@ -271,7 +283,7 @@ export class PaymentsService {
     });
 
     if (!payment) {
-      throw new NotFoundException('Payment not found');
+      throw NotFoundException.payment(paymentId);
     }
 
     return this.mapToEntity(payment);
@@ -315,11 +327,11 @@ export class PaymentsService {
     });
 
     if (!payment) {
-      throw new NotFoundException('Payment not found');
+      throw NotFoundException.payment(paymentId);
     }
 
     if (payment.status !== PaymentStatus.PENDING) {
-      throw new BadRequestException('Only pending payments can be cancelled');
+      throw new PaymentFailedException('Only pending payments can be cancelled');
     }
 
     // Cancel in Stripe if exists

@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import DataTable from '../../components/tables/DataTable';
-import { mockPayments, mockOrders } from '../../lib/mock-data';
-import { formatCurrency, formatDateTime, cn, getStatusColor, getStatusLabel } from '../../lib/utils';
-import type { Payment, TableColumn } from '../../types';
+import DataTable from '@/components/tables/DataTable';
+import { mockPayments, mockOrders } from '@/lib/mock-data';
+import { formatCurrency, formatDateTime, cn, getStatusColor, getStatusLabel } from '@/lib/utils';
+import type { Payment, TableColumn } from '@/types';
 
 export default function PaymentsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');

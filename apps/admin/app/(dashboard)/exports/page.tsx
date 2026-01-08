@@ -1,16 +1,16 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { ExportButton } from '../../components/export';
+import { ExportButton } from '@/components/export';
 import {
   userExportColumns,
   festivalExportColumns,
   orderExportColumns,
   cashlessExportColumns,
   staffExportColumns,
-} from '../../lib/export';
-import { mockUsers, mockFestivals, mockOrders, mockStaff } from '../../lib/mock-data';
-import { formatDateTime, cn } from '../../lib/utils';
+} from '@/lib/export';
+import { mockUsers, mockFestivals, mockOrders, mockStaff } from '@/lib/mock-data';
+import { formatDateTime, cn } from '@/lib/utils';
 
 // Types for export configurations
 interface ExportConfig {

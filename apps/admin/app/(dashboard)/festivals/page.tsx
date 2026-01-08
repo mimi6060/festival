@@ -3,10 +3,10 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import DataTable from '../../components/tables/DataTable';
-import { mockFestivals } from '../../lib/mock-data';
-import { formatCurrency, formatDate, formatNumber, getStatusColor, getStatusLabel } from '../../lib/utils';
-import type { Festival, TableColumn } from '../../types';
+import DataTable from '@/components/tables/DataTable';
+import { mockFestivals } from '@/lib/mock-data';
+import { formatCurrency, formatDate, formatNumber, getStatusColor, getStatusLabel } from '@/lib/utils';
+import type { Festival, TableColumn } from '@/types';
 
 export default function FestivalsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');

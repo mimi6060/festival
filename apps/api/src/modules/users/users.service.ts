@@ -53,6 +53,8 @@ export enum AuditAction {
   USER_BANNED = 'USER_BANNED',
   USER_UNBANNED = 'USER_UNBANNED',
   USER_DEACTIVATED = 'USER_DEACTIVATED',
+  USER_SOFT_DELETED = 'USER_SOFT_DELETED',
+  USER_HARD_DELETED = 'USER_HARD_DELETED',
   USER_VIEWED = 'USER_VIEWED',
   USER_SEARCHED = 'USER_SEARCHED',
   PASSWORD_CHANGED = 'PASSWORD_CHANGED',
@@ -218,7 +220,10 @@ export class UsersService {
     currentUser: AuthenticatedUser,
   ): Promise<PaginatedResponse<UserEntity>> {
     // Build where clause for filters
-    const where: Prisma.UserWhereInput = {};
+    // By default, exclude soft-deleted users
+    const where: Prisma.UserWhereInput = {
+      isDeleted: false,
+    };
 
     if (query.role) {
       where.role = query.role;
@@ -299,6 +304,7 @@ export class UsersService {
 
     const users = await this.prisma.user.findMany({
       where: {
+        isDeleted: false, // Exclude soft-deleted users
         OR: [
           { email: { contains: searchTerm, mode: 'insensitive' } },
           { firstName: { contains: searchTerm, mode: 'insensitive' } },
@@ -329,10 +335,18 @@ export class UsersService {
 
     const user = await this.prisma.user.findUnique({
       where: { id },
-      select: this.userSelect,
+      select: {
+        ...this.userSelect,
+        isDeleted: true,
+      },
     });
 
     if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    // Non-admin users cannot view soft-deleted users
+    if (user.isDeleted && currentUser.role !== UserRole.ADMIN) {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
@@ -746,10 +760,14 @@ export class UsersService {
 
   /**
    * Find user by email (for internal use).
+   * Excludes soft-deleted users by default.
    */
-  async findByEmail(email: string): Promise<UserEntity | null> {
-    const user = await this.prisma.user.findUnique({
-      where: { email: email.toLowerCase() },
+  async findByEmail(email: string, includeDeleted = false): Promise<UserEntity | null> {
+    const user = await this.prisma.user.findFirst({
+      where: {
+        email: email.toLowerCase(),
+        ...(includeDeleted ? {} : { isDeleted: false }),
+      },
       select: this.userSelect,
     });
 
@@ -758,11 +776,114 @@ export class UsersService {
 
   /**
    * Check if email exists (for validation).
+   * Excludes soft-deleted users by default.
    */
-  async emailExists(email: string): Promise<boolean> {
+  async emailExists(email: string, includeDeleted = false): Promise<boolean> {
     const count = await this.prisma.user.count({
-      where: { email: email.toLowerCase() },
+      where: {
+        email: email.toLowerCase(),
+        ...(includeDeleted ? {} : { isDeleted: false }),
+      },
     });
     return count > 0;
+  }
+
+  /**
+   * Soft delete a user (GDPR compliant).
+   * Sets isDeleted=true and deletedAt=now().
+   * User data is preserved but user is excluded from queries.
+   * Admin only.
+   */
+  async softDelete(
+    id: string,
+    currentUser: AuthenticatedUser,
+  ): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: { id: true, email: true, role: true, isDeleted: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    // Prevent soft-deleting another admin
+    if (user.role === UserRole.ADMIN && currentUser.id !== id) {
+      throw new ForbiddenException('Cannot delete another admin');
+    }
+
+    // Prevent self-deletion
+    if (currentUser.id === id) {
+      throw new ForbiddenException('Cannot delete your own account');
+    }
+
+    if (user.isDeleted) {
+      throw new BadRequestException('User is already deleted');
+    }
+
+    await this.prisma.user.update({
+      where: { id },
+      data: {
+        isDeleted: true,
+        deletedAt: new Date(),
+        refreshToken: null, // Invalidate all sessions
+      },
+    });
+
+    await this.logAudit(AuditAction.USER_SOFT_DELETED, id, currentUser, {
+      targetUserEmail: user.email,
+      deletedAt: new Date().toISOString(),
+    });
+
+    this.logger.log(`User ${user.email} soft deleted by ${currentUser.email}`);
+
+    return { message: `User ${user.email} has been deleted` };
+  }
+
+  /**
+   * Permanently delete a user from the database.
+   * This action is irreversible and should only be used for GDPR data deletion requests.
+   * Admin only.
+   */
+  async hardDelete(
+    id: string,
+    currentUser: AuthenticatedUser,
+  ): Promise<{ message: string }> {
+    const user = await this.prisma.user.findUnique({
+      where: { id },
+      select: { id: true, email: true, role: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    // Prevent hard-deleting any admin
+    if (user.role === UserRole.ADMIN) {
+      throw new ForbiddenException('Cannot permanently delete an admin account');
+    }
+
+    // Prevent self-deletion
+    if (currentUser.id === id) {
+      throw new ForbiddenException('Cannot delete your own account');
+    }
+
+    // Log before deletion (since user will be gone)
+    await this.logAudit(AuditAction.USER_HARD_DELETED, id, currentUser, {
+      targetUserEmail: user.email,
+      permanentDeletion: true,
+      gdprCompliance: true,
+    });
+
+    // Delete user and all related data (cascading deletes handle relations)
+    await this.prisma.user.delete({
+      where: { id },
+    });
+
+    this.logger.warn(
+      `User ${user.email} permanently deleted by ${currentUser.email} (GDPR compliance)`,
+    );
+
+    return { message: `User ${user.email} has been permanently deleted` };
   }
 }

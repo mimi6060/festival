@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
-import { Providers, themeScript } from '../components/Providers';
+import { Providers, themeScript } from '@/components/Providers';
 
 export const metadata: Metadata = {
   title: 'Festival Admin',

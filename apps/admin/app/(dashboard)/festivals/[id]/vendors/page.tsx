@@ -2,15 +2,15 @@
 
 import { use, useState } from 'react';
 import Link from 'next/link';
-import { mockFestivals } from '../../../../lib/mock-data';
+import { mockFestivals } from '@/lib/mock-data';
 import {
   useVendors,
   useCreateVendor,
   useUpdateVendor,
   useDeleteVendor,
   useToggleVendorOpen,
-} from '../../../../hooks';
-import type { VendorType, Vendor } from '../../../../types';
+} from '@/hooks';
+import type { VendorType, Vendor } from '@/types';
 
 interface VendorsPageProps {
   params: Promise<{ id: string }>;

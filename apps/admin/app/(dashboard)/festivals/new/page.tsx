@@ -3,8 +3,8 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import FestivalForm from '../../../components/forms/FestivalForm';
-import type { Festival } from '../../../types';
+import FestivalForm from '@/components/forms/FestivalForm';
+import type { Festival } from '@/types';
 
 export default function NewFestivalPage() {
   const router = useRouter();

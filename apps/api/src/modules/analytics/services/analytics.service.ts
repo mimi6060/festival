@@ -474,29 +474,41 @@ export class AnalyticsService {
     const totalSold = ticketStats._count || 0;
     const totalAvailable = totalQuota - totalSold;
 
-    const ticketsByType: TicketsByType[] = await Promise.all(
-      ticketCategories.map(async (cat) => {
-        const stats = await this.prisma.ticket.aggregate({
-          where: {
-            festivalId,
-            categoryId: cat.id,
-            status: { in: ['SOLD', 'USED'] },
-          },
-          _count: true,
-          _sum: {
-            purchasePrice: true,
-          },
-        });
+    // Use groupBy for a single query instead of sequential queries per category
+    const categoryStats = await this.prisma.ticket.groupBy({
+      by: ['categoryId'],
+      where: {
+        festivalId,
+        status: { in: ['SOLD', 'USED'] },
+      },
+      _count: true,
+      _sum: {
+        purchasePrice: true,
+      },
+    });
 
-        return {
-          type: cat.type,
-          name: cat.name,
-          sold: stats._count || 0,
-          available: cat.quota - (stats._count || 0),
-          revenue: this.decimalToNumber(stats._sum.purchasePrice),
-        };
-      }),
+    // Create a map for quick lookup of stats by categoryId
+    const statsMap = new Map(
+      categoryStats.map((stat) => [
+        stat.categoryId,
+        {
+          count: stat._count || 0,
+          revenue: stat._sum.purchasePrice,
+        },
+      ]),
     );
+
+    // Map categories to TicketsByType using the pre-fetched stats
+    const ticketsByType: TicketsByType[] = ticketCategories.map((cat) => {
+      const stats = statsMap.get(cat.id) || { count: 0, revenue: null };
+      return {
+        type: cat.type,
+        name: cat.name,
+        sold: stats.count,
+        available: cat.quota - stats.count,
+        revenue: this.decimalToNumber(stats.revenue),
+      };
+    });
 
     return {
       totalSold,

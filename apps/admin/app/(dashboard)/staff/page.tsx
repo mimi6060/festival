@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import DataTable from '../../components/tables/DataTable';
-import { mockStaff, mockUsers, mockFestivals, getUserById, getFestivalById } from '../../lib/mock-data';
-import { formatDateTime, getInitials, cn } from '../../lib/utils';
-import type { Staff, TableColumn } from '../../types';
+import DataTable from '@/components/tables/DataTable';
+import { mockStaff, mockUsers, mockFestivals, getUserById, getFestivalById } from '@/lib/mock-data';
+import { formatDateTime, getInitials, cn } from '@/lib/utils';
+import type { Staff, TableColumn } from '@/types';
 
 export default function StaffPage() {
   const [roleFilter, setRoleFilter] = useState<string>('all');

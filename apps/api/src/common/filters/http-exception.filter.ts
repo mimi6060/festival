@@ -7,12 +7,36 @@ import {
   Logger,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { BaseException, ErrorResponse } from '../exceptions/base.exception';
-import { ErrorCodes, getErrorMessage } from '../exceptions/error-codes';
+import { BaseException, ErrorResponse, ValidationError } from '../exceptions/base.exception';
+import { ErrorCodes, getErrorMessage, ErrorCode } from '../exceptions/error-codes';
+
+/**
+ * Flat error response format for API consumers
+ * This is the standardized format used across all endpoints
+ */
+export interface FlatErrorResponse {
+  statusCode: number;
+  errorCode: ErrorCode;
+  message: string;
+  timestamp: string;
+  path: string;
+  requestId?: string;
+  details?: Record<string, unknown>;
+  validationErrors?: ValidationError[];
+}
 
 /**
  * HTTP Exception Filter
  * Handles all HttpException instances and formats the response consistently
+ *
+ * Output format:
+ * {
+ *   "statusCode": 400,
+ *   "errorCode": "INSUFFICIENT_BALANCE",
+ *   "message": "Solde insuffisant pour cette operation",
+ *   "timestamp": "2024-01-07T12:00:00.000Z",
+ *   "path": "/api/cashless/pay"
+ * }
  */
 @Catch(HttpException)
 export class HttpExceptionFilter implements ExceptionFilter {
@@ -24,31 +48,123 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const request = ctx.getRequest<Request>();
     const status = exception.getStatus();
     const requestId = (request.headers['x-request-id'] as string) || this.generateRequestId();
+    const lang = this.getLanguageFromRequest(request);
 
     // Handle our custom BaseException
     if (exception instanceof BaseException) {
-      const errorResponse = exception.toResponse(request.url, requestId);
-
+      const flatResponse = this.formatBaseExceptionToFlat(exception, status, request, requestId, lang);
       this.logError(exception, request, requestId, 'BaseException');
-
-      response.status(status).json(errorResponse);
+      response.status(status).json(flatResponse);
       return;
     }
 
     // Handle standard HttpException
     const exceptionResponse = exception.getResponse();
-    const errorResponse = this.formatStandardHttpException(
+    const flatResponse = this.formatStandardHttpExceptionToFlat(
       exceptionResponse,
       status,
       request,
       requestId,
+      lang,
     );
 
     this.logError(exception, request, requestId, 'HttpException');
 
-    response.status(status).json(errorResponse);
+    response.status(status).json(flatResponse);
   }
 
+  /**
+   * Format BaseException to flat error response
+   */
+  private formatBaseExceptionToFlat(
+    exception: BaseException,
+    status: HttpStatus,
+    request: Request,
+    requestId: string,
+    lang: 'fr' | 'en',
+  ): FlatErrorResponse {
+    const flatResponse: FlatErrorResponse = {
+      statusCode: status,
+      errorCode: exception.errorCode,
+      message: exception.getUserMessage(lang),
+      timestamp: new Date().toISOString(),
+      path: request.url,
+      requestId,
+    };
+
+    if (exception.details && Object.keys(exception.details).length > 0) {
+      flatResponse.details = exception.details;
+    }
+
+    if (exception.validationErrors && exception.validationErrors.length > 0) {
+      flatResponse.validationErrors = exception.validationErrors;
+    }
+
+    return flatResponse;
+  }
+
+  /**
+   * Format standard HttpException to flat error response
+   */
+  private formatStandardHttpExceptionToFlat(
+    exceptionResponse: string | object,
+    status: HttpStatus,
+    request: Request,
+    requestId: string,
+    lang: 'fr' | 'en',
+  ): FlatErrorResponse {
+    const errorCode = this.getErrorCodeFromStatus(status);
+
+    let message: string;
+    let validationErrors: ValidationError[] | undefined;
+    let details: Record<string, unknown> | undefined;
+
+    if (typeof exceptionResponse === 'string') {
+      message = exceptionResponse;
+    } else if (typeof exceptionResponse === 'object') {
+      const resp = exceptionResponse as Record<string, unknown>;
+      message = (resp.message as string) || getErrorMessage(errorCode, lang);
+
+      // Handle class-validator errors
+      if (Array.isArray(resp.message)) {
+        validationErrors = this.parseValidationMessages(resp.message);
+        message = getErrorMessage(ErrorCodes.VALIDATION_FAILED, lang);
+      }
+
+      // Include additional details if present
+      if (resp.error || resp.statusCode) {
+        details = {
+          error: resp.error,
+        };
+      }
+    } else {
+      message = getErrorMessage(errorCode, lang);
+    }
+
+    const flatResponse: FlatErrorResponse = {
+      statusCode: status,
+      errorCode,
+      message,
+      timestamp: new Date().toISOString(),
+      path: request.url,
+      requestId,
+    };
+
+    if (details && Object.keys(details).length > 0) {
+      flatResponse.details = details;
+    }
+
+    if (validationErrors && validationErrors.length > 0) {
+      flatResponse.validationErrors = validationErrors;
+    }
+
+    return flatResponse;
+  }
+
+  /**
+   * Legacy format method - kept for backward compatibility
+   * @deprecated Use formatStandardHttpExceptionToFlat instead
+   */
   private formatStandardHttpException(
     exceptionResponse: string | object,
     status: HttpStatus,

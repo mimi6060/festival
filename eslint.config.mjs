@@ -16,9 +16,45 @@ export default [
           enforceBuildableLibDependency: true,
           allow: ['^.*/eslint(\\.base)?\\.config\\.[cm]?[jt]s$'],
           depConstraints: [
+            // Apps can import from any shared library
             {
-              sourceTag: '*',
-              onlyDependOnLibsWithTags: ['*'],
+              sourceTag: 'type:app',
+              onlyDependOnLibsWithTags: ['scope:shared'],
+            },
+            // types is the base - cannot import from other libs
+            {
+              sourceTag: 'module:types',
+              onlyDependOnLibsWithTags: [],
+            },
+            // utils can only import from types
+            {
+              sourceTag: 'module:utils',
+              onlyDependOnLibsWithTags: ['module:types'],
+            },
+            // validation can import from types and utils
+            {
+              sourceTag: 'module:validation',
+              onlyDependOnLibsWithTags: ['module:types', 'module:utils'],
+            },
+            // constants can import from types
+            {
+              sourceTag: 'module:constants',
+              onlyDependOnLibsWithTags: ['module:types'],
+            },
+            // i18n can import from types
+            {
+              sourceTag: 'module:i18n',
+              onlyDependOnLibsWithTags: ['module:types'],
+            },
+            // hooks can import from types, utils, and api-client
+            {
+              sourceTag: 'module:hooks',
+              onlyDependOnLibsWithTags: ['module:types', 'module:utils', 'module:api-client'],
+            },
+            // api-client can import from types
+            {
+              sourceTag: 'module:api-client',
+              onlyDependOnLibsWithTags: ['module:types'],
             },
           ],
         },

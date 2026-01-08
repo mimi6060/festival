@@ -2,9 +2,9 @@
 
 import { use, useState } from 'react';
 import Link from 'next/link';
-import { mockFestivals } from '../../../../lib/mock-data';
-import { useStages, useCreateStage, useUpdateStage, useDeleteStage } from '../../../../hooks/api/useProgram';
-import type { Stage } from '../../../../types';
+import { mockFestivals } from '@/lib/mock-data';
+import { useStages, useCreateStage, useUpdateStage, useDeleteStage } from '@/hooks/api/useProgram';
+import type { Stage } from '@/types';
 
 interface FestivalStagesPageProps {
   params: Promise<{ id: string }>;

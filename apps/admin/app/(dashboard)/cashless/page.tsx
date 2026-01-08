@@ -13,9 +13,9 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import DataTable from '../../components/tables/DataTable';
-import { formatCurrency, formatDateTime, cn } from '../../lib/utils';
-import type { TableColumn } from '../../types';
+import DataTable from '@/components/tables/DataTable';
+import { formatCurrency, formatDateTime, cn } from '@/lib/utils';
+import type { TableColumn } from '@/types';
 
 interface CashlessAccount {
   id: string;

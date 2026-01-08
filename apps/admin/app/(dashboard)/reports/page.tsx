@@ -27,13 +27,13 @@ import {
   ScatterChart,
   ZAxis,
 } from 'recharts';
-import { formatCurrency, formatNumber, formatDate, cn } from '../../lib/utils';
+import { formatCurrency, formatNumber, formatDate, cn } from '@/lib/utils';
 import {
   mockFestivals,
   mockTicketCategories,
   generateRevenueChartData,
   generateTicketSalesChartData,
-} from '../../lib/mock-data';
+} from '@/lib/mock-data';
 
 // Types
 interface ReportMetric {

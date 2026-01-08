@@ -2,8 +2,8 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AuthProvider, useAuth } from '../../lib/auth-context';
-import AdminShell from '../../components/layout/AdminShell';
+import { AuthProvider, useAuth } from '@/lib/auth-context';
+import AdminShell from '@/components/layout/AdminShell';
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();

@@ -12,8 +12,8 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { useRealtimeData, RealtimeTransaction, RealtimeAlert } from '../../hooks';
-import { formatCurrency, formatNumber, formatDateTime, cn } from '../../lib/utils';
+import { useRealtimeData, RealtimeTransaction, RealtimeAlert } from '@/hooks';
+import { formatCurrency, formatNumber, formatDateTime, cn } from '@/lib/utils';
 
 // Connection status indicator
 function ConnectionStatus({
