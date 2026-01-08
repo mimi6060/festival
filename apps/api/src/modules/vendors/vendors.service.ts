@@ -298,182 +298,35 @@ export class VendorsService {
   // ==================== ORDER MANAGEMENT ====================
 
   async createOrder(vendorId: string, userId: string, dto: CreateOrderDto) {
-    const vendor = await this.prisma.vendor.findUnique({
-      where: { id: vendorId },
-      include: {
-        festival: true,
-      },
-    });
+    const vendor = await this.fetchAndValidateVendor(vendorId);
+    const products = await this.fetchAndValidateProducts(vendorId, dto.items);
+    const { orderItems, subtotal } = this.calculateOrderTotals(dto.items, products);
+    const { commission, totalAmount } = this.calculateCommission(subtotal, vendor.commissionRate);
 
-    if (!vendor) {
-      throw new NotFoundException('Vendor not found');
-    }
+    const cashlessTransactionId = await this.processCashlessPaymentIfNeeded(
+      dto.paymentMethod,
+      userId,
+      totalAmount,
+      vendor,
+      vendorId,
+      orderItems.length
+    );
 
-    if (!vendor.isOpen) {
-      throw new BadRequestException('Vendor is currently closed');
-    }
-
-    // Fetch all products and validate
-    const productIds = dto.items.map((item) => item.productId);
-    const products = await this.prisma.vendorProduct.findMany({
-      where: {
-        id: { in: productIds },
-        vendorId,
-        isAvailable: true,
-      },
-    });
-
-    if (products.length !== productIds.length) {
-      throw new BadRequestException('One or more products are not available');
-    }
-
-    // Calculate totals and validate stock
-    let subtotal = 0;
-    const orderItems: {
-      productId: string;
-      productName: string;
-      quantity: number;
-      unitPrice: number;
-      totalPrice: number;
-      options?: Record<string, unknown>;
-      notes?: string;
-    }[] = [];
-
-    for (const item of dto.items) {
-      const product = products.find((p) => p.id === item.productId);
-      if (!product) {
-        throw new BadRequestException(`Product ${item.productId} not found`);
-      }
-
-      // Check stock
-      if (product.stock !== null && product.stock < item.quantity) {
-        throw new BadRequestException(
-          `Insufficient stock for ${product.name}. Available: ${product.stock}`
-        );
-      }
-
-      const unitPrice = Number(product.price);
-      const totalPrice = unitPrice * item.quantity;
-      subtotal += totalPrice;
-
-      orderItems.push({
-        productId: product.id,
-        productName: product.name,
-        quantity: item.quantity,
-        unitPrice,
-        totalPrice,
-        options: item.options,
-        notes: item.notes,
-      });
-    }
-
-    // Calculate commission
-    const commissionRate = Number(vendor.commissionRate) / 100;
-    const commission = subtotal * commissionRate;
-    const totalAmount = subtotal;
-
-    // Process cashless payment if needed
-    let cashlessTransactionId: string | undefined;
-
-    if (dto.paymentMethod === VendorPaymentMethod.CASHLESS) {
-      // Get user's cashless account
-      const cashlessAccount = await this.prisma.cashlessAccount.findUnique({
-        where: { userId },
-      });
-
-      if (!cashlessAccount) {
-        throw new BadRequestException('No cashless account found. Please top up first.');
-      }
-
-      if (Number(cashlessAccount.balance) < totalAmount) {
-        throw new BadRequestException(
-          `Insufficient cashless balance. Required: ${totalAmount}, Available: ${cashlessAccount.balance}`
-        );
-      }
-
-      // Deduct from cashless account and create transaction
-      const transaction = await this.prisma.$transaction(async (tx) => {
-        const balanceBefore = Number(cashlessAccount.balance);
-        const balanceAfter = balanceBefore - totalAmount;
-
-        // Update balance
-        await tx.cashlessAccount.update({
-          where: { id: cashlessAccount.id },
-          data: { balance: balanceAfter },
-        });
-
-        // Create transaction record
-        const txRecord = await tx.cashlessTransaction.create({
-          data: {
-            accountId: cashlessAccount.id,
-            festivalId: vendor.festivalId,
-            type: 'PAYMENT',
-            amount: -totalAmount,
-            balanceBefore,
-            balanceAfter,
-            description: `Vendor order: ${vendor.name}`,
-            metadata: { vendorId, orderItems: orderItems.length },
-          },
-        });
-
-        return txRecord;
-      });
-
-      cashlessTransactionId = transaction.id;
-    }
-
-    // Generate order number
     const orderNumber = this.generateOrderNumber(vendor.name);
 
-    // Create order with items
-    const order = await this.prisma.$transaction(async (tx) => {
-      // Create order
-      const newOrder = await tx.vendorOrder.create({
-        data: {
-          orderNumber,
-          vendorId,
-          userId,
-          subtotal,
-          commission,
-          totalAmount,
-          paymentMethod: dto.paymentMethod,
-          cashlessTransactionId,
-          notes: dto.notes,
-          items: {
-            create: orderItems.map((item) => ({
-              productId: item.productId,
-              productName: item.productName,
-              quantity: item.quantity,
-              unitPrice: item.unitPrice,
-              totalPrice: item.totalPrice,
-              options: item.options as Prisma.InputJsonValue,
-              notes: item.notes,
-            })),
-          },
-        },
-        include: {
-          items: true,
-          vendor: {
-            select: { id: true, name: true },
-          },
-        },
-      });
-
-      // Update product stock and sold count
-      for (const item of orderItems) {
-        await tx.vendorProduct.update({
-          where: { id: item.productId },
-          data: {
-            soldCount: { increment: item.quantity },
-            ...(products.find((p) => p.id === item.productId)?.stock !== null && {
-              stock: { decrement: item.quantity },
-            }),
-          },
-        });
-      }
-
-      return newOrder;
-    });
+    const order = await this.createOrderInTransaction(
+      orderNumber,
+      vendorId,
+      userId,
+      subtotal,
+      commission,
+      totalAmount,
+      dto.paymentMethod,
+      cashlessTransactionId,
+      dto.notes,
+      orderItems,
+      products
+    );
 
     return order;
   }
@@ -658,20 +511,18 @@ export class VendorsService {
       return;
     }
 
-    const cashlessAccount = await this.prisma.cashlessAccount.findUnique({
-      where: { userId: order.userId },
-    });
+    // Batch query: fetch cashless account and vendor in parallel to prevent N+1
+    const [cashlessAccount, vendor] = await Promise.all([
+      this.prisma.cashlessAccount.findUnique({
+        where: { userId: order.userId },
+      }),
+      this.prisma.vendor.findUnique({
+        where: { id: order.vendorId },
+        select: { festivalId: true, name: true },
+      }),
+    ]);
 
-    if (!cashlessAccount) {
-      return;
-    }
-
-    const vendor = await this.prisma.vendor.findUnique({
-      where: { id: order.vendorId },
-      select: { festivalId: true, name: true },
-    });
-
-    if (!vendor) {
+    if (!cashlessAccount || !vendor) {
       return;
     }
 
@@ -1475,21 +1326,265 @@ export class VendorsService {
     };
   }
 
-  // ==================== HELPERS ====================
+  // ==================== ORDER CREATION HELPERS ====================
 
-  private async verifyVendorOwnership(vendorId: string, userId: string) {
+  /**
+   * Fetch vendor and validate it's open for orders
+   */
+  private async fetchAndValidateVendor(vendorId: string): Promise<any> {
     const vendor = await this.prisma.vendor.findUnique({
       where: { id: vendorId },
+      include: { festival: true },
     });
 
     if (!vendor) {
       throw new NotFoundException('Vendor not found');
     }
 
-    // Check if user is owner or admin
-    const user = await this.prisma.user.findUnique({
-      where: { id: userId },
+    if (!vendor.isOpen) {
+      throw new BadRequestException('Vendor is currently closed');
+    }
+
+    return vendor;
+  }
+
+  /**
+   * Fetch and validate all products for an order
+   */
+  private async fetchAndValidateProducts(
+    vendorId: string,
+    items: { productId: string; quantity: number }[]
+  ): Promise<any[]> {
+    const productIds = items.map((item) => item.productId);
+    const products = await this.prisma.vendorProduct.findMany({
+      where: {
+        id: { in: productIds },
+        vendorId,
+        isAvailable: true,
+      },
     });
+
+    if (products.length !== productIds.length) {
+      throw new BadRequestException('One or more products are not available');
+    }
+
+    return products;
+  }
+
+  /**
+   * Calculate order totals and validate stock
+   */
+  private calculateOrderTotals(
+    items: {
+      productId: string;
+      quantity: number;
+      options?: Record<string, unknown>;
+      notes?: string;
+    }[],
+    products: any[]
+  ): {
+    orderItems: {
+      productId: string;
+      productName: string;
+      quantity: number;
+      unitPrice: number;
+      totalPrice: number;
+      options?: Record<string, unknown>;
+      notes?: string;
+    }[];
+    subtotal: number;
+  } {
+    let subtotal = 0;
+    const orderItems: {
+      productId: string;
+      productName: string;
+      quantity: number;
+      unitPrice: number;
+      totalPrice: number;
+      options?: Record<string, unknown>;
+      notes?: string;
+    }[] = [];
+
+    for (const item of items) {
+      const product = products.find((p) => p.id === item.productId);
+      if (!product) {
+        throw new BadRequestException(`Product ${item.productId} not found`);
+      }
+
+      if (product.stock !== null && product.stock < item.quantity) {
+        throw new BadRequestException(
+          `Insufficient stock for ${product.name}. Available: ${product.stock}`
+        );
+      }
+
+      const unitPrice = Number(product.price);
+      const totalPrice = unitPrice * item.quantity;
+      subtotal += totalPrice;
+
+      orderItems.push({
+        productId: product.id,
+        productName: product.name,
+        quantity: item.quantity,
+        unitPrice,
+        totalPrice,
+        options: item.options,
+        notes: item.notes,
+      });
+    }
+
+    return { orderItems, subtotal };
+  }
+
+  /**
+   * Calculate commission from subtotal
+   */
+  private calculateCommission(
+    subtotal: number,
+    commissionRate: any
+  ): { commission: number; totalAmount: number } {
+    const rate = Number(commissionRate) / 100;
+    const commission = subtotal * rate;
+    return { commission, totalAmount: subtotal };
+  }
+
+  /**
+   * Process cashless payment if payment method is CASHLESS
+   */
+  private async processCashlessPaymentIfNeeded(
+    paymentMethod: VendorPaymentMethod,
+    userId: string,
+    totalAmount: number,
+    vendor: any,
+    vendorId: string,
+    orderItemsCount: number
+  ): Promise<string | undefined> {
+    if (paymentMethod !== VendorPaymentMethod.CASHLESS) {
+      return undefined;
+    }
+
+    const cashlessAccount = await this.prisma.cashlessAccount.findUnique({
+      where: { userId },
+    });
+
+    if (!cashlessAccount) {
+      throw new BadRequestException('No cashless account found. Please top up first.');
+    }
+
+    if (Number(cashlessAccount.balance) < totalAmount) {
+      throw new BadRequestException(
+        `Insufficient cashless balance. Required: ${totalAmount}, Available: ${cashlessAccount.balance}`
+      );
+    }
+
+    const transaction = await this.prisma.$transaction(async (tx) => {
+      const balanceBefore = Number(cashlessAccount.balance);
+      const balanceAfter = balanceBefore - totalAmount;
+
+      await tx.cashlessAccount.update({
+        where: { id: cashlessAccount.id },
+        data: { balance: balanceAfter },
+      });
+
+      const txRecord = await tx.cashlessTransaction.create({
+        data: {
+          accountId: cashlessAccount.id,
+          festivalId: vendor.festivalId,
+          type: 'PAYMENT',
+          amount: -totalAmount,
+          balanceBefore,
+          balanceAfter,
+          description: `Vendor order: ${vendor.name}`,
+          metadata: { vendorId, orderItems: orderItemsCount },
+        },
+      });
+
+      return txRecord;
+    });
+
+    return transaction.id;
+  }
+
+  /**
+   * Create order and update stock in a transaction
+   */
+  private async createOrderInTransaction(
+    orderNumber: string,
+    vendorId: string,
+    userId: string,
+    subtotal: number,
+    commission: number,
+    totalAmount: number,
+    paymentMethod: VendorPaymentMethod,
+    cashlessTransactionId: string | undefined,
+    notes: string | undefined,
+    orderItems: any[],
+    products: any[]
+  ): Promise<any> {
+    return this.prisma.$transaction(async (tx) => {
+      const newOrder = await tx.vendorOrder.create({
+        data: {
+          orderNumber,
+          vendorId,
+          userId,
+          subtotal,
+          commission,
+          totalAmount,
+          paymentMethod,
+          cashlessTransactionId,
+          notes,
+          items: {
+            create: orderItems.map((item) => ({
+              productId: item.productId,
+              productName: item.productName,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              totalPrice: item.totalPrice,
+              options: item.options as Prisma.InputJsonValue,
+              notes: item.notes,
+            })),
+          },
+        },
+        include: {
+          items: true,
+          vendor: { select: { id: true, name: true } },
+        },
+      });
+
+      const stockUpdates = orderItems.map((item) => {
+        const product = products.find((p) => p.id === item.productId);
+        return tx.vendorProduct.update({
+          where: { id: item.productId },
+          data: {
+            soldCount: { increment: item.quantity },
+            ...(product?.stock !== null && {
+              stock: { decrement: item.quantity },
+            }),
+          },
+        });
+      });
+      await Promise.all(stockUpdates);
+
+      return newOrder;
+    });
+  }
+
+  // ==================== HELPERS ====================
+
+  private async verifyVendorOwnership(vendorId: string, userId: string) {
+    // Batch query: fetch vendor and user in parallel to prevent N+1
+    const [vendor, user] = await Promise.all([
+      this.prisma.vendor.findUnique({
+        where: { id: vendorId },
+      }),
+      this.prisma.user.findUnique({
+        where: { id: userId },
+        select: { id: true, role: true },
+      }),
+    ]);
+
+    if (!vendor) {
+      throw new NotFoundException('Vendor not found');
+    }
 
     if (!user) {
       throw new NotFoundException('User not found');

@@ -6,12 +6,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import {
-  CreateZoneDto,
-  UpdateZoneDto,
-  CheckAccessDto,
-  LogAccessDto,
-} from './dto';
+import { CreateZoneDto, UpdateZoneDto, CheckAccessDto, LogAccessDto } from './dto';
 import {
   Zone,
   ZoneAccessLog,
@@ -94,14 +89,10 @@ export class ZonesService {
 
     // Only organizer or admin can create zones
     if (festival.organizerId !== user.id && user.role !== UserRole.ADMIN) {
-      throw new ForbiddenException(
-        'You do not have permission to create zones for this festival'
-      );
+      throw new ForbiddenException('You do not have permission to create zones for this festival');
     }
 
-    this.logger.log(
-      `Creating zone "${createZoneDto.name}" for festival ${festivalId}`
-    );
+    this.logger.log(`Creating zone "${createZoneDto.name}" for festival ${festivalId}`);
 
     return this.prisma.zone.create({
       data: {
@@ -182,18 +173,12 @@ export class ZonesService {
   /**
    * Update a zone
    */
-  async update(
-    id: string,
-    updateZoneDto: UpdateZoneDto,
-    user: AuthenticatedUser
-  ): Promise<Zone> {
+  async update(id: string, updateZoneDto: UpdateZoneDto, user: AuthenticatedUser): Promise<Zone> {
     const zone = await this.findOne(id);
 
     // Only organizer or admin can update zones
     if (zone.festival.organizerId !== user.id && user.role !== UserRole.ADMIN) {
-      throw new ForbiddenException(
-        'You do not have permission to update this zone'
-      );
+      throw new ForbiddenException('You do not have permission to update this zone');
     }
 
     this.logger.log(`Updating zone ${id}`);
@@ -226,9 +211,7 @@ export class ZonesService {
 
     // Only organizer or admin can delete zones
     if (zone.festival.organizerId !== user.id && user.role !== UserRole.ADMIN) {
-      throw new ForbiddenException(
-        'You do not have permission to delete this zone'
-      );
+      throw new ForbiddenException('You do not have permission to delete this zone');
     }
 
     this.logger.log(`Deleting zone ${id}`);
@@ -277,14 +260,10 @@ export class ZonesService {
       throw new NotFoundException(`Zone with ID ${zoneId} not found`);
     }
 
-    const capacityPercentage = zone.capacity
-      ? (zone.currentOccupancy / zone.capacity) * 100
-      : null;
-    const isAtCapacity =
-      zone.capacity !== null && zone.currentOccupancy >= zone.capacity;
+    const capacityPercentage = zone.capacity ? (zone.currentOccupancy / zone.capacity) * 100 : null;
+    const isAtCapacity = zone.capacity !== null && zone.currentOccupancy >= zone.capacity;
     const isNearCapacity =
-      capacityPercentage !== null &&
-      capacityPercentage >= DEFAULT_CAPACITY_WARNING_THRESHOLD;
+      capacityPercentage !== null && capacityPercentage >= DEFAULT_CAPACITY_WARNING_THRESHOLD;
 
     const zoneInfo = {
       id: zone.id,
@@ -487,19 +466,19 @@ export class ZonesService {
       }
     }
 
-    // Find zone for validation
-    const zone = await this.prisma.zone.findUnique({
-      where: { id: zoneId },
-    });
+    // Batch query: fetch zone and ticket in parallel to prevent N+1
+    const [zone, ticket] = await Promise.all([
+      this.prisma.zone.findUnique({
+        where: { id: zoneId },
+      }),
+      this.prisma.ticket.findUnique({
+        where: { id: ticketId },
+      }),
+    ]);
 
     if (!zone) {
       throw new NotFoundException(`Zone with ID ${zoneId} not found`);
     }
-
-    // Verify ticket exists
-    const ticket = await this.prisma.ticket.findUnique({
-      where: { id: ticketId },
-    });
 
     if (!ticket) {
       throw new NotFoundException(`Ticket with ID ${ticketId} not found`);
@@ -535,10 +514,7 @@ export class ZonesService {
       });
 
       // Mark ticket as used if first entry
-      if (
-        logAccessDto.action === ZoneAccessAction.ENTRY &&
-        ticket.status === TicketStatus.SOLD
-      ) {
+      if (logAccessDto.action === ZoneAccessAction.ENTRY && ticket.status === TicketStatus.SOLD) {
         await tx.ticket.update({
           where: { id: ticketId },
           data: {
@@ -579,9 +555,7 @@ export class ZonesService {
           type: 'CRITICAL',
           message: `ALERT: Zone "${zone.name}" is at FULL CAPACITY!`,
         };
-        this.logger.warn(
-          `CRITICAL: Zone ${zone.name} reached full capacity!`
-        );
+        this.logger.warn(`CRITICAL: Zone ${zone.name} reached full capacity!`);
       } else if (capacityPercentage >= DEFAULT_CAPACITY_WARNING_THRESHOLD) {
         response.alert = {
           type: 'WARNING',
@@ -621,11 +595,9 @@ export class ZonesService {
     const occupancyPercentage = zone.capacity
       ? (zone.currentOccupancy / zone.capacity) * 100
       : null;
-    const isAtCapacity =
-      zone.capacity !== null && zone.currentOccupancy >= zone.capacity;
+    const isAtCapacity = zone.capacity !== null && zone.currentOccupancy >= zone.capacity;
     const isNearCapacity =
-      occupancyPercentage !== null &&
-      occupancyPercentage >= DEFAULT_CAPACITY_WARNING_THRESHOLD;
+      occupancyPercentage !== null && occupancyPercentage >= DEFAULT_CAPACITY_WARNING_THRESHOLD;
     const availableSpots = zone.capacity
       ? Math.max(0, zone.capacity - zone.currentOccupancy)
       : null;
@@ -659,7 +631,7 @@ export class ZonesService {
    * Get all zones capacity status for a festival (dashboard view)
    */
   async getAllZonesCapacityStatus(festivalId: string): Promise<
-    Array<{
+    {
       zoneId: string;
       zoneName: string;
       currentOccupancy: number;
@@ -667,7 +639,7 @@ export class ZonesService {
       occupancyPercentage: number | null;
       status: 'GREEN' | 'YELLOW' | 'ORANGE' | 'RED';
       isActive: boolean;
-    }>
+    }[]
   > {
     const zones = await this.prisma.zone.findMany({
       where: { festivalId },
@@ -806,11 +778,11 @@ export class ZonesService {
       peakOccupancy: number;
       averageStayDurationMinutes: number | null;
     };
-    hourlyDistribution: Array<{
+    hourlyDistribution: {
       hour: number;
       entries: number;
       exits: number;
-    }>;
+    }[];
   }> {
     // Verify zone exists
     const zone = await this.prisma.zone.findUnique({
@@ -877,7 +849,7 @@ export class ZonesService {
 
     // Calculate average stay duration
     const stayDurations: number[] = [];
-    const entryTimes: Map<string, Date> = new Map();
+    const entryTimes = new Map<string, Date>();
 
     for (const log of allLogs) {
       if (log.action === ZoneAccessAction.ENTRY) {
@@ -913,13 +885,11 @@ export class ZonesService {
       }
     }
 
-    const hourlyDistribution = Array.from(hourlyData.entries()).map(
-      ([hour, data]) => ({
-        hour,
-        entries: data.entries,
-        exits: data.exits,
-      })
-    );
+    const hourlyDistribution = Array.from(hourlyData.entries()).map(([hour, data]) => ({
+      hour,
+      entries: data.entries,
+      exits: data.exits,
+    }));
 
     return {
       zone: {
@@ -970,9 +940,7 @@ export class ZonesService {
     const zone = await this.findOne(zoneId);
 
     if (user.role !== UserRole.ADMIN && user.role !== UserRole.ORGANIZER) {
-      throw new ForbiddenException(
-        'Only admins and organizers can adjust zone occupancy'
-      );
+      throw new ForbiddenException('Only admins and organizers can adjust zone occupancy');
     }
 
     const newOccupancy = Math.max(0, zone.currentOccupancy + adjustment);
