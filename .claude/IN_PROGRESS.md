@@ -18,7 +18,7 @@
 | Functions  | **84.22%** | 80%    | Exceeded |
 | Lines      | **86.06%** | 80%    | Exceeded |
 
-**Total Tests: 5,050** | **Test Suites: 96**
+**Total Tests: 5,050+** | **Test Suites: 96+**
 
 ---
 
@@ -404,8 +404,24 @@
 ### DEV-20: Tests WebSocket
 
 - **Fichier**: `apps/api/src/gateways/`
-- **Status**: [ ] À faire
+- **Status**: [x] Terminé
 - **Description**: Tester le cycle de vie des connexions
+- **Solution**:
+  - Tests complets pour les 5 gateways WebSocket:
+    - **EventsGateway** (existant): 56 tests pour connexion/déconnexion, authentification, rooms, broadcast
+    - **PresenceGateway** (existant): 67 tests pour présence utilisateur, typing indicators, activity timeout
+    - **ZonesGateway** (existant): 58 tests pour occupancy tracking, alerts, staff positions
+    - **BroadcastGateway** (nouveau): 76 tests pour announcements, emergencies, schedule changes, weather/lost+found alerts
+    - **SupportChatGateway** (nouveau): 77 tests pour ticket rooms, messaging, typing, status updates, agent assignment
+  - Tests couvrent:
+    - Connexion/déconnexion avec authentification JWT
+    - Gestion des rooms (join/leave) par festival et utilisateur
+    - Emission d'événements temps réel (notifications, updates)
+    - Authentification WebSocket via middleware
+    - Contrôle d'accès par rôle (USER, STAFF, ADMIN, SUPPORT)
+    - Typing indicators avec timeout automatique
+    - Read receipts et message queueing
+  - Total: 334 tests WebSocket (5050 tests total)
 
 ---
 
