@@ -53,8 +53,13 @@ import {
 import {
   CreateConnectAccountDto,
   CreateAccountLinkDto,
+  CreateLoginLinkDto,
   CreateTransferDto,
   CreatePayoutDto,
+  ConnectAccountResponseDto,
+  AccountLinkResponseDto,
+  AccountBalanceDto,
+  DashboardLinkResponseDto,
 } from './dto/stripe-connect.dto';
 import {
   CreateProductDto,
@@ -239,53 +244,139 @@ export class PaymentsController {
   }
 
   // ============================================================================
-  // Stripe Connect
+  // Stripe Connect - Vendor Onboarding
   // ============================================================================
 
-  @Post('connect/account')
-  @ApiOperation({ summary: 'Create a Stripe Connect account for a vendor' })
+  @Post('connect/accounts')
+  @ApiOperation({
+    summary: 'Create a Stripe Connect account for a vendor',
+    description:
+      'Creates a new Stripe Connect account for vendor onboarding. Supports Express, Standard, and Custom account types.',
+  })
   @ApiBody({ type: CreateConnectAccountDto })
-  @ApiResponse({ status: 201, description: 'Connect account created' })
-  async createConnectAccount(@Body() dto: CreateConnectAccountDto) {
+  @ApiResponse({
+    status: 201,
+    description: 'Connect account created successfully',
+    type: ConnectAccountResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid request data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Vendor not found' })
+  async createConnectAccount(
+    @Body() dto: CreateConnectAccountDto
+  ): Promise<ConnectAccountResponseDto> {
     return this.connectService.createConnectAccount(dto);
   }
 
-  @Post('connect/account-link')
-  @ApiOperation({ summary: 'Create an account link for onboarding' })
-  @ApiBody({ type: CreateAccountLinkDto })
-  @ApiResponse({ status: 201, description: 'Account link created' })
-  async createAccountLink(@Body() dto: CreateAccountLinkDto) {
-    return this.connectService.createAccountLink(dto);
-  }
-
-  @Get('connect/account/:accountId')
-  @ApiOperation({ summary: 'Get Connect account details' })
-  @ApiParam({ name: 'accountId', description: 'Stripe account ID' })
-  @ApiResponse({ status: 200, description: 'Account details' })
-  async getConnectAccount(@Param('accountId') accountId: string) {
+  @Get('connect/accounts/:accountId')
+  @ApiOperation({
+    summary: 'Get Connect account details',
+    description:
+      'Retrieves the details of a Stripe Connect account including onboarding status, capabilities, and business profile.',
+  })
+  @ApiParam({
+    name: 'accountId',
+    description: 'Stripe Connect account ID (e.g., acct_xxx)',
+    example: 'acct_1234567890',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Account details retrieved successfully',
+    type: ConnectAccountResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid account ID' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({ status: 404, description: 'Connect account not found' })
+  async getConnectAccount(
+    @Param('accountId') accountId: string
+  ): Promise<ConnectAccountResponseDto> {
     return this.connectService.getAccount(accountId);
   }
 
-  @Get('connect/account/:accountId/balance')
-  @ApiOperation({ summary: 'Get Connect account balance' })
-  @ApiParam({ name: 'accountId', description: 'Stripe account ID' })
-  @ApiResponse({ status: 200, description: 'Account balance' })
-  async getAccountBalance(@Param('accountId') accountId: string) {
+  @Post('connect/onboarding-link')
+  @ApiOperation({
+    summary: 'Generate onboarding link for vendor',
+    description:
+      'Creates an account link URL that redirects vendors to Stripe-hosted onboarding flow. Links expire after a short period.',
+  })
+  @ApiBody({ type: CreateAccountLinkDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Onboarding link generated successfully',
+    type: AccountLinkResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid request data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async createOnboardingLink(@Body() dto: CreateAccountLinkDto): Promise<AccountLinkResponseDto> {
+    return this.connectService.createAccountLink(dto);
+  }
+
+  @Post('connect/dashboard-link')
+  @ApiOperation({
+    summary: 'Generate dashboard link for vendor',
+    description:
+      'Creates a login link URL that allows Express/Standard account holders to access their Stripe Express dashboard.',
+  })
+  @ApiBody({ type: CreateLoginLinkDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Dashboard link generated successfully',
+    type: DashboardLinkResponseDto,
+  })
+  @ApiResponse({ status: 400, description: 'Invalid account ID or account type not supported' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async createDashboardLink(@Body() dto: CreateLoginLinkDto): Promise<DashboardLinkResponseDto> {
+    return this.connectService.createLoginLink(dto.accountId);
+  }
+
+  @Get('connect/accounts/:accountId/balance')
+  @ApiOperation({
+    summary: 'Get Connect account balance',
+    description:
+      'Retrieves the available and pending balance for a Connect account, broken down by currency.',
+  })
+  @ApiParam({
+    name: 'accountId',
+    description: 'Stripe Connect account ID (e.g., acct_xxx)',
+    example: 'acct_1234567890',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Account balance retrieved successfully',
+    type: [AccountBalanceDto],
+  })
+  @ApiResponse({ status: 400, description: 'Invalid account ID' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async getAccountBalance(@Param('accountId') accountId: string): Promise<AccountBalanceDto[]> {
     return this.connectService.getAccountBalance(accountId);
   }
 
+  // ============================================================================
+  // Stripe Connect - Transfers & Payouts
+  // ============================================================================
+
   @Post('connect/transfer')
-  @ApiOperation({ summary: 'Create a transfer to a Connect account' })
+  @ApiOperation({
+    summary: 'Create a transfer to a Connect account',
+    description: 'Transfers funds from the platform account to a connected account.',
+  })
   @ApiBody({ type: CreateTransferDto })
-  @ApiResponse({ status: 201, description: 'Transfer created' })
+  @ApiResponse({ status: 201, description: 'Transfer created successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid request data' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createTransfer(@Body() dto: CreateTransferDto) {
     return this.connectService.createTransfer(dto);
   }
 
   @Post('connect/payout')
-  @ApiOperation({ summary: 'Create a payout from a Connect account' })
+  @ApiOperation({
+    summary: 'Create a payout from a Connect account',
+    description: 'Initiates a payout from a Connect account to the associated bank account.',
+  })
   @ApiBody({ type: CreatePayoutDto })
-  @ApiResponse({ status: 201, description: 'Payout created' })
+  @ApiResponse({ status: 201, description: 'Payout created successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid request data or insufficient balance' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
   async createPayout(@Body() dto: CreatePayoutDto) {
     return this.connectService.createPayout(dto);
   }

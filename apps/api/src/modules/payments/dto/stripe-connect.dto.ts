@@ -36,7 +36,11 @@ export class CreateConnectAccountDto {
   @IsUUID()
   vendorId!: string;
 
-  @ApiProperty({ description: 'Account type', enum: ConnectAccountType, default: ConnectAccountType.EXPRESS })
+  @ApiProperty({
+    description: 'Account type',
+    enum: ConnectAccountType,
+    default: ConnectAccountType.EXPRESS,
+  })
   @IsEnum(ConnectAccountType)
   type!: ConnectAccountType;
 
@@ -49,7 +53,11 @@ export class CreateConnectAccountDto {
   @IsEmail()
   email!: string;
 
-  @ApiPropertyOptional({ description: 'Country code (ISO 3166-1 alpha-2)', default: 'FR', example: 'FR' })
+  @ApiPropertyOptional({
+    description: 'Country code (ISO 3166-1 alpha-2)',
+    default: 'FR',
+    example: 'FR',
+  })
   @IsOptional()
   @IsString()
   @Matches(/^[A-Z]{2}$/)
@@ -76,11 +84,17 @@ export class CreateAccountLinkDto {
   @IsString()
   accountId!: string;
 
-  @ApiProperty({ description: 'Refresh URL when link expires', example: 'https://festival.com/vendor/onboarding/refresh' })
+  @ApiProperty({
+    description: 'Refresh URL when link expires',
+    example: 'https://festival.com/vendor/onboarding/refresh',
+  })
   @IsUrl()
   refreshUrl!: string;
 
-  @ApiProperty({ description: 'Return URL after onboarding', example: 'https://festival.com/vendor/dashboard' })
+  @ApiProperty({
+    description: 'Return URL after onboarding',
+    example: 'https://festival.com/vendor/dashboard',
+  })
   @IsUrl()
   returnUrl!: string;
 
@@ -243,4 +257,9 @@ export class PayoutResponseDto {
 
   @ApiProperty({ description: 'Expected arrival date' })
   arrivalDate!: Date;
+}
+
+export class DashboardLinkResponseDto {
+  @ApiProperty({ description: 'URL to access the Stripe Express dashboard' })
+  url!: string;
 }

@@ -143,8 +143,19 @@
 ### DEV-08: Implémenter les endpoints Stripe Connect
 
 - **Fichier**: `apps/api/src/modules/payments/`
-- **Status**: [ ] À faire
+- **Status**: [x] Terminé
 - **Description**: Onboarding et dashboard pour les vendors
+- **Solution**:
+  - Ajouté les endpoints REST pour Stripe Connect dans `PaymentsController`:
+    - `POST /payments/connect/accounts` - Créer un compte Connect pour un vendor
+    - `GET /payments/connect/accounts/:accountId` - Récupérer les détails d'un compte
+    - `POST /payments/connect/onboarding-link` - Générer un lien d'onboarding Stripe
+    - `POST /payments/connect/dashboard-link` - Générer un lien vers le dashboard Express
+    - `GET /payments/connect/accounts/:accountId/balance` - Récupérer le solde du compte
+  - Ajouté `DashboardLinkResponseDto` dans `stripe-connect.dto.ts`
+  - Documentation Swagger complète avec descriptions détaillées
+  - Tous les endpoints protégés par `JwtAuthGuard`
+  - Utilisation des méthodes existantes de `StripeConnectService`
 
 ### DEV-09: Ajouter la recherche dans le Programme
 
