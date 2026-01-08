@@ -2,6 +2,27 @@
 
 ---
 
+## Session 2026-01-08 - Test Suite Fixes
+
+### Tâches terminées cette session:
+
+- [x] **Fixed Stripe health indicator tests timing out**
+  - Added `jest.useFakeTimers()` for async promise tests
+  - Fixed timeout test to properly advance timers by 5 seconds
+  - All 18 Stripe health indicator tests now pass
+
+- [x] **Fixed variable declaration mismatches across test files**
+  - `payments.controller.spec.ts`: Fixed `_paymentsService`, `_checkoutService`, `_refundService` assignments
+  - `payments.controller.spec.ts`: Added mock request with user object for authorization tests
+  - `cashless.controller.spec.ts`: Fixed `_cashlessService` assignment
+  - `cashless.service.spec.ts`: Fixed `_prismaService` assignment
+  - `tickets.controller.spec.ts`: Fixed `_ticketsService` assignment
+  - `tickets.service.spec.ts`: Fixed `_prismaService` assignment
+
+- [x] **All 2197 API tests now pass (47 test suites)**
+
+---
+
 ## Session 2026-01-08 - React Native Mobile App Tests
 
 ### Tâches terminées cette session:
