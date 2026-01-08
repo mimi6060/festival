@@ -2,6 +2,74 @@
 
 ---
 
+## Session 2026-01-08 - Architecture Documentation with Mermaid Diagrams
+
+### Documentation complète avec diagrammes Mermaid
+
+- [x] **docs/ARCHITECTURE.md** - Complete rewrite with Mermaid diagrams
+  - **1. System Overview**: High-level architecture diagram showing all components
+    - Client applications (Next.js Web, Admin, React Native Mobile)
+    - API Gateway Layer (Load Balancer)
+    - Backend Services (NestJS API, BullMQ Queue)
+    - Data Layer (PostgreSQL, Redis, MinIO)
+    - External Services (Stripe, Firebase FCM, Sentry, SMTP)
+    - Monitoring (Prometheus, Grafana)
+  - **2. Authentication Flow**: JWT + httpOnly cookies sequence diagram
+    - Login flow with bcrypt password verification
+    - Authenticated request with JwtAuthGuard and RolesGuard
+    - Token refresh flow
+    - Logout with session invalidation
+    - Token configuration table (access: 15min, refresh: 7d)
+    - Security features summary
+  - **3. Payment Flow**: Stripe checkout sequence diagram
+    - Checkout initiation with PaymentIntent creation
+    - Payment processing with Stripe Elements
+    - Webhook handling (payment_intent.succeeded)
+    - Order confirmation
+    - Payment state diagram (PENDING -> PROCESSING -> COMPLETED/FAILED -> REFUNDED)
+    - Webhook events table
+  - **4. Ticket Purchase Flow**: End-to-end sequence diagram
+    - Ticket selection and cart management
+    - Checkout and payment
+    - Ticket generation with QR code creation
+    - QR code structure diagram (ticketId, code, hash, version)
+    - Ticket validation flowchart at entry points
+    - QR code security details (HMAC-SHA256)
+  - **5. Cashless Payment Flow**: NFC-based wallet sequence diagram
+    - Wallet setup (account creation)
+    - Top-up flow with Stripe payment
+    - Payment at vendor flow
+    - Refund flow
+    - Configuration table (MIN_TOPUP, MAX_TOPUP, MAX_BALANCE)
+    - Transaction types diagram
+    - NFC flow diagram
+  - **6. Data Model**: Entity-Relationship diagram
+    - Core entities: USER, FESTIVAL, TICKET, TICKET_CATEGORY, PAYMENT
+    - Cashless: CASHLESS_ACCOUNT, CASHLESS_TRANSACTION
+    - Festival features: ZONE, VENDOR, STAGE, ARTIST, PERFORMANCE
+    - Camping: CAMPING_ZONE, CAMPING_SPOT, CAMPING_BOOKING
+    - Key relationships table
+    - Database indexes for performance
+  - **7. Tech Stack Summary**: Backend, Frontend, Mobile, Infrastructure tables
+
+### Diagrams included
+
+| Diagram Type    | Count | Purpose                               |
+| --------------- | ----- | ------------------------------------- |
+| graph TB        | 1     | System Overview                       |
+| sequenceDiagram | 4     | Auth, Payment, Ticket, Cashless flows |
+| stateDiagram-v2 | 1     | Payment states                        |
+| flowchart TD    | 1     | Ticket validation                     |
+| flowchart LR    | 1     | NFC flow                              |
+| graph LR        | 2     | QR structure, Transaction types       |
+| erDiagram       | 1     | Data model                            |
+
+### Files modified
+
+- `docs/ARCHITECTURE.md` - Complete rewrite (~700 lines)
+
+---
+
 ## Session 2026-01-08 - Tests Unitaires Cashless Module
 
 ### Tests complets pour le module cashless
@@ -30,11 +98,11 @@
 
 ### Coverage cashless module
 
-| File                    | Statements | Branches | Functions | Lines   |
-| ----------------------- | ---------- | -------- | --------- | ------- |
-| cashless.controller.ts  | 100%       | 66.66%   | 100%      | 100%    |
-| cashless.service.ts     | 98.31%     | 85%      | 100%      | 98.3%   |
-| **Module Total**        | **98.48%** | **80.76%** | **100%** | **98.47%** |
+| File                   | Statements | Branches   | Functions | Lines      |
+| ---------------------- | ---------- | ---------- | --------- | ---------- |
+| cashless.controller.ts | 100%       | 66.66%     | 100%      | 100%       |
+| cashless.service.ts    | 98.31%     | 85%        | 100%      | 98.3%      |
+| **Module Total**       | **98.48%** | **80.76%** | **100%**  | **98.47%** |
 
 ### Total: 84+ cashless module tests passing
 
