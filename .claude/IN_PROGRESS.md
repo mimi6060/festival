@@ -431,8 +431,23 @@
 ### DEV-30: Health check pour FCM
 
 - **Fichier**: `apps/api/src/modules/health/`
-- **Status**: [ ] À faire
+- **Status**: [x] Terminé
 - **Description**: Indicator santé pour push notifications
+- **Solution**:
+  - Créé `FcmHealthIndicator` dans `apps/api/src/modules/health/indicators/fcm.health.ts`
+  - L'indicateur utilise `FcmService.isEnabled()` pour vérifier si FCM est configuré
+  - Retourne statut `up` si FCM est initialisé et fonctionnel
+  - Retourne statut `not_configured` si FCM n'est pas configuré (acceptable en dev)
+  - Retourne statut `down` avec message d'erreur en cas d'échec
+  - Mis à jour `HealthModule` pour importer `NotificationsModule` et fournir `FcmHealthIndicator`
+  - Mis à jour `HealthController`:
+    - Ajouté FCM au check complet (`GET /health`)
+    - Ajouté FCM à la sonde de readiness (`GET /health/ready`)
+    - FCM `not_configured` est acceptable pour les sondes (comme Stripe)
+  - Mis à jour les DTOs de réponse pour inclure FCM
+  - Documentation Swagger mise à jour avec exemples FCM
+  - Ajouté tests unitaires complets dans `fcm.health.spec.ts` (100% coverage)
+  - Mis à jour les tests du controller pour inclure FCM mock
 
 ---
 

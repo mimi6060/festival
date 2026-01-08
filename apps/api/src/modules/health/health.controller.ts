@@ -8,6 +8,7 @@ import {
 import { PrismaHealthIndicator } from './indicators/prisma.health';
 import { RedisHealthIndicator } from './indicators/redis.health';
 import { StripeHealthIndicator } from './indicators/stripe.health';
+import { FcmHealthIndicator } from './indicators/fcm.health';
 
 /**
  * Health check response DTO
@@ -20,6 +21,7 @@ class HealthCheckResponseDto {
     database: { status: string; responseTime?: number };
     redis: { status: string; responseTime?: number };
     stripe: { status: string };
+    fcm: { status: string; responseTime?: number };
     memory: { status: string; heapUsed?: number; heapTotal?: number };
   };
 }
@@ -36,6 +38,7 @@ class ReadinessResponseDto {
     database: boolean;
     redis: boolean;
     stripe: boolean;
+    fcm: boolean;
   };
 }
 
@@ -56,7 +59,8 @@ export class HealthController {
   constructor(
     private readonly prismaHealth: PrismaHealthIndicator,
     private readonly redisHealth: RedisHealthIndicator,
-    private readonly stripeHealth: StripeHealthIndicator
+    private readonly stripeHealth: StripeHealthIndicator,
+    private readonly fcmHealth: FcmHealthIndicator
   ) {}
 
   /**
@@ -74,6 +78,7 @@ Returns a comprehensive health status of the API including:
 - Database connectivity
 - Redis cache status
 - Stripe API connectivity
+- FCM push notification service status
 - Response times for each service
 
 **Use Cases:**
@@ -93,6 +98,7 @@ Returns a comprehensive health status of the API including:
         database: { status: 'up', responseTime: 5 },
         redis: { status: 'up', responseTime: 2 },
         stripe: { status: 'up' },
+        fcm: { status: 'up', responseTime: 1 },
         memory: { status: 'up', heapUsed: 50000000, heapTotal: 150000000 },
       },
     },
@@ -107,6 +113,7 @@ Returns a comprehensive health status of the API including:
         database: { status: 'down', error: 'Connection refused' },
         redis: { status: 'up', responseTime: 2 },
         stripe: { status: 'up' },
+        fcm: { status: 'not_configured' },
         memory: { status: 'up' },
       },
     },
@@ -117,7 +124,7 @@ Returns a comprehensive health status of the API including:
 
     try {
       // Run health checks with timeout (5s max for each)
-      const [dbResult, redisResult, stripeResult] = await Promise.all([
+      const [dbResult, redisResult, stripeResult, fcmResult] = await Promise.all([
         Promise.race([
           this.prismaHealth.isHealthy('database'),
           new Promise<any>((_, reject) =>
@@ -136,6 +143,12 @@ Returns a comprehensive health status of the API including:
             setTimeout(() => reject(new Error('Stripe health check timeout')), 5000)
           ),
         ]),
+        Promise.race([
+          this.fcmHealth.isHealthy('fcm'),
+          new Promise<any>((_, reject) =>
+            setTimeout(() => reject(new Error('FCM health check timeout')), 5000)
+          ),
+        ]),
       ]);
 
       const memoryUsage = process.memoryUsage();
@@ -146,14 +159,17 @@ Returns a comprehensive health status of the API including:
       const dbStatus = dbResult.database;
       const redisStatus = redisResult.redis;
       const stripeStatus = stripeResult.stripe;
+      const fcmStatus = fcmResult.fcm;
 
       // Check if critical services are up
       // Redis 'degraded' (fallback to in-memory) is acceptable
       // Stripe 'not_configured' (dev environment) is acceptable
+      // FCM 'not_configured' (dev environment) is acceptable
       const isHealthy =
         dbStatus.status === 'up' &&
         (redisStatus.status === 'up' || redisStatus.status === 'degraded') &&
         (stripeStatus.status === 'up' || stripeStatus.status === 'not_configured') &&
+        (fcmStatus.status === 'up' || fcmStatus.status === 'not_configured') &&
         memoryOk;
 
       const response: HealthCheckResponseDto = {
@@ -164,6 +180,7 @@ Returns a comprehensive health status of the API including:
           database: dbStatus as { status: string; responseTime?: number },
           redis: redisStatus as { status: string; responseTime?: number },
           stripe: stripeStatus as { status: string },
+          fcm: fcmStatus as { status: string; responseTime?: number },
           memory: {
             status: memoryOk ? 'up' : 'warning',
             heapUsed: Math.round(heapUsedMB),
@@ -191,6 +208,7 @@ Returns a comprehensive health status of the API including:
           database: { status: 'down' },
           redis: { status: 'down' },
           stripe: { status: 'down' },
+          fcm: { status: 'down' },
           memory: { status: 'unknown' },
         },
       };
@@ -278,6 +296,7 @@ If this endpoint returns 503, the pod will be removed from the load balancer.
         database: true,
         redis: true,
         stripe: true,
+        fcm: true,
       },
     },
   })
@@ -290,20 +309,23 @@ If this endpoint returns 503, the pod will be removed from the load balancer.
         database: false,
         redis: true,
         stripe: true,
+        fcm: true,
       },
     },
   })
   async ready(): Promise<ReadinessResponseDto> {
-    const [database, redis, stripe] = await Promise.all([
+    const [database, redis, stripe, fcm] = await Promise.all([
       this.checkDatabase(),
       this.checkRedis(),
       this.checkStripe(),
+      this.checkFcm(),
     ]);
 
     const dependencies = {
       database,
       redis,
       stripe,
+      fcm,
     };
 
     const isReady = Object.values(dependencies).every((v) => v);
@@ -345,6 +367,16 @@ If this endpoint returns 503, the pod will be removed from the load balancer.
       const result = await this.stripeHealth.isHealthy('stripe');
       // 'not_configured' (dev environment) is acceptable for readiness
       return result.stripe.status === 'up' || result.stripe.status === 'not_configured';
+    } catch {
+      return false;
+    }
+  }
+
+  private async checkFcm(): Promise<boolean> {
+    try {
+      const result = await this.fcmHealth.isHealthy('fcm');
+      // 'not_configured' (dev environment) is acceptable for readiness
+      return result.fcm.status === 'up' || result.fcm.status === 'not_configured';
     } catch {
       return false;
     }

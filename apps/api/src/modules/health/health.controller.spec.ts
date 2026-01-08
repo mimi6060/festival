@@ -15,6 +15,7 @@ import { HealthController } from './health.controller';
 import { PrismaHealthIndicator } from './indicators/prisma.health';
 import { RedisHealthIndicator } from './indicators/redis.health';
 import { StripeHealthIndicator } from './indicators/stripe.health';
+import { FcmHealthIndicator } from './indicators/fcm.health';
 
 // Helper to determine if memory is within acceptable bounds for tests
 const isMemoryOk = (): boolean => {
@@ -38,6 +39,10 @@ describe('HealthController', () => {
     isHealthy: jest.fn(),
   };
 
+  const mockFcmHealth = {
+    isHealthy: jest.fn(),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -47,6 +52,7 @@ describe('HealthController', () => {
         { provide: PrismaHealthIndicator, useValue: mockPrismaHealth },
         { provide: RedisHealthIndicator, useValue: mockRedisHealth },
         { provide: StripeHealthIndicator, useValue: mockStripeHealth },
+        { provide: FcmHealthIndicator, useValue: mockFcmHealth },
       ],
     }).compile();
 
@@ -80,6 +86,9 @@ describe('HealthController', () => {
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'up', responseTime: 100 },
         });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
+        });
 
         // Act & Assert
         // Memory usage in tests might exceed the 150MB threshold
@@ -90,6 +99,7 @@ describe('HealthController', () => {
           expect(result.checks.database.status).toBe('up');
           expect(result.checks.redis.status).toBe('up');
           expect(result.checks.stripe.status).toBe('up');
+          expect(result.checks.fcm.status).toBe('up');
           expect(result.checks.memory.status).toBe('up');
         } else {
           // Memory exceeded threshold, should throw SERVICE_UNAVAILABLE
@@ -107,6 +117,9 @@ describe('HealthController', () => {
         });
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'up', responseTime: 100 },
+        });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
         });
 
         // Act & Assert
@@ -130,12 +143,40 @@ describe('HealthController', () => {
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'not_configured' },
         });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
+        });
 
         // Act & Assert
         if (isMemoryOk()) {
           const result = await controller.check();
           expect(result.status).toBe('ok');
           expect(result.checks.stripe.status).toBe('not_configured');
+        } else {
+          await expect(controller.check()).rejects.toThrow(HttpException);
+        }
+      });
+
+      it('should return ok status when FCM is not configured (dev environment)', async () => {
+        // Arrange
+        mockPrismaHealth.isHealthy.mockResolvedValue({
+          database: { status: 'up', responseTime: 5 },
+        });
+        mockRedisHealth.isHealthy.mockResolvedValue({
+          redis: { status: 'up', responseTime: 2 },
+        });
+        mockStripeHealth.isHealthy.mockResolvedValue({
+          stripe: { status: 'up' },
+        });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'not_configured', responseTime: 1 },
+        });
+
+        // Act & Assert
+        if (isMemoryOk()) {
+          const result = await controller.check();
+          expect(result.status).toBe('ok');
+          expect(result.checks.fcm.status).toBe('not_configured');
         } else {
           await expect(controller.check()).rejects.toThrow(HttpException);
         }
@@ -151,6 +192,9 @@ describe('HealthController', () => {
         });
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'up' },
+        });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
         });
 
         // Act & Assert - Response structure tests can use error response too
@@ -176,6 +220,9 @@ describe('HealthController', () => {
         });
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'up' },
+        });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
         });
 
         // Act & Assert - Response structure tests can use error response too
@@ -203,6 +250,9 @@ describe('HealthController', () => {
         });
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'up' },
+        });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
         });
 
         // Act & Assert - Response structure tests can use error response too
@@ -235,6 +285,9 @@ describe('HealthController', () => {
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'up' },
         });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
+        });
 
         // Act & Assert
         await expect(controller.check()).rejects.toThrow(HttpException);
@@ -260,6 +313,9 @@ describe('HealthController', () => {
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'up' },
         });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
+        });
 
         // Act & Assert
         await expect(controller.check()).rejects.toThrow(HttpException);
@@ -276,6 +332,28 @@ describe('HealthController', () => {
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'down', error: 'Invalid API key' },
         });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
+        });
+
+        // Act & Assert
+        await expect(controller.check()).rejects.toThrow(HttpException);
+      });
+
+      it('should throw SERVICE_UNAVAILABLE when FCM is down', async () => {
+        // Arrange
+        mockPrismaHealth.isHealthy.mockResolvedValue({
+          database: { status: 'up', responseTime: 5 },
+        });
+        mockRedisHealth.isHealthy.mockResolvedValue({
+          redis: { status: 'up', responseTime: 2 },
+        });
+        mockStripeHealth.isHealthy.mockResolvedValue({
+          stripe: { status: 'up' },
+        });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'down', error: 'FCM initialization failed' },
+        });
 
         // Act & Assert
         await expect(controller.check()).rejects.toThrow(HttpException);
@@ -289,6 +367,9 @@ describe('HealthController', () => {
         });
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'up' },
+        });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
         });
 
         // Act & Assert
@@ -312,6 +393,9 @@ describe('HealthController', () => {
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'up' },
         });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
+        });
 
         // Act & Assert
         try {
@@ -327,13 +411,19 @@ describe('HealthController', () => {
       it('should handle health check timeout', async () => {
         // Arrange
         mockPrismaHealth.isHealthy.mockImplementation(
-          () => new Promise((resolve) => setTimeout(() => resolve({ database: { status: 'up' } }), 6000))
+          () =>
+            new Promise((resolve) =>
+              setTimeout(() => resolve({ database: { status: 'up' } }), 6000)
+            )
         );
         mockRedisHealth.isHealthy.mockResolvedValue({
           redis: { status: 'up', responseTime: 2 },
         });
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'up' },
+        });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
         });
 
         // Note: The actual timeout is 5000ms in the controller
@@ -399,6 +489,9 @@ describe('HealthController', () => {
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'up' },
         });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
+        });
 
         // Act
         const result = await controller.ready();
@@ -408,6 +501,7 @@ describe('HealthController', () => {
         expect(result.dependencies.database).toBe(true);
         expect(result.dependencies.redis).toBe(true);
         expect(result.dependencies.stripe).toBe(true);
+        expect(result.dependencies.fcm).toBe(true);
       });
 
       it('should return ready when Redis is degraded (acceptable)', async () => {
@@ -420,6 +514,9 @@ describe('HealthController', () => {
         });
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'up' },
+        });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
         });
 
         // Act
@@ -441,6 +538,9 @@ describe('HealthController', () => {
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'not_configured' },
         });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
+        });
 
         // Act
         const result = await controller.ready();
@@ -448,6 +548,29 @@ describe('HealthController', () => {
         // Assert
         expect(result.status).toBe('ready');
         expect(result.dependencies.stripe).toBe(true);
+      });
+
+      it('should return ready when FCM is not configured (acceptable)', async () => {
+        // Arrange
+        mockPrismaHealth.isHealthy.mockResolvedValue({
+          database: { status: 'up', responseTime: 5 },
+        });
+        mockRedisHealth.isHealthy.mockResolvedValue({
+          redis: { status: 'up', responseTime: 2 },
+        });
+        mockStripeHealth.isHealthy.mockResolvedValue({
+          stripe: { status: 'up' },
+        });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'not_configured', responseTime: 1 },
+        });
+
+        // Act
+        const result = await controller.ready();
+
+        // Assert
+        expect(result.status).toBe('ready');
+        expect(result.dependencies.fcm).toBe(true);
       });
 
       it('should include timestamp in response', async () => {
@@ -460,6 +583,9 @@ describe('HealthController', () => {
         });
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'up' },
+        });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
         });
 
         // Act
@@ -482,6 +608,9 @@ describe('HealthController', () => {
         });
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'up' },
+        });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
         });
 
         // Act & Assert
@@ -508,6 +637,9 @@ describe('HealthController', () => {
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'up' },
         });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
+        });
 
         // Act & Assert
         await expect(controller.ready()).rejects.toThrow(HttpException);
@@ -531,6 +663,9 @@ describe('HealthController', () => {
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'down', error: 'API Error' },
         });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
+        });
 
         // Act & Assert
         await expect(controller.ready()).rejects.toThrow(HttpException);
@@ -540,6 +675,32 @@ describe('HealthController', () => {
           const response = (error as HttpException).getResponse() as any;
           expect(response.status).toBe('not_ready');
           expect(response.dependencies.stripe).toBe(false);
+        }
+      });
+
+      it('should throw SERVICE_UNAVAILABLE when FCM is down', async () => {
+        // Arrange
+        mockPrismaHealth.isHealthy.mockResolvedValue({
+          database: { status: 'up', responseTime: 5 },
+        });
+        mockRedisHealth.isHealthy.mockResolvedValue({
+          redis: { status: 'up', responseTime: 2 },
+        });
+        mockStripeHealth.isHealthy.mockResolvedValue({
+          stripe: { status: 'up' },
+        });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'down', error: 'FCM initialization failed' },
+        });
+
+        // Act & Assert
+        await expect(controller.ready()).rejects.toThrow(HttpException);
+        try {
+          await controller.ready();
+        } catch (error) {
+          const response = (error as HttpException).getResponse() as any;
+          expect(response.status).toBe('not_ready');
+          expect(response.dependencies.fcm).toBe(false);
         }
       });
 
@@ -553,6 +714,9 @@ describe('HealthController', () => {
         });
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'up' },
+        });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
         });
 
         // Act & Assert
@@ -575,6 +739,9 @@ describe('HealthController', () => {
         });
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'up' },
+        });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
         });
 
         // Act & Assert
@@ -600,6 +767,9 @@ describe('HealthController', () => {
         mockStripeHealth.isHealthy.mockResolvedValue({
           stripe: { status: 'up' },
         });
+        mockFcmHealth.isHealthy.mockResolvedValue({
+          fcm: { status: 'up', responseTime: 1 },
+        });
 
         // Act
         const result = await controller.ready();
@@ -611,6 +781,7 @@ describe('HealthController', () => {
         expect(result.dependencies).toHaveProperty('database');
         expect(result.dependencies).toHaveProperty('redis');
         expect(result.dependencies).toHaveProperty('stripe');
+        expect(result.dependencies).toHaveProperty('fcm');
       });
     });
   });
