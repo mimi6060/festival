@@ -304,9 +304,32 @@
 
 ### DEV-16: Tests d'intégration pour les webhooks Stripe
 
-- **Fichier**: `apps/api/src/modules/payments/`
-- **Status**: [ ] À faire
+- **Fichier**: `apps/api/src/modules/payments/webhook.integration.spec.ts`
+- **Status**: [x] Terminé
 - **Description**: Tester tous les événements webhook
+- **Solution**:
+  - Créé `webhook.integration.spec.ts` avec tests complets pour tous les événements Stripe:
+    - `checkout.session.completed` - Mise à jour du paiement en COMPLETED
+    - `payment_intent.succeeded` - Mise à jour du paiement en COMPLETED avec méthode de paiement
+    - `payment_intent.payment_failed` - Mise à jour du paiement en FAILED avec détails d'erreur
+    - `refund.created` - Mise à jour du paiement en REFUNDED avec détails du remboursement
+    - `charge.refunded` - Gestion gracieuse (événement non géré)
+  - Tests de vérification de signature webhook:
+    - Signature invalide -> `InvalidWebhookException`
+    - Signature manquante -> `InvalidWebhookException`
+    - Timestamp expiré -> `InvalidWebhookException`
+    - Vérification des paramètres passés à Stripe
+  - Tests des types d'événements non reconnus:
+    - Événements inconnus gérés gracieusement
+    - Événements `customer.created`, `invoice.paid` non traités
+  - Tests de service indisponible:
+    - `ServiceUnavailableException` quand Stripe non configuré
+  - Tests des cas limites:
+    - Payload vide, JSON malformé
+    - Paiement avec `providerData` null
+    - Événements séquentiels rapides
+  - **26 tests passants** couvrant tous les scénarios critiques
+  - Note: Les tests des handlers de checkout (`handleCheckoutCompleted`, `handleCheckoutExpired`) sont dans `checkout.service.spec.ts`
 
 ### DEV-17: Tests pour les templates de notification
 
