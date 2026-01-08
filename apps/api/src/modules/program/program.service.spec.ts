@@ -201,9 +201,26 @@ describe('ProgramService', () => {
             festivalId: mockFestivalId,
           },
         },
-        include: {
-          artist: true,
-          stage: true,
+        select: {
+          id: true,
+          startTime: true,
+          endTime: true,
+          artist: {
+            select: {
+              id: true,
+              name: true,
+              genre: true,
+              imageUrl: true,
+            },
+          },
+          stage: {
+            select: {
+              id: true,
+              name: true,
+              location: true,
+              capacity: true,
+            },
+          },
         },
         orderBy: [{ startTime: 'asc' }],
       });
@@ -386,9 +403,26 @@ describe('ProgramService', () => {
             lte: expect.any(Date),
           },
         },
-        include: {
-          artist: true,
-          stage: true,
+        select: {
+          id: true,
+          startTime: true,
+          endTime: true,
+          artist: {
+            select: {
+              id: true,
+              name: true,
+              genre: true,
+              imageUrl: true,
+            },
+          },
+          stage: {
+            select: {
+              id: true,
+              name: true,
+              location: true,
+              capacity: true,
+            },
+          },
         },
         orderBy: [{ startTime: 'asc' }],
       });
@@ -549,6 +583,13 @@ describe('ProgramService', () => {
             },
           },
         },
+        select: {
+          id: true,
+          name: true,
+          genre: true,
+          bio: true,
+          imageUrl: true,
+        },
         orderBy: {
           name: 'asc',
         },
@@ -580,7 +621,7 @@ describe('ProgramService', () => {
         genre: mockArtist.genre,
         bio: mockArtist.bio,
         imageUrl: mockArtist.imageUrl,
-        country: mockArtist.country,
+        country: null, // Country field not in schema
       });
     });
   });
@@ -602,6 +643,13 @@ describe('ProgramService', () => {
       expect(result.name).toBe('Test Artist');
       expect(mockPrismaService.artist.findUnique).toHaveBeenCalledWith({
         where: { id: mockArtistId },
+        select: {
+          id: true,
+          name: true,
+          genre: true,
+          bio: true,
+          imageUrl: true,
+        },
       });
     });
 
@@ -629,7 +677,7 @@ describe('ProgramService', () => {
         genre: mockArtist.genre,
         bio: mockArtist.bio,
         imageUrl: mockArtist.imageUrl,
-        country: mockArtist.country,
+        country: null, // Country field not in schema
       });
     });
 
@@ -719,9 +767,29 @@ describe('ProgramService', () => {
             festivalId: mockFestivalId,
           },
         },
-        include: {
-          artist: true,
-          stage: true,
+        select: {
+          id: true,
+          startTime: true,
+          endTime: true,
+          isCancelled: true,
+          artist: {
+            select: {
+              id: true,
+              name: true,
+              genre: true,
+              bio: true,
+              imageUrl: true,
+            },
+          },
+          stage: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              capacity: true,
+              location: true,
+            },
+          },
         },
         orderBy: {
           startTime: 'asc',
@@ -741,9 +809,29 @@ describe('ProgramService', () => {
         where: {
           artistId: mockArtistId,
         },
-        include: {
-          artist: true,
-          stage: true,
+        select: {
+          id: true,
+          startTime: true,
+          endTime: true,
+          isCancelled: true,
+          artist: {
+            select: {
+              id: true,
+              name: true,
+              genre: true,
+              bio: true,
+              imageUrl: true,
+            },
+          },
+          stage: {
+            select: {
+              id: true,
+              name: true,
+              description: true,
+              capacity: true,
+              location: true,
+            },
+          },
         },
         orderBy: {
           startTime: 'asc',
@@ -955,6 +1043,13 @@ describe('ProgramService', () => {
       expect(mockPrismaService.stage.findMany).toHaveBeenCalledWith({
         where: {
           festivalId: mockFestivalId,
+        },
+        select: {
+          id: true,
+          name: true,
+          description: true,
+          capacity: true,
+          location: true,
         },
         orderBy: {
           name: 'asc',
