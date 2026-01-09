@@ -1,0 +1,325 @@
+# Prometheus Alert Rules for Festival Platform
+groups:
+  # System Resource Alerts
+  - name: system_alerts
+    rules:
+      # High CPU Usage
+      - alert: HighCpuUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "High CPU usage detected on {{ $labels.instance }}"
+          description: "CPU usage is above 80% (current value: {{ $value | printf \"%.2f\" }}%) for more than 5 minutes."
+          runbook_url: "https://docs.festival.local/runbooks/high-cpu"
+
+      - alert: CriticalCpuUsage
+        expr: 100 - (avg by(instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
+        for: 2m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Critical CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 95% (current value: {{ $value | printf \"%.2f\" }}%) for more than 2 minutes."
+          runbook_url: "https://docs.festival.local/runbooks/critical-cpu"
+
+      # High Memory Usage
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 80% (current value: {{ $value | printf \"%.2f\" }}%) for more than 5 minutes."
+          runbook_url: "https://docs.festival.local/runbooks/high-memory"
+
+      - alert: CriticalMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 95
+        for: 2m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Critical memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 95% (current value: {{ $value | printf \"%.2f\" }}%) for more than 2 minutes."
+          runbook_url: "https://docs.festival.local/runbooks/critical-memory"
+
+      # Disk Space
+      - alert: LowDiskSpace
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 20
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk space is below 20% (current value: {{ $value | printf \"%.2f\" }}% free)."
+
+      - alert: CriticalDiskSpace
+        expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 5
+        for: 2m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Critical disk space on {{ $labels.instance }}"
+          description: "Disk space is below 5% (current value: {{ $value | printf \"%.2f\" }}% free). Immediate action required!"
+
+  # API Performance Alerts
+  - name: api_alerts
+    rules:
+      # High API Response Time
+      - alert: HighApiResponseTime
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="festival-api"}[5m])) by (le)) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High API response time detected"
+          description: "95th percentile response time is above 500ms (current value: {{ $value | printf \"%.3f\" }}s) for more than 5 minutes."
+          runbook_url: "https://docs.festival.local/runbooks/slow-api"
+
+      - alert: CriticalApiResponseTime
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket{job="festival-api"}[5m])) by (le)) > 2
+        for: 2m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Critical API response time"
+          description: "95th percentile response time is above 2s (current value: {{ $value | printf \"%.3f\" }}s). Users are experiencing significant delays."
+
+      # High Error Rate
+      - alert: HighErrorRate
+        expr: |
+          sum(rate(http_requests_total{job="festival-api",status_code=~"5.."}[5m])) /
+          sum(rate(http_requests_total{job="festival-api"}[5m])) * 100 > 1
+        for: 5m
+        labels:
+          severity: warning
+          team: backend
+        annotations:
+          summary: "High error rate detected in Festival API"
+          description: "Error rate is above 1% (current value: {{ $value | printf \"%.2f\" }}%) for more than 5 minutes."
+          runbook_url: "https://docs.festival.local/runbooks/high-error-rate"
+
+      - alert: CriticalErrorRate
+        expr: |
+          sum(rate(http_requests_total{job="festival-api",status_code=~"5.."}[5m])) /
+          sum(rate(http_requests_total{job="festival-api"}[5m])) * 100 > 5
+        for: 2m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Critical error rate in Festival API"
+          description: "Error rate is above 5% (current value: {{ $value | printf \"%.2f\" }}%). Service degradation likely."
+
+      # API Down
+      - alert: ApiDown
+        expr: up{job="festival-api"} == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: backend
+        annotations:
+          summary: "Festival API is down"
+          description: "Festival API has been unreachable for more than 1 minute."
+          runbook_url: "https://docs.festival.local/runbooks/api-down"
+
+  # Database Alerts
+  - name: database_alerts
+    rules:
+      # Database Connections Exhausted
+      - alert: DatabaseConnectionsHigh
+        expr: pg_stat_activity_count / pg_settings_max_connections * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "High database connection usage"
+          description: "Database connection pool is above 80% (current value: {{ $value | printf \"%.2f\" }}%). Consider increasing max_connections or optimizing queries."
+
+      - alert: DatabaseConnectionsExhausted
+        expr: pg_stat_activity_count / pg_settings_max_connections * 100 > 95
+        for: 2m
+        labels:
+          severity: critical
+          team: database
+        annotations:
+          summary: "Database connections nearly exhausted"
+          description: "Database connection pool is above 95% (current value: {{ $value | printf \"%.2f\" }}%). New connections may fail."
+          runbook_url: "https://docs.festival.local/runbooks/db-connections"
+
+      # Database Down
+      - alert: DatabaseDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: database
+        annotations:
+          summary: "PostgreSQL database is down"
+          description: "PostgreSQL has been unreachable for more than 1 minute."
+          runbook_url: "https://docs.festival.local/runbooks/db-down"
+
+      # Long Running Queries
+      - alert: LongRunningQueries
+        expr: pg_stat_activity_max_tx_duration{state="active"} > 300
+        for: 5m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "Long running queries detected"
+          description: "Queries running for more than 5 minutes detected. This may indicate a problem."
+
+      # Deadlocks
+      - alert: DatabaseDeadlocks
+        expr: rate(pg_stat_database_deadlocks[5m]) > 0
+        for: 1m
+        labels:
+          severity: warning
+          team: database
+        annotations:
+          summary: "Database deadlocks detected"
+          description: "Deadlocks have been detected in the database. Review query patterns."
+
+  # Redis Alerts
+  - name: redis_alerts
+    rules:
+      # Redis Memory Full
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "High Redis memory usage"
+          description: "Redis memory usage is above 80% (current value: {{ $value | printf \"%.2f\" }}%)."
+
+      - alert: RedisMemoryFull
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 95
+        for: 2m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Redis memory nearly full"
+          description: "Redis memory usage is above 95% (current value: {{ $value | printf \"%.2f\" }}%). Evictions may occur."
+          runbook_url: "https://docs.festival.local/runbooks/redis-memory"
+
+      # Redis Down
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Redis is down"
+          description: "Redis has been unreachable for more than 1 minute. Caching and sessions affected."
+          runbook_url: "https://docs.festival.local/runbooks/redis-down"
+
+      # Redis Connection Issues
+      - alert: RedisConnectionsHigh
+        expr: redis_connected_clients / redis_config_maxclients * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "High Redis connection count"
+          description: "Redis connections are above 80% of max (current value: {{ $value | printf \"%.2f\" }}%)."
+
+  # Container/Pod Alerts
+  - name: container_alerts
+    rules:
+      # Pod/Container Restarts
+      - alert: ContainerRestarting
+        expr: increase(container_restart_count[1h]) > 3
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "Container {{ $labels.name }} is restarting frequently"
+          description: "Container {{ $labels.name }} has restarted {{ $value }} times in the last hour."
+          runbook_url: "https://docs.festival.local/runbooks/container-restarts"
+
+      - alert: ContainerCrashLooping
+        expr: increase(container_restart_count[15m]) > 5
+        for: 2m
+        labels:
+          severity: critical
+          team: infrastructure
+        annotations:
+          summary: "Container {{ $labels.name }} is crash looping"
+          description: "Container {{ $labels.name }} has restarted {{ $value }} times in the last 15 minutes. Immediate investigation required."
+
+      # Container Memory
+      - alert: ContainerMemoryHigh
+        expr: container_memory_usage_bytes / container_spec_memory_limit_bytes * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "High memory usage in container {{ $labels.name }}"
+          description: "Container {{ $labels.name }} memory usage is above 80% (current value: {{ $value | printf \"%.2f\" }}%)."
+
+      # Container CPU
+      - alert: ContainerCpuHigh
+        expr: rate(container_cpu_usage_seconds_total[5m]) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+          team: infrastructure
+        annotations:
+          summary: "High CPU usage in container {{ $labels.name }}"
+          description: "Container {{ $labels.name }} CPU usage is above 80% (current value: {{ $value | printf \"%.2f\" }}%)."
+
+  # Business Critical Alerts
+  - name: business_alerts
+    rules:
+      # Payment Processing Issues
+      - alert: PaymentProcessingErrors
+        expr: sum(rate(payment_errors_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          team: payments
+        annotations:
+          summary: "Payment processing errors detected"
+          description: "Payment errors are occurring at rate {{ $value | printf \"%.2f\" }}/s. Revenue impact likely."
+          runbook_url: "https://docs.festival.local/runbooks/payment-errors"
+
+      # Ticket Validation Failures
+      - alert: TicketValidationFailures
+        expr: sum(rate(ticket_validation_failures_total[5m])) / sum(rate(ticket_validation_total[5m])) * 100 > 5
+        for: 5m
+        labels:
+          severity: warning
+          team: operations
+        annotations:
+          summary: "High ticket validation failure rate"
+          description: "Ticket validation failure rate is above 5% (current value: {{ $value | printf \"%.2f\" }}%)."
+
+      # Cashless System Issues
+      - alert: CashlessSystemErrors
+        expr: sum(rate(cashless_transaction_errors_total[5m])) > 0.1
+        for: 5m
+        labels:
+          severity: critical
+          team: operations
+        annotations:
+          summary: "Cashless system errors detected"
+          description: "Cashless transaction errors are occurring. Festival operations may be impacted."

@@ -1,0 +1,65 @@
+# Grafana Datasources Provisioning
+apiVersion: 1
+
+# List of datasources that will be automatically provisioned
+datasources:
+  # Prometheus - Primary metrics store
+  - name: Prometheus
+    type: prometheus
+    access: proxy
+    orgId: 1
+    url: http://prometheus:9090
+    basicAuth: false
+    isDefault: true
+    version: 1
+    editable: false
+    jsonData:
+      timeInterval: "15s"
+      queryTimeout: "60s"
+      httpMethod: POST
+      manageAlerts: true
+      prometheusType: Prometheus
+      prometheusVersion: "2.45.0"
+      cacheLevel: "Medium"
+      disableRecordingRules: false
+      incrementalQueryOverlapWindow: "10m"
+
+  # PostgreSQL - Direct database access for business metrics
+  - name: PostgreSQL
+    type: postgres
+    access: proxy
+    orgId: 1
+    url: postgres:5432
+    database: festival
+    user: festival
+    secureJsonData:
+      password: ${POSTGRES_PASSWORD}
+    jsonData:
+      sslmode: disable
+      maxOpenConns: 10
+      maxIdleConns: 5
+      connMaxLifetime: 14400
+      postgresVersion: 1500
+      timescaledb: false
+    version: 1
+    editable: false
+
+  # Redis - For session and cache metrics
+  - name: Redis
+    type: redis-datasource
+    access: proxy
+    orgId: 1
+    url: redis://redis:6379
+    jsonData:
+      client: standalone
+      poolSize: 5
+      timeout: 10
+      pingInterval: 0
+      pipelineWindow: 0
+    version: 1
+    editable: false
+
+# Delete datasources that are no longer in this file
+deleteDatasources:
+  - name: Old-Prometheus
+    orgId: 1

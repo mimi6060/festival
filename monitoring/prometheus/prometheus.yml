@@ -1,0 +1,127 @@
+# Prometheus configuration for Festival platform
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    monitor: 'festival-monitor'
+    environment: 'development'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - alertmanager:9093
+
+# Load rules once and periodically evaluate them
+rule_files:
+  - /etc/prometheus/alerts.yml
+  - /etc/prometheus/recording_rules.yml
+
+# Scrape configurations
+scrape_configs:
+  # Prometheus self-monitoring
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+    metrics_path: /metrics
+
+  # Festival API (NestJS)
+  - job_name: 'festival-api'
+    static_configs:
+      - targets: ['api:3333']
+    metrics_path: /api/metrics
+    scrape_interval: 10s
+    scrape_timeout: 5s
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'festival-api'
+
+  # PostgreSQL Exporter
+  - job_name: 'postgresql'
+    static_configs:
+      - targets: ['postgres-exporter:9187']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'postgresql'
+
+  # Redis Exporter
+  - job_name: 'redis'
+    static_configs:
+      - targets: ['redis-exporter:9121']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'redis'
+
+  # Node Exporter (host metrics)
+  - job_name: 'node'
+    static_configs:
+      - targets: ['node-exporter:9100']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'host'
+
+  # cAdvisor (container metrics)
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'containers'
+
+# Recording rules for common queries
+recording_rules:
+  groups:
+    - name: festival_api_recording
+      interval: 30s
+      rules:
+        # Request rate per endpoint
+        - record: festival:http_requests:rate5m
+          expr: sum(rate(http_requests_total[5m])) by (method, route, status_code)
+
+        # Average response time per endpoint
+        - record: festival:http_request_duration:avg5m
+          expr: avg(rate(http_request_duration_seconds_sum[5m]) / rate(http_request_duration_seconds_count[5m])) by (method, route)
+
+        # Error rate percentage
+        - record: festival:http_errors:rate5m_percentage
+          expr: |
+            sum(rate(http_requests_total{status_code=~"5.."}[5m])) /
+            sum(rate(http_requests_total[5m])) * 100
+
+        # P95 response time
+        - record: festival:http_request_duration:p95
+          expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, route))
+
+        # P99 response time
+        - record: festival:http_request_duration:p99
+          expr: histogram_quantile(0.99, sum(rate(http_request_duration_seconds_bucket[5m])) by (le, route))
+
+    - name: festival_database_recording
+      interval: 30s
+      rules:
+        # Active database connections
+        - record: festival:pg_connections:active
+          expr: pg_stat_activity_count{state="active"}
+
+        # Database connection pool utilization
+        - record: festival:pg_connections:utilization
+          expr: pg_stat_activity_count / pg_settings_max_connections * 100
+
+    - name: festival_redis_recording
+      interval: 30s
+      rules:
+        # Redis memory utilization
+        - record: festival:redis_memory:utilization
+          expr: redis_memory_used_bytes / redis_memory_max_bytes * 100
+
+        # Redis hit rate
+        - record: festival:redis_cache:hit_rate
+          expr: |
+            redis_keyspace_hits_total /
+            (redis_keyspace_hits_total + redis_keyspace_misses_total) * 100
