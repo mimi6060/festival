@@ -1,0 +1,196 @@
+# Kubernetes Services for Redis High Availability Cluster
+# Festival Platform - Production Deployment
+
+---
+# Redis Master Service (for writes)
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-master
+  namespace: festival
+  labels:
+    app: redis
+    role: master
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: master
+    app.kubernetes.io/part-of: festival
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9121"
+spec:
+  type: ClusterIP
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+      protocol: TCP
+    - name: metrics
+      port: 9121
+      targetPort: metrics
+      protocol: TCP
+  selector:
+    app: redis
+    role: master
+
+---
+# Redis Master Headless Service (for StatefulSet)
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-master-headless
+  namespace: festival
+  labels:
+    app: redis
+    role: master
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+      protocol: TCP
+  selector:
+    app: redis
+    role: master
+
+---
+# Redis Replicas Service (for reads)
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-replica
+  namespace: festival
+  labels:
+    app: redis
+    role: replica
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: replica
+    app.kubernetes.io/part-of: festival
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "9121"
+spec:
+  type: ClusterIP
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+      protocol: TCP
+    - name: metrics
+      port: 9121
+      targetPort: metrics
+      protocol: TCP
+  selector:
+    app: redis
+    role: replica
+
+---
+# Redis Replicas Headless Service (for StatefulSet)
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-replica-headless
+  namespace: festival
+  labels:
+    app: redis
+    role: replica
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+      protocol: TCP
+  selector:
+    app: redis
+    role: replica
+
+---
+# Redis Read Service (load balanced across all replicas)
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-read
+  namespace: festival
+  labels:
+    app: redis
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: read
+    app.kubernetes.io/part-of: festival
+spec:
+  type: ClusterIP
+  ports:
+    - name: redis
+      port: 6379
+      targetPort: redis
+      protocol: TCP
+  selector:
+    app: redis
+    role: replica
+
+---
+# Redis Sentinel Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-sentinel
+  namespace: festival
+  labels:
+    app: redis-sentinel
+    app.kubernetes.io/name: redis-sentinel
+    app.kubernetes.io/component: sentinel
+    app.kubernetes.io/part-of: festival
+spec:
+  type: ClusterIP
+  ports:
+    - name: sentinel
+      port: 26379
+      targetPort: sentinel
+      protocol: TCP
+  selector:
+    app: redis-sentinel
+
+---
+# Redis Sentinel Headless Service (for StatefulSet)
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-sentinel-headless
+  namespace: festival
+  labels:
+    app: redis-sentinel
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: sentinel
+      port: 26379
+      targetPort: sentinel
+      protocol: TCP
+  selector:
+    app: redis-sentinel
+
+---
+# Redis External Service (for debugging - NodePort)
+# Only enable in development/staging environments
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-external
+  namespace: festival
+  labels:
+    app: redis
+    role: external
+spec:
+  type: NodePort
+  ports:
+    - name: redis-master
+      port: 6379
+      targetPort: redis
+      nodePort: 30379
+      protocol: TCP
+  selector:
+    app: redis
+    role: master

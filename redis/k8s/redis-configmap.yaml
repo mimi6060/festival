@@ -1,0 +1,303 @@
+# Kubernetes ConfigMaps for Redis High Availability Cluster
+# Festival Platform - Production Deployment
+
+---
+# Redis ConfigMap containing all Redis configuration files
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: festival
+  labels:
+    app: redis
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/part-of: festival
+data:
+  redis-master.conf: |
+    # Redis Master Configuration for Kubernetes
+
+    # Network
+    bind 0.0.0.0
+    port 6379
+    tcp-backlog 511
+    timeout 300
+    tcp-keepalive 300
+
+    # General
+    daemonize no
+    supervised no
+    loglevel notice
+    logfile ""
+    databases 16
+
+    # Security (password injected via environment)
+    # requirepass is set via command line args
+
+    # Memory
+    maxmemory 512mb
+    maxmemory-policy allkeys-lru
+    maxmemory-samples 10
+
+    # RDB Persistence
+    save 900 1
+    save 300 10
+    save 60 10000
+    stop-writes-on-bgsave-error yes
+    rdbcompression yes
+    rdbchecksum yes
+    dbfilename dump.rdb
+    dir /data
+
+    # AOF Persistence
+    appendonly yes
+    appendfilename "appendonly.aof"
+    appendfsync everysec
+    no-appendfsync-on-rewrite no
+    auto-aof-rewrite-percentage 100
+    auto-aof-rewrite-min-size 64mb
+    aof-load-truncated yes
+    aof-use-rdb-preamble yes
+
+    # Replication
+    replica-serve-stale-data yes
+    replica-read-only yes
+    repl-diskless-sync yes
+    repl-diskless-sync-delay 5
+    repl-ping-replica-period 10
+    repl-timeout 60
+    repl-disable-tcp-nodelay no
+    repl-backlog-size 10mb
+    repl-backlog-ttl 3600
+    replica-priority 100
+    min-replicas-to-write 1
+    min-replicas-max-lag 10
+
+    # Clients
+    maxclients 10000
+
+    # Slow Log
+    slowlog-log-slower-than 10000
+    slowlog-max-len 128
+
+    # Latency
+    latency-monitor-threshold 100
+
+    # Lua
+    lua-time-limit 5000
+
+    # Cluster
+    cluster-enabled no
+
+    # Advanced
+    activerehashing yes
+    client-output-buffer-limit normal 0 0 0
+    client-output-buffer-limit replica 256mb 64mb 60
+    client-output-buffer-limit pubsub 32mb 8mb 60
+    hash-max-ziplist-entries 512
+    hash-max-ziplist-value 64
+    list-max-ziplist-size -2
+    set-max-intset-entries 512
+    zset-max-ziplist-entries 128
+    zset-max-ziplist-value 64
+    hll-sparse-max-bytes 3000
+    stream-node-max-bytes 4096
+    stream-node-max-entries 100
+
+  redis-replica.conf: |
+    # Redis Replica Configuration for Kubernetes
+
+    # Network
+    bind 0.0.0.0
+    port 6379
+    tcp-backlog 511
+    timeout 300
+    tcp-keepalive 300
+
+    # General
+    daemonize no
+    supervised no
+    loglevel notice
+    logfile ""
+    databases 16
+
+    # Memory
+    maxmemory 512mb
+    maxmemory-policy allkeys-lru
+    maxmemory-samples 10
+
+    # Persistence
+    save 900 1
+    save 300 10
+    save 60 10000
+    stop-writes-on-bgsave-error yes
+    rdbcompression yes
+    rdbchecksum yes
+    dbfilename dump.rdb
+    dir /data
+
+    appendonly yes
+    appendfilename "appendonly.aof"
+    appendfsync everysec
+    no-appendfsync-on-rewrite no
+    auto-aof-rewrite-percentage 100
+    auto-aof-rewrite-min-size 64mb
+    aof-load-truncated yes
+    aof-use-rdb-preamble yes
+
+    # Replication (master set via command line)
+    replica-serve-stale-data yes
+    replica-read-only yes
+    repl-diskless-sync yes
+    repl-diskless-sync-delay 5
+    repl-ping-replica-period 10
+    repl-timeout 60
+    repl-disable-tcp-nodelay no
+    repl-backlog-size 10mb
+    repl-backlog-ttl 3600
+    replica-priority 100
+
+    # Clients
+    maxclients 10000
+
+    # Slow Log
+    slowlog-log-slower-than 10000
+    slowlog-max-len 128
+
+    # Latency
+    latency-monitor-threshold 100
+
+    # Lua
+    lua-time-limit 5000
+
+    # Cluster
+    cluster-enabled no
+
+    # Advanced
+    activerehashing yes
+    client-output-buffer-limit normal 0 0 0
+    client-output-buffer-limit replica 256mb 64mb 60
+    client-output-buffer-limit pubsub 32mb 8mb 60
+
+  sentinel.conf: |
+    # Redis Sentinel Configuration for Kubernetes
+
+    # Network
+    bind 0.0.0.0
+    port 26379
+    protected-mode no
+
+    # General
+    daemonize no
+    logfile ""
+    dir /tmp
+
+    # Sentinel monitoring
+    sentinel monitor festival-master redis-master.festival.svc.cluster.local 6379 2
+    sentinel down-after-milliseconds festival-master 5000
+    sentinel parallel-syncs festival-master 1
+    sentinel failover-timeout festival-master 60000
+
+    # Hostname resolution
+    sentinel resolve-hostnames yes
+    sentinel announce-hostnames yes
+
+    # Deny script reconfig
+    sentinel deny-scripts-reconfig yes
+
+---
+# Redis Secret for passwords
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-secret
+  namespace: festival
+  labels:
+    app: redis
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/part-of: festival
+type: Opaque
+stringData:
+  # Change these in production!
+  redis-password: "Festival2025!Redis"
+  sentinel-password: "Festival2025!Sentinel"
+
+---
+# ServiceMonitor for Prometheus Operator (optional)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: redis-monitor
+  namespace: festival
+  labels:
+    app: redis
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: redis
+  namespaceSelector:
+    matchNames:
+      - festival
+  endpoints:
+    - port: metrics
+      interval: 30s
+      path: /metrics
+
+---
+# PrometheusRule for Redis alerts (optional)
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: redis-alerts
+  namespace: festival
+  labels:
+    app: redis
+    release: prometheus
+spec:
+  groups:
+    - name: redis.rules
+      rules:
+        - alert: RedisDown
+          expr: redis_up == 0
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Redis instance is down"
+            description: "Redis instance {{ $labels.instance }} has been down for more than 5 minutes."
+
+        - alert: RedisMemoryHigh
+          expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.85
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Redis memory usage is high"
+            description: "Redis instance {{ $labels.instance }} memory usage is above 85%."
+
+        - alert: RedisReplicationBroken
+          expr: redis_connected_slaves < 1
+          for: 5m
+          labels:
+            severity: critical
+          annotations:
+            summary: "Redis replication broken"
+            description: "Redis master {{ $labels.instance }} has no connected replicas."
+
+        - alert: RedisTooManyConnections
+          expr: redis_connected_clients > 9000
+          for: 5m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Redis has too many connections"
+            description: "Redis instance {{ $labels.instance }} has {{ $value }} connections (limit: 10000)."
+
+        - alert: RedisRejectedConnections
+          expr: increase(redis_rejected_connections_total[1m]) > 0
+          for: 1m
+          labels:
+            severity: warning
+          annotations:
+            summary: "Redis is rejecting connections"
+            description: "Redis instance {{ $labels.instance }} is rejecting connections."

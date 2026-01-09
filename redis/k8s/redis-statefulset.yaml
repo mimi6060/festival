@@ -1,0 +1,493 @@
+# Kubernetes StatefulSet for Redis High Availability Cluster
+# Festival Platform - Production Deployment
+
+---
+# Redis Master StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-master
+  namespace: festival
+  labels:
+    app: redis
+    role: master
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: master
+    app.kubernetes.io/part-of: festival
+spec:
+  serviceName: redis-master
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+      role: master
+  template:
+    metadata:
+      labels:
+        app: redis
+        role: master
+        app.kubernetes.io/name: redis
+        app.kubernetes.io/component: master
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9121"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+        - name: redis
+          image: redis:7.2-alpine
+          imagePullPolicy: IfNotPresent
+          command:
+            - redis-server
+            - /etc/redis/redis.conf
+          ports:
+            - name: redis
+              containerPort: 6379
+              protocol: TCP
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: redis-password
+          volumeMounts:
+            - name: redis-config
+              mountPath: /etc/redis/redis.conf
+              subPath: redis-master.conf
+            - name: redis-data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - redis-cli -a $REDIS_PASSWORD ping | grep -q PONG
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - redis-cli -a $REDIS_PASSWORD ping | grep -q PONG
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+        # Redis Exporter for Prometheus
+        - name: redis-exporter
+          image: oliver006/redis_exporter:v1.55.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: metrics
+              containerPort: 9121
+              protocol: TCP
+          env:
+            - name: REDIS_ADDR
+              value: "redis://localhost:6379"
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: redis-password
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: redis-config
+          configMap:
+            name: redis-config
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: redis
+              topologyKey: kubernetes.io/hostname
+      tolerations:
+        - key: "redis"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-data
+        labels:
+          app: redis
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: fast-ssd
+        resources:
+          requests:
+            storage: 10Gi
+
+---
+# Redis Replicas StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-replica
+  namespace: festival
+  labels:
+    app: redis
+    role: replica
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: replica
+    app.kubernetes.io/part-of: festival
+spec:
+  serviceName: redis-replica
+  replicas: 2
+  selector:
+    matchLabels:
+      app: redis
+      role: replica
+  template:
+    metadata:
+      labels:
+        app: redis
+        role: replica
+        app.kubernetes.io/name: redis
+        app.kubernetes.io/component: replica
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9121"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      initContainers:
+        # Wait for master to be ready
+        - name: wait-for-master
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z redis-master 6379; do
+                echo "Waiting for Redis master..."
+                sleep 2
+              done
+              echo "Redis master is ready"
+      containers:
+        - name: redis
+          image: redis:7.2-alpine
+          imagePullPolicy: IfNotPresent
+          command:
+            - redis-server
+            - /etc/redis/redis.conf
+            - --replicaof
+            - redis-master
+            - "6379"
+          ports:
+            - name: redis
+              containerPort: 6379
+              protocol: TCP
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: redis-password
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          volumeMounts:
+            - name: redis-config
+              mountPath: /etc/redis/redis.conf
+              subPath: redis-replica.conf
+            - name: redis-data
+              mountPath: /data
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - redis-cli -a $REDIS_PASSWORD ping | grep -q PONG
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - |
+                  redis-cli -a $REDIS_PASSWORD ping | grep -q PONG && \
+                  redis-cli -a $REDIS_PASSWORD info replication | grep -q "role:slave"
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+        # Redis Exporter
+        - name: redis-exporter
+          image: oliver006/redis_exporter:v1.55.0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: metrics
+              containerPort: 9121
+              protocol: TCP
+          env:
+            - name: REDIS_ADDR
+              value: "redis://localhost:6379"
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: redis-password
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 100m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: redis-config
+          configMap:
+            name: redis-config
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: redis
+              topologyKey: kubernetes.io/hostname
+      tolerations:
+        - key: "redis"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+  volumeClaimTemplates:
+    - metadata:
+        name: redis-data
+        labels:
+          app: redis
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        storageClassName: fast-ssd
+        resources:
+          requests:
+            storage: 10Gi
+
+---
+# Redis Sentinel StatefulSet
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-sentinel
+  namespace: festival
+  labels:
+    app: redis-sentinel
+    app.kubernetes.io/name: redis-sentinel
+    app.kubernetes.io/component: sentinel
+    app.kubernetes.io/part-of: festival
+spec:
+  serviceName: redis-sentinel
+  replicas: 3
+  selector:
+    matchLabels:
+      app: redis-sentinel
+  template:
+    metadata:
+      labels:
+        app: redis-sentinel
+        app.kubernetes.io/name: redis-sentinel
+        app.kubernetes.io/component: sentinel
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      initContainers:
+        # Wait for master and replicas
+        - name: wait-for-redis
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - |
+              until nc -z redis-master 6379; do
+                echo "Waiting for Redis master..."
+                sleep 2
+              done
+              echo "Redis master is ready"
+              sleep 5
+        # Configure sentinel with master IP
+        - name: configure-sentinel
+          image: redis:7.2-alpine
+          command:
+            - sh
+            - -c
+            - |
+              cp /etc/redis/sentinel.conf /tmp/sentinel.conf
+              # Update master address
+              sed -i "s/redis-master/redis-master.festival.svc.cluster.local/g" /tmp/sentinel.conf
+          volumeMounts:
+            - name: sentinel-config
+              mountPath: /etc/redis/sentinel.conf
+              subPath: sentinel.conf
+            - name: sentinel-data
+              mountPath: /tmp
+      containers:
+        - name: sentinel
+          image: redis:7.2-alpine
+          imagePullPolicy: IfNotPresent
+          command:
+            - redis-sentinel
+            - /tmp/sentinel.conf
+          ports:
+            - name: sentinel
+              containerPort: 26379
+              protocol: TCP
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-secret
+                  key: redis-password
+          volumeMounts:
+            - name: sentinel-data
+              mountPath: /tmp
+          resources:
+            requests:
+              cpu: 50m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          livenessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - redis-cli -p 26379 ping | grep -q PONG
+            initialDelaySeconds: 30
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            exec:
+              command:
+                - sh
+                - -c
+                - redis-cli -p 26379 ping | grep -q PONG
+            initialDelaySeconds: 5
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 3
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: sentinel-config
+          configMap:
+            name: redis-config
+        - name: sentinel-data
+          emptyDir: {}
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - labelSelector:
+                matchLabels:
+                  app: redis-sentinel
+              topologyKey: kubernetes.io/hostname
+      tolerations:
+        - key: "redis"
+          operator: "Equal"
+          value: "true"
+          effect: "NoSchedule"
+
+---
+# Pod Disruption Budget for Redis Master
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: redis-master-pdb
+  namespace: festival
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: redis
+      role: master
+
+---
+# Pod Disruption Budget for Redis Replicas
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: redis-replica-pdb
+  namespace: festival
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: redis
+      role: replica
+
+---
+# Pod Disruption Budget for Redis Sentinel
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: redis-sentinel-pdb
+  namespace: festival
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: redis-sentinel
