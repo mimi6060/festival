@@ -300,7 +300,9 @@ body {
     background-color: var(--theme-input-bg);
     border: 1px solid var(--theme-input-border);
     color: var(--theme-text-primary);
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease;
   }
 
   .input-theme::placeholder {
@@ -335,14 +337,16 @@ body {
    * ============================================= */
 
   .transition-theme {
-    transition: color 0.3s ease,
+    transition:
+      color 0.3s ease,
       background-color 0.3s ease,
       border-color 0.3s ease,
       box-shadow 0.3s ease;
   }
 
   .transition-theme-fast {
-    transition: color 0.15s ease,
+    transition:
+      color 0.15s ease,
       background-color 0.15s ease,
       border-color 0.15s ease,
       box-shadow 0.15s ease;
@@ -815,4 +819,434 @@ textarea {
   content: ' *';
   color: #ef4444;
   font-weight: bold;
+}
+
+/* =============================================
+ * RTL (Right-to-Left) SUPPORT
+ * For Arabic, Hebrew, Farsi, Urdu languages
+ * ============================================= */
+
+/**
+ * Base RTL Layout
+ * Sets document direction and text alignment
+ */
+[dir='rtl'] {
+  direction: rtl;
+  text-align: right;
+}
+
+[dir='ltr'] {
+  direction: ltr;
+  text-align: left;
+}
+
+/**
+ * Logical Properties for RTL Support
+ * Using CSS logical properties for automatic RTL adaptation
+ *
+ * Physical -> Logical mapping:
+ * - margin-left -> margin-inline-start
+ * - margin-right -> margin-inline-end
+ * - padding-left -> padding-inline-start
+ * - padding-right -> padding-inline-end
+ * - left -> inset-inline-start
+ * - right -> inset-inline-end
+ * - border-left -> border-inline-start
+ * - border-right -> border-inline-end
+ */
+
+/* RTL-aware spacing utilities */
+@layer utilities {
+  /* Margin inline utilities */
+  .ms-auto {
+    margin-inline-start: auto;
+  }
+
+  .me-auto {
+    margin-inline-end: auto;
+  }
+
+  .ms-0 {
+    margin-inline-start: 0;
+  }
+
+  .me-0 {
+    margin-inline-end: 0;
+  }
+
+  .ms-1 {
+    margin-inline-start: 0.25rem;
+  }
+
+  .me-1 {
+    margin-inline-end: 0.25rem;
+  }
+
+  .ms-2 {
+    margin-inline-start: 0.5rem;
+  }
+
+  .me-2 {
+    margin-inline-end: 0.5rem;
+  }
+
+  .ms-3 {
+    margin-inline-start: 0.75rem;
+  }
+
+  .me-3 {
+    margin-inline-end: 0.75rem;
+  }
+
+  .ms-4 {
+    margin-inline-start: 1rem;
+  }
+
+  .me-4 {
+    margin-inline-end: 1rem;
+  }
+
+  .ms-6 {
+    margin-inline-start: 1.5rem;
+  }
+
+  .me-6 {
+    margin-inline-end: 1.5rem;
+  }
+
+  .ms-8 {
+    margin-inline-start: 2rem;
+  }
+
+  .me-8 {
+    margin-inline-end: 2rem;
+  }
+
+  /* Padding inline utilities */
+  .ps-0 {
+    padding-inline-start: 0;
+  }
+
+  .pe-0 {
+    padding-inline-end: 0;
+  }
+
+  .ps-1 {
+    padding-inline-start: 0.25rem;
+  }
+
+  .pe-1 {
+    padding-inline-end: 0.25rem;
+  }
+
+  .ps-2 {
+    padding-inline-start: 0.5rem;
+  }
+
+  .pe-2 {
+    padding-inline-end: 0.5rem;
+  }
+
+  .ps-3 {
+    padding-inline-start: 0.75rem;
+  }
+
+  .pe-3 {
+    padding-inline-end: 0.75rem;
+  }
+
+  .ps-4 {
+    padding-inline-start: 1rem;
+  }
+
+  .pe-4 {
+    padding-inline-end: 1rem;
+  }
+
+  .ps-6 {
+    padding-inline-start: 1.5rem;
+  }
+
+  .pe-6 {
+    padding-inline-end: 1.5rem;
+  }
+
+  .ps-8 {
+    padding-inline-start: 2rem;
+  }
+
+  .pe-8 {
+    padding-inline-end: 2rem;
+  }
+
+  /* Inset inline utilities (position) */
+  .start-0 {
+    inset-inline-start: 0;
+  }
+
+  .end-0 {
+    inset-inline-end: 0;
+  }
+
+  .start-auto {
+    inset-inline-start: auto;
+  }
+
+  .end-auto {
+    inset-inline-end: auto;
+  }
+
+  /* Border inline utilities */
+  .border-s {
+    border-inline-start-width: 1px;
+  }
+
+  .border-e {
+    border-inline-end-width: 1px;
+  }
+
+  .border-s-0 {
+    border-inline-start-width: 0;
+  }
+
+  .border-e-0 {
+    border-inline-end-width: 0;
+  }
+
+  .border-s-2 {
+    border-inline-start-width: 2px;
+  }
+
+  .border-e-2 {
+    border-inline-end-width: 2px;
+  }
+
+  /* Rounded corners (logical) */
+  .rounded-s {
+    border-start-start-radius: 0.25rem;
+    border-end-start-radius: 0.25rem;
+  }
+
+  .rounded-e {
+    border-start-end-radius: 0.25rem;
+    border-end-end-radius: 0.25rem;
+  }
+
+  .rounded-s-lg {
+    border-start-start-radius: 0.5rem;
+    border-end-start-radius: 0.5rem;
+  }
+
+  .rounded-e-lg {
+    border-start-end-radius: 0.5rem;
+    border-end-end-radius: 0.5rem;
+  }
+
+  .rounded-s-none {
+    border-start-start-radius: 0;
+    border-end-start-radius: 0;
+  }
+
+  .rounded-e-none {
+    border-start-end-radius: 0;
+    border-end-end-radius: 0;
+  }
+
+  /* Text alignment utilities */
+  .text-start {
+    text-align: start;
+  }
+
+  .text-end {
+    text-align: end;
+  }
+
+  /* Float utilities (logical) */
+  .float-start {
+    float: inline-start;
+  }
+
+  .float-end {
+    float: inline-end;
+  }
+
+  /* Clear utilities (logical) */
+  .clear-start {
+    clear: inline-start;
+  }
+
+  .clear-end {
+    clear: inline-end;
+  }
+}
+
+/**
+ * RTL-specific overrides
+ * These rules apply only when dir="rtl" is set
+ */
+[dir='rtl'] {
+  /* Mirror icons that indicate direction */
+  .rtl-mirror {
+    transform: scaleX(-1);
+  }
+
+  /* Flip flex row direction */
+  .rtl-flex-reverse {
+    flex-direction: row-reverse;
+  }
+}
+
+/* Icons that should be mirrored in RTL */
+[dir='rtl'] .icon-arrow-right,
+[dir='rtl'] .icon-arrow-left,
+[dir='rtl'] .icon-chevron-right,
+[dir='rtl'] .icon-chevron-left,
+[dir='rtl'] .icon-arrow-forward,
+[dir='rtl'] .icon-arrow-back,
+[dir='rtl'] [data-rtl-mirror='true'] {
+  transform: scaleX(-1);
+}
+
+/* Skip link RTL adjustment */
+[dir='rtl'] .skip-link {
+  left: auto;
+  right: 0;
+  border-radius: 0 0 0 0.5rem;
+}
+
+/* Scrollbar position for RTL */
+[dir='rtl'] {
+  scrollbar-gutter: stable both-edges;
+}
+
+/* Form elements RTL */
+[dir='rtl'] input[type='text'],
+[dir='rtl'] input[type='email'],
+[dir='rtl'] input[type='password'],
+[dir='rtl'] input[type='search'],
+[dir='rtl'] input[type='tel'],
+[dir='rtl'] input[type='url'],
+[dir='rtl'] textarea {
+  text-align: right;
+}
+
+[dir='rtl'] input[type='number'] {
+  /* Numbers stay LTR but align right */
+  direction: ltr;
+  text-align: right;
+}
+
+/* List markers for RTL */
+[dir='rtl'] ul,
+[dir='rtl'] ol {
+  padding-inline-start: 2rem;
+  padding-inline-end: 0;
+}
+
+/* Table cells alignment */
+[dir='rtl'] th,
+[dir='rtl'] td {
+  text-align: right;
+}
+
+/* Progress bar and slider direction */
+[dir='rtl'] progress,
+[dir='rtl'] input[type='range'] {
+  direction: rtl;
+}
+
+/* Checkbox and radio label spacing */
+[dir='rtl'] input[type='checkbox'] + label,
+[dir='rtl'] input[type='radio'] + label {
+  margin-inline-start: 0.5rem;
+  margin-inline-end: 0;
+}
+
+/**
+ * RTL Animation Adjustments
+ * Mirror slide animations for RTL
+ */
+@keyframes slideInStart {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slideInEnd {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+[dir='ltr'] .animate-slide-in-start {
+  animation: slideInStart 0.3s ease-out;
+}
+
+[dir='ltr'] .animate-slide-in-end {
+  animation: slideInEnd 0.3s ease-out;
+}
+
+[dir='rtl'] .animate-slide-in-start {
+  animation: slideInEnd 0.3s ease-out;
+}
+
+[dir='rtl'] .animate-slide-in-end {
+  animation: slideInStart 0.3s ease-out;
+}
+
+/**
+ * RTL Flexbox helpers
+ * Use with caution - prefer logical properties
+ */
+.flex-row-reverse-rtl {
+  flex-direction: row;
+}
+
+[dir='rtl'] .flex-row-reverse-rtl {
+  flex-direction: row-reverse;
+}
+
+/**
+ * RTL Grid helpers
+ */
+[dir='rtl'] .grid-flow-col {
+  direction: rtl;
+}
+
+/**
+ * Bidirectional text support
+ * For mixed LTR/RTL content
+ */
+.bidi-isolate {
+  unicode-bidi: isolate;
+}
+
+.bidi-override {
+  unicode-bidi: bidi-override;
+}
+
+.bidi-embed {
+  unicode-bidi: embed;
+}
+
+/* Force LTR for code, URLs, etc. */
+.force-ltr {
+  direction: ltr !important;
+  unicode-bidi: embed;
+}
+
+/* Force RTL */
+.force-rtl {
+  direction: rtl !important;
+  unicode-bidi: embed;
 }

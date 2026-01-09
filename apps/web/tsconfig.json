@@ -1,11 +1,7 @@
 {
   "compilerOptions": {
     "target": "ES2017",
-    "lib": [
-      "dom",
-      "dom.iterable",
-      "esnext"
-    ],
+    "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
@@ -23,9 +19,11 @@
       }
     ],
     "paths": {
-      "@/*": [
-        "./*"
-      ]
+      "@/*": ["./*"],
+      "@festival/shared/i18n": ["../../libs/shared/i18n/src/index.ts"],
+      "@festival/shared/types": ["../../libs/shared/types/src/index.ts"],
+      "@festival/shared/utils": ["../../libs/shared/utils/src/index.ts"],
+      "@festival/shared/constants": ["../../libs/shared/constants/src/index.ts"]
     }
   },
   "include": [
@@ -37,7 +35,10 @@
     "next-env.d.ts",
     "../../apps/web/.next/types/**/*.ts"
   ],
-  "exclude": [
-    "node_modules"
+  "exclude": ["node_modules"],
+  "references": [
+    {
+      "path": "../../libs/shared/i18n"
+    }
   ]
 }
