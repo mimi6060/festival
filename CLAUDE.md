@@ -21,6 +21,27 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 3. **FORBIDDEN: Never include "Claude", "AI", "assistant" in commit messages**
 4. Push immediately - **1 feature = 1 commit + 1 push**
 
+## Post-Modification Verification (MANDATORY)
+
+**After modifying or rebuilding any app, ALWAYS verify it works:**
+
+```bash
+# API verification
+curl -s http://localhost:3333/api/health | grep -q "status" && echo "API OK" || echo "API FAILED"
+
+# Web verification (port 3000 in dev)
+curl -s http://localhost:3000 | grep -q "html" && echo "Web OK" || echo "Web FAILED"
+
+# Admin verification (port 4200 in dev)
+curl -s http://localhost:4200 | grep -q "html" && echo "Admin OK" || echo "Admin FAILED"
+```
+
+**If verification fails:**
+
+1. Check logs: `docker logs <container>` or terminal output
+2. Fix the issue before moving on
+3. Re-verify after fix
+
 ## Pre-Push Verification (MANDATORY)
 
 **Before `git push`:**
@@ -59,7 +80,7 @@ NODE_ENV=production npx nx build web
 NODE_ENV=production npx nx build admin
 npm run build:all                   # Build everything
 
-# Testing
+# Testing (file naming: *.spec.ts for unit, *.int-spec.ts for integration)
 npx nx test api                     # API tests
 npx nx test api --testPathPattern=auth        # Single module tests
 npx nx test api --testPathPattern=auth.service.spec  # Single file
@@ -84,6 +105,11 @@ npx prisma studio                   # Interactive viewer
 # Docker
 docker-compose up -d                # Start PostgreSQL, Redis, MailHog
 docker-compose down                 # Stop services
+
+# Quick npm aliases (from package.json)
+npm run start:api                   # Same as nx serve api
+npm run build:api                   # Same as nx build api
+npm run verify-ci                   # Run ./scripts/verify-ci.sh
 ```
 
 ## Project Architecture
@@ -176,6 +202,7 @@ common/
 - **Error Codes**: Standardized format `ERR_XXXX` (1xxx=general, 2xxx=auth, 3xxx=authz, etc.)
 - **Rate Limiting**: Use `@RateLimit(limit, window)` decorator on public endpoints
 - **API Versioning**: `X-API-Version` header, defaults to v1
+- **WebSocket**: Gateways in `gateways/` use Socket.io, test with `@nestjs/testing` + socket.io-client
 
 ## Frontend Patterns (Next.js)
 
@@ -202,14 +229,20 @@ Soft-deletable models: User, Festival, Ticket, TicketCategory, Payment, Artist, 
 
 ## Environment Variables
 
-Required in `.env.development`:
+Required in `.env.development` (copy from `.env.example`):
 
 - `DATABASE_URL` - PostgreSQL connection
 - `REDIS_URL` - Redis connection
-- `JWT_ACCESS_SECRET` - Min 32 chars
+- `JWT_SECRET` - Min 32 chars (access token)
 - `JWT_REFRESH_SECRET` - Different from access secret
-- `QR_CODE_SECRET` - Min 32 chars
+- `QR_SECRET` - Min 32 chars (QR code signing)
 - `STRIPE_SECRET_KEY` - sk*test*... or sk*live*...
+
+Test credentials (after `npx prisma db seed`):
+
+- Admin: `admin@festival.fr` / `Festival2025!`
+- Organizer: `organisateur@festival.fr` / `Festival2025!`
+- User: `user@festival.fr` / `Festival2025!`
 
 ## Reference
 

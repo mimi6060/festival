@@ -2,6 +2,51 @@
 
 ---
 
+## Session 2026-01-09 - Fixes & Improvements
+
+### Cross-Origin Cookie Fix (Web & Admin)
+
+- [x] **Added Next.js proxy for API calls** (avoids cross-origin cookie issues)
+  - `apps/web/next.config.js` - Added rewrites for `/api/*` proxy
+  - `apps/admin/next.config.js` - Added rewrites for `/api/*` proxy
+  - Updated all stores to use relative URL `/api` instead of absolute URL
+
+### Two-Factor Authentication (2FA) Module
+
+- [x] **Implemented TOTP 2FA for API**
+  - `apps/api/src/modules/two-factor/` - New module
+  - `two-factor.service.ts` - Generate secret, QR code, verify, enable/disable
+  - `two-factor.controller.ts` - API endpoints for 2FA management
+  - `dto/two-factor.dto.ts` - DTOs for 2FA operations
+  - Added `twoFactorEnabled` and `twoFactorSecret` fields to User model
+  - Dependencies: `otplib`, `qrcode`
+
+### Missing Pages Created (Web App)
+
+- [x] **Created 6 missing pages**
+  - `/about` - About page with mission and values
+  - `/contact` - Contact form with email info
+  - `/faq` - FAQ accordion with 3 categories
+  - `/terms` - Terms of service
+  - `/privacy` - Privacy policy (GDPR compliant)
+  - `/artists` - Artists listing with genre filter
+
+### Bug Fixes
+
+- [x] **Fixed admin error.tsx** - Changed `/admin` link to `/`
+- [x] **Fixed admin profile page** - Created missing `/profile` page
+- [x] **Fixed image configuration** - Added `example.com` and `*.unsplash.com` to allowed domains
+
+### API Endpoints Added
+
+- `GET /auth/2fa/status` - Get 2FA status
+- `POST /auth/2fa/generate` - Generate 2FA secret and QR code
+- `POST /auth/2fa/enable` - Verify code and enable 2FA
+- `POST /auth/2fa/disable` - Disable 2FA (requires verification)
+- `POST /auth/2fa/verify` - Verify 2FA code
+
+---
+
 ## Session 2026-01-08 - CTO Mission COMPLETE (30/30 Tasks)
 
 ### Mission Summary
