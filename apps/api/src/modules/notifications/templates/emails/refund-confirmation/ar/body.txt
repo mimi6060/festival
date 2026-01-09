@@ -1,0 +1,18 @@
+مرحبا {{firstName}}،
+
+نؤكد ان استرداد المبلغ قد بدا.
+
+تفاصيل الاسترداد
+----------------
+المرجع: {{transactionId}}
+المبلغ: {{amount}} {{currency}}
+تاريخ الاسترداد: {{refundDate}}
+طريقة الاسترداد: {{refundMethod}}
+الوقت المقدر: {{estimatedArrival}}
+
+لاي استفسارات، تواصل معنا على {{supportEmail}}.
+
+فريق {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. جميع الحقوق محفوظة.

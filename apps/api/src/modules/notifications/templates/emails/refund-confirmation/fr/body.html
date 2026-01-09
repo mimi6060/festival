@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="fr" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Confirmation de remboursement</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+    .button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+    .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+    .info-box { background: white; border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin: 20px 0; }
+    .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; }
+    .info { background: #d1ecf1; border: 1px solid #bee5eb; padding: 15px; border-radius: 5px; margin: 20px 0; color: #0c5460; }
+  </style>
+</head>
+<body>
+  <div class="header"><h1>Remboursement confirme</h1></div>
+  <div class="content">
+    <p>Bonjour {{firstName}},</p>
+    <p>Nous confirmons que votre remboursement a ete initie.</p>
+    <div class="info-box">
+      <h3 style="margin-top: 0;">Details du remboursement</h3>
+      <div class="info-row"><span>Reference</span><span>{{transactionId}}</span></div>
+      <div class="info-row"><span>Montant</span><span>{{amount}} {{currency}}</span></div>
+      <div class="info-row"><span>Date du remboursement</span><span>{{refundDate}}</span></div>
+      <div class="info-row"><span>Paiement original</span><span>{{originalPaymentDate}}</span></div>
+      <div class="info-row"><span>Methode de remboursement</span><span>{{refundMethod}}</span></div>
+      {{#if reason}}<div class="info-row"><span>Motif</span><span>{{reason}}</span></div>{{/if}}
+    </div>
+    <div class="info">
+      <strong>Delai estime :</strong> {{estimatedArrival}}
+    </div>
+    <p>Si vous avez des questions, contactez-nous a <a href="mailto:{{supportEmail}}">{{supportEmail}}</a>.</p>
+    <p><strong>L'equipe {{companyName}}</strong></p>
+  </div>
+  <div class="footer"><p>&copy; {{year}} {{companyName}}. Tous droits reserves.</p></div>
+</body>
+</html>

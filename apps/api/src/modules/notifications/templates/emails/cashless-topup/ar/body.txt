@@ -1,0 +1,19 @@
+مرحبا {{firstName}}،
+
+تم اضافة {{amount}} {{currency}} الى حسابك النقدي.
+
+الرصيد الجديد: {{newBalance}} {{currency}}
+
+تفاصيل المعاملة
+---------------
+المرجع: {{transactionId}}
+التاريخ: {{topupDate}}
+طريقة الدفع: {{paymentMethod}}
+المبلغ المضاف: {{amount}} {{currency}}
+
+{{#if festivalName}}استمتع بـ {{festivalName}}!{{/if}}
+
+فريق {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. جميع الحقوق محفوظة.

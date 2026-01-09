@@ -24,6 +24,13 @@ import {
 } from '../dto';
 import { FcmService } from './fcm.service';
 import { NotificationTemplateService } from './notification-template.service';
+import {
+  EmailTemplateService,
+  EmailTemplateType,
+  EmailLanguage,
+  DEFAULT_EMAIL_LANGUAGE,
+  RenderedEmail,
+} from './email-template.service';
 import * as Handlebars from 'handlebars';
 
 @Injectable()
@@ -34,6 +41,7 @@ export class NotificationsService {
     private readonly prisma: PrismaService,
     private readonly fcmService: FcmService,
     private readonly templateService: NotificationTemplateService,
+    private readonly emailTemplateService: EmailTemplateService,
     private readonly eventEmitter: EventEmitter2
   ) {}
 
@@ -465,6 +473,147 @@ export class NotificationsService {
         read: Number(d.read),
       })),
     };
+  }
+
+  // ============== Email Methods ==============
+
+  /**
+   * Get the user's preferred email language
+   * Falls back to DEFAULT_EMAIL_LANGUAGE ('fr') if not set
+   */
+  async getUserEmailLanguage(userId: string): Promise<EmailLanguage> {
+    const preferences = await this.getPreferences(userId);
+    const lang = (preferences as any).emailLanguage;
+
+    if (lang && this.emailTemplateService.isLanguageSupported(lang)) {
+      return lang as EmailLanguage;
+    }
+
+    return DEFAULT_EMAIL_LANGUAGE;
+  }
+
+  /**
+   * Render a multilingual email template for a user
+   * Automatically uses the user's preferred language with fallback
+   */
+  async renderEmailForUser(
+    userId: string,
+    templateType: EmailTemplateType,
+    variables: Record<string, unknown>
+  ): Promise<RenderedEmail> {
+    const language = await this.getUserEmailLanguage(userId);
+    return this.emailTemplateService.renderTemplate(templateType, language, variables);
+  }
+
+  /**
+   * Send a multilingual transactional email to a user
+   * This method renders the template in the user's preferred language
+   * and emits an event for the email to be sent
+   */
+  async sendTransactionalEmail(
+    userId: string,
+    templateType: EmailTemplateType,
+    variables: Record<string, unknown>,
+    options: { festivalId?: string } = {}
+  ): Promise<{ rendered: RenderedEmail; language: EmailLanguage }> {
+    // Get user info for email
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { id: true, email: true, firstName: true, lastName: true },
+    });
+
+    if (!user) {
+      throw new NotFoundException(`User not found: ${userId}`);
+    }
+
+    // Get user's preferred language
+    const language = await this.getUserEmailLanguage(userId);
+
+    // Render the template with user's language
+    const rendered = await this.emailTemplateService.renderTemplate(
+      templateType,
+      language,
+      variables
+    );
+
+    // Emit event for email sending (to be handled by email service)
+    this.eventEmitter.emit('email.send', {
+      userId,
+      email: user.email,
+      subject: rendered.subject,
+      html: rendered.html,
+      text: rendered.text,
+      templateType,
+      language,
+      festivalId: options.festivalId,
+    });
+
+    this.logger.log(`Transactional email queued: ${templateType} to ${user.email} in ${language}`);
+
+    return { rendered, language };
+  }
+
+  /**
+   * Send bulk transactional emails to multiple users
+   * Each user receives the email in their preferred language
+   */
+  async sendBulkTransactionalEmails(
+    userIds: string[],
+    templateType: EmailTemplateType,
+    variablesGenerator: (user: {
+      id: string;
+      email: string;
+      firstName: string;
+      lastName: string;
+    }) => Record<string, unknown>,
+    options: { festivalId?: string } = {}
+  ): Promise<{ successCount: number; failedCount: number }> {
+    let successCount = 0;
+    let failedCount = 0;
+
+    // Get all users
+    const users = await this.prisma.user.findMany({
+      where: { id: { in: userIds } },
+      select: { id: true, email: true, firstName: true, lastName: true },
+    });
+
+    // Process in batches
+    const batchSize = 50;
+    for (let i = 0; i < users.length; i += batchSize) {
+      const batch = users.slice(i, i + batchSize);
+
+      const results = await Promise.allSettled(
+        batch.map(async (user) => {
+          const variables = variablesGenerator(user);
+          return this.sendTransactionalEmail(user.id, templateType, variables, options);
+        })
+      );
+
+      results.forEach((result) => {
+        if (result.status === 'fulfilled') {
+          successCount++;
+        } else {
+          failedCount++;
+          this.logger.error(`Failed to send transactional email: ${result.reason}`);
+        }
+      });
+    }
+
+    return { successCount, failedCount };
+  }
+
+  /**
+   * Get available email template types
+   */
+  getEmailTemplateTypes(): EmailTemplateType[] {
+    return this.emailTemplateService.getTemplateTypes();
+  }
+
+  /**
+   * Get supported email languages
+   */
+  getSupportedEmailLanguages(): EmailLanguage[] {
+    return this.emailTemplateService.getSupportedLanguages();
   }
 
   // ============== Helper Methods ==============

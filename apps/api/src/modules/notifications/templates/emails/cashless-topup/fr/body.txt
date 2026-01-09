@@ -1,0 +1,19 @@
+Bonjour {{firstName}},
+
+Votre compte cashless a ete credite de {{amount}} {{currency}}.
+
+NOUVEAU SOLDE: {{newBalance}} {{currency}}
+
+DETAILS DE LA TRANSACTION
+-------------------------
+Reference: {{transactionId}}
+Date: {{topupDate}}
+Methode de paiement: {{paymentMethod}}
+Montant ajoute: {{amount}} {{currency}}
+
+{{#if festivalName}}Profitez de {{festivalName}} !{{/if}}
+
+L'equipe {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. Tous droits reserves.

@@ -1,0 +1,15 @@
+Hallo {{firstName}},
+
+Wir haben eine Anfrage erhalten, das Passwort fuer Ihr Konto zurueckzusetzen.
+
+Klicken Sie auf den folgenden Link, um ein neues Passwort zu erstellen:
+{{resetUrl}}
+
+Dieser Link laeuft in {{expiresIn}} ab.
+
+WARNUNG: Wenn Sie diese Zuruecksetzung nicht angefordert haben, ignorieren Sie diese E-Mail oder kontaktieren Sie sofort unseren Support.
+
+Das {{companyName}} Team
+
+---
+(c) {{year}} {{companyName}}. Alle Rechte vorbehalten.

@@ -1,0 +1,15 @@
+Bonjour {{firstName}},
+
+Nous avons recu une demande de reinitialisation de mot de passe pour votre compte.
+
+Cliquez sur le lien ci-dessous pour creer un nouveau mot de passe :
+{{resetUrl}}
+
+Ce lien expire dans {{expiresIn}}.
+
+ATTENTION : Si vous n'avez pas demande cette reinitialisation, ignorez cet email ou contactez notre support immediatement.
+
+L'equipe {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. Tous droits reserves.

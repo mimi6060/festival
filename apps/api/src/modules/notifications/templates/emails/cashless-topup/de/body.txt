@@ -1,0 +1,19 @@
+Hallo {{firstName}},
+
+Ihr Cashless-Konto wurde mit {{amount}} {{currency}} aufgeladen.
+
+NEUER KONTOSTAND: {{newBalance}} {{currency}}
+
+TRANSAKTIONSDETAILS
+-------------------
+Referenz: {{transactionId}}
+Datum: {{topupDate}}
+Zahlungsmethode: {{paymentMethod}}
+Aufgeladener Betrag: {{amount}} {{currency}}
+
+{{#if festivalName}}Geniessen Sie {{festivalName}}!{{/if}}
+
+Das {{companyName}} Team
+
+---
+(c) {{year}} {{companyName}}. Alle Rechte vorbehalten.

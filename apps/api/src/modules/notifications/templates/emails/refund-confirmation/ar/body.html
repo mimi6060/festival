@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>تاكيد الاسترداد</title>
+<style>body{font-family:'Segoe UI',Tahoma,Arial,sans-serif;line-height:1.8;color:#333;max-width:600px;margin:0 auto;padding:20px;direction:rtl;text-align:right}.header{background:linear-gradient(135deg,#667eea 0%,#764ba2 100%);color:white;padding:30px;text-align:center;border-radius:10px 10px 0 0}.content{background:#f9f9f9;padding:30px;border-radius:0 0 10px 10px}.footer{text-align:center;margin-top:30px;color:#666;font-size:12px}.info-box{background:white;border:1px solid #ddd;border-radius:8px;padding:20px;margin:20px 0}.info-row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #eee}.info{background:#d1ecf1;border:1px solid #bee5eb;padding:15px;border-radius:5px;margin:20px 0;color:#0c5460}</style></head>
+<body><div class="header"><h1>تم تاكيد الاسترداد</h1></div>
+<div class="content"><p>مرحبا {{firstName}}،</p><p>نؤكد ان استرداد المبلغ قد بدا.</p>
+<div class="info-box"><h3 style="margin-top:0">تفاصيل الاسترداد</h3>
+<div class="info-row"><span>المرجع</span><span>{{transactionId}}</span></div>
+<div class="info-row"><span>المبلغ</span><span>{{amount}} {{currency}}</span></div>
+<div class="info-row"><span>تاريخ الاسترداد</span><span>{{refundDate}}</span></div>
+<div class="info-row"><span>طريقة الاسترداد</span><span>{{refundMethod}}</span></div></div>
+<div class="info"><strong>الوقت المقدر:</strong> {{estimatedArrival}}</div>
+<p>لاي استفسارات، تواصل معنا على <a href="mailto:{{supportEmail}}">{{supportEmail}}</a>.</p>
+<p><strong>فريق {{companyName}}</strong></p></div>
+<div class="footer"><p>&copy; {{year}} {{companyName}}. جميع الحقوق محفوظة.</p></div></body></html>

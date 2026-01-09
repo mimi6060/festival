@@ -1,0 +1,14 @@
+Ciao {{firstName}},
+
+Grazie per esserti registrato! Per attivare il tuo account, verifica il tuo indirizzo email cliccando sul seguente link:
+
+{{verificationUrl}}
+
+Questo link scade tra {{expiresIn}}.
+
+Se non hai creato un account, puoi tranquillamente ignorare questa email.
+
+Il team {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. Tutti i diritti riservati.

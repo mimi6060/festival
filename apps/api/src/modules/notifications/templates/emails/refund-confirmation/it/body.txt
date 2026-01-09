@@ -1,0 +1,18 @@
+Ciao {{firstName}},
+
+Confermiamo che il tuo rimborso e stato avviato.
+
+DETTAGLI DEL RIMBORSO
+---------------------
+Riferimento: {{transactionId}}
+Importo: {{amount}} {{currency}}
+Data del rimborso: {{refundDate}}
+Metodo di rimborso: {{refundMethod}}
+Tempo stimato: {{estimatedArrival}}
+
+Per domande, contattaci a {{supportEmail}}.
+
+Il team {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. Tutti i diritti riservati.

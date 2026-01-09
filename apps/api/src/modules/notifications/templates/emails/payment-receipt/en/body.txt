@@ -1,0 +1,20 @@
+Hello {{firstName}},
+
+We confirm that your payment has been successfully processed.
+
+TRANSACTION DETAILS
+-------------------
+Reference: {{transactionId}}
+Date: {{paymentDate}}
+Payment Method: {{paymentMethod}}
+{{#if subtotal}}Subtotal: {{subtotal}} {{currency}}{{/if}}
+{{#if tax}}Tax: {{tax}} {{currency}}{{/if}}
+Total: {{amount}} {{currency}}
+
+{{#if invoiceUrl}}Download Invoice: {{invoiceUrl}}{{/if}}
+
+Thank you for your trust!
+The {{companyName}} Team
+
+---
+(c) {{year}} {{companyName}}. All rights reserved.

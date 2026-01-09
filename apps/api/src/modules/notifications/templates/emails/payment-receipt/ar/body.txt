@@ -1,0 +1,18 @@
+مرحبا {{firstName}}،
+
+نؤكد ان الدفع الخاص بك قد تمت معالجته بنجاح.
+
+تفاصيل المعاملة
+---------------
+المرجع: {{transactionId}}
+التاريخ: {{paymentDate}}
+طريقة الدفع: {{paymentMethod}}
+الاجمالي: {{amount}} {{currency}}
+
+{{#if invoiceUrl}}تحميل الفاتورة: {{invoiceUrl}}{{/if}}
+
+شكرا لثقتك!
+فريق {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. جميع الحقوق محفوظة.

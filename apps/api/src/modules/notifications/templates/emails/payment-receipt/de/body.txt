@@ -1,0 +1,18 @@
+Hallo {{firstName}},
+
+Wir bestaetigen, dass Ihre Zahlung erfolgreich verarbeitet wurde.
+
+TRANSAKTIONSDETAILS
+-------------------
+Referenz: {{transactionId}}
+Datum: {{paymentDate}}
+Zahlungsmethode: {{paymentMethod}}
+Gesamt: {{amount}} {{currency}}
+
+{{#if invoiceUrl}}Rechnung herunterladen: {{invoiceUrl}}{{/if}}
+
+Vielen Dank fuer Ihr Vertrauen!
+Das {{companyName}} Team
+
+---
+(c) {{year}} {{companyName}}. Alle Rechte vorbehalten.

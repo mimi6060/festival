@@ -1,0 +1,1 @@
+Aufladung bestaetigt - {{amount}} {{currency}}

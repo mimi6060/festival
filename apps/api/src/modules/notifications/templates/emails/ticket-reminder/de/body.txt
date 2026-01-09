@@ -1,0 +1,25 @@
+Hallo {{firstName}},
+
+{{festivalName}} steht vor der Tuer! Bereiten Sie sich auf ein unvergessliches Erlebnis vor.
+
+{{daysUntilEvent}} Tage verbleibend!
+
+VERANSTALTUNGSDETAILS
+---------------------
+Datum: {{eventDate}}
+{{#if eventTime}}Uhrzeit: {{eventTime}}{{/if}}
+{{#if festivalLocation}}Ort: {{festivalLocation}}{{/if}}
+
+VERGESSEN SIE NICHT:
+- Laden Sie Ihr Ticket in die App herunter
+- Bringen Sie einen gueltigen Ausweis mit
+- Schauen Sie sich das Kuenstler-Programm an
+- Laden Sie Ihr Cashless-Konto im Voraus auf
+
+Mein Ticket anzeigen: {{ticketUrl}}
+
+Wir freuen uns auf Sie!
+Das {{companyName}} Team
+
+---
+(c) {{year}} {{companyName}}. Alle Rechte vorbehalten.

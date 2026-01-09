@@ -1,0 +1,26 @@
+Congratulations {{firstName}}!
+
+Your ticket for {{festivalName}} has been successfully confirmed.
+
+TICKET DETAILS
+--------------
+Ticket Type: {{ticketType}}
+Reference: {{ticketId}}
+Date: {{eventDate}}
+{{#if eventTime}}Time: {{eventTime}}{{/if}}
+{{#if festivalLocation}}Location: {{festivalLocation}}{{/if}}
+{{#if totalPrice}}Total Price: {{totalPrice}} {{currency}}{{/if}}
+
+View my ticket: {{ticketUrl}}
+
+IMPORTANT INFORMATION
+---------------------
+- Keep your QR code on your phone or print it
+- The ticket is personal and non-transferable
+- Present a valid ID at the entrance
+
+See you at the festival!
+The {{companyName}} Team
+
+---
+(c) {{year}} {{companyName}}. All rights reserved.

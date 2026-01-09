@@ -1,0 +1,1 @@
+Votre billet pour {{festivalName}} est confirme !

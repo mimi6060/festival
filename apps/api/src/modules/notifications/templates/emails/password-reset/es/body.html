@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="es" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Restablecer contrasena</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+    .button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+    .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+    .warning { background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 5px; margin: 20px 0; }
+    .alert { background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px; margin: 20px 0; color: #721c24; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Restablecer tu contrasena</h1>
+  </div>
+  <div class="content">
+    <p>Hola {{firstName}},</p>
+
+    <p>Recibimos una solicitud para restablecer la contrasena de tu cuenta. Haz clic en el boton de abajo para crear una nueva contrasena:</p>
+
+    <p style="text-align: center;">
+      <a href="{{resetUrl}}" class="button">Restablecer mi contrasena</a>
+    </p>
+
+    <div class="warning">
+      <strong>Este enlace expira en {{expiresIn}}.</strong>
+    </div>
+
+    <div class="alert">
+      <strong>Advertencia:</strong> Si no solicitaste este restablecimiento, ignora este correo o contacta a nuestro soporte inmediatamente.
+    </div>
+
+    <p>Si el boton no funciona, copia y pega este enlace en tu navegador:</p>
+    <p style="word-break: break-all; color: #667eea;">{{resetUrl}}</p>
+
+    <p><strong>El equipo de {{companyName}}</strong></p>
+  </div>
+  <div class="footer">
+    <p>&copy; {{year}} {{companyName}}. Todos los derechos reservados.</p>
+  </div>
+</body>
+</html>

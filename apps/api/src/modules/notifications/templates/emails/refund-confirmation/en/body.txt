@@ -1,0 +1,21 @@
+Hello {{firstName}},
+
+We confirm that your refund has been initiated.
+
+REFUND DETAILS
+--------------
+Reference: {{transactionId}}
+Amount: {{amount}} {{currency}}
+Refund Date: {{refundDate}}
+Original Payment: {{originalPaymentDate}}
+Refund Method: {{refundMethod}}
+{{#if reason}}Reason: {{reason}}{{/if}}
+
+Estimated Arrival: {{estimatedArrival}}
+
+If you have any questions, contact us at {{supportEmail}}.
+
+The {{companyName}} Team
+
+---
+(c) {{year}} {{companyName}}. All rights reserved.

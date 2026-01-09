@@ -1,0 +1,14 @@
+Hallo {{firstName}},
+
+Vielen Dank fuer Ihre Anmeldung! Um Ihr Konto zu aktivieren, bestaetigen Sie bitte Ihre E-Mail-Adresse, indem Sie auf den folgenden Link klicken:
+
+{{verificationUrl}}
+
+Dieser Link laeuft in {{expiresIn}} ab.
+
+Wenn Sie kein Konto erstellt haben, koennen Sie diese E-Mail ignorieren.
+
+Das {{companyName}} Team
+
+---
+(c) {{year}} {{companyName}}. Alle Rechte vorbehalten.

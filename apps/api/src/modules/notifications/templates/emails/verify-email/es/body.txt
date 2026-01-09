@@ -1,0 +1,14 @@
+Hola {{firstName}},
+
+Gracias por registrarte! Para activar tu cuenta, por favor verifica tu direccion de correo electronico haciendo clic en el siguiente enlace:
+
+{{verificationUrl}}
+
+Este enlace expira en {{expiresIn}}.
+
+Si no creaste una cuenta, puedes ignorar este correo de forma segura.
+
+El equipo de {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. Todos los derechos reservados.

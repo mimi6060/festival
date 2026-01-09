@@ -1,0 +1,15 @@
+Hola {{firstName}},
+
+Recibimos una solicitud para restablecer la contrasena de tu cuenta.
+
+Haz clic en el siguiente enlace para crear una nueva contrasena:
+{{resetUrl}}
+
+Este enlace expira en {{expiresIn}}.
+
+ADVERTENCIA: Si no solicitaste este restablecimiento, ignora este correo o contacta a nuestro soporte inmediatamente.
+
+El equipo de {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. Todos los derechos reservados.

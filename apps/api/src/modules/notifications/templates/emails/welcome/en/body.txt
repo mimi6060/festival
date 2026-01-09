@@ -1,0 +1,19 @@
+Welcome, {{firstName}}!
+
+We're thrilled to have you on {{festivalName}}!
+
+Your account has been successfully created. You can now:
+- Purchase tickets for events
+- Manage your cashless account
+- Browse the artist lineup
+- Receive real-time notifications
+
+Sign in here: {{loginUrl}}
+
+If you have any questions, feel free to contact our support team at {{supportEmail}}.
+
+See you soon!
+The {{companyName}} Team
+
+---
+(c) {{year}} {{companyName}}. All rights reserved.

@@ -1,0 +1,14 @@
+Bonjour {{firstName}},
+
+Merci de vous etre inscrit ! Pour activer votre compte, veuillez verifier votre adresse email en cliquant sur le lien ci-dessous :
+
+{{verificationUrl}}
+
+Ce lien expire dans {{expiresIn}}.
+
+Si vous n'avez pas cree de compte, vous pouvez ignorer cet email en toute securite.
+
+L'equipe {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. Tous droits reserves.

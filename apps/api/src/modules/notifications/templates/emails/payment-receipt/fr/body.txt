@@ -1,0 +1,20 @@
+Bonjour {{firstName}},
+
+Nous vous confirmons que votre paiement a ete traite avec succes.
+
+DETAILS DE LA TRANSACTION
+-------------------------
+Reference: {{transactionId}}
+Date: {{paymentDate}}
+Methode de paiement: {{paymentMethod}}
+{{#if subtotal}}Sous-total: {{subtotal}} {{currency}}{{/if}}
+{{#if tax}}TVA: {{tax}} {{currency}}{{/if}}
+Total: {{amount}} {{currency}}
+
+{{#if invoiceUrl}}Telecharger la facture: {{invoiceUrl}}{{/if}}
+
+Merci pour votre confiance !
+L'equipe {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. Tous droits reserves.

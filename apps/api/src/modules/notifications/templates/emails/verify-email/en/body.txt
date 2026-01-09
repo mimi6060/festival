@@ -1,0 +1,14 @@
+Hello {{firstName}},
+
+Thank you for signing up! To activate your account, please verify your email address by clicking the link below:
+
+{{verificationUrl}}
+
+This link expires in {{expiresIn}}.
+
+If you did not create an account, you can safely ignore this email.
+
+The {{companyName}} Team
+
+---
+(c) {{year}} {{companyName}}. All rights reserved.

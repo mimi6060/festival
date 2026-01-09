@@ -1,0 +1,21 @@
+Hallo {{firstName}},
+
+Gute Nachrichten! Ihre Bestellung bei {{vendorName}} ist abholbereit.
+
+BESTELLNUMMER {{orderNumber}}
+
+BESTELLTE ARTIKEL
+-----------------
+{{#each items}}{{this.name}} x{{this.quantity}}{{#if this.price}} - {{this.price}} {{../currency}}{{/if}}
+{{/each}}
+{{#if totalAmount}}Gesamt: {{totalAmount}} {{currency}}{{/if}}
+
+{{#if vendorLocation}}ABHOLORT: {{vendorLocation}}{{/if}}
+
+{{#if pickupInstructions}}HINWEISE: {{pickupInstructions}}{{/if}}
+
+Bis gleich!
+{{vendorName}}
+
+---
+(c) {{year}} {{companyName}}. Alle Rechte vorbehalten.

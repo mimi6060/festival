@@ -1,0 +1,26 @@
+Herzlichen Glueckwunsch {{firstName}}!
+
+Ihr Ticket fuer {{festivalName}} wurde erfolgreich bestaetigt.
+
+TICKET-DETAILS
+--------------
+Ticket-Typ: {{ticketType}}
+Referenz: {{ticketId}}
+Datum: {{eventDate}}
+{{#if eventTime}}Uhrzeit: {{eventTime}}{{/if}}
+{{#if festivalLocation}}Ort: {{festivalLocation}}{{/if}}
+{{#if totalPrice}}Gesamtpreis: {{totalPrice}} {{currency}}{{/if}}
+
+Mein Ticket anzeigen: {{ticketUrl}}
+
+WICHTIGE INFORMATIONEN
+----------------------
+- Speichern Sie Ihren QR-Code auf Ihrem Handy oder drucken Sie ihn aus
+- Das Ticket ist persoenlich und nicht uebertragbar
+- Zeigen Sie am Eingang einen gueltigen Ausweis vor
+
+Wir sehen uns auf dem Festival!
+Das {{companyName}} Team
+
+---
+(c) {{year}} {{companyName}}. Alle Rechte vorbehalten.

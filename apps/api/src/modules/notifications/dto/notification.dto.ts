@@ -93,6 +93,18 @@ export class UpdateNotificationPreferencesDto {
   smsEnabled?: boolean;
 
   @ApiPropertyOptional({
+    description: 'Email language preference',
+    enum: ['fr', 'en', 'de', 'es', 'it', 'ar'],
+    example: 'fr',
+  })
+  @IsOptional()
+  @IsString()
+  @Matches(/^(fr|en|de|es|it|ar)$/, {
+    message: 'emailLanguage must be one of: fr, en, de, es, it, ar',
+  })
+  emailLanguage?: string;
+
+  @ApiPropertyOptional({
     enum: NotificationCategory,
     isArray: true,
     description: 'Enabled notification categories',

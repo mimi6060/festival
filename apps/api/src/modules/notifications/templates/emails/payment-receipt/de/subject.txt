@@ -1,0 +1,1 @@
+Zahlungsbeleg - {{amount}} {{currency}}

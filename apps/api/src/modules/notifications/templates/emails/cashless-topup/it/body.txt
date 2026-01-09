@@ -1,0 +1,19 @@
+Ciao {{firstName}},
+
+Il tuo conto cashless e stato accreditato con {{amount}} {{currency}}.
+
+NUOVO SALDO: {{newBalance}} {{currency}}
+
+DETTAGLI DELLA TRANSAZIONE
+--------------------------
+Riferimento: {{transactionId}}
+Data: {{topupDate}}
+Metodo di pagamento: {{paymentMethod}}
+Importo aggiunto: {{amount}} {{currency}}
+
+{{#if festivalName}}Goditi {{festivalName}}!{{/if}}
+
+Il team {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. Tutti i diritti riservati.

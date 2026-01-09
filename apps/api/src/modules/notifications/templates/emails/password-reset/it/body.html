@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="it" dir="ltr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reimposta password</title>
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+    .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+    .button { display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; margin: 20px 0; }
+    .footer { text-align: center; margin-top: 30px; color: #666; font-size: 12px; }
+    .warning { background: #fff3cd; border: 1px solid #ffc107; padding: 15px; border-radius: 5px; margin: 20px 0; }
+    .alert { background: #f8d7da; border: 1px solid #f5c6cb; padding: 15px; border-radius: 5px; margin: 20px 0; color: #721c24; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1>Reimposta la tua password</h1>
+  </div>
+  <div class="content">
+    <p>Ciao {{firstName}},</p>
+
+    <p>Abbiamo ricevuto una richiesta per reimpostare la password del tuo account. Clicca sul pulsante qui sotto per creare una nuova password:</p>
+
+    <p style="text-align: center;">
+      <a href="{{resetUrl}}" class="button">Reimposta la mia password</a>
+    </p>
+
+    <div class="warning">
+      <strong>Questo link scade tra {{expiresIn}}.</strong>
+    </div>
+
+    <div class="alert">
+      <strong>Attenzione:</strong> Se non hai richiesto questa reimpostazione, ignora questa email o contatta immediatamente il nostro supporto.
+    </div>
+
+    <p>Se il pulsante non funziona, copia e incolla questo link nel tuo browser:</p>
+    <p style="word-break: break-all; color: #667eea;">{{resetUrl}}</p>
+
+    <p><strong>Il team {{companyName}}</strong></p>
+  </div>
+  <div class="footer">
+    <p>&copy; {{year}} {{companyName}}. Tutti i diritti riservati.</p>
+  </div>
+</body>
+</html>

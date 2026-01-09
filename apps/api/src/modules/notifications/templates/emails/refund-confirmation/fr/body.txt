@@ -1,0 +1,21 @@
+Bonjour {{firstName}},
+
+Nous confirmons que votre remboursement a ete initie.
+
+DETAILS DU REMBOURSEMENT
+------------------------
+Reference: {{transactionId}}
+Montant: {{amount}} {{currency}}
+Date du remboursement: {{refundDate}}
+Paiement original: {{originalPaymentDate}}
+Methode de remboursement: {{refundMethod}}
+{{#if reason}}Motif: {{reason}}{{/if}}
+
+Delai estime: {{estimatedArrival}}
+
+Si vous avez des questions, contactez-nous a {{supportEmail}}.
+
+L'equipe {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. Tous droits reserves.

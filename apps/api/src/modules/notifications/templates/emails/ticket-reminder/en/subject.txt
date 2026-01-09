@@ -1,0 +1,1 @@
+Reminder: {{festivalName}} in {{daysUntilEvent}} days!

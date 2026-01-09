@@ -1,0 +1,15 @@
+Ciao {{firstName}},
+
+Abbiamo ricevuto una richiesta per reimpostare la password del tuo account.
+
+Clicca sul seguente link per creare una nuova password:
+{{resetUrl}}
+
+Questo link scade tra {{expiresIn}}.
+
+ATTENZIONE: Se non hai richiesto questa reimpostazione, ignora questa email o contatta immediatamente il nostro supporto.
+
+Il team {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. Tutti i diritti riservati.

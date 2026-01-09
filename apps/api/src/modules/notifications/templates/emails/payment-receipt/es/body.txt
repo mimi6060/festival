@@ -1,0 +1,18 @@
+Hola {{firstName}},
+
+Confirmamos que tu pago ha sido procesado con exito.
+
+DETALLES DE LA TRANSACCION
+--------------------------
+Referencia: {{transactionId}}
+Fecha: {{paymentDate}}
+Metodo de pago: {{paymentMethod}}
+Total: {{amount}} {{currency}}
+
+{{#if invoiceUrl}}Descargar factura: {{invoiceUrl}}{{/if}}
+
+Gracias por tu confianza!
+El equipo de {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. Todos los derechos reservados.

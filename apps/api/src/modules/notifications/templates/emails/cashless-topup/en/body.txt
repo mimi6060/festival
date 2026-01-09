@@ -1,0 +1,19 @@
+Hello {{firstName}},
+
+Your cashless account has been credited with {{amount}} {{currency}}.
+
+NEW BALANCE: {{newBalance}} {{currency}}
+
+TRANSACTION DETAILS
+-------------------
+Reference: {{transactionId}}
+Date: {{topupDate}}
+Payment Method: {{paymentMethod}}
+Amount Added: {{amount}} {{currency}}
+
+{{#if festivalName}}Enjoy {{festivalName}}!{{/if}}
+
+The {{companyName}} Team
+
+---
+(c) {{year}} {{companyName}}. All rights reserved.

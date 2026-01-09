@@ -1,0 +1,21 @@
+مرحبا {{firstName}}،
+
+اخبار سارة! طلبك من {{vendorName}} جاهز للاستلام.
+
+رقم الطلب {{orderNumber}}
+
+العناصر المطلوبة
+----------------
+{{#each items}}{{this.name}} x{{this.quantity}}{{#if this.price}} - {{this.price}} {{../currency}}{{/if}}
+{{/each}}
+{{#if totalAmount}}الاجمالي: {{totalAmount}} {{currency}}{{/if}}
+
+{{#if vendorLocation}}مكان الاستلام: {{vendorLocation}}{{/if}}
+
+{{#if pickupInstructions}}التعليمات: {{pickupInstructions}}{{/if}}
+
+نراك قريبا!
+{{vendorName}}
+
+---
+(c) {{year}} {{companyName}}. جميع الحقوق محفوظة.

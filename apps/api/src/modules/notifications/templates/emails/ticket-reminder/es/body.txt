@@ -1,0 +1,25 @@
+Hola {{firstName}},
+
+{{festivalName}} esta muy cerca! Preparate para una experiencia inolvidable.
+
+{{daysUntilEvent}} dias restantes!
+
+DETALLES DEL EVENTO
+-------------------
+Fecha: {{eventDate}}
+{{#if eventTime}}Hora: {{eventTime}}{{/if}}
+{{#if festivalLocation}}Lugar: {{festivalLocation}}{{/if}}
+
+NO OLVIDES:
+- Descargar tu entrada en la app
+- Llevar un documento de identidad valido
+- Consultar el programa de artistas
+- Recargar tu cuenta cashless con antelacion
+
+Ver mi entrada: {{ticketUrl}}
+
+Nos vemos alli!
+El equipo de {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. Todos los derechos reservados.

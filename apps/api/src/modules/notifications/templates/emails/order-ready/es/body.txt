@@ -1,0 +1,21 @@
+Hola {{firstName}},
+
+Buenas noticias! Tu pedido en {{vendorName}} esta listo para recoger.
+
+PEDIDO N° {{orderNumber}}
+
+ARTICULOS PEDIDOS
+-----------------
+{{#each items}}{{this.name}} x{{this.quantity}}{{#if this.price}} - {{this.price}} {{../currency}}{{/if}}
+{{/each}}
+{{#if totalAmount}}Total: {{totalAmount}} {{currency}}{{/if}}
+
+{{#if vendorLocation}}DONDE RECOGER: {{vendorLocation}}{{/if}}
+
+{{#if pickupInstructions}}INSTRUCCIONES: {{pickupInstructions}}{{/if}}
+
+Hasta pronto!
+{{vendorName}}
+
+---
+(c) {{year}} {{companyName}}. Todos los derechos reservados.

@@ -1,0 +1,19 @@
+Hola {{firstName}},
+
+Tu cuenta cashless ha sido acreditada con {{amount}} {{currency}}.
+
+NUEVO SALDO: {{newBalance}} {{currency}}
+
+DETALLES DE LA TRANSACCION
+--------------------------
+Referencia: {{transactionId}}
+Fecha: {{topupDate}}
+Metodo de pago: {{paymentMethod}}
+Importe anadido: {{amount}} {{currency}}
+
+{{#if festivalName}}Disfruta de {{festivalName}}!{{/if}}
+
+El equipo de {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. Todos los derechos reservados.

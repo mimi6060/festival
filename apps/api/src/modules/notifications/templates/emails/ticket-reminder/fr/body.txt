@@ -1,0 +1,25 @@
+Bonjour {{firstName}},
+
+{{festivalName}} commence bientot ! Preparez-vous pour une experience inoubliable.
+
+{{daysUntilEvent}} jours restants !
+
+DETAILS DE L'EVENEMENT
+----------------------
+Date : {{eventDate}}
+{{#if eventTime}}Heure : {{eventTime}}{{/if}}
+{{#if festivalLocation}}Lieu : {{festivalLocation}}{{/if}}
+
+N'OUBLIEZ PAS :
+- Telechargez votre billet sur l'application
+- Apportez une piece d'identite valide
+- Consultez le programme des artistes
+- Rechargez votre compte cashless a l'avance
+
+Voir mon billet : {{ticketUrl}}
+
+On a hate de vous voir !
+L'equipe {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. Tous droits reserves.

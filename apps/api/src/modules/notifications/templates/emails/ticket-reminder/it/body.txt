@@ -1,0 +1,25 @@
+Ciao {{firstName}},
+
+{{festivalName}} e quasi qui! Preparati per un'esperienza indimenticabile.
+
+{{daysUntilEvent}} giorni rimanenti!
+
+DETTAGLI DELL'EVENTO
+--------------------
+Data: {{eventDate}}
+{{#if eventTime}}Ora: {{eventTime}}{{/if}}
+{{#if festivalLocation}}Luogo: {{festivalLocation}}{{/if}}
+
+NON DIMENTICARE DI:
+- Scaricare il tuo biglietto sull'app
+- Portare un documento d'identita valido
+- Consultare il programma degli artisti
+- Ricaricare il tuo conto cashless in anticipo
+
+Visualizza il mio biglietto: {{ticketUrl}}
+
+Non vediamo l'ora di vederti!
+Il team {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. Tutti i diritti riservati.

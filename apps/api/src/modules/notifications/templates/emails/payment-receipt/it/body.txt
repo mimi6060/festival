@@ -1,0 +1,18 @@
+Ciao {{firstName}},
+
+Confermiamo che il tuo pagamento e stato elaborato con successo.
+
+DETTAGLI DELLA TRANSAZIONE
+--------------------------
+Riferimento: {{transactionId}}
+Data: {{paymentDate}}
+Metodo di pagamento: {{paymentMethod}}
+Totale: {{amount}} {{currency}}
+
+{{#if invoiceUrl}}Scarica fattura: {{invoiceUrl}}{{/if}}
+
+Grazie per la tua fiducia!
+Il team {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. Tutti i diritti riservati.

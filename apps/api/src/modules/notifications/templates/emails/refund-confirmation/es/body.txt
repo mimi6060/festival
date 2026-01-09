@@ -1,0 +1,18 @@
+Hola {{firstName}},
+
+Confirmamos que tu reembolso ha sido iniciado.
+
+DETALLES DEL REEMBOLSO
+----------------------
+Referencia: {{transactionId}}
+Importe: {{amount}} {{currency}}
+Fecha del reembolso: {{refundDate}}
+Metodo de reembolso: {{refundMethod}}
+Tiempo estimado: {{estimatedArrival}}
+
+Si tienes preguntas, contactanos en {{supportEmail}}.
+
+El equipo de {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. Todos los derechos reservados.

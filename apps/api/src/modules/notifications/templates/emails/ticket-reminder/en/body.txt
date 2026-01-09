@@ -1,0 +1,25 @@
+Hello {{firstName}},
+
+{{festivalName}} is almost here! Get ready for an unforgettable experience.
+
+{{daysUntilEvent}} days to go!
+
+EVENT DETAILS
+-------------
+Date: {{eventDate}}
+{{#if eventTime}}Time: {{eventTime}}{{/if}}
+{{#if festivalLocation}}Location: {{festivalLocation}}{{/if}}
+
+DON'T FORGET TO:
+- Download your ticket to the app
+- Bring a valid ID
+- Check out the artist lineup
+- Top up your cashless account in advance
+
+View my ticket: {{ticketUrl}}
+
+Can't wait to see you there!
+The {{companyName}} Team
+
+---
+(c) {{year}} {{companyName}}. All rights reserved.

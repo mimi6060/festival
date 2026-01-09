@@ -1,0 +1,21 @@
+Bonjour {{firstName}},
+
+Bonne nouvelle ! Votre commande chez {{vendorName}} est prete a etre recuperee.
+
+COMMANDE N° {{orderNumber}}
+
+ARTICLES COMMANDES
+------------------
+{{#each items}}{{this.name}} x{{this.quantity}}{{#if this.price}} - {{this.price}} {{../currency}}{{/if}}
+{{/each}}
+{{#if totalAmount}}Total: {{totalAmount}} {{currency}}{{/if}}
+
+{{#if vendorLocation}}OU RECUPERER: {{vendorLocation}}{{/if}}
+
+{{#if pickupInstructions}}INSTRUCTIONS: {{pickupInstructions}}{{/if}}
+
+A tout de suite !
+{{vendorName}}
+
+---
+(c) {{year}} {{companyName}}. Tous droits reserves.

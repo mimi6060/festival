@@ -1,0 +1,1 @@
+Rechargement confirme - {{amount}} {{currency}}

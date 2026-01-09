@@ -1,0 +1,26 @@
+تهانينا {{firstName}}!
+
+تم تاكيد تذكرتك لـ {{festivalName}} بنجاح.
+
+تفاصيل التذكرة
+--------------
+نوع التذكرة: {{ticketType}}
+المرجع: {{ticketId}}
+التاريخ: {{eventDate}}
+{{#if eventTime}}الوقت: {{eventTime}}{{/if}}
+{{#if festivalLocation}}الموقع: {{festivalLocation}}{{/if}}
+{{#if totalPrice}}السعر الاجمالي: {{totalPrice}} {{currency}}{{/if}}
+
+عرض تذكرتي: {{ticketUrl}}
+
+معلومات مهمة
+------------
+- احتفظ برمز QR على هاتفك او اطبعه
+- التذكرة شخصية وغير قابلة للتحويل
+- اعرض هوية صالحة عند المدخل
+
+نراك في المهرجان!
+فريق {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. جميع الحقوق محفوظة.

@@ -1,0 +1,19 @@
+Benvenuto, {{firstName}}!
+
+Siamo lieti di accoglierti su {{festivalName}}!
+
+Il tuo account e stato creato con successo. Ora puoi:
+- Acquistare biglietti per gli eventi
+- Gestire il tuo conto cashless
+- Consultare il programma degli artisti
+- Ricevere notifiche in tempo reale
+
+Accedi qui: {{loginUrl}}
+
+Se hai domande, non esitare a contattare il nostro team di supporto a {{supportEmail}}.
+
+A presto!
+Il team {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. Tutti i diritti riservati.

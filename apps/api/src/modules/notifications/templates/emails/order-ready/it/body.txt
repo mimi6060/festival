@@ -1,0 +1,21 @@
+Ciao {{firstName}},
+
+Ottime notizie! Il tuo ordine da {{vendorName}} e pronto per il ritiro.
+
+ORDINE N° {{orderNumber}}
+
+ARTICOLI ORDINATI
+-----------------
+{{#each items}}{{this.name}} x{{this.quantity}}{{#if this.price}} - {{this.price}} {{../currency}}{{/if}}
+{{/each}}
+{{#if totalAmount}}Totale: {{totalAmount}} {{currency}}{{/if}}
+
+{{#if vendorLocation}}DOVE RITIRARE: {{vendorLocation}}{{/if}}
+
+{{#if pickupInstructions}}ISTRUZIONI: {{pickupInstructions}}{{/if}}
+
+A presto!
+{{vendorName}}
+
+---
+(c) {{year}} {{companyName}}. Tutti i diritti riservati.

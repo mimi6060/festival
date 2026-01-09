@@ -1,0 +1,21 @@
+Hello {{firstName}},
+
+Great news! Your order at {{vendorName}} is ready for pickup.
+
+ORDER NO. {{orderNumber}}
+
+ORDERED ITEMS
+-------------
+{{#each items}}{{this.name}} x{{this.quantity}}{{#if this.price}} - {{this.price}} {{../currency}}{{/if}}
+{{/each}}
+{{#if totalAmount}}Total: {{totalAmount}} {{currency}}{{/if}}
+
+{{#if vendorLocation}}WHERE TO PICK UP: {{vendorLocation}}{{/if}}
+
+{{#if pickupInstructions}}INSTRUCTIONS: {{pickupInstructions}}{{/if}}
+
+See you soon!
+{{vendorName}}
+
+---
+(c) {{year}} {{companyName}}. All rights reserved.

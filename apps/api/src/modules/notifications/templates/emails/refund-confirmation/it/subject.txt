@@ -1,0 +1,1 @@
+Conferma di rimborso - {{amount}} {{currency}}

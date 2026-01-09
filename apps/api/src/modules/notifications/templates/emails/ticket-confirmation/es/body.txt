@@ -1,0 +1,26 @@
+Felicidades {{firstName}}!
+
+Tu entrada para {{festivalName}} ha sido confirmada con exito.
+
+DETALLES DE LA ENTRADA
+----------------------
+Tipo de entrada: {{ticketType}}
+Referencia: {{ticketId}}
+Fecha: {{eventDate}}
+{{#if eventTime}}Hora: {{eventTime}}{{/if}}
+{{#if festivalLocation}}Lugar: {{festivalLocation}}{{/if}}
+{{#if totalPrice}}Precio total: {{totalPrice}} {{currency}}{{/if}}
+
+Ver mi entrada: {{ticketUrl}}
+
+INFORMACION IMPORTANTE
+----------------------
+- Guarda tu codigo QR en tu telefono o imprimelo
+- La entrada es personal e intransferible
+- Presenta un documento de identidad valido en la entrada
+
+Nos vemos en el festival!
+El equipo de {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. Todos los derechos reservados.

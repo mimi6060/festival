@@ -1,0 +1,19 @@
+Willkommen, {{firstName}}!
+
+Wir freuen uns, Sie bei {{festivalName}} begruessen zu duerfen!
+
+Ihr Konto wurde erfolgreich erstellt. Sie koennen jetzt:
+- Tickets fuer Veranstaltungen kaufen
+- Ihr Cashless-Konto verwalten
+- Das Kuenstler-Programm durchstoebern
+- Echtzeit-Benachrichtigungen erhalten
+
+Hier anmelden: {{loginUrl}}
+
+Bei Fragen wenden Sie sich bitte an unser Support-Team unter {{supportEmail}}.
+
+Bis bald!
+Das {{companyName}} Team
+
+---
+(c) {{year}} {{companyName}}. Alle Rechte vorbehalten.

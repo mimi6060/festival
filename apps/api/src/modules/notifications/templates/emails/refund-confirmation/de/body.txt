@@ -1,0 +1,18 @@
+Hallo {{firstName}},
+
+Wir bestaetigen, dass Ihre Rueckerstattung eingeleitet wurde.
+
+RUECKERSTATTUNGSDETAILS
+-----------------------
+Referenz: {{transactionId}}
+Betrag: {{amount}} {{currency}}
+Rueckerstattungsdatum: {{refundDate}}
+Rueckerstattungsmethode: {{refundMethod}}
+Voraussichtliche Ankunft: {{estimatedArrival}}
+
+Bei Fragen kontaktieren Sie uns unter {{supportEmail}}.
+
+Das {{companyName}} Team
+
+---
+(c) {{year}} {{companyName}}. Alle Rechte vorbehalten.

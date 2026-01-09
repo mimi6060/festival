@@ -1,0 +1,26 @@
+Felicitations {{firstName}} !
+
+Votre billet pour {{festivalName}} a ete confirme avec succes.
+
+DETAILS DU BILLET
+-----------------
+Type de billet : {{ticketType}}
+Reference : {{ticketId}}
+Date : {{eventDate}}
+{{#if eventTime}}Heure : {{eventTime}}{{/if}}
+{{#if festivalLocation}}Lieu : {{festivalLocation}}{{/if}}
+{{#if totalPrice}}Prix total : {{totalPrice}} {{currency}}{{/if}}
+
+Voir mon billet : {{ticketUrl}}
+
+INFORMATIONS IMPORTANTES
+------------------------
+- Conservez votre QR code sur votre telephone ou imprimez-le
+- Le billet est personnel et non transferable
+- Presentez une piece d'identite a l'entree
+
+A bientot au festival !
+L'equipe {{companyName}}
+
+---
+(c) {{year}} {{companyName}}. Tous droits reserves.
