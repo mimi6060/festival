@@ -333,9 +333,9 @@ export const createPayoutSchema = z.object({
     paypalEmail: emailSchema.optional(),
   }).refine(
     (data) => {
-      if (data.type === 'bank_account') return !!data.bankAccount;
-      if (data.type === 'card') return !!data.cardId;
-      if (data.type === 'paypal') return !!data.paypalEmail;
+      if (data.type === 'bank_account') {return !!data.bankAccount;}
+      if (data.type === 'card') {return !!data.cardId;}
+      if (data.type === 'paypal') {return !!data.paypalEmail;}
       return false;
     },
     { message: 'Destination de paiement invalide' }

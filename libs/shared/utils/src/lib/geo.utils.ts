@@ -381,7 +381,7 @@ export function formatCoordinatesAsDMS(
 /**
  * Format coordinates as decimal string
  */
-export function formatCoordinatesAsDecimal(lat: number, lng: number, precision: number = 6): string {
+export function formatCoordinatesAsDecimal(lat: number, lng: number, precision = 6): string {
   return `${lat.toFixed(precision)}, ${lng.toFixed(precision)}`;
 }
 
@@ -566,7 +566,7 @@ export function formatDistance(distanceKm: number, unit: DistanceUnit = 'km'): s
 export function estimateWalkingTime(
   from: Coordinates,
   to: Coordinates,
-  walkingSpeedKmh: number = 5
+  walkingSpeedKmh = 5
 ): number {
   const distanceKm = calculateDistance(from, to);
   const timeHours = distanceKm / walkingSpeedKmh;

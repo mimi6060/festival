@@ -32,7 +32,7 @@ const initialState: AuthState = {
  * Get stored auth state from localStorage
  */
 function getStoredAuth(): Partial<AuthState> | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined') {return null;}
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
@@ -48,7 +48,7 @@ function getStoredAuth(): Partial<AuthState> | null {
  * Store auth state in localStorage
  */
 function storeAuth(state: Partial<AuthState>): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {return;}
   try {
     localStorage.setItem(
       STORAGE_KEY,
@@ -74,7 +74,7 @@ function storeAuth(state: Partial<AuthState>): void {
  * Clear stored auth state
  */
 function clearStoredAuth(): void {
-  if (typeof window === 'undefined') return;
+  if (typeof window === 'undefined') {return;}
   try {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem('auth_token');
@@ -365,7 +365,7 @@ export function useAuth(options: UseAuthOptions = {}) {
   // Update user data
   const updateUser = useCallback(
     (userData: Partial<AuthState['user']>) => {
-      if (!state.user) return;
+      if (!state.user) {return;}
 
       const newState: AuthState = {
         ...state,

@@ -295,6 +295,22 @@ export class NotFoundException extends BaseException {
       { fileId },
     );
   }
+
+  static webhook(webhookId: string): NotFoundException {
+    return new NotFoundException(
+      ErrorCodes.WEBHOOK_NOT_FOUND,
+      `Webhook not found: ${webhookId}`,
+      { webhookId },
+    );
+  }
+
+  static webhookDelivery(deliveryId: string): NotFoundException {
+    return new NotFoundException(
+      ErrorCodes.WEBHOOK_DELIVERY_NOT_FOUND,
+      `Webhook delivery not found: ${deliveryId}`,
+      { deliveryId },
+    );
+  }
 }
 
 // ============================================
@@ -346,6 +362,14 @@ export class ConflictException extends BaseException {
       ErrorCodes.CASHLESS_NFC_TAG_EXISTS,
       `NFC tag already linked: ${nfcTag}`,
       { nfcTag },
+    );
+  }
+
+  static webhookUrl(url: string): ConflictException {
+    return new ConflictException(
+      ErrorCodes.WEBHOOK_URL_EXISTS,
+      `Webhook URL already exists: ${url}`,
+      { url },
     );
   }
 }

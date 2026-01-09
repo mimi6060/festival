@@ -120,7 +120,7 @@ export const updateProfileSchema = z.object({
     .optional()
     .refine(
       (date) => {
-        if (!date) return true;
+        if (!date) {return true;}
         const parsed = new Date(date);
         const now = new Date();
         const minAge = new Date(now.getFullYear() - 13, now.getMonth(), now.getDate());

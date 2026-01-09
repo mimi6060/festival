@@ -12,7 +12,7 @@ const STORAGE_KEY = 'festival-auth';
  * Get stored auth state
  */
 function getStoredAuth(): { user: { role: UserRole } | null; isAuthenticated: boolean } | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined') {return null;}
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
@@ -52,11 +52,11 @@ function permissionMatches(
   }
 
   // Scope check
-  if (!required.scope) return true;
-  if (!available.scope) return true;
-  if (available.scope === 'all') return true;
-  if (available.scope === required.scope) return true;
-  if (available.scope === 'festival' && required.scope === 'own') return true;
+  if (!required.scope) {return true;}
+  if (!available.scope) {return true;}
+  if (available.scope === 'all') {return true;}
+  if (available.scope === required.scope) {return true;}
+  if (available.scope === 'festival' && required.scope === 'own') {return true;}
 
   return false;
 }
@@ -71,14 +71,14 @@ export function usePermissions() {
 
   // Get all permissions for the current user
   const permissions = useMemo((): Permission[] => {
-    if (!userRole) return [];
+    if (!userRole) {return [];}
     return ROLE_PERMISSIONS[userRole] || [];
   }, [userRole]);
 
   // Check if user has a specific role
   const hasRole = useCallback(
     (role: UserRole | UserRole[]): boolean => {
-      if (!userRole) return false;
+      if (!userRole) {return false;}
       if (Array.isArray(role)) {
         return role.includes(userRole);
       }
@@ -90,7 +90,7 @@ export function usePermissions() {
   // Check if user has a specific permission
   const hasPermission = useCallback(
     (permission: Permission): boolean => {
-      if (!userRole) return false;
+      if (!userRole) {return false;}
       return permissions.some((p) => permissionMatches(permission, p));
     },
     [userRole, permissions]
@@ -216,14 +216,14 @@ export function useRequireAuth(options: UseRequireAuthOptions = {}) {
 
   // Check access
   const hasAccess = useMemo(() => {
-    if (!isAuthenticated) return false;
+    if (!isAuthenticated) {return false;}
 
     if (requiredRole) {
-      if (!hasRole(requiredRole)) return false;
+      if (!hasRole(requiredRole)) {return false;}
     }
 
     if (requiredPermission) {
-      if (!hasPermission(requiredPermission)) return false;
+      if (!hasPermission(requiredPermission)) {return false;}
     }
 
     return true;
@@ -232,7 +232,7 @@ export function useRequireAuth(options: UseRequireAuthOptions = {}) {
   // Redirect if no access
   useEffect(() => {
     // Wait for client-side hydration
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {return;}
 
     const storedAuth = getStoredAuth();
     const isAuth = storedAuth?.isAuthenticated ?? false;
@@ -265,7 +265,7 @@ export function useRedirectIfAuthenticated(redirectTo = '/account') {
   const { isAuthenticated } = usePermissions();
 
   useEffect(() => {
-    if (typeof window === 'undefined') return;
+    if (typeof window === 'undefined') {return;}
 
     const storedAuth = getStoredAuth();
     if (storedAuth?.isAuthenticated) {

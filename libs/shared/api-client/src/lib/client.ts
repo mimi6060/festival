@@ -104,14 +104,14 @@ export class FestivalApiClient {
   private readonly axios: AxiosInstance;
   private readonly config: Required<ApiClientConfig>;
   private readonly tokenStorage: TokenStorage;
-  private readonly eventListeners: Set<ApiClientEventListener> = new Set();
+  private readonly eventListeners = new Set<ApiClientEventListener>();
 
   // Token refresh state
   private isRefreshing = false;
   private refreshQueue: QueuedRequest[] = [];
 
   // Retry state
-  private retryCount: Map<string, number> = new Map();
+  private retryCount = new Map<string, number>();
 
   constructor(
     config: Partial<ApiClientConfig> = {},

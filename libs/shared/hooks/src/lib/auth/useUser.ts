@@ -19,7 +19,7 @@ export const userQueryKeys = {
  * Get auth token from storage
  */
 function getAuthToken(): string | null {
-  if (typeof window === 'undefined') return null;
+  if (typeof window === 'undefined') {return null;}
   return localStorage.getItem('auth_token');
 }
 
@@ -103,7 +103,7 @@ export function useUser() {
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message || 'Upload failed');
+      if (!response.ok) {throw new Error(data.message || 'Upload failed');}
       return data.data;
     },
     onSuccess: (result) => {

@@ -216,7 +216,7 @@ export function isAudioFile(mimeType: string, extension?: string): boolean {
 /**
  * Format file size in human-readable format
  */
-export function formatFileSize(bytes: number, decimals: number = 2): string {
+export function formatFileSize(bytes: number, decimals = 2): string {
   if (bytes === 0) return '0 B';
 
   const k = 1024;
@@ -310,7 +310,7 @@ export function validateFile(
 /**
  * Create validation config for images
  */
-export function createImageUploadConfig(maxSizeMB: number = 5): FileUploadConfig {
+export function createImageUploadConfig(maxSizeMB = 5): FileUploadConfig {
   return {
     maxSizeBytes: maxSizeMB * 1024 * 1024,
     allowedTypes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
@@ -321,7 +321,7 @@ export function createImageUploadConfig(maxSizeMB: number = 5): FileUploadConfig
 /**
  * Create validation config for documents
  */
-export function createDocumentUploadConfig(maxSizeMB: number = 10): FileUploadConfig {
+export function createDocumentUploadConfig(maxSizeMB = 10): FileUploadConfig {
   return {
     maxSizeBytes: maxSizeMB * 1024 * 1024,
     allowedTypes: [

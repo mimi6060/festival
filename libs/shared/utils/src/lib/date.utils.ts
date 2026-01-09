@@ -45,7 +45,7 @@ export function endOfDay(date: Date): Date {
  */
 export function formatDateLocale(
   date: Date,
-  locale: string = 'fr-FR',
+  locale = 'fr-FR',
   options?: Intl.DateTimeFormatOptions
 ): string {
   const defaultOptions: Intl.DateTimeFormatOptions = {
@@ -174,7 +174,7 @@ export function getDateRange(startDate: Date, endDate: Date): Date[] {
 /**
  * Get relative time string (e.g., "2 hours ago", "in 3 days")
  */
-export function getRelativeTime(date: Date, locale: string = 'fr-FR'): string {
+export function getRelativeTime(date: Date, locale = 'fr-FR'): string {
   const now = new Date();
   const diffMs = date.getTime() - now.getTime();
   const diffSecs = Math.round(diffMs / 1000);

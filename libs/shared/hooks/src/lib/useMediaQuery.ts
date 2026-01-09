@@ -133,11 +133,11 @@ export function useBreakpoint(
 
   // Determine current breakpoint
   let currentBreakpoint: keyof Breakpoints = 'xs';
-  if (is2xl) currentBreakpoint = '2xl';
-  else if (isXl) currentBreakpoint = 'xl';
-  else if (isLg) currentBreakpoint = 'lg';
-  else if (isMd) currentBreakpoint = 'md';
-  else if (isSm) currentBreakpoint = 'sm';
+  if (is2xl) {currentBreakpoint = '2xl';}
+  else if (isXl) {currentBreakpoint = 'xl';}
+  else if (isLg) {currentBreakpoint = 'lg';}
+  else if (isMd) {currentBreakpoint = 'md';}
+  else if (isSm) {currentBreakpoint = 'sm';}
 
   return {
     isXs,

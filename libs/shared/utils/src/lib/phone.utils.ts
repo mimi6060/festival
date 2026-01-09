@@ -225,7 +225,7 @@ export function getCountryFromDialCode(dialCode: string): string | null {
 /**
  * Parse phone number string into structured format
  */
-export function parsePhoneNumber(phone: string, defaultCountry: string = 'FR'): PhoneNumber | null {
+export function parsePhoneNumber(phone: string, defaultCountry = 'FR'): PhoneNumber | null {
   if (!phone) return null;
 
   const cleaned = phone.trim();
@@ -331,7 +331,7 @@ export function validatePhoneNumber(
 /**
  * Check if phone number is mobile
  */
-export function isMobileNumber(phone: string, countryCode: string = 'FR'): boolean {
+export function isMobileNumber(phone: string, countryCode = 'FR'): boolean {
   const digits = extractDigits(phone);
 
   switch (countryCode) {
@@ -353,7 +353,7 @@ export function isMobileNumber(phone: string, countryCode: string = 'FR'): boole
 /**
  * Check if phone number is landline
  */
-export function isLandlineNumber(phone: string, countryCode: string = 'FR'): boolean {
+export function isLandlineNumber(phone: string, countryCode = 'FR'): boolean {
   return !isMobileNumber(phone, countryCode);
 }
 
@@ -364,7 +364,7 @@ export function isLandlineNumber(phone: string, countryCode: string = 'FR'): boo
 /**
  * Format phone number to national format
  */
-export function formatPhoneNumber(phone: string, countryCode: string = 'FR'): string {
+export function formatPhoneNumber(phone: string, countryCode = 'FR'): string {
   if (!phone) return '';
 
   const parsed = parsePhoneNumber(phone, countryCode);
@@ -403,7 +403,7 @@ export function formatPhoneNumber(phone: string, countryCode: string = 'FR'): st
 /**
  * Format phone number to international format
  */
-export function formatInternational(phone: string, countryCode: string = 'FR'): string {
+export function formatInternational(phone: string, countryCode = 'FR'): string {
   const parsed = parsePhoneNumber(phone, countryCode);
   if (!parsed) return phone;
 
@@ -413,7 +413,7 @@ export function formatInternational(phone: string, countryCode: string = 'FR'): 
 /**
  * Format phone number to E.164 format
  */
-export function formatE164(phone: string, countryCode: string = 'FR'): string {
+export function formatE164(phone: string, countryCode = 'FR'): string {
   const parsed = parsePhoneNumber(phone, countryCode);
   if (!parsed) return phone;
 
@@ -423,7 +423,7 @@ export function formatE164(phone: string, countryCode: string = 'FR'): string {
 /**
  * Format phone number for display (with flag)
  */
-export function formatPhoneWithFlag(phone: string, countryCode: string = 'FR'): string {
+export function formatPhoneWithFlag(phone: string, countryCode = 'FR'): string {
   const flags: Record<string, string> = {
     FR: '\u{1F1EB}\u{1F1F7}',
     BE: '\u{1F1E7}\u{1F1EA}',
@@ -446,7 +446,7 @@ export function formatPhoneWithFlag(phone: string, countryCode: string = 'FR'): 
 /**
  * Format phone as clickable tel: link
  */
-export function formatPhoneLink(phone: string, countryCode: string = 'FR'): string {
+export function formatPhoneLink(phone: string, countryCode = 'FR'): string {
   const e164 = formatE164(phone, countryCode);
   return `tel:${e164}`;
 }
@@ -454,7 +454,7 @@ export function formatPhoneLink(phone: string, countryCode: string = 'FR'): stri
 /**
  * Format phone as WhatsApp link
  */
-export function formatWhatsAppLink(phone: string, countryCode: string = 'FR'): string {
+export function formatWhatsAppLink(phone: string, countryCode = 'FR'): string {
   const e164 = formatE164(phone, countryCode).replace('+', '');
   return `https://wa.me/${e164}`;
 }
@@ -466,7 +466,7 @@ export function formatWhatsAppLink(phone: string, countryCode: string = 'FR'): s
 /**
  * Mask phone number for privacy
  */
-export function maskPhoneNumber(phone: string, visibleDigits: number = 4): string {
+export function maskPhoneNumber(phone: string, visibleDigits = 4): string {
   const formatted = formatPhoneNumber(phone);
   const digits = extractDigits(formatted);
 
@@ -524,7 +524,7 @@ export function partialMaskPhone(phone: string): string {
 /**
  * Normalize phone number for comparison
  */
-export function normalizePhoneNumber(phone: string, countryCode: string = 'FR'): string {
+export function normalizePhoneNumber(phone: string, countryCode = 'FR'): string {
   const parsed = parsePhoneNumber(phone, countryCode);
   return parsed ? parsed.e164 : extractDigits(phone);
 }
@@ -535,7 +535,7 @@ export function normalizePhoneNumber(phone: string, countryCode: string = 'FR'):
 export function arePhoneNumbersEqual(
   phone1: string,
   phone2: string,
-  countryCode: string = 'FR'
+  countryCode = 'FR'
 ): boolean {
   const normalized1 = normalizePhoneNumber(phone1, countryCode);
   const normalized2 = normalizePhoneNumber(phone2, countryCode);
@@ -552,7 +552,7 @@ export function arePhoneNumbersEqual(
 export function autoFormatPhoneInput(
   value: string,
   previousValue: string,
-  countryCode: string = 'FR'
+  countryCode = 'FR'
 ): string {
   // Only format if adding characters (not deleting)
   if (value.length <= previousValue.length) {
