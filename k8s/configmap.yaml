@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: festival-config
+  namespace: festival
+  labels:
+    app.kubernetes.io/name: festival
+    app.kubernetes.io/part-of: festival-platform
+data:
+  # API Configuration
+  NODE_ENV: "production"
+  API_PORT: "3333"
+  API_HOST: "0.0.0.0"
+
+  # Database Configuration
+  DATABASE_HOST: "postgres-0.postgres.festival.svc.cluster.local"
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: "festival"
+
+  # Redis Configuration
+  REDIS_HOST: "redis-0.redis.festival.svc.cluster.local"
+  REDIS_PORT: "6379"
+
+  # Frontend Configuration
+  WEB_PORT: "3000"
+  ADMIN_PORT: "4200"
+
+  # API URLs (for frontend apps)
+  NEXT_PUBLIC_API_URL: "https://api.festival.example.com"
+  NEXT_PUBLIC_WEB_URL: "https://festival.example.com"
+  NEXT_PUBLIC_ADMIN_URL: "https://admin.festival.example.com"
+
+  # Logging
+  LOG_LEVEL: "info"
+
+  # CORS Origins
+  CORS_ORIGINS: "https://festival.example.com,https://admin.festival.example.com"
+
+  # Feature Flags
+  ENABLE_SWAGGER: "false"
+  ENABLE_RATE_LIMITING: "true"

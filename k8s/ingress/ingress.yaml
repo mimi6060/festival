@@ -74,7 +74,7 @@ spec:
               service:
                 name: api
                 port:
-                  number: 3000
+                  number: 3333
     # Admin panel
     - host: admin.festival.example.com
       http:
@@ -85,7 +85,7 @@ spec:
               service:
                 name: admin
                 port:
-                  number: 3000
+                  number: 4200
 ---
 # WebSocket-specific Ingress for real-time features
 apiVersion: networking.k8s.io/v1
@@ -125,4 +125,4 @@ spec:
               service:
                 name: api
                 port:
-                  number: 3000
+                  number: 3333

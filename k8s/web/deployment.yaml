@@ -63,7 +63,9 @@ spec:
               protocol: TCP
           envFrom:
             - configMapRef:
-                name: web-config
+                name: festival-config
+            - secretRef:
+                name: festival-secrets
           env:
             - name: POD_NAME
               valueFrom:

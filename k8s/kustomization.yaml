@@ -19,47 +19,38 @@ commonLabels:
 
 # Resources to deploy
 resources:
-  # Base namespace and quotas
-  - base/namespace.yaml
+  # Namespace
+  - namespace.yaml
 
-  # ConfigMaps
-  - configmaps/api-config.yaml
-  - configmaps/web-config.yaml
-  - configmaps/admin-config.yaml
-  - configmaps/postgresql-config.yaml
-  - configmaps/redis-config.yaml
+  # ConfigMaps and Secrets
+  - configmap.yaml
+  - secrets.yaml
 
-  # Secrets (use external secrets manager in production)
-  - secrets/api-secrets.yaml
-  - secrets/postgresql-secrets.yaml
-  - secrets/redis-secrets.yaml
-  - secrets/tls-secrets.yaml
-
-  # Application deployments
+  # API (NestJS backend - port 3333)
   - api/deployment.yaml
   - api/service.yaml
   - api/hpa.yaml
   - api/pdb.yaml
 
+  # Web (Next.js public site - port 3000)
   - web/deployment.yaml
   - web/service.yaml
   - web/hpa.yaml
 
+  # Admin (Next.js admin dashboard - port 4200)
   - admin/deployment.yaml
   - admin/service.yaml
 
-  # Database
-  - postgresql/statefulset.yaml
-  - postgresql/service.yaml
-  - postgresql/pdb.yaml
+  # PostgreSQL Database
+  - postgres/statefulset.yaml
+  - postgres/service.yaml
 
-  # Cache
+  # Redis Cache
   - redis/statefulset.yaml
   - redis/service.yaml
 
-  # Networking
+  # Ingress with TLS
   - ingress/ingress.yaml
-  - ingress/nginx-config.yaml
 
   # Network Policies (pod-to-pod isolation)
   - network-policies/default-deny.yaml
@@ -67,7 +58,7 @@ resources:
   - network-policies/web-policy.yaml
   - network-policies/database-policy.yaml
 
-  # SSL/TLS
+  # SSL/TLS via cert-manager
   - cert-manager/cluster-issuer.yaml
   - cert-manager/certificates.yaml
 
@@ -79,12 +70,6 @@ images:
     newTag: latest
   - name: festival/admin
     newTag: latest
-
-# Generate ConfigMaps from environment files
-configMapGenerator: []
-
-# Generate Secrets from files
-secretGenerator: []
 
 # Patches for environment-specific overrides
 patches: []
