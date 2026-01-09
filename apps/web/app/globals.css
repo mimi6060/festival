@@ -2,25 +2,280 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Import design tokens */
+@import '../styles/tokens.css';
+
+/**
+ * Theme System - Light/Dark Mode
+ *
+ * The application uses CSS custom properties for theming.
+ * Default theme is "dark" (festival aesthetic).
+ * Light mode can be activated via .light class or data-theme="light".
+ */
+
 :root {
+  /* Base foreground/background */
   --foreground-rgb: 255, 255, 255;
   --background-start-rgb: 26, 26, 46;
   --background-end-rgb: 15, 52, 96;
+
+  /* Theme colors - Default: Dark */
+  --theme-bg: var(--color-festival-dark);
+  --theme-bg-secondary: var(--color-festival-darker);
+  --theme-bg-tertiary: var(--color-festival-medium);
+  --theme-bg-elevated: rgba(255, 255, 255, 0.05);
+  --theme-bg-hover: rgba(255, 255, 255, 0.1);
+
+  --theme-text-primary: rgba(255, 255, 255, 1);
+  --theme-text-secondary: rgba(255, 255, 255, 0.7);
+  --theme-text-tertiary: rgba(255, 255, 255, 0.5);
+  --theme-text-muted: rgba(255, 255, 255, 0.4);
+
+  --theme-border: rgba(255, 255, 255, 0.1);
+  --theme-border-hover: rgba(255, 255, 255, 0.2);
+  --theme-border-focus: var(--color-primary-500);
+
+  --theme-surface: rgba(255, 255, 255, 0.05);
+  --theme-surface-hover: rgba(255, 255, 255, 0.1);
+  --theme-surface-active: rgba(255, 255, 255, 0.15);
+
+  /* Overlay */
+  --theme-overlay: rgba(0, 0, 0, 0.7);
+  --theme-backdrop: blur(8px);
+
+  /* Shadows */
+  --theme-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --theme-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
+  --theme-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
+  --theme-shadow-glow: 0 0 20px var(--color-primary-500);
+
+  /* Input specific */
+  --theme-input-bg: rgba(255, 255, 255, 0.05);
+  --theme-input-border: rgba(255, 255, 255, 0.1);
+  --theme-input-placeholder: rgba(255, 255, 255, 0.4);
+
+  /* Card specific */
+  --theme-card-bg: rgba(255, 255, 255, 0.05);
+  --theme-card-border: rgba(255, 255, 255, 0.1);
+
+  /* Scrollbar */
+  --theme-scrollbar-track: rgba(255, 255, 255, 0.05);
+  --theme-scrollbar-thumb: rgba(255, 255, 255, 0.2);
+  --theme-scrollbar-thumb-hover: rgba(255, 255, 255, 0.3);
 }
 
+/* Light Mode */
+.light,
+[data-theme='light'] {
+  --foreground-rgb: 26, 26, 46;
+  --background-start-rgb: 249, 250, 251;
+  --background-end-rgb: 243, 244, 246;
+
+  --theme-bg: #f9fafb;
+  --theme-bg-secondary: #ffffff;
+  --theme-bg-tertiary: #f3f4f6;
+  --theme-bg-elevated: rgba(0, 0, 0, 0.02);
+  --theme-bg-hover: rgba(0, 0, 0, 0.05);
+
+  --theme-text-primary: rgba(26, 26, 46, 1);
+  --theme-text-secondary: rgba(26, 26, 46, 0.7);
+  --theme-text-tertiary: rgba(26, 26, 46, 0.5);
+  --theme-text-muted: rgba(26, 26, 46, 0.4);
+
+  --theme-border: rgba(0, 0, 0, 0.1);
+  --theme-border-hover: rgba(0, 0, 0, 0.2);
+  --theme-border-focus: var(--color-primary-500);
+
+  --theme-surface: rgba(0, 0, 0, 0.02);
+  --theme-surface-hover: rgba(0, 0, 0, 0.05);
+  --theme-surface-active: rgba(0, 0, 0, 0.08);
+
+  --theme-overlay: rgba(0, 0, 0, 0.5);
+
+  --theme-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --theme-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --theme-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --theme-shadow-glow: 0 0 20px rgba(217, 70, 239, 0.2);
+
+  --theme-input-bg: #ffffff;
+  --theme-input-border: rgba(0, 0, 0, 0.15);
+  --theme-input-placeholder: rgba(0, 0, 0, 0.4);
+
+  --theme-card-bg: #ffffff;
+  --theme-card-border: rgba(0, 0, 0, 0.1);
+
+  --theme-scrollbar-track: rgba(0, 0, 0, 0.05);
+  --theme-scrollbar-thumb: rgba(0, 0, 0, 0.2);
+  --theme-scrollbar-thumb-hover: rgba(0, 0, 0, 0.3);
+}
+
+/* Base body styles */
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
-      transparent,
-      rgb(var(--background-end-rgb))
-    )
+  background: linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb)))
     rgb(var(--background-start-rgb));
   min-height: 100vh;
+  transition:
+    background-color 0.3s ease,
+    color 0.3s ease;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--theme-scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--theme-scrollbar-thumb);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--theme-scrollbar-thumb-hover);
+}
+
+/* Selection */
+::selection {
+  background-color: var(--color-primary-500);
+  color: white;
 }
 
 @layer utilities {
   .text-balance {
     text-wrap: balance;
   }
+}
+
+/* Theme utility classes */
+@layer components {
+  /* Surface backgrounds */
+  .bg-theme {
+    background-color: var(--theme-bg);
+  }
+
+  .bg-theme-secondary {
+    background-color: var(--theme-bg-secondary);
+  }
+
+  .bg-theme-elevated {
+    background-color: var(--theme-bg-elevated);
+  }
+
+  .bg-theme-surface {
+    background-color: var(--theme-surface);
+  }
+
+  /* Text colors */
+  .text-theme {
+    color: var(--theme-text-primary);
+  }
+
+  .text-theme-secondary {
+    color: var(--theme-text-secondary);
+  }
+
+  .text-theme-muted {
+    color: var(--theme-text-muted);
+  }
+
+  /* Borders */
+  .border-theme {
+    border-color: var(--theme-border);
+  }
+
+  .border-theme-hover:hover {
+    border-color: var(--theme-border-hover);
+  }
+
+  /* Card */
+  .card-theme {
+    background-color: var(--theme-card-bg);
+    border-color: var(--theme-card-border);
+  }
+
+  /* Input */
+  .input-theme {
+    background-color: var(--theme-input-bg);
+    border-color: var(--theme-input-border);
+  }
+
+  .input-theme::placeholder {
+    color: var(--theme-input-placeholder);
+  }
+
+  /* Shadows */
+  .shadow-theme-sm {
+    box-shadow: var(--theme-shadow-sm);
+  }
+
+  .shadow-theme-md {
+    box-shadow: var(--theme-shadow-md);
+  }
+
+  .shadow-theme-lg {
+    box-shadow: var(--theme-shadow-lg);
+  }
+
+  .shadow-theme-glow {
+    box-shadow: var(--theme-shadow-glow);
+  }
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-out;
+}
+
+.animate-slideUp {
+  animation: slideUp 0.3s ease-out;
+}
+
+.animate-slideDown {
+  animation: slideDown 0.3s ease-out;
 }

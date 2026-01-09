@@ -150,3 +150,6 @@ firebase-adminsdk*.json
 # =============================================================================
 uploads/
 tmp-uploads/
+
+*storybook.log
+storybook-static
