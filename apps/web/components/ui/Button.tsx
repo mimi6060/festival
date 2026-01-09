@@ -15,6 +15,10 @@ interface ButtonBaseProps {
   fullWidth?: boolean;
   children: React.ReactNode;
   className?: string;
+  /** Loading text for screen readers (defaults to "Loading...") */
+  loadingText?: string;
+  /** Accessible label for icon-only buttons */
+  'aria-label'?: string;
 }
 
 interface ButtonAsButton extends ButtonBaseProps, Omit<React.ButtonHTMLAttributes<HTMLButtonElement>, keyof ButtonBaseProps> {
@@ -59,11 +63,34 @@ const variantStyles: Record<ButtonVariant, string> = {
 };
 
 const sizeStyles: Record<ButtonSize, string> = {
-  sm: 'px-4 py-2 text-sm rounded-lg',
-  md: 'px-6 py-3 text-base rounded-xl',
-  lg: 'px-8 py-4 text-lg rounded-2xl',
+  sm: 'px-4 py-2 text-sm rounded-lg min-h-[36px] min-w-[36px]',
+  md: 'px-6 py-3 text-base rounded-xl min-h-[44px] min-w-[44px]',
+  lg: 'px-8 py-4 text-lg rounded-2xl min-h-[52px] min-w-[52px]',
 };
 
+/**
+ * Button - Accessible button component
+ *
+ * WCAG 2.1 AA Compliance:
+ * - 2.4.7 Focus Visible: Clear focus indicator with ring
+ * - 1.4.3 Contrast: High contrast text and background
+ * - 2.5.5 Target Size: Minimum 44x44px touch target (WCAG 2.2 AAA, good practice)
+ * - 4.1.2 Name, Role, Value: Proper ARIA states for loading/disabled
+ *
+ * @example
+ * ```tsx
+ * // Standard button
+ * <Button variant="primary">Click me</Button>
+ *
+ * // Loading state (automatically sets aria-busy and aria-disabled)
+ * <Button isLoading loadingText="Saving...">Save</Button>
+ *
+ * // Icon-only button (requires aria-label)
+ * <Button variant="ghost" aria-label="Close menu">
+ *   <CloseIcon />
+ * </Button>
+ * ```
+ */
 export function Button({
   variant = 'primary',
   size = 'md',
@@ -73,13 +100,15 @@ export function Button({
   fullWidth = false,
   children,
   className = '',
+  loadingText = 'Loading...',
   ...props
 }: ButtonProps) {
   const baseStyles = `
     inline-flex items-center justify-center gap-2
     transition-all duration-300
     disabled:opacity-50 disabled:cursor-not-allowed
-    focus:outline-none focus:ring-2 focus:ring-primary-500/50
+    focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2
+    focus-visible:ring-primary-500 focus-visible:ring-offset-festival-dark
   `;
 
   const combinedClassName = `
@@ -90,33 +119,41 @@ export function Button({
     ${className}
   `.trim().replace(/\s+/g, ' ');
 
+  const loadingSpinner = (
+    <svg
+      className="animate-spin h-5 w-5"
+      xmlns="http://www.w3.org/2000/svg"
+      fill="none"
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+    >
+      <circle
+        className="opacity-25"
+        cx="12"
+        cy="12"
+        r="10"
+        stroke="currentColor"
+        strokeWidth="4"
+      />
+      <path
+        className="opacity-75"
+        fill="currentColor"
+        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+      />
+    </svg>
+  );
+
   const content = (
     <>
       {isLoading ? (
-        <svg
-          className="animate-spin h-5 w-5"
-          xmlns="http://www.w3.org/2000/svg"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
-          <circle
-            className="opacity-25"
-            cx="12"
-            cy="12"
-            r="10"
-            stroke="currentColor"
-            strokeWidth="4"
-          />
-          <path
-            className="opacity-75"
-            fill="currentColor"
-            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-          />
-        </svg>
+        <>
+          {loadingSpinner}
+          <span className="sr-only">{loadingText}</span>
+        </>
       ) : (
         leftIcon
       )}
-      <span>{children}</span>
+      <span aria-hidden={isLoading ? true : undefined}>{children}</span>
       {!isLoading && rightIcon}
     </>
   );
@@ -130,14 +167,20 @@ export function Button({
     );
   }
 
-  const { as: _as2, ...buttonProps } = props as ButtonAsButton;
+  const { as: _as2, disabled, ...buttonProps } = props as ButtonAsButton;
+  const isDisabled = isLoading || disabled;
+
   return (
     <button
       className={combinedClassName}
-      disabled={isLoading || buttonProps.disabled}
+      disabled={isDisabled}
+      aria-disabled={isDisabled || undefined}
+      aria-busy={isLoading || undefined}
       {...buttonProps}
     >
       {content}
     </button>
   );
 }
+
+Button.displayName = 'Button';

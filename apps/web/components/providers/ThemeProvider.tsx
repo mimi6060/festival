@@ -44,7 +44,7 @@ export function ThemeScript({ storageKey = THEME_KEY }: { storageKey?: string })
         root.classList.add(resolved);
         root.setAttribute('data-theme', resolved);
         root.style.colorScheme = resolved;
-      } catch () {
+      } catch (e) {
         // If localStorage is not available, default to dark
         document.documentElement.classList.add('dark');
         document.documentElement.setAttribute('data-theme', 'dark');
@@ -101,7 +101,7 @@ export function ThemeProvider({
       if (typeof window !== 'undefined') {
         try {
           localStorage.setItem(storageKey, newTheme);
-        } catch () {
+        } catch (e) {
           // localStorage might not be available
         }
       }
@@ -129,7 +129,7 @@ export function ThemeProvider({
       setThemeState(initialTheme);
       const resolved = initialTheme === 'system' ? getSystemTheme() : initialTheme;
       applyTheme(resolved);
-    } catch () {
+    } catch (e) {
       // localStorage might not be available
       applyTheme('dark');
     }

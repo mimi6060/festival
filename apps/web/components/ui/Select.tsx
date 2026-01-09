@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useEffect, forwardRef } from 'react';
+import React, { useState, useRef, useEffect, forwardRef, useId, useCallback } from 'react';
 
 /**
  * Select size options
@@ -72,17 +72,17 @@ export interface SelectProps {
 
 const sizeStyles: Record<SelectSize, { input: string; text: string; icon: string }> = {
   sm: {
-    input: 'px-3 py-2',
+    input: 'px-3 py-2 min-h-[36px]',
     text: 'text-sm',
     icon: 'w-4 h-4',
   },
   md: {
-    input: 'px-4 py-3',
+    input: 'px-4 py-3 min-h-[44px]',
     text: 'text-base',
     icon: 'w-5 h-5',
   },
   lg: {
-    input: 'px-5 py-4',
+    input: 'px-5 py-4 min-h-[52px]',
     text: 'text-lg',
     icon: 'w-6 h-6',
   },
@@ -110,6 +110,12 @@ function flattenOptions(options: (SelectOption | SelectOptionGroup)[]): SelectOp
 
 /**
  * Custom Select component with dropdown functionality.
+ *
+ * WCAG 2.1 AA Compliance:
+ * - 1.3.1 Info and Relationships: Proper ARIA roles (combobox, listbox, option)
+ * - 2.1.1 Keyboard: Full keyboard navigation (arrows, home, end, type-ahead)
+ * - 2.4.7 Focus Visible: Clear focus indicators
+ * - 4.1.2 Name, Role, Value: Proper ARIA attributes
  *
  * @example
  * ```tsx
@@ -150,15 +156,23 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
     const [isOpen, setIsOpen] = useState(false);
     const [internalValue, setInternalValue] = useState(defaultValue || '');
     const [searchQuery, setSearchQuery] = useState('');
+    const [activeIndex, setActiveIndex] = useState(-1);
     const containerRef = useRef<HTMLDivElement>(null);
     const searchInputRef = useRef<HTMLInputElement>(null);
+    const listboxRef = useRef<HTMLDivElement>(null);
+
+    const generatedId = useId();
+    const selectId = id || generatedId;
+    const labelId = `${selectId}-label`;
+    const listboxId = `${selectId}-listbox`;
+    const errorId = `${selectId}-error`;
+    const helperId = `${selectId}-helper`;
 
     const currentValue = value !== undefined ? value : internalValue;
     const flatOptions = flattenOptions(options);
     const selectedOption = flatOptions.find(opt => opt.value === currentValue);
 
     const sizeStyle = sizeStyles[size];
-    const selectId = id || `select-${Math.random().toString(36).substr(2, 9)}`;
 
     // Filter options based on search query
     const filteredOptions = searchQuery
@@ -175,12 +189,15 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
         }).filter(Boolean) as (SelectOption | SelectOptionGroup)[]
       : options;
 
+    const filteredFlatOptions = flattenOptions(filteredOptions).filter(opt => !opt.disabled);
+
     // Handle click outside
     useEffect(() => {
       const handleClickOutside = (e: MouseEvent) => {
         if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
           setIsOpen(false);
           setSearchQuery('');
+          setActiveIndex(-1);
         }
       };
 
@@ -197,14 +214,25 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
       }
     }, [isOpen, searchable]);
 
-    const handleSelect = (optionValue: string) => {
+    // Scroll active option into view
+    useEffect(() => {
+      if (isOpen && activeIndex >= 0 && listboxRef.current) {
+        const activeOption = listboxRef.current.querySelector(`[data-index="${activeIndex}"]`);
+        if (activeOption) {
+          activeOption.scrollIntoView({ block: 'nearest' });
+        }
+      }
+    }, [activeIndex, isOpen]);
+
+    const handleSelect = useCallback((optionValue: string) => {
       if (value === undefined) {
         setInternalValue(optionValue);
       }
       onChange?.(optionValue);
       setIsOpen(false);
       setSearchQuery('');
-    };
+      setActiveIndex(-1);
+    }, [value, onChange]);
 
     const handleClear = (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -214,16 +242,95 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
       onChange?.('');
     };
 
+    const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+      if (disabled) return;
+
+      switch (e.key) {
+        case 'Enter':
+        case ' ':
+          e.preventDefault();
+          if (isOpen && activeIndex >= 0) {
+            const option = filteredFlatOptions[activeIndex];
+            if (option && !option.disabled) {
+              handleSelect(option.value);
+            }
+          } else {
+            setIsOpen(true);
+          }
+          break;
+
+        case 'Escape':
+          e.preventDefault();
+          setIsOpen(false);
+          setSearchQuery('');
+          setActiveIndex(-1);
+          break;
+
+        case 'ArrowDown':
+          e.preventDefault();
+          if (!isOpen) {
+            setIsOpen(true);
+          } else {
+            setActiveIndex(prev =>
+              prev < filteredFlatOptions.length - 1 ? prev + 1 : 0
+            );
+          }
+          break;
+
+        case 'ArrowUp':
+          e.preventDefault();
+          if (!isOpen) {
+            setIsOpen(true);
+          } else {
+            setActiveIndex(prev =>
+              prev > 0 ? prev - 1 : filteredFlatOptions.length - 1
+            );
+          }
+          break;
+
+        case 'Home':
+          e.preventDefault();
+          if (isOpen) {
+            setActiveIndex(0);
+          }
+          break;
+
+        case 'End':
+          e.preventDefault();
+          if (isOpen) {
+            setActiveIndex(filteredFlatOptions.length - 1);
+          }
+          break;
+
+        case 'Tab':
+          if (isOpen) {
+            setIsOpen(false);
+            setSearchQuery('');
+            setActiveIndex(-1);
+          }
+          break;
+      }
+    }, [disabled, isOpen, activeIndex, filteredFlatOptions, handleSelect]);
+
+    // Build aria-describedby
+    const describedByIds: string[] = [];
+    if (error) describedByIds.push(errorId);
+    if (helperText && !error) describedByIds.push(helperId);
+
+    let flatIndex = -1;
+
     return (
       <div ref={containerRef} className={`relative ${className}`}>
         {/* Label */}
         {label && (
           <label
+            id={labelId}
             htmlFor={selectId}
             className="block text-sm font-medium text-white/80 mb-2"
           >
             {label}
-            {required && <span className="text-red-400 ml-1">*</span>}
+            {required && <span className="text-red-400 ml-1" aria-hidden="true">*</span>}
+            {required && <span className="sr-only">(required)</span>}
           </label>
         )}
 
@@ -234,6 +341,7 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
           id={selectId}
           disabled={disabled}
           onClick={() => !disabled && setIsOpen(!isOpen)}
+          onKeyDown={handleKeyDown}
           className={`
             w-full
             flex items-center justify-between gap-2
@@ -245,15 +353,23 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
             ${variantStyles[variant]}
             ${error ? 'border-red-500' : ''}
             ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-            focus:outline-none focus:ring-2 focus:ring-primary-500/30
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/50
+            focus-visible:ring-offset-2 focus-visible:ring-offset-festival-dark
           `}
+          role="combobox"
           aria-haspopup="listbox"
           aria-expanded={isOpen}
+          aria-controls={listboxId}
+          aria-labelledby={label ? labelId : undefined}
+          aria-describedby={describedByIds.length > 0 ? describedByIds.join(' ') : undefined}
+          aria-invalid={error ? true : undefined}
+          aria-required={required}
+          aria-activedescendant={activeIndex >= 0 ? `${selectId}-option-${activeIndex}` : undefined}
         >
           <span className={selectedOption ? 'text-white' : 'text-white/50'}>
             {selectedOption ? (
               <span className="flex items-center gap-2">
-                {selectedOption.icon}
+                {selectedOption.icon && <span aria-hidden="true">{selectedOption.icon}</span>}
                 {selectedOption.label}
               </span>
             ) : (
@@ -264,9 +380,19 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
             {clearable && currentValue && (
               <span
                 onClick={handleClear}
-                className="p-1 rounded hover:bg-white/10 text-white/50 hover:text-white"
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    handleClear(e as unknown as React.MouseEvent);
+                  }
+                }}
+                role="button"
+                tabIndex={0}
+                className="p-1 rounded hover:bg-white/10 text-white/50 hover:text-white min-w-[28px] min-h-[28px] flex items-center justify-center"
+                aria-label="Clear selection"
               >
-                <svg className={sizeStyle.icon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <svg className={sizeStyle.icon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </span>
@@ -277,6 +403,7 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
               viewBox="0 0 24 24"
               stroke="currentColor"
               strokeWidth={2}
+              aria-hidden="true"
             >
               <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
             </svg>
@@ -285,7 +412,14 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
 
         {/* Hidden native select for form submission */}
         {name && (
-          <select name={name} value={currentValue} onChange={() => {}} className="sr-only">
+          <select
+            name={name}
+            value={currentValue}
+            onChange={() => {}}
+            tabIndex={-1}
+            aria-hidden="true"
+            className="sr-only"
+          >
             <option value="">{placeholder}</option>
             {flatOptions.map(opt => (
               <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -296,6 +430,10 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
         {/* Dropdown */}
         {isOpen && (
           <div
+            ref={listboxRef}
+            id={listboxId}
+            role="listbox"
+            aria-labelledby={label ? labelId : undefined}
             className="
               absolute z-50
               w-full mt-2
@@ -306,7 +444,6 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
               overflow-hidden
               animate-in fade-in zoom-in-95 duration-150
             "
-            role="listbox"
           >
             {/* Search input */}
             {searchable && (
@@ -315,7 +452,11 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
                   ref={searchInputRef}
                   type="text"
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setActiveIndex(0);
+                  }}
+                  onKeyDown={handleKeyDown}
                   placeholder="Search..."
                   className="
                     w-full px-3 py-2
@@ -323,55 +464,77 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
                     rounded-lg text-white text-sm
                     placeholder:text-white/40
                     focus:outline-none focus:border-primary-500
+                    min-h-[40px]
                   "
+                  aria-label="Search options"
+                  aria-controls={listboxId}
                 />
               </div>
             )}
 
             {/* Options */}
             <div className="max-h-60 overflow-y-auto py-1">
-              {filteredOptions.map((option, index) => {
+              {filteredOptions.map((option, groupIndex) => {
                 if (isOptionGroup(option)) {
                   if (option.options.length === 0) return null;
                   return (
-                    <div key={option.label}>
-                      <div className="px-4 py-2 text-xs font-medium text-white/50 uppercase tracking-wider">
+                    <div key={option.label} role="group" aria-labelledby={`${selectId}-group-${groupIndex}`}>
+                      <div
+                        id={`${selectId}-group-${groupIndex}`}
+                        className="px-4 py-2 text-xs font-medium text-white/50 uppercase tracking-wider"
+                        role="presentation"
+                      >
                         {option.label}
                       </div>
-                      {option.options.map(opt => (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          onClick={() => !opt.disabled && handleSelect(opt.value)}
-                          disabled={opt.disabled}
-                          className={`
-                            w-full px-4 py-2.5
-                            flex items-center gap-3
-                            text-left ${sizeStyle.text}
-                            transition-colors duration-150
-                            ${opt.disabled ? 'text-white/30 cursor-not-allowed' : 'text-white/80 hover:bg-white/10 hover:text-white'}
-                            ${currentValue === opt.value ? 'bg-primary-500/10 text-primary-400' : ''}
-                          `}
-                          role="option"
-                          aria-selected={currentValue === opt.value}
-                        >
-                          {opt.icon && <span className={sizeStyle.icon}>{opt.icon}</span>}
-                          <span className="flex-1">{opt.label}</span>
-                          {currentValue === opt.value && (
-                            <svg className={sizeStyle.icon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
-                            </svg>
-                          )}
-                        </button>
-                      ))}
+                      {option.options.map(opt => {
+                        if (!opt.disabled) flatIndex++;
+                        const currentFlatIndex = opt.disabled ? -1 : flatIndex;
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            id={currentFlatIndex >= 0 ? `${selectId}-option-${currentFlatIndex}` : undefined}
+                            data-index={currentFlatIndex >= 0 ? currentFlatIndex : undefined}
+                            onClick={() => !opt.disabled && handleSelect(opt.value)}
+                            disabled={opt.disabled}
+                            className={`
+                              w-full px-4 py-2.5
+                              flex items-center gap-3
+                              text-left ${sizeStyle.text}
+                              transition-colors duration-150
+                              ${opt.disabled ? 'text-white/30 cursor-not-allowed' : 'text-white/80 hover:bg-white/10 hover:text-white'}
+                              ${currentValue === opt.value ? 'bg-primary-500/10 text-primary-400' : ''}
+                              ${currentFlatIndex === activeIndex ? 'bg-white/10' : ''}
+                              focus:outline-none focus:bg-white/10
+                              min-h-[44px]
+                            `}
+                            role="option"
+                            aria-selected={currentValue === opt.value}
+                            aria-disabled={opt.disabled}
+                          >
+                            {opt.icon && <span className={sizeStyle.icon} aria-hidden="true">{opt.icon}</span>}
+                            <span className="flex-1">{opt.label}</span>
+                            {currentValue === opt.value && (
+                              <svg className={sizeStyle.icon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
+                                <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                              </svg>
+                            )}
+                          </button>
+                        );
+                      })}
                     </div>
                   );
                 }
+
+                if (!option.disabled) flatIndex++;
+                const currentFlatIndex = option.disabled ? -1 : flatIndex;
 
                 return (
                   <button
                     key={option.value}
                     type="button"
+                    id={currentFlatIndex >= 0 ? `${selectId}-option-${currentFlatIndex}` : undefined}
+                    data-index={currentFlatIndex >= 0 ? currentFlatIndex : undefined}
                     onClick={() => !option.disabled && handleSelect(option.value)}
                     disabled={option.disabled}
                     className={`
@@ -381,14 +544,18 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
                       transition-colors duration-150
                       ${option.disabled ? 'text-white/30 cursor-not-allowed' : 'text-white/80 hover:bg-white/10 hover:text-white'}
                       ${currentValue === option.value ? 'bg-primary-500/10 text-primary-400' : ''}
+                      ${currentFlatIndex === activeIndex ? 'bg-white/10' : ''}
+                      focus:outline-none focus:bg-white/10
+                      min-h-[44px]
                     `}
                     role="option"
                     aria-selected={currentValue === option.value}
+                    aria-disabled={option.disabled}
                   >
-                    {option.icon && <span className={sizeStyle.icon}>{option.icon}</span>}
+                    {option.icon && <span className={sizeStyle.icon} aria-hidden="true">{option.icon}</span>}
                     <span className="flex-1">{option.label}</span>
                     {currentValue === option.value && (
-                      <svg className={sizeStyle.icon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                      <svg className={sizeStyle.icon} fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} aria-hidden="true">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
                       </svg>
                     )}
@@ -397,7 +564,7 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
               })}
 
               {filteredOptions.length === 0 && (
-                <div className="px-4 py-8 text-center text-white/40 text-sm">
+                <div className="px-4 py-8 text-center text-white/40 text-sm" role="status">
                   No options found
                 </div>
               )}
@@ -406,9 +573,14 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
         )}
 
         {/* Helper/Error text */}
-        {(helperText || error) && (
-          <p className={`mt-2 text-sm ${error ? 'text-red-400' : 'text-white/50'}`}>
-            {error || helperText}
+        {error && (
+          <p id={errorId} className="mt-2 text-sm text-red-400" role="alert" aria-live="polite">
+            {error}
+          </p>
+        )}
+        {helperText && !error && (
+          <p id={helperId} className="mt-2 text-sm text-white/50">
+            {helperText}
           </p>
         )}
       </div>
