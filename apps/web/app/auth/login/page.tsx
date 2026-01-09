@@ -126,15 +126,23 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form
+            onSubmit={handleSubmit}
+            className="space-y-5"
+            name="login"
+            id="login-form"
+            autoComplete="on"
+          >
             <Input
               label="Email Address"
               name="email"
+              id="email"
               type="email"
               placeholder="you@example.com"
               value={formData.email}
               onChange={handleChange}
               error={errors.email}
+              autoComplete="username email"
               leftIcon={
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
@@ -150,11 +158,13 @@ export default function LoginPage() {
             <Input
               label="Password"
               name="password"
+              id="password"
               type="password"
               placeholder="Enter your password"
               value={formData.password}
               onChange={handleChange}
               error={errors.password}
+              autoComplete="current-password"
               leftIcon={
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path
@@ -204,7 +214,7 @@ export default function LoginPage() {
           {/* Social Login */}
           <div className="grid grid-cols-2 gap-4">
             <a
-              href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api'}/auth/google`}
+              href="/api/auth/google"
               className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-theme-surface border border-theme text-theme-primary hover:bg-theme-surface-hover transition-colors"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
@@ -228,7 +238,7 @@ export default function LoginPage() {
               <span className="text-sm font-medium">Google</span>
             </a>
             <a
-              href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api'}/auth/github`}
+              href="/api/auth/github"
               className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-theme-surface border border-theme text-theme-primary hover:bg-theme-surface-hover transition-colors"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">

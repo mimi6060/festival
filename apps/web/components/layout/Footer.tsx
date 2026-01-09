@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 
 const footerLinks = {
@@ -94,6 +94,29 @@ const socialLinks = [
 ];
 
 export function Footer() {
+  const [email, setEmail] = useState('');
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email?.includes('@')) {
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      // TODO: Implement actual newsletter subscription API
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      setIsSubscribed(true);
+      setEmail('');
+    } catch (error) {
+      console.error('Newsletter subscription failed:', error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <footer className="bg-festival-darker border-t border-white/5">
       <div className="container-app py-12 lg:py-16">
@@ -120,7 +143,8 @@ export function Footer() {
               <span className="text-xl font-bold gradient-text">FestivalHub</span>
             </Link>
             <p className="text-white/50 text-sm mb-6 max-w-xs">
-              Discover and book tickets to the best music festivals around the world. Your next unforgettable experience starts here.
+              Discover and book tickets to the best music festivals around the world. Your next
+              unforgettable experience starts here.
             </p>
             {/* Social Links */}
             <div className="flex items-center gap-4">
@@ -168,19 +192,36 @@ export function Footer() {
                 Get the latest festivals and exclusive offers straight to your inbox.
               </p>
             </div>
-            <form className="flex gap-3 w-full md:w-auto">
-              <input
-                type="email"
-                placeholder="Enter your email"
-                className="flex-1 md:w-64 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-primary-500 transition-colors"
-              />
-              <button
-                type="submit"
-                className="px-6 py-3 rounded-xl bg-primary-500 hover:bg-primary-600 text-white font-semibold transition-colors"
-              >
-                Subscribe
-              </button>
-            </form>
+            {isSubscribed ? (
+              <div className="flex items-center gap-2 text-green-400">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <span className="text-sm font-medium">Thanks for subscribing!</span>
+              </div>
+            ) : (
+              <form onSubmit={handleNewsletterSubmit} className="flex gap-3 w-full md:w-auto">
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="flex-1 md:w-64 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-primary-500 transition-colors"
+                />
+                <button
+                  type="submit"
+                  disabled={isLoading}
+                  className="px-6 py-3 rounded-xl bg-primary-500 hover:bg-primary-600 disabled:bg-primary-500/50 text-white font-semibold transition-colors"
+                >
+                  {isLoading ? 'Subscribing...' : 'Subscribe'}
+                </button>
+              </form>
+            )}
           </div>
         </div>
 
@@ -190,13 +231,22 @@ export function Footer() {
             {new Date().getFullYear()} FestivalHub. All rights reserved.
           </p>
           <div className="flex items-center gap-6">
-            <Link href="/privacy" className="text-white/40 hover:text-white text-sm transition-colors">
+            <Link
+              href="/privacy"
+              className="text-white/40 hover:text-white text-sm transition-colors"
+            >
               Privacy Policy
             </Link>
-            <Link href="/terms" className="text-white/40 hover:text-white text-sm transition-colors">
+            <Link
+              href="/terms"
+              className="text-white/40 hover:text-white text-sm transition-colors"
+            >
               Terms of Service
             </Link>
-            <Link href="/cookies" className="text-white/40 hover:text-white text-sm transition-colors">
+            <Link
+              href="/cookies"
+              className="text-white/40 hover:text-white text-sm transition-colors"
+            >
               Cookie Settings
             </Link>
           </div>

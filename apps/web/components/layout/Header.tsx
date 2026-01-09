@@ -2,9 +2,10 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Button } from '../ui/Button';
 import { ThemeToggle } from '../ui/ThemeToggle';
+import { useAuthStore } from '@/stores/auth.store';
 
 interface NavItem {
   label: string;
@@ -30,6 +31,13 @@ export function Header({ isAuthenticated = false, user }: HeaderProps) {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
+  const router = useRouter();
+  const logout = useAuthStore((state) => state.logout);
+
+  const handleSignOut = async () => {
+    await logout();
+    router.push('/');
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -71,9 +79,7 @@ export function Header({ isAuthenticated = false, user }: HeaderProps) {
                 />
               </svg>
             </div>
-            <span className="text-xl font-bold gradient-text hidden sm:block">
-              FestivalHub
-            </span>
+            <span className="text-xl font-bold gradient-text hidden sm:block">FestivalHub</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -111,7 +117,7 @@ export function Header({ isAuthenticated = false, user }: HeaderProps) {
                   </div>
                   <span className="text-sm font-medium">{user?.name || 'Account'}</span>
                 </Link>
-                <Button variant="ghost" size="sm">
+                <Button variant="ghost" size="sm" onClick={handleSignOut}>
                   Sign Out
                 </Button>
               </div>
@@ -140,11 +146,21 @@ export function Header({ isAuthenticated = false, user }: HeaderProps) {
             >
               {isMobileMenuOpen ? (
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               ) : (
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 6h16M4 12h16M4 18h16"
+                  />
                 </svg>
               )}
             </button>
@@ -177,7 +193,10 @@ export function Header({ isAuthenticated = false, user }: HeaderProps) {
                     >
                       My Account
                     </Link>
-                    <button className="px-4 py-3 rounded-xl text-left text-theme-secondary hover:bg-theme-surface-hover hover:text-theme-primary transition-colors">
+                    <button
+                      onClick={handleSignOut}
+                      className="px-4 py-3 rounded-xl text-left text-theme-secondary hover:bg-theme-surface-hover hover:text-theme-primary transition-colors"
+                    >
                       Sign Out
                     </button>
                   </>

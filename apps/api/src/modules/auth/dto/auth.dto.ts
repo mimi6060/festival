@@ -4,6 +4,7 @@ import {
   IsNotEmpty,
   IsOptional,
   IsString,
+  IsBoolean,
   MinLength,
   MaxLength,
   Matches,
@@ -46,10 +47,10 @@ export class RegisterDto {
   @IsNotEmpty({ message: 'Password is required' })
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
   @MaxLength(100)
-  @Matches(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-    { message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number' },
-  )
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
+    message:
+      'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+  })
   password!: string;
 
   @ApiProperty({
@@ -83,7 +84,9 @@ export class RegisterDto {
   })
   @IsOptional()
   @IsString()
-  @Matches(/^\+[1-9]\d{1,14}$/, { message: 'Phone number must be in international format (e.g., +33612345678)' })
+  @Matches(/^\+[1-9]\d{1,14}$/, {
+    message: 'Phone number must be in international format (e.g., +33612345678)',
+  })
   phone?: string;
 }
 
@@ -108,6 +111,15 @@ export class LoginDto {
   @IsString()
   @IsNotEmpty({ message: 'Password is required' })
   password!: string;
+
+  @ApiPropertyOptional({
+    description: 'Remember me for longer session',
+    example: false,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  rememberMe?: boolean;
 }
 
 /**
@@ -158,10 +170,10 @@ export class ResetPasswordDto {
   @IsString()
   @IsNotEmpty({ message: 'New password is required' })
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
-  @Matches(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-    { message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number' },
-  )
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
+    message:
+      'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+  })
   newPassword!: string;
 }
 
@@ -187,10 +199,10 @@ export class ChangePasswordDto {
   @IsString()
   @IsNotEmpty({ message: 'New password is required' })
   @MinLength(8, { message: 'Password must be at least 8 characters long' })
-  @Matches(
-    /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/,
-    { message: 'Password must contain at least one uppercase letter, one lowercase letter, and one number' },
-  )
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, {
+    message:
+      'Password must contain at least one uppercase letter, one lowercase letter, and one number',
+  })
   newPassword!: string;
 }
 
@@ -274,7 +286,8 @@ export class UserResponseDto {
 export class AuthTokensDto {
   @ApiProperty({
     description: 'JWT access token (expires in 15 minutes)',
-    example: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
+    example:
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c',
   })
   accessToken!: string;
 

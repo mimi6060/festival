@@ -563,6 +563,34 @@ Toutes les tâches ont été déplacées vers `DONE.md`.
 
 - [ ] **MOB-01**: Audit performance React Native
 
+### Session 2026-01-09-10 - Corrections & Améliorations
+
+- [x] **Cross-origin cookie fix**: Added Next.js proxy for web and admin apps
+- [x] **2FA Module**: Implemented TOTP two-factor authentication
+- [x] **Missing pages**: Created about, contact, faq, terms, privacy, artists pages
+- [x] **Bug fixes**: Fixed admin error.tsx, profile page, image configuration
+
+### Session 2026-01-10 - Button & Form Fixes (Web App)
+
+- [x] **Header Sign Out**: Added `handleSignOut` function with `useAuthStore().logout()`
+- [x] **Register OAuth buttons**: Changed from `<button>` to `<a>` with proper hrefs
+- [x] **Register form**: Changed from fake setTimeout to real `useAuthStore().register()`
+- [x] **Login OAuth links**: Fixed to use proxy route `/api/auth/google|github`
+- [x] **LoginDto fix**: Added `rememberMe` optional field to fix validation error
+- [x] **Forgot password page**: Created new `/auth/forgot-password` page
+- [x] **Footer newsletter**: Added state management and form handler with success state
+- [x] **Festivals page filters**: Converted to client component with working filters
+  - Search by name/location/description
+  - Status filter (upcoming/ongoing/completed)
+  - Month filter
+  - Sort by date/price/name
+  - Load more pagination
+  - Clear filters button
+- [x] **Festival detail page**:
+  - Created `FestivalShare` component with Twitter/Facebook/Web Share API
+  - Created `FestivalLineup` component with expand/collapse functionality
+  - Replaced static buttons with functional components
+
 ### Completed (Q2)
 
 - [x] **MOB-02**: Architecture offline-first WatermelonDB
