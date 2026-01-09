@@ -40,6 +40,9 @@ import {
   FestivalCancelledException,
   FestivalEndedException,
 } from '../../common/exceptions/business.exception';
+
+// Webhook event helper for dispatching webhook events
+import { WebhookEventHelper } from '../webhooks/webhook-event.emitter';
 // ============================================================================
 // Types
 // ============================================================================
@@ -98,7 +101,8 @@ export class TicketsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
-    private readonly emailService: EmailService
+    private readonly emailService: EmailService,
+    private readonly webhookEventHelper: WebhookEventHelper,
   ) {
     // Validate QR code secret is configured and meets minimum security requirements
     const qrSecret = this.configService.getOrThrow<string>('QR_CODE_SECRET');
@@ -136,6 +140,20 @@ export class TicketsService {
     );
 
     this.logger.log(`User ${userId} purchased ${quantity} ticket(s) for festival ${festivalId}`);
+
+    // Emit webhook events for each purchased ticket
+    for (const ticket of tickets) {
+      this.webhookEventHelper.emitTicketPurchased({
+        festivalId,
+        ticketId: ticket.id,
+        userId,
+        categoryId,
+        categoryName: ticket.category?.name || category.name,
+        price: ticket.purchasePrice,
+        currency: 'EUR', // TODO: Get from festival currency settings
+        purchasedAt: ticket.createdAt,
+      });
+    }
 
     return tickets;
   }
@@ -306,6 +324,16 @@ export class TicketsService {
 
     this.logger.log(`Ticket ${ticket.id} scanned by staff ${staffId}`);
 
+    // Emit webhook event for ticket validated
+    this.webhookEventHelper.emitTicketValidated({
+      festivalId: ticket.festivalId,
+      ticketId: ticket.id,
+      userId: ticket.userId,
+      validatedAt: ticket.usedAt!,
+      zoneId,
+      staffId,
+    });
+
     return {
       valid: true,
       ticket: this.mapToEntity(ticket),
@@ -449,6 +477,15 @@ export class TicketsService {
 
     this.logger.log(`Ticket ${ticketId} cancelled by user ${userId}`);
 
+    // Emit webhook event for ticket cancelled
+    this.webhookEventHelper.emitTicketCancelled({
+      festivalId: ticket.festivalId,
+      ticketId,
+      userId,
+      cancelledAt: new Date(),
+      reason: 'User requested cancellation',
+    });
+
     return this.mapToEntity(updatedTicket);
   }
 
@@ -476,6 +513,16 @@ export class TicketsService {
     this.logger.log(
       `Ticket ${ticketId} transferred from ${ticket.user.email} to ${normalizedEmail}`
     );
+
+    // Emit webhook event for ticket transferred
+    this.webhookEventHelper.emitTicketTransferred({
+      festivalId: ticket.festivalId,
+      ticketId,
+      fromUserId,
+      toUserId: recipientUser.id,
+      toUserEmail: normalizedEmail,
+      transferredAt: new Date(),
+    });
 
     await this.sendTransferNotification(normalizedEmail, recipientUser, ticket);
 

@@ -6,11 +6,14 @@
  * - Webhook handling
  * - Refund processing
  * - Payment status management
+ * - Multi-currency support with automatic conversion
  */
 
 import {
   Injectable,
   Logger,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import Stripe from 'stripe';
@@ -30,6 +33,13 @@ import {
   InvalidWebhookException,
 } from '../../common/exceptions/business.exception';
 
+// Currency service for multi-currency support
+import { CurrencyService } from '../currency/currency.service';
+import { SupportedCurrency } from '../currency/dto';
+
+// Webhook event helper for dispatching webhook events
+import { WebhookEventHelper } from '../webhooks/webhook-event.emitter';
+
 // ============================================================================
 // Types
 // ============================================================================
@@ -40,6 +50,15 @@ export interface CreatePaymentDto {
   currency?: string;
   description?: string;
   metadata?: Record<string, string>;
+  /** Festival ID for currency conversion to festival's base currency */
+  festivalId?: string;
+}
+
+export interface CreateMultiCurrencyPaymentDto extends CreatePaymentDto {
+  /** User's payment currency (what they pay in) */
+  paymentCurrency: SupportedCurrency;
+  /** Festival ID for determining base currency */
+  festivalId: string;
 }
 
 export interface PaymentIntentResult {
@@ -48,6 +67,12 @@ export interface PaymentIntentResult {
   amount: number;
   currency: string;
   status: PaymentStatus;
+  /** Original amount in user's currency (if converted) */
+  originalAmount?: number;
+  /** Original currency (if converted) */
+  originalCurrency?: string;
+  /** Exchange rate used (if converted) */
+  exchangeRate?: number;
 }
 
 export interface RefundResult {
@@ -55,6 +80,9 @@ export interface RefundResult {
   refundId: string;
   amount: number;
   status: string;
+  /** Refund amount in original currency (if different from base) */
+  originalAmount?: number;
+  originalCurrency?: string;
 }
 
 export interface PaymentEntity {
@@ -70,6 +98,10 @@ export interface PaymentEntity {
   refundedAt: Date | null;
   createdAt: Date;
   updatedAt: Date;
+  /** Multi-currency fields */
+  originalAmount?: number | null;
+  originalCurrency?: string | null;
+  exchangeRate?: number | null;
 }
 
 // ============================================================================
@@ -82,9 +114,15 @@ export class PaymentsService {
   private stripe: Stripe;
   private readonly webhookSecret: string;
 
+  // Supported currencies for Stripe
+  private readonly STRIPE_SUPPORTED_CURRENCIES = ['eur', 'usd', 'gbp', 'chf'];
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
+    @Inject(forwardRef(() => CurrencyService))
+    private readonly currencyService: CurrencyService,
+    private readonly webhookEventHelper: WebhookEventHelper,
   ) {
     const stripeSecretKey = this.configService.get<string>('STRIPE_SECRET_KEY');
     this.webhookSecret = this.configService.get<string>('STRIPE_WEBHOOK_SECRET', '');
@@ -164,6 +202,199 @@ export class PaymentsService {
       this.logger.error(`Failed to create payment intent: ${error}`);
       throw new PaymentFailedException('Failed to create payment intent');
     }
+  }
+
+  /**
+   * Create a multi-currency payment intent
+   *
+   * This method:
+   * 1. Accepts payment in the user's preferred currency
+   * 2. Converts to the festival's base currency for accounting
+   * 3. Stores both original and converted amounts
+   */
+  async createMultiCurrencyPaymentIntent(
+    dto: CreateMultiCurrencyPaymentDto,
+  ): Promise<PaymentIntentResult> {
+    const {
+      userId,
+      amount,
+      paymentCurrency,
+      festivalId,
+      description,
+      metadata = {},
+    } = dto;
+
+    // Validate amount
+    if (amount <= 0) {
+      throw new ValidationException('Amount must be positive', [
+        { field: 'amount', message: 'Amount must be positive', value: amount },
+      ]);
+    }
+
+    // Validate currency is supported
+    if (!this.currencyService.isValidCurrency(paymentCurrency)) {
+      throw new ValidationException('Invalid currency', [
+        { field: 'paymentCurrency', message: 'Currency not supported', value: paymentCurrency },
+      ]);
+    }
+
+    // Get festival currency settings
+    const festivalSettings = await this.currencyService.getFestivalCurrencySettings(festivalId);
+    const baseCurrency = festivalSettings.defaultCurrency;
+
+    // Check if payment currency is supported by the festival
+    if (!festivalSettings.supportedCurrencies.includes(paymentCurrency)) {
+      throw new ValidationException('Currency not supported for this festival', [
+        {
+          field: 'paymentCurrency',
+          message: `Festival only accepts: ${festivalSettings.supportedCurrencies.join(', ')}`,
+          value: paymentCurrency,
+        },
+      ]);
+    }
+
+    // Convert to base currency if needed
+    let convertedAmount = amount;
+    let exchangeRate: number | undefined;
+    let exchangeRateId: string | undefined;
+
+    if (paymentCurrency !== baseCurrency) {
+      const conversion = await this.currencyService.convert(
+        amount,
+        paymentCurrency,
+        baseCurrency,
+        { trackRate: true },
+      );
+      convertedAmount = conversion.convertedAmount;
+      exchangeRate = conversion.exchangeRate;
+      exchangeRateId = conversion.exchangeRateId;
+
+      this.logger.log(
+        `Currency conversion: ${amount} ${paymentCurrency} -> ${convertedAmount} ${baseCurrency} (rate: ${exchangeRate})`,
+      );
+    }
+
+    // Convert to cents for Stripe (use payment currency for Stripe)
+    const amountInCents = Math.round(amount * 100);
+
+    if (!this.stripe) {
+      throw new ServiceUnavailableException('Stripe');
+    }
+
+    try {
+      // Create Stripe payment intent in user's currency
+      const paymentIntent = await this.stripe.paymentIntents.create({
+        amount: amountInCents,
+        currency: paymentCurrency.toLowerCase(),
+        metadata: {
+          ...metadata,
+          userId,
+          festivalId,
+          baseCurrency,
+          originalAmount: amount.toString(),
+          originalCurrency: paymentCurrency,
+          exchangeRate: exchangeRate?.toString() || '1',
+        },
+        automatic_payment_methods: {
+          enabled: true,
+        },
+      });
+
+      // Create payment record in database with both amounts
+      const payment = await this.prisma.payment.create({
+        data: {
+          userId,
+          // Store converted amount in base currency for accounting
+          amount: convertedAmount,
+          currency: baseCurrency,
+          // Store original payment details
+          originalAmount: amount,
+          originalCurrency: paymentCurrency,
+          exchangeRate: exchangeRate || 1,
+          exchangeRateId,
+          convertedAt: exchangeRate ? new Date() : null,
+          status: PaymentStatus.PENDING,
+          provider: PaymentProvider.STRIPE,
+          providerPaymentId: paymentIntent.id,
+          providerData: {
+            clientSecret: paymentIntent.client_secret,
+            paymentCurrency,
+            festivalId,
+          },
+          description,
+          metadata: {
+            ...metadata,
+            festivalId,
+          },
+        },
+      });
+
+      this.logger.log(
+        `Multi-currency payment intent created: ${payment.id} (${amount} ${paymentCurrency} -> ${convertedAmount} ${baseCurrency})`,
+      );
+
+      return {
+        paymentId: payment.id,
+        clientSecret: paymentIntent.client_secret!,
+        amount: convertedAmount,
+        currency: baseCurrency,
+        status: PaymentStatus.PENDING,
+        originalAmount: amount,
+        originalCurrency: paymentCurrency,
+        exchangeRate,
+      };
+    } catch (error) {
+      this.logger.error(`Failed to create multi-currency payment intent: ${error}`);
+      throw new PaymentFailedException('Failed to create payment intent');
+    }
+  }
+
+  /**
+   * Get supported currencies for a festival
+   */
+  async getFestivalSupportedCurrencies(festivalId: string): Promise<SupportedCurrency[]> {
+    const settings = await this.currencyService.getFestivalCurrencySettings(festivalId);
+    return settings.supportedCurrencies;
+  }
+
+  /**
+   * Convert a payment amount to user's preferred currency for display
+   */
+  async convertPaymentForDisplay(
+    paymentId: string,
+    targetCurrency: SupportedCurrency,
+  ): Promise<{
+    originalAmount: number;
+    originalCurrency: string;
+    displayAmount: number;
+    displayCurrency: string;
+    exchangeRate: number;
+  }> {
+    const payment = await this.getPayment(paymentId);
+
+    if (payment.currency === targetCurrency) {
+      return {
+        originalAmount: payment.amount,
+        originalCurrency: payment.currency,
+        displayAmount: payment.amount,
+        displayCurrency: targetCurrency,
+        exchangeRate: 1,
+      };
+    }
+
+    const conversion = await this.currencyService.convert(
+      payment.amount,
+      payment.currency as SupportedCurrency,
+      targetCurrency,
+    );
+
+    return {
+      originalAmount: payment.amount,
+      originalCurrency: payment.currency,
+      displayAmount: conversion.convertedAmount,
+      displayCurrency: targetCurrency,
+      exchangeRate: conversion.exchangeRate,
+    };
   }
 
   /**
@@ -370,7 +601,7 @@ export class PaymentsService {
       return;
     }
 
-    await this.prisma.payment.update({
+    const updatedPayment = await this.prisma.payment.update({
       where: { id: payment.id },
       data: {
         status: PaymentStatus.COMPLETED,
@@ -385,8 +616,20 @@ export class PaymentsService {
 
     this.logger.log(`Payment completed: ${payment.id}`);
 
-    // Emit event for other services (ticket creation, etc.)
-    // This would typically use an event emitter or message queue
+    // Emit webhook event for payment completed
+    const festivalId = (payment.metadata as any)?.festivalId;
+    if (festivalId) {
+      this.webhookEventHelper.emitPaymentCompleted({
+        festivalId,
+        paymentId: payment.id,
+        userId: payment.userId,
+        amount: Number(payment.amount),
+        currency: payment.currency,
+        provider: payment.provider,
+        providerPaymentId: payment.providerPaymentId || undefined,
+        completedAt: updatedPayment.paidAt!,
+      });
+    }
   }
 
   /**
@@ -414,6 +657,22 @@ export class PaymentsService {
     });
 
     this.logger.log(`Payment failed: ${payment.id}`);
+
+    // Emit webhook event for payment failed
+    const festivalId = (payment.metadata as any)?.festivalId;
+    if (festivalId) {
+      this.webhookEventHelper.emitPaymentFailed({
+        festivalId,
+        paymentId: payment.id,
+        userId: payment.userId,
+        amount: Number(payment.amount),
+        currency: payment.currency,
+        provider: payment.provider,
+        failedAt: new Date(),
+        errorCode: paymentIntent.last_payment_error?.code,
+        errorMessage: paymentIntent.last_payment_error?.message,
+      });
+    }
   }
 
   /**
@@ -433,7 +692,7 @@ export class PaymentsService {
       return;
     }
 
-    await this.prisma.payment.update({
+    const updatedPayment = await this.prisma.payment.update({
       where: { id: payment.id },
       data: {
         status: PaymentStatus.REFUNDED,
@@ -447,6 +706,20 @@ export class PaymentsService {
     });
 
     this.logger.log(`Refund processed via webhook: ${payment.id}`);
+
+    // Emit webhook event for payment refunded
+    const festivalId = (payment.metadata as any)?.festivalId;
+    if (festivalId) {
+      this.webhookEventHelper.emitPaymentRefunded({
+        festivalId,
+        paymentId: payment.id,
+        userId: payment.userId,
+        refundAmount: Number(payment.amount),
+        currency: payment.currency,
+        refundedAt: updatedPayment.refundedAt!,
+        reason: refund.reason || undefined,
+      });
+    }
   }
 
   /**
@@ -466,6 +739,10 @@ export class PaymentsService {
       refundedAt: payment.refundedAt,
       createdAt: payment.createdAt,
       updatedAt: payment.updatedAt,
+      // Multi-currency fields
+      originalAmount: payment.originalAmount ? Number(payment.originalAmount) : null,
+      originalCurrency: payment.originalCurrency,
+      exchangeRate: payment.exchangeRate ? Number(payment.exchangeRate) : null,
     };
   }
 }

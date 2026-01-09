@@ -29,6 +29,9 @@ import {
   FestivalCancelledException,
   FestivalNotPublishedException,
 } from '../../common/exceptions/business.exception';
+
+// Webhook event helper for dispatching webhook events
+import { WebhookEventHelper } from '../webhooks/webhook-event.emitter';
 // ============================================================================
 // Types
 // ============================================================================
@@ -139,7 +142,10 @@ const CASHLESS_CONFIG = {
 export class CashlessService {
   private readonly logger = new Logger(CashlessService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly webhookEventHelper: WebhookEventHelper,
+  ) {}
 
   /**
    * Get or create cashless account for a user
@@ -293,6 +299,18 @@ export class CashlessService {
 
     this.logger.log(`Top-up of ${amount} for user ${userId} in festival ${festivalId}`);
 
+    // Emit webhook event for cashless topup
+    this.webhookEventHelper.emitCashlessTopup({
+      festivalId,
+      accountId: account.id,
+      userId,
+      amount,
+      currency,
+      balanceAfter: Number(result.balanceAfter),
+      transactionId: result.id,
+      toppedUpAt: result.createdAt,
+    });
+
     return this.mapTransactionToEntity(result);
   }
 
@@ -388,6 +406,30 @@ export class CashlessService {
 
     this.logger.log(`Payment of ${amount} by user ${userId} in festival ${festivalId}`);
 
+    // Emit webhook event for cashless payment
+    // Get vendor name if vendorId is provided
+    let vendorName: string | undefined;
+    if (vendorId) {
+      const vendor = await this.prisma.vendor.findUnique({
+        where: { id: vendorId },
+        select: { name: true },
+      });
+      vendorName = vendor?.name;
+    }
+
+    this.webhookEventHelper.emitCashlessPayment({
+      festivalId,
+      accountId: account.id,
+      userId,
+      amount,
+      currency,
+      balanceAfter: Number(result.balanceAfter),
+      transactionId: result.id,
+      vendorId,
+      vendorName,
+      paidAt: result.createdAt,
+    });
+
     return this.mapTransactionToEntity(result);
   }
 
@@ -476,6 +518,20 @@ export class CashlessService {
     });
 
     this.logger.log(`Refund of ${refundAmount} for transaction ${transactionId}`);
+
+    // Emit webhook event for cashless refund
+    this.webhookEventHelper.emitCashlessRefund({
+      festivalId: originalTransaction.festivalId,
+      accountId: account.id,
+      userId,
+      amount: refundAmount,
+      currency: 'EUR', // Get from festival if needed
+      balanceAfter: Number(result.balanceAfter),
+      transactionId: result.id,
+      originalTransactionId: transactionId,
+      refundedAt: result.createdAt,
+      reason,
+    });
 
     return this.mapTransactionToEntity(result);
   }

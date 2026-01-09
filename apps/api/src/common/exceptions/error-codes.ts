@@ -161,6 +161,27 @@ export const ErrorCodes = {
   PROMO_CODE_NOT_FOUND: 'ERR_13000',
   PROMO_CODE_NOT_STACKABLE: 'ERR_13001',
   PROMO_CODE_ALREADY_APPLIED: 'ERR_13002',
+
+  // ============================================
+  // WEBHOOK ERRORS (14xxx)
+  // ============================================
+  WEBHOOK_NOT_FOUND: 'ERR_14000',
+  WEBHOOK_URL_EXISTS: 'ERR_14001',
+  WEBHOOK_DELIVERY_NOT_FOUND: 'ERR_14002',
+  WEBHOOK_DELIVERY_FAILED: 'ERR_14003',
+  WEBHOOK_INVALID_SECRET: 'ERR_14004',
+  WEBHOOK_DISABLED: 'ERR_14005',
+
+  // ============================================
+  // INVOICE ERRORS (15xxx)
+  // ============================================
+  INVOICE_NOT_FOUND: 'ERR_15000',
+  INVOICE_ALREADY_PAID: 'ERR_15001',
+  INVOICE_ALREADY_CANCELLED: 'ERR_15002',
+  INVOICE_CANNOT_UPDATE: 'ERR_15003',
+  INVOICE_CANNOT_DELETE: 'ERR_15004',
+  INVOICE_SEND_FAILED: 'ERR_15005',
+  INVOICE_PDF_GENERATION_FAILED: 'ERR_15006',
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
@@ -601,6 +622,62 @@ export const ErrorMessages: Record<ErrorCode, { fr: string; en: string }> = {
   [ErrorCodes.PROMO_CODE_ALREADY_APPLIED]: {
     fr: 'Ce code promo a deja ete applique a cet achat.',
     en: 'This promo code has already been applied to this purchase.',
+  },
+
+  // Webhook
+  [ErrorCodes.WEBHOOK_NOT_FOUND]: {
+    fr: 'Webhook non trouve.',
+    en: 'Webhook not found.',
+  },
+  [ErrorCodes.WEBHOOK_URL_EXISTS]: {
+    fr: 'Un webhook avec cette URL existe deja.',
+    en: 'A webhook with this URL already exists.',
+  },
+  [ErrorCodes.WEBHOOK_DELIVERY_NOT_FOUND]: {
+    fr: 'Livraison de webhook non trouvee.',
+    en: 'Webhook delivery not found.',
+  },
+  [ErrorCodes.WEBHOOK_DELIVERY_FAILED]: {
+    fr: 'La livraison du webhook a echoue.',
+    en: 'Webhook delivery failed.',
+  },
+  [ErrorCodes.WEBHOOK_INVALID_SECRET]: {
+    fr: 'Secret de webhook invalide.',
+    en: 'Invalid webhook secret.',
+  },
+  [ErrorCodes.WEBHOOK_DISABLED]: {
+    fr: 'Ce webhook est desactive.',
+    en: 'This webhook is disabled.',
+  },
+
+  // Invoice errors
+  [ErrorCodes.INVOICE_NOT_FOUND]: {
+    fr: 'Facture non trouvee.',
+    en: 'Invoice not found.',
+  },
+  [ErrorCodes.INVOICE_ALREADY_PAID]: {
+    fr: 'Cette facture a deja ete payee.',
+    en: 'This invoice has already been paid.',
+  },
+  [ErrorCodes.INVOICE_ALREADY_CANCELLED]: {
+    fr: 'Cette facture a deja ete annulee.',
+    en: 'This invoice has already been cancelled.',
+  },
+  [ErrorCodes.INVOICE_CANNOT_UPDATE]: {
+    fr: 'Impossible de modifier cette facture.',
+    en: 'Cannot update this invoice.',
+  },
+  [ErrorCodes.INVOICE_CANNOT_DELETE]: {
+    fr: 'Impossible de supprimer cette facture.',
+    en: 'Cannot delete this invoice.',
+  },
+  [ErrorCodes.INVOICE_SEND_FAILED]: {
+    fr: 'Echec de l\'envoi de la facture.',
+    en: 'Failed to send invoice.',
+  },
+  [ErrorCodes.INVOICE_PDF_GENERATION_FAILED]: {
+    fr: 'Echec de la generation du PDF.',
+    en: 'Failed to generate PDF.',
   },
 };
 
