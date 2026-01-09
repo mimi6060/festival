@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { APP_GUARD } from '@nestjs/core';
@@ -27,6 +27,7 @@ import { TicketsModule } from '../modules/tickets';
 import { CashlessModule } from '../modules/cashless';
 import { ProgramModule } from '../modules/program';
 import { PoiModule } from '../modules/poi';
+import { LanguagesModule } from '../modules/languages';
 
 // Service modules
 import { EmailModule } from '../modules/email';
@@ -41,6 +42,9 @@ import { InvoicesModule } from '../modules/invoices';
 
 // Guards
 import { RateLimitGuard } from '../common/guards';
+
+// Middleware
+import { LanguageMiddleware } from '../common/middleware';
 
 @Module({
   imports: [
@@ -74,6 +78,7 @@ import { RateLimitGuard } from '../common/guards';
     CashlessModule,
     ProgramModule,
     PoiModule,
+    LanguagesModule,
 
     // Service modules
     EmailModule,
@@ -96,4 +101,9 @@ import { RateLimitGuard } from '../common/guards';
     },
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    // Apply language middleware to all routes
+    consumer.apply(LanguageMiddleware).forRoutes('*');
+  }
+}

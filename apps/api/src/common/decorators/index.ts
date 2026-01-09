@@ -8,6 +8,9 @@
 export { CurrentUser, AuthenticatedUser } from './current-user.decorator';
 export { Roles, ROLES_KEY } from './roles.decorator';
 
+// Locale decorators
+export { Locale, LocaleCode, AcceptLanguage, LocaleInfo } from './locale.decorator';
+
 // Rate limit tier decorators
 export {
   TierRateLimit,

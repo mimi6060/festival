@@ -5,3 +5,4 @@
  */
 
 export * from './security.middleware';
+export * from './language.middleware';
