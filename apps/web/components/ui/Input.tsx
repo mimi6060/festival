@@ -17,15 +17,15 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, '
 
 const variantStyles: Record<InputVariant, string> = {
   default: `
-    bg-white/5 border border-white/10
+    bg-theme-input border border-theme
     focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
   `,
   filled: `
-    bg-white/10 border border-transparent
+    bg-theme-surface-hover border border-transparent
     focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
   `,
   outline: `
-    bg-transparent border-2 border-white/20
+    bg-transparent border-2 border-theme-hover
     focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
   `,
 };
@@ -58,7 +58,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
     const baseStyles = `
       rounded-xl
-      text-white placeholder-white/40
+      text-theme-primary placeholder:text-theme-muted
       transition-all duration-300
       focus:outline-none
       disabled:opacity-50 disabled:cursor-not-allowed
@@ -80,14 +80,14 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         {label && (
           <label
             htmlFor={inputId}
-            className="block text-sm font-medium text-white/80 mb-2"
+            className="block text-sm font-medium text-theme-secondary mb-2"
           >
             {label}
           </label>
         )}
         <div className="relative">
           {leftIcon && (
-            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-white/40">
+            <div className="absolute left-4 top-1/2 -translate-y-1/2 text-theme-muted">
               {leftIcon}
             </div>
           )}
@@ -98,7 +98,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
             {...props}
           />
           {rightIcon && (
-            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-white/40">
+            <div className="absolute right-4 top-1/2 -translate-y-1/2 text-theme-muted">
               {rightIcon}
             </div>
           )}
@@ -107,7 +107,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           <p className="mt-2 text-sm text-red-400">{error}</p>
         )}
         {helperText && !error && (
-          <p className="mt-2 text-sm text-white/50">{helperText}</p>
+          <p className="mt-2 text-sm text-theme-tertiary">{helperText}</p>
         )}
       </div>
     );
@@ -144,7 +144,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
 
     const baseStyles = `
       px-4 py-3 rounded-xl
-      text-white placeholder-white/40
+      text-theme-primary placeholder:text-theme-muted
       transition-all duration-300
       focus:outline-none
       disabled:opacity-50 disabled:cursor-not-allowed
@@ -164,7 +164,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
         {label && (
           <label
             htmlFor={textareaId}
-            className="block text-sm font-medium text-white/80 mb-2"
+            className="block text-sm font-medium text-theme-secondary mb-2"
           >
             {label}
           </label>
@@ -179,7 +179,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           <p className="mt-2 text-sm text-red-400">{error}</p>
         )}
         {helperText && !error && (
-          <p className="mt-2 text-sm text-white/50">{helperText}</p>
+          <p className="mt-2 text-sm text-theme-tertiary">{helperText}</p>
         )}
       </div>
     );
@@ -225,7 +225,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
 
     const baseStyles = `
       rounded-xl
-      text-white
+      text-theme-primary
       transition-all duration-300
       focus:outline-none
       disabled:opacity-50 disabled:cursor-not-allowed
@@ -246,7 +246,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
         {label && (
           <label
             htmlFor={selectId}
-            className="block text-sm font-medium text-white/80 mb-2"
+            className="block text-sm font-medium text-theme-secondary mb-2"
           >
             {label}
           </label>
@@ -259,7 +259,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             {...props}
           >
             {placeholder && (
-              <option value="" disabled className="bg-festival-dark text-white/40">
+              <option value="" disabled className="bg-theme-bg text-theme-muted">
                 {placeholder}
               </option>
             )}
@@ -267,13 +267,13 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
               <option
                 key={option.value}
                 value={option.value}
-                className="bg-festival-dark text-white"
+                className="bg-theme-bg text-theme-primary"
               >
                 {option.label}
               </option>
             ))}
           </select>
-          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-white/40">
+          <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-theme-muted">
             <svg
               className="w-5 h-5"
               fill="none"

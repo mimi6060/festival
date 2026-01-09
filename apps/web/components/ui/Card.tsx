@@ -16,23 +16,23 @@ interface CardProps {
 
 const variantStyles: Record<CardVariant, string> = {
   default: `
-    bg-white/5 backdrop-blur-lg
-    border border-white/10
+    bg-theme-surface backdrop-blur-lg
+    border border-theme
     hover:border-primary-500/30
   `,
   glow: `
-    bg-white/5 backdrop-blur-lg
-    border border-white/10
+    bg-theme-surface backdrop-blur-lg
+    border border-theme
     hover:border-primary-500/50
     hover:shadow-lg hover:shadow-primary-500/20
   `,
   solid: `
-    bg-festival-darker
-    border border-white/5
-    hover:border-white/10
+    bg-theme-card
+    border border-theme
+    hover:border-theme-hover
   `,
   gradient: `
-    bg-gradient-to-br from-primary-900/30 via-festival-dark to-pink-900/30
+    bg-gradient-to-br from-primary-900/30 via-theme-bg to-pink-900/30
     border border-primary-500/20
     hover:border-primary-500/40
   `,
@@ -103,7 +103,7 @@ interface CardTitleProps {
 
 export function CardTitle({ children, className = '' }: CardTitleProps) {
   return (
-    <h3 className={`text-xl font-bold text-white ${className}`}>
+    <h3 className={`text-xl font-bold text-theme-primary ${className}`}>
       {children}
     </h3>
   );
@@ -117,7 +117,7 @@ interface CardDescriptionProps {
 
 export function CardDescription({ children, className = '' }: CardDescriptionProps) {
   return (
-    <p className={`text-white/60 text-sm mt-1 ${className}`}>
+    <p className={`text-theme-muted text-sm mt-1 ${className}`}>
       {children}
     </p>
   );
@@ -145,7 +145,7 @@ interface CardFooterProps {
 
 export function CardFooter({ children, className = '' }: CardFooterProps) {
   return (
-    <div className={`mt-4 pt-4 border-t border-white/10 ${className}`}>
+    <div className={`mt-4 pt-4 border-t border-theme ${className}`}>
       {children}
     </div>
   );

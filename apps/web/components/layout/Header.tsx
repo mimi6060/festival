@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Button } from '../ui/Button';
+import { ThemeToggle } from '../ui/ThemeToggle';
 
 interface NavItem {
   label: string;
@@ -47,7 +48,7 @@ export function Header({ isAuthenticated = false, user }: HeaderProps) {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled || isMobileMenuOpen
-          ? 'bg-festival-dark/95 backdrop-blur-xl border-b border-white/10'
+          ? 'bg-theme-bg/95 backdrop-blur-xl border-b border-theme'
           : 'bg-transparent'
       }`}
     >
@@ -84,7 +85,7 @@ export function Header({ isAuthenticated = false, user }: HeaderProps) {
                 className={`text-sm font-medium transition-colors duration-300 ${
                   pathname === item.href
                     ? 'text-primary-400'
-                    : 'text-white/70 hover:text-white'
+                    : 'text-theme-secondary hover:text-theme-primary'
                 }`}
               >
                 {item.label}
@@ -93,12 +94,15 @@ export function Header({ isAuthenticated = false, user }: HeaderProps) {
           </div>
 
           {/* Desktop Actions */}
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3">
+            {/* Theme Toggle */}
+            <ThemeToggle variant="dropdown" />
+
             {isAuthenticated ? (
               <div className="flex items-center gap-4">
                 <Link
                   href="/account"
-                  className="flex items-center gap-2 text-white/70 hover:text-white transition-colors"
+                  className="flex items-center gap-2 text-theme-secondary hover:text-theme-primary transition-colors"
                 >
                   <div className="w-8 h-8 rounded-full bg-primary-500/20 flex items-center justify-center">
                     <span className="text-sm font-medium text-primary-400">
@@ -123,27 +127,33 @@ export function Header({ isAuthenticated = false, user }: HeaderProps) {
             )}
           </div>
 
-          {/* Mobile Menu Button */}
-          <button
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            className="md:hidden p-2 text-white/70 hover:text-white transition-colors"
-            aria-label="Toggle menu"
-          >
-            {isMobileMenuOpen ? (
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            ) : (
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-              </svg>
-            )}
-          </button>
+          {/* Mobile Actions */}
+          <div className="flex md:hidden items-center gap-2">
+            {/* Theme Toggle */}
+            <ThemeToggle variant="button" />
+
+            {/* Mobile Menu Button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 text-theme-secondary hover:text-theme-primary transition-colors"
+              aria-label="Toggle menu"
+            >
+              {isMobileMenuOpen ? (
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              ) : (
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
+              )}
+            </button>
+          </div>
         </div>
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-white/10">
+          <div className="md:hidden py-4 border-t border-theme">
             <div className="flex flex-col gap-2">
               {navItems.map((item) => (
                 <Link
@@ -152,22 +162,22 @@ export function Header({ isAuthenticated = false, user }: HeaderProps) {
                   className={`px-4 py-3 rounded-xl transition-colors duration-300 ${
                     pathname === item.href
                       ? 'bg-primary-500/10 text-primary-400'
-                      : 'text-white/70 hover:bg-white/5 hover:text-white'
+                      : 'text-theme-secondary hover:bg-theme-surface-hover hover:text-theme-primary'
                   }`}
                 >
                   {item.label}
                 </Link>
               ))}
-              <div className="mt-4 pt-4 border-t border-white/10 flex flex-col gap-2">
+              <div className="mt-4 pt-4 border-t border-theme flex flex-col gap-2">
                 {isAuthenticated ? (
                   <>
                     <Link
                       href="/account"
-                      className="px-4 py-3 rounded-xl text-white/70 hover:bg-white/5 hover:text-white transition-colors"
+                      className="px-4 py-3 rounded-xl text-theme-secondary hover:bg-theme-surface-hover hover:text-theme-primary transition-colors"
                     >
                       My Account
                     </Link>
-                    <button className="px-4 py-3 rounded-xl text-left text-white/70 hover:bg-white/5 hover:text-white transition-colors">
+                    <button className="px-4 py-3 rounded-xl text-left text-theme-secondary hover:bg-theme-surface-hover hover:text-theme-primary transition-colors">
                       Sign Out
                     </button>
                   </>

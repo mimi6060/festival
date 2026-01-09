@@ -153,8 +153,16 @@ body {
 
 /* Theme utility classes */
 @layer components {
-  /* Surface backgrounds */
+  /* =============================================
+   * BACKGROUND UTILITIES
+   * ============================================= */
+
+  /* Primary backgrounds */
   .bg-theme {
+    background-color: var(--theme-bg);
+  }
+
+  .bg-theme-primary {
     background-color: var(--theme-bg);
   }
 
@@ -162,16 +170,55 @@ body {
     background-color: var(--theme-bg-secondary);
   }
 
+  .bg-theme-tertiary {
+    background-color: var(--theme-bg-tertiary);
+  }
+
   .bg-theme-elevated {
     background-color: var(--theme-bg-elevated);
   }
 
+  .bg-theme-hover {
+    background-color: var(--theme-bg-hover);
+  }
+
+  /* Surface backgrounds */
   .bg-theme-surface {
     background-color: var(--theme-surface);
   }
 
-  /* Text colors */
+  .bg-theme-surface-hover {
+    background-color: var(--theme-surface-hover);
+  }
+
+  .bg-theme-surface-active {
+    background-color: var(--theme-surface-active);
+  }
+
+  /* Card backgrounds */
+  .bg-theme-card {
+    background-color: var(--theme-card-bg);
+  }
+
+  /* Input backgrounds */
+  .bg-theme-input {
+    background-color: var(--theme-input-bg);
+  }
+
+  /* Overlay */
+  .bg-theme-overlay {
+    background-color: var(--theme-overlay);
+  }
+
+  /* =============================================
+   * TEXT COLOR UTILITIES
+   * ============================================= */
+
   .text-theme {
+    color: var(--theme-text-primary);
+  }
+
+  .text-theme-primary {
     color: var(--theme-text-primary);
   }
 
@@ -179,36 +226,47 @@ body {
     color: var(--theme-text-secondary);
   }
 
+  .text-theme-tertiary {
+    color: var(--theme-text-tertiary);
+  }
+
   .text-theme-muted {
     color: var(--theme-text-muted);
   }
 
-  /* Borders */
+  /* =============================================
+   * BORDER UTILITIES
+   * ============================================= */
+
   .border-theme {
     border-color: var(--theme-border);
   }
 
-  .border-theme-hover:hover {
+  .border-theme-hover {
     border-color: var(--theme-border-hover);
   }
 
-  /* Card */
-  .card-theme {
-    background-color: var(--theme-card-bg);
-    border-color: var(--theme-card-border);
+  .border-theme-focus {
+    border-color: var(--theme-border-focus);
   }
 
-  /* Input */
-  .input-theme {
-    background-color: var(--theme-input-bg);
-    border-color: var(--theme-input-border);
+  /* Interactive border states */
+  .hover\:border-theme-hover:hover {
+    border-color: var(--theme-border-hover);
   }
 
-  .input-theme::placeholder {
-    color: var(--theme-input-placeholder);
+  .focus\:border-theme-focus:focus {
+    border-color: var(--theme-border-focus);
   }
 
-  /* Shadows */
+  /* =============================================
+   * SHADOW UTILITIES
+   * ============================================= */
+
+  .shadow-theme {
+    box-shadow: var(--theme-shadow-md);
+  }
+
   .shadow-theme-sm {
     box-shadow: var(--theme-shadow-sm);
   }
@@ -223,6 +281,129 @@ body {
 
   .shadow-theme-glow {
     box-shadow: var(--theme-shadow-glow);
+  }
+
+  /* =============================================
+   * COMPONENT UTILITIES
+   * ============================================= */
+
+  /* Card component */
+  .card-theme {
+    background-color: var(--theme-card-bg);
+    border: 1px solid var(--theme-card-border);
+    box-shadow: var(--theme-shadow-md);
+    border-radius: var(--radius-xl);
+  }
+
+  /* Input component */
+  .input-theme {
+    background-color: var(--theme-input-bg);
+    border: 1px solid var(--theme-input-border);
+    color: var(--theme-text-primary);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .input-theme::placeholder {
+    color: var(--theme-input-placeholder);
+  }
+
+  .input-theme:focus {
+    border-color: var(--theme-border-focus);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.2);
+  }
+
+  /* Button base with theme */
+  .btn-theme {
+    background-color: var(--theme-surface);
+    border: 1px solid var(--theme-border);
+    color: var(--theme-text-primary);
+    transition: all 0.2s ease;
+  }
+
+  .btn-theme:hover {
+    background-color: var(--theme-surface-hover);
+    border-color: var(--theme-border-hover);
+  }
+
+  .btn-theme:active {
+    background-color: var(--theme-surface-active);
+  }
+
+  /* =============================================
+   * TRANSITION UTILITIES
+   * ============================================= */
+
+  .transition-theme {
+    transition: color 0.3s ease,
+      background-color 0.3s ease,
+      border-color 0.3s ease,
+      box-shadow 0.3s ease;
+  }
+
+  .transition-theme-fast {
+    transition: color 0.15s ease,
+      background-color 0.15s ease,
+      border-color 0.15s ease,
+      box-shadow 0.15s ease;
+  }
+
+  /* =============================================
+   * INTERACTIVE STATE UTILITIES
+   * ============================================= */
+
+  /* Hover states */
+  .hover\:bg-theme-hover:hover {
+    background-color: var(--theme-bg-hover);
+  }
+
+  .hover\:bg-theme-surface-hover:hover {
+    background-color: var(--theme-surface-hover);
+  }
+
+  .hover\:text-theme-primary:hover {
+    color: var(--theme-text-primary);
+  }
+
+  /* Focus states */
+  .focus-theme:focus {
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.3);
+    border-color: var(--theme-border-focus);
+  }
+
+  /* =============================================
+   * LAYOUT UTILITIES
+   * ============================================= */
+
+  /* Container with theme background */
+  .container-theme {
+    background-color: var(--theme-bg);
+    color: var(--theme-text-primary);
+  }
+
+  /* Section divider */
+  .divider-theme {
+    border-color: var(--theme-border);
+    border-top-width: 1px;
+  }
+
+  /* =============================================
+   * GRADIENT TEXT (works in both themes)
+   * ============================================= */
+
+  .gradient-text {
+    background: linear-gradient(135deg, var(--color-primary-400), var(--color-secondary-400));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .gradient-text-primary {
+    background: linear-gradient(135deg, var(--color-primary-500), var(--color-primary-300));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
   }
 }
 
@@ -268,6 +449,15 @@ body {
   }
 }
 
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 .animate-fadeIn {
   animation: fadeIn 0.3s ease-out;
 }
@@ -278,4 +468,8 @@ body {
 
 .animate-slideDown {
   animation: slideDown 0.3s ease-out;
+}
+
+.animate-spin-slow {
+  animation: spin 2s linear infinite;
 }

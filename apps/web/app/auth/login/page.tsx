@@ -116,8 +116,8 @@ export default function LoginPage() {
 
         <Card variant="solid" padding="lg">
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold text-white mb-2">Welcome Back</h1>
-            <p className="text-white/60">Sign in to access your account</p>
+            <h1 className="text-2xl font-bold text-theme-primary mb-2">Welcome Back</h1>
+            <p className="text-theme-muted">Sign in to access your account</p>
           </div>
 
           {(errors.general || authError) && (
@@ -174,9 +174,9 @@ export default function LoginPage() {
                   name="rememberMe"
                   checked={formData.rememberMe}
                   onChange={handleChange}
-                  className="w-4 h-4 rounded border-white/20 bg-white/5 text-primary-500 focus:ring-primary-500/50"
+                  className="w-4 h-4 rounded border-theme bg-theme-surface text-primary-500 focus:ring-primary-500/50"
                 />
-                <span className="text-sm text-white/70">Remember me</span>
+                <span className="text-sm text-theme-secondary">Remember me</span>
               </label>
               <Link
                 href="/auth/forgot-password"
@@ -194,18 +194,18 @@ export default function LoginPage() {
           {/* Divider */}
           <div className="relative my-8">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/10" />
+              <div className="w-full border-t border-theme" />
             </div>
             <div className="relative flex justify-center text-sm">
-              <span className="px-4 bg-festival-darker text-white/50">Or continue with</span>
+              <span className="px-4 bg-theme-card text-theme-muted">Or continue with</span>
             </div>
           </div>
 
           {/* Social Login */}
           <div className="grid grid-cols-2 gap-4">
             <a
-              href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'}/auth/google`}
-              className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors"
+              href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api'}/auth/google`}
+              className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-theme-surface border border-theme text-theme-primary hover:bg-theme-surface-hover transition-colors"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -228,8 +228,8 @@ export default function LoginPage() {
               <span className="text-sm font-medium">Google</span>
             </a>
             <a
-              href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'}/auth/github`}
-              className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-white/5 border border-white/10 text-white hover:bg-white/10 transition-colors"
+              href={`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api'}/auth/github`}
+              className="flex items-center justify-center gap-2 py-3 px-4 rounded-xl bg-theme-surface border border-theme text-theme-primary hover:bg-theme-surface-hover transition-colors"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z" />
@@ -239,7 +239,7 @@ export default function LoginPage() {
           </div>
 
           {/* Sign Up Link */}
-          <p className="mt-8 text-center text-white/60 text-sm">
+          <p className="mt-8 text-center text-theme-muted text-sm">
             Don&apos;t have an account?{' '}
             <Link
               href="/auth/register"
