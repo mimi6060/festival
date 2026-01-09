@@ -497,12 +497,67 @@ Toutes les tâches ont été déplacées vers `DONE.md`.
 
 ---
 
+## Session 2026-01-09 - CORE-02: Monitoring Prometheus/Grafana
+
+### Grafana Dashboards (`k8s/monitoring/grafana/dashboards/`)
+
+- [x] `api-overview.json` - API Overview Dashboard
+  - Success rate, P95 latency, request rate, errors/min
+  - HTTP traffic by method and status
+  - Latency percentiles (p50, p90, p95, p99)
+  - Top 10 endpoints by rate and slowest
+  - Memory usage and Node.js handles
+
+- [x] `database.json` - PostgreSQL Dashboard
+  - Connection status, active connections, queries/sec
+  - Query latency percentiles by operation
+  - Top 10 models by query rate and slowest
+  - Connection pool usage
+  - Transactions and locks
+
+- [x] `redis.json` - Redis Cache Dashboard
+  - Cache hit rate, memory used, total keys
+  - Hits vs misses over time
+  - Memory fragmentation ratio
+  - Client connections and commands/sec
+
+- [x] `business-metrics.json` - Business Metrics Dashboard
+  - Tickets sold/validated (24h)
+  - Revenue and cashless spending
+  - Current attendees and capacity
+  - Payments by provider and status
+  - Cashless flow and top vendors
+  - Zone occupancy in real-time
+
+### Prometheus Stack (`k8s/monitoring/`)
+
+- [x] `prometheus-stack-values.yaml` - Helm values for kube-prometheus-stack
+  - Grafana configuration with persistence and plugins
+  - Prometheus with 30d retention, 50Gi storage
+  - HA setup (2 replicas each)
+  - Additional scrape configs for Festival API
+  - Dashboard provisioning via ConfigMaps
+
+- [x] `alertmanager-config.yaml` - Alertmanager configuration
+  - Slack integration (5 channels: critical, warnings, business, database, infra)
+  - PagerDuty integration for on-call
+  - Email notifications for reports
+  - Route-based alert routing by severity
+  - Inhibition rules to reduce noise
+  - Custom templates for Slack and email
+
+- [x] `grafana-dashboards-configmap.yaml` - Dashboard provisioning
+
+- [x] `README.md` - Documentation and quick start guide
+
+---
+
 ## Prochaines Tâches (Plan CTO Q3)
 
 ### Infrastructure
 
 - [x] **CORE-01**: Migration Kubernetes production ✅
-- [ ] **CORE-02**: Monitoring Prometheus/Grafana
+- [x] **CORE-02**: Monitoring Prometheus/Grafana ✅
 
 ### Mobile
 
@@ -514,6 +569,7 @@ Toutes les tâches ont été déplacées vers `DONE.md`.
 - [x] **MOB-03**: Enhanced bidirectional sync with offline mutations
 - [x] **Sprint 5-6**: Full internationalization (6 languages + RTL)
 - [x] **CORE-01**: Kubernetes production deployment
+- [x] **CORE-02**: Prometheus/Grafana monitoring
 
 ---
 

@@ -1,0 +1,390 @@
+# ============================================
+# kube-prometheus-stack Helm Values
+# ============================================
+# Prometheus + Grafana + Alertmanager Stack
+# Install: helm install prometheus prometheus-community/kube-prometheus-stack -f prometheus-stack-values.yaml -n monitoring
+# ============================================
+
+# Grafana Configuration
+grafana:
+  enabled: true
+  adminPassword: festival-admin-2026
+
+  # Grafana ingress
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - grafana.festival.fr
+    tls:
+      - secretName: grafana-tls
+        hosts:
+          - grafana.festival.fr
+
+  # Persistence
+  persistence:
+    enabled: true
+    size: 10Gi
+    storageClassName: standard
+
+  # Grafana configuration
+  grafana.ini:
+    server:
+      root_url: https://grafana.festival.fr
+    auth:
+      disable_login_form: false
+    auth.anonymous:
+      enabled: false
+    security:
+      admin_user: admin
+    users:
+      allow_sign_up: false
+    log:
+      mode: console
+      level: info
+
+  # Default dashboards
+  defaultDashboardsEnabled: true
+  defaultDashboardsTimezone: Europe/Paris
+
+  # Dashboard providers
+  dashboardProviders:
+    dashboardproviders.yaml:
+      apiVersion: 1
+      providers:
+        - name: festival
+          orgId: 1
+          folder: Festival
+          type: file
+          disableDeletion: false
+          editable: true
+          options:
+            path: /var/lib/grafana/dashboards/festival
+
+  # Dashboard ConfigMaps
+  dashboardsConfigMaps:
+    festival: grafana-festival-dashboards
+
+  # Additional data sources
+  additionalDataSources:
+    - name: Loki
+      type: loki
+      url: http://loki:3100
+      access: proxy
+      isDefault: false
+
+  # Plugins
+  plugins:
+    - grafana-piechart-panel
+    - grafana-clock-panel
+    - grafana-worldmap-panel
+
+  # Resource limits
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+# Prometheus Configuration
+prometheus:
+  enabled: true
+
+  # Prometheus ingress
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - prometheus.festival.fr
+    tls:
+      - secretName: prometheus-tls
+        hosts:
+          - prometheus.festival.fr
+
+  # Prometheus spec
+  prometheusSpec:
+    # Retention
+    retention: 30d
+    retentionSize: 45GB
+
+    # Storage
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: standard
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 50Gi
+
+    # Service monitor selectors
+    serviceMonitorSelector:
+      matchLabels:
+        release: prometheus
+    serviceMonitorNamespaceSelector: {}
+
+    # Pod monitor selectors
+    podMonitorSelector:
+      matchLabels:
+        release: prometheus
+    podMonitorNamespaceSelector: {}
+
+    # Prometheus rule selectors
+    ruleSelector:
+      matchLabels:
+        release: prometheus
+    ruleNamespaceSelector: {}
+
+    # Additional scrape configs for Festival API
+    additionalScrapeConfigs:
+      - job_name: 'festival-api'
+        kubernetes_sd_configs:
+          - role: endpoints
+            namespaces:
+              names:
+                - festival
+                - festival-staging
+                - festival-prod
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_service_label_app_kubernetes_io_name]
+            regex: api
+            action: keep
+          - source_labels: [__meta_kubernetes_namespace]
+            target_label: namespace
+          - source_labels: [__meta_kubernetes_service_name]
+            target_label: service
+        metrics_path: /api/metrics
+        scheme: http
+
+    # Resources
+    resources:
+      requests:
+        cpu: 200m
+        memory: 1Gi
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+
+    # Replicas for HA
+    replicas: 2
+
+    # External labels
+    externalLabels:
+      cluster: festival-production
+      environment: production
+
+# Alertmanager Configuration
+alertmanager:
+  enabled: true
+
+  # Alertmanager ingress
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    hosts:
+      - alertmanager.festival.fr
+    tls:
+      - secretName: alertmanager-tls
+        hosts:
+          - alertmanager.festival.fr
+
+  # Alertmanager config
+  alertmanagerSpec:
+    # Storage
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: standard
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+
+    # Replicas
+    replicas: 2
+
+    # Resources
+    resources:
+      requests:
+        cpu: 50m
+        memory: 128Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+
+  # Alertmanager configuration
+  config:
+    global:
+      resolve_timeout: 5m
+      slack_api_url: 'https://hooks.slack.com/services/YOUR/SLACK/WEBHOOK'
+
+    # Route configuration
+    route:
+      group_by: ['alertname', 'severity', 'namespace']
+      group_wait: 30s
+      group_interval: 5m
+      repeat_interval: 4h
+      receiver: 'slack-notifications'
+      routes:
+        # Critical alerts - immediate notification
+        - match:
+            severity: critical
+          receiver: 'slack-critical'
+          group_wait: 10s
+          repeat_interval: 1h
+
+        # Warning alerts
+        - match:
+            severity: warning
+          receiver: 'slack-warnings'
+          group_wait: 1m
+          repeat_interval: 4h
+
+        # Business alerts
+        - match:
+            alertname: ~"^Festival.*"
+          receiver: 'slack-business'
+          group_wait: 30s
+          repeat_interval: 2h
+
+        # Watchdog (deadman's switch)
+        - match:
+            alertname: Watchdog
+          receiver: 'null'
+
+    # Receivers
+    receivers:
+      - name: 'null'
+
+      - name: 'slack-notifications'
+        slack_configs:
+          - channel: '#festival-alerts'
+            send_resolved: true
+            title: '{{ template "slack.default.title" . }}'
+            text: '{{ template "slack.default.text" . }}'
+
+      - name: 'slack-critical'
+        slack_configs:
+          - channel: '#festival-critical'
+            send_resolved: true
+            color: '{{ if eq .Status "firing" }}danger{{ else }}good{{ end }}'
+            title: ':rotating_light: {{ .CommonAnnotations.summary }}'
+            text: |
+              *Alert:* {{ .CommonAnnotations.summary }}
+              *Description:* {{ .CommonAnnotations.description }}
+              *Severity:* {{ .CommonLabels.severity }}
+              *Namespace:* {{ .CommonLabels.namespace }}
+              {{ range .Alerts }}
+              • {{ .Annotations.description }}
+              {{ end }}
+
+      - name: 'slack-warnings'
+        slack_configs:
+          - channel: '#festival-warnings'
+            send_resolved: true
+            color: '{{ if eq .Status "firing" }}warning{{ else }}good{{ end }}'
+            title: ':warning: {{ .CommonAnnotations.summary }}'
+            text: |
+              *Alert:* {{ .CommonAnnotations.summary }}
+              *Description:* {{ .CommonAnnotations.description }}
+              {{ range .Alerts }}
+              • {{ .Annotations.description }}
+              {{ end }}
+
+      - name: 'slack-business'
+        slack_configs:
+          - channel: '#festival-business'
+            send_resolved: true
+            title: ':chart_with_upwards_trend: {{ .CommonAnnotations.summary }}'
+            text: '{{ .CommonAnnotations.description }}'
+
+    # Inhibit rules
+    inhibit_rules:
+      - source_match:
+          severity: 'critical'
+        target_match:
+          severity: 'warning'
+        equal: ['alertname', 'namespace']
+
+      - source_match:
+          alertname: 'InfoInhibitor'
+        target_match:
+          severity: 'info'
+        equal: ['namespace']
+
+# Node Exporter (for node metrics)
+nodeExporter:
+  enabled: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+
+# Kube State Metrics
+kubeStateMetrics:
+  enabled: true
+  resources:
+    requests:
+      cpu: 50m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
+
+# Prometheus Operator
+prometheusOperator:
+  enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 400m
+      memory: 512Mi
+
+# Default rules
+defaultRules:
+  create: true
+  rules:
+    alertmanager: true
+    etcd: false  # Disable if not using etcd
+    configReloaders: true
+    general: true
+    k8s: true
+    kubeApiserverAvailability: true
+    kubeApiserverBurnrate: true
+    kubeApiserverHistogram: true
+    kubeApiserverSlos: true
+    kubeControllerManager: true
+    kubelet: true
+    kubeProxy: true
+    kubePrometheusGeneral: true
+    kubePrometheusNodeRecording: true
+    kubernetesApps: true
+    kubernetesResources: true
+    kubernetesStorage: true
+    kubernetesSystem: true
+    kubeSchedulerAlerting: true
+    kubeSchedulerRecording: true
+    kubeStateMetrics: true
+    network: true
+    node: true
+    nodeExporterAlerting: true
+    nodeExporterRecording: true
+    prometheus: true
+    prometheusOperator: true
+
+# Additional labels for all resources
+commonLabels:
+  app.kubernetes.io/part-of: festival-platform

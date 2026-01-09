@@ -1,0 +1,75 @@
+# ============================================
+# Grafana Dashboard ConfigMaps
+# ============================================
+# Festival Platform dashboards for Grafana
+# These are provisioned automatically by kube-prometheus-stack
+# ============================================
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-festival-dashboards
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/component: dashboards
+    app.kubernetes.io/part-of: festival-platform
+    grafana_dashboard: "1"
+data:
+  api-overview.json: |-
+    {{ include "api-overview.json" | indent 4 }}
+  database.json: |-
+    {{ include "database.json" | indent 4 }}
+  redis.json: |-
+    {{ include "redis.json" | indent 4 }}
+  business-metrics.json: |-
+    {{ include "business-metrics.json" | indent 4 }}
+---
+# Alternative: Use separate ConfigMaps per dashboard
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-api-overview
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+    app.kubernetes.io/part-of: festival-platform
+data:
+  festival-api-overview.json: |
+    # Content loaded from grafana/dashboards/api-overview.json
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-database
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+    app.kubernetes.io/part-of: festival-platform
+data:
+  festival-database.json: |
+    # Content loaded from grafana/dashboards/database.json
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-redis
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+    app.kubernetes.io/part-of: festival-platform
+data:
+  festival-redis.json: |
+    # Content loaded from grafana/dashboards/redis.json
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-business
+  namespace: monitoring
+  labels:
+    grafana_dashboard: "1"
+    app.kubernetes.io/part-of: festival-platform
+data:
+  festival-business.json: |
+    # Content loaded from grafana/dashboards/business-metrics.json

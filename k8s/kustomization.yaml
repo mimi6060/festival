@@ -62,9 +62,11 @@ resources:
   - cert-manager/cluster-issuer.yaml
   - cert-manager/certificates.yaml
 
-  # Monitoring (Prometheus ServiceMonitors)
+  # Monitoring (Prometheus + Grafana)
   - monitoring/servicemonitor.yaml
   - monitoring/prometheusrule.yaml
+  - monitoring/alertmanager-config.yaml
+  - monitoring/grafana-dashboards-configmap.yaml
 
   # Jobs (optional - apply separately)
   # - jobs/prisma-migrate.yaml

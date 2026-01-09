@@ -4560,3 +4560,27 @@ Derniere mise a jour: 2026-01-03 - Build Fixes Complete
 - Hot-reload local avec Skaffold
 
 ---
+
+### CORE-02: Monitoring Prometheus/Grafana ✅
+
+**Fichiers créés**:
+
+- `k8s/monitoring/grafana/dashboards/api-overview.json` - Dashboard API
+- `k8s/monitoring/grafana/dashboards/database.json` - Dashboard PostgreSQL
+- `k8s/monitoring/grafana/dashboards/redis.json` - Dashboard Redis
+- `k8s/monitoring/grafana/dashboards/business-metrics.json` - Dashboard business
+- `k8s/monitoring/prometheus-stack-values.yaml` - Config Helm Prometheus stack
+- `k8s/monitoring/alertmanager-config.yaml` - Config Alertmanager + templates
+- `k8s/monitoring/grafana-dashboards-configmap.yaml` - ConfigMaps dashboards
+- `k8s/monitoring/README.md` - Documentation monitoring
+
+**Fonctionnalités**:
+
+- 4 dashboards Grafana complets avec variables
+- kube-prometheus-stack configuré (Prometheus HA, Grafana, Alertmanager)
+- Alertmanager avec 5 canaux Slack + PagerDuty + Email
+- Templates d'alertes personnalisés
+- Métriques business: tickets, paiements, cashless, zones
+- Retention 30 jours, stockage 50Gi
+
+---
