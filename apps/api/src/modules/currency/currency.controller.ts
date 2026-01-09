@@ -57,6 +57,7 @@ import {
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '@prisma/client';
 import { CurrentUser, AuthenticatedUser } from '../../common/decorators/current-user.decorator';
 
 @ApiTags('Currency')
@@ -66,7 +67,7 @@ export class CurrencyController {
     private readonly currencyService: CurrencyService,
     private readonly exchangeRateService: ExchangeRateService,
     private readonly exchangeRateScheduler: ExchangeRateScheduler,
-    private readonly rateAlertService: RateAlertService,
+    private readonly rateAlertService: RateAlertService
   ) {}
 
   // ============================================================================
@@ -101,7 +102,7 @@ export class CurrencyController {
     type: ExchangeRatesResponseDto,
   })
   async getExchangeRates(
-    @Query('base') base?: SupportedCurrency,
+    @Query('base') base?: SupportedCurrency
   ): Promise<ExchangeRatesResponseDto> {
     const ratesBatch = await this.exchangeRateService.getAllRates();
 
@@ -147,9 +148,7 @@ export class CurrencyController {
     description: 'Live exchange rates with metadata',
     type: LiveRatesResponseDto,
   })
-  async getLiveRates(
-    @Query('base') base?: SupportedCurrency,
-  ): Promise<LiveRatesResponseDto> {
+  async getLiveRates(@Query('base') base?: SupportedCurrency): Promise<LiveRatesResponseDto> {
     const liveRates = await this.exchangeRateService.getLiveRates(base || SupportedCurrency.EUR);
 
     return {
@@ -178,7 +177,7 @@ export class CurrencyController {
   })
   async getHistoricalRatesForCurrency(
     @Param('currency') currency: SupportedCurrency,
-    @Query('days') days?: number,
+    @Query('days') days?: number
   ): Promise<HistoricalRatesResponseDto> {
     const daysNum = Math.min(Math.max(days || 30, 1), 365);
     const rates = await this.exchangeRateService.getHistoricalRatesForCurrency(currency, daysNum);
@@ -208,14 +207,14 @@ export class CurrencyController {
     description: 'Volatility metrics for all currencies',
     type: AllVolatilityResponseDto,
   })
-  async getAllVolatilityMetrics(
-    @Query('days') days?: number,
-  ): Promise<AllVolatilityResponseDto> {
+  async getAllVolatilityMetrics(@Query('days') days?: number): Promise<AllVolatilityResponseDto> {
     const daysNum = Math.min(Math.max(days || 30, 7), 365);
 
     const currencies: VolatilityMetricsDto[] = [];
     for (const currency of Object.values(SupportedCurrency)) {
-      if (currency === SupportedCurrency.EUR) continue;
+      if (currency === SupportedCurrency.EUR) {
+        continue;
+      }
       const metrics = await this.exchangeRateService.getVolatilityMetrics(currency, daysNum);
       currencies.push(metrics);
     }
@@ -242,7 +241,7 @@ export class CurrencyController {
   })
   async getVolatilityMetrics(
     @Param('currency') currency: SupportedCurrency,
-    @Query('days') days?: number,
+    @Query('days') days?: number
   ): Promise<VolatilityMetricsDto> {
     const daysNum = Math.min(Math.max(days || 30, 7), 365);
     return this.exchangeRateService.getVolatilityMetrics(currency, daysNum);
@@ -259,7 +258,7 @@ export class CurrencyController {
   })
   async getExchangeRate(
     @Param('from') from: SupportedCurrency,
-    @Param('to') to: SupportedCurrency,
+    @Param('to') to: SupportedCurrency
   ): Promise<ExchangeRateDto> {
     const rate = await this.exchangeRateService.getRate(from, to);
 
@@ -283,15 +282,13 @@ export class CurrencyController {
     description: 'Conversion result',
     type: CurrencyConversionResponseDto,
   })
-  async convertAmount(
-    @Body() dto: CurrencyConversionDto,
-  ): Promise<CurrencyConversionResponseDto> {
+  async convertAmount(@Body() dto: CurrencyConversionDto): Promise<CurrencyConversionResponseDto> {
     const date = dto.date ? new Date(dto.date) : undefined;
     return this.currencyService.convertForResponse(
       dto.amount,
       dto.fromCurrency,
       dto.toCurrency,
-      date,
+      date
     );
   }
 
@@ -313,7 +310,7 @@ export class CurrencyController {
   formatPrice(
     @Param('amount') amount: number,
     @Param('currency') currency: SupportedCurrency,
-    @Query('locale') locale?: 'en' | 'fr',
+    @Query('locale') locale?: 'en' | 'fr'
   ): PriceDisplayDto {
     return this.currencyService.formatPrice(Number(amount), currency, locale || 'fr');
   }
@@ -333,7 +330,7 @@ export class CurrencyController {
   })
   async createRateAlert(
     @CurrentUser() user: AuthenticatedUser,
-    @Body() dto: CreateRateAlertDto,
+    @Body() dto: CreateRateAlertDto
   ): Promise<RateAlertSubscriptionDto> {
     const subscription = await this.rateAlertService.createSubscription({
       userId: user.id,
@@ -356,7 +353,7 @@ export class CurrencyController {
     type: [RateAlertSubscriptionDto],
   })
   async getMyRateAlerts(
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ): Promise<RateAlertSubscriptionDto[]> {
     return this.rateAlertService.getUserSubscriptions(user.id);
   }
@@ -371,9 +368,7 @@ export class CurrencyController {
     status: 204,
     description: 'Subscription deleted',
   })
-  async deleteRateAlert(
-    @Param('id') id: string,
-  ): Promise<void> {
+  async deleteRateAlert(@Param('id') id: string): Promise<void> {
     await this.rateAlertService.deleteSubscription(id);
   }
 
@@ -392,7 +387,7 @@ export class CurrencyController {
     type: FestivalCurrencySettingsDto,
   })
   async getFestivalCurrencySettings(
-    @Param('festivalId') festivalId: string,
+    @Param('festivalId') festivalId: string
   ): Promise<FestivalCurrencySettingsDto> {
     return this.currencyService.getFestivalCurrencySettings(festivalId);
   }
@@ -410,7 +405,7 @@ export class CurrencyController {
   })
   async updateFestivalCurrencySettings(
     @Param('festivalId') festivalId: string,
-    @Body() dto: UpdateFestivalCurrencySettingsDto,
+    @Body() dto: UpdateFestivalCurrencySettingsDto
   ): Promise<FestivalCurrencySettingsDto> {
     return this.currencyService.updateFestivalCurrencySettings(festivalId, dto);
   }
@@ -478,7 +473,7 @@ export class CurrencyController {
     const rate = await this.exchangeRateService.setManualRate(
       dto.baseCurrency,
       dto.targetCurrency,
-      dto.rate,
+      dto.rate
     );
 
     return {
@@ -511,13 +506,13 @@ export class CurrencyController {
     @Param('from') from: SupportedCurrency,
     @Param('to') to: SupportedCurrency,
     @Query('startDate') startDate: string,
-    @Query('endDate') endDate: string,
+    @Query('endDate') endDate: string
   ): Promise<ExchangeRateDto[]> {
     const rates = await this.exchangeRateService.getHistoricalRates(
       from,
       to,
       new Date(startDate),
-      new Date(endDate),
+      new Date(endDate)
     );
 
     return rates.map((r) => ({
