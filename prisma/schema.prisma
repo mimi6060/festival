@@ -166,6 +166,13 @@ enum AuthProvider {
   APPLE
 }
 
+enum Currency {
+  EUR // Euro - base currency
+  USD // US Dollar
+  GBP // British Pound
+  CHF // Swiss Franc
+}
+
 enum CampingSpotStatus {
   AVAILABLE
   OCCUPIED
@@ -201,6 +208,8 @@ model User {
   resetToken        String?       // Hashed password reset token
   resetTokenExpiry  DateTime?     // Token expiration timestamp
   lastLoginAt       DateTime?
+  // Currency preferences
+  displayCurrency   String?       // User's preferred display currency (ISO code)
   isDeleted         Boolean       @default(false)  // Soft delete flag for GDPR compliance
   deletedAt         DateTime?     // Timestamp when user was soft deleted
   createdAt         DateTime      @default(now())
@@ -223,6 +232,7 @@ model User {
   userConsents      UserConsent[]          // GDPR consent records
   gdprRequests      GdprRequest[]          // GDPR data requests
   sessions          Session[]              // Active sessions
+  apiKeys           ApiKey[]               // API keys for programmatic access
 
   // Performance indexes
   @@index([email])
@@ -395,6 +405,12 @@ model Payment {
   userId          String?         // Optional for guest purchases
   amount          Decimal         @db.Decimal(10, 2)
   currency        String          @default("EUR")
+  // Multi-currency support: original payment details
+  originalAmount      Decimal?    @db.Decimal(10, 2)  // Amount in user's currency
+  originalCurrency    String?                          // User's currency (ISO code)
+  exchangeRate        Decimal?    @db.Decimal(18, 8)  // Rate used for conversion
+  exchangeRateId      String?                          // Reference to ExchangeRate record
+  convertedAt         DateTime?                        // When conversion was applied
   status          PaymentStatus   @default(PENDING)
   provider        PaymentProvider
   providerPaymentId String?
@@ -424,6 +440,7 @@ model Payment {
   @@index([provider, status])             // Provider analysis
   @@index([paidAt])                       // Completed payments timeline
   @@index([isDeleted])                    // Soft delete filter
+  @@index([originalCurrency])             // Currency analytics
 }
 
 model CashlessAccount {
@@ -1471,4 +1488,320 @@ model Session {
   @@index([userId, isActive])                  // User's active sessions
   @@index([isActive, expiresAt])               // Cleanup expired sessions
   @@index([lastActiveAt])                      // Session activity tracking
+}
+
+// =============================================
+// MULTI-CURRENCY SUPPORT
+// =============================================
+
+// ExchangeRate: Stores historical and current exchange rates
+model ExchangeRate {
+  id              String    @id @default(uuid())
+  baseCurrency    Currency  @default(EUR)
+  targetCurrency  Currency
+  rate            Decimal   @db.Decimal(18, 8) // High precision for accurate conversions
+  inverseRate     Decimal   @db.Decimal(18, 8) // Pre-calculated inverse for performance
+  source          String    @default("api")    // Rate source (api, manual, fallback)
+  effectiveAt     DateTime  @default(now())    // When this rate became effective
+  expiresAt       DateTime?                    // When this rate expires (null = indefinite)
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([baseCurrency, targetCurrency, effectiveAt])
+  @@index([baseCurrency, targetCurrency])
+  @@index([effectiveAt])
+  @@index([isActive])
+  @@index([targetCurrency, isActive, effectiveAt])
+}
+
+// FestivalCurrencySettings: Currency configuration per festival
+model FestivalCurrencySettings {
+  id                  String    @id @default(uuid())
+  festivalId          String    @unique
+  defaultCurrency     Currency  @default(EUR)
+  supportedCurrencies Currency[] @default([EUR])
+  displayFormat       String    @default("symbol") // symbol, code, both
+  decimalSeparator    String    @default(",")      // , or .
+  thousandsSeparator  String    @default(" ")      // space, comma, or period
+  symbolPosition      String    @default("after")  // before or after
+  autoConvert         Boolean   @default(true)     // Auto-convert prices for users
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([festivalId])
+}
+
+// RateAlertSubscription: User subscriptions for exchange rate alerts
+model RateAlertSubscription {
+  id            String    @id @default(uuid())
+  userId        String
+  festivalId    String?
+  currency      Currency  @default(USD)
+  alertType     String    @default("both")   // increase, decrease, both
+  threshold     Decimal   @db.Decimal(5, 2) @default(2.0) // Percentage threshold
+  enabled       Boolean   @default(true)
+  lastTriggered DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@index([festivalId])
+  @@index([currency, enabled])
+  @@index([userId, currency])
+}
+
+// =============================================
+// OUTGOING WEBHOOKS SYSTEM
+// =============================================
+
+enum WebhookDeliveryStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  RETRYING
+}
+
+// Webhook: External webhook subscription for a festival
+model Webhook {
+  id              String   @id @default(uuid())
+  festivalId      String
+  name            String               // Human-readable name for this webhook
+  url             String               // Destination URL for webhook delivery
+  secret          String               // HMAC-SHA256 secret for signing payloads
+  events          String[]             // Array of event types to subscribe to
+  isActive        Boolean  @default(true)
+  headers         Json?                // Custom headers to include in requests
+  description     String?              // Optional description
+  createdById     String?              // User who created the webhook
+  lastTriggeredAt DateTime?            // Last time webhook was triggered
+  failureCount    Int      @default(0) // Consecutive failure count
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  // Relations
+  deliveries      WebhookDelivery[]
+
+  @@unique([festivalId, url])           // One webhook per URL per festival
+  @@index([festivalId])
+  @@index([isActive])
+  @@index([festivalId, isActive])
+  @@index([events])
+}
+
+// WebhookDelivery: Record of each webhook delivery attempt
+model WebhookDelivery {
+  id              String                @id @default(uuid())
+  webhookId       String
+  event           String                // Event type that triggered this delivery
+  payload         Json                  // Full payload sent to webhook
+  status          WebhookDeliveryStatus @default(PENDING)
+  attempts        Int                   @default(0)
+  maxAttempts     Int                   @default(5)
+  lastAttemptAt   DateTime?
+  nextRetryAt     DateTime?             // Scheduled retry time (exponential backoff)
+  responseCode    Int?                  // HTTP response code from last attempt
+  responseBody    String?               // Response body (truncated)
+  responseHeaders Json?                 // Response headers from last attempt
+  errorMessage    String?               // Error message if failed
+  duration        Int?                  // Request duration in milliseconds
+  completedAt     DateTime?             // When delivery was successfully completed
+  createdAt       DateTime              @default(now())
+  updatedAt       DateTime              @updatedAt
+
+  // Relations
+  webhook         Webhook               @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+
+  // Performance indexes
+  @@index([webhookId])
+  @@index([status])
+  @@index([event])
+  @@index([createdAt])
+  @@index([webhookId, status])                  // Webhook delivery status lookup
+  @@index([status, nextRetryAt])                // Pending retries lookup
+  @@index([webhookId, createdAt])               // Webhook delivery history
+}
+
+// =============================================
+// INVOICE SYSTEM
+// =============================================
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  CANCELLED
+}
+
+// Invoice: Multi-currency invoice for festival transactions
+model Invoice {
+  id              String        @id @default(uuid())
+  invoiceNumber   String        @unique // Sequential per festival: INV-2025-FEST-0001
+  festivalId      String
+  userId          String
+
+  // Invoice details
+  currency        String        @default("EUR")
+  subtotal        Decimal       @db.Decimal(10, 2)
+  taxAmount       Decimal       @db.Decimal(10, 2) @default(0)
+  taxRate         Decimal       @db.Decimal(5, 2) @default(20.00) // VAT rate %
+  total           Decimal       @db.Decimal(10, 2)
+
+  // Multi-currency support
+  originalCurrency    String?                          // User's currency
+  originalSubtotal    Decimal?    @db.Decimal(10, 2)
+  originalTax         Decimal?    @db.Decimal(10, 2)
+  originalTotal       Decimal?    @db.Decimal(10, 2)
+  exchangeRate        Decimal?    @db.Decimal(18, 8)
+
+  // Status and dates
+  status          InvoiceStatus @default(DRAFT)
+  issueDate       DateTime      @default(now())
+  dueDate         DateTime
+  paidAt          DateTime?
+  sentAt          DateTime?
+  cancelledAt     DateTime?
+
+  // Customer details (snapshot at invoice time)
+  customerName    String
+  customerEmail   String
+  customerAddress String?
+  customerPhone   String?
+  customerVatNumber String?      // For B2B
+
+  // Company/festival details (snapshot)
+  companyName     String
+  companyAddress  String
+  companyVatNumber String?
+  companyEmail    String?
+  companyPhone    String?
+
+  // Tax handling
+  taxExempt       Boolean       @default(false)
+  reverseCharge   Boolean       @default(false) // B2B reverse charge
+  taxCountry      String?       // Country for VAT calculation
+
+  // References
+  paymentId       String?       // Link to payment
+  notes           String?       @db.Text
+  internalNotes   String?       @db.Text
+  termsAndConditions String?    @db.Text
+
+  // Metadata
+  metadata        Json?
+  pdfUrl          String?       // Stored PDF URL
+  locale          String        @default("fr") // Invoice language
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  items           InvoiceItem[]
+
+  // Performance indexes
+  @@index([festivalId])
+  @@index([userId])
+  @@index([status])
+  @@index([issueDate])
+  @@index([dueDate])
+  @@index([festivalId, status])
+  @@index([userId, status])
+  @@index([invoiceNumber])
+  @@index([paymentId])
+  @@index([createdAt])
+}
+
+// InvoiceItem: Individual line items on an invoice
+model InvoiceItem {
+  id              String    @id @default(uuid())
+  invoiceId       String
+  description     String
+  quantity        Int       @default(1)
+  unitPrice       Decimal   @db.Decimal(10, 2)
+  total           Decimal   @db.Decimal(10, 2)
+
+  // Tax details per item (optional for different tax rates)
+  taxRate         Decimal?  @db.Decimal(5, 2)
+  taxAmount       Decimal?  @db.Decimal(10, 2)
+
+  // Reference to original item (ticket, order, etc.)
+  itemType        String?   // TICKET, VENDOR_ORDER, CASHLESS, CAMPING, etc.
+  itemId          String?   // Reference ID
+
+  // Metadata
+  metadata        Json?
+  sortOrder       Int       @default(0)
+
+  createdAt       DateTime  @default(now())
+
+  // Relations
+  invoice         Invoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+
+  // Performance indexes
+  @@index([invoiceId])
+  @@index([itemType])
+  @@index([itemId])
+}
+
+// =============================================
+// API KEYS FOR RATE LIMITING
+// =============================================
+
+enum ApiKeyStatus {
+  ACTIVE
+  INACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum ApiKeyTier {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+}
+
+enum ApiKeyScope {
+  READ
+  WRITE
+  DELETE
+  ADMIN
+}
+
+// ApiKey: API keys for programmatic access with tier-based rate limiting
+model ApiKey {
+  id              String        @id @default(uuid())
+  userId          String
+  name            String                    // Friendly name for the API key
+  keyPrefix       String                    // First 12 chars for identification
+  keyHash         String        @unique     // SHA-256 hash of the key
+  tier            ApiKeyTier    @default(FREE)
+  status          ApiKeyStatus  @default(ACTIVE)
+  scopes          ApiKeyScope[] @default([READ])
+  permissions     Json?                     // Resource-specific permissions
+  description     String?
+  ipWhitelist     String[]      @default([]) // Allowed IP addresses
+  lastUsedAt      DateTime?
+  lastUsedIp      String?
+  usageCount      Int           @default(0)
+  expiresAt       DateTime?                 // Expiration date (null = never)
+  festivalId      String?                   // Scoped to specific festival (null = all)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  // Performance indexes
+  @@unique([userId, name])                  // One key per name per user
+  @@index([userId])
+  @@index([keyHash])
+  @@index([keyPrefix])
+  @@index([status])
+  @@index([tier])
+  @@index([festivalId])
+  @@index([userId, status])                 // User's active keys
+  @@index([status, expiresAt])              // Expired keys cleanup
+  @@index([lastUsedAt])                     // Key usage tracking
 }
