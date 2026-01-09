@@ -1,0 +1,81 @@
+# ============================================
+# Prisma Database Migration Job
+# ============================================
+# Manual job template for running database migrations
+# Usage: kubectl apply -f k8s/jobs/prisma-migrate.yaml
+# Note: CD pipeline creates these jobs automatically
+# ============================================
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: prisma-migrate
+  namespace: festival
+  labels:
+    app.kubernetes.io/name: prisma-migrate
+    app.kubernetes.io/component: migration
+    app.kubernetes.io/part-of: festival-platform
+spec:
+  # Auto-delete job after 10 minutes
+  ttlSecondsAfterFinished: 600
+  backoffLimit: 3
+  activeDeadlineSeconds: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: prisma-migrate
+        app.kubernetes.io/component: migration
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: migration-service-account
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
+      containers:
+        - name: migrate
+          image: festival/api:latest
+          imagePullPolicy: Always
+          command:
+            - /bin/sh
+            - -c
+            - |
+              echo "Starting database migration..."
+              echo "Database URL: $DATABASE_URL (masked)"
+
+              # Run Prisma migrate deploy
+              npx prisma migrate deploy
+
+              # Verify migration
+              npx prisma migrate status
+
+              echo "Migration completed successfully!"
+          envFrom:
+            - configMapRef:
+                name: festival-config
+            - secretRef:
+                name: festival-secrets
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: migration-service-account
+  namespace: festival
+  labels:
+    app.kubernetes.io/name: prisma-migrate
+    app.kubernetes.io/component: migration
+    app.kubernetes.io/part-of: festival-platform

@@ -1,0 +1,119 @@
+# ============================================
+# Prometheus ServiceMonitors
+# ============================================
+# ServiceMonitor CRDs for Prometheus Operator
+# These define how Prometheus scrapes metrics
+# Requires: prometheus-operator installed
+# ============================================
+
+# API ServiceMonitor
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: api-monitor
+  namespace: festival
+  labels:
+    app.kubernetes.io/name: api
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/part-of: festival-platform
+    release: prometheus  # Match prometheus-operator selector
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: api
+  namespaceSelector:
+    matchNames:
+      - festival
+      - festival-staging
+      - festival-prod
+  endpoints:
+    - port: http
+      path: /api/metrics
+      interval: 30s
+      scrapeTimeout: 10s
+      scheme: http
+      honorLabels: true
+      metricRelabelings:
+        # Drop high-cardinality metrics
+        - sourceLabels: [__name__]
+          regex: 'nodejs_gc_.*'
+          action: drop
+        # Add environment label
+        - targetLabel: environment
+          replacement: production
+---
+# Web ServiceMonitor
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: web-monitor
+  namespace: festival
+  labels:
+    app.kubernetes.io/name: web
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/part-of: festival-platform
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: web
+  namespaceSelector:
+    matchNames:
+      - festival
+      - festival-staging
+      - festival-prod
+  endpoints:
+    - port: http
+      path: /metrics
+      interval: 30s
+      scrapeTimeout: 10s
+---
+# PostgreSQL ServiceMonitor (postgres-exporter)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: postgresql-monitor
+  namespace: festival
+  labels:
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/part-of: festival-platform
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: postgresql
+  namespaceSelector:
+    matchNames:
+      - festival
+      - festival-staging
+      - festival-prod
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s
+---
+# Redis ServiceMonitor (redis-exporter)
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: redis-monitor
+  namespace: festival
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/part-of: festival-platform
+    release: prometheus
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: redis
+  namespaceSelector:
+    matchNames:
+      - festival
+      - festival-staging
+      - festival-prod
+  endpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s

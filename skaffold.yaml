@@ -1,0 +1,221 @@
+# ============================================
+# Skaffold Configuration
+# ============================================
+# Local Kubernetes development workflow
+# Usage:
+#   skaffold dev              - Development mode (hot reload)
+#   skaffold run              - Build and deploy once
+#   skaffold debug            - Debug mode with debugger
+#   skaffold render           - Preview generated manifests
+# ============================================
+
+apiVersion: skaffold/v4beta10
+kind: Config
+metadata:
+  name: festival-platform
+
+# ============================================
+# Build Configuration
+# ============================================
+build:
+  # Use local Docker daemon
+  local:
+    push: false
+    useBuildkit: true
+    concurrency: 3
+
+  # Build artifacts (Docker images)
+  artifacts:
+    # API (NestJS)
+    - image: festival/api
+      context: .
+      docker:
+        dockerfile: apps/api/Dockerfile
+        buildArgs:
+          NODE_ENV: development
+      sync:
+        manual:
+          - src: 'apps/api/src/**/*.ts'
+            dest: /app/apps/api/src
+          - src: 'libs/**/*.ts'
+            dest: /app/libs
+
+    # Web (Next.js)
+    - image: festival/web
+      context: .
+      docker:
+        dockerfile: apps/web/Dockerfile
+        buildArgs:
+          NODE_ENV: development
+      sync:
+        manual:
+          - src: 'apps/web/**/*.{ts,tsx}'
+            dest: /app/apps/web
+          - src: 'libs/**/*.ts'
+            dest: /app/libs
+
+    # Admin (Next.js)
+    - image: festival/admin
+      context: .
+      docker:
+        dockerfile: apps/admin/Dockerfile
+        buildArgs:
+          NODE_ENV: development
+      sync:
+        manual:
+          - src: 'apps/admin/**/*.{ts,tsx}'
+            dest: /app/apps/admin
+          - src: 'libs/**/*.ts'
+            dest: /app/libs
+
+# ============================================
+# Deploy Configuration
+# ============================================
+deploy:
+  kubectl:
+    defaultNamespace: festival-dev
+  kustomize:
+    paths:
+      - k8s/overlays/development
+
+# ============================================
+# Port Forwarding
+# ============================================
+portForward:
+  - resourceType: service
+    resourceName: api
+    namespace: festival-dev
+    port: 3333
+    localPort: 3333
+
+  - resourceType: service
+    resourceName: web
+    namespace: festival-dev
+    port: 3000
+    localPort: 3000
+
+  - resourceType: service
+    resourceName: admin
+    namespace: festival-dev
+    port: 4200
+    localPort: 4200
+
+  - resourceType: service
+    resourceName: postgresql
+    namespace: festival-dev
+    port: 5432
+    localPort: 5432
+
+  - resourceType: service
+    resourceName: redis
+    namespace: festival-dev
+    port: 6379
+    localPort: 6379
+
+# ============================================
+# Profiles
+# ============================================
+profiles:
+  # Development profile (default)
+  - name: dev
+    activation:
+      - kubeContext: minikube
+      - kubeContext: docker-desktop
+      - kubeContext: kind-.*
+    build:
+      local:
+        push: false
+
+  # Staging profile
+  - name: staging
+    build:
+      local:
+        push: true
+      tagPolicy:
+        sha256: {}
+    deploy:
+      kustomize:
+        paths:
+          - k8s/overlays/staging
+
+  # Production profile
+  - name: production
+    build:
+      local:
+        push: true
+      tagPolicy:
+        gitCommit:
+          prefix: v
+    deploy:
+      kustomize:
+        paths:
+          - k8s/overlays/production
+
+  # Debug profile
+  - name: debug
+    activation:
+      - command: debug
+    patches:
+      - op: add
+        path: /build/artifacts/0/docker/buildArgs/DEBUG
+        value: "true"
+    deploy:
+      kubectl:
+        flags:
+          apply:
+            - --validate=false
+
+# ============================================
+# Custom Actions
+# ============================================
+customActions:
+  # Run database migrations
+  - name: migrate
+    executionMode:
+      kubernetesCluster: {}
+    containers:
+      - name: migrate
+        image: festival/api
+        command:
+          - npx
+          - prisma
+          - migrate
+          - deploy
+
+  # Seed database
+  - name: seed
+    executionMode:
+      kubernetesCluster: {}
+    containers:
+      - name: seed
+        image: festival/api
+        command:
+          - npx
+          - prisma
+          - db
+          - seed
+
+  # Open Prisma Studio
+  - name: studio
+    executionMode:
+      local: {}
+
+# ============================================
+# Verification
+# ============================================
+verify:
+  - name: api-health
+    container:
+      name: health-check
+      image: curlimages/curl:latest
+      command:
+        - /bin/sh
+        - -c
+        - |
+          for i in 1 2 3 4 5; do
+            if curl -sf http://api:3333/api/health; then
+              exit 0
+            fi
+            sleep 5
+          done
+          exit 1

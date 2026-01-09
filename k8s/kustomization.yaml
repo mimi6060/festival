@@ -62,6 +62,14 @@ resources:
   - cert-manager/cluster-issuer.yaml
   - cert-manager/certificates.yaml
 
+  # Monitoring (Prometheus ServiceMonitors)
+  - monitoring/servicemonitor.yaml
+  - monitoring/prometheusrule.yaml
+
+  # Jobs (optional - apply separately)
+  # - jobs/prisma-migrate.yaml
+  # - jobs/database-backup.yaml
+
 # Image configurations (override for different environments)
 images:
   - name: festival/api

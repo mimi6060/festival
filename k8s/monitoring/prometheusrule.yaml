@@ -1,0 +1,299 @@
+# ============================================
+# Prometheus Alerting Rules
+# ============================================
+# PrometheusRule CRDs for alerting
+# Requires: prometheus-operator installed
+# ============================================
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: festival-alerts
+  namespace: festival
+  labels:
+    app.kubernetes.io/name: festival-alerts
+    app.kubernetes.io/component: monitoring
+    app.kubernetes.io/part-of: festival-platform
+    release: prometheus
+spec:
+  groups:
+    # ========================================
+    # API Alerts
+    # ========================================
+    - name: festival-api
+      interval: 30s
+      rules:
+        # High error rate
+        - alert: APIHighErrorRate
+          expr: |
+            sum(rate(http_requests_total{job="api",status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total{job="api"}[5m]))
+            > 0.05
+          for: 5m
+          labels:
+            severity: critical
+            service: api
+          annotations:
+            summary: "High API error rate"
+            description: "API error rate is above 5% (current: {{ $value | humanizePercentage }})"
+
+        # High latency
+        - alert: APIHighLatency
+          expr: |
+            histogram_quantile(0.95, rate(http_request_duration_seconds_bucket{job="api"}[5m]))
+            > 0.5
+          for: 5m
+          labels:
+            severity: warning
+            service: api
+          annotations:
+            summary: "High API latency"
+            description: "API P95 latency is above 500ms (current: {{ $value | humanizeDuration }})"
+
+        # Critical latency
+        - alert: APICriticalLatency
+          expr: |
+            histogram_quantile(0.99, rate(http_request_duration_seconds_bucket{job="api"}[5m]))
+            > 2
+          for: 5m
+          labels:
+            severity: critical
+            service: api
+          annotations:
+            summary: "Critical API latency"
+            description: "API P99 latency is above 2s (current: {{ $value | humanizeDuration }})"
+
+        # Pod not ready
+        - alert: APIPodNotReady
+          expr: |
+            kube_pod_status_ready{namespace=~"festival.*",pod=~"api.*",condition="true"} == 0
+          for: 5m
+          labels:
+            severity: warning
+            service: api
+          annotations:
+            summary: "API pod not ready"
+            description: "Pod {{ $labels.pod }} is not ready for more than 5 minutes"
+
+        # High memory usage
+        - alert: APIHighMemoryUsage
+          expr: |
+            container_memory_usage_bytes{namespace=~"festival.*",container="api"}
+            /
+            container_spec_memory_limit_bytes{namespace=~"festival.*",container="api"}
+            > 0.85
+          for: 5m
+          labels:
+            severity: warning
+            service: api
+          annotations:
+            summary: "High API memory usage"
+            description: "API memory usage is above 85% (current: {{ $value | humanizePercentage }})"
+
+    # ========================================
+    # Database Alerts
+    # ========================================
+    - name: festival-database
+      interval: 30s
+      rules:
+        # PostgreSQL down
+        - alert: PostgreSQLDown
+          expr: pg_up == 0
+          for: 1m
+          labels:
+            severity: critical
+            service: postgresql
+          annotations:
+            summary: "PostgreSQL is down"
+            description: "PostgreSQL instance {{ $labels.instance }} is not responding"
+
+        # High connection count
+        - alert: PostgreSQLHighConnections
+          expr: |
+            pg_stat_database_numbackends
+            /
+            pg_settings_max_connections
+            > 0.8
+          for: 5m
+          labels:
+            severity: warning
+            service: postgresql
+          annotations:
+            summary: "High PostgreSQL connection count"
+            description: "PostgreSQL connection usage is above 80%"
+
+        # Slow queries
+        - alert: PostgreSQLSlowQueries
+          expr: |
+            rate(pg_stat_database_conflicts[5m]) > 10
+          for: 10m
+          labels:
+            severity: warning
+            service: postgresql
+          annotations:
+            summary: "PostgreSQL query conflicts"
+            description: "High rate of query conflicts detected"
+
+        # Replication lag
+        - alert: PostgreSQLReplicationLag
+          expr: |
+            pg_replication_lag > 300
+          for: 5m
+          labels:
+            severity: warning
+            service: postgresql
+          annotations:
+            summary: "PostgreSQL replication lag"
+            description: "Replication lag is above 5 minutes"
+
+    # ========================================
+    # Redis Alerts
+    # ========================================
+    - name: festival-redis
+      interval: 30s
+      rules:
+        # Redis down
+        - alert: RedisDown
+          expr: redis_up == 0
+          for: 1m
+          labels:
+            severity: critical
+            service: redis
+          annotations:
+            summary: "Redis is down"
+            description: "Redis instance {{ $labels.instance }} is not responding"
+
+        # High memory usage
+        - alert: RedisHighMemoryUsage
+          expr: |
+            redis_memory_used_bytes / redis_memory_max_bytes > 0.85
+          for: 5m
+          labels:
+            severity: warning
+            service: redis
+          annotations:
+            summary: "High Redis memory usage"
+            description: "Redis memory usage is above 85%"
+
+        # Too many connections
+        - alert: RedisTooManyConnections
+          expr: redis_connected_clients > 500
+          for: 5m
+          labels:
+            severity: warning
+            service: redis
+          annotations:
+            summary: "Too many Redis connections"
+            description: "Redis has {{ $value }} connected clients"
+
+    # ========================================
+    # Infrastructure Alerts
+    # ========================================
+    - name: festival-infrastructure
+      interval: 30s
+      rules:
+        # Node not ready
+        - alert: NodeNotReady
+          expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+          for: 5m
+          labels:
+            severity: critical
+            service: kubernetes
+          annotations:
+            summary: "Kubernetes node not ready"
+            description: "Node {{ $labels.node }} is not ready"
+
+        # High node CPU
+        - alert: NodeHighCPU
+          expr: |
+            (1 - avg(rate(node_cpu_seconds_total{mode="idle"}[5m])) by (instance)) > 0.85
+          for: 10m
+          labels:
+            severity: warning
+            service: kubernetes
+          annotations:
+            summary: "High node CPU usage"
+            description: "Node {{ $labels.instance }} CPU usage is above 85%"
+
+        # High node memory
+        - alert: NodeHighMemory
+          expr: |
+            (1 - node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes) > 0.85
+          for: 10m
+          labels:
+            severity: warning
+            service: kubernetes
+          annotations:
+            summary: "High node memory usage"
+            description: "Node {{ $labels.instance }} memory usage is above 85%"
+
+        # Disk space low
+        - alert: NodeDiskSpaceLow
+          expr: |
+            (1 - node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes) > 0.85
+          for: 10m
+          labels:
+            severity: warning
+            service: kubernetes
+          annotations:
+            summary: "Low disk space"
+            description: "Node {{ $labels.instance }} disk usage is above 85%"
+
+        # PVC almost full
+        - alert: PVCAlmostFull
+          expr: |
+            kubelet_volume_stats_used_bytes / kubelet_volume_stats_capacity_bytes > 0.85
+          for: 5m
+          labels:
+            severity: warning
+            service: kubernetes
+          annotations:
+            summary: "PVC almost full"
+            description: "PVC {{ $labels.persistentvolumeclaim }} is {{ $value | humanizePercentage }} full"
+
+    # ========================================
+    # Business Alerts
+    # ========================================
+    - name: festival-business
+      interval: 60s
+      rules:
+        # No payments in last hour (during business hours)
+        - alert: NoPaymentsReceived
+          expr: |
+            sum(increase(payment_total{status="success"}[1h])) == 0
+            and ON() hour() >= 8 < 22
+          for: 1h
+          labels:
+            severity: warning
+            service: payments
+          annotations:
+            summary: "No payments received"
+            description: "No successful payments in the last hour"
+
+        # Payment failure rate high
+        - alert: HighPaymentFailureRate
+          expr: |
+            sum(rate(payment_total{status="failed"}[15m]))
+            /
+            sum(rate(payment_total[15m]))
+            > 0.1
+          for: 15m
+          labels:
+            severity: critical
+            service: payments
+          annotations:
+            summary: "High payment failure rate"
+            description: "Payment failure rate is above 10%"
+
+        # Ticket validation errors
+        - alert: TicketValidationErrors
+          expr: |
+            sum(rate(ticket_validation_total{status="error"}[5m])) > 10
+          for: 5m
+          labels:
+            severity: warning
+            service: tickets
+          annotations:
+            summary: "High ticket validation error rate"
+            description: "Ticket validation errors are above normal"

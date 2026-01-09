@@ -1,0 +1,211 @@
+# ============================================
+# ArgoCD Application Manifests
+# ============================================
+# GitOps deployment configuration
+# Requires: ArgoCD installed in cluster
+# Usage: kubectl apply -f k8s/argocd/application.yaml
+# ============================================
+
+# ArgoCD Project for Festival Platform
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: festival
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Festival Platform Project
+  sourceRepos:
+    - 'https://github.com/*/festival.git'
+    - 'git@github.com:*/festival.git'
+  destinations:
+    - namespace: festival
+      server: https://kubernetes.default.svc
+    - namespace: festival-staging
+      server: https://kubernetes.default.svc
+    - namespace: festival-prod
+      server: https://kubernetes.default.svc
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: networking.k8s.io
+      kind: IngressClass
+  namespaceResourceBlacklist:
+    - group: ''
+      kind: ResourceQuota
+    - group: ''
+      kind: LimitRange
+  roles:
+    - name: admin
+      description: Admin access to festival project
+      policies:
+        - p, proj:festival:admin, applications, *, festival/*, allow
+      groups:
+        - festival-admins
+    - name: developer
+      description: Developer access (read + sync)
+      policies:
+        - p, proj:festival:developer, applications, get, festival/*, allow
+        - p, proj:festival:developer, applications, sync, festival/*, allow
+      groups:
+        - festival-developers
+---
+# Staging Application
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: festival-staging
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: festival
+    app.kubernetes.io/environment: staging
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: festival
+  source:
+    repoURL: https://github.com/mimi6060/festival.git
+    targetRevision: develop
+    path: k8s/overlays/staging
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: festival-staging
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+      allowEmpty: false
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  revisionHistoryLimit: 10
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+      jsonPointers:
+        - /spec/minReplicas
+        - /spec/maxReplicas
+---
+# Production Application
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: festival-production
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: festival
+    app.kubernetes.io/environment: production
+  annotations:
+    # Require manual sync for production
+    argocd.argoproj.io/sync-wave: "0"
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: festival
+  source:
+    repoURL: https://github.com/mimi6060/festival.git
+    targetRevision: main
+    path: k8s/overlays/production
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: festival-prod
+  syncPolicy:
+    # Manual sync for production (no automated)
+    syncOptions:
+      - CreateNamespace=true
+      - PrunePropagationPolicy=foreground
+      - PruneLast=true
+      - ApplyOutOfSyncOnly=true
+    retry:
+      limit: 5
+      backoff:
+        duration: 5s
+        factor: 2
+        maxDuration: 3m
+  revisionHistoryLimit: 10
+  ignoreDifferences:
+    - group: apps
+      kind: Deployment
+      jsonPointers:
+        - /spec/replicas
+    - group: autoscaling
+      kind: HorizontalPodAutoscaler
+      jsonPointers:
+        - /spec/minReplicas
+        - /spec/maxReplicas
+---
+# Database Migration Pre-Sync Hook
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: festival-migrations
+  namespace: argocd
+  labels:
+    app.kubernetes.io/name: festival
+    app.kubernetes.io/component: migrations
+spec:
+  project: festival
+  source:
+    repoURL: https://github.com/mimi6060/festival.git
+    targetRevision: main
+    path: k8s/jobs
+    directory:
+      include: 'prisma-migrate.yaml'
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: festival-prod
+  syncPolicy:
+    syncOptions:
+      - CreateNamespace=false
+---
+# ApplicationSet for multi-environment (alternative approach)
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: festival-envs
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+          - env: staging
+            branch: develop
+            namespace: festival-staging
+            autoSync: true
+          - env: production
+            branch: main
+            namespace: festival-prod
+            autoSync: false
+  template:
+    metadata:
+      name: 'festival-{{env}}-set'
+      labels:
+        app.kubernetes.io/name: festival
+        app.kubernetes.io/environment: '{{env}}'
+    spec:
+      project: festival
+      source:
+        repoURL: https://github.com/mimi6060/festival.git
+        targetRevision: '{{branch}}'
+        path: 'k8s/overlays/{{env}}'
+      destination:
+        server: https://kubernetes.default.svc
+        namespace: '{{namespace}}'
+      syncPolicy:
+        automated:
+          prune: '{{autoSync}}'
+          selfHeal: '{{autoSync}}'
+        syncOptions:
+          - CreateNamespace=true

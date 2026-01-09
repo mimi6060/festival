@@ -1,0 +1,253 @@
+# ============================================
+# Database Backup CronJob
+# ============================================
+# Automated PostgreSQL backups to S3/GCS
+# Schedule: Daily at 2:00 AM UTC
+# Retention: 30 days
+# ============================================
+
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: database-backup
+  namespace: festival
+  labels:
+    app.kubernetes.io/name: database-backup
+    app.kubernetes.io/component: backup
+    app.kubernetes.io/part-of: festival-platform
+spec:
+  # Run daily at 2:00 AM UTC
+  schedule: "0 2 * * *"
+  # Keep last 3 successful jobs
+  successfulJobsHistoryLimit: 3
+  # Keep last 3 failed jobs
+  failedJobsHistoryLimit: 3
+  # Don't run if previous job is still running
+  concurrencyPolicy: Forbid
+  # Start job within 1 hour of scheduled time
+  startingDeadlineSeconds: 3600
+  jobTemplate:
+    spec:
+      # Auto-delete job after 1 hour
+      ttlSecondsAfterFinished: 3600
+      backoffLimit: 3
+      activeDeadlineSeconds: 3600
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: database-backup
+            app.kubernetes.io/component: backup
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: backup-service-account
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            runAsGroup: 1000
+            fsGroup: 1000
+          containers:
+            - name: backup
+              image: postgres:16-alpine
+              imagePullPolicy: IfNotPresent
+              command:
+                - /bin/sh
+                - -c
+                - |
+                  set -e
+
+                  # Generate backup filename with timestamp
+                  TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+                  BACKUP_FILE="festival_backup_${TIMESTAMP}.sql.gz"
+                  BACKUP_PATH="/tmp/${BACKUP_FILE}"
+
+                  echo "Starting backup at $(date)"
+                  echo "Backup file: ${BACKUP_FILE}"
+
+                  # Create backup using pg_dump
+                  PGPASSWORD="${POSTGRES_PASSWORD}" pg_dump \
+                    -h "${POSTGRES_HOST}" \
+                    -p "${POSTGRES_PORT}" \
+                    -U "${POSTGRES_USER}" \
+                    -d "${POSTGRES_DB}" \
+                    --format=custom \
+                    --compress=9 \
+                    --verbose \
+                    > "${BACKUP_PATH}"
+
+                  # Get backup size
+                  BACKUP_SIZE=$(du -h "${BACKUP_PATH}" | cut -f1)
+                  echo "Backup size: ${BACKUP_SIZE}"
+
+                  # Upload to S3 (if configured)
+                  if [ -n "${S3_BUCKET}" ]; then
+                    echo "Uploading to S3: s3://${S3_BUCKET}/backups/${BACKUP_FILE}"
+                    aws s3 cp "${BACKUP_PATH}" "s3://${S3_BUCKET}/backups/${BACKUP_FILE}"
+
+                    # Clean up old backups (keep last 30 days)
+                    echo "Cleaning up old backups..."
+                    aws s3 ls "s3://${S3_BUCKET}/backups/" | \
+                      while read -r line; do
+                        FILE_DATE=$(echo "$line" | awk '{print $1}')
+                        FILE_NAME=$(echo "$line" | awk '{print $4}')
+                        if [ -n "$FILE_NAME" ]; then
+                          FILE_EPOCH=$(date -d "$FILE_DATE" +%s 2>/dev/null || echo "0")
+                          CUTOFF_EPOCH=$(date -d "-30 days" +%s)
+                          if [ "$FILE_EPOCH" -lt "$CUTOFF_EPOCH" ]; then
+                            echo "Deleting old backup: $FILE_NAME"
+                            aws s3 rm "s3://${S3_BUCKET}/backups/${FILE_NAME}"
+                          fi
+                        fi
+                      done
+                  fi
+
+                  # Upload to GCS (if configured)
+                  if [ -n "${GCS_BUCKET}" ]; then
+                    echo "Uploading to GCS: gs://${GCS_BUCKET}/backups/${BACKUP_FILE}"
+                    gsutil cp "${BACKUP_PATH}" "gs://${GCS_BUCKET}/backups/${BACKUP_FILE}"
+
+                    # Set lifecycle policy for auto-deletion after 30 days
+                    gsutil lifecycle get "gs://${GCS_BUCKET}" || \
+                      gsutil lifecycle set /tmp/lifecycle.json "gs://${GCS_BUCKET}"
+                  fi
+
+                  # Cleanup local file
+                  rm -f "${BACKUP_PATH}"
+
+                  echo "Backup completed successfully at $(date)"
+              env:
+                - name: POSTGRES_HOST
+                  value: "postgresql"
+                - name: POSTGRES_PORT
+                  value: "5432"
+                - name: POSTGRES_DB
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgresql-secrets
+                      key: POSTGRES_DB
+                - name: POSTGRES_USER
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgresql-secrets
+                      key: POSTGRES_USER
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: postgresql-secrets
+                      key: POSTGRES_PASSWORD
+                - name: S3_BUCKET
+                  valueFrom:
+                    configMapKeyRef:
+                      name: backup-config
+                      key: S3_BUCKET
+                      optional: true
+                - name: GCS_BUCKET
+                  valueFrom:
+                    configMapKeyRef:
+                      name: backup-config
+                      key: GCS_BUCKET
+                      optional: true
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-secrets
+                      key: AWS_ACCESS_KEY_ID
+                      optional: true
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: backup-secrets
+                      key: AWS_SECRET_ACCESS_KEY
+                      optional: true
+                - name: AWS_DEFAULT_REGION
+                  valueFrom:
+                    configMapKeyRef:
+                      name: backup-config
+                      key: AWS_DEFAULT_REGION
+                      optional: true
+              resources:
+                requests:
+                  cpu: "100m"
+                  memory: "256Mi"
+                limits:
+                  cpu: "500m"
+                  memory: "1Gi"
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: false
+                capabilities:
+                  drop:
+                    - ALL
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+          volumes:
+            - name: tmp
+              emptyDir:
+                sizeLimit: 10Gi
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backup-service-account
+  namespace: festival
+  labels:
+    app.kubernetes.io/name: database-backup
+    app.kubernetes.io/component: backup
+    app.kubernetes.io/part-of: festival-platform
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: backup-config
+  namespace: festival
+  labels:
+    app.kubernetes.io/name: database-backup
+    app.kubernetes.io/component: backup
+data:
+  # S3 configuration (AWS)
+  S3_BUCKET: "festival-backups"
+  AWS_DEFAULT_REGION: "eu-west-1"
+  # GCS configuration (Google Cloud)
+  # GCS_BUCKET: "festival-backups"
+---
+# Manual backup job (for on-demand backups)
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: database-backup-manual
+  namespace: festival
+  labels:
+    app.kubernetes.io/name: database-backup
+    app.kubernetes.io/component: backup
+    app.kubernetes.io/instance: manual
+spec:
+  ttlSecondsAfterFinished: 3600
+  template:
+    spec:
+      restartPolicy: Never
+      serviceAccountName: backup-service-account
+      containers:
+        - name: backup
+          image: postgres:16-alpine
+          command:
+            - /bin/sh
+            - -c
+            - |
+              TIMESTAMP=$(date +%Y%m%d_%H%M%S)
+              echo "Manual backup started at $(date)"
+              PGPASSWORD="${POSTGRES_PASSWORD}" pg_dump \
+                -h postgresql -U "${POSTGRES_USER}" -d "${POSTGRES_DB}" \
+                --format=custom --compress=9 \
+                > "/tmp/manual_backup_${TIMESTAMP}.sql.gz"
+              echo "Backup completed: /tmp/manual_backup_${TIMESTAMP}.sql.gz"
+              ls -lh /tmp/manual_backup_*.sql.gz
+          envFrom:
+            - secretRef:
+                name: postgresql-secrets
+          volumeMounts:
+            - name: backup-volume
+              mountPath: /tmp
+      volumes:
+        - name: backup-volume
+          emptyDir:
+            sizeLimit: 10Gi
