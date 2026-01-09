@@ -16,5 +16,10 @@
     "jsx": "react-native"
   },
   "include": ["src/**/*"],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
+  "references": [
+    {
+      "path": "../../libs/shared/i18n"
+    }
+  ]
 }

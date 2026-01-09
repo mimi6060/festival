@@ -1,3 +1,45 @@
+// Translation hooks
+export { useTranslation, getCurrentLanguage, translate, setLanguage } from './useTranslation';
+export type { UseTranslationReturn, TranslationKey, TranslationKeys } from './useTranslation';
+
+// Formatting hooks (locale-aware)
+export {
+  useFormatDate,
+  type UseFormatDateReturn,
+  type DateFormatterOptions,
+  type DateFormatStyle,
+  type TimeFormatStyle,
+} from './useFormatDate';
+
+export {
+  useFormatNumber,
+  type UseFormatNumberReturn,
+  type NumberFormatterOptions,
+  type CompactDisplay,
+  type PercentFormatterOptions,
+} from './useFormatNumber';
+
+export {
+  useFormatCurrency,
+  type UseFormatCurrencyReturn,
+  type CurrencyFormatterOptions,
+  type CurrencyDisplay,
+  type CurrencySign,
+  type CurrencyConfig,
+} from './useFormatCurrency';
+
+export {
+  useRelativeTime,
+  useLiveRelativeTime,
+  useLiveCountdown,
+  type UseRelativeTimeReturn,
+  type CountdownResult,
+  type RelativeTimeOptions,
+  type RelativeTimeUnit,
+  type RelativeTimeNumeric,
+  type RelativeTimeStyle,
+} from './useRelativeTime';
+
 // Offline & Location
 export { useOffline } from './useOffline';
 export { useOfflineStatus } from './useOfflineStatus';
@@ -37,11 +79,7 @@ export {
 } from './useDatabase';
 
 // Sync
-export {
-  useSync,
-  useEntitySyncStatus,
-  useSyncQueueStatus,
-} from './useSync';
+export { useSync, useEntitySyncStatus, useSyncQueueStatus } from './useSync';
 export type { SyncOptions, UseSyncResult } from './useSync';
 
 // Offline-First Data

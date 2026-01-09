@@ -29,3 +29,7 @@ export type {
   NetworkStatusContextValue,
   NetworkStatusProviderProps,
 } from './NetworkStatusProvider';
+
+// Language Provider
+export { LanguageProvider, useLanguage, withLanguage } from './LanguageProvider';
+export type { WithLanguageProps } from './LanguageProvider';
