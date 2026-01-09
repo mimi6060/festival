@@ -208,6 +208,9 @@ model User {
   resetToken        String?       // Hashed password reset token
   resetTokenExpiry  DateTime?     // Token expiration timestamp
   lastLoginAt       DateTime?
+  // Two-factor authentication
+  twoFactorEnabled  Boolean       @default(false)
+  twoFactorSecret   String?       // Encrypted TOTP secret
   // Currency preferences
   displayCurrency   String?       // User's preferred display currency (ISO code)
   isDeleted         Boolean       @default(false)  // Soft delete flag for GDPR compliance
