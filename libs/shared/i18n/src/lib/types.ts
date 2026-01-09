@@ -1,6 +1,6 @@
-export type Locale = 'fr' | 'en';
+export type Locale = 'fr' | 'en' | 'de' | 'es' | 'it' | 'nl';
 
-export const locales: Locale[] = ['fr', 'en'];
+export const locales: Locale[] = ['fr', 'en', 'de', 'es', 'it', 'nl'];
 export const defaultLocale: Locale = 'fr';
 
 export interface LocaleConfig {
@@ -23,6 +23,30 @@ export const localeConfigs: Record<Locale, LocaleConfig> = {
     flag: 'GB',
     direction: 'ltr',
   },
+  de: {
+    locale: 'de',
+    name: 'Deutsch',
+    flag: 'DE',
+    direction: 'ltr',
+  },
+  es: {
+    locale: 'es',
+    name: 'Espanol',
+    flag: 'ES',
+    direction: 'ltr',
+  },
+  it: {
+    locale: 'it',
+    name: 'Italiano',
+    flag: 'IT',
+    direction: 'ltr',
+  },
+  nl: {
+    locale: 'nl',
+    name: 'Nederlands',
+    flag: 'NL',
+    direction: 'ltr',
+  },
 };
 
 export function isValidLocale(locale: string): locale is Locale {
@@ -30,7 +54,9 @@ export function isValidLocale(locale: string): locale is Locale {
 }
 
 export function getLocaleFromHeader(acceptLanguage: string | null): Locale {
-  if (!acceptLanguage) return defaultLocale;
+  if (!acceptLanguage) {
+    return defaultLocale;
+  }
 
   const languages = acceptLanguage
     .split(',')
@@ -53,7 +79,9 @@ export function getLocaleFromHeader(acceptLanguage: string | null): Locale {
 }
 
 export function getLocaleFromCookie(cookie: string | null): Locale | null {
-  if (!cookie) return null;
+  if (!cookie) {
+    return null;
+  }
 
   const match = cookie.match(/(?:^|;\s*)NEXT_LOCALE=([^;]+)/);
   const locale = match?.[1];

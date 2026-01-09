@@ -9,7 +9,7 @@ export function useLocale(): Locale {
   if (typeof document !== 'undefined') {
     const match = document.cookie.match(/(?:^|;\s*)NEXT_LOCALE=([^;]+)/);
     const locale = match?.[1];
-    if (locale === 'fr' || locale === 'en') {
+    if (locale === 'fr' || locale === 'en' || locale === 'it') {
       return locale;
     }
   }

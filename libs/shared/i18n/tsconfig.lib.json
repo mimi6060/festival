@@ -4,6 +4,7 @@
     "outDir": "../../../dist/out-tsc",
     "declaration": true,
     "types": ["node"],
+    "lib": ["es2022", "dom"],
     "resolveJsonModule": true
   },
   "include": ["src/**/*.ts", "src/**/*.json"],

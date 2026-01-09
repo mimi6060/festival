@@ -1,8 +1,25 @@
 // Types
 export * from './lib/types';
 
-// Utilities
-export * from './lib/utils';
+// Legacy utilities (for backward compatibility)
+// Note: Use the new formatters module for more comprehensive formatting
+export {
+  interpolate,
+  getNestedValue,
+  formatDate as formatDateSimple,
+  formatDateTime as formatDateTimeSimple,
+  formatCurrency as formatCurrencySimple,
+  formatNumber as formatNumberSimple,
+  formatPercent as formatPercentSimple,
+  formatRelativeTime as formatRelativeTimeSimple,
+  pluralize,
+  getBrowserLocale,
+  setStoredLocale,
+  getStoredLocale,
+} from './lib/utils';
+
+// Formatters (locale-aware date, number, currency, relative time)
+export * from './lib/formatters';
 
 // Locales (JSON imports)
 export { default as frLocale } from './lib/locales/fr.json';

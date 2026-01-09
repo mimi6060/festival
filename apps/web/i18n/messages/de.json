@@ -1,0 +1,285 @@
+{
+  "common": {
+    "loading": "Laden...",
+    "error": "Ein Fehler ist aufgetreten",
+    "retry": "Erneut versuchen",
+    "cancel": "Abbrechen",
+    "confirm": "Bestätigen",
+    "save": "Speichern",
+    "delete": "Löschen",
+    "edit": "Bearbeiten",
+    "close": "Schließen",
+    "search": "Suchen",
+    "filter": "Filtern",
+    "sortBy": "Sortieren nach",
+    "viewAll": "Alle anzeigen",
+    "learnMore": "Mehr erfahren",
+    "getStarted": "Loslegen",
+    "signIn": "Anmelden",
+    "signOut": "Abmelden",
+    "signUp": "Registrieren",
+    "backTo": "Zurück zu {page}"
+  },
+  "navigation": {
+    "home": "Startseite",
+    "festivals": "Festivals",
+    "artists": "Künstler",
+    "about": "Über uns",
+    "contact": "Kontakt",
+    "account": "Mein Konto",
+    "tickets": "Meine Tickets",
+    "orders": "Meine Bestellungen"
+  },
+  "home": {
+    "hero": {
+      "title1": "Erlebe",
+      "title2": "die Musik",
+      "subtitle": "Entdecke und buche Tickets für die unglaublichsten Musikfestivals der Welt. Dein nächstes unvergessliches Abenteuer beginnt hier.",
+      "cta": "Festivals entdecken"
+    },
+    "featured": {
+      "title": "Ausgewähltes Festival",
+      "subtitle": "Verpasse nicht das Event des Jahres"
+    },
+    "upcoming": {
+      "title": "Kommende Festivals",
+      "subtitle": "Finde dein perfektes Festival-Erlebnis"
+    },
+    "features": {
+      "title": "Warum FestivalHub wählen?",
+      "subtitle": "Wir machen das Entdecken und Besuchen von Festivals einfach, sicher und unvergesslich.",
+      "instantBooking": {
+        "title": "Sofortige Buchung",
+        "description": "Buche deine Tickets in Sekunden mit unserem optimierten Bezahlvorgang."
+      },
+      "securePayments": {
+        "title": "Sichere Zahlungen",
+        "description": "Deine Transaktionen sind mit Bankstandard-Sicherheit geschützt."
+      },
+      "mobileTickets": {
+        "title": "Mobile Tickets",
+        "description": "Greife jederzeit von deinem Handy auf deine Tickets zu. Kein Drucken erforderlich."
+      },
+      "support": {
+        "title": "24/7 Support",
+        "description": "Unser Team ist vor, während und nach dem Festival für dich da."
+      }
+    },
+    "cta": {
+      "title": "Bereit für unvergessliche Momente?",
+      "subtitle": "Schließe dich Millionen von Festivalbesuchern an und entdecke dein nächstes Abenteuer. Registriere dich heute und erhalte exklusiven Zugang zu Early-Bird-Tickets.",
+      "button": "Kostenlos starten"
+    },
+    "newsletter": {
+      "title": "Bleib auf dem Laufenden",
+      "subtitle": "Erhalte die neuesten Festival-News, exklusive Angebote und frühzeitigen Zugang zu Tickets.",
+      "placeholder": "Deine E-Mail-Adresse",
+      "button": "Abonnieren"
+    }
+  },
+  "festivals": {
+    "title": "Festivals entdecken",
+    "subtitle": "Finde dein perfektes Festival-Erlebnis aus hunderten von Events weltweit.",
+    "filters": {
+      "search": "Festivals suchen...",
+      "genre": "Alle Genres",
+      "country": "Alle Länder",
+      "date": "Datum wählen"
+    },
+    "showing": "{count} Festivals angezeigt",
+    "loadMore": "Mehr Festivals laden",
+    "from": "Ab",
+    "soldOut": "Ausverkauft",
+    "getTickets": "Tickets holen",
+    "buyTickets": "Tickets kaufen"
+  },
+  "festivalDetail": {
+    "about": "Über das Festival",
+    "lineup": "Line-up",
+    "viewFullLineup": "Vollständiges Line-up anzeigen",
+    "location": "Standort",
+    "quickInfo": "Kurzinfo",
+    "dates": "Termine",
+    "duration": "Dauer",
+    "ageRestriction": "Altersbeschränkung",
+    "share": "Festival teilen",
+    "ticketCta": {
+      "title": "Hol dir deine Tickets",
+      "subtitle": "Sichere dir deinen Platz bei {festival}. Begrenzte Tickets verfügbar!",
+      "cancellation": "Kostenlose Stornierung bis 30 Tage vor der Veranstaltung"
+    }
+  },
+  "tickets": {
+    "selectTickets": "Wähle deine Tickets",
+    "completeOrder": "Bestellung abschließen",
+    "ticketType": "Ticketart",
+    "quantity": "Anzahl",
+    "price": "Preis",
+    "perPerson": "pro Person",
+    "soldOut": "Ausverkauft",
+    "onlyLeft": "Nur noch {count} verfügbar",
+    "orderSummary": "Bestellübersicht",
+    "ticketsSelected": "{count} Ticket(s) ausgewählt",
+    "subtotal": "Zwischensumme",
+    "serviceFee": "Servicegebühr",
+    "total": "Gesamt",
+    "continueToCheckout": "Weiter zur Kasse",
+    "reserved": "Deine Tickets sind für 15 Minuten reserviert"
+  },
+  "checkout": {
+    "contactInfo": "Kontaktdaten",
+    "paymentDetails": "Zahlungsdetails",
+    "email": "E-Mail-Adresse",
+    "firstName": "Vorname",
+    "lastName": "Nachname",
+    "phone": "Telefonnummer (optional)",
+    "cardNumber": "Kartennummer",
+    "expiryDate": "Ablaufdatum",
+    "cvv": "CVV",
+    "cardholderName": "Name des Karteninhabers",
+    "continueToPayment": "Weiter zur Zahlung",
+    "completePurchase": "Kauf abschließen",
+    "processing": "Wird verarbeitet...",
+    "terms": "Ich akzeptiere die Nutzungsbedingungen und Datenschutzrichtlinie",
+    "securePayment": "Deine Zahlung ist durch SSL-Verschlüsselung gesichert"
+  },
+  "confirmation": {
+    "title": "Bestellung bestätigt!",
+    "subtitle": "Vielen Dank für deinen Einkauf. Deine Tickets sind unterwegs!",
+    "orderNumber": "Bestellnummer",
+    "festival": "Festival",
+    "confirmationEmail": "Bestätigungs-E-Mail",
+    "viewTickets": "Meine Tickets anzeigen",
+    "exploreMore": "Mehr Festivals entdecken"
+  },
+  "auth": {
+    "login": {
+      "title": "Willkommen zurück",
+      "subtitle": "Melde dich an, um auf dein Konto zuzugreifen",
+      "rememberMe": "Angemeldet bleiben",
+      "forgotPassword": "Passwort vergessen?",
+      "noAccount": "Noch kein Konto?",
+      "signUpFree": "Kostenlos registrieren"
+    },
+    "register": {
+      "title": "Erstelle dein Konto",
+      "subtitle": "Werde Teil von FestivalHub und starte dein Abenteuer",
+      "confirmPassword": "Passwort bestätigen",
+      "passwordStrength": "Passwortstärke",
+      "terms": "Ich akzeptiere die Nutzungsbedingungen und Datenschutzrichtlinie",
+      "newsletter": "Festival-News und exklusive Angebote erhalten (optional)",
+      "createAccount": "Konto erstellen",
+      "hasAccount": "Bereits ein Konto?"
+    },
+    "errors": {
+      "invalidEmail": "Ungültige E-Mail-Adresse",
+      "emailRequired": "E-Mail ist erforderlich",
+      "passwordRequired": "Passwort ist erforderlich",
+      "passwordMinLength": "Passwort muss mindestens 8 Zeichen haben",
+      "passwordMismatch": "Passwörter stimmen nicht überein",
+      "termsRequired": "Du musst die Bedingungen akzeptieren",
+      "invalidCredentials": "Ungültige E-Mail oder Passwort. Bitte versuche es erneut."
+    }
+  },
+  "account": {
+    "welcome": "Willkommen zurück, {name}!",
+    "editProfile": "Profil bearbeiten",
+    "quickLinks": {
+      "tickets": {
+        "title": "Meine Tickets",
+        "description": "Deine Festival-Tickets anzeigen und herunterladen"
+      },
+      "orders": {
+        "title": "Bestellverlauf",
+        "description": "Alle vergangenen Bestellungen und Rechnungen anzeigen"
+      },
+      "saved": {
+        "title": "Gespeicherte Festivals",
+        "description": "Festivals, die du für später gespeichert hast"
+      },
+      "settings": {
+        "title": "Kontoeinstellungen",
+        "description": "Profil und Einstellungen aktualisieren"
+      }
+    },
+    "upcomingFestivals": "Kommende Festivals",
+    "noUpcoming": {
+      "title": "Keine kommenden Festivals",
+      "subtitle": "Entdecke fantastische Festivals und sichere dir noch heute deine Tickets!",
+      "cta": "Festivals entdecken"
+    },
+    "recentOrders": "Letzte Bestellungen",
+    "accountDetails": "Kontodetails",
+    "fullName": "Vollständiger Name",
+    "memberSince": "Mitglied seit",
+    "needHelp": {
+      "title": "Brauchst du Hilfe?",
+      "subtitle": "Unser Support-Team ist für dich da bei allen Fragen oder Problemen.",
+      "helpCenter": "Hilfecenter besuchen",
+      "contactSupport": "Support kontaktieren"
+    }
+  },
+  "tickets_page": {
+    "title": "Meine Tickets",
+    "subtitle": "Deine Festival-Tickets anzeigen und verwalten",
+    "noTickets": {
+      "title": "Noch keine Tickets",
+      "subtitle": "Du hast noch keine Tickets gekauft. Entdecke unsere Festivals und finde dein nächstes Abenteuer!"
+    },
+    "ticketId": "Ticket-ID",
+    "ticketType": "Typ",
+    "holder": "Inhaber",
+    "order": "Bestellung",
+    "status": {
+      "valid": "Gültig",
+      "used": "Verwendet",
+      "expired": "Abgelaufen"
+    },
+    "download": "Herunterladen",
+    "info": {
+      "mobile": {
+        "title": "Mobile Tickets",
+        "description": "Zeige dein Ticket auf deinem Handy am Eingang. Kein Drucken erforderlich."
+      },
+      "qr": {
+        "title": "Sichere QR-Codes",
+        "description": "Jedes Ticket hat einen einzigartigen QR-Code, der nur einmal gescannt werden kann."
+      },
+      "help": {
+        "title": "Brauchst du Hilfe?",
+        "description": "Kontaktiere unser Support-Team bei allen Fragen zu deinen Tickets."
+      }
+    }
+  },
+  "orders": {
+    "title": "Bestellverlauf",
+    "subtitle": "Alle vergangenen Bestellungen anzeigen und Rechnungen herunterladen",
+    "noOrders": {
+      "title": "Noch keine Bestellungen",
+      "subtitle": "Sobald du Tickets kaufst, erscheinen deine Bestellungen hier."
+    },
+    "placedOn": "Bestellt am {date}",
+    "invoice": "Rechnung",
+    "viewTickets": "Tickets anzeigen",
+    "paymentMethod": "Zahlungsmethode",
+    "status": {
+      "pending": "Ausstehend",
+      "confirmed": "Bestätigt",
+      "completed": "Abgeschlossen",
+      "cancelled": "Storniert",
+      "refunded": "Erstattet"
+    }
+  },
+  "footer": {
+    "description": "Entdecke und buche Tickets für die besten Musikfestivals weltweit. Dein nächstes unvergessliches Erlebnis beginnt hier.",
+    "product": "Produkt",
+    "company": "Unternehmen",
+    "support": "Support",
+    "legal": "Rechtliches",
+    "newsletter": {
+      "title": "Bleib auf dem Laufenden",
+      "subtitle": "Erhalte die neuesten Festivals und exklusive Angebote direkt in dein Postfach."
+    },
+    "copyright": "{year} FestivalHub. Alle Rechte vorbehalten."
+  }
+}

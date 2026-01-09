@@ -1,0 +1,285 @@
+{
+  "common": {
+    "loading": "Cargando...",
+    "error": "Ha ocurrido un error",
+    "retry": "Reintentar",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "save": "Guardar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "close": "Cerrar",
+    "search": "Buscar",
+    "filter": "Filtrar",
+    "sortBy": "Ordenar por",
+    "viewAll": "Ver todo",
+    "learnMore": "Saber más",
+    "getStarted": "Empezar",
+    "signIn": "Iniciar sesión",
+    "signOut": "Cerrar sesión",
+    "signUp": "Registrarse",
+    "backTo": "Volver a {page}"
+  },
+  "navigation": {
+    "home": "Inicio",
+    "festivals": "Festivales",
+    "artists": "Artistas",
+    "about": "Acerca de",
+    "contact": "Contacto",
+    "account": "Mi cuenta",
+    "tickets": "Mis entradas",
+    "orders": "Mis pedidos"
+  },
+  "home": {
+    "hero": {
+      "title1": "Vive",
+      "title2": "la Música",
+      "subtitle": "Descubre y reserva entradas para los festivales de música más increíbles del mundo. Tu próxima aventura inolvidable comienza aquí.",
+      "cta": "Explorar festivales"
+    },
+    "featured": {
+      "title": "Festival destacado",
+      "subtitle": "No te pierdas el evento del año"
+    },
+    "upcoming": {
+      "title": "Próximos festivales",
+      "subtitle": "Encuentra tu experiencia de festival perfecta"
+    },
+    "features": {
+      "title": "¿Por qué elegir FestivalHub?",
+      "subtitle": "Hacemos que descubrir y asistir a festivales sea sencillo, seguro e inolvidable.",
+      "instantBooking": {
+        "title": "Reserva instantánea",
+        "description": "Reserva tus entradas en segundos con nuestro proceso de compra simplificado."
+      },
+      "securePayments": {
+        "title": "Pagos seguros",
+        "description": "Tus transacciones están protegidas con seguridad de nivel bancario."
+      },
+      "mobileTickets": {
+        "title": "Entradas móviles",
+        "description": "Accede a tus entradas en cualquier momento desde tu móvil. Sin necesidad de imprimir."
+      },
+      "support": {
+        "title": "Soporte 24/7",
+        "description": "Nuestro equipo está aquí para ayudarte antes, durante y después del festival."
+      }
+    },
+    "cta": {
+      "title": "¿Listo para crear recuerdos?",
+      "subtitle": "Únete a millones de festivaleros y descubre tu próxima aventura. Regístrate hoy y obtén acceso exclusivo a entradas anticipadas.",
+      "button": "Empieza gratis"
+    },
+    "newsletter": {
+      "title": "Mantente informado",
+      "subtitle": "Recibe las últimas noticias sobre festivales, ofertas exclusivas y acceso anticipado a entradas.",
+      "placeholder": "Introduce tu correo electrónico",
+      "button": "Suscribirse"
+    }
+  },
+  "festivals": {
+    "title": "Descubre festivales",
+    "subtitle": "Encuentra tu experiencia de festival perfecta entre cientos de eventos en todo el mundo.",
+    "filters": {
+      "search": "Buscar festivales...",
+      "genre": "Todos los géneros",
+      "country": "Todos los países",
+      "date": "Seleccionar fecha"
+    },
+    "showing": "Mostrando {count} festivales",
+    "loadMore": "Cargar más festivales",
+    "from": "Desde",
+    "soldOut": "Agotado",
+    "getTickets": "Conseguir entradas",
+    "buyTickets": "Comprar entradas"
+  },
+  "festivalDetail": {
+    "about": "Sobre el festival",
+    "lineup": "Cartel",
+    "viewFullLineup": "Ver cartel completo",
+    "location": "Ubicación",
+    "quickInfo": "Información rápida",
+    "dates": "Fechas",
+    "duration": "Duración",
+    "ageRestriction": "Restricción de edad",
+    "share": "Compartir este festival",
+    "ticketCta": {
+      "title": "Consigue tus entradas",
+      "subtitle": "Asegura tu plaza en {festival}. ¡Entradas limitadas disponibles!",
+      "cancellation": "Cancelación gratuita hasta 30 días antes del evento"
+    }
+  },
+  "tickets": {
+    "selectTickets": "Selecciona tus entradas",
+    "completeOrder": "Completa tu pedido",
+    "ticketType": "Tipo de entrada",
+    "quantity": "Cantidad",
+    "price": "Precio",
+    "perPerson": "por persona",
+    "soldOut": "Agotado",
+    "onlyLeft": "Solo quedan {count}",
+    "orderSummary": "Resumen del pedido",
+    "ticketsSelected": "{count} entrada(s) seleccionada(s)",
+    "subtotal": "Subtotal",
+    "serviceFee": "Gastos de gestión",
+    "total": "Total",
+    "continueToCheckout": "Continuar al pago",
+    "reserved": "Tus entradas están reservadas durante 15 minutos"
+  },
+  "checkout": {
+    "contactInfo": "Información de contacto",
+    "paymentDetails": "Datos de pago",
+    "email": "Correo electrónico",
+    "firstName": "Nombre",
+    "lastName": "Apellidos",
+    "phone": "Teléfono (opcional)",
+    "cardNumber": "Número de tarjeta",
+    "expiryDate": "Fecha de caducidad",
+    "cvv": "CVV",
+    "cardholderName": "Nombre del titular",
+    "continueToPayment": "Continuar al pago",
+    "completePurchase": "Completar compra",
+    "processing": "Procesando...",
+    "terms": "Acepto los Términos de servicio y la Política de privacidad",
+    "securePayment": "Tu pago está protegido con encriptación SSL"
+  },
+  "confirmation": {
+    "title": "¡Pedido confirmado!",
+    "subtitle": "Gracias por tu compra. ¡Tus entradas están en camino!",
+    "orderNumber": "Número de pedido",
+    "festival": "Festival",
+    "confirmationEmail": "Correo de confirmación",
+    "viewTickets": "Ver mis entradas",
+    "exploreMore": "Explorar más festivales"
+  },
+  "auth": {
+    "login": {
+      "title": "Bienvenido de nuevo",
+      "subtitle": "Inicia sesión para acceder a tu cuenta",
+      "rememberMe": "Recordarme",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "noAccount": "¿No tienes cuenta?",
+      "signUpFree": "Regístrate gratis"
+    },
+    "register": {
+      "title": "Crea tu cuenta",
+      "subtitle": "Únete a FestivalHub y comienza tu aventura",
+      "confirmPassword": "Confirmar contraseña",
+      "passwordStrength": "Seguridad de la contraseña",
+      "terms": "Acepto los Términos de servicio y la Política de privacidad",
+      "newsletter": "Enviadme noticias sobre festivales y ofertas exclusivas (opcional)",
+      "createAccount": "Crear cuenta",
+      "hasAccount": "¿Ya tienes cuenta?"
+    },
+    "errors": {
+      "invalidEmail": "Correo electrónico no válido",
+      "emailRequired": "El correo electrónico es obligatorio",
+      "passwordRequired": "La contraseña es obligatoria",
+      "passwordMinLength": "La contraseña debe tener al menos 8 caracteres",
+      "passwordMismatch": "Las contraseñas no coinciden",
+      "termsRequired": "Debes aceptar los términos y condiciones",
+      "invalidCredentials": "Correo o contraseña incorrectos. Por favor, inténtalo de nuevo."
+    }
+  },
+  "account": {
+    "welcome": "¡Bienvenido de nuevo, {name}!",
+    "editProfile": "Editar perfil",
+    "quickLinks": {
+      "tickets": {
+        "title": "Mis entradas",
+        "description": "Ver y descargar tus entradas de festival"
+      },
+      "orders": {
+        "title": "Historial de pedidos",
+        "description": "Ver todos tus pedidos anteriores y facturas"
+      },
+      "saved": {
+        "title": "Festivales guardados",
+        "description": "Festivales que has guardado para más tarde"
+      },
+      "settings": {
+        "title": "Configuración de cuenta",
+        "description": "Actualizar tu perfil y preferencias"
+      }
+    },
+    "upcomingFestivals": "Próximos festivales",
+    "noUpcoming": {
+      "title": "Sin festivales próximos",
+      "subtitle": "¡Descubre festivales increíbles y consigue tus entradas hoy!",
+      "cta": "Explorar festivales"
+    },
+    "recentOrders": "Pedidos recientes",
+    "accountDetails": "Datos de la cuenta",
+    "fullName": "Nombre completo",
+    "memberSince": "Miembro desde",
+    "needHelp": {
+      "title": "¿Necesitas ayuda?",
+      "subtitle": "Nuestro equipo de soporte está aquí para ayudarte con cualquier pregunta o problema.",
+      "helpCenter": "Visitar Centro de ayuda",
+      "contactSupport": "Contactar con soporte"
+    }
+  },
+  "tickets_page": {
+    "title": "Mis entradas",
+    "subtitle": "Ver y gestionar tus entradas de festival",
+    "noTickets": {
+      "title": "Sin entradas todavía",
+      "subtitle": "Aún no has comprado ninguna entrada. ¡Explora nuestros festivales y encuentra tu próxima aventura!"
+    },
+    "ticketId": "ID de entrada",
+    "ticketType": "Tipo",
+    "holder": "Titular",
+    "order": "Pedido",
+    "status": {
+      "valid": "Válida",
+      "used": "Utilizada",
+      "expired": "Caducada"
+    },
+    "download": "Descargar",
+    "info": {
+      "mobile": {
+        "title": "Entradas móviles",
+        "description": "Muestra tu entrada en el móvil en la entrada. Sin necesidad de imprimir."
+      },
+      "qr": {
+        "title": "Códigos QR seguros",
+        "description": "Cada entrada tiene un código QR único que solo puede escanearse una vez."
+      },
+      "help": {
+        "title": "¿Necesitas ayuda?",
+        "description": "Contacta con nuestro equipo de soporte para cualquier pregunta sobre entradas."
+      }
+    }
+  },
+  "orders": {
+    "title": "Historial de pedidos",
+    "subtitle": "Ver todos tus pedidos anteriores y descargar facturas",
+    "noOrders": {
+      "title": "Sin pedidos todavía",
+      "subtitle": "Cuando compres entradas, tus pedidos aparecerán aquí."
+    },
+    "placedOn": "Realizado el {date}",
+    "invoice": "Factura",
+    "viewTickets": "Ver entradas",
+    "paymentMethod": "Método de pago",
+    "status": {
+      "pending": "Pendiente",
+      "confirmed": "Confirmado",
+      "completed": "Completado",
+      "cancelled": "Cancelado",
+      "refunded": "Reembolsado"
+    }
+  },
+  "footer": {
+    "description": "Descubre y reserva entradas para los mejores festivales de música del mundo. Tu próxima experiencia inolvidable comienza aquí.",
+    "product": "Producto",
+    "company": "Empresa",
+    "support": "Soporte",
+    "legal": "Legal",
+    "newsletter": {
+      "title": "Mantente informado",
+      "subtitle": "Recibe los últimos festivales y ofertas exclusivas directamente en tu bandeja de entrada."
+    },
+    "copyright": "{year} FestivalHub. Todos los derechos reservados."
+  }
+}

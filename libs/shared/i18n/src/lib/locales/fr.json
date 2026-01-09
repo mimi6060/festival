@@ -1252,5 +1252,76 @@
       "transactions": "Transactions cashless",
       "users": "Utilisateurs"
     }
+  },
+  "dates": {
+    "days": {
+      "monday": "Lundi",
+      "tuesday": "Mardi",
+      "wednesday": "Mercredi",
+      "thursday": "Jeudi",
+      "friday": "Vendredi",
+      "saturday": "Samedi",
+      "sunday": "Dimanche"
+    },
+    "daysShort": {
+      "monday": "Lun",
+      "tuesday": "Mar",
+      "wednesday": "Mer",
+      "thursday": "Jeu",
+      "friday": "Ven",
+      "saturday": "Sam",
+      "sunday": "Dim"
+    },
+    "months": {
+      "january": "Janvier",
+      "february": "Fevrier",
+      "march": "Mars",
+      "april": "Avril",
+      "may": "Mai",
+      "june": "Juin",
+      "july": "Juillet",
+      "august": "Aout",
+      "september": "Septembre",
+      "october": "Octobre",
+      "november": "Novembre",
+      "december": "Decembre"
+    },
+    "monthsShort": {
+      "january": "Jan",
+      "february": "Fev",
+      "march": "Mar",
+      "april": "Avr",
+      "may": "Mai",
+      "june": "Juin",
+      "july": "Juil",
+      "august": "Aout",
+      "september": "Sep",
+      "october": "Oct",
+      "november": "Nov",
+      "december": "Dec"
+    },
+    "relative": {
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "tomorrow": "Demain",
+      "thisWeek": "Cette semaine",
+      "lastWeek": "La semaine derniere",
+      "nextWeek": "La semaine prochaine",
+      "thisMonth": "Ce mois-ci",
+      "lastMonth": "Le mois dernier",
+      "nextMonth": "Le mois prochain",
+      "thisYear": "Cette annee",
+      "lastYear": "L'annee derniere",
+      "nextYear": "L'annee prochaine",
+      "ago": "il y a {time}",
+      "inTime": "dans {time}",
+      "justNow": "A l'instant",
+      "minutesAgo": "il y a {count} minutes",
+      "hoursAgo": "il y a {count} heures",
+      "daysAgo": "il y a {count} jours",
+      "weeksAgo": "il y a {count} semaines",
+      "monthsAgo": "il y a {count} mois",
+      "yearsAgo": "il y a {count} ans"
+    }
   }
 }
