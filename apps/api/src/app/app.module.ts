@@ -11,7 +11,9 @@ import { validationSchema, validationOptions } from '../config';
 // Core modules
 import { PrismaModule } from '../modules/prisma';
 import { AuthModule } from '../modules/auth';
+import { TwoFactorModule } from '../modules/two-factor';
 import { HealthModule } from '../modules/health';
+import { StatusModule } from '../modules/status';
 import { CacheModule } from '../modules/cache';
 import { LoggerModule } from '../modules/logger';
 import { CurrencyModule } from '../modules/currency';
@@ -63,7 +65,9 @@ import { LanguageMiddleware } from '../common/middleware';
     // Core modules
     PrismaModule,
     AuthModule,
+    TwoFactorModule,
     HealthModule,
+    StatusModule,
     CacheModule,
     CurrencyModule,
 
