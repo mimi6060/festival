@@ -84,7 +84,8 @@ export type AuthStore = AuthState & AuthActions;
 // Constants
 // ============================================================================
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+// Use relative URL to leverage Next.js proxy (avoids cross-origin issues)
+const API_URL = '/api';
 const STORE_NAME = 'festival-auth';
 
 // ============================================================================

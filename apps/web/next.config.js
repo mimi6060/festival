@@ -20,7 +20,30 @@ const nextConfig = {
         protocol: 'https',
         hostname: '*.unsplash.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'example.com',
+      },
+      {
+        protocol: 'https',
+        hostname: '*.example.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'localhost',
+      },
     ],
+  },
+  // Proxy API requests to avoid cross-origin issues
+  async rewrites() {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
+    const apiBaseUrl = apiUrl.replace(/\/api$/, '');
+    return [
+      {
+        source: '/api/:path*',
+        destination: `${apiBaseUrl}/api/:path*`,
+      },
+    ];
   },
 };
 

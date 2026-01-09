@@ -88,9 +88,10 @@ const STORE_NAME = 'festival-cart';
 const DEFAULT_EXPIRY_MINUTES = 15;
 const SERVICE_FEE_PERCENTAGE = 0.05; // 5%
 const PROCESSING_FEE_PERCENTAGE = 0.029; // 2.9% (Stripe)
-const PROCESSING_FEE_FIXED = 0.30; // 30 cents per transaction
+const PROCESSING_FEE_FIXED = 0.3; // 30 cents per transaction
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+// Use relative URL to leverage Next.js proxy
+const API_URL = '/api';
 
 // ============================================================================
 // Helpers
@@ -255,7 +256,9 @@ export const useCartStore = create<CartStore>()(
 
         isExpired: () => {
           const { expiresAt } = get();
-          if (!expiresAt) {return false;}
+          if (!expiresAt) {
+            return false;
+          }
           return Date.now() > expiresAt;
         },
 
@@ -276,7 +279,9 @@ export const useCartStore = create<CartStore>()(
 
         getDiscount: () => {
           const { promoCode } = get();
-          if (!promoCode) {return 0;}
+          if (!promoCode) {
+            return 0;
+          }
 
           const subtotal = get().getSubtotal();
 
@@ -314,7 +319,9 @@ export const useCartStore = create<CartStore>()(
           const serviceFee = get().getServiceFee();
           const baseAmount = subtotal - discount + serviceFee;
 
-          if (baseAmount <= 0) {return 0;}
+          if (baseAmount <= 0) {
+            return 0;
+          }
 
           return baseAmount * PROCESSING_FEE_PERCENTAGE + PROCESSING_FEE_FIXED;
         },

@@ -118,7 +118,8 @@ export type NotificationStore = NotificationState & NotificationActions;
 // ============================================================================
 
 const STORE_NAME = 'festival-notifications';
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+// Use relative URL to leverage Next.js proxy
+const API_URL = '/api';
 const MAX_NOTIFICATIONS = 100;
 
 const DEFAULT_PREFERENCES: NotificationPreferences = {
@@ -222,7 +223,9 @@ export const useNotificationStore = create<NotificationStore>()(
           const now = new Date();
           set((state) => {
             state.notifications = state.notifications.filter((n) => {
-              if (!n.expiresAt) {return true;}
+              if (!n.expiresAt) {
+                return true;
+              }
               return new Date(n.expiresAt) > now;
             });
             state.unreadCount = calculateUnreadCount(state.notifications);
@@ -264,9 +267,15 @@ export const useNotificationStore = create<NotificationStore>()(
           const { notifications } = get();
 
           return notifications.filter((n) => {
-            if (filters.type && n.type !== filters.type) {return false;}
-            if (filters.priority && n.priority !== filters.priority) {return false;}
-            if (filters.read !== undefined && n.read !== filters.read) {return false;}
+            if (filters.type && n.type !== filters.type) {
+              return false;
+            }
+            if (filters.priority && n.priority !== filters.priority) {
+              return false;
+            }
+            if (filters.read !== undefined && n.read !== filters.read) {
+              return false;
+            }
             return true;
           });
         },
@@ -306,7 +315,8 @@ export const useNotificationStore = create<NotificationStore>()(
           } catch (error) {
             set((state) => {
               state.isLoading = false;
-              state.error = error instanceof Error ? error.message : 'Failed to fetch notifications';
+              state.error =
+                error instanceof Error ? error.message : 'Failed to fetch notifications';
             });
           }
         },
