@@ -251,13 +251,217 @@ Toutes les tâches ont été déplacées vers `DONE.md`.
 
 ---
 
-## Prochaines Tâches (Plan CTO Q2)
+## Session 2026-01-09 - Per-Festival Language Configuration
+
+### Language Module Implementation
+
+- [x] **Prisma Schema Updates** (`prisma/schema.prisma`)
+  - Added `SupportedLanguage` enum (FR, EN, DE, ES, IT, NL)
+  - Added `FestivalLanguageSettings` model with default/supported languages
+  - Added `FestivalLocalizedContent` model for translations
+  - Added relation from `Festival` to `FestivalLanguageSettings`
+
+- [x] **DTOs** (`apps/api/src/modules/languages/dto/`)
+  - `festival-language-settings.dto.ts` - Create/response DTOs with language info
+  - `update-language-settings.dto.ts` - Partial update DTO
+  - `language-content.dto.ts` - Localized content DTOs
+
+- [x] **Services** (`apps/api/src/modules/languages/`)
+  - `languages.service.ts` - Language settings CRUD, language resolution
+  - `localized-content.service.ts` - Merge localized content with base festival
+
+- [x] **Controller** (`apps/api/src/modules/languages/languages.controller.ts`)
+  - Language settings endpoints (GET, POST, PUT, DELETE)
+  - Localized content endpoints (GET, PUT, DELETE)
+  - Supported languages endpoint
+
+- [x] **Middleware** (`apps/api/src/common/middleware/language.middleware.ts`)
+  - Accept-Language header detection
+  - Query param language override
+  - Cookie language support
+  - Set Content-Language response header
+
+- [x] **Decorator** (`apps/api/src/common/decorators/locale.decorator.ts`)
+  - `@Locale()` - Get full locale info from request
+  - `@LocaleCode()` - Get just the locale code
+  - `@AcceptLanguage()` - Get Accept-Language header
+
+- [x] **Festival Controller Updates** (`apps/api/src/modules/festivals/festivals.controller.ts`)
+  - `GET /festivals/:id/localized` - Get festival with localized content
+  - `GET /festivals/by-slug/:slug/localized` - Get by slug with localization
+
+- [x] **API Endpoints Summary**
+  - `GET /festivals/:festivalId/languages` - Get supported languages
+  - `GET /festivals/:festivalId/languages/settings` - Get language settings
+  - `POST /festivals/:festivalId/languages/settings` - Create settings
+  - `PUT /festivals/:festivalId/languages/settings` - Update settings
+  - `DELETE /festivals/:festivalId/languages/settings` - Delete settings
+  - `GET /festivals/:festivalId/languages/content` - Get all localized content
+  - `GET /festivals/:festivalId/languages/content/:lang` - Get content for language
+  - `PUT /festivals/:festivalId/languages/content/:lang` - Upsert content
+  - `DELETE /festivals/:festivalId/languages/content/:lang` - Delete content
+  - `GET /festivals/:id/localized?lang=FR` - Get localized festival
+  - `GET /festivals/by-slug/:slug/localized?lang=FR` - Get localized by slug
+
+---
+
+## Session 2026-01-09 - Multilingual Transactional Email Templates
+
+### Email Template System Implementation
+
+- [x] **Directory Structure** (`apps/api/src/modules/notifications/templates/emails/`)
+  - Created template directories for 9 email types
+  - Each type has 6 language subdirectories (fr, en, de, es, it, ar)
+  - Each language folder contains: subject.txt, body.html, body.txt (162 files total)
+
+- [x] **Template Types**
+  - `welcome` - Welcome email for new users
+  - `verify-email` - Email verification
+  - `password-reset` - Password reset link
+  - `ticket-confirmation` - Ticket purchase confirmation
+  - `ticket-reminder` - Event reminder before festival
+  - `payment-receipt` - Payment confirmation
+  - `refund-confirmation` - Refund processing confirmation
+  - `cashless-topup` - Cashless wallet top-up confirmation
+  - `order-ready` - Vendor order ready for pickup
+
+- [x] **EmailTemplateService** (`services/email-template.service.ts`)
+  - Template loading from filesystem with caching
+  - Handlebars variable interpolation
+  - Custom helpers: ifEqual, formatCurrency, formatDate, eachWithIndex, isRtl
+  - Language fallback to French (default)
+  - Type-safe variable interfaces for each email type
+  - Sample data generation for template previews
+
+- [x] **EmailPreviewController** (`controllers/email-preview.controller.ts`)
+  - Admin-only endpoints for previewing email templates
+  - `GET /emails/templates` - List all template types
+  - `GET /emails/languages` - List supported languages
+  - `GET /emails/preview/:type/:lang` - Preview template as JSON
+  - `GET /emails/preview/:type/:lang/html` - Preview raw HTML
+  - `GET /emails/preview/:type/:lang/text` - Preview plain text
+  - `GET /emails/cache/clear` - Clear template cache
+
+- [x] **Prisma Schema Update** (`prisma/schema.prisma`)
+  - Added `emailLanguage` field to `NotificationPreference` model
+  - Default value: 'fr' (French)
+
+- [x] **DTO Update** (`dto/notification.dto.ts`)
+  - Added `emailLanguage` field to `UpdateNotificationPreferencesDto`
+  - Validation for supported languages (fr, en, de, es, it, ar)
+
+- [x] **NotificationsService Updates** (`services/notifications.service.ts`)
+  - Integrated `EmailTemplateService`
+  - `getUserEmailLanguage()` - Get user's preferred email language
+  - `renderEmailForUser()` - Render template in user's language
+  - `sendTransactionalEmail()` - Send multilingual transactional email
+  - `sendBulkTransactionalEmails()` - Send to multiple users with individual languages
+  - `getEmailTemplateTypes()` - List available template types
+  - `getSupportedEmailLanguages()` - List supported languages
+
+- [x] **Module Updates** (`notifications.module.ts`)
+  - Registered `EmailTemplateService` provider
+  - Registered `EmailPreviewController`
+  - Exported `EmailTemplateService`
+
+- [x] **Build Verification**: SUCCESS
+
+### Email Template Features
+
+- **RTL Support**: Arabic templates include `dir="rtl"` and appropriate styling
+- **Responsive Design**: HTML templates with gradient headers, consistent styling
+- **Handlebars Templating**: Conditionals ({{#if}}), loops ({{#each}}), helpers
+- **Caching**: Templates cached in memory for performance
+- **Fallback**: Automatic fallback to French if translation missing
+
+---
+
+## Session 2026-01-09 - Sprint 5-6: Internationalization Complete
+
+### FE-07/08/09: Multi-language Support
+
+- [x] **Spanish (ES)** - Complete translation files
+- [x] **German (DE)** - Complete translation files
+- [x] **Italian (IT)** - Complete translation files
+
+### FE-10: RTL Support for Arabic
+
+- [x] **RTL Utilities** (`apps/web/utils/rtl.ts`)
+  - `isRtlLocale()` - Detect RTL languages
+  - `getDirection()` - Get text direction
+  - `getDirectionalPositions()` - Logical position mapping
+  - `getMirrorTransform()` - Icon mirroring
+- [x] **useDirection hook** - Direction-aware components
+- [x] **DirectionProvider** - App-wide direction context
+- [x] **Tailwind RTL plugins** - Logical properties utilities
+  - `rtl:`, `ltr:` variants
+  - `ms-*`, `me-*`, `ps-*`, `pe-*` spacing
+  - `start-*`, `end-*` positioning
+  - `text-start`, `text-end` alignment
+
+### MOB-05: Mobile i18n with i18next
+
+- [x] **i18next setup** with react-i18next and expo-localization
+- [x] **LanguageProvider** - Language state management
+- [x] **useTranslation hook** - Component translations
+- [x] **LanguageSelector component** - Visual language picker
+- [x] **6 language translations** (FR, EN, DE, ES, IT, AR)
+
+### MOB-06: Locale-Aware Formatters
+
+- [x] **Formatters library** (`libs/shared/i18n/src/lib/formatters/`)
+  - `date-formatter.ts` - Localized date/time formatting
+  - `number-formatter.ts` - Numbers, percentages, file sizes
+  - `currency-formatter.ts` - Multi-currency with symbols
+  - `relative-time.ts` - "5 minutes ago" style formatting
+- [x] **Web hooks** - useFormatDate, useFormatNumber, useFormatCurrency, useRelativeTime
+- [x] **Mobile hooks** - Same formatting hooks for React Native
+
+### PLAT-01: Per-Festival Language Configuration
+
+- [x] **Languages module** (`apps/api/src/modules/languages/`)
+  - Language settings CRUD
+  - Localized content service
+- [x] **Middleware** - Accept-Language detection, query/cookie override
+- [x] **Decorators** - @Locale, @LocaleCode, @AcceptLanguage
+- [x] **Prisma schema** - FestivalLanguageSettings, FestivalLocalizedContent
+
+### PLAT-02: Multilingual Email Templates
+
+- [x] **9 email template types** (welcome, verify-email, password-reset, etc.)
+- [x] **6 language versions each** (162 template files total)
+- [x] **EmailTemplateService** - Handlebars rendering with caching
+- [x] **EmailPreviewController** - Admin template preview
+- [x] **RTL support** for Arabic templates
+
+### Commits Sprint 5-6
+
+- `51c66e4` feat(i18n): add Spanish, German, Italian and Arabic translations
+- `efa31df` feat(web): implement RTL support for Arabic language
+- `fe04b58` feat(mobile): implement i18n with i18next
+- `be3b4e7` feat(i18n): add locale-aware formatting utilities
+- `424c895` feat(api): implement per-festival language configuration
+- `d987bd1` feat(notifications): add multilingual transactional email templates
+- `ce8a65a` chore: update shared libs and dependencies for i18n
+
+---
+
+## Prochaines Tâches (Plan CTO Q3)
+
+### Infrastructure
 
 - [ ] **CORE-01**: Migration Kubernetes production
 - [ ] **CORE-02**: Monitoring Prometheus/Grafana
+
+### Mobile
+
 - [ ] **MOB-01**: Audit performance React Native
+
+### Completed (Q2)
+
 - [x] **MOB-02**: Architecture offline-first WatermelonDB
 - [x] **MOB-03**: Enhanced bidirectional sync with offline mutations
+- [x] **Sprint 5-6**: Full internationalization (6 languages + RTL)
 
 ---
 
