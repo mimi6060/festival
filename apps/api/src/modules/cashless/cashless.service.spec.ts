@@ -61,6 +61,7 @@ describe('CashlessService', () => {
       findFirst: jest.fn(),
       findMany: jest.fn(),
       create: jest.fn(),
+      aggregate: jest.fn(),
     },
     festival: {
       findUnique: jest.fn(),
@@ -218,7 +219,7 @@ describe('CashlessService', () => {
       const accountWithLowBalance = { ...activeCashlessAccount, balance: 100 };
       mockPrismaService.festival.findUnique.mockResolvedValue(ongoingFestival);
       mockPrismaService.cashlessAccount.findUnique.mockResolvedValue(accountWithLowBalance);
-      mockPrismaService.cashlessTransaction.findMany.mockResolvedValue([]); // No daily transactions
+      mockPrismaService.cashlessTransaction.aggregate.mockResolvedValue({ _sum: { amount: 0 } }); // No daily transactions
       mockPrismaService.cashlessAccount.update.mockResolvedValue({
         ...accountWithLowBalance,
         balance: accountWithLowBalance.balance + topupAmount,
@@ -321,7 +322,7 @@ describe('CashlessService', () => {
       };
       mockPrismaService.festival.findUnique.mockResolvedValue(ongoingFestival);
       mockPrismaService.cashlessAccount.findUnique.mockResolvedValue(highBalanceAccount);
-      mockPrismaService.cashlessTransaction.findMany.mockResolvedValue([]); // No daily transactions
+      mockPrismaService.cashlessTransaction.aggregate.mockResolvedValue({ _sum: { amount: 0 } }); // No daily transactions
 
       // Act & Assert
       await expect(
@@ -346,7 +347,7 @@ describe('CashlessService', () => {
         status: FestivalStatus.ONGOING,
       });
       mockPrismaService.cashlessAccount.findUnique.mockResolvedValue(activeCashlessAccount);
-      mockPrismaService.cashlessTransaction.findMany.mockResolvedValue([]); // No daily transactions
+      mockPrismaService.cashlessTransaction.aggregate.mockResolvedValue({ _sum: { amount: 0 } }); // No daily transactions
       mockPrismaService.cashlessAccount.update.mockResolvedValue({
         ...activeCashlessAccount,
         balance: activeCashlessAccount.balance - paymentAmount,
@@ -802,7 +803,7 @@ describe('CashlessService', () => {
         };
         mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithLimits);
         mockPrismaService.cashlessAccount.findUnique.mockResolvedValue(highBalanceAccount);
-        mockPrismaService.cashlessTransaction.findMany.mockResolvedValue([]); // No daily transactions
+        mockPrismaService.cashlessTransaction.aggregate.mockResolvedValue({ _sum: { amount: 0 } }); // No daily transactions
 
         // Act & Assert
         await expect(
@@ -854,10 +855,7 @@ describe('CashlessService', () => {
           balance: 0,
         });
         // Simulate existing transactions totaling 80 today
-        mockPrismaService.cashlessTransaction.findMany.mockResolvedValue([
-          { amount: 50, type: TransactionType.TOPUP },
-          { amount: 30, type: TransactionType.PAYMENT },
-        ]);
+        mockPrismaService.cashlessTransaction.aggregate.mockResolvedValue({ _sum: { amount: 80 } });
 
         // Act & Assert
         await expect(
@@ -884,7 +882,7 @@ describe('CashlessService', () => {
           ...activeCashlessAccount,
           balance: 0,
         });
-        mockPrismaService.cashlessTransaction.findMany.mockResolvedValue([]);
+        mockPrismaService.cashlessTransaction.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
         mockPrismaService.cashlessAccount.update.mockResolvedValue({
           ...activeCashlessAccount,
           balance: 150,
@@ -922,7 +920,7 @@ describe('CashlessService', () => {
           ...activeCashlessAccount,
           balance: 0,
         });
-        mockPrismaService.cashlessTransaction.findMany.mockResolvedValue([]);
+        mockPrismaService.cashlessTransaction.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
 
         // Act & Assert - 150 exceeds default 100 single transaction limit
         await expect(
@@ -978,10 +976,7 @@ describe('CashlessService', () => {
           balance: 500, // Plenty of balance
         });
         // Simulate existing transactions totaling 90 today
-        mockPrismaService.cashlessTransaction.findMany.mockResolvedValue([
-          { amount: 50, type: TransactionType.PAYMENT },
-          { amount: 40, type: TransactionType.TOPUP },
-        ]);
+        mockPrismaService.cashlessTransaction.aggregate.mockResolvedValue({ _sum: { amount: 90 } });
 
         // Act & Assert
         await expect(
@@ -1008,9 +1003,7 @@ describe('CashlessService', () => {
           ...activeCashlessAccount,
           balance: 200,
         });
-        mockPrismaService.cashlessTransaction.findMany.mockResolvedValue([
-          { amount: 50, type: TransactionType.PAYMENT },
-        ]); // 50 already spent today
+        mockPrismaService.cashlessTransaction.aggregate.mockResolvedValue({ _sum: { amount: 50 } }); // 50 already spent today
         mockPrismaService.cashlessAccount.update.mockResolvedValue({
           ...activeCashlessAccount,
           balance: 125,

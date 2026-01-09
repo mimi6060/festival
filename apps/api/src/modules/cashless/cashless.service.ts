@@ -630,8 +630,8 @@ export class CashlessService {
     const endOfDay = new Date(date);
     endOfDay.setHours(23, 59, 59, 999);
 
-    // Get all transactions for the day (payments and topups)
-    const transactions = await this.prisma.cashlessTransaction.findMany({
+    // Use Prisma aggregate for efficient sum calculation (avoids N+1)
+    const result = await this.prisma.cashlessTransaction.aggregate({
       where: {
         accountId,
         festivalId,
@@ -643,14 +643,12 @@ export class CashlessService {
           in: [TransactionType.PAYMENT, TransactionType.TOPUP],
         },
       },
-      select: {
+      _sum: {
         amount: true,
-        type: true,
       },
     });
 
-    // Sum up all transaction amounts
-    return transactions.reduce((total, tx) => total + Number(tx.amount), 0);
+    return Number(result._sum.amount ?? 0);
   }
 
   /**

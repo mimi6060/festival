@@ -1405,8 +1405,11 @@ export class VendorsService {
       notes?: string;
     }[] = [];
 
+    // Use Map for O(1) product lookups instead of O(n) Array.find()
+    const productMap = new Map(products.map((p) => [p.id, p]));
+
     for (const item of items) {
-      const product = products.find((p) => p.id === item.productId);
+      const product = productMap.get(item.productId);
       if (!product) {
         throw new BadRequestException(`Product ${item.productId} not found`);
       }

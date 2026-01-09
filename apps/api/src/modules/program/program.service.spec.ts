@@ -1644,9 +1644,8 @@ describe('ProgramService', () => {
         artist: { ...mockArtist, id: 'other-artist-id', name: 'Other Artist' },
         stage: mockStage,
       };
-      mockPrismaService.performance.findMany
-        .mockResolvedValueOnce([]) // Artist conflicts
-        .mockResolvedValueOnce([conflictingPerformance]); // Stage conflicts
+      // Optimized query returns all conflicts in a single call
+      mockPrismaService.performance.findMany.mockResolvedValue([conflictingPerformance]);
 
       // Act
       const result = await programService.detectScheduleConflicts({
@@ -1684,9 +1683,8 @@ describe('ProgramService', () => {
         artist: { ...mockArtist, id: 'other-artist-id', name: 'Other Artist' },
         stage: mockStage,
       };
-      mockPrismaService.performance.findMany
-        .mockResolvedValueOnce([artistConflict])
-        .mockResolvedValueOnce([stageConflict]);
+      // Optimized query returns all conflicts in a single call
+      mockPrismaService.performance.findMany.mockResolvedValue([artistConflict, stageConflict]);
 
       // Act
       const result = await programService.detectScheduleConflicts({

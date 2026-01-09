@@ -859,27 +859,39 @@ export class ProgramService {
     // Build the base exclusion filter
     const excludeFilter = excludePerformanceId ? { NOT: { id: excludePerformanceId } } : {};
 
-    // Check for artist time conflicts (same artist, overlapping time, any stage)
-    const artistConflicts = await this.prisma.performance.findMany({
+    // Time overlap conditions (shared between artist and stage conflicts)
+    const timeOverlapConditions = [
+      // New performance starts during existing performance
+      {
+        startTime: { lte: startTime },
+        endTime: { gt: startTime },
+      },
+      // New performance ends during existing performance
+      {
+        startTime: { lt: endTime },
+        endTime: { gte: endTime },
+      },
+      // New performance completely contains existing performance
+      {
+        startTime: { gte: startTime },
+        endTime: { lte: endTime },
+      },
+    ];
+
+    // OPTIMIZED: Single query for both artist and stage conflicts
+    // Instead of two separate queries, use OR to find all potential conflicts at once
+    const allConflicts = await this.prisma.performance.findMany({
       where: {
-        artistId,
         isCancelled: false,
         ...excludeFilter,
-        OR: [
-          // New performance starts during existing performance
+        AND: [
+          // Must match either same artist OR same stage
           {
-            startTime: { lte: startTime },
-            endTime: { gt: startTime },
+            OR: [{ artistId }, { stageId }],
           },
-          // New performance ends during existing performance
+          // AND must have time overlap
           {
-            startTime: { lt: endTime },
-            endTime: { gte: endTime },
-          },
-          // New performance completely contains existing performance
-          {
-            startTime: { gte: startTime },
-            endTime: { lte: endTime },
+            OR: timeOverlapConditions,
           },
         ],
       },
@@ -889,67 +901,38 @@ export class ProgramService {
       },
     });
 
-    for (const conflict of artistConflicts) {
-      conflicts.push({
-        type: 'ARTIST_OVERLAP',
-        performanceId: conflict.id,
-        stageId: conflict.stageId,
-        stageName: conflict.stage.name,
-        artistId: conflict.artistId,
-        artistName: conflict.artist.name,
-        conflictingStartTime: conflict.startTime.toISOString(),
-        conflictingEndTime: conflict.endTime.toISOString(),
-        message: `Artist "${conflict.artist.name}" already has a performance on "${conflict.stage.name}" from ${this.formatTime(conflict.startTime)} to ${this.formatTime(conflict.endTime)}`,
-      });
-    }
-
-    // Check for stage time conflicts (same stage, overlapping time, any artist)
-    const stageConflicts = await this.prisma.performance.findMany({
-      where: {
-        stageId,
-        isCancelled: false,
-        ...excludeFilter,
-        OR: [
-          // New performance starts during existing performance
-          {
-            startTime: { lte: startTime },
-            endTime: { gt: startTime },
-          },
-          // New performance ends during existing performance
-          {
-            startTime: { lt: endTime },
-            endTime: { gte: endTime },
-          },
-          // New performance completely contains existing performance
-          {
-            startTime: { gte: startTime },
-            endTime: { lte: endTime },
-          },
-        ],
-      },
-      include: {
-        stage: true,
-        artist: true,
-      },
-    });
-
-    for (const conflict of stageConflicts) {
-      // Skip if this is the same conflict we already found (same performance)
-      if (conflicts.some((c) => c.performanceId === conflict.id)) {
-        continue;
+    // Process conflicts and classify by type
+    for (const conflict of allConflicts) {
+      // Check if this is an artist conflict (same artist, different or same stage)
+      if (conflict.artistId === artistId) {
+        conflicts.push({
+          type: 'ARTIST_OVERLAP',
+          performanceId: conflict.id,
+          stageId: conflict.stageId,
+          stageName: conflict.stage.name,
+          artistId: conflict.artistId,
+          artistName: conflict.artist.name,
+          conflictingStartTime: conflict.startTime.toISOString(),
+          conflictingEndTime: conflict.endTime.toISOString(),
+          message: `Artist "${conflict.artist.name}" already has a performance on "${conflict.stage.name}" from ${this.formatTime(conflict.startTime)} to ${this.formatTime(conflict.endTime)}`,
+        });
       }
 
-      conflicts.push({
-        type: 'STAGE_OVERLAP',
-        performanceId: conflict.id,
-        stageId: conflict.stageId,
-        stageName: conflict.stage.name,
-        artistId: conflict.artistId,
-        artistName: conflict.artist.name,
-        conflictingStartTime: conflict.startTime.toISOString(),
-        conflictingEndTime: conflict.endTime.toISOString(),
-        message: `Stage "${conflict.stage.name}" already has a performance by "${conflict.artist.name}" from ${this.formatTime(conflict.startTime)} to ${this.formatTime(conflict.endTime)}`,
-      });
+      // Check if this is a stage conflict (same stage, different artist)
+      // Skip if already added as artist conflict (when same artist AND same stage)
+      if (conflict.stageId === stageId && conflict.artistId !== artistId) {
+        conflicts.push({
+          type: 'STAGE_OVERLAP',
+          performanceId: conflict.id,
+          stageId: conflict.stageId,
+          stageName: conflict.stage.name,
+          artistId: conflict.artistId,
+          artistName: conflict.artist.name,
+          conflictingStartTime: conflict.startTime.toISOString(),
+          conflictingEndTime: conflict.endTime.toISOString(),
+          message: `Stage "${conflict.stage.name}" already has a performance by "${conflict.artist.name}" from ${this.formatTime(conflict.startTime)} to ${this.formatTime(conflict.endTime)}`,
+        });
+      }
     }
 
     const hasConflicts = conflicts.length > 0;
