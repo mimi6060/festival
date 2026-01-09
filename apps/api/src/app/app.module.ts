@@ -14,6 +14,7 @@ import { AuthModule } from '../modules/auth';
 import { HealthModule } from '../modules/health';
 import { CacheModule } from '../modules/cache';
 import { LoggerModule } from '../modules/logger';
+import { CurrencyModule } from '../modules/currency';
 
 // Feature modules
 import { UsersModule } from '../modules/users';
@@ -34,6 +35,9 @@ import { PdfModule } from '../modules/pdf';
 import { AnalyticsModule } from '../modules/analytics';
 import { SupportModule } from '../modules/support';
 import { GdprModule } from '../modules/gdpr';
+import { QueueModule } from '../modules/queue';
+import { WebhooksModule } from '../modules/webhooks';
+import { InvoicesModule } from '../modules/invoices';
 
 // Guards
 import { RateLimitGuard } from '../common/guards';
@@ -57,6 +61,7 @@ import { RateLimitGuard } from '../common/guards';
     AuthModule,
     HealthModule,
     CacheModule,
+    CurrencyModule,
 
     // Feature modules
     UsersModule,
@@ -77,6 +82,9 @@ import { RateLimitGuard } from '../common/guards';
     AnalyticsModule,
     SupportModule,
     GdprModule,
+    QueueModule,
+    WebhooksModule,
+    InvoicesModule,
   ],
   controllers: [AppController],
   providers: [
