@@ -20,3 +20,9 @@ export {
   type RestoreResult,
   type SoftDeletedCount,
 } from './soft-delete.service';
+
+export {
+  TierRateLimitService,
+  type TierRateLimitOptions,
+  type TierMetrics,
+} from './tier-rate-limit.service';

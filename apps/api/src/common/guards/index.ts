@@ -4,6 +4,7 @@
  * Central export point for all guards
  */
 
+// Basic rate limit guard
 export {
   RateLimitGuard,
   RateLimit,
@@ -21,3 +22,13 @@ export {
   type RateLimitConfig,
   type RateLimitState,
 } from './rate-limit.guard';
+
+// Tier-based rate limit guard
+export {
+  TierRateLimitGuard,
+  TIER_RATE_LIMIT_KEY,
+  SKIP_TIER_RATE_LIMIT_KEY,
+  RATE_LIMIT_TIER_OVERRIDE_KEY,
+  RATE_LIMIT_COST_KEY,
+  type TierRateLimitConfig,
+} from './tier-rate-limit.guard';

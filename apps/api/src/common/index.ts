@@ -15,3 +15,9 @@ export * from './config';
 
 // Rate Limiting (full module)
 export * from './rate-limit';
+
+// Decorators
+export * from './decorators';
+
+// Interceptors
+export * from './interceptors';
