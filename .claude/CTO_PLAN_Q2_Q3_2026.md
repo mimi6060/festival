@@ -91,9 +91,9 @@ Transformer la plateforme festival en solution SaaS leader du marché européen,
 
 #### FRONTEND
 
-- [ ] **FE-01**: Initialisation Storybook avec composants existants
-- [ ] **FE-02**: Design tokens (couleurs, spacing, typography)
-- [ ] **FE-03**: Dark mode - architecture CSS variables
+- [x] **FE-01**: Initialisation Storybook avec composants existants
+- [x] **FE-02**: Design tokens (couleurs, spacing, typography)
+- [x] **FE-03**: Dark mode - architecture CSS variables
 
 #### MOBILE
 
