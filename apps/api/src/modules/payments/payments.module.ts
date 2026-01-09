@@ -8,11 +8,13 @@
  * - Subscriptions for season passes
  * - Refund management
  * - Webhook handling
+ * - Multi-currency support
  */
 
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaModule } from '../../prisma/prisma.module';
+import { CurrencyModule } from '../currency/currency.module';
 import { PaymentsService } from './payments.service';
 import { PaymentsController } from './payments.controller';
 import { CheckoutService } from './services/checkout.service';
@@ -21,7 +23,11 @@ import { SubscriptionService } from './services/subscription.service';
 import { RefundService } from './services/refund.service';
 
 @Module({
-  imports: [ConfigModule, PrismaModule],
+  imports: [
+    ConfigModule,
+    PrismaModule,
+    forwardRef(() => CurrencyModule),
+  ],
   controllers: [PaymentsController],
   providers: [
     PaymentsService,
