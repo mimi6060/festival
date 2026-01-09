@@ -446,11 +446,62 @@ Toutes les tâches ont été déplacées vers `DONE.md`.
 
 ---
 
+## Session 2026-01-09 - CORE-01: Kubernetes Production Deployment
+
+### CD Pipeline (`.github/workflows/cd.yml`)
+
+- [x] Multi-environment deployment (staging, production)
+- [x] Docker image build and push to GHCR
+- [x] Automatic database migrations
+- [x] Rollout verification and health checks
+- [x] Slack notifications
+- [x] Manual rollback capability
+
+### Database Jobs (`k8s/jobs/`)
+
+- [x] Prisma migration job for deployments
+- [x] Automated daily backup CronJob to S3/GCS
+- [x] Manual backup job template
+- [x] 30-day retention policy
+
+### Monitoring (`k8s/monitoring/`)
+
+- [x] ServiceMonitor for API, Web, PostgreSQL, Redis
+- [x] PrometheusRule with 25+ alerting rules
+- [x] Alerts for: error rates, latency, memory, connections
+- [x] Business alerts for payments and tickets
+
+### GitOps (`k8s/argocd/`)
+
+- [x] ArgoCD Application for staging (auto-sync)
+- [x] ArgoCD Application for production (manual sync)
+- [x] AppProject with RBAC roles
+- [x] ApplicationSet for multi-environment
+
+### Local Development
+
+- [x] Skaffold config for hot-reload (`skaffold.yaml`)
+- [x] Port forwarding configuration
+- [x] Custom actions for migrate/seed
+- [x] Multi-profile support (dev, staging, production)
+
+### Deployment Script (`scripts/deploy.sh`)
+
+- [x] Unified deployment across environments
+- [x] Build, migrate, dry-run, rollback options
+- [x] Status verification and reporting
+
+### Commit
+
+- `f376411` feat(infra): complete Kubernetes production deployment (CORE-01)
+
+---
+
 ## Prochaines Tâches (Plan CTO Q3)
 
 ### Infrastructure
 
-- [ ] **CORE-01**: Migration Kubernetes production
+- [x] **CORE-01**: Migration Kubernetes production ✅
 - [ ] **CORE-02**: Monitoring Prometheus/Grafana
 
 ### Mobile
@@ -462,6 +513,7 @@ Toutes les tâches ont été déplacées vers `DONE.md`.
 - [x] **MOB-02**: Architecture offline-first WatermelonDB
 - [x] **MOB-03**: Enhanced bidirectional sync with offline mutations
 - [x] **Sprint 5-6**: Full internationalization (6 languages + RTL)
+- [x] **CORE-01**: Kubernetes production deployment
 
 ---
 
