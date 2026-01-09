@@ -68,7 +68,7 @@ export function useCreateUser() {
 
   return useMutation({
     mutationFn: async (data: CreateUserData) => {
-      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
       const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
 
       const response = await fetch(`${API_BASE_URL}/admin/users`, {
@@ -100,8 +100,7 @@ export function useUpdateUser() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ id, data }: { id: string; data: UpdateUserData }) =>
-      usersApi.update(id, data),
+    mutationFn: ({ id, data }: { id: string; data: UpdateUserData }) => usersApi.update(id, data),
     onSuccess: (updatedUser) => {
       // Update the specific user in cache
       queryClient.setQueryData(userQueryKeys.detail(updatedUser.id), updatedUser);

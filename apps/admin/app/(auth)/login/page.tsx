@@ -108,7 +108,13 @@ export default function LoginPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="space-y-5"
+            name="login"
+            id="login-form"
+            autoComplete="on"
+          >
             <div>
               <label htmlFor="email" className="form-label">
                 Adresse email
@@ -133,9 +139,10 @@ export default function LoginPage() {
                   id="email"
                   type="email"
                   {...register('email')}
+                  name="email"
                   className={`input-field pl-10 ${errors.email ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                   placeholder="admin@festival.fr"
-                  autoComplete="email"
+                  autoComplete="username email"
                 />
               </div>
               {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email.message}</p>}
@@ -165,6 +172,7 @@ export default function LoginPage() {
                   id="password"
                   type={showPassword ? 'text' : 'password'}
                   {...register('password')}
+                  name="password"
                   className={`input-field pl-10 pr-10 ${errors.password ? 'border-red-500 focus:border-red-500 focus:ring-red-500' : ''}`}
                   placeholder="********"
                   autoComplete="current-password"

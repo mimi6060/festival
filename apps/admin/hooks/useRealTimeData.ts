@@ -64,7 +64,7 @@ const initialStats: RealtimeStats = {
   alerts: [],
 };
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
 
 // Fetch real data from the API
 async function fetchRealtimeStats(festivalId?: string): Promise<RealtimeStats> {

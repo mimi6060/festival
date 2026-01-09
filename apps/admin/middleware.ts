@@ -37,10 +37,11 @@ function addSecurityHeaders(response: NextResponse): NextResponse {
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Vérifier si c'est une ressource statique
+  // Vérifier si c'est une ressource statique ou une route API proxy
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/static') ||
+    pathname.startsWith('/api') || // Let API proxy requests pass through
     pathname.includes('.') // fichiers comme favicon.ico, etc.
   ) {
     return NextResponse.next();
@@ -55,8 +56,8 @@ export function middleware(request: NextRequest) {
     return addSecurityHeaders(response);
   }
 
-  // Récupérer le token d'authentification
-  const token = request.cookies.get('admin_token')?.value;
+  // Récupérer le token d'authentification (access_token from API)
+  const token = request.cookies.get('access_token')?.value;
 
   // Si pas de token, rediriger vers la page de login
   if (!token) {
@@ -81,7 +82,7 @@ export function middleware(request: NextRequest) {
         loginUrl.searchParams.set('expired', 'true');
 
         const response = NextResponse.redirect(loginUrl);
-        response.cookies.delete('admin_token');
+        response.cookies.delete('access_token');
         return response;
       }
     }
@@ -89,7 +90,7 @@ export function middleware(request: NextRequest) {
     // Token invalide, rediriger vers login
     const loginUrl = new URL('/login', request.url);
     const response = NextResponse.redirect(loginUrl);
-    response.cookies.delete('admin_token');
+    response.cookies.delete('access_token');
     return response;
   }
 
