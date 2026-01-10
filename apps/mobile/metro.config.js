@@ -23,6 +23,10 @@ const webAliases = {
   '@react-native-community/netinfo': path.resolve(projectRoot, 'src/mocks/netinfo.web.ts'),
 };
 
+// Remove .mjs from source extensions to avoid ESM modules with import.meta
+// This forces Metro to use CommonJS versions of packages like zustand
+config.resolver.sourceExts = config.resolver.sourceExts.filter((ext) => ext !== 'mjs');
+
 // Custom resolver for web platform
 const originalResolveRequest = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
