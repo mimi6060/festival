@@ -1,15 +1,10 @@
 import { useAuthStore } from '../store/authStore';
 import type { ApiResponse, User, Ticket, WalletBalance, Transaction, ProgramEvent } from '../types';
 
-import { Platform } from 'react-native';
-
 // Use localhost for development, can be overridden via environment variables
 const getApiBaseUrl = () => {
-  if (Platform.OS === 'web') {
-    return 'http://localhost:3000/api';
-  }
-  // For mobile simulators, use machine's IP or localhost
-  return 'http://localhost:3000/api';
+  // API server runs on port 3333
+  return 'http://localhost:3333/api';
 };
 
 const API_BASE_URL = getApiBaseUrl();
@@ -23,10 +18,7 @@ class ApiService {
     };
   }
 
-  private async request<T>(
-    endpoint: string,
-    options: RequestInit = {}
-  ): Promise<ApiResponse<T>> {
+  private async request<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
     try {
       const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         ...options,
@@ -50,7 +42,10 @@ class ApiService {
   }
 
   // Auth endpoints
-  async login(email: string, password: string): Promise<ApiResponse<{ user: User; token: string }>> {
+  async login(
+    email: string,
+    password: string
+  ): Promise<ApiResponse<{ user: User; token: string }>> {
     return this.request('/auth/login', {
       method: 'POST',
       body: JSON.stringify({ email, password }),
