@@ -10,6 +10,100 @@ import { Festival } from '@/lib/api';
 const API_URL = '/api';
 const ITEMS_PER_PAGE = 9;
 
+// Mock data for when API is unavailable
+const MOCK_FESTIVALS: FestivalCardType[] = [
+  {
+    id: '1',
+    slug: 'summer-vibes-2026',
+    name: 'Summer Vibes 2026',
+    description:
+      "Le plus grand festival de musique électronique de l'été. 3 jours de fête non-stop avec les meilleurs DJs internationaux.",
+    location: 'Marseille, France',
+    startDate: '2026-07-15',
+    endDate: '2026-07-17',
+    imageUrl: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&h=600&fit=crop',
+    price: { from: 89, currency: 'EUR' },
+    genres: ['Electronic', 'House', 'Techno'],
+    isSoldOut: false,
+    isFeatured: true,
+  },
+  {
+    id: '2',
+    slug: 'rock-en-seine-2026',
+    name: 'Rock en Seine 2026',
+    description:
+      'Le festival rock incontournable de la rentrée. Découvrez les plus grands groupes de rock et indie.',
+    location: 'Paris, France',
+    startDate: '2026-08-22',
+    endDate: '2026-08-24',
+    imageUrl: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800&h=600&fit=crop',
+    price: { from: 75, currency: 'EUR' },
+    genres: ['Rock', 'Indie', 'Alternative'],
+    isSoldOut: false,
+    isFeatured: true,
+  },
+  {
+    id: '3',
+    slug: 'jazz-a-vienne-2026',
+    name: 'Jazz à Vienne 2026',
+    description:
+      'Festival de jazz de renommée mondiale dans le cadre unique du théâtre antique de Vienne.',
+    location: 'Vienne, France',
+    startDate: '2026-06-28',
+    endDate: '2026-07-13',
+    imageUrl: 'https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=800&h=600&fit=crop',
+    price: { from: 45, currency: 'EUR' },
+    genres: ['Jazz', 'Blues', 'Soul'],
+    isSoldOut: false,
+    isFeatured: false,
+  },
+  {
+    id: '4',
+    slug: 'hellfest-2026',
+    name: 'Hellfest 2026',
+    description:
+      'Le plus grand festival de metal en France. Une expérience unique pour les fans de musique extrême.',
+    location: 'Clisson, France',
+    startDate: '2026-06-19',
+    endDate: '2026-06-22',
+    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600&fit=crop',
+    price: { from: 199, currency: 'EUR' },
+    genres: ['Metal', 'Hard Rock', 'Punk'],
+    isSoldOut: true,
+    isFeatured: true,
+  },
+  {
+    id: '5',
+    slug: 'les-vieilles-charrues-2026',
+    name: 'Les Vieilles Charrues 2026',
+    description:
+      'Le plus grand festival de France en termes de fréquentation. Un programme éclectique pour tous les goûts.',
+    location: 'Carhaix, France',
+    startDate: '2026-07-16',
+    endDate: '2026-07-19',
+    imageUrl: 'https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=800&h=600&fit=crop',
+    price: { from: 119, currency: 'EUR' },
+    genres: ['Pop', 'Rock', 'Electro', 'World'],
+    isSoldOut: false,
+    isFeatured: false,
+  },
+  {
+    id: '6',
+    slug: 'solidays-2026',
+    name: 'Solidays 2026',
+    description:
+      "Festival engagé contre le SIDA. Musique, solidarité et bonne humeur à l'hippodrome de Longchamp.",
+    location: 'Paris, France',
+    startDate: '2026-06-26',
+    endDate: '2026-06-28',
+    imageUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&h=600&fit=crop',
+    price: { from: 69, currency: 'EUR' },
+    genres: ['Electro', 'Hip-Hop', 'Pop'],
+    isSoldOut: false,
+    isFeatured: false,
+  },
+];
+
 // Transform API festival data to FestivalCard expected format
 function transformFestival(festival: Festival): FestivalCardType {
   // Get minimum price from ticket categories
@@ -47,7 +141,7 @@ type SortOption = 'date' | 'price_asc' | 'price_desc' | 'name';
 export default function FestivalsPage() {
   const [allFestivals, setAllFestivals] = useState<FestivalCardType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [error] = useState<string | null>(null);
 
   // Filter states
   const [searchQuery, setSearchQuery] = useState('');
@@ -72,8 +166,9 @@ export default function FestivalsPage() {
         const data = await res.json();
         const festivals: Festival[] = Array.isArray(data) ? data : data.data || [];
         setAllFestivals(festivals.map(transformFestival));
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'An error occurred');
+      } catch {
+        // Use mock data when API is unavailable
+        setAllFestivals(MOCK_FESTIVALS);
       } finally {
         setIsLoading(false);
       }
