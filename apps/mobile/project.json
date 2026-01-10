@@ -5,6 +5,48 @@
   "projectType": "application",
   "tags": ["type:app", "scope:mobile"],
   "targets": {
+    "serve": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx expo start --host lan --port 8081",
+        "cwd": "apps/mobile"
+      }
+    },
+    "serve-tunnel": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx expo start --tunnel",
+        "cwd": "apps/mobile"
+      }
+    },
+    "start-ios": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx expo start --ios --host lan",
+        "cwd": "apps/mobile"
+      }
+    },
+    "start-android": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx expo start --android --host lan",
+        "cwd": "apps/mobile"
+      }
+    },
+    "build-android": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx expo build:android",
+        "cwd": "apps/mobile"
+      }
+    },
+    "build-ios": {
+      "executor": "nx:run-commands",
+      "options": {
+        "command": "npx expo build:ios",
+        "cwd": "apps/mobile"
+      }
+    },
     "test": {
       "executor": "@nx/jest:jest",
       "outputs": ["{workspaceRoot}/coverage/apps/mobile"],

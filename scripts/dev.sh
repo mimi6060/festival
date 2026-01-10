@@ -2,7 +2,7 @@
 # ==============================================
 # Festival Platform - Development Script
 # ==============================================
-# Usage: ./scripts/dev.sh [start|stop|logs|status]
+# Usage: ./scripts/dev.sh [start|stop|logs|status|mobile]
 
 set -e
 
@@ -39,7 +39,7 @@ start_infra() {
     fi
 }
 
-# Start apps locally
+# Start apps locally (without mobile)
 start_apps() {
     log_info "Starting apps locally..."
 
@@ -57,13 +57,63 @@ start_apps() {
     log_info "Running database migrations..."
     npx prisma db push --accept-data-loss 2>/dev/null || true
 
-    log_info "Starting API on :3001, Web on :4200, Admin on :4201..."
+    log_info "Starting API on :3333, Web on :3000, Admin on :4200..."
     echo ""
     log_success "Services starting in background. Use './scripts/dev.sh logs' to see output."
     echo ""
 
     # Start all services
     npx nx run-many --target=serve --projects=api,web,admin --parallel=3
+}
+
+# Start all apps including mobile
+start_all() {
+    log_info "Starting all apps including mobile..."
+
+    # Check if npm install needed
+    if [ ! -d "node_modules" ]; then
+        log_info "Installing dependencies..."
+        npm install
+    fi
+
+    # Generate Prisma client
+    log_info "Generating Prisma client..."
+    npx prisma generate
+
+    # Run migrations if needed
+    log_info "Running database migrations..."
+    npx prisma db push --accept-data-loss 2>/dev/null || true
+
+    log_info "Starting API on :3333, Web on :3000, Admin on :4200, Mobile on :8081..."
+    echo ""
+    log_success "Services starting. Use './scripts/dev.sh logs' to see output."
+    echo ""
+
+    # Start all services including mobile
+    npx nx run-many --target=serve --projects=api,web,admin,mobile --parallel=4
+}
+
+# Start mobile app only
+start_mobile() {
+    log_info "Starting mobile app (Expo)..."
+
+    # Get local IP address
+    LOCAL_IP=$(ipconfig getifaddr en0 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}')
+
+    echo ""
+    log_info "Mobile app will be available at:"
+    echo "  - LAN: http://${LOCAL_IP:-localhost}:8081"
+    echo "  - Expo Go: Scan QR code with Expo Go app"
+    echo ""
+
+    # Start Expo with LAN mode
+    npx nx serve mobile
+}
+
+# Start mobile with tunnel (for external access)
+start_mobile_tunnel() {
+    log_info "Starting mobile app with tunnel (for external access)..."
+    npx nx serve-tunnel mobile
 }
 
 # Stop everything
@@ -73,6 +123,7 @@ stop_all() {
     # Kill local processes
     pkill -f "nx serve" 2>/dev/null || true
     pkill -f "next dev" 2>/dev/null || true
+    pkill -f "expo start" 2>/dev/null || true
 
     # Stop Docker
     docker-compose -f docker-compose.dev.yml stop
@@ -91,10 +142,15 @@ show_status() {
     log_info "Docker Infrastructure:"
     docker ps --format "table {{.Names}}\t{{.Status}}\t{{.Ports}}" | grep -E "festival|NAMES"
     echo ""
+
+    # Get local IP
+    LOCAL_IP=$(ipconfig getifaddr en0 2>/dev/null || hostname -I 2>/dev/null | awk '{print $1}')
+
     log_info "URLs:"
-    echo "  - API:      http://localhost:3001"
-    echo "  - Web:      http://localhost:4200"
-    echo "  - Admin:    http://localhost:4201"
+    echo "  - API:      http://localhost:3333"
+    echo "  - Web:      http://localhost:3000"
+    echo "  - Admin:    http://localhost:4200"
+    echo "  - Mobile:   http://${LOCAL_IP:-localhost}:8081"
     echo "  - Mailpit:  http://localhost:8026"
     echo "  - MinIO:    http://localhost:9001"
     echo ""
@@ -106,9 +162,19 @@ case "${1:-start}" in
         start_infra
         start_apps
         ;;
+    all)
+        start_infra
+        start_all
+        ;;
     infra)
         start_infra
         show_status
+        ;;
+    mobile)
+        start_mobile
+        ;;
+    mobile-tunnel)
+        start_mobile_tunnel
         ;;
     stop)
         stop_all
@@ -120,14 +186,17 @@ case "${1:-start}" in
         show_status
         ;;
     *)
-        echo "Usage: $0 {start|infra|stop|logs|status}"
+        echo "Usage: $0 {start|all|infra|mobile|mobile-tunnel|stop|logs|status}"
         echo ""
         echo "Commands:"
-        echo "  start   - Start infra (Docker) + apps (local)"
-        echo "  infra   - Start only infrastructure (Docker)"
-        echo "  stop    - Stop all services"
-        echo "  logs    - Show Docker logs"
-        echo "  status  - Show status and URLs"
+        echo "  start         - Start infra (Docker) + apps (API, Web, Admin)"
+        echo "  all           - Start infra + all apps including Mobile"
+        echo "  infra         - Start only infrastructure (Docker)"
+        echo "  mobile        - Start only mobile app (Expo on LAN)"
+        echo "  mobile-tunnel - Start mobile with tunnel (external access)"
+        echo "  stop          - Stop all services"
+        echo "  logs          - Show Docker logs"
+        echo "  status        - Show status and URLs"
         exit 1
         ;;
 esac
