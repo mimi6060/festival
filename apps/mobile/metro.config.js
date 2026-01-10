@@ -17,6 +17,30 @@ config.resolver.nodeModulesPaths = [
   path.resolve(workspaceRoot, 'node_modules'),
 ];
 
+// Web-specific module aliases
+const webAliases = {
+  'react-native-push-notification': path.resolve(projectRoot, 'src/mocks/push-notification.web.ts'),
+  '@react-native-community/netinfo': path.resolve(projectRoot, 'src/mocks/netinfo.web.ts'),
+};
+
+// Custom resolver for web platform
+const originalResolveRequest = config.resolver.resolveRequest;
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  // Use web mocks when building for web
+  if (platform === 'web' && webAliases[moduleName]) {
+    return {
+      filePath: webAliases[moduleName],
+      type: 'sourceFile',
+    };
+  }
+
+  // Default resolution
+  if (originalResolveRequest) {
+    return originalResolveRequest(context, moduleName, platform);
+  }
+  return context.resolveRequest(context, moduleName, platform);
+};
+
 // Support for SVG transformer
 config.transformer.babelTransformerPath = require.resolve('react-native-svg-transformer');
 
