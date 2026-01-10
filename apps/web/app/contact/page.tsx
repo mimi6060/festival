@@ -1,12 +1,58 @@
-import { Metadata } from 'next';
+'use client';
+
+import { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 
-export const metadata: Metadata = {
-  title: 'Contact - FestivalHub',
-  description: 'Contactez-nous pour toute question sur FestivalHub.',
-};
-
 export default function ContactPage() {
+  const [formData, setFormData] = useState({
+    name: '',
+    email: '',
+    subject: '',
+    message: '',
+  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    setError(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Basic validation
+    if (!formData.name || !formData.email || !formData.subject || !formData.message) {
+      setError('Veuillez remplir tous les champs.');
+      return;
+    }
+
+    if (!formData.email.includes('@')) {
+      setError('Veuillez entrer une adresse email valide.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      // TODO: Implement actual contact form API
+      // For now, simulate an API call
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      setIsSubmitted(true);
+      setFormData({ name: '', email: '', subject: '', message: '' });
+    } catch {
+      setError("Une erreur s'est produite. Veuillez réessayer.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen pt-24 pb-16">
       <div className="container-app">
@@ -122,48 +168,100 @@ export default function ContactPage() {
             {/* Contact Form */}
             <Card variant="glow" padding="lg">
               <h2 className="text-xl font-bold text-white mb-6">Envoyez-nous un message</h2>
-              <form className="space-y-4">
-                <div>
-                  <label className="block text-white/70 text-sm mb-2">Nom</label>
-                  <input
-                    type="text"
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none transition-colors"
-                    placeholder="Votre nom"
-                  />
+
+              {isSubmitted ? (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
+                    <svg
+                      className="w-8 h-8 text-green-400"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      stroke="currentColor"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M5 13l4 4L19 7"
+                      />
+                    </svg>
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">Message envoyé !</h3>
+                  <p className="text-white/60 mb-4">
+                    Merci de nous avoir contacté. Nous vous répondrons dans les plus brefs délais.
+                  </p>
+                  <button
+                    onClick={() => setIsSubmitted(false)}
+                    className="text-primary-400 hover:text-primary-300 text-sm"
+                  >
+                    Envoyer un autre message
+                  </button>
                 </div>
-                <div>
-                  <label className="block text-white/70 text-sm mb-2">Email</label>
-                  <input
-                    type="email"
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none transition-colors"
-                    placeholder="votre@email.com"
-                  />
-                </div>
-                <div>
-                  <label className="block text-white/70 text-sm mb-2">Sujet</label>
-                  <select className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none transition-colors">
-                    <option value="">Selectionnez un sujet</option>
-                    <option value="general">Question generale</option>
-                    <option value="billing">Facturation</option>
-                    <option value="technical">Support technique</option>
-                    <option value="partnership">Partenariat</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-white/70 text-sm mb-2">Message</label>
-                  <textarea
-                    rows={4}
-                    className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none transition-colors resize-none"
-                    placeholder="Votre message..."
-                  />
-                </div>
-                <button
-                  type="submit"
-                  className="w-full py-3 rounded-xl bg-gradient-to-r from-primary-500 to-pink-500 text-white font-semibold hover:from-primary-600 hover:to-pink-600 transition-all"
-                >
-                  Envoyer
-                </button>
-              </form>
+              ) : (
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  {error && (
+                    <div className="p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm">
+                      {error}
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Nom</label>
+                    <input
+                      type="text"
+                      name="name"
+                      value={formData.name}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none transition-colors"
+                      placeholder="Votre nom"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Email</label>
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none transition-colors"
+                      placeholder="votre@email.com"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Sujet</label>
+                    <select
+                      name="subject"
+                      value={formData.subject}
+                      onChange={handleChange}
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none transition-colors"
+                    >
+                      <option value="">Selectionnez un sujet</option>
+                      <option value="general">Question generale</option>
+                      <option value="billing">Facturation</option>
+                      <option value="technical">Support technique</option>
+                      <option value="partnership">Partenariat</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-white/70 text-sm mb-2">Message</label>
+                    <textarea
+                      name="message"
+                      value={formData.message}
+                      onChange={handleChange}
+                      rows={4}
+                      className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:border-primary-500 focus:ring-1 focus:ring-primary-500 outline-none transition-colors resize-none"
+                      placeholder="Votre message..."
+                    />
+                  </div>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full py-3 rounded-xl bg-gradient-to-r from-primary-500 to-pink-500 text-white font-semibold hover:from-primary-600 hover:to-pink-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {isSubmitting ? 'Envoi en cours...' : 'Envoyer'}
+                  </button>
+                </form>
+              )}
             </Card>
           </div>
         </div>

@@ -4,7 +4,7 @@
  * Triggers the Google OAuth authentication flow.
  */
 
-import { Injectable, ExecutionContext } from '@nestjs/common';
+import { Injectable, ExecutionContext, BadRequestException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ConfigService } from '@nestjs/config';
 
@@ -15,10 +15,25 @@ export class GoogleOAuthGuard extends AuthGuard('google') {
   }
 
   canActivate(context: ExecutionContext) {
-    const isEnabled = this.configService.get<boolean>('GOOGLE_OAUTH_ENABLED');
+    const isEnabled =
+      this.configService.get<string>('GOOGLE_OAUTH_ENABLED') === 'true' ||
+      this.configService.get<boolean>('GOOGLE_OAUTH_ENABLED') === true;
+
     if (!isEnabled) {
-      return false;
+      throw new BadRequestException(
+        'Google OAuth is not configured. Please contact the administrator or use email/password login.'
+      );
     }
+
+    const clientId = this.configService.get<string>('GOOGLE_CLIENT_ID');
+    const clientSecret = this.configService.get<string>('GOOGLE_CLIENT_SECRET');
+
+    if (!clientId || clientId === 'disabled' || !clientSecret || clientSecret === 'disabled') {
+      throw new BadRequestException(
+        'Google OAuth credentials are not configured. Please use email/password login.'
+      );
+    }
+
     return super.canActivate(context);
   }
 
