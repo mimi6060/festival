@@ -2,6 +2,7 @@
   "name": "mobile",
   "version": "0.0.1",
   "private": true,
+  "main": "index.js",
   "dependencies": {
     "@nozbe/watermelondb": "^0.27.1",
     "@react-native-async-storage/async-storage": "^2.1.0",
@@ -33,6 +34,7 @@
   "devDependencies": {
     "@babel/plugin-proposal-decorators": "^7.24.0",
     "@types/react-native-push-notification": "^8.1.4",
-    "@types/uuid": "^9.0.0"
+    "@types/uuid": "^9.0.0",
+    "metro-config": "^0.83.3"
   }
 }
