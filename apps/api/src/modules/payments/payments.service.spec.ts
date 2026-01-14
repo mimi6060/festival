@@ -12,6 +12,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { PaymentsService, CreatePaymentDto } from './payments.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CurrencyService } from '../currency/currency.service';
+import { WebhookEventHelper } from '../webhooks/webhook-event.emitter';
 import { PaymentStatus, PaymentProvider } from '@prisma/client';
 import {
   regularUser,
@@ -59,6 +61,21 @@ describe('PaymentsService', () => {
     }),
   };
 
+  const mockCurrencyService = {
+    convert: jest.fn().mockResolvedValue(100),
+    getExchangeRate: jest.fn().mockResolvedValue(1.0),
+    formatAmount: jest.fn().mockReturnValue('100.00 EUR'),
+    getSupportedCurrencies: jest.fn().mockReturnValue(['EUR', 'USD', 'GBP']),
+  };
+
+  const mockWebhookEventHelper = {
+    emitPaymentCreated: jest.fn(),
+    emitPaymentSucceeded: jest.fn(),
+    emitPaymentFailed: jest.fn(),
+    emitPaymentRefunded: jest.fn(),
+    emitPaymentUpdated: jest.fn(),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -81,6 +98,8 @@ describe('PaymentsService', () => {
         PaymentsService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: CurrencyService, useValue: mockCurrencyService },
+        { provide: WebhookEventHelper, useValue: mockWebhookEventHelper },
       ],
     }).compile();
 
@@ -142,7 +161,7 @@ describe('PaymentsService', () => {
           metadata: expect.objectContaining({
             userId: validPaymentDto.userId,
           }),
-        }),
+        })
       );
     });
 
@@ -151,7 +170,7 @@ describe('PaymentsService', () => {
         paymentsService.createPaymentIntent({
           ...validPaymentDto,
           amount: 0,
-        }),
+        })
       ).rejects.toThrow(ValidationException);
     });
 
@@ -160,7 +179,7 @@ describe('PaymentsService', () => {
         paymentsService.createPaymentIntent({
           ...validPaymentDto,
           amount: -50,
-        }),
+        })
       ).rejects.toThrow(ValidationException);
     });
 
@@ -233,7 +252,7 @@ describe('PaymentsService', () => {
       expect(mockStripe.paymentIntents.create).toHaveBeenCalledWith(
         expect.objectContaining({
           amount: 9999,
-        }),
+        })
       );
     });
 
@@ -264,7 +283,7 @@ describe('PaymentsService', () => {
       expect(mockStripe.paymentIntents.create).toHaveBeenCalledWith(
         expect.objectContaining({
           amount: 1050,
-        }),
+        })
       );
     });
 
@@ -272,7 +291,7 @@ describe('PaymentsService', () => {
       mockStripe.paymentIntents.create.mockRejectedValue(new Error('Stripe error'));
 
       await expect(paymentsService.createPaymentIntent(validPaymentDto)).rejects.toThrow(
-        PaymentFailedException,
+        PaymentFailedException
       );
     });
 
@@ -308,7 +327,7 @@ describe('PaymentsService', () => {
             ...customMetadata,
             userId: validPaymentDto.userId,
           }),
-        }),
+        })
       );
     });
   });
@@ -464,7 +483,7 @@ describe('PaymentsService', () => {
         });
 
         await expect(
-          paymentsService.handleWebhook('invalid_sig', Buffer.from('payload')),
+          paymentsService.handleWebhook('invalid_sig', Buffer.from('payload'))
         ).rejects.toThrow(InvalidWebhookException);
       });
 
@@ -503,10 +522,7 @@ describe('PaymentsService', () => {
         refundedAt: new Date(),
       });
 
-      const result = await paymentsService.refundPayment(
-        completedPayment.id,
-        'Customer request',
-      );
+      const result = await paymentsService.refundPayment(completedPayment.id, 'Customer request');
 
       expect(result.paymentId).toBe(completedPayment.id);
       expect(result.refundId).toBe('re_test_refund_123');
@@ -514,7 +530,7 @@ describe('PaymentsService', () => {
       expect(mockStripe.refunds.create).toHaveBeenCalledWith(
         expect.objectContaining({
           payment_intent: completedPayment.providerPaymentId,
-        }),
+        })
       );
     });
 
@@ -549,7 +565,7 @@ describe('PaymentsService', () => {
       mockPrismaService.payment.findUnique.mockResolvedValue(null);
 
       await expect(paymentsService.refundPayment('non-existent-id')).rejects.toThrow(
-        NotFoundException,
+        NotFoundException
       );
     });
 
@@ -557,7 +573,7 @@ describe('PaymentsService', () => {
       mockPrismaService.payment.findUnique.mockResolvedValue(refundedPayment);
 
       await expect(paymentsService.refundPayment(refundedPayment.id)).rejects.toThrow(
-        AlreadyRefundedException,
+        AlreadyRefundedException
       );
     });
 
@@ -565,7 +581,7 @@ describe('PaymentsService', () => {
       mockPrismaService.payment.findUnique.mockResolvedValue(pendingPayment);
 
       await expect(paymentsService.refundPayment(pendingPayment.id)).rejects.toThrow(
-        RefundFailedException,
+        RefundFailedException
       );
     });
 
@@ -576,7 +592,7 @@ describe('PaymentsService', () => {
       });
 
       await expect(paymentsService.refundPayment(completedPayment.id)).rejects.toThrow(
-        RefundFailedException,
+        RefundFailedException
       );
     });
 
@@ -588,7 +604,7 @@ describe('PaymentsService', () => {
       mockStripe.refunds.create.mockRejectedValue(new Error('Stripe error'));
 
       await expect(paymentsService.refundPayment(completedPayment.id)).rejects.toThrow(
-        RefundFailedException,
+        RefundFailedException
       );
     });
 
@@ -615,7 +631,7 @@ describe('PaymentsService', () => {
           metadata: expect.objectContaining({
             reason: refundReason,
           }),
-        }),
+        })
       );
     });
 
@@ -661,7 +677,7 @@ describe('PaymentsService', () => {
       mockPrismaService.payment.findUnique.mockResolvedValue(null);
 
       await expect(paymentsService.getPayment('non-existent-id')).rejects.toThrow(
-        NotFoundException,
+        NotFoundException
       );
     });
 
@@ -688,10 +704,7 @@ describe('PaymentsService', () => {
 
   describe('getUserPayments', () => {
     it('should return user payment history', async () => {
-      mockPrismaService.payment.findMany.mockResolvedValue([
-        completedPayment,
-        pendingPayment,
-      ]);
+      mockPrismaService.payment.findMany.mockResolvedValue([completedPayment, pendingPayment]);
 
       const result = await paymentsService.getUserPayments(regularUser.id);
 
@@ -700,7 +713,7 @@ describe('PaymentsService', () => {
         expect.objectContaining({
           where: { userId: regularUser.id },
           orderBy: { createdAt: 'desc' },
-        }),
+        })
       );
     });
 
@@ -713,7 +726,7 @@ describe('PaymentsService', () => {
         expect.objectContaining({
           take: 20,
           skip: 10,
-        }),
+        })
       );
     });
 
@@ -726,7 +739,7 @@ describe('PaymentsService', () => {
         expect.objectContaining({
           take: 50,
           skip: 0,
-        }),
+        })
       );
     });
 
@@ -749,7 +762,7 @@ describe('PaymentsService', () => {
       expect(mockPrismaService.payment.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           orderBy: { createdAt: 'desc' },
-        }),
+        })
       );
     });
   });
@@ -763,7 +776,7 @@ describe('PaymentsService', () => {
       mockPrismaService.payment.findFirst.mockResolvedValue(completedPayment);
 
       const result = await paymentsService.getPaymentByProviderId(
-        completedPayment.providerPaymentId!,
+        completedPayment.providerPaymentId!
       );
 
       expect(result?.id).toBe(completedPayment.id);
@@ -805,7 +818,7 @@ describe('PaymentsService', () => {
 
       expect(result.status).toBe(PaymentStatus.CANCELLED);
       expect(mockStripe.paymentIntents.cancel).toHaveBeenCalledWith(
-        pendingPayment.providerPaymentId,
+        pendingPayment.providerPaymentId
       );
     });
 
@@ -813,7 +826,7 @@ describe('PaymentsService', () => {
       mockPrismaService.payment.findUnique.mockResolvedValue(null);
 
       await expect(paymentsService.cancelPayment('non-existent-id')).rejects.toThrow(
-        NotFoundException,
+        NotFoundException
       );
     });
 
@@ -821,7 +834,7 @@ describe('PaymentsService', () => {
       mockPrismaService.payment.findUnique.mockResolvedValue(completedPayment);
 
       await expect(paymentsService.cancelPayment(completedPayment.id)).rejects.toThrow(
-        PaymentFailedException,
+        PaymentFailedException
       );
     });
 
@@ -829,7 +842,7 @@ describe('PaymentsService', () => {
       mockPrismaService.payment.findUnique.mockResolvedValue(refundedPayment);
 
       await expect(paymentsService.cancelPayment(refundedPayment.id)).rejects.toThrow(
-        PaymentFailedException,
+        PaymentFailedException
       );
     });
 
@@ -874,10 +887,29 @@ describe('PaymentsService', () => {
     beforeEach(async () => {
       const mockConfigServiceNoStripe = {
         get: jest.fn().mockImplementation((key: string, defaultValue?: any) => {
-          if (key === 'STRIPE_SECRET_KEY') {return undefined;}
-          if (key === 'STRIPE_WEBHOOK_SECRET') {return '';}
+          if (key === 'STRIPE_SECRET_KEY') {
+            return undefined;
+          }
+          if (key === 'STRIPE_WEBHOOK_SECRET') {
+            return '';
+          }
           return defaultValue;
         }),
+      };
+
+      const mockCurrencyServiceLocal = {
+        convert: jest.fn().mockResolvedValue(100),
+        getExchangeRate: jest.fn().mockResolvedValue(1.0),
+        formatAmount: jest.fn().mockReturnValue('100.00 EUR'),
+        getSupportedCurrencies: jest.fn().mockReturnValue(['EUR', 'USD', 'GBP']),
+      };
+
+      const mockWebhookEventHelperLocal = {
+        emitPaymentCreated: jest.fn(),
+        emitPaymentSucceeded: jest.fn(),
+        emitPaymentFailed: jest.fn(),
+        emitPaymentRefunded: jest.fn(),
+        emitPaymentUpdated: jest.fn(),
       };
 
       const module: TestingModule = await Test.createTestingModule({
@@ -885,6 +917,8 @@ describe('PaymentsService', () => {
           PaymentsService,
           { provide: PrismaService, useValue: mockPrismaService },
           { provide: ConfigService, useValue: mockConfigServiceNoStripe },
+          { provide: CurrencyService, useValue: mockCurrencyServiceLocal },
+          { provide: WebhookEventHelper, useValue: mockWebhookEventHelperLocal },
         ],
       }).compile();
 
@@ -896,22 +930,22 @@ describe('PaymentsService', () => {
         paymentsServiceNoStripe.createPaymentIntent({
           userId: regularUser.id,
           amount: 100,
-        }),
+        })
       ).rejects.toThrow(ServiceUnavailableException);
     });
 
     it('should throw ServiceUnavailableException when handling webhook without Stripe', async () => {
       await expect(
-        paymentsServiceNoStripe.handleWebhook('sig', Buffer.from('payload')),
+        paymentsServiceNoStripe.handleWebhook('sig', Buffer.from('payload'))
       ).rejects.toThrow(ServiceUnavailableException);
     });
 
     it('should throw ServiceUnavailableException when refunding without Stripe', async () => {
       mockPrismaService.payment.findUnique.mockResolvedValue(completedPayment);
 
-      await expect(
-        paymentsServiceNoStripe.refundPayment(completedPayment.id),
-      ).rejects.toThrow(ServiceUnavailableException);
+      await expect(paymentsServiceNoStripe.refundPayment(completedPayment.id)).rejects.toThrow(
+        ServiceUnavailableException
+      );
     });
   });
 });

@@ -229,7 +229,7 @@ describe('Auth Store', () => {
       });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:3000/api/auth/login',
+        '/api/auth/login',
         expect.objectContaining({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -307,7 +307,7 @@ describe('Auth Store', () => {
       });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:3000/api/auth/register',
+        '/api/auth/register',
         expect.objectContaining({
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -371,7 +371,7 @@ describe('Auth Store', () => {
       });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:3000/api/auth/logout',
+        '/api/auth/logout',
         expect.objectContaining({
           method: 'POST',
           credentials: 'include',
@@ -568,7 +568,7 @@ describe('Auth Store', () => {
       });
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'http://localhost:3000/api/auth/me',
+        '/api/auth/me',
         expect.objectContaining({
           method: 'GET',
           credentials: 'include',

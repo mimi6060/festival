@@ -21,13 +21,10 @@ import { NotificationsService } from './notifications.service';
 import { PrismaService } from '../../../prisma/prisma.service';
 import { FcmService } from './fcm.service';
 import { NotificationTemplateService } from './notification-template.service';
+import { EmailTemplateService } from './email-template.service';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { NotFoundException } from '@nestjs/common';
-import {
-  NotificationType,
-  NotificationCategory,
-  NotificationPlatform,
-} from '@prisma/client';
+import { NotificationType, NotificationCategory, NotificationPlatform } from '@prisma/client';
 import { NotificationPayload } from '../interfaces';
 
 // ============================================================================
@@ -164,6 +161,26 @@ describe('NotificationsService', () => {
     getById: jest.fn(),
   };
 
+  const mockEmailTemplateService = {
+    renderTemplate: jest.fn(),
+    loadTemplate: jest.fn(),
+    isLanguageSupported: jest.fn().mockReturnValue(true),
+    getTemplateTypes: jest
+      .fn()
+      .mockReturnValue([
+        'welcome',
+        'verify-email',
+        'password-reset',
+        'ticket-confirmation',
+        'ticket-reminder',
+        'payment-receipt',
+        'refund-confirmation',
+        'cashless-topup',
+        'order-ready',
+      ]),
+    getSupportedLanguages: jest.fn().mockReturnValue(['fr', 'en', 'de', 'es', 'it', 'ar']),
+  };
+
   const mockEventEmitter = {
     emit: jest.fn(),
   };
@@ -177,6 +194,7 @@ describe('NotificationsService', () => {
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: FcmService, useValue: mockFcmService },
         { provide: NotificationTemplateService, useValue: mockTemplateService },
+        { provide: EmailTemplateService, useValue: mockEmailTemplateService },
         { provide: EventEmitter2, useValue: mockEventEmitter },
       ],
     }).compile();
@@ -220,16 +238,14 @@ describe('NotificationsService', () => {
           orderBy: { createdAt: 'desc' },
           skip: 0,
           take: 20,
-        }),
+        })
       );
     });
 
     it('should filter by read status when provided', async () => {
       // Arrange
       mockPrismaService.notification.findMany.mockResolvedValue([mockNotification]);
-      mockPrismaService.notification.count
-        .mockResolvedValueOnce(5)
-        .mockResolvedValueOnce(5);
+      mockPrismaService.notification.count.mockResolvedValueOnce(5).mockResolvedValueOnce(5);
 
       // Act
       await notificationsService.getUserNotifications(mockUserId, {
@@ -242,16 +258,14 @@ describe('NotificationsService', () => {
       expect(mockPrismaService.notification.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { userId: mockUserId, isRead: false },
-        }),
+        })
       );
     });
 
     it('should filter by notification type when provided', async () => {
       // Arrange
       mockPrismaService.notification.findMany.mockResolvedValue([mockNotification]);
-      mockPrismaService.notification.count
-        .mockResolvedValueOnce(3)
-        .mockResolvedValueOnce(2);
+      mockPrismaService.notification.count.mockResolvedValueOnce(3).mockResolvedValueOnce(2);
 
       // Act
       await notificationsService.getUserNotifications(mockUserId, {
@@ -264,16 +278,14 @@ describe('NotificationsService', () => {
       expect(mockPrismaService.notification.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { userId: mockUserId, type: NotificationType.TICKET_PURCHASED },
-        }),
+        })
       );
     });
 
     it('should filter by festivalId when provided', async () => {
       // Arrange
       mockPrismaService.notification.findMany.mockResolvedValue([mockNotification]);
-      mockPrismaService.notification.count
-        .mockResolvedValueOnce(2)
-        .mockResolvedValueOnce(1);
+      mockPrismaService.notification.count.mockResolvedValueOnce(2).mockResolvedValueOnce(1);
 
       // Act
       await notificationsService.getUserNotifications(mockUserId, {
@@ -286,16 +298,14 @@ describe('NotificationsService', () => {
       expect(mockPrismaService.notification.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { userId: mockUserId, festivalId: mockFestivalId },
-        }),
+        })
       );
     });
 
     it('should apply pagination correctly on page 2', async () => {
       // Arrange
       mockPrismaService.notification.findMany.mockResolvedValue([]);
-      mockPrismaService.notification.count
-        .mockResolvedValueOnce(50)
-        .mockResolvedValueOnce(25);
+      mockPrismaService.notification.count.mockResolvedValueOnce(50).mockResolvedValueOnce(25);
 
       // Act
       await notificationsService.getUserNotifications(mockUserId, {
@@ -308,16 +318,14 @@ describe('NotificationsService', () => {
         expect.objectContaining({
           skip: 10,
           take: 10,
-        }),
+        })
       );
     });
 
     it('should return empty array when no notifications exist', async () => {
       // Arrange
       mockPrismaService.notification.findMany.mockResolvedValue([]);
-      mockPrismaService.notification.count
-        .mockResolvedValueOnce(0)
-        .mockResolvedValueOnce(0);
+      mockPrismaService.notification.count.mockResolvedValueOnce(0).mockResolvedValueOnce(0);
 
       // Act
       const result = await notificationsService.getUserNotifications(mockUserId, {});
@@ -331,9 +339,7 @@ describe('NotificationsService', () => {
     it('should use default pagination values when not provided', async () => {
       // Arrange
       mockPrismaService.notification.findMany.mockResolvedValue([]);
-      mockPrismaService.notification.count
-        .mockResolvedValueOnce(0)
-        .mockResolvedValueOnce(0);
+      mockPrismaService.notification.count.mockResolvedValueOnce(0).mockResolvedValueOnce(0);
 
       // Act
       await notificationsService.getUserNotifications(mockUserId, {});
@@ -343,7 +349,7 @@ describe('NotificationsService', () => {
         expect.objectContaining({
           skip: 0,
           take: 20,
-        }),
+        })
       );
     });
   });
@@ -379,9 +385,9 @@ describe('NotificationsService', () => {
       mockPrismaService.notification.findFirst.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        notificationsService.markAsRead(mockUserId, 'non-existent'),
-      ).rejects.toThrow(NotFoundException);
+      await expect(notificationsService.markAsRead(mockUserId, 'non-existent')).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw NotFoundException if notification belongs to different user', async () => {
@@ -390,7 +396,7 @@ describe('NotificationsService', () => {
 
       // Act & Assert
       await expect(
-        notificationsService.markAsRead('different-user', mockNotificationId),
+        notificationsService.markAsRead('different-user', mockNotificationId)
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -464,7 +470,7 @@ describe('NotificationsService', () => {
 
       // Act & Assert
       await expect(
-        notificationsService.deleteNotification(mockUserId, 'non-existent'),
+        notificationsService.deleteNotification(mockUserId, 'non-existent')
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -474,7 +480,7 @@ describe('NotificationsService', () => {
 
       // Act & Assert
       await expect(
-        notificationsService.deleteNotification('different-user', mockNotificationId),
+        notificationsService.deleteNotification('different-user', mockNotificationId)
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -574,10 +580,7 @@ describe('NotificationsService', () => {
       });
 
       // Assert
-      expect(mockFcmService.sendToTokens).toHaveBeenCalledWith(
-        [mockPushToken.token],
-        payload,
-      );
+      expect(mockFcmService.sendToTokens).toHaveBeenCalledWith([mockPushToken.token], payload);
       expect(mockPrismaService.notification.update).toHaveBeenCalledWith({
         where: { id: mockNotificationId },
         data: { sentAt: expect.any(Date) },
@@ -650,7 +653,9 @@ describe('NotificationsService', () => {
         ...mockPreferences,
         pushEnabled: false,
       };
-      mockPrismaService.notificationPreference.findUnique.mockResolvedValue(pushDisabledPreferences);
+      mockPrismaService.notificationPreference.findUnique.mockResolvedValue(
+        pushDisabledPreferences
+      );
       mockPrismaService.notification.create.mockResolvedValue(mockNotification);
       mockPrismaService.pushToken.findMany.mockResolvedValue([mockPushToken]);
 
@@ -672,7 +677,9 @@ describe('NotificationsService', () => {
         ...mockPreferences,
         emailEnabled: false,
       };
-      mockPrismaService.notificationPreference.findUnique.mockResolvedValue(emailDisabledPreferences);
+      mockPrismaService.notificationPreference.findUnique.mockResolvedValue(
+        emailDisabledPreferences
+      );
       mockPrismaService.notification.create.mockResolvedValue(mockNotification);
 
       // Act
@@ -686,7 +693,7 @@ describe('NotificationsService', () => {
       // Assert
       expect(mockEventEmitter.emit).not.toHaveBeenCalledWith(
         'notification.email',
-        expect.anything(),
+        expect.anything()
       );
     });
 
@@ -870,10 +877,7 @@ describe('NotificationsService', () => {
 
     it('should send to all users when targetAll is true', async () => {
       // Arrange
-      mockPrismaService.user.findMany.mockResolvedValue([
-        { id: 'user-1' },
-        { id: 'user-2' },
-      ]);
+      mockPrismaService.user.findMany.mockResolvedValue([{ id: 'user-1' }, { id: 'user-2' }]);
       mockPrismaService.notification.create.mockResolvedValue(mockNotification);
       mockPrismaService.pushToken.findMany.mockResolvedValue([]);
 
@@ -892,10 +896,7 @@ describe('NotificationsService', () => {
 
     it('should send to users by role', async () => {
       // Arrange
-      mockPrismaService.user.findMany.mockResolvedValue([
-        { id: 'staff-1' },
-        { id: 'staff-2' },
-      ]);
+      mockPrismaService.user.findMany.mockResolvedValue([{ id: 'staff-1' }, { id: 'staff-2' }]);
       mockPrismaService.notification.create.mockResolvedValue(mockNotification);
       mockPrismaService.pushToken.findMany.mockResolvedValue([]);
 
@@ -957,10 +958,7 @@ describe('NotificationsService', () => {
 
     it('should combine users from multiple targeting criteria', async () => {
       // Arrange
-      mockPrismaService.user.findMany.mockResolvedValue([
-        { id: 'staff-1' },
-        { id: 'staff-2' },
-      ]);
+      mockPrismaService.user.findMany.mockResolvedValue([{ id: 'staff-1' }, { id: 'staff-2' }]);
       mockPrismaService.ticket.findMany.mockResolvedValue([
         { userId: 'vip-1' },
         { userId: 'staff-1' }, // Duplicate - should be deduplicated
@@ -999,7 +997,7 @@ describe('NotificationsService', () => {
       const result = await notificationsService.sendTemplatedNotification(
         'ticket_purchased',
         [mockUserId],
-        { ticketType: 'VIP', festivalName: 'Summer Fest' },
+        { ticketType: 'VIP', festivalName: 'Summer Fest' }
       );
 
       // Assert
@@ -1019,11 +1017,7 @@ describe('NotificationsService', () => {
 
       // Act & Assert
       await expect(
-        notificationsService.sendTemplatedNotification(
-          'non_existent_template',
-          [mockUserId],
-          {},
-        ),
+        notificationsService.sendTemplatedNotification('non_existent_template', [mockUserId], {})
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -1037,7 +1031,7 @@ describe('NotificationsService', () => {
       const result = await notificationsService.sendTemplatedNotification(
         'ticket_purchased',
         ['user-1', 'user-2', 'user-3'],
-        { ticketType: 'Standard', festivalName: 'Rock Fest' },
+        { ticketType: 'Standard', festivalName: 'Rock Fest' }
       );
 
       // Assert
@@ -1057,11 +1051,7 @@ describe('NotificationsService', () => {
       mockPrismaService.notification.update.mockResolvedValue(mockNotification);
 
       // Act
-      await notificationsService.sendTemplatedNotification(
-        'ticket_purchased',
-        [mockUserId],
-        {},
-      );
+      await notificationsService.sendTemplatedNotification('ticket_purchased', [mockUserId], {});
 
       // Assert - sendPush defaults to true
       expect(mockFcmService.sendToTokens).toHaveBeenCalled();
@@ -1306,9 +1296,7 @@ describe('NotificationsService', () => {
 
     it('should filter analytics by festivalId', async () => {
       // Arrange
-      mockPrismaService.notification.count
-        .mockResolvedValueOnce(50)
-        .mockResolvedValueOnce(40);
+      mockPrismaService.notification.count.mockResolvedValueOnce(50).mockResolvedValueOnce(40);
       mockPrismaService.notification.groupBy.mockResolvedValue([]);
       mockPrismaService.$queryRaw.mockResolvedValue([]);
 
@@ -1325,9 +1313,7 @@ describe('NotificationsService', () => {
       // Arrange
       const startDate = new Date('2026-01-01');
       const endDate = new Date('2026-01-31');
-      mockPrismaService.notification.count
-        .mockResolvedValueOnce(30)
-        .mockResolvedValueOnce(25);
+      mockPrismaService.notification.count.mockResolvedValueOnce(30).mockResolvedValueOnce(25);
       mockPrismaService.notification.groupBy.mockResolvedValue([]);
       mockPrismaService.$queryRaw.mockResolvedValue([]);
 
@@ -1344,9 +1330,7 @@ describe('NotificationsService', () => {
 
     it('should return 0 read rate when no notifications sent', async () => {
       // Arrange
-      mockPrismaService.notification.count
-        .mockResolvedValueOnce(0)
-        .mockResolvedValueOnce(0);
+      mockPrismaService.notification.count.mockResolvedValueOnce(0).mockResolvedValueOnce(0);
       mockPrismaService.notification.groupBy.mockResolvedValue([]);
       mockPrismaService.$queryRaw.mockResolvedValue([]);
 
@@ -1375,7 +1359,7 @@ describe('NotificationsService', () => {
       [NotificationType.PROMO, NotificationCategory.PROMOTIONS],
       [NotificationType.VENDOR_ORDER, NotificationCategory.VENDOR],
       [NotificationType.SYSTEM, NotificationCategory.SYSTEM],
-    ])('should handle %s notification type correctly', async (type, expectedCategory) => {
+    ])('should handle %s notification type correctly', async (type, _expectedCategory) => {
       // Arrange
       const payload: NotificationPayload = {
         title: 'Test',
@@ -1406,27 +1390,26 @@ describe('NotificationsService', () => {
   // ==========================================================================
 
   describe('Platform Support', () => {
-    it.each([
-      NotificationPlatform.IOS,
-      NotificationPlatform.ANDROID,
-      NotificationPlatform.WEB,
-    ])('should register token for %s platform', async (platform) => {
-      // Arrange
-      mockPrismaService.pushToken.findUnique.mockResolvedValue(null);
-      mockPrismaService.pushToken.upsert.mockResolvedValue({
-        ...mockPushToken,
-        platform,
-      });
+    it.each([NotificationPlatform.IOS, NotificationPlatform.ANDROID, NotificationPlatform.WEB])(
+      'should register token for %s platform',
+      async (platform) => {
+        // Arrange
+        mockPrismaService.pushToken.findUnique.mockResolvedValue(null);
+        mockPrismaService.pushToken.upsert.mockResolvedValue({
+          ...mockPushToken,
+          platform,
+        });
 
-      // Act
-      const result = await notificationsService.registerPushToken(mockUserId, {
-        token: 'platform-token',
-        platform,
-      });
+        // Act
+        const result = await notificationsService.registerPushToken(mockUserId, {
+          token: 'platform-token',
+          platform,
+        });
 
-      // Assert
-      expect(result.platform).toBe(platform);
-    });
+        // Assert
+        expect(result.platform).toBe(platform);
+      }
+    );
   });
 
   // ==========================================================================
@@ -1482,7 +1465,9 @@ describe('NotificationsService', () => {
         quietHoursStart: '22:00',
         quietHoursEnd: '08:00',
       };
-      mockPrismaService.notificationPreference.findUnique.mockResolvedValue(overnightQuietPreferences);
+      mockPrismaService.notificationPreference.findUnique.mockResolvedValue(
+        overnightQuietPreferences
+      );
       mockPrismaService.notification.create.mockResolvedValue(mockNotification);
       mockPrismaService.pushToken.findMany.mockResolvedValue([mockPushToken]);
 
@@ -1505,7 +1490,9 @@ describe('NotificationsService', () => {
         quietHoursStart: 'invalid',
         quietHoursEnd: 'also-invalid',
       };
-      mockPrismaService.notificationPreference.findUnique.mockResolvedValue(invalidQuietPreferences);
+      mockPrismaService.notificationPreference.findUnique.mockResolvedValue(
+        invalidQuietPreferences
+      );
       mockPrismaService.notification.create.mockResolvedValue(mockNotification);
       mockPrismaService.pushToken.findMany.mockResolvedValue([mockPushToken]);
       mockFcmService.sendToTokens.mockResolvedValue({
@@ -1534,7 +1521,9 @@ describe('NotificationsService', () => {
         quietHoursStart: null,
         quietHoursEnd: '08:00',
       };
-      mockPrismaService.notificationPreference.findUnique.mockResolvedValue(partialQuietPreferences);
+      mockPrismaService.notificationPreference.findUnique.mockResolvedValue(
+        partialQuietPreferences
+      );
       mockPrismaService.notification.create.mockResolvedValue(mockNotification);
       mockPrismaService.pushToken.findMany.mockResolvedValue([mockPushToken]);
       mockFcmService.sendToTokens.mockResolvedValue({
@@ -1563,7 +1552,9 @@ describe('NotificationsService', () => {
         quietHoursStart: '22:00',
         quietHoursEnd: null,
       };
-      mockPrismaService.notificationPreference.findUnique.mockResolvedValue(partialQuietPreferences);
+      mockPrismaService.notificationPreference.findUnique.mockResolvedValue(
+        partialQuietPreferences
+      );
       mockPrismaService.notification.create.mockResolvedValue(mockNotification);
       mockPrismaService.pushToken.findMany.mockResolvedValue([mockPushToken]);
       mockFcmService.sendToTokens.mockResolvedValue({
@@ -1665,9 +1656,7 @@ describe('NotificationsService', () => {
       // Arrange
       const startDate = new Date('2026-01-01');
       const endDate = new Date('2026-01-31');
-      mockPrismaService.notification.count
-        .mockResolvedValueOnce(50)
-        .mockResolvedValueOnce(40);
+      mockPrismaService.notification.count.mockResolvedValueOnce(50).mockResolvedValueOnce(40);
       mockPrismaService.notification.groupBy.mockResolvedValue([]);
       mockPrismaService.$queryRaw.mockResolvedValue([]);
 
@@ -1700,16 +1689,10 @@ describe('NotificationsService', () => {
 
     it('should return byType with all notification types initialized', async () => {
       // Arrange
-      mockPrismaService.notification.count
-        .mockResolvedValueOnce(10)
-        .mockResolvedValueOnce(5);
+      mockPrismaService.notification.count.mockResolvedValueOnce(10).mockResolvedValueOnce(5);
       mockPrismaService.notification.groupBy
-        .mockResolvedValueOnce([
-          { type: NotificationType.TICKET_PURCHASED, _count: { id: 5 } },
-        ])
-        .mockResolvedValueOnce([
-          { type: NotificationType.TICKET_PURCHASED, _count: { id: 3 } },
-        ]);
+        .mockResolvedValueOnce([{ type: NotificationType.TICKET_PURCHASED, _count: { id: 5 } }])
+        .mockResolvedValueOnce([{ type: NotificationType.TICKET_PURCHASED, _count: { id: 3 } }]);
       mockPrismaService.$queryRaw.mockResolvedValue([]);
 
       // Act
@@ -1729,9 +1712,7 @@ describe('NotificationsService', () => {
 
     it('should convert byDay numbers correctly', async () => {
       // Arrange
-      mockPrismaService.notification.count
-        .mockResolvedValueOnce(100)
-        .mockResolvedValueOnce(75);
+      mockPrismaService.notification.count.mockResolvedValueOnce(100).mockResolvedValueOnce(75);
       mockPrismaService.notification.groupBy.mockResolvedValue([]);
       mockPrismaService.$queryRaw.mockResolvedValue([
         { date: '2026-01-08', sent: BigInt(15), read: BigInt(12) },
@@ -1773,7 +1754,7 @@ describe('NotificationsService', () => {
           update: expect.objectContaining({
             lastUsedAt: expect.any(Date),
           }),
-        }),
+        })
       );
     });
 
@@ -1781,8 +1762,18 @@ describe('NotificationsService', () => {
       // Arrange
       const tokens = [
         mockPushToken,
-        { ...mockPushToken, id: 'token-2', token: 'fcm-token-2', platform: NotificationPlatform.IOS },
-        { ...mockPushToken, id: 'token-3', token: 'fcm-token-3', platform: NotificationPlatform.WEB },
+        {
+          ...mockPushToken,
+          id: 'token-2',
+          token: 'fcm-token-2',
+          platform: NotificationPlatform.IOS,
+        },
+        {
+          ...mockPushToken,
+          id: 'token-3',
+          token: 'fcm-token-3',
+          platform: NotificationPlatform.WEB,
+        },
       ];
       mockPrismaService.pushToken.findMany.mockResolvedValue(tokens);
 
@@ -1815,7 +1806,7 @@ describe('NotificationsService', () => {
           create: expect.objectContaining({
             deviceName: 'iPhone 15 Pro Max',
           }),
-        }),
+        })
       );
     });
   });
@@ -1996,10 +1987,7 @@ describe('NotificationsService', () => {
 
       // Assert
       expect(result.successCount).toBe(1);
-      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
-        'notification.email',
-        expect.anything(),
-      );
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith('notification.email', expect.anything());
     });
   });
 
@@ -2019,11 +2007,10 @@ describe('NotificationsService', () => {
       mockPrismaService.pushToken.findMany.mockResolvedValue([]);
 
       // Act
-      await notificationsService.sendTemplatedNotification(
-        'ticket_purchased',
-        [mockUserId],
-        { ticketType: 'VIP', festivalName: 'Test Fest' },
-      );
+      await notificationsService.sendTemplatedNotification('ticket_purchased', [mockUserId], {
+        ticketType: 'VIP',
+        festivalName: 'Test Fest',
+      });
 
       // Assert
       expect(mockPrismaService.notification.create).toHaveBeenCalledWith({
@@ -2040,11 +2027,10 @@ describe('NotificationsService', () => {
       mockPrismaService.pushToken.findMany.mockResolvedValue([]);
 
       // Act
-      await notificationsService.sendTemplatedNotification(
-        'ticket_purchased',
-        [mockUserId],
-        { ticketType: 'VIP', festivalName: 'Test Fest' },
-      );
+      await notificationsService.sendTemplatedNotification('ticket_purchased', [mockUserId], {
+        ticketType: 'VIP',
+        festivalName: 'Test Fest',
+      });
 
       // Assert
       expect(mockPrismaService.notification.create).toHaveBeenCalledWith({
@@ -2065,15 +2051,12 @@ describe('NotificationsService', () => {
         'ticket_purchased',
         [mockUserId],
         { ticketType: 'VIP', festivalName: 'Test Fest' },
-        { sendPush: false, sendEmail: true },
+        { sendPush: false, sendEmail: true }
       );
 
       // Assert
       expect(mockFcmService.sendToTokens).not.toHaveBeenCalled();
-      expect(mockEventEmitter.emit).toHaveBeenCalledWith(
-        'notification.email',
-        expect.anything(),
-      );
+      expect(mockEventEmitter.emit).toHaveBeenCalledWith('notification.email', expect.anything());
     });
   });
 
@@ -2147,7 +2130,7 @@ describe('NotificationsService', () => {
         type: NotificationType.SYSTEM,
       };
       mockPrismaService.notification.create.mockRejectedValue(
-        new Error('Database connection error'),
+        new Error('Database connection error')
       );
 
       // Act & Assert
@@ -2157,7 +2140,7 @@ describe('NotificationsService', () => {
           payload,
           sendPush: false,
           sendEmail: false,
-        }),
+        })
       ).rejects.toThrow('Database connection error');
     });
 
@@ -2169,7 +2152,7 @@ describe('NotificationsService', () => {
         type: NotificationType.SYSTEM,
       };
       mockPrismaService.notificationPreference.findUnique.mockRejectedValue(
-        new Error('Database error'),
+        new Error('Database error')
       );
 
       // Act & Assert
@@ -2179,20 +2162,16 @@ describe('NotificationsService', () => {
           payload,
           sendPush: false,
           sendEmail: false,
-        }),
+        })
       ).rejects.toThrow('Database error');
     });
 
     it('should handle analytics query failure gracefully', async () => {
       // Arrange
-      mockPrismaService.notification.count.mockRejectedValue(
-        new Error('Query failed'),
-      );
+      mockPrismaService.notification.count.mockRejectedValue(new Error('Query failed'));
 
       // Act & Assert
-      await expect(notificationsService.getAnalytics()).rejects.toThrow(
-        'Query failed',
-      );
+      await expect(notificationsService.getAnalytics()).rejects.toThrow('Query failed');
     });
   });
 

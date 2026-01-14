@@ -82,7 +82,12 @@ describe('AuthContext', () => {
     });
 
     it('should show loading state initially', () => {
-      mockFetch.mockImplementation(() => new Promise(() => {})); // Never resolves
+      mockFetch.mockImplementation(
+        () =>
+          new Promise(() => {
+            /* never resolves */
+          })
+      );
 
       render(
         <AuthProvider>
@@ -115,7 +120,7 @@ describe('AuthContext', () => {
 
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
-          'http://localhost:3000/api/auth/me',
+          '/api/auth/me',
           expect.objectContaining({
             method: 'GET',
             credentials: 'include',
@@ -225,7 +230,7 @@ describe('AuthContext', () => {
 
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
-          'http://localhost:3000/api/auth/login',
+          '/api/auth/login',
           expect.objectContaining({
             method: 'POST',
             credentials: 'include',
@@ -315,7 +320,7 @@ describe('AuthContext', () => {
 
       await waitFor(() => {
         expect(mockFetch).toHaveBeenCalledWith(
-          'http://localhost:3000/api/auth/logout',
+          '/api/auth/logout',
           expect.objectContaining({
             method: 'POST',
             credentials: 'include',
@@ -368,7 +373,12 @@ describe('AuthContext', () => {
   // ==========================================================================
   describe('withAuth HOC', () => {
     it('should show loading spinner while checking auth', () => {
-      mockFetch.mockImplementation(() => new Promise(() => {})); // Never resolves
+      mockFetch.mockImplementation(
+        () =>
+          new Promise(() => {
+            /* never resolves */
+          })
+      );
 
       const ProtectedPage = withAuth(ProtectedComponent);
 

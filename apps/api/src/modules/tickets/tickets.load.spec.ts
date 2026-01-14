@@ -13,6 +13,7 @@ import { ConfigService } from '@nestjs/config';
 import { TicketsService } from './tickets.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
+import { WebhookEventHelper } from '../webhooks/webhook-event.emitter';
 import { TicketStatus, TicketType, FestivalStatus } from '@prisma/client';
 import {
   regularUser,
@@ -81,6 +82,18 @@ describe('TicketsService - Load Tests', () => {
     isEmailEnabled: jest.fn().mockReturnValue(true),
   };
 
+  const mockWebhookEventHelper = {
+    emitTicketCreated: jest.fn(),
+    emitTicketUpdated: jest.fn(),
+    emitTicketTransferred: jest.fn(),
+    emitTicketCancelled: jest.fn(),
+    emitTicketUsed: jest.fn(),
+    emitTicketPurchased: jest.fn(),
+    emitTicketScanned: jest.fn(),
+    emitTicketRefunded: jest.fn(),
+    emitTicketValidated: jest.fn(),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
     mockConfigService.getOrThrow.mockReturnValue(QR_CODE_SECRET);
@@ -95,6 +108,7 @@ describe('TicketsService - Load Tests', () => {
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: ConfigService, useValue: mockConfigService },
         { provide: EmailService, useValue: mockEmailService },
+        { provide: WebhookEventHelper, useValue: mockWebhookEventHelper },
       ],
     }).compile();
 

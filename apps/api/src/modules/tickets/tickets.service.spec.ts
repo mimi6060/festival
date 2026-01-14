@@ -14,6 +14,7 @@ import { ConfigService } from '@nestjs/config';
 import { TicketsService, PurchaseTicketDto } from './tickets.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { EmailService } from '../email/email.service';
+import { WebhookEventHelper } from '../webhooks/webhook-event.emitter';
 import { TicketStatus, TicketType, FestivalStatus } from '@prisma/client';
 import {
   regularUser,
@@ -113,6 +114,18 @@ describe('TicketsService', () => {
     isEmailEnabled: jest.fn().mockReturnValue(true),
   };
 
+  const mockWebhookEventHelper = {
+    emitTicketCreated: jest.fn(),
+    emitTicketUpdated: jest.fn(),
+    emitTicketTransferred: jest.fn(),
+    emitTicketCancelled: jest.fn(),
+    emitTicketUsed: jest.fn(),
+    emitTicketPurchased: jest.fn(),
+    emitTicketScanned: jest.fn(),
+    emitTicketRefunded: jest.fn(),
+    emitTicketValidated: jest.fn(),
+  };
+
   beforeEach(async () => {
     // Reset mocks but restore the config service return value
     jest.clearAllMocks();
@@ -134,6 +147,7 @@ describe('TicketsService', () => {
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: ConfigService, useValue: mockConfigService },
         { provide: EmailService, useValue: mockEmailService },
+        { provide: WebhookEventHelper, useValue: mockWebhookEventHelper },
       ],
     }).compile();
 
@@ -165,6 +179,17 @@ describe('TicketsService', () => {
         isEmailEnabled: jest.fn().mockReturnValue(true),
       };
 
+      const localMockWebhookEventHelper = {
+        emitTicketCreated: jest.fn(),
+        emitTicketUpdated: jest.fn(),
+        emitTicketTransferred: jest.fn(),
+        emitTicketCancelled: jest.fn(),
+        emitTicketUsed: jest.fn(),
+        emitTicketPurchased: jest.fn(),
+        emitTicketScanned: jest.fn(),
+        emitTicketRefunded: jest.fn(),
+      };
+
       await expect(
         Test.createTestingModule({
           providers: [
@@ -172,6 +197,7 @@ describe('TicketsService', () => {
             { provide: PrismaService, useValue: mockPrismaService },
             { provide: ConfigService, useValue: shortSecretConfigService },
             { provide: EmailService, useValue: localMockEmailService },
+            { provide: WebhookEventHelper, useValue: localMockWebhookEventHelper },
           ],
         }).compile()
       ).rejects.toThrow('QR_CODE_SECRET must be at least 32 characters for security');

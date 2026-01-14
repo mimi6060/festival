@@ -85,7 +85,7 @@ describe('Card Component', () => {
       const { container } = render(<Card>Default</Card>);
 
       const card = container.firstChild as HTMLElement;
-      expect(card.className).toContain('bg-white/5');
+      expect(card.className).toContain('bg-theme-surface');
       expect(card.className).toContain('backdrop-blur-lg');
     });
 
@@ -100,7 +100,7 @@ describe('Card Component', () => {
       const { container } = render(<Card variant="solid">Solid</Card>);
 
       const card = container.firstChild as HTMLElement;
-      expect(card.className).toContain('bg-festival-darker');
+      expect(card.className).toContain('bg-theme-card');
     });
 
     it('should apply gradient variant styles', () => {
@@ -290,7 +290,7 @@ describe('CardTitle Component', () => {
     const title = container.firstChild as HTMLElement;
     expect(title.className).toContain('text-xl');
     expect(title.className).toContain('font-bold');
-    expect(title.className).toContain('text-white');
+    expect(title.className).toContain('text-theme-primary');
   });
 
   it('should apply custom className', () => {
@@ -322,7 +322,7 @@ describe('CardDescription Component', () => {
     const { container } = render(<CardDescription>Description</CardDescription>);
 
     const description = container.firstChild as HTMLElement;
-    expect(description.className).toContain('text-white/60');
+    expect(description.className).toContain('text-theme-muted');
     expect(description.className).toContain('text-sm');
     expect(description.className).toContain('mt-1');
   });
@@ -387,7 +387,7 @@ describe('CardFooter Component', () => {
     expect(footer.className).toContain('mt-4');
     expect(footer.className).toContain('pt-4');
     expect(footer.className).toContain('border-t');
-    expect(footer.className).toContain('border-white/10');
+    expect(footer.className).toContain('border-theme');
   });
 
   it('should apply custom className', () => {

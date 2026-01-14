@@ -16,6 +16,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FestivalsController } from './festivals.controller';
 import { FestivalsService } from './festivals.service';
+import { LocalizedContentService } from '../languages/localized-content.service';
 import { FestivalStatus } from '@prisma/client';
 import { NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import {
@@ -24,8 +25,6 @@ import {
   draftFestival,
   publishedFestival,
   ongoingFestival,
-  validFestivalInput,
-  createFestivalFixture,
 } from '../../test/fixtures';
 import { FestivalStatus as DtoFestivalStatus } from './dto';
 
@@ -35,7 +34,7 @@ import { FestivalStatus as DtoFestivalStatus } from './dto';
 
 describe('FestivalsController', () => {
   let controller: FestivalsController;
-  let festivalsService: jest.Mocked<FestivalsService>;
+  let _festivalsService: jest.Mocked<FestivalsService>;
 
   const mockFestivalsService = {
     create: jest.fn(),
@@ -47,6 +46,14 @@ describe('FestivalsController', () => {
     updateStatus: jest.fn(),
     remove: jest.fn(),
     getStats: jest.fn(),
+  };
+
+  const mockLocalizedContentService = {
+    getContent: jest.fn(),
+    setContent: jest.fn(),
+    updateContent: jest.fn(),
+    deleteContent: jest.fn(),
+    getAvailableLocales: jest.fn(),
   };
 
   const mockOrganizerRequest = {
@@ -72,11 +79,12 @@ describe('FestivalsController', () => {
       controllers: [FestivalsController],
       providers: [
         { provide: FestivalsService, useValue: mockFestivalsService },
+        { provide: LocalizedContentService, useValue: mockLocalizedContentService },
       ],
     }).compile();
 
     controller = module.get<FestivalsController>(FestivalsController);
-    festivalsService = module.get(FestivalsService);
+    _festivalsService = module.get(FestivalsService);
   });
 
   // ==========================================================================
@@ -88,7 +96,13 @@ describe('FestivalsController', () => {
       name: 'New Festival 2026',
       shortDescription: 'A great festival',
       description: 'Full description here',
-      location: { venueName: 'Test Venue', address: '123 Test St', city: 'Paris', country: 'FR', postalCode: '75001' },
+      location: {
+        venueName: 'Test Venue',
+        address: '123 Test St',
+        city: 'Paris',
+        country: 'FR',
+        postalCode: '75001',
+      },
       startDate: '2026-07-15T14:00:00.000Z',
       endDate: '2026-07-18T23:00:00.000Z',
       capacity: 50000,
@@ -115,10 +129,7 @@ describe('FestivalsController', () => {
       // Assert
       expect(result.id).toBe('new-festival-id');
       expect(result.status).toBe(FestivalStatus.DRAFT);
-      expect(mockFestivalsService.create).toHaveBeenCalledWith(
-        createDto,
-        organizerUser.id
-      );
+      expect(mockFestivalsService.create).toHaveBeenCalledWith(createDto, organizerUser.id);
     });
 
     it('should pass organizer ID from authenticated user', async () => {
@@ -294,7 +305,12 @@ describe('FestivalsController', () => {
       // Arrange
       const festivalWithRelations = {
         ...publishedFestival,
-        organizer: { id: organizerUser.id, firstName: 'Organizer', lastName: 'User', email: 'org@test.com' },
+        organizer: {
+          id: organizerUser.id,
+          firstName: 'Organizer',
+          lastName: 'User',
+          email: 'org@test.com',
+        },
         ticketCategories: [],
         stages: [],
         zones: [],
@@ -318,9 +334,7 @@ describe('FestivalsController', () => {
       );
 
       // Act & Assert
-      await expect(
-        controller.findOne('non-existent')
-      ).rejects.toThrow(NotFoundException);
+      await expect(controller.findOne('non-existent')).rejects.toThrow(NotFoundException);
     });
 
     it('should include related entities in response', async () => {
@@ -377,9 +391,7 @@ describe('FestivalsController', () => {
       );
 
       // Act & Assert
-      await expect(
-        controller.findBySlug('non-existent')
-      ).rejects.toThrow(NotFoundException);
+      await expect(controller.findBySlug('non-existent')).rejects.toThrow(NotFoundException);
     });
 
     it('should work with hyphenated slugs', async () => {
@@ -509,10 +521,7 @@ describe('FestivalsController', () => {
       await controller.remove(draftFestival.id, mockOrganizerRequest);
 
       // Assert
-      expect(mockFestivalsService.remove).toHaveBeenCalledWith(
-        draftFestival.id,
-        organizerUser.id
-      );
+      expect(mockFestivalsService.remove).toHaveBeenCalledWith(draftFestival.id, organizerUser.id);
     });
 
     it('should return void (204 No Content)', async () => {
@@ -536,9 +545,9 @@ describe('FestivalsController', () => {
       );
 
       // Act & Assert
-      await expect(
-        controller.remove(draftFestival.id, mockUserRequest)
-      ).rejects.toThrow(ForbiddenException);
+      await expect(controller.remove(draftFestival.id, mockUserRequest)).rejects.toThrow(
+        ForbiddenException
+      );
     });
 
     it('should throw NotFoundException when festival not found', async () => {
@@ -548,9 +557,9 @@ describe('FestivalsController', () => {
       );
 
       // Act & Assert
-      await expect(
-        controller.remove('non-existent', mockOrganizerRequest)
-      ).rejects.toThrow(NotFoundException);
+      await expect(controller.remove('non-existent', mockOrganizerRequest)).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
@@ -594,9 +603,7 @@ describe('FestivalsController', () => {
       );
 
       // Act & Assert
-      await expect(
-        controller.getStats('non-existent')
-      ).rejects.toThrow(NotFoundException);
+      await expect(controller.getStats('non-existent')).rejects.toThrow(NotFoundException);
     });
 
     it('should include ticket breakdown by status', async () => {
@@ -653,9 +660,9 @@ describe('FestivalsController', () => {
       );
 
       // Act & Assert
-      await expect(
-        controller.publish(draftFestival.id, mockUserRequest)
-      ).rejects.toThrow(ForbiddenException);
+      await expect(controller.publish(draftFestival.id, mockUserRequest)).rejects.toThrow(
+        ForbiddenException
+      );
     });
 
     it('should throw NotFoundException when festival not found', async () => {
@@ -665,9 +672,9 @@ describe('FestivalsController', () => {
       );
 
       // Act & Assert
-      await expect(
-        controller.publish('non-existent', mockOrganizerRequest)
-      ).rejects.toThrow(NotFoundException);
+      await expect(controller.publish('non-existent', mockOrganizerRequest)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should pass correct status to service', async () => {
@@ -720,9 +727,9 @@ describe('FestivalsController', () => {
       );
 
       // Act & Assert
-      await expect(
-        controller.cancel(publishedFestival.id, mockUserRequest)
-      ).rejects.toThrow(ForbiddenException);
+      await expect(controller.cancel(publishedFestival.id, mockUserRequest)).rejects.toThrow(
+        ForbiddenException
+      );
     });
 
     it('should throw NotFoundException when festival not found', async () => {
@@ -732,9 +739,9 @@ describe('FestivalsController', () => {
       );
 
       // Act & Assert
-      await expect(
-        controller.cancel('non-existent', mockOrganizerRequest)
-      ).rejects.toThrow(NotFoundException);
+      await expect(controller.cancel('non-existent', mockOrganizerRequest)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should pass correct status to service', async () => {
@@ -787,9 +794,9 @@ describe('FestivalsController', () => {
       mockFestivalsService.update.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.update('festival-id', {} as any, mockUserRequest)
-      ).rejects.toThrow(ForbiddenException);
+      await expect(controller.update('festival-id', {} as any, mockUserRequest)).rejects.toThrow(
+        ForbiddenException
+      );
     });
   });
 
@@ -840,10 +847,7 @@ describe('FestivalsController', () => {
       await controller.remove(draftFestival.id, mockOrganizerRequest);
 
       // Assert
-      expect(mockFestivalsService.remove).toHaveBeenCalledWith(
-        draftFestival.id,
-        organizerUser.id
-      );
+      expect(mockFestivalsService.remove).toHaveBeenCalledWith(draftFestival.id, organizerUser.id);
     });
 
     it('should extract user ID from request for publish', async () => {
@@ -983,11 +987,7 @@ describe('FestivalsController', () => {
       mockFestivalsService.update.mockResolvedValue(publishedFestival);
 
       // Act
-      const result = await controller.update(
-        publishedFestival.id,
-        {} as any,
-        mockOrganizerRequest
-      );
+      const result = await controller.update(publishedFestival.id, {} as any, mockOrganizerRequest);
 
       // Assert
       expect(result).toBeDefined();
@@ -1004,7 +1004,7 @@ describe('FestivalsController', () => {
       });
 
       // Act
-      const result = await controller.findOne(validUuid);
+      const _result = await controller.findOne(validUuid);
 
       // Assert
       expect(mockFestivalsService.findOne).toHaveBeenCalledWith(validUuid);

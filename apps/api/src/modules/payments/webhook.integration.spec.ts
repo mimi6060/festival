@@ -17,6 +17,8 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { PaymentsService } from './payments.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { CurrencyService } from '../currency/currency.service';
+import { WebhookEventHelper } from '../webhooks/webhook-event.emitter';
 import { PaymentStatus } from '@prisma/client';
 import Stripe from 'stripe';
 import { InvalidWebhookException } from '../../common/exceptions/business.exception';
@@ -180,6 +182,21 @@ describe('PaymentsService Webhook Integration Tests', () => {
     }),
   };
 
+  const mockCurrencyService = {
+    convert: jest.fn().mockResolvedValue(100),
+    getExchangeRate: jest.fn().mockResolvedValue(1.0),
+    formatAmount: jest.fn().mockReturnValue('100.00 EUR'),
+    getSupportedCurrencies: jest.fn().mockReturnValue(['EUR', 'USD', 'GBP']),
+  };
+
+  const mockWebhookEventHelper = {
+    emitPaymentCreated: jest.fn(),
+    emitPaymentSucceeded: jest.fn(),
+    emitPaymentFailed: jest.fn(),
+    emitPaymentRefunded: jest.fn(),
+    emitPaymentUpdated: jest.fn(),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -202,6 +219,8 @@ describe('PaymentsService Webhook Integration Tests', () => {
         PaymentsService,
         { provide: PrismaService, useValue: mockPrismaService },
         { provide: ConfigService, useValue: mockConfigService },
+        { provide: CurrencyService, useValue: mockCurrencyService },
+        { provide: WebhookEventHelper, useValue: mockWebhookEventHelper },
       ],
     }).compile();
 
@@ -714,11 +733,28 @@ describe('PaymentsService Webhook Integration Tests', () => {
         }),
       };
 
+      const mockCurrencyServiceLocal = {
+        convert: jest.fn().mockResolvedValue(100),
+        getExchangeRate: jest.fn().mockResolvedValue(1.0),
+        formatAmount: jest.fn().mockReturnValue('100.00 EUR'),
+        getSupportedCurrencies: jest.fn().mockReturnValue(['EUR', 'USD', 'GBP']),
+      };
+
+      const mockWebhookEventHelperLocal = {
+        emitPaymentCreated: jest.fn(),
+        emitPaymentSucceeded: jest.fn(),
+        emitPaymentFailed: jest.fn(),
+        emitPaymentRefunded: jest.fn(),
+        emitPaymentUpdated: jest.fn(),
+      };
+
       const module: TestingModule = await Test.createTestingModule({
         providers: [
           PaymentsService,
           { provide: PrismaService, useValue: mockPrismaService },
           { provide: ConfigService, useValue: mockConfigServiceNoStripe },
+          { provide: CurrencyService, useValue: mockCurrencyServiceLocal },
+          { provide: WebhookEventHelper, useValue: mockWebhookEventHelperLocal },
         ],
       }).compile();
 

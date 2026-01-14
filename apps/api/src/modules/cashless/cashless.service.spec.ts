@@ -12,6 +12,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CashlessService, DEFAULT_CASHLESS_LIMITS, CashlessLimitsConfig } from './cashless.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { WebhookEventHelper } from '../webhooks/webhook-event.emitter';
 import { TransactionType, FestivalStatus } from '@prisma/client';
 import {
   regularUser,
@@ -69,11 +70,23 @@ describe('CashlessService', () => {
     $transaction: jest.fn(),
   };
 
+  const mockWebhookEventHelper = {
+    emitCashlessTopup: jest.fn(),
+    emitCashlessPayment: jest.fn(),
+    emitCashlessRefund: jest.fn(),
+    emitCashlessAccountCreated: jest.fn(),
+    emitCashlessAccountUpdated: jest.fn(),
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [CashlessService, { provide: PrismaService, useValue: mockPrismaService }],
+      providers: [
+        CashlessService,
+        { provide: PrismaService, useValue: mockPrismaService },
+        { provide: WebhookEventHelper, useValue: mockWebhookEventHelper },
+      ],
     }).compile();
 
     cashlessService = module.get<CashlessService>(CashlessService);
