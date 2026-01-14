@@ -1,0 +1,82 @@
+{
+  "workflow_version": "1.2.0",
+  "timestamps": {
+    "started": "2026-01-14T20:35:00.000Z",
+    "last_updated": "2026-01-14T21:00:00.000Z",
+    "completed": "2026-01-14T21:00:00.000Z"
+  },
+  "mode": "initial_scan",
+  "scan_level": "exhaustive",
+  "project_root": "/Users/mac-m3-michel/workspace/festival",
+  "output_folder": "/Users/mac-m3-michel/workspace/festival/docs",
+  "repository_type": "monorepo",
+  "project_types": [
+    { "part_id": "api", "project_type_id": "backend", "display_name": "API NestJS" },
+    { "part_id": "web", "project_type_id": "web", "display_name": "Web Next.js" },
+    { "part_id": "admin", "project_type_id": "web", "display_name": "Admin Next.js" },
+    { "part_id": "mobile", "project_type_id": "mobile", "display_name": "Mobile React Native" },
+    { "part_id": "shared", "project_type_id": "library", "display_name": "Shared Libraries" },
+    { "part_id": "infra", "project_type_id": "infra", "display_name": "Infrastructure" }
+  ],
+  "completed_steps": [
+    "step_1_parallel_scan",
+    "step_2_structure_detection",
+    "step_3_existing_docs_discovery",
+    "step_4_tech_stack_analysis",
+    "step_5_conditional_analysis",
+    "step_6_source_tree_generation",
+    "step_7_dev_ops_extraction",
+    "step_8_architecture_documentation",
+    "step_9_supporting_docs",
+    "step_10_master_index"
+  ],
+  "current_step": "completed",
+  "findings": {
+    "api": {
+      "modules": 25,
+      "endpoints": "130+",
+      "gateways": 5,
+      "guards": 6,
+      "entities": "52 Prisma models"
+    },
+    "web": {
+      "pages": 20,
+      "components": 133,
+      "stores": 3,
+      "hooks": 20,
+      "locales": 4
+    },
+    "admin": {
+      "pages": 25,
+      "components": 17,
+      "hooks": 14,
+      "widgets": 12
+    },
+    "mobile": {
+      "screens": 15,
+      "components": 17,
+      "stores": 6,
+      "services": 7,
+      "locales": 6
+    },
+    "shared": {
+      "types": "30+",
+      "utils": "50+",
+      "schemas": "100+",
+      "locales": 6
+    },
+    "infra": {
+      "docker_services": 10,
+      "k8s_deployments": 3,
+      "ci_workflows": 2,
+      "scripts": 16
+    }
+  },
+  "outputs_generated": [
+    "project-scan-report.json",
+    "index.md",
+    "source-tree.md",
+    "architecture.md (enhanced)"
+  ],
+  "resume_instructions": "Workflow completed. Documentation available in docs/"
+}

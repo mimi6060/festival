@@ -1,0 +1,72 @@
+# Sprint Status Tracking
+# Festival Management Platform - Brownfield Improvements
+# Generated: 2026-01-14
+
+# ============================================================================
+# STATUS DEFINITIONS (DO NOT MODIFY)
+# ============================================================================
+# backlog       - Not yet started, waiting for prioritization
+# ready-for-dev - Story file created, ready for implementation
+# in-progress   - Currently being developed
+# code-review   - Implementation complete, awaiting review
+# testing       - In QA/testing phase
+# done          - Completed and merged
+# blocked       - Cannot proceed due to dependency or issue
+# ============================================================================
+
+project:
+  name: "festival"
+  type: "brownfield"
+  current_sprint: 1
+  sprint_start: "2026-01-14"
+  sprint_goal: "Improve test coverage and fix critical issues"
+
+# Epic and Story Status Tracking
+development_status:
+  # Epic 1: Test Coverage & Quality Improvements
+  epic-1: backlog
+  1-1-test-coverage-api: backlog
+  1-2-eslint-warnings: backlog
+  1-3-e2e-tests: backlog
+
+  # Epic 2: API Performance Optimization
+  epic-2: backlog
+  2-1-redis-cache-festivals: backlog
+  2-2-prisma-n-plus-one: backlog
+  2-3-rate-limiting: backlog
+
+  # Epic 3: Mobile App Enhancements
+  epic-3: backlog
+  3-1-offline-sync: backlog
+  3-2-mobile-performance: backlog
+
+  # Epic 4: Admin Dashboard Improvements
+  epic-4: backlog
+  4-1-realtime-dashboard: backlog
+  4-2-excel-exports: backlog
+  4-3-notification-center: backlog
+
+  # Epic 5: Bug Fixes & Technical Debt
+  epic-5: backlog
+  5-1-flaky-tests: backlog
+  5-2-dead-code: backlog
+  5-3-dependency-updates: backlog
+
+# Sprint Metrics
+metrics:
+  total_stories: 14
+  backlog: 14
+  ready_for_dev: 0
+  in_progress: 0
+  done: 0
+  velocity_target: 4
+
+# Notes
+notes:
+  - "Brownfield project - focus on quality improvements"
+  - "Prioritize Epic 1 and Epic 5 for stability"
+  - "Epic 3 can be deferred if time constrained"
+
+# Last Updated
+last_updated: "2026-01-14T21:30:00.000Z"
+updated_by: "bmad-workflow"
