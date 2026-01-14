@@ -8,7 +8,7 @@ export default [
   ...nx.configs['flat/typescript'],
   ...nx.configs['flat/javascript'],
   {
-    ignores: ['**/dist', '**/out-tsc', '**/vite.config.*.timestamp*', '**/next-env.d.ts', '.storybook/**', 'stories/**', '**/webpack.config.js'],
+    ignores: ['**/dist', '**/out-tsc', '**/vite.config.*.timestamp*', '**/next-env.d.ts', '.storybook/**', 'stories/**', '**/webpack.config.js', '**/__mocks__/**'],
   },
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],

@@ -21,6 +21,7 @@ module.exports = [
       '**/.expo',
       '**/android',
       '**/ios',
+      '**/__mocks__/**',
     ],
   },
   {
@@ -70,6 +71,7 @@ module.exports = [
     files: ['**/*.js', '**/*.jsx'],
     rules: {
       '@typescript-eslint/no-require-imports': 'off',
+      '@typescript-eslint/prefer-optional-chain': 'off',
     },
   },
 ];
