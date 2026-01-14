@@ -590,6 +590,34 @@ Toutes les tâches ont été déplacées vers `DONE.md`.
   - Created `FestivalShare` component with Twitter/Facebook/Web Share API
   - Created `FestivalLineup` component with expand/collapse functionality
   - Replaced static buttons with functional components
+- [x] **OAuth Guards**: Added BadRequestException with clear error messages
+  - Google OAuth guard now throws descriptive error when not configured
+  - GitHub OAuth guard now throws descriptive error when not configured
+  - Added GitHub OAuth config to .env.example
+- [x] **Contact Form**: Converted to client component with full form handling
+  - Form validation, loading states, success feedback
+  - Proper error handling
+
+### Session 2026-01-10 - Mock Data & Mobile Fixes
+
+- [x] **Mobile App Entry Points**: Created missing App.tsx and index.js
+  - Added proper GestureHandlerRootView and SafeAreaProvider
+  - Configured package.json with correct main entry point
+- [x] **Festivals Page Mock Data**: Added fallback mock data when API unavailable
+  - 6 sample French festivals (Summer Vibes, Rock en Seine, Jazz à Vienne, Hellfest, Les Vieilles Charrues, Solidays)
+  - Graceful fallback in catch block
+- [x] **Mobile Web Platform Fixes**: Fixed import.meta error on web
+  - Added resolveRequest to metro.config.js for web mocks
+  - Alias react-native-push-notification to web mock
+  - Alias @react-native-community/netinfo to web mock
+  - Removed unused vite.config.mts (Expo uses Metro)
+  - Installed @expo/metro-runtime for web support
+
+### Commits
+
+- `28375f1` fix(mobile): add missing App entry point for Expo bundling
+- `f5a8b55` fix(web): add mock data fallback for festivals page when API unavailable
+- `e09e027` fix(mobile): add web platform module aliases and remove vite config
 
 ### Completed (Q2)
 
@@ -601,4 +629,55 @@ Toutes les tâches ont été déplacées vers `DONE.md`.
 
 ---
 
-_Dernière mise à jour: 2026-01-09_
+---
+
+## Session 2026-01-14 - Story 1.1: Test Coverage API
+
+### BMM Workflow Initialization
+
+- [x] **Workflow Status**: Created `bmm-workflow-status.yaml` tracking file
+- [x] **Sprint Status**: Updated epic-1 to "in-progress"
+
+### Auth Module Test Coverage (Story 1.1 - Task 1)
+
+**5 nouveaux fichiers de tests créés:**
+
+- [x] `jwt.strategy.spec.ts` - 15 tests
+  - Token validation, user retrieval, error handling
+- [x] `google.strategy.spec.ts` - 23 tests
+  - OAuth callback, profile extraction, missing email handling
+- [x] `github.strategy.spec.ts` - 25 tests
+  - OAuth callback, name parsing, missing email handling
+- [x] `google-oauth.guard.spec.ts` - 19 tests
+  - OAuth enabled/disabled, credentials validation, handleRequest
+- [x] `github-oauth.guard.spec.ts` - 19 tests
+  - OAuth enabled/disabled, credentials validation, handleRequest
+
+**Test Results:**
+
+- **Total Tests**: 5,157 (all passing)
+- **Test Suites**: 101
+
+### Story Status
+
+- **Story**: 1-1-test-coverage-api
+- **Status**: in-progress
+- **Completed**: Task 1 (Auth module - 5 new test files)
+- **Remaining**: Tasks 2-5 (edge cases for tickets, payments, cashless)
+
+### Files Created
+
+```
+apps/api/src/modules/auth/strategies/
+├── jwt.strategy.spec.ts          (NEW - 225 lines)
+├── google.strategy.spec.ts       (NEW - 225 lines)
+└── github.strategy.spec.ts       (NEW - 240 lines)
+
+apps/api/src/modules/auth/guards/
+├── google-oauth.guard.spec.ts    (NEW - 230 lines)
+└── github-oauth.guard.spec.ts    (NEW - 230 lines)
+```
+
+---
+
+_Dernière mise à jour: 2026-01-14_

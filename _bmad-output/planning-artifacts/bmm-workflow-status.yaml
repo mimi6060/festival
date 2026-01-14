@@ -1,0 +1,134 @@
+# BMM Workflow Status Tracking
+# Festival Management Platform - Brownfield
+
+generated: "2026-01-14T22:00:00.000Z"
+project: "festival"
+project_type: "brownfield"
+selected_track: "bmad-method"
+field_type: "brownfield"
+workflow_path: "_bmad/bmm/workflows/workflow-status/paths/method-brownfield.yaml"
+
+# STATUS DEFINITIONS:
+# ==================
+# Initial Status (before completion):
+#   - required: Must be completed to progress
+#   - optional: Can be completed but not required
+#   - recommended: Strongly suggested but not required
+#   - conditional: Required only if certain conditions met (e.g., if_has_ui)
+#
+# Completion Status:
+#   - {file-path}: File created/found
+#   - skipped: Optional/conditional workflow that was skipped
+
+workflow_status:
+  # Phase 0: Documentation (Brownfield prerequisite)
+  phase-0:
+    name: "Documentation"
+    status: "complete"
+    workflows:
+      document-project:
+        status: "_bmad-output/project-context.md"
+        agent: "analyst"
+        command: "/bmad:bmm:workflows:document-project"
+        completed_at: "2026-01-14"
+
+  # Phase 1: Analysis (Optional)
+  phase-1:
+    name: "Analysis (Optional)"
+    status: "skipped"
+    note: "Optional phase - user chose to continue with existing artifacts"
+    workflows:
+      brainstorm-project:
+        status: "skipped"
+        optional: true
+      research:
+        status: "skipped"
+        optional: true
+      product-brief:
+        status: "skipped"
+        optional: true
+
+  # Phase 2: Planning
+  phase-2:
+    name: "Planning"
+    status: "complete"
+    workflows:
+      prd:
+        status: "_bmad-output/planning-artifacts/prd.md"
+        agent: "pm"
+        command: "/bmad:bmm:workflows:prd"
+        completed_at: "2026-01-14"
+      create-ux-design:
+        status: "skipped"
+        conditional: "if_has_ui"
+        note: "Skipped - existing brownfield project"
+
+  # Phase 3: Solutioning
+  phase-3:
+    name: "Solutioning"
+    status: "complete"
+    workflows:
+      create-architecture:
+        status: "_bmad-output/planning-artifacts/architecture.md"
+        agent: "architect"
+        command: "/bmad:bmm:workflows:create-architecture"
+        completed_at: "2026-01-14"
+      create-epics-and-stories:
+        status: "_bmad-output/planning-artifacts/epics.md"
+        agent: "pm"
+        command: "/bmad:bmm:workflows:create-epics-and-stories"
+        completed_at: "2026-01-14"
+      test-design:
+        status: "skipped"
+        optional: true
+        note: "Optional - can be run later if needed"
+      implementation-readiness:
+        status: "skipped"
+        note: "Brownfield - existing sprint-status indicates readiness validated"
+
+  # Phase 4: Implementation
+  phase-4:
+    name: "Implementation"
+    status: "active"
+    workflows:
+      sprint-planning:
+        status: "_bmad-output/implementation-artifacts/sprint-status.yaml"
+        agent: "sm"
+        command: "/bmad:bmm:workflows:sprint-planning"
+        completed_at: "2026-01-14"
+        note: "Sprint 1 initialized - 14 stories in backlog"
+
+# Current State
+current_phase: 4
+current_workflow: "implementation"
+next_action: "Select and implement stories from sprint-status.yaml"
+
+# Implementation Workflows Available
+implementation_workflows:
+  - id: "create-story"
+    command: "/bmad:bmm:workflows:create-story"
+    purpose: "Create detailed story file for implementation"
+    agent: "pm"
+  - id: "dev-story"
+    command: "/bmad:bmm:workflows:dev-story"
+    purpose: "Implement a story"
+    agent: "dev"
+  - id: "code-review"
+    command: "/bmad:bmm:workflows:code-review"
+    purpose: "Adversarial code review"
+    agent: "dev"
+  - id: "sprint-status"
+    command: "/bmad:bmm:workflows:sprint-status"
+    purpose: "Check sprint progress and risks"
+    agent: "sm"
+
+# Notes
+notes:
+  - "Brownfield project - documentation created from existing codebase"
+  - "5 epics, 14 stories defined in epics.md"
+  - "All stories currently in backlog status"
+  - "Priority: Epic 1 (Test Coverage) and Epic 5 (Bug Fixes)"
+  - "Code review completed - 20+ issues identified (see session notes)"
+
+last_updated: "2026-01-14T22:00:00.000Z"
+updated_by: "workflow-init"
