@@ -1,6 +1,6 @@
 # Story 1.1: Augmenter la couverture des tests API
 
-Status: ready-for-dev
+Status: done
 
 ## Story
 
@@ -295,10 +295,12 @@ Claude Opus 4.5 (claude-opus-4-5-20251101)
 
 ### Completion Notes List
 
-- [ ] Story created with comprehensive context
-- [ ] All 4 critical modules analyzed
-- [ ] 5 new test files identified for auth strategies/guards
-- [ ] Edge cases documented for all modules
+- [x] Story created with comprehensive context
+- [x] All 4 critical modules analyzed
+- [x] 5 new test files created for auth strategies/guards
+- [x] Edge cases implemented for all modules
+- [x] All 5,210 tests passing
+- [x] Changes committed and pushed to main
 
 ### File List
 
