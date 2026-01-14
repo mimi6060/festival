@@ -47,6 +47,7 @@ import {
   TicketAlreadyUsedException,
   FestivalCancelledException,
   FestivalEndedException,
+  TicketTransferFailedException,
 } from '../../common/exceptions/business.exception';
 
 // ============================================================================
@@ -97,6 +98,10 @@ describe('TicketsService', () => {
       update: jest.fn(),
     },
     zoneAccessLog: {
+      create: jest.fn(),
+    },
+    user: {
+      findUnique: jest.fn(),
       create: jest.fn(),
     },
     $transaction: jest.fn(),
@@ -1435,6 +1440,585 @@ describe('TicketsService', () => {
       await expect(
         ticketsService.getTicketQrCodeImage(soldTicket.id, regularUser.id)
       ).rejects.toThrow(ForbiddenException);
+    });
+  });
+
+  // ==========================================================================
+  // Edge Cases - Story 1.1 (Test Coverage API)
+  // ==========================================================================
+
+  describe('Edge Cases - Story 1.1', () => {
+    // ------------------------------------------------------------------------
+    // Concurrent Operations Tests
+    // ------------------------------------------------------------------------
+
+    describe('Concurrent Operations', () => {
+      it('should handle race condition on quota validation (2 simultaneous purchases for last ticket)', async () => {
+        // Arrange - Category with only 1 ticket remaining
+        const limitedCategory = {
+          ...standardCategory,
+          quota: 100,
+          soldCount: 99, // Only 1 ticket left
+        };
+
+        mockPrismaService.festival.findUnique.mockResolvedValue({
+          ...publishedFestival,
+          isDeleted: false,
+        });
+        mockPrismaService.ticketCategory.findUnique.mockResolvedValue(limitedCategory);
+        mockPrismaService.ticket.count.mockResolvedValue(0);
+
+        // Simulate race condition: first call succeeds, second should fail
+        // The transaction should handle this atomically
+        let callCount = 0;
+        mockPrismaService.$transaction.mockImplementation(async (callback) => {
+          callCount++;
+          if (callCount === 1) {
+            // First purchase succeeds
+            if (typeof callback === 'function') {
+              return callback(mockPrismaService);
+            }
+            return callback;
+          } else {
+            // Second purchase fails due to sold out
+            throw new TicketSoldOutException(standardCategory.id);
+          }
+        });
+
+        mockPrismaService.ticketCategory.update.mockResolvedValue({
+          ...limitedCategory,
+          soldCount: 100,
+        });
+        mockPrismaService.ticket.createMany.mockResolvedValue({ count: 1 });
+        mockPrismaService.ticket.findMany.mockResolvedValue([
+          {
+            id: 'ticket-last',
+            festivalId: publishedFestival.id,
+            categoryId: standardCategory.id,
+            userId: regularUser.id,
+            qrCode: 'QR-LAST',
+            qrCodeData: '{}',
+            status: TicketStatus.SOLD,
+            purchasePrice: standardCategory.price,
+            usedAt: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            festival: {
+              id: publishedFestival.id,
+              name: publishedFestival.name,
+              startDate: publishedFestival.startDate,
+              endDate: publishedFestival.endDate,
+            },
+            category: {
+              id: standardCategory.id,
+              name: standardCategory.name,
+              type: standardCategory.type,
+            },
+          },
+        ]);
+
+        // Act - First purchase
+        const firstPurchase = await ticketsService.purchaseTickets(regularUser.id, {
+          festivalId: publishedFestival.id,
+          categoryId: standardCategory.id,
+          quantity: 1,
+        });
+
+        // Assert - First purchase succeeds
+        expect(firstPurchase).toHaveLength(1);
+
+        // Act & Assert - Second purchase should fail
+        await expect(
+          ticketsService.purchaseTickets('another-user-id', {
+            festivalId: publishedFestival.id,
+            categoryId: standardCategory.id,
+            quantity: 1,
+          })
+        ).rejects.toThrow(TicketSoldOutException);
+      });
+
+      it('should handle simultaneous ticket purchases from same user', async () => {
+        // Arrange - User has quota limit
+        const categoryWithLimit = {
+          ...standardCategory,
+          maxPerUser: 2,
+        };
+
+        mockPrismaService.festival.findUnique.mockResolvedValue({
+          ...publishedFestival,
+          isDeleted: false,
+        });
+        mockPrismaService.ticketCategory.findUnique.mockResolvedValue(categoryWithLimit);
+
+        // First call: user has 0 tickets
+        // Second call: should check updated count
+        let ticketCountCalls = 0;
+        mockPrismaService.ticket.count.mockImplementation(async () => {
+          ticketCountCalls++;
+          if (ticketCountCalls === 1) {
+            return 0; // First purchase check
+          }
+          return 2; // After first purchase completed, user now has 2
+        });
+
+        mockPrismaService.ticketCategory.update.mockResolvedValue(categoryWithLimit);
+        mockPrismaService.ticket.createMany.mockResolvedValue({ count: 2 });
+        mockPrismaService.ticket.findMany.mockResolvedValue([
+          {
+            id: 'ticket-1',
+            festivalId: publishedFestival.id,
+            categoryId: standardCategory.id,
+            userId: regularUser.id,
+            qrCode: 'QR-1',
+            qrCodeData: '{}',
+            status: TicketStatus.SOLD,
+            purchasePrice: standardCategory.price,
+            usedAt: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            festival: {
+              id: publishedFestival.id,
+              name: publishedFestival.name,
+              startDate: publishedFestival.startDate,
+              endDate: publishedFestival.endDate,
+            },
+            category: {
+              id: standardCategory.id,
+              name: standardCategory.name,
+              type: standardCategory.type,
+            },
+          },
+          {
+            id: 'ticket-2',
+            festivalId: publishedFestival.id,
+            categoryId: standardCategory.id,
+            userId: regularUser.id,
+            qrCode: 'QR-2',
+            qrCodeData: '{}',
+            status: TicketStatus.SOLD,
+            purchasePrice: standardCategory.price,
+            usedAt: null,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            festival: {
+              id: publishedFestival.id,
+              name: publishedFestival.name,
+              startDate: publishedFestival.startDate,
+              endDate: publishedFestival.endDate,
+            },
+            category: {
+              id: standardCategory.id,
+              name: standardCategory.name,
+              type: standardCategory.type,
+            },
+          },
+        ]);
+
+        // Act - First purchase succeeds
+        const result = await ticketsService.purchaseTickets(regularUser.id, {
+          festivalId: publishedFestival.id,
+          categoryId: standardCategory.id,
+          quantity: 2,
+        });
+
+        // Assert
+        expect(result).toHaveLength(2);
+
+        // Act & Assert - Second purchase should fail due to quota
+        await expect(
+          ticketsService.purchaseTickets(regularUser.id, {
+            festivalId: publishedFestival.id,
+            categoryId: standardCategory.id,
+            quantity: 1,
+          })
+        ).rejects.toThrow(TicketQuotaExceededException);
+      });
+    });
+
+    // ------------------------------------------------------------------------
+    // QR Code Edge Cases
+    // ------------------------------------------------------------------------
+
+    describe('QR Code Edge Cases', () => {
+      it('should handle invalid QR code format', async () => {
+        // Arrange - QR code with invalid format (missing signature)
+        mockPrismaService.ticket.findUnique.mockResolvedValue(null);
+
+        // Act
+        const result = await ticketsService.validateTicket({ qrCode: 'INVALID-FORMAT' });
+
+        // Assert
+        expect(result.valid).toBe(false);
+        expect(result.message).toContain('not found');
+      });
+
+      it('should handle empty QR code string', async () => {
+        // Arrange
+        mockPrismaService.ticket.findUnique.mockResolvedValue(null);
+
+        // Act
+        const result = await ticketsService.validateTicket({ qrCode: '' });
+
+        // Assert
+        expect(result.valid).toBe(false);
+      });
+
+      it('should handle QR code with special characters', async () => {
+        // Arrange
+        mockPrismaService.ticket.findUnique.mockResolvedValue(null);
+
+        // Act
+        const result = await ticketsService.validateTicket({
+          qrCode: '<script>alert("xss")</script>',
+        });
+
+        // Assert
+        expect(result.valid).toBe(false);
+        expect(result.message).toContain('not found');
+      });
+
+      it('should handle expired QR signatures (ticket exists but signature mismatch)', async () => {
+        // Arrange - Ticket exists but QR code has been tampered with
+        const tamperedQrCode = 'QR-TICKET-TAMPERED-SIGNATURE';
+        mockPrismaService.ticket.findUnique.mockResolvedValue(null); // Won't find with tampered code
+
+        // Act
+        const result = await ticketsService.validateTicket({ qrCode: tamperedQrCode });
+
+        // Assert
+        expect(result.valid).toBe(false);
+        expect(result.message).toContain('not found');
+      });
+
+      it('should prevent double-scan (scan same ticket twice rapidly)', async () => {
+        // Arrange - First scan marks ticket as used
+        const ticketForDoubleScan = {
+          ...soldTicket,
+          festival: { ...ongoingFestival, status: FestivalStatus.ONGOING },
+          category: standardCategory,
+          user: regularUser,
+        };
+
+        // First call returns SOLD ticket
+        mockPrismaService.ticket.findUnique
+          .mockResolvedValueOnce(ticketForDoubleScan)
+          .mockResolvedValueOnce({
+            ...ticketForDoubleScan,
+            status: TicketStatus.USED,
+            usedAt: new Date(),
+          });
+
+        mockPrismaService.ticket.update.mockResolvedValue({
+          ...ticketForDoubleScan,
+          status: TicketStatus.USED,
+          usedAt: new Date(),
+          festival: {
+            id: ongoingFestival.id,
+            name: ongoingFestival.name,
+            startDate: ongoingFestival.startDate,
+            endDate: ongoingFestival.endDate,
+          },
+          category: {
+            id: standardCategory.id,
+            name: standardCategory.name,
+            type: standardCategory.type,
+          },
+        });
+
+        // Act - First scan
+        const firstScan = await ticketsService.scanTicket(soldTicket.qrCode, staffUser.id);
+
+        // Assert - First scan succeeds
+        expect(firstScan.valid).toBe(true);
+        expect(firstScan.accessGranted).toBe(true);
+
+        // Act - Second scan (rapid double-scan)
+        const secondScan = await ticketsService.scanTicket(soldTicket.qrCode, staffUser.id);
+
+        // Assert - Second scan fails because ticket is already used
+        expect(secondScan.valid).toBe(false);
+        expect(secondScan.message).toContain('already used');
+      });
+
+      it('should handle very long QR code strings', async () => {
+        // Arrange - Extremely long QR code (potential buffer overflow attempt)
+        const longQrCode = 'A'.repeat(10000);
+        mockPrismaService.ticket.findUnique.mockResolvedValue(null);
+
+        // Act
+        const result = await ticketsService.validateTicket({ qrCode: longQrCode });
+
+        // Assert
+        expect(result.valid).toBe(false);
+      });
+
+      it('should handle unicode characters in QR code', async () => {
+        // Arrange
+        mockPrismaService.ticket.findUnique.mockResolvedValue(null);
+
+        // Act
+        const result = await ticketsService.validateTicket({
+          qrCode: 'QR-\u0000\uFFFF-CODE',
+        });
+
+        // Assert
+        expect(result.valid).toBe(false);
+      });
+    });
+
+    // ------------------------------------------------------------------------
+    // Transfer Edge Cases
+    // ------------------------------------------------------------------------
+
+    describe('Transfer Edge Cases', () => {
+      it('should prevent self-transfer', async () => {
+        // Arrange - Ticket must include user with email for self-transfer check
+        mockPrismaService.ticket.findUnique.mockResolvedValue({
+          ...soldTicket,
+          userId: regularUser.id,
+          festival: publishedFestival,
+          category: standardCategory,
+          user: {
+            id: regularUser.id,
+            email: regularUser.email,
+            firstName: regularUser.firstName,
+            lastName: regularUser.lastName,
+          },
+        });
+
+        // Act & Assert - Transfer to self should fail with TicketTransferFailedException
+        await expect(
+          ticketsService.transferTicket(soldTicket.id, regularUser.id, regularUser.email)
+        ).rejects.toThrow(TicketTransferFailedException);
+      });
+
+      it('should handle transfer when recipient has quota limit reached', async () => {
+        // Arrange
+        const recipientUser = {
+          id: 'recipient-user-id',
+          email: 'recipient@example.com',
+          firstName: 'Recipient',
+          lastName: 'User',
+        };
+
+        const categoryWithQuota = {
+          ...standardCategory,
+          maxPerUser: 2,
+        };
+
+        mockPrismaService.ticket.findUnique.mockResolvedValue({
+          ...soldTicket,
+          userId: regularUser.id,
+          festival: publishedFestival,
+          category: categoryWithQuota,
+          user: {
+            id: regularUser.id,
+            email: regularUser.email,
+            firstName: regularUser.firstName,
+            lastName: regularUser.lastName,
+          },
+        });
+
+        // Mock user lookup - recipient exists
+        mockPrismaService.user.findUnique.mockResolvedValue(recipientUser);
+
+        // Recipient already has max tickets
+        mockPrismaService.ticket.count.mockResolvedValue(2);
+
+        // Act & Assert - Should fail with TicketTransferFailedException (quota message)
+        await expect(
+          ticketsService.transferTicket(soldTicket.id, regularUser.id, recipientUser.email)
+        ).rejects.toThrow(TicketTransferFailedException);
+      });
+
+      it('should handle transfer to user who does not exist yet (create new user)', async () => {
+        // Arrange
+        const newUserEmail = 'newuser@example.com';
+        const newUser = {
+          id: 'new-user-id',
+          email: newUserEmail,
+          firstName: '',
+          lastName: '',
+        };
+
+        mockPrismaService.ticket.findUnique.mockResolvedValue({
+          ...soldTicket,
+          userId: regularUser.id,
+          festival: publishedFestival,
+          category: standardCategory,
+          user: {
+            id: regularUser.id,
+            email: regularUser.email,
+            firstName: regularUser.firstName,
+            lastName: regularUser.lastName,
+          },
+        });
+
+        // User doesn't exist, will be created
+        mockPrismaService.user.findUnique.mockResolvedValue(null);
+        mockPrismaService.user.create.mockResolvedValue(newUser);
+
+        // Recipient has no tickets (quota check passes)
+        mockPrismaService.ticket.count.mockResolvedValue(0);
+
+        // Mock ticket update for transfer
+        mockPrismaService.ticket.update.mockResolvedValue({
+          ...soldTicket,
+          userId: newUser.id,
+          transferredFromUserId: regularUser.id,
+          transferredAt: new Date(),
+          festival: {
+            id: publishedFestival.id,
+            name: publishedFestival.name,
+            startDate: publishedFestival.startDate,
+            endDate: publishedFestival.endDate,
+            location: publishedFestival.location,
+          },
+          category: {
+            id: standardCategory.id,
+            name: standardCategory.name,
+            type: standardCategory.type,
+          },
+        });
+
+        // Act
+        const result = await ticketsService.transferTicket(
+          soldTicket.id,
+          regularUser.id,
+          newUserEmail
+        );
+
+        // Assert
+        expect(result).toBeDefined();
+        expect(mockPrismaService.user.create).toHaveBeenCalled();
+        expect(mockEmailService.sendTicketTransferEmail).toHaveBeenCalled();
+      });
+
+      it('should not allow transfer of already used ticket', async () => {
+        // Arrange
+        mockPrismaService.ticket.findUnique.mockResolvedValue({
+          ...usedTicket,
+          userId: regularUser.id,
+          festival: publishedFestival,
+          category: standardCategory,
+          user: {
+            id: regularUser.id,
+            email: regularUser.email,
+            firstName: regularUser.firstName,
+            lastName: regularUser.lastName,
+          },
+        });
+
+        // Act & Assert - Used ticket throws TicketAlreadyUsedException
+        await expect(
+          ticketsService.transferTicket(usedTicket.id, regularUser.id, 'other@example.com')
+        ).rejects.toThrow(TicketAlreadyUsedException);
+      });
+
+      it('should not allow transfer of cancelled ticket', async () => {
+        // Arrange
+        mockPrismaService.ticket.findUnique.mockResolvedValue({
+          ...cancelledTicket,
+          userId: regularUser.id,
+          festival: publishedFestival,
+          category: standardCategory,
+          user: {
+            id: regularUser.id,
+            email: regularUser.email,
+            firstName: regularUser.firstName,
+            lastName: regularUser.lastName,
+          },
+        });
+
+        // Act & Assert
+        await expect(
+          ticketsService.transferTicket(cancelledTicket.id, regularUser.id, 'other@example.com')
+        ).rejects.toThrow(TicketTransferFailedException);
+      });
+
+      it('should not allow transfer of refunded ticket', async () => {
+        // Arrange
+        mockPrismaService.ticket.findUnique.mockResolvedValue({
+          ...refundedTicket,
+          userId: regularUser.id,
+          festival: publishedFestival,
+          category: standardCategory,
+          user: {
+            id: regularUser.id,
+            email: regularUser.email,
+            firstName: regularUser.firstName,
+            lastName: regularUser.lastName,
+          },
+        });
+
+        // Act & Assert
+        await expect(
+          ticketsService.transferTicket(refundedTicket.id, regularUser.id, 'other@example.com')
+        ).rejects.toThrow(TicketTransferFailedException);
+      });
+
+      it('should not allow transfer by non-owner', async () => {
+        // Arrange - Ticket belongs to different user
+        mockPrismaService.ticket.findUnique.mockResolvedValue({
+          ...soldTicket,
+          userId: 'different-user-id',
+          festival: publishedFestival,
+          category: standardCategory,
+          user: {
+            id: 'different-user-id',
+            email: 'different@example.com',
+            firstName: 'Different',
+            lastName: 'User',
+          },
+        });
+
+        // Act & Assert
+        await expect(
+          ticketsService.transferTicket(soldTicket.id, regularUser.id, 'other@example.com')
+        ).rejects.toThrow(ForbiddenException);
+      });
+
+      it('should handle transfer when festival has ended', async () => {
+        // Arrange
+        mockPrismaService.ticket.findUnique.mockResolvedValue({
+          ...soldTicket,
+          userId: regularUser.id,
+          festival: completedFestival,
+          category: standardCategory,
+          user: {
+            id: regularUser.id,
+            email: regularUser.email,
+            firstName: regularUser.firstName,
+            lastName: regularUser.lastName,
+          },
+        });
+
+        // Act & Assert
+        await expect(
+          ticketsService.transferTicket(soldTicket.id, regularUser.id, 'other@example.com')
+        ).rejects.toThrow(FestivalEndedException);
+      });
+
+      it('should handle transfer when festival is cancelled', async () => {
+        // Arrange
+        mockPrismaService.ticket.findUnique.mockResolvedValue({
+          ...soldTicket,
+          userId: regularUser.id,
+          festival: cancelledFestival,
+          category: standardCategory,
+          user: {
+            id: regularUser.id,
+            email: regularUser.email,
+            firstName: regularUser.firstName,
+            lastName: regularUser.lastName,
+          },
+        });
+
+        // Act & Assert
+        await expect(
+          ticketsService.transferTicket(soldTicket.id, regularUser.id, 'other@example.com')
+        ).rejects.toThrow(FestivalCancelledException);
+      });
     });
   });
 });

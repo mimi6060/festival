@@ -1057,4 +1057,615 @@ describe('CashlessService', () => {
       });
     });
   });
+
+  // ==========================================================================
+  // Edge Cases - Story 1.1 (Test Coverage API)
+  // ==========================================================================
+
+  describe('Edge Cases - Story 1.1', () => {
+    // ------------------------------------------------------------------------
+    // Concurrent Transaction Tests
+    // ------------------------------------------------------------------------
+
+    describe('Concurrent Transaction Tests', () => {
+      it('should handle two transactions hitting daily limit simultaneously', async () => {
+        // Arrange
+        const festivalWithLimits = {
+          ...ongoingFestival,
+          status: FestivalStatus.ONGOING,
+          cashlessLimits: {
+            maxBalance: 1000,
+            maxSingleTransactionAmount: 100,
+            dailyTransactionLimit: 100, // Low daily limit
+          },
+        };
+        mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithLimits);
+        mockPrismaService.cashlessAccount.findUnique.mockResolvedValue({
+          ...activeCashlessAccount,
+          balance: 500,
+        });
+        // Simulate daily total at 60 - two 50 payments would each think they have room
+        mockPrismaService.cashlessTransaction.aggregate.mockResolvedValue({ _sum: { amount: 60 } });
+
+        // Act - First payment would bring total to 110, exceeding limit
+        const paymentPromise = cashlessService.pay(regularUser.id, {
+          amount: 50,
+          festivalId: ongoingFestival.id,
+        });
+
+        // Assert - Should throw DailyTransactionLimitExceededException
+        await expect(paymentPromise).rejects.toThrow(DailyTransactionLimitExceededException);
+      });
+
+      it('should handle race condition on balance update with two concurrent payments', async () => {
+        // Arrange
+        const accountWithBalance = {
+          ...activeCashlessAccount,
+          balance: 100,
+        };
+        const festivalWithLimits = {
+          ...ongoingFestival,
+          status: FestivalStatus.ONGOING,
+          cashlessLimits: {
+            maxBalance: 1000,
+            maxSingleTransactionAmount: 100,
+            dailyTransactionLimit: 1000,
+          },
+        };
+        mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithLimits);
+        mockPrismaService.cashlessAccount.findUnique.mockResolvedValue(accountWithBalance);
+        mockPrismaService.cashlessTransaction.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
+
+        // Simulate transaction failing due to optimistic locking / race condition
+        mockPrismaService.$transaction.mockRejectedValueOnce(
+          new Error('Transaction failed due to concurrent modification')
+        );
+
+        // Act & Assert
+        await expect(
+          cashlessService.pay(regularUser.id, {
+            amount: 80,
+            festivalId: ongoingFestival.id,
+          })
+        ).rejects.toThrow('Transaction failed due to concurrent modification');
+      });
+
+      it('should handle concurrent topup and payment on same account', async () => {
+        // Arrange
+        const accountWithBalance = {
+          ...activeCashlessAccount,
+          balance: 50,
+        };
+        const festivalWithLimits = {
+          ...ongoingFestival,
+          status: FestivalStatus.ONGOING,
+          cashlessLimits: {
+            maxBalance: 500,
+            maxSingleTransactionAmount: 100,
+            dailyTransactionLimit: 1000,
+          },
+        };
+
+        // Setup for topup
+        mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithLimits);
+        mockPrismaService.cashlessAccount.findUnique.mockResolvedValue(accountWithBalance);
+        mockPrismaService.cashlessTransaction.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
+        mockPrismaService.cashlessAccount.update.mockResolvedValue({
+          ...accountWithBalance,
+          balance: 100,
+        });
+        mockPrismaService.cashlessTransaction.create.mockResolvedValue({
+          id: 'topup-tx',
+          accountId: activeCashlessAccount.id,
+          festivalId: ongoingFestival.id,
+          type: TransactionType.TOPUP,
+          amount: 50,
+          balanceBefore: 50,
+          balanceAfter: 100,
+          description: 'Top-up via CARD',
+          createdAt: new Date(),
+        });
+
+        // Act - Topup should succeed
+        const topupResult = await cashlessService.topup(regularUser.id, {
+          amount: 50,
+          festivalId: ongoingFestival.id,
+        });
+
+        // Assert
+        expect(topupResult.type).toBe(TransactionType.TOPUP);
+        expect(topupResult.balanceAfter).toBe(100);
+      });
+    });
+
+    // ------------------------------------------------------------------------
+    // Limit Boundary Tests
+    // ------------------------------------------------------------------------
+
+    describe('Limit Boundary Tests', () => {
+      it('should allow exact max balance topup (balance + topup = exactly max)', async () => {
+        // Arrange
+        const accountNearMax = {
+          ...activeCashlessAccount,
+          balance: 450, // 450 + 50 = 500 (exactly max)
+        };
+        const festivalWithLimits = {
+          ...ongoingFestival,
+          cashlessLimits: {
+            maxBalance: 500,
+            maxSingleTransactionAmount: 100,
+            dailyTransactionLimit: 1000,
+          },
+        };
+        mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithLimits);
+        mockPrismaService.cashlessAccount.findUnique.mockResolvedValue(accountNearMax);
+        mockPrismaService.cashlessTransaction.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
+        mockPrismaService.cashlessAccount.update.mockResolvedValue({
+          ...accountNearMax,
+          balance: 500,
+        });
+        mockPrismaService.cashlessTransaction.create.mockResolvedValue({
+          id: 'exact-max-tx',
+          accountId: activeCashlessAccount.id,
+          festivalId: ongoingFestival.id,
+          type: TransactionType.TOPUP,
+          amount: 50,
+          balanceBefore: 450,
+          balanceAfter: 500,
+          description: 'Top-up via CARD',
+          createdAt: new Date(),
+        });
+
+        // Act
+        const result = await cashlessService.topup(regularUser.id, {
+          amount: 50,
+          festivalId: ongoingFestival.id,
+        });
+
+        // Assert
+        expect(result.balanceAfter).toBe(500);
+        expect(result.type).toBe(TransactionType.TOPUP);
+      });
+
+      it('should reject topup that would exceed max balance by 1 cent', async () => {
+        // Arrange
+        const accountNearMax = {
+          ...activeCashlessAccount,
+          balance: 450.01, // 450.01 + 50 = 500.01 (exceeds max by 0.01)
+        };
+        const festivalWithLimits = {
+          ...ongoingFestival,
+          cashlessLimits: {
+            maxBalance: 500,
+            maxSingleTransactionAmount: 100,
+            dailyTransactionLimit: 1000,
+          },
+        };
+        mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithLimits);
+        mockPrismaService.cashlessAccount.findUnique.mockResolvedValue(accountNearMax);
+        mockPrismaService.cashlessTransaction.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
+
+        // Act & Assert
+        await expect(
+          cashlessService.topup(regularUser.id, {
+            amount: 50,
+            festivalId: ongoingFestival.id,
+          })
+        ).rejects.toThrow(MaxBalanceExceededException);
+      });
+
+      it('should handle daily limit at exact boundary (total = exactly limit)', async () => {
+        // Arrange
+        const festivalWithLimits = {
+          ...ongoingFestival,
+          status: FestivalStatus.ONGOING,
+          cashlessLimits: {
+            maxBalance: 1000,
+            maxSingleTransactionAmount: 100,
+            dailyTransactionLimit: 100,
+          },
+        };
+        mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithLimits);
+        mockPrismaService.cashlessAccount.findUnique.mockResolvedValue({
+          ...activeCashlessAccount,
+          balance: 200,
+        });
+        // Existing daily total is 80, payment of 20 would bring to exactly 100
+        mockPrismaService.cashlessTransaction.aggregate.mockResolvedValue({ _sum: { amount: 80 } });
+        mockPrismaService.cashlessAccount.update.mockResolvedValue({
+          ...activeCashlessAccount,
+          balance: 180,
+        });
+        mockPrismaService.cashlessTransaction.create.mockResolvedValue({
+          id: 'exact-limit-tx',
+          accountId: activeCashlessAccount.id,
+          festivalId: ongoingFestival.id,
+          type: TransactionType.PAYMENT,
+          amount: 20,
+          balanceBefore: 200,
+          balanceAfter: 180,
+          description: 'Exact limit payment',
+          createdAt: new Date(),
+        });
+
+        // Act
+        const result = await cashlessService.pay(regularUser.id, {
+          amount: 20,
+          festivalId: ongoingFestival.id,
+          description: 'Exact limit payment',
+        });
+
+        // Assert
+        expect(result.amount).toBe(20);
+        expect(result.type).toBe(TransactionType.PAYMENT);
+      });
+
+      it('should reject payment that would exceed daily limit by 1 cent', async () => {
+        // Arrange
+        const festivalWithLimits = {
+          ...ongoingFestival,
+          status: FestivalStatus.ONGOING,
+          cashlessLimits: {
+            maxBalance: 1000,
+            maxSingleTransactionAmount: 100,
+            dailyTransactionLimit: 100,
+          },
+        };
+        mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithLimits);
+        mockPrismaService.cashlessAccount.findUnique.mockResolvedValue({
+          ...activeCashlessAccount,
+          balance: 200,
+        });
+        // Existing daily total is 80.01, payment of 20 would bring to 100.01
+        mockPrismaService.cashlessTransaction.aggregate.mockResolvedValue({
+          _sum: { amount: 80.01 },
+        });
+
+        // Act & Assert
+        await expect(
+          cashlessService.pay(regularUser.id, {
+            amount: 20,
+            festivalId: ongoingFestival.id,
+          })
+        ).rejects.toThrow(DailyTransactionLimitExceededException);
+      });
+
+      it('should allow topup of exactly minimum amount', async () => {
+        // Arrange
+        const accountWithBalance = {
+          ...activeCashlessAccount,
+          balance: 0,
+        };
+        mockPrismaService.festival.findUnique.mockResolvedValue(ongoingFestival);
+        mockPrismaService.cashlessAccount.findUnique.mockResolvedValue(accountWithBalance);
+        mockPrismaService.cashlessTransaction.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
+        mockPrismaService.cashlessAccount.update.mockResolvedValue({
+          ...accountWithBalance,
+          balance: 5,
+        });
+        mockPrismaService.cashlessTransaction.create.mockResolvedValue({
+          id: 'min-topup-tx',
+          accountId: activeCashlessAccount.id,
+          festivalId: ongoingFestival.id,
+          type: TransactionType.TOPUP,
+          amount: 5, // Exactly minimum
+          balanceBefore: 0,
+          balanceAfter: 5,
+          description: 'Top-up via CARD',
+          createdAt: new Date(),
+        });
+
+        // Act
+        const result = await cashlessService.topup(regularUser.id, {
+          amount: 5, // Exactly DEFAULT_CASHLESS_LIMITS.minTopupAmount
+          festivalId: ongoingFestival.id,
+        });
+
+        // Assert
+        expect(result.amount).toBe(5);
+        expect(result.type).toBe(TransactionType.TOPUP);
+      });
+
+      it('should reject topup below minimum by 1 cent', async () => {
+        // Arrange
+        mockPrismaService.festival.findUnique.mockResolvedValue(ongoingFestival);
+
+        // Act & Assert - 4.99 is below minimum of 5
+        await expect(
+          cashlessService.topup(regularUser.id, {
+            amount: 4.99,
+            festivalId: ongoingFestival.id,
+          })
+        ).rejects.toThrow(TransactionLimitExceededException);
+      });
+
+      it('should allow topup of exactly maximum amount when balance is zero', async () => {
+        // Arrange
+        const accountWithZeroBalance = {
+          ...activeCashlessAccount,
+          balance: 0,
+        };
+        const festivalWithLimits = {
+          ...ongoingFestival,
+          cashlessLimits: {
+            maxBalance: 500,
+            maxSingleTransactionAmount: 500, // Allow max topup as single transaction
+            dailyTransactionLimit: 1000,
+            minTopupAmount: 5,
+            maxTopupAmount: 500,
+          },
+        };
+        mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithLimits);
+        mockPrismaService.cashlessAccount.findUnique.mockResolvedValue(accountWithZeroBalance);
+        mockPrismaService.cashlessTransaction.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
+        mockPrismaService.cashlessAccount.update.mockResolvedValue({
+          ...accountWithZeroBalance,
+          balance: 500,
+        });
+        mockPrismaService.cashlessTransaction.create.mockResolvedValue({
+          id: 'max-topup-tx',
+          accountId: activeCashlessAccount.id,
+          festivalId: ongoingFestival.id,
+          type: TransactionType.TOPUP,
+          amount: 500,
+          balanceBefore: 0,
+          balanceAfter: 500,
+          description: 'Top-up via CARD',
+          createdAt: new Date(),
+        });
+
+        // Act
+        const result = await cashlessService.topup(regularUser.id, {
+          amount: 500, // Exactly maxTopupAmount
+          festivalId: ongoingFestival.id,
+        });
+
+        // Assert
+        expect(result.amount).toBe(500);
+        expect(result.balanceAfter).toBe(500);
+      });
+
+      it('should reject topup exceeding maximum by 1 cent', async () => {
+        // Arrange
+        mockPrismaService.festival.findUnique.mockResolvedValue(ongoingFestival);
+
+        // Act & Assert - 500.01 exceeds maxTopupAmount of 500
+        await expect(
+          cashlessService.topup(regularUser.id, {
+            amount: 500.01,
+            festivalId: ongoingFestival.id,
+          })
+        ).rejects.toThrow(TransactionLimitExceededException);
+      });
+
+      it('should allow payment of exactly minimum amount (0.01)', async () => {
+        // Arrange
+        const festivalWithLimits = {
+          ...ongoingFestival,
+          status: FestivalStatus.ONGOING,
+          cashlessLimits: {
+            maxBalance: 500,
+            maxSingleTransactionAmount: 100,
+            dailyTransactionLimit: 1000,
+            minPaymentAmount: 0.01,
+          },
+        };
+        mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithLimits);
+        mockPrismaService.cashlessAccount.findUnique.mockResolvedValue({
+          ...activeCashlessAccount,
+          balance: 100,
+        });
+        mockPrismaService.cashlessTransaction.aggregate.mockResolvedValue({ _sum: { amount: 0 } });
+        mockPrismaService.cashlessAccount.update.mockResolvedValue({
+          ...activeCashlessAccount,
+          balance: 99.99,
+        });
+        mockPrismaService.cashlessTransaction.create.mockResolvedValue({
+          id: 'min-payment-tx',
+          accountId: activeCashlessAccount.id,
+          festivalId: ongoingFestival.id,
+          type: TransactionType.PAYMENT,
+          amount: 0.01,
+          balanceBefore: 100,
+          balanceAfter: 99.99,
+          description: 'Minimum payment',
+          createdAt: new Date(),
+        });
+
+        // Act
+        const result = await cashlessService.pay(regularUser.id, {
+          amount: 0.01,
+          festivalId: ongoingFestival.id,
+          description: 'Minimum payment',
+        });
+
+        // Assert
+        expect(result.amount).toBe(0.01);
+        expect(result.type).toBe(TransactionType.PAYMENT);
+      });
+    });
+
+    // ------------------------------------------------------------------------
+    // NFC Edge Cases
+    // ------------------------------------------------------------------------
+
+    describe('NFC Edge Cases', () => {
+      it('should allow linking a short NFC tag (current behavior)', async () => {
+        // Arrange
+        const shortNfcTag = 'AB';
+        mockPrismaService.cashlessAccount.findUnique
+          .mockResolvedValueOnce(activeCashlessAccount) // Account lookup
+          .mockResolvedValueOnce(null); // NFC tag not in use
+        mockPrismaService.cashlessAccount.update.mockResolvedValue({
+          ...activeCashlessAccount,
+          nfcTagId: shortNfcTag,
+        });
+
+        // Act
+        const result = await cashlessService.linkNfcTag(regularUser.id, shortNfcTag);
+
+        // Assert - Currently no length validation
+        expect(result.nfcTagId).toBe(shortNfcTag);
+      });
+
+      it('should allow linking a long NFC tag (current behavior)', async () => {
+        // Arrange
+        const longNfcTag = 'A'.repeat(100);
+        mockPrismaService.cashlessAccount.findUnique
+          .mockResolvedValueOnce(activeCashlessAccount)
+          .mockResolvedValueOnce(null);
+        mockPrismaService.cashlessAccount.update.mockResolvedValue({
+          ...activeCashlessAccount,
+          nfcTagId: longNfcTag,
+        });
+
+        // Act
+        const result = await cashlessService.linkNfcTag(regularUser.id, longNfcTag);
+
+        // Assert - Currently no length validation
+        expect(result.nfcTagId).toBe(longNfcTag);
+      });
+
+      it('should throw ConflictException when linking tag already in use by another user', async () => {
+        // Arrange
+        const existingTag = 'NFC-EXISTING-TAG';
+        const otherAccount = { ...emptyCashlessAccount, id: 'other-account-id' };
+        mockPrismaService.cashlessAccount.findUnique
+          .mockResolvedValueOnce(activeCashlessAccount) // User's account
+          .mockResolvedValueOnce(otherAccount); // Tag belongs to other account
+
+        // Act & Assert
+        await expect(cashlessService.linkNfcTag(regularUser.id, existingTag)).rejects.toThrow(
+          ConflictException
+        );
+      });
+
+      it('should handle NFC tag reassignment after previous account unlinks', async () => {
+        // Arrange - Simulating tag was unlinked from another account and is now free
+        const previouslyUsedTag = 'NFC-RECYCLED-TAG';
+        const newAccount = { ...emptyCashlessAccount, id: 'new-account-id', userId: 'new-user-id' };
+
+        mockPrismaService.cashlessAccount.findUnique
+          .mockResolvedValueOnce(newAccount) // New user's account lookup
+          .mockResolvedValueOnce(null); // Tag is now available (was unlinked)
+        mockPrismaService.cashlessAccount.update.mockResolvedValue({
+          ...newAccount,
+          nfcTagId: previouslyUsedTag,
+        });
+
+        // Act
+        const result = await cashlessService.linkNfcTag('new-user-id', previouslyUsedTag);
+
+        // Assert
+        expect(result.nfcTagId).toBe(previouslyUsedTag);
+      });
+
+      it('should handle NFC tag lookup with exact case matching', async () => {
+        // Arrange - Prisma lookup is case-sensitive by default
+        const nfcTag = 'NFC-TAG-MIXED-Case';
+        mockPrismaService.cashlessAccount.findUnique.mockResolvedValue({
+          ...activeCashlessAccount,
+          nfcTagId: nfcTag,
+        });
+
+        // Act
+        const result = await cashlessService.findAccountByNfcTag(nfcTag);
+
+        // Assert
+        expect(result.id).toBe(activeCashlessAccount.id);
+        expect(mockPrismaService.cashlessAccount.findUnique).toHaveBeenCalledWith({
+          where: { nfcTagId: nfcTag },
+        });
+      });
+
+      it('should throw InvalidNFCTagException when tag not found', async () => {
+        // Arrange
+        mockPrismaService.cashlessAccount.findUnique.mockResolvedValue(null);
+
+        // Act & Assert
+        await expect(cashlessService.findAccountByNfcTag('NON-EXISTENT-TAG')).rejects.toThrow(
+          InvalidNFCTagException
+        );
+      });
+
+      it('should allow relinking same NFC tag to same account (idempotent)', async () => {
+        // Arrange
+        const existingTag = 'NFC-EXISTING-TAG';
+        const accountWithTag = { ...activeCashlessAccount, nfcTagId: existingTag };
+        mockPrismaService.cashlessAccount.findUnique
+          .mockResolvedValueOnce(accountWithTag) // User's account
+          .mockResolvedValueOnce(accountWithTag); // Tag belongs to same account
+        mockPrismaService.cashlessAccount.update.mockResolvedValue(accountWithTag);
+
+        // Act
+        const result = await cashlessService.linkNfcTag(regularUser.id, existingTag);
+
+        // Assert - Should succeed (same account)
+        expect(result.nfcTagId).toBe(existingTag);
+      });
+
+      it('should link NFC tag with hyphen characters', async () => {
+        // Arrange
+        const nfcTagWithHyphens = 'NFC-TAG-WITH-HYPHENS-123';
+        mockPrismaService.cashlessAccount.findUnique
+          .mockResolvedValueOnce(activeCashlessAccount)
+          .mockResolvedValueOnce(null);
+        mockPrismaService.cashlessAccount.update.mockResolvedValue({
+          ...activeCashlessAccount,
+          nfcTagId: nfcTagWithHyphens,
+        });
+
+        // Act
+        const result = await cashlessService.linkNfcTag(regularUser.id, nfcTagWithHyphens);
+
+        // Assert
+        expect(result.nfcTagId).toBe(nfcTagWithHyphens);
+      });
+
+      it('should link NFC tag with numeric characters', async () => {
+        // Arrange
+        const numericNfcTag = '1234567890';
+        mockPrismaService.cashlessAccount.findUnique
+          .mockResolvedValueOnce(activeCashlessAccount)
+          .mockResolvedValueOnce(null);
+        mockPrismaService.cashlessAccount.update.mockResolvedValue({
+          ...activeCashlessAccount,
+          nfcTagId: numericNfcTag,
+        });
+
+        // Act
+        const result = await cashlessService.linkNfcTag(regularUser.id, numericNfcTag);
+
+        // Assert
+        expect(result.nfcTagId).toBe(numericNfcTag);
+      });
+
+      it('should handle account not found when linking NFC tag', async () => {
+        // Arrange
+        mockPrismaService.cashlessAccount.findUnique.mockResolvedValue(null);
+
+        // Act & Assert
+        await expect(cashlessService.linkNfcTag('non-existent-user', 'NFC-TAG')).rejects.toThrow(
+          NotFoundException
+        );
+      });
+
+      it('should handle multiple NFC tag lookups for same tag', async () => {
+        // Arrange
+        const nfcTag = 'NFC-POPULAR-TAG';
+        mockPrismaService.cashlessAccount.findUnique.mockResolvedValue({
+          ...activeCashlessAccount,
+          nfcTagId: nfcTag,
+        });
+
+        // Act - Multiple lookups
+        const result1 = await cashlessService.findAccountByNfcTag(nfcTag);
+        const result2 = await cashlessService.findAccountByNfcTag(nfcTag);
+
+        // Assert
+        expect(result1.id).toBe(result2.id);
+        expect(mockPrismaService.cashlessAccount.findUnique).toHaveBeenCalledTimes(2);
+      });
+    });
+  });
 });

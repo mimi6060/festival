@@ -658,14 +658,47 @@ Toutes les tâches ont été déplacées vers `DONE.md`.
 - **Total Tests**: 5,157 (all passing)
 - **Test Suites**: 101
 
+### Edge Cases Tests (Story 1.1 - Tasks 2-4)
+
+**Tickets Module Edge Cases** - 18 tests ajoutés:
+
+- Concurrent quota validation
+- Simultaneous ticket purchases
+- Invalid QR code format
+- Expired QR signatures
+- Double-scan prevention
+- Transfer to non-existent user
+- Self-transfer prevention
+- Quota exceeded on recipient
+
+**Payments Module Edge Cases** - 13 tests ajoutés:
+
+- Webhook replay attack prevention
+- Out-of-order event handling
+- Idempotency validation
+- Partial refund edge cases
+- Refund on cancelled payment
+- Multiple refund attempts
+- Currency conversion (very small/large amounts)
+
+**Cashless Module Edge Cases** - 23 tests ajoutés:
+
+- Two transactions hitting daily limit simultaneously
+- Race condition on balance update
+- Exact max balance topup
+- Daily limit at day boundary
+- Min/max topup edge values
+- Invalid NFC tag format
+- Tag reassignment scenarios
+
 ### Story Status
 
 - **Story**: 1-1-test-coverage-api
-- **Status**: in-progress
-- **Completed**: Task 1 (Auth module - 5 new test files)
-- **Remaining**: Tasks 2-5 (edge cases for tickets, payments, cashless)
+- **Status**: COMPLETED
+- **Total Tests**: 5,210 (all passing)
+- **Test Suites**: 101
 
-### Files Created
+### Files Created/Modified
 
 ```
 apps/api/src/modules/auth/strategies/
@@ -676,6 +709,10 @@ apps/api/src/modules/auth/strategies/
 apps/api/src/modules/auth/guards/
 ├── google-oauth.guard.spec.ts    (NEW - 230 lines)
 └── github-oauth.guard.spec.ts    (NEW - 230 lines)
+
+apps/api/src/modules/tickets/tickets.service.spec.ts     (MODIFIED - +18 tests)
+apps/api/src/modules/payments/payments.service.spec.ts   (MODIFIED - +13 tests)
+apps/api/src/modules/cashless/cashless.service.spec.ts   (MODIFIED - +23 tests)
 ```
 
 ---
