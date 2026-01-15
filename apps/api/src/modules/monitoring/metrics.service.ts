@@ -14,9 +14,7 @@ export enum MetricType {
 /**
  * Metric Labels
  */
-export interface MetricLabels {
-  [key: string]: string | number;
-}
+export type MetricLabels = Record<string, string | number>;
 
 /**
  * Histogram Buckets Configuration
@@ -330,9 +328,9 @@ export class MetricsService implements OnModuleInit {
   /**
    * Increment a counter
    */
-  incrementCounter(name: string, labels?: MetricLabels, value: number = 1): void {
+  incrementCounter(name: string, labels?: MetricLabels, value = 1): void {
     const metric = this.metrics.get(name);
-    if (!metric || metric.type !== MetricType.COUNTER) {
+    if (metric?.type !== MetricType.COUNTER) {
       this.logger.warn(`Counter metric not found: ${name}`);
       return;
     }
@@ -347,7 +345,7 @@ export class MetricsService implements OnModuleInit {
    */
   setGauge(name: string, value: number, labels?: MetricLabels): void {
     const metric = this.metrics.get(name);
-    if (!metric || metric.type !== MetricType.GAUGE) {
+    if (metric?.type !== MetricType.GAUGE) {
       this.logger.warn(`Gauge metric not found: ${name}`);
       return;
     }
@@ -359,9 +357,9 @@ export class MetricsService implements OnModuleInit {
   /**
    * Increment a gauge
    */
-  incrementGauge(name: string, labels?: MetricLabels, value: number = 1): void {
+  incrementGauge(name: string, labels?: MetricLabels, value = 1): void {
     const metric = this.metrics.get(name);
-    if (!metric || metric.type !== MetricType.GAUGE) {
+    if (metric?.type !== MetricType.GAUGE) {
       this.logger.warn(`Gauge metric not found: ${name}`);
       return;
     }
@@ -374,7 +372,7 @@ export class MetricsService implements OnModuleInit {
   /**
    * Decrement a gauge
    */
-  decrementGauge(name: string, labels?: MetricLabels, value: number = 1): void {
+  decrementGauge(name: string, labels?: MetricLabels, value = 1): void {
     this.incrementGauge(name, labels, -value);
   }
 
@@ -385,7 +383,7 @@ export class MetricsService implements OnModuleInit {
     const metric = this.metrics.get(name);
     const bucketsMetric = this.metrics.get(`${name}_buckets`);
 
-    if (!metric || metric.type !== MetricType.HISTOGRAM || !bucketsMetric) {
+    if (metric?.type !== MetricType.HISTOGRAM || !bucketsMetric) {
       this.logger.warn(`Histogram metric not found: ${name}`);
       return;
     }
@@ -455,21 +453,21 @@ export class MetricsService implements OnModuleInit {
   /**
    * Record cache hit
    */
-  recordCacheHit(cacheType: string = 'redis'): void {
+  recordCacheHit(cacheType = 'redis'): void {
     this.incrementCounter('cache_hits_total', { cache_type: cacheType });
   }
 
   /**
    * Record cache miss
    */
-  recordCacheMiss(cacheType: string = 'redis'): void {
+  recordCacheMiss(cacheType = 'redis'): void {
     this.incrementCounter('cache_misses_total', { cache_type: cacheType });
   }
 
   /**
    * Update cache keys count
    */
-  setCacheKeysCount(count: number, cacheType: string = 'redis'): void {
+  setCacheKeysCount(count: number, cacheType = 'redis'): void {
     this.setGauge('cache_keys_count', count, { cache_type: cacheType });
   }
 
@@ -594,7 +592,7 @@ export class MetricsService implements OnModuleInit {
 
     for (const [name, metric] of this.metrics.entries()) {
       // Skip bucket configuration metrics
-      if (name.endsWith('_buckets')) continue;
+      if (name.endsWith('_buckets')) {continue;}
 
       // Add HELP and TYPE
       lines.push(`# HELP ${name} ${metric.help}`);
@@ -652,7 +650,7 @@ export class MetricsService implements OnModuleInit {
     const result: Record<string, any> = {};
 
     for (const [name, metric] of this.metrics.entries()) {
-      if (name.endsWith('_buckets')) continue;
+      if (name.endsWith('_buckets')) {continue;}
 
       if (metric.type === MetricType.HISTOGRAM) {
         result[name] = {
@@ -703,12 +701,12 @@ export class MetricsService implements OnModuleInit {
       .join(',');
   }
 
-  private keyToLabelString(key: string, labelNames: string[]): string {
+  private keyToLabelString(key: string, _labelNames: string[]): string {
     return key;
   }
 
-  private keyToLabels(key: string, labelNames: string[]): Record<string, string> {
-    if (!key) return {};
+  private keyToLabels(key: string, _labelNames: string[]): Record<string, string> {
+    if (!key) {return {};}
 
     const labels: Record<string, string> = {};
     const pairs = key.split(',');

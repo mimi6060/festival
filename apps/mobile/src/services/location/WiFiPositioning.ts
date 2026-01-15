@@ -65,11 +65,11 @@ const getWiFiScannerModule = (): WiFiScannerModule => {
 
 export class WiFiPositioning {
   private config: WiFiPositioningConfig;
-  private isScanning: boolean = false;
+  private isScanning = false;
   private scanInterval: NodeJS.Timeout | null = null;
   private wifiModule: WiFiScannerModule;
   private lastPosition: IndoorCoordinate | null = null;
-  private fingerprintIndex: Map<string, WiFiFingerprint[]> = new Map();
+  private fingerprintIndex = new Map<string, WiFiFingerprint[]>();
 
   constructor(config: WiFiPositioningConfig) {
     this.config = config;
@@ -172,7 +172,7 @@ export class WiFiPositioning {
    * Perform a single WiFi scan and estimate position
    */
   private async performScan(): Promise<void> {
-    if (!this.isScanning) return;
+    if (!this.isScanning) {return;}
 
     try {
       const accessPoints = await this.wifiModule.startScan();
@@ -296,7 +296,7 @@ export class WiFiPositioning {
     let weightedLat = 0;
     let weightedLng = 0;
     let weightedAlt = 0;
-    const floorVotes: Map<number, number> = new Map();
+    const floorVotes = new Map<number, number>();
 
     candidates.forEach((candidate) => {
       const weight = candidate.confidence * candidate.matchedAPs;
@@ -341,7 +341,7 @@ export class WiFiPositioning {
    * Stop WiFi positioning
    */
   stopPositioning(): void {
-    if (!this.isScanning) return;
+    if (!this.isScanning) {return;}
 
     this.isScanning = false;
 
@@ -394,10 +394,10 @@ export class WiFiPositioning {
       }
 
       // Aggregate samples
-      const apStats: Map<
+      const apStats = new Map<
         string,
         { rssiValues: number[]; ssid: string }
-      > = new Map();
+      >();
 
       samples.forEach((sample) => {
         sample.forEach((ap) => {

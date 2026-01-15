@@ -2,6 +2,30 @@
 
 ---
 
+## Session 2026-01-10 - OAuth & Form Fixes
+
+### OAuth Guards Improvements
+
+- [x] **Google OAuth Guard** - Added proper BadRequestException error messages
+  - Guard now throws clear error when OAuth is not configured (instead of silently failing)
+  - Checks both GOOGLE_OAUTH_ENABLED flag and credential configuration
+- [x] **GitHub OAuth Guard** - Same improvements as Google OAuth
+  - Added GitHub OAuth configuration to `.env.example`
+
+### Contact Form Fix
+
+- [x] **Converted to client component** with full form handling
+  - Form validation for all fields
+  - Loading states during submission
+  - Success feedback with ability to send another message
+  - Proper error handling
+
+### Commits
+
+- `de59979` fix(auth): improve OAuth guards error handling and fix contact form
+
+---
+
 ## Session 2026-01-09 - Fixes & Improvements
 
 ### Cross-Origin Cookie Fix (Web & Admin)

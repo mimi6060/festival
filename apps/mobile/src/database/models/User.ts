@@ -121,16 +121,16 @@ export default class User extends Model {
     updatedAt?: string;
   }): Promise<void> {
     await this.update((user) => {
-      if (data.email !== undefined) user.email = data.email;
-      if (data.firstName !== undefined) user.firstName = data.firstName;
-      if (data.lastName !== undefined) user.lastName = data.lastName;
-      if (data.phone !== undefined) user.phone = data.phone;
-      if (data.avatarUrl !== undefined) user.avatarUrl = data.avatarUrl;
-      if (data.role !== undefined) user.role = data.role;
-      if (data.status !== undefined) user.status = data.status;
-      if (data.emailVerified !== undefined) user.emailVerified = data.emailVerified;
-      if (data.lastLoginAt) user.lastLoginAt = new Date(data.lastLoginAt).getTime();
-      if (data.updatedAt) user.serverUpdatedAt = new Date(data.updatedAt).getTime();
+      if (data.email !== undefined) {user.email = data.email;}
+      if (data.firstName !== undefined) {user.firstName = data.firstName;}
+      if (data.lastName !== undefined) {user.lastName = data.lastName;}
+      if (data.phone !== undefined) {user.phone = data.phone;}
+      if (data.avatarUrl !== undefined) {user.avatarUrl = data.avatarUrl;}
+      if (data.role !== undefined) {user.role = data.role;}
+      if (data.status !== undefined) {user.status = data.status;}
+      if (data.emailVerified !== undefined) {user.emailVerified = data.emailVerified;}
+      if (data.lastLoginAt) {user.lastLoginAt = new Date(data.lastLoginAt).getTime();}
+      if (data.updatedAt) {user.serverUpdatedAt = new Date(data.updatedAt).getTime();}
       user.isSynced = true;
       user.lastSyncedAt = Date.now();
       user.needsPush = false;

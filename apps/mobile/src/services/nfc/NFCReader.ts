@@ -3,10 +3,9 @@
  * Handles reading NFC tags for the Festival cashless system
  */
 
-import NfcManager, { NfcTech, Ndef, TagEvent } from 'react-native-nfc-manager';
-import { NFCFormatter, NFCTagData, NFCPayload, CashlessData } from './NFCFormatter';
-import { NFCError, NFCErrorCode } from './NFCManager';
-import type NFCManagerService from './NFCManager';
+import NfcManager, { NfcTech, TagEvent } from 'react-native-nfc-manager';
+import { NFCFormatter, NFCTagData, CashlessData } from './NFCFormatter';
+import { NFCError, NFCErrorCode, default as NFCManagerService } from './NFCManager';
 
 // Read result interface
 export interface NFCReadResult {
@@ -187,7 +186,7 @@ export class NFCReader {
 
       const tag = await NfcManager.getTag();
 
-      if (!tag || !tag.ndefMessage) {
+      if (!tag?.ndefMessage) {
         return null;
       }
 
@@ -252,7 +251,7 @@ export class NFCReader {
           // Small delay between scans
           await new Promise(resolve => setTimeout(resolve, 500));
         } catch (error) {
-          if (!isScanning) break;
+          if (!isScanning) {break;}
           console.error('[NFCReader] Continuous scan error:', error);
           await new Promise(resolve => setTimeout(resolve, 1000));
         }

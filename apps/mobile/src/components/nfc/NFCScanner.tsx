@@ -44,7 +44,7 @@ export const NFCScanner: React.FC<NFCScannerProps> = ({
   autoStart = false,
   showStatus = true,
   showAnimation = true,
-  festivalId,
+  festivalId: _festivalId,
 }) => {
   const [scanAttempts, setScanAttempts] = useState(0);
 

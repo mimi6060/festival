@@ -265,7 +265,7 @@ export function useLocalStorageArray<T>(
   clear: () => void;
   set: (items: T[]) => void;
 } {
-  const [value, setValue, clearValue] = useLocalStorage<T[]>(key, initialValue);
+  const [value, setValue, _clearValue] = useLocalStorage<T[]>(key, initialValue);
 
   const push = useCallback(
     (item: T) => {

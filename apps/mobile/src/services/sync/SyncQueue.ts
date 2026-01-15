@@ -57,7 +57,7 @@ class SyncQueue {
   private static instance: SyncQueue;
   private database: Database;
   private config: QueueConfig;
-  private listeners: Set<QueueEventListener> = new Set();
+  private listeners = new Set<QueueEventListener>();
   private isProcessing = false;
 
   private constructor(config: Partial<QueueConfig> = {}) {

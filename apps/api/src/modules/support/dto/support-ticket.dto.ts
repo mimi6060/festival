@@ -337,10 +337,10 @@ export class TicketStatisticsDto {
   };
 
   @ApiProperty({ type: Object })
-  byStaff!: Array<{
+  byStaff!: {
     staffId: string;
     staffName: string;
     assignedCount: number;
     resolvedCount: number;
-  }>;
+  }[];
 }

@@ -65,7 +65,7 @@ export function useAuth() {
   }, []);
 
   const login = useCallback(
-    async (email: string, password: string, rememberMe: boolean = false) => {
+    async (email: string, password: string, rememberMe = false) => {
       // En production, utiliser une vraie API
       const response = await fetch('/api/auth/login', {
         method: 'POST',

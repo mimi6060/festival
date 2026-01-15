@@ -10,7 +10,6 @@ import {
   syncManager,
   SyncStatus,
   SyncResult,
-  SyncProgress,
   SyncPhase,
   SyncTask,
   SyncManagerEvent,
@@ -48,7 +47,7 @@ export interface SyncProgressResult {
   bytesTransferred: number;
 
   // Errors
-  errors: Array<{ entity: string; message: string }>;
+  errors: { entity: string; message: string }[];
   hasErrors: boolean;
 
   // Last result
@@ -89,7 +88,7 @@ export function useSyncProgress(): SyncProgressResult {
   const [duration, setDuration] = useState(0);
 
   // Errors
-  const [errors, setErrors] = useState<Array<{ entity: string; message: string }>>([]);
+  const [errors, setErrors] = useState<{ entity: string; message: string }[]>([]);
 
   // Last result
   const [lastResult, setLastResult] = useState<SyncResult | null>(null);
@@ -190,7 +189,7 @@ export function useSyncProgress(): SyncProgressResult {
    * Update duration while syncing
    */
   useEffect(() => {
-    if (!isActive || !startedAt) return;
+    if (!isActive || !startedAt) {return;}
 
     const interval = setInterval(() => {
       setDuration(Date.now() - startedAt.getTime());
@@ -203,12 +202,12 @@ export function useSyncProgress(): SyncProgressResult {
    * Calculate current entity progress
    */
   const currentEntityProgress = useMemo(() => {
-    if (!currentEntity) return 0;
+    if (!currentEntity) {return 0;}
     const entityStatus = entityStatuses.get(currentEntity);
-    if (!entityStatus) return 0;
+    if (!entityStatus) {return 0;}
 
     // Calculate based on pending changes
-    if (entityStatus.pendingChanges === 0) return 100;
+    if (entityStatus.pendingChanges === 0) {return 100;}
     return Math.round((1 - entityStatus.pendingChanges / 100) * 100);
   }, [currentEntity, entityStatuses]);
 

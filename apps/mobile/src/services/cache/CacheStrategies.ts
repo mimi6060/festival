@@ -48,7 +48,7 @@ abstract class BaseStrategy {
     data: T | null,
     source: 'cache' | 'network' | 'stale',
     error: Error | null = null,
-    isStale: boolean = false
+    isStale = false
   ): StrategyResult<T> {
     return {
       data,
@@ -128,7 +128,7 @@ export class CacheFirstStrategy extends BaseStrategy {
 export class NetworkFirstStrategy extends BaseStrategy {
   private timeout: number;
 
-  constructor(cacheManager?: CacheManager, timeout: number = 10000) {
+  constructor(cacheManager?: CacheManager, timeout = 10000) {
     super(cacheManager);
     this.timeout = timeout;
   }
@@ -191,7 +191,7 @@ export class NetworkFirstStrategy extends BaseStrategy {
 export class StaleWhileRevalidateStrategy extends BaseStrategy {
   private staleThreshold: number;
 
-  constructor(cacheManager?: CacheManager, staleThreshold: number = 60000) {
+  constructor(cacheManager?: CacheManager, staleThreshold = 60000) {
     super(cacheManager);
     this.staleThreshold = staleThreshold; // Time in ms after which data is considered stale
   }

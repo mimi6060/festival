@@ -8,7 +8,6 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Platform, Alert, Linking } from 'react-native';
 import {
   walletManager,
-  WalletManager,
   WalletType,
   WalletAvailability,
   AddToWalletResult,
@@ -67,7 +66,7 @@ export function useWallet(config: UseWalletConfig): UseWalletReturn {
   // Initialize wallet manager
   useEffect(() => {
     const initWallet = async () => {
-      if (isInitializedRef.current) return;
+      if (isInitializedRef.current) {return;}
 
       try {
         setIsLoading(true);
@@ -101,7 +100,7 @@ export function useWallet(config: UseWalletConfig): UseWalletReturn {
         setCanAddPasses(availability.canAddPasses);
 
         if (!availability.isAvailable && availability.reason) {
-          console.log('[useWallet] Wallet not available:', availability.reason);
+          console.warn('[useWallet] Wallet not available:', availability.reason);
         }
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to initialize wallet';
@@ -231,9 +230,9 @@ export function useWallet(config: UseWalletConfig): UseWalletReturn {
 
   // Get add button text
   const getAddButtonText = useCallback((): string => {
-    if (isLoading) return 'Chargement...';
-    if (!isAvailable) return 'Wallet non disponible';
-    if (!canAddPasses) return 'Impossible d\'ajouter';
+    if (isLoading) {return 'Chargement...';}
+    if (!isAvailable) {return 'Wallet non disponible';}
+    if (!canAddPasses) {return 'Impossible d\'ajouter';}
 
     switch (walletType) {
       case 'apple':

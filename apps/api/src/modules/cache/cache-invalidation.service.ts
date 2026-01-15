@@ -207,7 +207,7 @@ export class CacheInvalidationService {
 
       // Invalidate each target
       for (const targetPattern of targetKeys) {
-        const count = await this.invalidatePattern(targetPattern);
+        const _count = await this.invalidatePattern(targetPattern);
         invalidatedKeys.push(targetPattern);
 
         // Handle cascade if enabled

@@ -818,7 +818,7 @@ describe('Edge cases', () => {
 });
 
 describe('Security patterns', () => {
-  const service = new SanitizationService();
+  const _service = new SanitizationService();
 
   describe('SQL injection patterns', () => {
     // Note: Due to regex global flag state issues, we test patterns individually

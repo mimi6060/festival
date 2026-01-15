@@ -80,15 +80,15 @@ const DEFAULT_CONFIG: CacheConfig = {
  * LRU Cache Manager with TTL and priority-based eviction
  */
 export class CacheManager {
-  private cache: Map<string, CacheEntry> = new Map();
+  private cache = new Map<string, CacheEntry>();
   private config: CacheConfig;
-  private currentSize: number = 0;
-  private listeners: Set<CacheEventListener> = new Set();
+  private currentSize = 0;
+  private listeners = new Set<CacheEventListener>();
   private statistics: CacheStatistics;
   private accessTimes: number[] = [];
   private appStateSubscription: { remove: () => void } | null = null;
   private cleanupInterval: NodeJS.Timeout | null = null;
-  private initialized: boolean = false;
+  private initialized = false;
 
   constructor(config: Partial<CacheConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -101,7 +101,7 @@ export class CacheManager {
    * Initialize cache from persistent storage
    */
   async initialize(): Promise<void> {
-    if (this.initialized) return;
+    if (this.initialized) {return;}
 
     if (this.config.persistToStorage) {
       await this.restoreFromStorage();
@@ -253,7 +253,7 @@ export class CacheManager {
    */
   has(key: string): boolean {
     const entry = this.cache.get(key);
-    if (!entry) return false;
+    if (!entry) {return false;}
     return !this.isExpired(entry);
   }
 
@@ -277,7 +277,7 @@ export class CacheManager {
    * Set multiple values
    */
   async setMany<T>(
-    entries: Array<{ key: string; data: T; ttl?: number; priority?: CachePriority; tags?: string[] }>
+    entries: { key: string; data: T; ttl?: number; priority?: CachePriority; tags?: string[] }[]
   ): Promise<void> {
     for (const entry of entries) {
       await this.set(entry.key, entry.data, {
@@ -351,7 +351,7 @@ export class CacheManager {
    */
   updateTTL(key: string, ttl: number): boolean {
     const entry = this.cache.get(key);
-    if (!entry) return false;
+    if (!entry) {return false;}
 
     entry.expiresAt = Date.now() + ttl;
     return true;
@@ -373,7 +373,7 @@ export class CacheManager {
    */
   getMetadata(key: string): Omit<CacheEntry, 'data'> | null {
     const entry = this.cache.get(key);
-    if (!entry) return null;
+    if (!entry) {return null;}
 
     const { data: _, ...metadata } = entry;
     return metadata;
@@ -461,7 +461,7 @@ export class CacheManager {
     // Check size
     while (this.currentSize + requiredSize > this.config.maxSize) {
       const evicted = await this.evictOne();
-      if (!evicted) break; // No more entries to evict
+      if (!evicted) {break;} // No more entries to evict
     }
   }
 
@@ -538,10 +538,10 @@ export class CacheManager {
       .sort((a, b) => a.score - b.score);
 
     for (const { key, entry } of sortedEntries) {
-      if (reducedSize >= targetReduction) break;
+      if (reducedSize >= targetReduction) {break;}
 
       // Don't evict critical entries unless absolutely necessary
-      if (entry.priority === CachePriority.CRITICAL && reducedSize > 0) continue;
+      if (entry.priority === CachePriority.CRITICAL && reducedSize > 0) {continue;}
 
       await this.delete(key);
       evictedKeys.push(key);
@@ -575,7 +575,7 @@ export class CacheManager {
   }
 
   private calculateAverageAccessTime(): number {
-    if (this.accessTimes.length === 0) return 0;
+    if (this.accessTimes.length === 0) {return 0;}
     return this.accessTimes.reduce((a, b) => a + b, 0) / this.accessTimes.length;
   }
 
@@ -590,7 +590,7 @@ export class CacheManager {
   }
 
   private setupAppStateListener(): void {
-    if (Platform.OS === 'web') return;
+    if (Platform.OS === 'web') {return;}
 
     this.appStateSubscription = AppState.addEventListener(
       'change',
@@ -678,13 +678,13 @@ export class CacheManager {
       const allKeys = await AsyncStorage.getAllKeys();
       const cacheKeys = allKeys.filter(key => key.startsWith(this.config.storageKeyPrefix));
 
-      if (cacheKeys.length === 0) return;
+      if (cacheKeys.length === 0) {return;}
 
       const entries = await AsyncStorage.multiGet(cacheKeys);
       let restoredCount = 0;
 
       for (const [key, value] of entries) {
-        if (!value) continue;
+        if (!value) {continue;}
 
         try {
           const entry: CacheEntry = JSON.parse(value);

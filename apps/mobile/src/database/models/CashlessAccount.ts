@@ -148,9 +148,9 @@ export default class CashlessAccount extends Model {
         // Clear pending changes after sync (server has authoritative balance)
         account.pendingBalanceChange = 0;
       }
-      if (data.nfcTagId !== undefined) account.nfcTagId = data.nfcTagId;
-      if (data.isActive !== undefined) account.isActive = data.isActive;
-      if (data.updatedAt) account.serverUpdatedAt = new Date(data.updatedAt).getTime();
+      if (data.nfcTagId !== undefined) {account.nfcTagId = data.nfcTagId;}
+      if (data.isActive !== undefined) {account.isActive = data.isActive;}
+      if (data.updatedAt) {account.serverUpdatedAt = new Date(data.updatedAt).getTime();}
       account.isSynced = true;
       account.lastSyncedAt = Date.now();
       account.needsPush = false;

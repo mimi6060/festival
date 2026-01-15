@@ -9,10 +9,8 @@ import {
   offlineMutationHandler,
   Mutation,
   MutationEvent,
-  MutationStatus,
   ReplayResult,
 } from '../services/sync';
-import { syncQueueService, QueueEvent } from '../services/sync';
 
 // Return type
 export interface PendingMutationsResult {

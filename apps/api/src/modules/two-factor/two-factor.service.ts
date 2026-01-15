@@ -143,7 +143,7 @@ export class TwoFactorService {
       select: { twoFactorSecret: true, twoFactorEnabled: true },
     });
 
-    if (!user || !user.twoFactorEnabled || !user.twoFactorSecret) {
+    if (!user?.twoFactorEnabled || !user.twoFactorSecret) {
       return false;
     }
 

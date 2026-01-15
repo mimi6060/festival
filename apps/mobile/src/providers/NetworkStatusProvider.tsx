@@ -22,7 +22,7 @@ import {
   offlineMutationHandler,
   SyncResult,
 } from '../services/sync';
-import { networkDetector, ConnectionQuality, NetworkStatus } from '../services/offline';
+import { networkDetector, ConnectionQuality } from '../services/offline';
 
 // Context value type
 export interface NetworkStatusContextValue {
@@ -388,7 +388,7 @@ export function NetworkStatusProvider({
    * Wait for connection
    */
   const waitForConnection = useCallback(
-    (timeoutMs: number = 30000): Promise<boolean> => {
+    (timeoutMs = 30000): Promise<boolean> => {
       if (isOnline) {
         return Promise.resolve(true);
       }

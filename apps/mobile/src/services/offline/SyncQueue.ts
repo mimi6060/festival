@@ -53,8 +53,8 @@ class SyncQueue {
   private static instance: SyncQueue;
   private queue: SyncQueueItem[] = [];
   private metadata: QueueMetadata;
-  private isLoaded: boolean = false;
-  private processingLock: boolean = false;
+  private isLoaded = false;
+  private processingLock = false;
 
   private constructor() {
     this.metadata = this.getInitialMetadata();
@@ -81,7 +81,7 @@ class SyncQueue {
    * Load queue from storage
    */
   public async load(): Promise<void> {
-    if (this.isLoaded) return;
+    if (this.isLoaded) {return;}
 
     try {
       const [queueData, metadataData] = await Promise.all([
@@ -198,7 +198,7 @@ class SyncQueue {
     this.queue.sort((a, b) => {
       // First by priority
       const priorityDiff = PRIORITY_ORDER[a.priority] - PRIORITY_ORDER[b.priority];
-      if (priorityDiff !== 0) return priorityDiff;
+      if (priorityDiff !== 0) {return priorityDiff;}
       // Then by creation time
       return a.createdAt - b.createdAt;
     });
@@ -244,14 +244,14 @@ class SyncQueue {
 
     // Find first pending item that has no unmet dependencies
     for (const item of this.queue) {
-      if (item.status !== 'pending') continue;
+      if (item.status !== 'pending') {continue;}
 
       if (item.dependsOn && item.dependsOn.length > 0) {
         const dependenciesMet = item.dependsOn.every((depId) => {
           const dep = this.queue.find((q) => q.id === depId);
           return dep?.status === 'completed';
         });
-        if (!dependenciesMet) continue;
+        if (!dependenciesMet) {continue;}
       }
 
       return item;

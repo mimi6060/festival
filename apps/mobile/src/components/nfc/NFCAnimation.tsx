@@ -11,7 +11,7 @@ import {
   Animated,
   Easing,
 } from 'react-native';
-import { colors, spacing, borderRadius } from '../../theme';
+import { colors } from '../../theme';
 
 // Animation status
 export type NFCAnimationStatus = 'idle' | 'scanning' | 'success' | 'error';
@@ -36,14 +36,15 @@ export const NFCAnimation: React.FC<NFCAnimationProps> = ({
   const pulseAnim = useRef(new Animated.Value(1)).current;
   const rotateAnim = useRef(new Animated.Value(0)).current;
   const scaleAnim = useRef(new Animated.Value(1)).current;
-  const opacityAnim = useRef(new Animated.Value(0.3)).current;
+  // opacityAnim kept for potential future opacity transitions
+  const _opacityAnim = useRef(new Animated.Value(0.3)).current;
   const waveAnim1 = useRef(new Animated.Value(0)).current;
   const waveAnim2 = useRef(new Animated.Value(0)).current;
   const waveAnim3 = useRef(new Animated.Value(0)).current;
 
   // Determine color based on status
   const getStatusColor = (): string => {
-    if (color) return color;
+    if (color) {return color;}
     switch (status) {
       case 'scanning':
         return colors.primary;

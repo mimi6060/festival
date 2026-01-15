@@ -64,6 +64,14 @@ export class TicketsController {
 
   @UseGuards(JwtAuthGuard)
   @Post('purchase')
+  @RateLimit({
+    limit: 10,
+    windowSeconds: 60, // 10 requests per minute per user
+    keyPrefix: 'tickets:purchase',
+    perUser: true,
+    errorMessage: 'Too many purchase attempts. Please try again later.',
+  })
+  @HttpCode(HttpStatus.CREATED)
   async purchaseTickets(@Request() req, @Body() dto: PurchaseTicketsDto) {
     return this.ticketsService.purchaseTickets(req.user.id, dto);
   }

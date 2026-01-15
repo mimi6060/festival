@@ -26,7 +26,7 @@ interface StripeCheckoutProps {
   clientSecret: string;
   amount: number;
   currency: string;
-  onSuccess: (paymentIntent: any) => void;
+  onSuccess: (paymentIntent: { id: string; status: string }) => void;
   onError: (error: string) => void;
   returnUrl?: string;
 }

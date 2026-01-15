@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useContext, createContext } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 
 export type Theme = 'light' | 'dark' | 'system';
 export type ResolvedTheme = 'light' | 'dark';
@@ -14,15 +14,6 @@ interface ThemeContextValue {
   toggleTheme: () => void;
   isDark: boolean;
   isLight: boolean;
-}
-
-// Try to import from providers, but handle the case where it's not available
-let ThemeContext: React.Context<ThemeContextValue | undefined> | null = null;
-try {
-  // This will be set by the ThemeProvider when it's used
-  ThemeContext = createContext<ThemeContextValue | undefined>(undefined);
-} catch {
-  ThemeContext = null;
 }
 
 /**
@@ -68,7 +59,7 @@ export function useTheme(): ThemeContextValue {
       if (typeof window !== 'undefined') {
         try {
           localStorage.setItem(THEME_KEY, newTheme);
-        } catch (_e) {
+        } catch {
           // localStorage might not be available
         }
       }
@@ -96,7 +87,7 @@ export function useTheme(): ThemeContextValue {
       setThemeState(initialTheme);
       const resolved = initialTheme === 'system' ? getSystemTheme() : initialTheme;
       applyTheme(resolved);
-    } catch (_e) {
+    } catch {
       // localStorage might not be available
       applyTheme('dark');
     }
@@ -120,7 +111,7 @@ export function useTheme(): ThemeContextValue {
 
   // Listen for storage changes (sync across tabs)
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted) {return;}
 
     const handleStorage = (e: StorageEvent) => {
       if (e.key === THEME_KEY && e.newValue) {

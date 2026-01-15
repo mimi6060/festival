@@ -330,7 +330,7 @@ export async function purchaseTicket(
   accessToken: string,
   festivalId: string,
   categoryId: string,
-  quantity: number = 1,
+  quantity = 1,
 ): Promise<TestTicket[]> {
   const response = await authenticatedRequest('post', '/api/tickets/buy', accessToken, {
     festivalId,
@@ -531,7 +531,7 @@ export function expectNotFound(response: AxiosResponse): void {
 /**
  * Generates a random string of given length
  */
-export function randomString(length: number = 10): string {
+export function randomString(length = 10): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
   let result = '';
   for (let i = 0; i < length; i++) {

@@ -9,9 +9,8 @@ import {
   Dimensions,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RouteProp } from '@react-navigation/native';
 import { Card, Button } from '../../components/common';
 import { QRCodeDisplay } from '../../components/tickets';
 import { useTicketStore } from '../../store';
@@ -42,8 +41,8 @@ const mockTicket: Ticket = {
 export const TicketDetailScreen: React.FC = () => {
   const navigation = useNavigation<TicketDetailNavigationProp>();
   const route = useRoute<TicketDetailRouteProp>();
-  const { tickets, selectTicket, selectedTicket } = useTicketStore();
-  const [brightness, setBrightness] = useState(100);
+  const { tickets, selectTicket } = useTicketStore();
+  const [_brightness, _setBrightness] = useState(100);
 
   const ticketId = route.params?.ticketId;
   const ticket = tickets.find((t) => t.id === ticketId) || mockTicket;

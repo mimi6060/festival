@@ -12,7 +12,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService, CacheTag } from '../cache/cache.service';
-import { ExchangeRateService, ExchangeRateResult } from './services/exchange-rate.service';
+import { ExchangeRateService } from './services/exchange-rate.service';
 import {
   SupportedCurrency,
   CurrencyInfo,
@@ -23,7 +23,6 @@ import {
   CurrencyInfoDto,
 } from './dto';
 import { Currency } from '@prisma/client';
-import { NotFoundException } from '../../common/exceptions/base.exception';
 
 // Cache TTL
 const SETTINGS_CACHE_TTL = 3600; // 1 hour
@@ -291,11 +290,11 @@ export class CurrencyService {
     if (updates.supportedCurrencies) {
       updateData.supportedCurrencies = updates.supportedCurrencies as Currency[];
     }
-    if (updates.displayFormat) updateData.displayFormat = updates.displayFormat;
-    if (updates.decimalSeparator) updateData.decimalSeparator = updates.decimalSeparator;
-    if (updates.thousandsSeparator) updateData.thousandsSeparator = updates.thousandsSeparator;
-    if (updates.symbolPosition) updateData.symbolPosition = updates.symbolPosition;
-    if (typeof updates.autoConvert === 'boolean') updateData.autoConvert = updates.autoConvert;
+    if (updates.displayFormat) {updateData.displayFormat = updates.displayFormat;}
+    if (updates.decimalSeparator) {updateData.decimalSeparator = updates.decimalSeparator;}
+    if (updates.thousandsSeparator) {updateData.thousandsSeparator = updates.thousandsSeparator;}
+    if (updates.symbolPosition) {updateData.symbolPosition = updates.symbolPosition;}
+    if (typeof updates.autoConvert === 'boolean') {updateData.autoConvert = updates.autoConvert;}
 
     const settings = await this.prisma.festivalCurrencySettings.update({
       where: { festivalId },

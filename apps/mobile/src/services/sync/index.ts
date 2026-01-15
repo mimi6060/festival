@@ -56,3 +56,18 @@ export type {
   MutationEvent,
   OfflineMutationConfig,
 } from './OfflineMutationHandler';
+
+// Background sync service
+export { default as BackgroundSyncService, backgroundSyncService } from './BackgroundSyncService';
+export type {
+  BackgroundSyncConfig,
+  BackgroundSyncResult,
+  BackgroundSyncEvent,
+} from './BackgroundSyncService';
+
+// Ticket cache service
+export { default as TicketCacheService, ticketCacheService } from './TicketCacheService';
+export type {
+  CachedTicketData,
+  TicketCacheStatus,
+} from './TicketCacheService';

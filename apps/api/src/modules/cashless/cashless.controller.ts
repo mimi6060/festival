@@ -3,7 +3,6 @@ import {
   Get,
   Post,
   Body,
-  Param,
   Query,
   UseGuards,
   Request,
@@ -12,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { CashlessService, TopupDto, CashlessPaymentDto, RefundDto } from './cashless.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { PaginationDto } from '../../common/dto/pagination.dto';
+import { RateLimit } from '../../common/guards/rate-limit.guard';
 
 @Controller('api/wallet')
 export class CashlessController {
@@ -55,6 +54,13 @@ export class CashlessController {
    */
   @UseGuards(JwtAuthGuard)
   @Post('pay')
+  @RateLimit({
+    limit: 60,
+    windowSeconds: 60, // 60 requests per minute per user (high limit for point of sale usage)
+    keyPrefix: 'cashless:pay',
+    perUser: true,
+    errorMessage: 'Too many payment requests. Please try again later.',
+  })
   @HttpCode(HttpStatus.OK)
   async pay(@Request() req, @Body() dto: CashlessPaymentDto) {
     return this.cashlessService.pay(req.user.id, dto);

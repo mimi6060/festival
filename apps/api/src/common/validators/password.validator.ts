@@ -206,7 +206,7 @@ export class PasswordValidatorService {
     const hasUppercase = /[A-Z]/.test(password);
     const hasLowercase = /[a-z]/.test(password);
     const hasNumbers = /[0-9]/.test(password);
-    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password);
+    const hasSpecial = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(password);
 
     const charTypes = [hasUppercase, hasLowercase, hasNumbers, hasSpecial].filter(
       Boolean,
@@ -304,11 +304,11 @@ export class PasswordValidatorService {
 
     // Calculate character pool size
     let poolSize = 0;
-    if (/[a-z]/.test(password)) poolSize += 26;
-    if (/[A-Z]/.test(password)) poolSize += 26;
-    if (/[0-9]/.test(password)) poolSize += 10;
-    if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password)) poolSize += 32;
-    if (/[^a-zA-Z0-9!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password)) poolSize += 100;
+    if (/[a-z]/.test(password)) {poolSize += 26;}
+    if (/[A-Z]/.test(password)) {poolSize += 26;}
+    if (/[0-9]/.test(password)) {poolSize += 10;}
+    if (/[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(password)) {poolSize += 32;}
+    if (/[^a-zA-Z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(password)) {poolSize += 100;}
 
     // Calculate entropy: E = L * log2(R) where L = length, R = pool size
     return password.length * Math.log2(poolSize || 1);
@@ -384,7 +384,7 @@ export class PasswordValidatorService {
     const hasUppercase = /[A-Z]/.test(password);
     const hasLowercase = /[a-z]/.test(password);
     const hasNumbers = /[0-9]/.test(password);
-    const hasSpecial = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?~`]/.test(password);
+    const hasSpecial = /[!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?~`]/.test(password);
 
     score += [hasUppercase, hasLowercase, hasNumbers, hasSpecial].filter(Boolean)
       .length * 5;
@@ -403,10 +403,10 @@ export class PasswordValidatorService {
    * Get strength level from score
    */
   private getStrengthLevel(score: number): PasswordStrength {
-    if (score >= 80) return PasswordStrength.VERY_STRONG;
-    if (score >= 60) return PasswordStrength.STRONG;
-    if (score >= 40) return PasswordStrength.FAIR;
-    if (score >= 20) return PasswordStrength.WEAK;
+    if (score >= 80) {return PasswordStrength.VERY_STRONG;}
+    if (score >= 60) {return PasswordStrength.STRONG;}
+    if (score >= 40) {return PasswordStrength.FAIR;}
+    if (score >= 20) {return PasswordStrength.WEAK;}
     return PasswordStrength.VERY_WEAK;
   }
 }
@@ -475,7 +475,7 @@ export function IsStrongPassword(
 /**
  * Utility function to generate a strong random password
  */
-export function generateStrongPassword(length: number = 16): string {
+export function generateStrongPassword(length = 16): string {
   const uppercase = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   const lowercase = 'abcdefghijklmnopqrstuvwxyz';
   const numbers = '0123456789';
@@ -483,7 +483,7 @@ export function generateStrongPassword(length: number = 16): string {
   const allChars = uppercase + lowercase + numbers + special;
 
   // Ensure at least one of each type
-  let password = [
+  const password = [
     uppercase[Math.floor(Math.random() * uppercase.length)],
     lowercase[Math.floor(Math.random() * lowercase.length)],
     numbers[Math.floor(Math.random() * numbers.length)],

@@ -10,12 +10,12 @@ export default function NewFestivalPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const handleSubmit = async (data: Partial<Festival>) => {
+  const handleSubmit = async (_data: Partial<Festival>) => {
     setLoading(true);
     try {
       // Simulation de la création
       await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log('Festival created:', data);
+      // Festival created - TODO: implement actual API call
 
       // Rediriger vers la liste des festivals
       router.push('/festivals');

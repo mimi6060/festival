@@ -367,8 +367,9 @@ function validateIbanChecksum(iban: string): boolean {
 
   // Perform MOD 97-10 calculation
   let remainder = 0;
-  for (let i = 0; i < numericIban.length; i++) {
-    remainder = (remainder * 10 + parseInt(numericIban[i], 10)) % 97;
+  // Index-based iteration needed for modular arithmetic calculation
+  for (const digit of numericIban) {
+    remainder = (remainder * 10 + parseInt(digit, 10)) % 97;
   }
   return remainder === 1;
 }

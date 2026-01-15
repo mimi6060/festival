@@ -14,7 +14,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import {
   RetryService,
   RetryOptions,
-  RetryResult,
+  RetryResult as _RetryResult,
   DEFAULT_RETRY_OPTIONS,
   RetryPresets,
   Retry,
@@ -361,7 +361,7 @@ describe('RetryService', () => {
 
         // With jitter, delays should vary (100ms + 0-30% jitter = 100-130ms)
         // Not all delays should be exactly the same
-        const uniqueDelays = new Set(delays);
+        const _uniqueDelays = new Set(delays);
         // With jitter and enough samples, we expect some variation
         expect(delays.every((d) => d >= 100 && d <= 130)).toBe(true);
       });

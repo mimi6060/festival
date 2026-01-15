@@ -16,8 +16,8 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import {
   ZonesGateway,
-  ZoneOccupancy,
-  ZoneStatus,
+  ZoneOccupancy as _ZoneOccupancy,
+  ZoneStatus as _ZoneStatus,
   ZoneAlert,
   StaffPosition,
 } from './zones.gateway';

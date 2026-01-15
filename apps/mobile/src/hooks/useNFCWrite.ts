@@ -186,7 +186,7 @@ export function useNFCWrite(options: UseNFCWriteOptions = {}) {
     userId: string,
     accountId: string,
     festivalId: string,
-    initialBalance: number = 0
+    initialBalance = 0
   ): Promise<NFCWriteResult> => {
     if (!nfcManager.isReady()) {
       const error = new NFCError(

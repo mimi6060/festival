@@ -14,17 +14,9 @@ import axios from 'axios';
 import {
   createTestUser,
   createTestFestival,
-  createCashlessAccount,
-  topupCashlessAccount,
-  makeCashlessPayment,
-  getCashlessBalance,
   authenticatedRequest,
   randomEmail,
   randomPassword,
-  expectValidationError,
-  expectUnauthorized,
-  expectNotFound,
-  expectForbidden,
 } from '../support';
 import { validFestivalData } from '../support/fixtures';
 
@@ -33,7 +25,7 @@ describe('Cashless E2E Tests', () => {
   let userToken: string;
   let cashierToken: string;
   let festivalId: string;
-  let userId: string;
+  let _userId: string;
 
   beforeAll(async () => {
     // Create organizer and get token
@@ -49,7 +41,7 @@ describe('Cashless E2E Tests', () => {
       password: randomPassword(),
     });
     userToken = user.accessToken!;
-    userId = user.id;
+    _userId = user.id;
 
     // Create cashier user
     const cashier = await createTestUser('CASHIER', {
@@ -62,8 +54,8 @@ describe('Cashless E2E Tests', () => {
     try {
       const festival = await createTestFestival(organizerToken, validFestivalData);
       festivalId = festival.id;
-    } catch (error) {
-      console.log('Setup may have failed - tests will skip if festival not created');
+    } catch {
+      console.warn('Setup may have failed - tests will skip if festival not created');
     }
   });
 
@@ -278,7 +270,7 @@ describe('Cashless E2E Tests', () => {
     let topupUserToken: string;
 
     beforeAll(async () => {
-      if (!festivalId) return;
+      if (!festivalId) {return;}
 
       // Create user with balance for payment tests
       const paymentUser = await createTestUser('USER', {

@@ -12,7 +12,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
-import { WsException } from '@nestjs/websockets';
+import { WsException as _WsException } from '@nestjs/websockets';
 import { EventsGateway, WsUser, WsNotification } from './events.gateway';
 import { Server, Socket } from 'socket.io';
 
@@ -69,8 +69,8 @@ const mockAdminUser: WsUser = {
 
 describe('EventsGateway', () => {
   let gateway: EventsGateway;
-  let jwtService: JwtService;
-  let configService: ConfigService;
+  let _jwtService: JwtService;
+  let _configService: ConfigService;
   let mockServer: Partial<Server>;
 
   const mockJwtService = {
@@ -94,8 +94,8 @@ describe('EventsGateway', () => {
     }).compile();
 
     gateway = module.get<EventsGateway>(EventsGateway);
-    jwtService = module.get<JwtService>(JwtService);
-    configService = module.get<ConfigService>(ConfigService);
+    _jwtService = module.get<JwtService>(JwtService);
+    _configService = module.get<ConfigService>(ConfigService);
 
     // Setup mock server
     mockServer = {
@@ -652,7 +652,7 @@ describe('EventsGateway', () => {
 
     it('should support all notification types', () => {
       const userId = 'user-123';
-      const types: Array<'info' | 'success' | 'warning' | 'error' | 'alert'> = [
+      const types: ('info' | 'success' | 'warning' | 'error' | 'alert')[] = [
         'info',
         'success',
         'warning',

@@ -169,7 +169,7 @@ export function EnterpriseTierRateLimit() {
  * Apply strict rate limiting (high cost, limited to minute window)
  * Good for expensive operations
  */
-export function StrictTierRateLimit(cost: number = 10) {
+export function StrictTierRateLimit(cost = 10) {
   return TierRateLimit({
     cost,
     errorMessage: 'This is an expensive operation. Please wait before trying again.',

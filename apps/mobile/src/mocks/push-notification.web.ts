@@ -12,8 +12,8 @@ export const Importance = {
 };
 
 const PushNotification = {
-  configure: (options: unknown) => {
-    console.log('[Web] Push notifications not supported in web mode');
+  configure: (_options: unknown) => {
+    console.warn('[Web] Push notifications not supported in web mode');
   },
 
   createChannel: (channel: unknown, callback?: (created: boolean) => void) => {
@@ -42,14 +42,14 @@ const PushNotification = {
     }
   },
 
-  localNotificationSchedule: (details: unknown) => {
-    console.log('[Web] Scheduled notifications not supported');
+  localNotificationSchedule: (_details: unknown) => {
+    console.warn('[Web] Scheduled notifications not supported');
   },
 
-  cancelAllLocalNotifications: () => {},
-  cancelLocalNotification: (id: string) => {},
-  removeAllDeliveredNotifications: () => {},
-  setApplicationIconBadgeNumber: (count: number) => {},
+  cancelAllLocalNotifications: () => { /* no-op for web */ },
+  cancelLocalNotification: (_id: string) => { /* no-op for web */ },
+  removeAllDeliveredNotifications: () => { /* no-op for web */ },
+  setApplicationIconBadgeNumber: (_count: number) => { /* no-op for web */ },
 };
 
 export default PushNotification;

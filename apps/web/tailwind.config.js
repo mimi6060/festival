@@ -122,7 +122,7 @@ module.exports = {
   },
   plugins: [
     // RTL variant plugin
-    plugin(function ({ addVariant, e }) {
+    plugin(function ({ addVariant }) {
       // Add RTL variant (applies when dir="rtl" is set on html/body)
       addVariant('rtl', '[dir="rtl"] &');
       // Add LTR variant (applies when dir="ltr" is set on html/body)

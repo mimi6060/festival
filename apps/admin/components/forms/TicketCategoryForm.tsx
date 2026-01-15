@@ -75,7 +75,7 @@ export default function TicketCategoryForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validate()) {return;}
 
     const categoryData: Partial<TicketCategory> = {
       festivalId,

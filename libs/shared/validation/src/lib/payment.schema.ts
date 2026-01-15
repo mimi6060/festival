@@ -15,7 +15,6 @@ import {
   dateStringSchema,
   dateTimeStringSchema,
   paginationSchema,
-  PATTERNS,
 } from './common.schema';
 
 // ============================================================================

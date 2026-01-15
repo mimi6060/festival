@@ -1233,4 +1233,334 @@ describe('FestivalsService', () => {
       ).rejects.toThrow('Unique constraint failed');
     });
   });
+
+  // ==========================================================================
+  // Cache Behavior Tests
+  // ==========================================================================
+
+  describe('cache behavior', () => {
+    describe('findAll caching', () => {
+      it('should return cached data on cache hit', async () => {
+        // Arrange
+        const cachedData = {
+          data: [publishedFestival],
+          total: 1,
+          page: 1,
+          limit: 10,
+          totalPages: 1,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        };
+        mockCacheService.get.mockResolvedValue(cachedData);
+
+        // Act
+        const result = await festivalsService.findAll({});
+
+        // Assert
+        expect(result).toEqual(cachedData);
+        expect(mockCacheService.get).toHaveBeenCalledWith(
+          expect.stringContaining('festivals:list:')
+        );
+        expect(mockPrismaService.festival.findMany).not.toHaveBeenCalled();
+      });
+
+      it('should fetch from database and cache on cache miss', async () => {
+        // Arrange
+        mockCacheService.get.mockResolvedValue(null);
+        mockPrismaService.festival.findMany.mockResolvedValue([publishedFestival]);
+        mockPrismaService.festival.count.mockResolvedValue(1);
+
+        // Act
+        const result = await festivalsService.findAll({});
+
+        // Assert
+        expect(result.data).toHaveLength(1);
+        expect(mockCacheService.set).toHaveBeenCalledWith(
+          expect.stringContaining('festivals:list:'),
+          expect.objectContaining({ data: expect.any(Array) }),
+          expect.objectContaining({ ttl: 60 }) // 60 seconds TTL
+        );
+      });
+
+      it('should use correct cache key format with query params', async () => {
+        // Arrange
+        mockCacheService.get.mockResolvedValue(null);
+        mockPrismaService.festival.findMany.mockResolvedValue([]);
+        mockPrismaService.festival.count.mockResolvedValue(0);
+
+        // Act
+        await festivalsService.findAll({
+          status: 'PUBLISHED' as any,
+          page: 2,
+          limit: 20,
+          search: 'rock',
+          organizerId: 'org-123',
+        });
+
+        // Assert
+        expect(mockCacheService.get).toHaveBeenCalledWith(
+          'festivals:list:PUBLISHED:2:20:rock:org-123'
+        );
+      });
+    });
+
+    describe('findOne caching', () => {
+      it('should return cached festival on cache hit', async () => {
+        // Arrange
+        const cachedFestival = {
+          ...publishedFestival,
+          organizer: { id: organizerUser.id },
+          ticketCategories: [],
+          stages: [],
+          zones: [],
+          _count: { tickets: 0, vendors: 0, staffAssignments: 0 },
+        };
+        mockCacheService.get.mockResolvedValue(cachedFestival);
+
+        // Act
+        const result = await festivalsService.findOne(publishedFestival.id);
+
+        // Assert
+        expect(result).toEqual(cachedFestival);
+        expect(mockCacheService.get).toHaveBeenCalledWith(`festival:${publishedFestival.id}`);
+        expect(mockPrismaService.festival.findUnique).not.toHaveBeenCalled();
+      });
+
+      it('should fetch from database and cache on cache miss with 30s TTL', async () => {
+        // Arrange
+        mockCacheService.get.mockResolvedValue(null);
+        mockPrismaService.festival.findUnique.mockResolvedValue({
+          ...publishedFestival,
+          organizer: { id: organizerUser.id },
+          ticketCategories: [],
+          stages: [],
+          zones: [],
+          _count: { tickets: 0, vendors: 0, staffAssignments: 0 },
+        });
+
+        // Act
+        await festivalsService.findOne(publishedFestival.id);
+
+        // Assert
+        expect(mockCacheService.set).toHaveBeenCalledWith(
+          `festival:${publishedFestival.id}`,
+          expect.any(Object),
+          expect.objectContaining({ ttl: 30 }) // 30 seconds TTL
+        );
+      });
+    });
+
+    describe('findBySlug caching', () => {
+      it('should return cached festival on cache hit', async () => {
+        // Arrange
+        const cachedFestival = {
+          ...publishedFestival,
+          organizer: { id: organizerUser.id },
+          ticketCategories: [],
+          stages: [],
+          _count: { tickets: 0 },
+        };
+        mockCacheService.get.mockResolvedValue(cachedFestival);
+
+        // Act
+        const result = await festivalsService.findBySlug(publishedFestival.slug);
+
+        // Assert
+        expect(result).toEqual(cachedFestival);
+        expect(mockCacheService.get).toHaveBeenCalledWith(`festival:slug:${publishedFestival.slug}`);
+        expect(mockPrismaService.festival.findUnique).not.toHaveBeenCalled();
+      });
+
+      it('should fetch from database and cache on cache miss with 30s TTL', async () => {
+        // Arrange
+        mockCacheService.get.mockResolvedValue(null);
+        mockPrismaService.festival.findUnique.mockResolvedValue({
+          ...publishedFestival,
+          organizer: { id: organizerUser.id },
+          ticketCategories: [],
+          stages: [],
+          _count: { tickets: 0 },
+        });
+
+        // Act
+        await festivalsService.findBySlug(publishedFestival.slug);
+
+        // Assert
+        expect(mockCacheService.set).toHaveBeenCalledWith(
+          `festival:slug:${publishedFestival.slug}`,
+          expect.any(Object),
+          expect.objectContaining({ ttl: 30 }) // 30 seconds TTL
+        );
+      });
+    });
+
+    describe('cache invalidation', () => {
+      it('should invalidate cache on festival update', async () => {
+        // Arrange
+        mockCacheService.get.mockResolvedValue(null);
+        mockPrismaService.festival.findUnique.mockResolvedValue({
+          ...publishedFestival,
+          organizer: { id: organizerUser.id },
+          ticketCategories: [],
+          stages: [],
+          zones: [],
+          _count: { tickets: 0, vendors: 0, staffAssignments: 0 },
+        });
+        mockPrismaService.festival.update.mockResolvedValue({
+          ...publishedFestival,
+          name: 'Updated Festival Name',
+        });
+
+        // Act
+        await festivalsService.update(
+          publishedFestival.id,
+          { name: 'Updated Festival Name' },
+          organizerUser.id
+        );
+
+        // Assert
+        expect(mockCacheService.delete).toHaveBeenCalledWith(`festival:${publishedFestival.id}`);
+        expect(mockCacheService.delete).toHaveBeenCalledWith(
+          `festival:${publishedFestival.id}:categories`
+        );
+        expect(mockCacheService.delete).toHaveBeenCalledWith(
+          `festival:slug:${publishedFestival.slug}`
+        );
+        expect(mockCacheService.deletePattern).toHaveBeenCalledWith('festivals:list:*');
+      });
+
+      it('should invalidate cache on festival delete', async () => {
+        // Arrange
+        mockCacheService.get.mockResolvedValue(null);
+        mockPrismaService.festival.findUnique.mockResolvedValue({
+          ...draftFestival,
+          organizer: { id: organizerUser.id },
+          ticketCategories: [],
+          stages: [],
+          zones: [],
+          _count: { tickets: 0, vendors: 0, staffAssignments: 0 },
+        });
+        mockPrismaService.festival.update.mockResolvedValue({
+          ...draftFestival,
+          isDeleted: true,
+          deletedAt: new Date(),
+        });
+
+        // Act
+        await festivalsService.remove(draftFestival.id, organizerUser.id);
+
+        // Assert
+        expect(mockCacheService.delete).toHaveBeenCalledWith(`festival:${draftFestival.id}`);
+        expect(mockCacheService.deletePattern).toHaveBeenCalledWith('festivals:list:*');
+      });
+
+      it('should invalidate cache on status change', async () => {
+        // Arrange
+        mockCacheService.get.mockResolvedValue(null);
+        mockPrismaService.festival.findUnique.mockResolvedValue({
+          ...draftFestival,
+          organizer: { id: organizerUser.id },
+          ticketCategories: [],
+          stages: [],
+          zones: [],
+          _count: { tickets: 0, vendors: 0, staffAssignments: 0 },
+        });
+        mockPrismaService.festival.update.mockResolvedValue({
+          ...draftFestival,
+          status: 'PUBLISHED',
+        });
+
+        // Act
+        await festivalsService.updateStatus(
+          draftFestival.id,
+          'PUBLISHED' as any,
+          organizerUser.id
+        );
+
+        // Assert
+        expect(mockCacheService.delete).toHaveBeenCalledWith(`festival:${draftFestival.id}`);
+        expect(mockCacheService.deletePattern).toHaveBeenCalledWith('festivals:list:*');
+      });
+    });
+
+    describe('cache metrics', () => {
+      it('should track cache hits and misses', async () => {
+        // Reset metrics
+        festivalsService.resetCacheMetrics();
+
+        // Simulate cache miss
+        mockCacheService.get.mockResolvedValue(null);
+        mockPrismaService.festival.findMany.mockResolvedValue([]);
+        mockPrismaService.festival.count.mockResolvedValue(0);
+        await festivalsService.findAll({});
+
+        // Check metrics after miss
+        let metrics = festivalsService.getCacheMetrics();
+        expect(metrics.misses).toBe(1);
+        expect(metrics.hits).toBe(0);
+
+        // Simulate cache hit
+        mockCacheService.get.mockResolvedValue({
+          data: [],
+          total: 0,
+          page: 1,
+          limit: 10,
+          totalPages: 0,
+          hasNextPage: false,
+          hasPreviousPage: false,
+        });
+        await festivalsService.findAll({ page: 2 });
+
+        // Check metrics after hit
+        metrics = festivalsService.getCacheMetrics();
+        expect(metrics.hits).toBe(1);
+        expect(metrics.misses).toBe(1);
+        expect(metrics.hitRate).toBe(50);
+      });
+
+      it('should calculate hit rate correctly', async () => {
+        festivalsService.resetCacheMetrics();
+
+        // 3 hits, 1 miss = 75% hit rate
+        mockCacheService.get.mockResolvedValue({ data: [] });
+
+        // 3 cache hits
+        for (let i = 0; i < 3; i++) {
+          await festivalsService.findAll({ page: i + 1 });
+        }
+
+        // 1 cache miss
+        mockCacheService.get.mockResolvedValue(null);
+        mockPrismaService.festival.findMany.mockResolvedValue([]);
+        mockPrismaService.festival.count.mockResolvedValue(0);
+        await festivalsService.findAll({ page: 10 });
+
+        const metrics = festivalsService.getCacheMetrics();
+        expect(metrics.hits).toBe(3);
+        expect(metrics.misses).toBe(1);
+        expect(metrics.total).toBe(4);
+        expect(metrics.hitRate).toBe(75);
+      });
+
+      it('should reset metrics', async () => {
+        // Arrange - simulate some activity
+        mockCacheService.get.mockResolvedValue({ data: [] });
+        await festivalsService.findAll({});
+
+        // Verify there's data
+        let metrics = festivalsService.getCacheMetrics();
+        expect(metrics.hits).toBeGreaterThan(0);
+
+        // Act - reset metrics
+        festivalsService.resetCacheMetrics();
+
+        // Assert
+        metrics = festivalsService.getCacheMetrics();
+        expect(metrics.hits).toBe(0);
+        expect(metrics.misses).toBe(0);
+        expect(metrics.total).toBe(0);
+        expect(metrics.hitRate).toBe(0);
+      });
+    });
+  });
 });

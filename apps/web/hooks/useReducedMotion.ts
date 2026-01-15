@@ -93,7 +93,7 @@ export function useReducedMotion(): boolean {
  */
 export function getReducedMotionDuration(
   normalDuration: number,
-  reducedDuration: number = 0
+  reducedDuration = 0
 ): number {
   if (typeof window === 'undefined' || !window.matchMedia) {
     return normalDuration;

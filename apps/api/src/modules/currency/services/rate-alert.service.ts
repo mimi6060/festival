@@ -97,11 +97,11 @@ export class RateAlertService {
 
     for (const subscription of subscriptions) {
       // Check if threshold is met
-      if (absChange < subscription.threshold) continue;
+      if (absChange < subscription.threshold) {continue;}
 
       // Check direction match
-      if (subscription.type === 'increase' && changePercent <= 0) continue;
-      if (subscription.type === 'decrease' && changePercent >= 0) continue;
+      if (subscription.type === 'increase' && changePercent <= 0) {continue;}
+      if (subscription.type === 'decrease' && changePercent >= 0) {continue;}
 
       // Create alert
       const alert: RateAlert = {
@@ -243,14 +243,14 @@ export class RateAlertService {
   /**
    * Get recent alerts
    */
-  getRecentAlerts(limit: number = 50): RateAlert[] {
+  getRecentAlerts(limit = 50): RateAlert[] {
     return this.recentAlerts.slice(-limit);
   }
 
   /**
    * Get alerts for a specific currency
    */
-  getAlertsForCurrency(currency: SupportedCurrency, limit: number = 50): RateAlert[] {
+  getAlertsForCurrency(currency: SupportedCurrency, limit = 50): RateAlert[] {
     return this.recentAlerts
       .filter((a) => a.currency === currency)
       .slice(-limit);

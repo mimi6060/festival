@@ -43,7 +43,7 @@ export default function StatCard({
   };
 
   const calculateChange = () => {
-    if (previousValue === undefined || previousValue === 0) return null;
+    if (previousValue === undefined || previousValue === 0) {return null;}
     const change = ((value - previousValue) / previousValue) * 100;
     return change;
   };

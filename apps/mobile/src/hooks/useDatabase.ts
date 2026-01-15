@@ -4,7 +4,7 @@
  */
 
 import { useCallback } from 'react';
-import { Database, Q, Collection, Model } from '@nozbe/watermelondb';
+import { Database, Q, Collection } from '@nozbe/watermelondb';
 import { useDatabase as useWatermelonDatabase } from '@nozbe/watermelondb/hooks';
 
 import { TableNames, TableName } from '../database/schema';
@@ -22,7 +22,7 @@ import {
 } from '../database/models';
 
 // Type mapping for collections
-type ModelTypeMap = {
+interface ModelTypeMap {
   [TableNames.USERS]: User;
   [TableNames.FESTIVALS]: Festival;
   [TableNames.TICKETS]: Ticket;
@@ -33,7 +33,7 @@ type ModelTypeMap = {
   [TableNames.NOTIFICATIONS]: Notification;
   [TableNames.SYNC_METADATA]: SyncMetadata;
   [TableNames.SYNC_QUEUE]: SyncQueueItem;
-};
+}
 
 /**
  * Hook to access the database instance

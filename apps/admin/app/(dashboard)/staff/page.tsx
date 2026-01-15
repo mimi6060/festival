@@ -44,7 +44,7 @@ export default function StaffPage() {
       sortable: true,
       render: (_, row) => {
         const user = row.user;
-        if (!user) return '-';
+        if (!user) {return '-';}
         return (
           <div className="flex items-center gap-3">
             {user.avatar ? (

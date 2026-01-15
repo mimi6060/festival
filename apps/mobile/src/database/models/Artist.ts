@@ -56,9 +56,9 @@ export default class Artist extends Model {
 
   get socialLinks(): { type: string; url: string }[] {
     const links: { type: string; url: string }[] = [];
-    if (this.spotifyUrl) links.push({ type: 'spotify', url: this.spotifyUrl });
-    if (this.instagramUrl) links.push({ type: 'instagram', url: this.instagramUrl });
-    if (this.websiteUrl) links.push({ type: 'website', url: this.websiteUrl });
+    if (this.spotifyUrl) {links.push({ type: 'spotify', url: this.spotifyUrl });}
+    if (this.instagramUrl) {links.push({ type: 'instagram', url: this.instagramUrl });}
+    if (this.websiteUrl) {links.push({ type: 'website', url: this.websiteUrl });}
     return links;
   }
 
@@ -79,8 +79,8 @@ export default class Artist extends Model {
    * Get short bio (truncated)
    */
   getShortBio(maxLength = 150): string {
-    if (!this.bio) return '';
-    if (this.bio.length <= maxLength) return this.bio;
+    if (!this.bio) {return '';}
+    if (this.bio.length <= maxLength) {return this.bio;}
     return `${this.bio.slice(0, maxLength).trim()}...`;
   }
 
@@ -116,14 +116,14 @@ export default class Artist extends Model {
     updatedAt?: string;
   }): Promise<void> {
     await this.update((artist) => {
-      if (data.name !== undefined) artist.name = data.name;
-      if (data.genre !== undefined) artist.genre = data.genre;
-      if (data.bio !== undefined) artist.bio = data.bio;
-      if (data.imageUrl !== undefined) artist.imageUrl = data.imageUrl;
-      if (data.spotifyUrl !== undefined) artist.spotifyUrl = data.spotifyUrl;
-      if (data.instagramUrl !== undefined) artist.instagramUrl = data.instagramUrl;
-      if (data.websiteUrl !== undefined) artist.websiteUrl = data.websiteUrl;
-      if (data.updatedAt) artist.serverUpdatedAt = new Date(data.updatedAt).getTime();
+      if (data.name !== undefined) {artist.name = data.name;}
+      if (data.genre !== undefined) {artist.genre = data.genre;}
+      if (data.bio !== undefined) {artist.bio = data.bio;}
+      if (data.imageUrl !== undefined) {artist.imageUrl = data.imageUrl;}
+      if (data.spotifyUrl !== undefined) {artist.spotifyUrl = data.spotifyUrl;}
+      if (data.instagramUrl !== undefined) {artist.instagramUrl = data.instagramUrl;}
+      if (data.websiteUrl !== undefined) {artist.websiteUrl = data.websiteUrl;}
+      if (data.updatedAt) {artist.serverUpdatedAt = new Date(data.updatedAt).getTime();}
       artist.isSynced = true;
       artist.lastSyncedAt = Date.now();
       artist.needsPush = false;
@@ -148,7 +148,7 @@ export default class Artist extends Model {
    * Set favorite status
    */
   @writer async setFavorite(isFavorite: boolean): Promise<void> {
-    if (this.isFavorite === isFavorite) return;
+    if (this.isFavorite === isFavorite) {return;}
 
     await this.update((artist) => {
       artist.isFavorite = isFavorite;

@@ -80,7 +80,7 @@ export class WalletManager {
   private googleWalletService: GoogleWalletService;
   private passGenerator: PassGenerator;
   private config: WalletConfig;
-  private initialized: boolean = false;
+  private initialized = false;
 
   private constructor() {
     this.appleWalletService = new AppleWalletService();
@@ -172,8 +172,8 @@ export class WalletManager {
    * Get preferred wallet type for current platform
    */
   public getPreferredWalletType(): WalletType {
-    if (Platform.OS === 'ios') return 'apple';
-    if (Platform.OS === 'android') return 'google';
+    if (Platform.OS === 'ios') {return 'apple';}
+    if (Platform.OS === 'android') {return 'google';}
     return 'none';
   }
 

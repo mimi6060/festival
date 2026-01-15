@@ -77,7 +77,7 @@ export default function FestivalForm({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validate()) {return;}
 
     const festivalData: Partial<Festival> = {
       name: formData.name,

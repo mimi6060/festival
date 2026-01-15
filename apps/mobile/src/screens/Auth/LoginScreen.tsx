@@ -50,7 +50,7 @@ export const LoginScreen: React.FC = () => {
   };
 
   const handleLogin = async () => {
-    if (!validate()) return;
+    if (!validate()) {return;}
 
     setLoading(true);
     try {
@@ -62,7 +62,7 @@ export const LoginScreen: React.FC = () => {
       } else {
         Alert.alert('Erreur', response.message || 'Identifiants incorrects');
       }
-    } catch (error) {
+    } catch {
       Alert.alert('Erreur', 'Une erreur est survenue. Veuillez reessayer.');
     } finally {
       setLoading(false);

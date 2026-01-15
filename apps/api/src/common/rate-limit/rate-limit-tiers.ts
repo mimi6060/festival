@@ -398,7 +398,7 @@ export function getTierFromSubscription(subscription?: {
   tier?: string;
   status?: string;
 }): ClientTier {
-  if (!subscription || subscription.status !== 'active') {
+  if (subscription?.status !== 'active') {
     return DEFAULT_TIER;
   }
 

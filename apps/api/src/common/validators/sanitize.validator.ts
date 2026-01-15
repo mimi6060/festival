@@ -304,11 +304,12 @@ export class SanitizationService {
    * Sanitize an email address
    */
   sanitizeEmail(email: string): string {
-    if (!email) return '';
+    if (!email) {return '';}
 
     let sanitized = email.toLowerCase().trim();
 
     // Remove null bytes and control characters
+    // eslint-disable-next-line no-control-regex
     sanitized = sanitized.replace(/[\x00-\x1F\x7F]/g, '');
 
     // Remove any HTML/script
@@ -330,7 +331,7 @@ export class SanitizationService {
    * Sanitize a phone number (keep only digits and +)
    */
   sanitizePhone(phone: string): string {
-    if (!phone) return '';
+    if (!phone) {return '';}
 
     let sanitized = phone.trim();
 
@@ -353,7 +354,7 @@ export class SanitizationService {
    * Sanitize a URL
    */
   sanitizeUrl(url: string): string {
-    if (!url) return '';
+    if (!url) {return '';}
 
     let sanitized = url.trim();
 
@@ -376,7 +377,7 @@ export class SanitizationService {
    * Sanitize a filename
    */
   sanitizeFilename(filename: string): string {
-    if (!filename) return '';
+    if (!filename) {return '';}
 
     let sanitized = filename.trim();
 
@@ -387,6 +388,7 @@ export class SanitizationService {
     sanitized = this.preventPathTraversal(sanitized);
 
     // Remove characters not safe for filenames
+    // eslint-disable-next-line no-control-regex
     sanitized = sanitized.replace(/[<>:"/\\|?*\x00-\x1F]/g, '');
 
     // Remove leading/trailing dots and spaces

@@ -92,7 +92,7 @@ export function Tabs({
 
   const registerTab = useCallback((tabValue: string) => {
     setTabs(prev => {
-      if (prev.includes(tabValue)) return prev;
+      if (prev.includes(tabValue)) {return prev;}
       return [...prev, tabValue];
     });
   }, []);
@@ -137,7 +137,7 @@ export function TabList({
   'aria-labelledby': ariaLabelledBy,
 }: TabListProps) {
   const context = useContext(TabsContext);
-  if (!context) throw new Error('TabList must be used within Tabs');
+  if (!context) {throw new Error('TabList must be used within Tabs');}
 
   const tabListRef = useRef<HTMLDivElement>(null);
 
@@ -239,7 +239,7 @@ const variantTabStyles: Record<TabVariant, { base: string; active: string; inact
  */
 export function Tab({ value, children, disabled = false, icon, className = '' }: TabProps) {
   const context = useContext(TabsContext);
-  if (!context) throw new Error('Tab must be used within Tabs');
+  if (!context) {throw new Error('Tab must be used within Tabs');}
 
   const { activeTab, setActiveTab, variant, size, tabListId, registerTab } = context;
   const isActive = activeTab === value;
@@ -308,7 +308,7 @@ export function TabPanel({
   forceMount = false,
 }: TabPanelProps) {
   const context = useContext(TabsContext);
-  if (!context) throw new Error('TabPanel must be used within Tabs');
+  if (!context) {throw new Error('TabPanel must be used within Tabs');}
 
   const { activeTab, tabListId } = context;
   const isActive = activeTab === value;
@@ -316,7 +316,7 @@ export function TabPanel({
   const panelId = `${tabListId}-panel-${value}`;
 
   // If not active and not force mounted, don't render
-  if (!isActive && !forceMount) return null;
+  if (!isActive && !forceMount) {return null;}
 
   return (
     <div

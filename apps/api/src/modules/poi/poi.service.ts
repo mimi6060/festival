@@ -289,8 +289,8 @@ export class PoiService {
     festivalId: string,
     latitude: number,
     longitude: number,
-    radiusMeters: number = 1000
-  ): Promise<Array<MapPoi & { distance: number }>> {
+    radiusMeters = 1000
+  ): Promise<(MapPoi & { distance: number })[]> {
     // Verify festival exists
     const festival = await this.prisma.festival.findUnique({
       where: { id: festivalId },

@@ -402,7 +402,7 @@ export class ExchangeRateService implements OnModuleInit, OnModuleDestroy {
    */
   async getHistoricalRatesForCurrency(
     currency: SupportedCurrency,
-    days: number = 30,
+    days = 30,
   ): Promise<ExchangeRateResult[]> {
     const endDate = new Date();
     const startDate = new Date();
@@ -416,7 +416,7 @@ export class ExchangeRateService implements OnModuleInit, OnModuleDestroy {
    */
   async getVolatilityMetrics(
     currency: SupportedCurrency,
-    days: number = 30,
+    days = 30,
   ): Promise<VolatilityMetrics> {
     const historicalRates = await this.getHistoricalRatesForCurrency(currency, days);
 

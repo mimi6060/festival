@@ -4,9 +4,8 @@
  */
 
 import NfcManager, { NfcTech, Ndef } from 'react-native-nfc-manager';
-import { NFCFormatter, NFCTagData, CashlessData, NFCPayload } from './NFCFormatter';
-import { NFCError, NFCErrorCode } from './NFCManager';
-import type NFCManagerService from './NFCManager';
+import { NFCFormatter, NFCTagData, CashlessData } from './NFCFormatter';
+import { NFCError, NFCErrorCode, default as NFCManagerService } from './NFCManager';
 
 // Write result interface
 export interface NFCWriteResult {
@@ -148,7 +147,7 @@ export class NFCWriter {
     userId: string,
     accountId: string,
     festivalId: string,
-    initialBalance: number = 0,
+    initialBalance = 0,
     options: NFCWriteOptions = {}
   ): Promise<NFCWriteResult> {
     const cashlessData: CashlessData = {
@@ -179,7 +178,7 @@ export class NFCWriter {
 
       const tag = await NfcManager.getTag();
 
-      if (!tag || !tag.ndefMessage || tag.ndefMessage.length === 0) {
+      if (!tag?.ndefMessage || tag.ndefMessage.length === 0) {
         throw new NFCError(NFCErrorCode.INVALID_TAG, 'Cannot read current tag data');
       }
 
@@ -363,7 +362,7 @@ export class NFCWriter {
   /**
    * Parse NDEF message to string
    */
-  private parseNdefMessage(ndefMessage: Array<{ payload?: number[] }>): string | null {
+  private parseNdefMessage(ndefMessage: { payload?: number[] }[]): string | null {
     if (!ndefMessage || ndefMessage.length === 0) {
       return null;
     }

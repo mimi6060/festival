@@ -1,14 +1,23 @@
-import React from 'react';
+import React, { memo, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
 } from 'react-native';
-import { Card } from '../common';
+import { Card, OptimizedImage, ImagePlaceholder } from '../common';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { ProgramEvent } from '../../types';
+
+// Genre color map - memoized outside component
+const GENRE_COLORS: Record<string, string> = {
+  Electronic: colors.primary,
+  Rock: colors.error,
+  Pop: colors.secondary,
+  Jazz: colors.accent,
+  'Hip-Hop': colors.warning,
+  Reggae: colors.success,
+};
 
 interface EventCardProps {
   event: ProgramEvent;
@@ -18,32 +27,33 @@ interface EventCardProps {
   variant?: 'default' | 'compact' | 'featured';
 }
 
-export const EventCard: React.FC<EventCardProps> = ({
+// Memoized EventCard component for optimal performance
+export const EventCard = memo<EventCardProps>(({
   event,
   onPress,
   onFavoritePress,
   isFavorite = false,
   variant = 'default',
 }) => {
-  const formatTimeRange = () => {
-    return `${event.startTime} - ${event.endTime}`;
-  };
+  // Memoized time range calculation
+  const timeRange = useMemo(() =>
+    `${event.startTime} - ${event.endTime}`,
+    [event.startTime, event.endTime]
+  );
 
-  const getGenreColor = (genre: string) => {
-    const genreColors: Record<string, string> = {
-      Electronic: colors.primary,
-      Rock: colors.error,
-      Pop: colors.secondary,
-      Jazz: colors.accent,
-      'Hip-Hop': colors.warning,
-      Reggae: colors.success,
-    };
-    return genreColors[genre] || colors.primary;
-  };
+  // Memoized genre color lookup
+  const genreColor = useMemo(() =>
+    GENRE_COLORS[event.artist.genre] || colors.primary,
+    [event.artist.genre]
+  );
+
+  // Memoized callbacks to prevent re-renders
+  const handlePress = useCallback(() => onPress?.(), [onPress]);
+  const handleFavoritePress = useCallback(() => onFavoritePress?.(), [onFavoritePress]);
 
   if (variant === 'compact') {
     return (
-      <TouchableOpacity onPress={onPress} disabled={!onPress}>
+      <TouchableOpacity onPress={handlePress} disabled={!onPress}>
         <View style={styles.compactContainer}>
           <View style={styles.compactTimeColumn}>
             <Text style={styles.compactTime}>{event.startTime}</Text>
@@ -60,7 +70,7 @@ export const EventCard: React.FC<EventCardProps> = ({
           {onFavoritePress && (
             <TouchableOpacity
               style={styles.compactFavorite}
-              onPress={onFavoritePress}
+              onPress={handleFavoritePress}
             >
               <Text style={styles.favoriteIcon}>
                 {isFavorite ? '❤️' : '🤍'}
@@ -74,25 +84,26 @@ export const EventCard: React.FC<EventCardProps> = ({
 
   if (variant === 'featured') {
     return (
-      <TouchableOpacity onPress={onPress} disabled={!onPress}>
+      <TouchableOpacity onPress={handlePress} disabled={!onPress}>
         <Card style={styles.featuredCard}>
-          {/* Artist Image */}
+          {/* Artist Image with OptimizedImage */}
           <View style={styles.featuredImageContainer}>
             {event.artist.image ? (
-              <Image
-                source={{ uri: event.artist.image }}
+              <OptimizedImage
+                uri={event.artist.image}
                 style={styles.featuredImage}
+                priority="high"
+                cachePolicy="memory-disk"
+                contentFit="cover"
               />
             ) : (
-              <View style={styles.featuredImagePlaceholder}>
-                <Text style={styles.featuredImageIcon}>🎵</Text>
-              </View>
+              <ImagePlaceholder style={styles.featuredImagePlaceholder} icon="🎵" />
             )}
             {/* Favorite Button */}
             {onFavoritePress && (
               <TouchableOpacity
                 style={styles.featuredFavoriteButton}
-                onPress={onFavoritePress}
+                onPress={handleFavoritePress}
               >
                 <Text style={styles.favoriteIcon}>
                   {isFavorite ? '❤️' : '🤍'}
@@ -112,13 +123,13 @@ export const EventCard: React.FC<EventCardProps> = ({
               <View
                 style={[
                   styles.genreBadge,
-                  { backgroundColor: getGenreColor(event.artist.genre) + '20' },
+                  { backgroundColor: genreColor + '20' },
                 ]}
               >
                 <Text
                   style={[
                     styles.genreText,
-                    { color: getGenreColor(event.artist.genre) },
+                    { color: genreColor },
                   ]}
                 >
                   {event.artist.genre}
@@ -132,7 +143,7 @@ export const EventCard: React.FC<EventCardProps> = ({
               </View>
               <View style={styles.detailItem}>
                 <Text style={styles.detailIcon}>⏱️</Text>
-                <Text style={styles.detailText}>{formatTimeRange()}</Text>
+                <Text style={styles.detailText}>{timeRange}</Text>
               </View>
             </View>
           </View>
@@ -143,7 +154,7 @@ export const EventCard: React.FC<EventCardProps> = ({
 
   // Default variant
   return (
-    <TouchableOpacity onPress={onPress} disabled={!onPress}>
+    <TouchableOpacity onPress={handlePress} disabled={!onPress}>
       <Card style={styles.defaultCard}>
         <View style={styles.defaultContent}>
           {/* Time Column */}
@@ -159,13 +170,13 @@ export const EventCard: React.FC<EventCardProps> = ({
             <View
               style={[
                 styles.genreBadge,
-                { backgroundColor: getGenreColor(event.artist.genre) + '20' },
+                { backgroundColor: genreColor + '20' },
               ]}
             >
               <Text
                 style={[
                   styles.genreText,
-                  { color: getGenreColor(event.artist.genre) },
+                  { color: genreColor },
                 ]}
               >
                 {event.artist.genre}
@@ -181,7 +192,7 @@ export const EventCard: React.FC<EventCardProps> = ({
           {onFavoritePress && (
             <TouchableOpacity
               style={styles.favoriteButton}
-              onPress={onFavoritePress}
+              onPress={handleFavoritePress}
             >
               <Text style={styles.favoriteIcon}>
                 {isFavorite ? '❤️' : '🤍'}
@@ -192,7 +203,7 @@ export const EventCard: React.FC<EventCardProps> = ({
       </Card>
     </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
   // Default variant

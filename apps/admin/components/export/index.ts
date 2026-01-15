@@ -1,2 +1,2 @@
-export { default as ExportButton } from './ExportButton';
-export type { ExportFormat } from './ExportButton';
+export { default as ExportButton, ServerExportButton } from './ExportButton';
+export type { ExportFormat, ExportType } from './ExportButton';

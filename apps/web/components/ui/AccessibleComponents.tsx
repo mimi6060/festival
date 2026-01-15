@@ -18,7 +18,7 @@ export function useFocusTrap(isActive: boolean) {
   const containerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!isActive || !containerRef.current) return;
+    if (!isActive || !containerRef.current) {return;}
 
     const container = containerRef.current;
     const focusableElements = container.querySelectorAll<HTMLElement>(
@@ -28,7 +28,7 @@ export function useFocusTrap(isActive: boolean) {
     const lastElement = focusableElements[focusableElements.length - 1];
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Tab') return;
+      if (e.key !== 'Tab') {return;}
 
       if (e.shiftKey) {
         if (document.activeElement === firstElement) {
@@ -74,7 +74,7 @@ export function useKeyboardNavigation({
 
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent) => {
-      if (!items || items.length === 0) return;
+      if (!items || items.length === 0) {return;}
 
       let newIndex = activeIndex;
       const lastIndex = items.length - 1;
@@ -645,7 +645,6 @@ export function AccessibleTabs({
   };
 
   const handleKeyDown = (e: React.KeyboardEvent, currentIndex: number) => {
-    const enabledTabs = tabs.filter((t) => !t.disabled);
     const enabledIndexes = tabs.map((t, i) => (!t.disabled ? i : -1)).filter((i) => i >= 0);
     const currentEnabledIndex = enabledIndexes.indexOf(currentIndex);
 
@@ -775,7 +774,7 @@ export function AccessibleDialog({
 
   // Handle escape key
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {return;}
 
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -792,7 +791,7 @@ export function AccessibleDialog({
     };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen) {return null;}
 
   return (
     <div

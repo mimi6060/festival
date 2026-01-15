@@ -61,12 +61,7 @@ export async function POST(request: NextRequest) {
     signups.push(record);
 
     // Log pour le développement (à remplacer par envoi email/webhook en production)
-    console.log('🎉 Nouvelle inscription beta:', {
-      email: record.email,
-      festivalName: record.festivalName,
-      estimatedSize: record.estimatedSize,
-      createdAt: record.createdAt,
-    });
+    // TODO: Replace with proper logging service in production
 
     // TODO: En production, ajouter ici:
     // 1. Sauvegarde en base de données (Prisma)
@@ -125,7 +120,8 @@ export async function GET() {
 // Fonction pour envoyer l'email de bienvenue
 async function sendWelcomeEmail(email: string, festivalName: string) {
   // TODO: Implémenter l'envoi d'email avec votre service (SendGrid, Mailgun, etc.)
-  console.log(`📧 Email de bienvenue envoyé à ${email} pour le festival "${festivalName}"`);
+  void email;
+  void festivalName;
 
   // Exemple de contenu d'email:
   // Sujet: "Bienvenue dans le programme Beta de Festival Platform !"
@@ -141,10 +137,7 @@ async function sendWelcomeEmail(email: string, festivalName: string) {
 // Fonction pour notifier l'équipe
 async function notifyTeam(record: BetaSignupRecord) {
   // TODO: Implémenter la notification (Slack webhook, Discord, email, etc.)
-  console.log('🔔 Notification équipe:', {
-    message: `Nouveau beta tester: ${record.festivalName} (${record.estimatedSize})`,
-    email: record.email,
-  });
+  void record;
 
   // Exemple d'intégration Slack:
   // const slackWebhookUrl = process.env.SLACK_WEBHOOK_URL;
@@ -177,12 +170,13 @@ async function notifyTeam(record: BetaSignupRecord) {
   return Promise.resolve();
 }
 
-function getSizeLabel(size: string): string {
-  const labels: Record<string, string> = {
-    small: 'Petit (<5K)',
-    medium: 'Moyen (5K-20K)',
-    large: 'Grand (20K-100K)',
-    xlarge: 'Très grand (>100K)',
-  };
-  return labels[size] || size;
-}
+// _getSizeLabel intentionally unused - kept for future Slack webhook integration
+// function _getSizeLabel(size: string): string {
+//   const labels: Record<string, string> = {
+//     small: 'Petit (<5K)',
+//     medium: 'Moyen (5K-20K)',
+//     large: 'Grand (20K-100K)',
+//     xlarge: 'Très grand (>100K)',
+//   };
+//   return labels[size] || size;
+// }

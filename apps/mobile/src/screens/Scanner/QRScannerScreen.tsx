@@ -45,7 +45,7 @@ export const QRScannerScreen: React.FC = () => {
   };
 
   const handleBarCodeScanned = (data: string) => {
-    if (!isScanning) return;
+    if (!isScanning) {return;}
 
     setIsScanning(false);
 

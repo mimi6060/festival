@@ -114,7 +114,7 @@ export class CreateInvoiceDto {
   })
   @IsString()
   @MaxLength(3)
-  currency: string = 'EUR';
+  currency = 'EUR';
 
   @ApiPropertyOptional({
     description: 'Original currency (if different from invoice currency)',

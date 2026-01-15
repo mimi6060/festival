@@ -2,7 +2,11 @@
 
 import { useMemo } from 'react';
 import dynamic from 'next/dynamic';
-import StatCard from '@/components/dashboard/StatCard';
+import { useRealtimeData } from '@/hooks';
+import { ConnectionStatusIndicator } from '@/components/dashboard/ConnectionStatusIndicator';
+import { RealTimeStatCard } from '@/components/dashboard/RealTimeStatCard';
+import { ZoneOccupancyWidget } from '@/components/dashboard/ZoneOccupancyWidget';
+import { RecentTransactionsWidget } from '@/components/dashboard/RecentTransactionsWidget';
 import RecentActivity from '@/components/dashboard/RecentActivity';
 import TopFestivals from '@/components/dashboard/TopFestivals';
 import {
@@ -32,7 +36,31 @@ const TicketSalesChart = dynamic(() => import('@/components/dashboard/TicketSale
 });
 
 export default function DashboardPage() {
-  const stats = mockDashboardStats;
+  // Real-time data hook with WebSocket connection
+  const {
+    stats: realtimeStats,
+    isConnected,
+    connectionState,
+    lastUpdate,
+    isLoading,
+    connect,
+    refresh,
+  } = useRealtimeData({
+    autoConnect: true,
+    pollingFallback: true,
+    pollingInterval: 30000, // Fallback to 30s polling if WebSocket unavailable
+  });
+
+  // Combine real-time stats with mock data for complete display
+  const stats = useMemo(() => ({
+    activeFestivals: mockDashboardStats.activeFestivals,
+    ticketsSoldThisMonth: realtimeStats.ticketsSoldToday > 0 ? realtimeStats.ticketsSoldToday : mockDashboardStats.ticketsSoldThisMonth,
+    revenueThisMonth: realtimeStats.revenueToday > 0 ? realtimeStats.revenueToday : mockDashboardStats.revenueThisMonth,
+    newUsersThisMonth: mockDashboardStats.newUsersThisMonth,
+    currentAttendees: realtimeStats.currentAttendees,
+    cashlessBalance: realtimeStats.cashlessBalance,
+  }), [realtimeStats, mockDashboardStats]);
+
   const festivals = mockFestivals.filter((f) => f.status === 'published');
   const revenueData = useMemo(() => generateRevenueChartData(90), []);
   const ticketSalesData = useMemo(() => generateTicketSalesChartData(90), []);
@@ -43,9 +71,30 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-500 mt-1">Bienvenue ! Voici un apercu de votre activite.</p>
+          <p className="text-gray-500 mt-1">Bienvenue ! Voici un apercu de votre activite en temps reel.</p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
+          {/* Connection Status */}
+          <ConnectionStatusIndicator
+            isConnected={isConnected}
+            connectionState={connectionState}
+            lastUpdate={lastUpdate}
+            onReconnect={connect}
+            size="sm"
+          />
+
+          {/* Action Buttons */}
+          <button onClick={refresh} className="btn-secondary flex items-center gap-2">
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+              />
+            </svg>
+            Actualiser
+          </button>
           <button className="btn-secondary flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -71,9 +120,9 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <StatCard
+      {/* Real-Time Stats Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+        <RealTimeStatCard
           title="Festivals actifs"
           value={stats.activeFestivals}
           previousValue={2}
@@ -89,7 +138,7 @@ export default function DashboardPage() {
           }
           color="blue"
         />
-        <StatCard
+        <RealTimeStatCard
           title="Billets vendus"
           value={stats.ticketsSoldThisMonth}
           previousValue={10500}
@@ -104,9 +153,11 @@ export default function DashboardPage() {
             </svg>
           }
           color="purple"
+          isLive={isConnected}
+          lastUpdate={lastUpdate}
         />
-        <StatCard
-          title="Revenus ce mois"
+        <RealTimeStatCard
+          title="Revenus"
           value={stats.revenueThisMonth}
           previousValue={480000}
           type="currency"
@@ -121,8 +172,10 @@ export default function DashboardPage() {
             </svg>
           }
           color="green"
+          isLive={isConnected}
+          lastUpdate={lastUpdate}
         />
-        <StatCard
+        <RealTimeStatCard
           title="Nouveaux utilisateurs"
           value={stats.newUsersThisMonth}
           previousValue={1980}
@@ -138,12 +191,63 @@ export default function DashboardPage() {
           }
           color="orange"
         />
+        <RealTimeStatCard
+          title="Participants actuels"
+          value={stats.currentAttendees}
+          icon={
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"
+              />
+            </svg>
+          }
+          color="blue"
+          trend="up"
+          isLive={isConnected}
+          lastUpdate={lastUpdate}
+        />
+        <RealTimeStatCard
+          title="Solde cashless"
+          value={stats.cashlessBalance}
+          type="currency"
+          icon={
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+              />
+            </svg>
+          }
+          color="purple"
+          trend="stable"
+          isLive={isConnected}
+          lastUpdate={lastUpdate}
+        />
       </div>
 
       {/* Charts Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <RevenueChart data={revenueData} />
         <TicketSalesChart data={ticketSalesData} />
+      </div>
+
+      {/* Real-Time Widgets Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <ZoneOccupancyWidget
+          zones={realtimeStats.zoneOccupancy}
+          isLive={isConnected}
+          loading={isLoading}
+        />
+        <RecentTransactionsWidget
+          transactions={realtimeStats.recentTransactions}
+          isLive={isConnected}
+          loading={isLoading}
+        />
       </div>
 
       {/* Bottom Row */}

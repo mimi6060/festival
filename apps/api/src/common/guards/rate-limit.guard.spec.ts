@@ -870,4 +870,457 @@ describe('RateLimitGuard', () => {
       await expect(guard.canActivate(context)).rejects.toThrow(HttpException);
     });
   });
+
+  describe('sensitive endpoints rate limiting (Story 2.3)', () => {
+    beforeEach(async () => {
+      jest.clearAllMocks();
+      jest.useFakeTimers();
+
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          RateLimitGuard,
+          {
+            provide: Reflector,
+            useValue: mockReflector,
+          },
+        ],
+      }).compile();
+
+      guard = module.get<RateLimitGuard>(RateLimitGuard);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+      guard.onModuleDestroy();
+    });
+
+    describe('POST /auth/login rate limiting (5 req/min per IP)', () => {
+      it('should allow 5 login requests per minute', async () => {
+        mockReflector.getAllAndOverride.mockImplementation((key) => {
+          if (key === SKIP_RATE_LIMIT_KEY) { return false; }
+          if (key === RATE_LIMIT_KEY) { return { limit: 5, windowSeconds: 60, keyPrefix: 'auth:login' }; }
+          return null;
+        });
+
+        const context = createMockExecutionContext({
+          method: 'POST',
+          path: '/api/auth/login',
+          ip: '192.168.1.100',
+        });
+
+        // First 5 requests should pass
+        for (let i = 0; i < 5; i++) {
+          const result = await guard.canActivate(context);
+          expect(result).toBe(true);
+        }
+      });
+
+      it('should reject 6th login request within same minute', async () => {
+        mockReflector.getAllAndOverride.mockImplementation((key) => {
+          if (key === SKIP_RATE_LIMIT_KEY) {return false;}
+          if (key === RATE_LIMIT_KEY) {return { limit: 5, windowSeconds: 60, keyPrefix: 'auth:login' };}
+          return null;
+        });
+
+        const context = createMockExecutionContext({
+          method: 'POST',
+          path: '/api/auth/login',
+          ip: '192.168.1.101',
+        });
+
+        // First 5 requests should pass
+        for (let i = 0; i < 5; i++) {
+          await guard.canActivate(context);
+        }
+
+        // 6th request should be rate limited
+        await expect(guard.canActivate(context)).rejects.toThrow(HttpException);
+      });
+
+      it('should include Retry-After header when login rate limited', async () => {
+        mockReflector.getAllAndOverride.mockImplementation((key) => {
+          if (key === SKIP_RATE_LIMIT_KEY) {return false;}
+          if (key === RATE_LIMIT_KEY) {return { limit: 1, windowSeconds: 60, keyPrefix: 'auth:login' };}
+          return null;
+        });
+
+        const context = createMockExecutionContext({
+          method: 'POST',
+          path: '/api/auth/login',
+          ip: '192.168.1.102',
+        });
+        const response = context.switchToHttp().getResponse();
+
+        await guard.canActivate(context);
+
+        try {
+          await guard.canActivate(context);
+        } catch {
+          expect(response.setHeader).toHaveBeenCalledWith('Retry-After', expect.any(String));
+          const retryAfterCall = (response.setHeader as jest.Mock).mock.calls.find(
+            (call) => call[0] === 'Retry-After'
+          );
+          expect(retryAfterCall).toBeDefined();
+          const retryAfterValue = parseInt(retryAfterCall[1], 10);
+          expect(retryAfterValue).toBeGreaterThan(0);
+          expect(retryAfterValue).toBeLessThanOrEqual(60);
+        }
+      });
+
+      it('should track rate limit per IP for login', async () => {
+        mockReflector.getAllAndOverride.mockImplementation((key) => {
+          if (key === SKIP_RATE_LIMIT_KEY) {return false;}
+          if (key === RATE_LIMIT_KEY) {return { limit: 2, windowSeconds: 60, keyPrefix: 'auth:login' };}
+          return null;
+        });
+
+        const contextIp1 = createMockExecutionContext({
+          method: 'POST',
+          path: '/api/auth/login',
+          ip: '10.0.0.1',
+        });
+
+        const contextIp2 = createMockExecutionContext({
+          method: 'POST',
+          path: '/api/auth/login',
+          ip: '10.0.0.2',
+        });
+
+        // IP1: 2 requests should pass
+        await guard.canActivate(contextIp1);
+        await guard.canActivate(contextIp1);
+        await expect(guard.canActivate(contextIp1)).rejects.toThrow(HttpException);
+
+        // IP2: Should still have its own quota
+        const result = await guard.canActivate(contextIp2);
+        expect(result).toBe(true);
+      });
+    });
+
+    describe('POST /auth/register rate limiting (3 req/min per IP)', () => {
+      it('should allow 3 registration requests per minute', async () => {
+        mockReflector.getAllAndOverride.mockImplementation((key) => {
+          if (key === SKIP_RATE_LIMIT_KEY) {return false;}
+          if (key === RATE_LIMIT_KEY) {return { limit: 3, windowSeconds: 60, keyPrefix: 'auth:register' };}
+          return null;
+        });
+
+        const context = createMockExecutionContext({
+          method: 'POST',
+          path: '/api/auth/register',
+          ip: '192.168.2.100',
+        });
+
+        // First 3 requests should pass
+        for (let i = 0; i < 3; i++) {
+          const result = await guard.canActivate(context);
+          expect(result).toBe(true);
+        }
+      });
+
+      it('should reject 4th registration request within same minute', async () => {
+        mockReflector.getAllAndOverride.mockImplementation((key) => {
+          if (key === SKIP_RATE_LIMIT_KEY) {return false;}
+          if (key === RATE_LIMIT_KEY) {return { limit: 3, windowSeconds: 60, keyPrefix: 'auth:register' };}
+          return null;
+        });
+
+        const context = createMockExecutionContext({
+          method: 'POST',
+          path: '/api/auth/register',
+          ip: '192.168.2.101',
+        });
+
+        // First 3 requests should pass
+        for (let i = 0; i < 3; i++) {
+          await guard.canActivate(context);
+        }
+
+        // 4th request should be rate limited
+        await expect(guard.canActivate(context)).rejects.toThrow(HttpException);
+      });
+
+      it('should return 429 status with proper error message for register', async () => {
+        const errorMessage = 'Too many registration attempts. Please try again later.';
+        mockReflector.getAllAndOverride.mockImplementation((key) => {
+          if (key === SKIP_RATE_LIMIT_KEY) {return false;}
+          if (key === RATE_LIMIT_KEY) {return { limit: 1, windowSeconds: 60, keyPrefix: 'auth:register', errorMessage };}
+          return null;
+        });
+
+        const context = createMockExecutionContext({
+          method: 'POST',
+          path: '/api/auth/register',
+          ip: '192.168.2.102',
+        });
+
+        await guard.canActivate(context);
+
+        try {
+          await guard.canActivate(context);
+          fail('Should have thrown');
+        } catch (error) {
+          expect((error as HttpException).getStatus()).toBe(HttpStatus.TOO_MANY_REQUESTS);
+          const response = (error as HttpException).getResponse() as any;
+          expect(response.message).toBe(errorMessage);
+        }
+      });
+    });
+
+    describe('POST /tickets/purchase rate limiting (10 req/min per user)', () => {
+      it('should allow 10 purchase requests per minute per user', async () => {
+        mockReflector.getAllAndOverride.mockImplementation((key) => {
+          if (key === SKIP_RATE_LIMIT_KEY) {return false;}
+          if (key === RATE_LIMIT_KEY) {return { limit: 10, windowSeconds: 60, keyPrefix: 'tickets:purchase', perUser: true };}
+          return null;
+        });
+
+        const context = createMockExecutionContext({
+          method: 'POST',
+          path: '/api/tickets/purchase',
+          user: { id: 'user-purchase-1' },
+        });
+
+        // First 10 requests should pass
+        for (let i = 0; i < 10; i++) {
+          const result = await guard.canActivate(context);
+          expect(result).toBe(true);
+        }
+      });
+
+      it('should reject 11th purchase request within same minute', async () => {
+        mockReflector.getAllAndOverride.mockImplementation((key) => {
+          if (key === SKIP_RATE_LIMIT_KEY) {return false;}
+          if (key === RATE_LIMIT_KEY) {return { limit: 10, windowSeconds: 60, keyPrefix: 'tickets:purchase', perUser: true };}
+          return null;
+        });
+
+        const context = createMockExecutionContext({
+          method: 'POST',
+          path: '/api/tickets/purchase',
+          user: { id: 'user-purchase-2' },
+        });
+
+        // First 10 requests should pass
+        for (let i = 0; i < 10; i++) {
+          await guard.canActivate(context);
+        }
+
+        // 11th request should be rate limited
+        await expect(guard.canActivate(context)).rejects.toThrow(HttpException);
+      });
+
+      it('should track rate limit per user for ticket purchase', async () => {
+        mockReflector.getAllAndOverride.mockImplementation((key) => {
+          if (key === SKIP_RATE_LIMIT_KEY) {return false;}
+          if (key === RATE_LIMIT_KEY) {return { limit: 2, windowSeconds: 60, keyPrefix: 'tickets:purchase', perUser: true };}
+          return null;
+        });
+
+        const contextUser1 = createMockExecutionContext({
+          method: 'POST',
+          path: '/api/tickets/purchase',
+          user: { id: 'user-purchase-3' },
+        });
+
+        const contextUser2 = createMockExecutionContext({
+          method: 'POST',
+          path: '/api/tickets/purchase',
+          user: { id: 'user-purchase-4' },
+        });
+
+        // User1: 2 requests should pass
+        await guard.canActivate(contextUser1);
+        await guard.canActivate(contextUser1);
+        await expect(guard.canActivate(contextUser1)).rejects.toThrow(HttpException);
+
+        // User2: Should still have its own quota
+        const result = await guard.canActivate(contextUser2);
+        expect(result).toBe(true);
+      });
+
+      it('should include retryAfter in error response for ticket purchase', async () => {
+        mockReflector.getAllAndOverride.mockImplementation((key) => {
+          if (key === SKIP_RATE_LIMIT_KEY) {return false;}
+          if (key === RATE_LIMIT_KEY) {return { limit: 1, windowSeconds: 60, keyPrefix: 'tickets:purchase', perUser: true };}
+          return null;
+        });
+
+        const context = createMockExecutionContext({
+          method: 'POST',
+          path: '/api/tickets/purchase',
+          user: { id: 'user-purchase-5' },
+        });
+
+        await guard.canActivate(context);
+
+        try {
+          await guard.canActivate(context);
+          fail('Should have thrown');
+        } catch (error) {
+          const response = (error as HttpException).getResponse() as any;
+          expect(response.retryAfter).toBeDefined();
+          expect(response.retryAfter).toBeGreaterThan(0);
+        }
+      });
+    });
+
+    describe('POST /cashless/pay rate limiting (60 req/min per user)', () => {
+      it('should allow 60 payment requests per minute per user', async () => {
+        mockReflector.getAllAndOverride.mockImplementation((key) => {
+          if (key === SKIP_RATE_LIMIT_KEY) {return false;}
+          if (key === RATE_LIMIT_KEY) {return { limit: 60, windowSeconds: 60, keyPrefix: 'cashless:pay', perUser: true };}
+          return null;
+        });
+
+        const context = createMockExecutionContext({
+          method: 'POST',
+          path: '/api/wallet/pay',
+          user: { id: 'user-pay-1' },
+        });
+
+        // First 60 requests should pass (high limit for POS usage)
+        for (let i = 0; i < 60; i++) {
+          const result = await guard.canActivate(context);
+          expect(result).toBe(true);
+        }
+      });
+
+      it('should reject 61st payment request within same minute', async () => {
+        mockReflector.getAllAndOverride.mockImplementation((key) => {
+          if (key === SKIP_RATE_LIMIT_KEY) {return false;}
+          if (key === RATE_LIMIT_KEY) {return { limit: 60, windowSeconds: 60, keyPrefix: 'cashless:pay', perUser: true };}
+          return null;
+        });
+
+        const context = createMockExecutionContext({
+          method: 'POST',
+          path: '/api/wallet/pay',
+          user: { id: 'user-pay-2' },
+        });
+
+        // First 60 requests should pass
+        for (let i = 0; i < 60; i++) {
+          await guard.canActivate(context);
+        }
+
+        // 61st request should be rate limited
+        await expect(guard.canActivate(context)).rejects.toThrow(HttpException);
+      });
+
+      it('should track rate limit per user for cashless payment', async () => {
+        mockReflector.getAllAndOverride.mockImplementation((key) => {
+          if (key === SKIP_RATE_LIMIT_KEY) {return false;}
+          if (key === RATE_LIMIT_KEY) {return { limit: 3, windowSeconds: 60, keyPrefix: 'cashless:pay', perUser: true };}
+          return null;
+        });
+
+        const contextUser1 = createMockExecutionContext({
+          method: 'POST',
+          path: '/api/wallet/pay',
+          user: { id: 'user-pay-3' },
+        });
+
+        const contextUser2 = createMockExecutionContext({
+          method: 'POST',
+          path: '/api/wallet/pay',
+          user: { id: 'user-pay-4' },
+        });
+
+        // User1: 3 requests should pass
+        await guard.canActivate(contextUser1);
+        await guard.canActivate(contextUser1);
+        await guard.canActivate(contextUser1);
+        await expect(guard.canActivate(contextUser1)).rejects.toThrow(HttpException);
+
+        // User2: Should still have its own quota
+        const result = await guard.canActivate(contextUser2);
+        expect(result).toBe(true);
+      });
+    });
+
+    describe('rate limit reset after window expires', () => {
+      it('should reset login rate limit after 60 seconds', async () => {
+        mockReflector.getAllAndOverride.mockImplementation((key) => {
+          if (key === SKIP_RATE_LIMIT_KEY) {return false;}
+          if (key === RATE_LIMIT_KEY) {return { limit: 1, windowSeconds: 60, keyPrefix: 'auth:login:reset' };}
+          return null;
+        });
+
+        const context = createMockExecutionContext({
+          method: 'POST',
+          path: '/api/auth/login',
+          ip: '10.10.10.1',
+        });
+
+        // First request should pass
+        await guard.canActivate(context);
+
+        // Second request should fail
+        await expect(guard.canActivate(context)).rejects.toThrow(HttpException);
+
+        // Advance time past window
+        jest.advanceTimersByTime(61000);
+
+        // Should pass again after window reset
+        const result = await guard.canActivate(context);
+        expect(result).toBe(true);
+      });
+
+      it('should reset ticket purchase rate limit after 60 seconds', async () => {
+        mockReflector.getAllAndOverride.mockImplementation((key) => {
+          if (key === SKIP_RATE_LIMIT_KEY) {return false;}
+          if (key === RATE_LIMIT_KEY) {return { limit: 1, windowSeconds: 60, keyPrefix: 'tickets:purchase:reset', perUser: true };}
+          return null;
+        });
+
+        const context = createMockExecutionContext({
+          method: 'POST',
+          path: '/api/tickets/purchase',
+          user: { id: 'user-reset-test' },
+        });
+
+        await guard.canActivate(context);
+        await expect(guard.canActivate(context)).rejects.toThrow(HttpException);
+
+        jest.advanceTimersByTime(61000);
+
+        const result = await guard.canActivate(context);
+        expect(result).toBe(true);
+      });
+    });
+
+    describe('429 response format', () => {
+      it('should return proper 429 error structure', async () => {
+        const errorMessage = 'Rate limit exceeded';
+        mockReflector.getAllAndOverride.mockImplementation((key) => {
+          if (key === SKIP_RATE_LIMIT_KEY) {return false;}
+          if (key === RATE_LIMIT_KEY) {return { limit: 1, windowSeconds: 60, keyPrefix: 'format-test', errorMessage };}
+          return null;
+        });
+
+        const context = createMockExecutionContext({
+          method: 'POST',
+          path: '/api/test',
+          ip: '1.2.3.4',
+        });
+
+        await guard.canActivate(context);
+
+        try {
+          await guard.canActivate(context);
+          fail('Should have thrown');
+        } catch (error) {
+          const httpError = error as HttpException;
+          expect(httpError.getStatus()).toBe(429);
+
+          const response = httpError.getResponse() as any;
+          expect(response).toHaveProperty('statusCode', 429);
+          expect(response).toHaveProperty('error', 'Too Many Requests');
+          expect(response).toHaveProperty('message', errorMessage);
+          expect(response).toHaveProperty('retryAfter');
+        }
+      });
+    });
+  });
 });

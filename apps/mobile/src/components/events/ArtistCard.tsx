@@ -1,14 +1,27 @@
-import React from 'react';
+import React, { memo, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  Image,
 } from 'react-native';
-import { Card } from '../common';
+import { Card, OptimizedImage } from '../common';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { Artist, ProgramEvent } from '../../types';
+
+// Genre color map - memoized outside component
+const GENRE_COLORS: Record<string, string> = {
+  Electronic: colors.primary,
+  Rock: colors.error,
+  Pop: colors.secondary,
+  Jazz: colors.accent,
+  'Hip-Hop': colors.warning,
+  Reggae: colors.success,
+  Synthwave: colors.primary,
+  'Disco/Funk': colors.secondary,
+  House: colors.accent,
+  Downtempo: colors.info,
+};
 
 interface ArtistCardProps {
   artist: Artist;
@@ -19,7 +32,8 @@ interface ArtistCardProps {
   variant?: 'default' | 'compact' | 'large';
 }
 
-export const ArtistCard: React.FC<ArtistCardProps> = ({
+// Memoized ArtistCard component for optimal performance
+export const ArtistCard = memo<ArtistCardProps>(({
   artist,
   events = [],
   onPress,
@@ -27,48 +41,53 @@ export const ArtistCard: React.FC<ArtistCardProps> = ({
   isFavorite = false,
   variant = 'default',
 }) => {
-  const getGenreColor = (genre: string) => {
-    const genreColors: Record<string, string> = {
-      Electronic: colors.primary,
-      Rock: colors.error,
-      Pop: colors.secondary,
-      Jazz: colors.accent,
-      'Hip-Hop': colors.warning,
-      Reggae: colors.success,
-      Synthwave: colors.primary,
-      'Disco/Funk': colors.secondary,
-      House: colors.accent,
-      Downtempo: colors.info,
-    };
-    return genreColors[genre] || colors.primary;
-  };
+  // Memoized genre color lookup
+  const genreColor = useMemo(() =>
+    GENRE_COLORS[artist.genre] || colors.primary,
+    [artist.genre]
+  );
 
-  const getInitials = (name: string) => {
-    return name
+  // Memoized initials calculation
+  const initials = useMemo(() =>
+    artist.name
       .split(' ')
       .map((word) => word.charAt(0))
       .join('')
       .slice(0, 2)
-      .toUpperCase();
-  };
+      .toUpperCase(),
+    [artist.name]
+  );
 
-  const nextEvent = events.find((e) => e.artist.id === artist.id);
+  // Memoized next event lookup
+  const nextEvent = useMemo(() =>
+    events.find((e) => e.artist.id === artist.id),
+    [events, artist.id]
+  );
+
+  // Memoized callbacks to prevent re-renders
+  const handlePress = useCallback(() => onPress?.(), [onPress]);
+  const handleFavoritePress = useCallback(() => onFavoritePress?.(), [onFavoritePress]);
 
   if (variant === 'compact') {
     return (
-      <TouchableOpacity onPress={onPress} disabled={!onPress}>
+      <TouchableOpacity onPress={handlePress} disabled={!onPress}>
         <View style={styles.compactContainer}>
-          {/* Avatar */}
+          {/* Avatar with OptimizedImage */}
           {artist.image ? (
-            <Image source={{ uri: artist.image }} style={styles.compactAvatar} />
+            <OptimizedImage
+              uri={artist.image}
+              style={styles.compactAvatar}
+              priority="normal"
+              cachePolicy="memory-disk"
+            />
           ) : (
             <View
               style={[
                 styles.compactAvatar,
-                { backgroundColor: getGenreColor(artist.genre) },
+                { backgroundColor: genreColor },
               ]}
             >
-              <Text style={styles.compactAvatarText}>{getInitials(artist.name)}</Text>
+              <Text style={styles.compactAvatarText}>{initials}</Text>
             </View>
           )}
 
@@ -82,7 +101,7 @@ export const ArtistCard: React.FC<ArtistCardProps> = ({
 
           {/* Favorite */}
           {onFavoritePress && (
-            <TouchableOpacity style={styles.compactFavorite} onPress={onFavoritePress}>
+            <TouchableOpacity style={styles.compactFavorite} onPress={handleFavoritePress}>
               <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
             </TouchableOpacity>
           )}
@@ -93,17 +112,23 @@ export const ArtistCard: React.FC<ArtistCardProps> = ({
 
   if (variant === 'large') {
     return (
-      <TouchableOpacity onPress={onPress} disabled={!onPress}>
+      <TouchableOpacity onPress={handlePress} disabled={!onPress}>
         <Card style={styles.largeCard}>
-          {/* Cover Image */}
+          {/* Cover Image with OptimizedImage */}
           <View style={styles.largeCover}>
             {artist.image ? (
-              <Image source={{ uri: artist.image }} style={styles.largeCoverImage} />
+              <OptimizedImage
+                uri={artist.image}
+                style={styles.largeCoverImage}
+                priority="high"
+                cachePolicy="memory-disk"
+                contentFit="cover"
+              />
             ) : (
               <View
                 style={[
                   styles.largeCoverPlaceholder,
-                  { backgroundColor: getGenreColor(artist.genre) },
+                  { backgroundColor: genreColor },
                 ]}
               >
                 <Text style={styles.largeCoverIcon}>🎵</Text>
@@ -114,7 +139,7 @@ export const ArtistCard: React.FC<ArtistCardProps> = ({
             {onFavoritePress && (
               <TouchableOpacity
                 style={styles.largeFavoriteButton}
-                onPress={onFavoritePress}
+                onPress={handleFavoritePress}
               >
                 <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
               </TouchableOpacity>
@@ -124,7 +149,7 @@ export const ArtistCard: React.FC<ArtistCardProps> = ({
             <View
               style={[
                 styles.largeGenreBadge,
-                { backgroundColor: getGenreColor(artist.genre) },
+                { backgroundColor: genreColor },
               ]}
             >
               <Text style={styles.largeGenreText}>{artist.genre}</Text>
@@ -164,21 +189,26 @@ export const ArtistCard: React.FC<ArtistCardProps> = ({
 
   // Default variant
   return (
-    <TouchableOpacity onPress={onPress} disabled={!onPress}>
+    <TouchableOpacity onPress={handlePress} disabled={!onPress}>
       <Card style={styles.defaultCard}>
         <View style={styles.defaultContent}>
-          {/* Avatar */}
+          {/* Avatar with OptimizedImage */}
           <View style={styles.avatarContainer}>
             {artist.image ? (
-              <Image source={{ uri: artist.image }} style={styles.avatar} />
+              <OptimizedImage
+                uri={artist.image}
+                style={styles.avatar}
+                priority="normal"
+                cachePolicy="memory-disk"
+              />
             ) : (
               <View
                 style={[
                   styles.avatarPlaceholder,
-                  { backgroundColor: getGenreColor(artist.genre) },
+                  { backgroundColor: genreColor },
                 ]}
               >
-                <Text style={styles.avatarText}>{getInitials(artist.name)}</Text>
+                <Text style={styles.avatarText}>{initials}</Text>
               </View>
             )}
           </View>
@@ -191,11 +221,11 @@ export const ArtistCard: React.FC<ArtistCardProps> = ({
             <View
               style={[
                 styles.genreBadge,
-                { backgroundColor: getGenreColor(artist.genre) + '20' },
+                { backgroundColor: genreColor + '20' },
               ]}
             >
               <Text
-                style={[styles.genreText, { color: getGenreColor(artist.genre) }]}
+                style={[styles.genreText, { color: genreColor }]}
               >
                 {artist.genre}
               </Text>
@@ -214,7 +244,7 @@ export const ArtistCard: React.FC<ArtistCardProps> = ({
 
           {/* Favorite Button */}
           {onFavoritePress && (
-            <TouchableOpacity style={styles.favoriteButton} onPress={onFavoritePress}>
+            <TouchableOpacity style={styles.favoriteButton} onPress={handleFavoritePress}>
               <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
             </TouchableOpacity>
           )}
@@ -222,7 +252,7 @@ export const ArtistCard: React.FC<ArtistCardProps> = ({
       </Card>
     </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
   // Default variant

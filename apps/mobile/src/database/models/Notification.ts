@@ -69,7 +69,7 @@ export default class Notification extends Model {
    * Parse data JSON
    */
   get parsedData(): Record<string, unknown> | null {
-    if (!this.data) return null;
+    if (!this.data) {return null;}
     try {
       return JSON.parse(this.data);
     } catch {
@@ -123,10 +123,10 @@ export default class Notification extends Model {
     const hours = Math.floor(diff / (1000 * 60 * 60));
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
 
-    if (minutes < 1) return 'Just now';
-    if (minutes < 60) return `${minutes}m ago`;
-    if (hours < 24) return `${hours}h ago`;
-    if (days < 7) return `${days}d ago`;
+    if (minutes < 1) {return 'Just now';}
+    if (minutes < 60) {return `${minutes}m ago`;}
+    if (hours < 24) {return `${hours}h ago`;}
+    if (days < 7) {return `${days}d ago`;}
 
     return this.notificationDate.toLocaleDateString('en-US', {
       month: 'short',
@@ -205,8 +205,8 @@ export default class Notification extends Model {
     const highPriority: NotificationType[] = ['SECURITY_ALERT', 'PAYMENT_FAILED'];
     const lowPriority: NotificationType[] = ['PROMO', 'SYSTEM'];
 
-    if (highPriority.includes(this.type)) return 'high';
-    if (lowPriority.includes(this.type)) return 'low';
+    if (highPriority.includes(this.type)) {return 'high';}
+    if (lowPriority.includes(this.type)) {return 'low';}
     return 'normal';
   }
 
@@ -258,14 +258,14 @@ export default class Notification extends Model {
     readAt?: string;
   }): Promise<void> {
     await this.update((notification) => {
-      if (data.title !== undefined) notification.title = data.title;
-      if (data.body !== undefined) notification.body = data.body;
-      if (data.type !== undefined) notification.type = data.type;
-      if (data.data !== undefined) notification.data = JSON.stringify(data.data);
-      if (data.imageUrl !== undefined) notification.imageUrl = data.imageUrl;
-      if (data.actionUrl !== undefined) notification.actionUrl = data.actionUrl;
-      if (data.isRead !== undefined) notification.isRead = data.isRead;
-      if (data.readAt) notification.readAt = new Date(data.readAt).getTime();
+      if (data.title !== undefined) {notification.title = data.title;}
+      if (data.body !== undefined) {notification.body = data.body;}
+      if (data.type !== undefined) {notification.type = data.type;}
+      if (data.data !== undefined) {notification.data = JSON.stringify(data.data);}
+      if (data.imageUrl !== undefined) {notification.imageUrl = data.imageUrl;}
+      if (data.actionUrl !== undefined) {notification.actionUrl = data.actionUrl;}
+      if (data.isRead !== undefined) {notification.isRead = data.isRead;}
+      if (data.readAt) {notification.readAt = new Date(data.readAt).getTime();}
       notification.isSynced = true;
       notification.lastSyncedAt = Date.now();
       notification.needsPush = false;
@@ -276,7 +276,7 @@ export default class Notification extends Model {
    * Mark notification as read
    */
   @writer async markAsRead(): Promise<void> {
-    if (this.isRead) return;
+    if (this.isRead) {return;}
 
     await this.update((notification) => {
       notification.isRead = true;
@@ -290,7 +290,7 @@ export default class Notification extends Model {
    * Mark notification as unread
    */
   @writer async markAsUnread(): Promise<void> {
-    if (!this.isRead) return;
+    if (!this.isRead) {return;}
 
     await this.update((notification) => {
       notification.isRead = false;

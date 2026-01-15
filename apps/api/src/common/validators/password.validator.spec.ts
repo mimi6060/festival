@@ -15,7 +15,7 @@
 import {
   PasswordValidatorService,
   PasswordStrength,
-  PasswordValidationResult,
+  PasswordValidationResult as _PasswordValidationResult,
   PasswordValidationOptions,
   IsStrongPasswordConstraint,
   generateStrongPassword,
@@ -525,7 +525,7 @@ describe('generateStrongPassword', () => {
 
   it('should contain at least one special character', () => {
     const password = generateStrongPassword();
-    expect(/[!@#$%^&*()_+\-=\[\]{}]/.test(password)).toBe(true);
+    expect(/[!@#$%^&*()_+\-=[\]{}]/.test(password)).toBe(true);
   });
 
   it('should generate unique passwords', () => {

@@ -62,17 +62,17 @@ function getPhaseText(phase: SyncPhase): string {
  * Format time ago
  */
 function formatTimeAgo(date: Date | null): string {
-  if (!date) return 'Never';
+  if (!date) {return 'Never';}
 
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
 
-  if (diffMins < 1) return 'Just now';
-  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffMins < 1) {return 'Just now';}
+  if (diffMins < 60) {return `${diffMins}m ago`;}
 
   const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffHours < 24) {return `${diffHours}h ago`;}
 
   const diffDays = Math.floor(diffHours / 24);
   return `${diffDays}d ago`;
@@ -82,10 +82,10 @@ function formatTimeAgo(date: Date | null): string {
  * Format duration
  */
 function formatDuration(ms: number | null): string {
-  if (!ms) return '';
+  if (!ms) {return '';}
 
   const seconds = Math.floor(ms / 1000);
-  if (seconds < 60) return `${seconds}s`;
+  if (seconds < 60) {return `${seconds}s`;}
 
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
@@ -183,10 +183,10 @@ export function SyncIndicator({
    * Get status color
    */
   const getStatusColor = () => {
-    if (!isOnline) return colors.offline;
-    if (hasErrors) return colors.error;
-    if (isSyncing) return colors.syncing;
-    if (pendingCount > 0) return colors.pending;
+    if (!isOnline) {return colors.offline;}
+    if (hasErrors) {return colors.error;}
+    if (isSyncing) {return colors.syncing;}
+    if (pendingCount > 0) {return colors.pending;}
     return colors.synced;
   };
 
@@ -194,10 +194,10 @@ export function SyncIndicator({
    * Get status text
    */
   const getStatusText = () => {
-    if (!isOnline) return 'Offline';
-    if (isSyncing) return getPhaseText(syncProgress.phase);
-    if (hasErrors) return 'Sync Error';
-    if (pendingCount > 0) return `${pendingCount} pending`;
+    if (!isOnline) {return 'Offline';}
+    if (isSyncing) {return getPhaseText(syncProgress.phase);}
+    if (hasErrors) {return 'Sync Error';}
+    if (pendingCount > 0) {return `${pendingCount} pending`;}
     return 'Synced';
   };
 

@@ -261,7 +261,7 @@ export function parseTierRateLimitHeaders(headers: Record<string, string | strin
   };
 
   const parseNumber = (value: string): number => {
-    if (value === 'unlimited') return UNLIMITED;
+    if (value === 'unlimited') {return UNLIMITED;}
     return parseInt(value, 10) || 0;
   };
 

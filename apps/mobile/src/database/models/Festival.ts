@@ -96,7 +96,7 @@ export default class Festival extends Model {
   }
 
   get capacityPercentage(): number {
-    if (this.maxCapacity === 0) return 0;
+    if (this.maxCapacity === 0) {return 0;}
     return Math.round((this.currentAttendees / this.maxCapacity) * 100);
   }
 
@@ -179,23 +179,23 @@ export default class Festival extends Model {
     updatedAt?: string;
   }): Promise<void> {
     await this.update((festival) => {
-      if (data.name !== undefined) festival.name = data.name;
-      if (data.slug !== undefined) festival.slug = data.slug;
-      if (data.description !== undefined) festival.description = data.description;
-      if (data.location !== undefined) festival.location = data.location;
-      if (data.address !== undefined) festival.address = data.address;
-      if (data.startDate) festival.startDate = new Date(data.startDate).getTime();
-      if (data.endDate) festival.endDate = new Date(data.endDate).getTime();
-      if (data.status !== undefined) festival.status = data.status;
-      if (data.maxCapacity !== undefined) festival.maxCapacity = data.maxCapacity;
-      if (data.currentAttendees !== undefined) festival.currentAttendees = data.currentAttendees;
-      if (data.logoUrl !== undefined) festival.logoUrl = data.logoUrl;
-      if (data.bannerUrl !== undefined) festival.bannerUrl = data.bannerUrl;
-      if (data.websiteUrl !== undefined) festival.websiteUrl = data.websiteUrl;
-      if (data.contactEmail !== undefined) festival.contactEmail = data.contactEmail;
-      if (data.timezone !== undefined) festival.timezone = data.timezone;
-      if (data.currency !== undefined) festival.currency = data.currency;
-      if (data.updatedAt) festival.serverUpdatedAt = new Date(data.updatedAt).getTime();
+      if (data.name !== undefined) {festival.name = data.name;}
+      if (data.slug !== undefined) {festival.slug = data.slug;}
+      if (data.description !== undefined) {festival.description = data.description;}
+      if (data.location !== undefined) {festival.location = data.location;}
+      if (data.address !== undefined) {festival.address = data.address;}
+      if (data.startDate) {festival.startDate = new Date(data.startDate).getTime();}
+      if (data.endDate) {festival.endDate = new Date(data.endDate).getTime();}
+      if (data.status !== undefined) {festival.status = data.status;}
+      if (data.maxCapacity !== undefined) {festival.maxCapacity = data.maxCapacity;}
+      if (data.currentAttendees !== undefined) {festival.currentAttendees = data.currentAttendees;}
+      if (data.logoUrl !== undefined) {festival.logoUrl = data.logoUrl;}
+      if (data.bannerUrl !== undefined) {festival.bannerUrl = data.bannerUrl;}
+      if (data.websiteUrl !== undefined) {festival.websiteUrl = data.websiteUrl;}
+      if (data.contactEmail !== undefined) {festival.contactEmail = data.contactEmail;}
+      if (data.timezone !== undefined) {festival.timezone = data.timezone;}
+      if (data.currency !== undefined) {festival.currency = data.currency;}
+      if (data.updatedAt) {festival.serverUpdatedAt = new Date(data.updatedAt).getTime();}
       festival.isSynced = true;
       festival.lastSyncedAt = Date.now();
       festival.needsPush = false;

@@ -198,7 +198,7 @@ export function formatOrdinal(n: number, locale = 'fr-FR'): string {
 export function formatList(
   items: string[],
   conjunction = 'et',
-  locale = 'fr-FR'
+  _locale = 'fr-FR'
 ): string {
   if (items.length === 0) return '';
   if (items.length === 1) return items[0];
@@ -219,7 +219,7 @@ export function formatTimeRange(startTime: string, endTime: string): string {
 /**
  * Format distance in meters to human-readable format
  */
-export function formatDistance(meters: number, locale = 'fr-FR'): string {
+export function formatDistance(meters: number, _locale = 'fr-FR'): string {
   if (meters < 1000) {
     return `${Math.round(meters)} m`;
   }

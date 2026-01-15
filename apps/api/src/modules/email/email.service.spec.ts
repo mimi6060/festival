@@ -148,8 +148,8 @@ describe('EmailService', () => {
       setupMocks();
       const noHostConfig = {
         get: jest.fn((key: string) => {
-          if (key === 'SMTP_HOST') return undefined;
-          if (key === 'SMTP_PORT') return 587;
+          if (key === 'SMTP_HOST') {return undefined;}
+          if (key === 'SMTP_PORT') {return 587;}
           return undefined;
         }),
       };

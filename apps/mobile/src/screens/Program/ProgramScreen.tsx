@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import {
   View,
   Text,
@@ -12,6 +12,10 @@ import { Card } from '../../components/common';
 import { useProgramStore } from '../../store';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { ProgramEvent } from '../../types';
+
+// Constants for FlatList optimization
+const EVENT_CARD_HEIGHT = 100; // Approximate height of event card
+const ITEM_SEPARATOR_HEIGHT = 8; // spacing.sm
 
 const days = [
   { key: 'vendredi', label: 'Ven. 12', fullLabel: 'Vendredi 12 Juillet' },
@@ -137,44 +141,66 @@ export const ProgramScreen: React.FC = () => {
     setRefreshing(false);
   };
 
-  const handleToggleFavorite = (eventId: string) => {
+  const handleToggleFavorite = useCallback((eventId: string) => {
     toggleFavorite(eventId);
-  };
+  }, [toggleFavorite]);
 
-  const renderEvent = ({ item }: { item: ProgramEvent }) => {
-    const isFavorite = favorites.includes(item.id);
-
-    return (
-      <Card style={styles.eventCard}>
-        <View style={styles.eventContent}>
-          {/* Time Column */}
-          <View style={styles.timeColumn}>
-            <Text style={styles.startTime}>{item.startTime}</Text>
-            <View style={styles.timeLine} />
-            <Text style={styles.endTime}>{item.endTime}</Text>
-          </View>
-
-          {/* Event Info */}
-          <View style={styles.eventInfo}>
-            <Text style={styles.artistName}>{item.artist.name}</Text>
-            <Text style={styles.genre}>{item.artist.genre}</Text>
-            <View style={styles.stageRow}>
-              <Text style={styles.stageIcon}>📍</Text>
-              <Text style={styles.stageName}>{item.stage.name}</Text>
-            </View>
-          </View>
-
-          {/* Favorite Button */}
-          <TouchableOpacity
-            style={styles.favoriteButton}
-            onPress={() => handleToggleFavorite(item.id)}
-          >
-            <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
-          </TouchableOpacity>
+  // Memoized event item component for better performance
+  const EventItem = memo(({ item, isFavorite, onToggleFavorite }: {
+    item: ProgramEvent;
+    isFavorite: boolean;
+    onToggleFavorite: (id: string) => void;
+  }) => (
+    <Card style={styles.eventCard}>
+      <View style={styles.eventContent}>
+        {/* Time Column */}
+        <View style={styles.timeColumn}>
+          <Text style={styles.startTime}>{item.startTime}</Text>
+          <View style={styles.timeLine} />
+          <Text style={styles.endTime}>{item.endTime}</Text>
         </View>
-      </Card>
+
+        {/* Event Info */}
+        <View style={styles.eventInfo}>
+          <Text style={styles.artistName}>{item.artist.name}</Text>
+          <Text style={styles.genre}>{item.artist.genre}</Text>
+          <View style={styles.stageRow}>
+            <Text style={styles.stageIcon}>📍</Text>
+            <Text style={styles.stageName}>{item.stage.name}</Text>
+          </View>
+        </View>
+
+        {/* Favorite Button */}
+        <TouchableOpacity
+          style={styles.favoriteButton}
+          onPress={() => onToggleFavorite(item.id)}
+        >
+          <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
+        </TouchableOpacity>
+      </View>
+    </Card>
+  ));
+
+  const renderEvent = useCallback(({ item }: { item: ProgramEvent }) => {
+    const isFavorite = favorites.includes(item.id);
+    return (
+      <EventItem
+        item={item}
+        isFavorite={isFavorite}
+        onToggleFavorite={handleToggleFavorite}
+      />
     );
-  };
+  }, [favorites, handleToggleFavorite]);
+
+  // getItemLayout for fixed-height optimization
+  const getItemLayout = useCallback((_: unknown, index: number) => ({
+    length: EVENT_CARD_HEIGHT + ITEM_SEPARATOR_HEIGHT,
+    offset: (EVENT_CARD_HEIGHT + ITEM_SEPARATOR_HEIGHT) * index,
+    index,
+  }), []);
+
+  // Stable key extractor
+  const keyExtractor = useCallback((item: ProgramEvent) => item.id, []);
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
@@ -236,14 +262,21 @@ export const ProgramScreen: React.FC = () => {
         ))}
       </View>
 
-      {/* Events List */}
+      {/* Events List - Optimized FlatList */}
       <FlatList
         data={filteredEvents}
         renderItem={renderEvent}
-        keyExtractor={(item) => item.id}
+        keyExtractor={keyExtractor}
+        getItemLayout={getItemLayout}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={renderEmptyState}
+        // Performance optimizations
+        windowSize={5} // Render 5 screens worth of content (2 above, 2 below, 1 visible)
+        maxToRenderPerBatch={10} // Render 10 items per batch
+        initialNumToRender={8} // Start with 8 items
+        removeClippedSubviews={true} // Unmount off-screen components (Android)
+        updateCellsBatchingPeriod={50} // Batch updates every 50ms
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

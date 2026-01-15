@@ -507,10 +507,22 @@ export class PaymentsService {
 
   /**
    * Get payment by ID
+   *
+   * Optimized: Includes user relation to prevent N+1 when accessing user data.
    */
   async getPayment(paymentId: string): Promise<PaymentEntity> {
     const payment = await this.prisma.payment.findUnique({
       where: { id: paymentId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
     });
 
     if (!payment) {
@@ -522,14 +534,26 @@ export class PaymentsService {
 
   /**
    * Get user's payment history
+   *
+   * Optimized: Includes user relation to prevent N+1 when accessing user data.
    */
   async getUserPayments(
     userId: string,
-    limit: number = 50,
-    offset: number = 0,
+    limit = 50,
+    offset = 0,
   ): Promise<PaymentEntity[]> {
     const payments = await this.prisma.payment.findMany({
       where: { userId },
+      include: {
+        user: {
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
       orderBy: { createdAt: 'desc' },
       take: limit,
       skip: offset,

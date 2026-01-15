@@ -1,11 +1,11 @@
 // Web mock for @react-native-community/netinfo
 // Uses browser's navigator.onLine API
 
-type NetInfoState = {
+interface NetInfoState {
   isConnected: boolean | null;
   isInternetReachable: boolean | null;
   type: string;
-};
+}
 
 type NetInfoListener = (state: NetInfoState) => void;
 

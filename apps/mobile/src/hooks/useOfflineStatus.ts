@@ -5,10 +5,8 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import NetInfo, { NetInfoState, NetInfoStateType } from '@react-native-community/netinfo';
-import { AppState, AppStateStatus } from 'react-native';
-
-import { syncService, SyncStatus, SyncState } from '../services/sync';
-import { networkDetector, NetworkStatus, ConnectionQuality } from '../services/offline';
+import { syncService, SyncStatus } from '../services/sync';
+import { networkDetector, ConnectionQuality } from '../services/offline';
 
 // Return type
 export interface OfflineStatusResult {
@@ -198,7 +196,7 @@ export function useOfflineStatus(): OfflineStatusResult {
    * Wait for connection to be available
    */
   const waitForConnection = useCallback(
-    (timeoutMs: number = 30000): Promise<boolean> => {
+    (timeoutMs = 30000): Promise<boolean> => {
       if (isOnline) {
         return Promise.resolve(true);
       }

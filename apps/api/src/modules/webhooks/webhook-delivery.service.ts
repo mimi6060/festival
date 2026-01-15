@@ -385,13 +385,13 @@ export class WebhookDeliveryService {
    * Get pending retries that are due
    */
   async getPendingRetries(limit = 100): Promise<
-    Array<{
+    {
       deliveryId: string;
       webhookId: string;
       url: string;
       secret: string;
       headers: Record<string, string> | null;
-    }>
+    }[]
   > {
     const deliveries = await this.prisma.webhookDelivery.findMany({
       where: {

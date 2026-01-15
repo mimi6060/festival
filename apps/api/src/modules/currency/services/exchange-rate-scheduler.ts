@@ -58,7 +58,7 @@ export class ExchangeRateScheduler implements OnModuleInit, OnModuleDestroy {
   private lastError: string | null = null;
 
   // Rate change tracking
-  private previousRates: Map<SupportedCurrency, number> = new Map();
+  private previousRates = new Map<SupportedCurrency, number>();
   private rateChangeLogs: RateChangeLog[] = [];
   private readonly maxLogSize = 1000;
 
@@ -165,7 +165,7 @@ export class ExchangeRateScheduler implements OnModuleInit, OnModuleDestroy {
   /**
    * Get recent rate change logs
    */
-  getRateChangeLogs(limit: number = 100): RateChangeLog[] {
+  getRateChangeLogs(limit = 100): RateChangeLog[] {
     return this.rateChangeLogs.slice(-limit);
   }
 
@@ -231,7 +231,7 @@ export class ExchangeRateScheduler implements OnModuleInit, OnModuleDestroy {
       const previousRate = previousRates[currency] || this.previousRates.get(currency);
       const newRate = newRates[currency];
 
-      if (!previousRate || !newRate) continue;
+      if (!previousRate || !newRate) {continue;}
 
       const changePercent = ((newRate - previousRate) / previousRate) * 100;
 

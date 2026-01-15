@@ -203,20 +203,20 @@ export class ZoneStatsEntity {
     description: 'Hourly distribution of entries and exits',
     isArray: true,
   })
-  hourlyDistribution!: Array<{
+  hourlyDistribution!: {
     hour: number;
     entries: number;
     exits: number;
-  }>;
+  }[];
 
   @ApiPropertyOptional({
     description: 'Real-time capacity alerts',
   })
-  alerts?: Array<{
+  alerts?: {
     type: 'WARNING' | 'CRITICAL';
     message: string;
     timestamp: Date;
-  }>;
+  }[];
 }
 
 /**

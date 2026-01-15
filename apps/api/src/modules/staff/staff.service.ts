@@ -43,21 +43,23 @@ export class StaffService {
 
   /**
    * Create a new staff member assignment
+   *
+   * Optimized: Fetches user and festival in parallel to prevent N+1.
    */
   async createStaffMember(dto: CreateStaffMemberDto, currentUser: AuthenticatedUser) {
-    // Verify the user exists
-    const user = await this.prisma.user.findUnique({
-      where: { id: dto.userId },
-    });
+    // Optimized: Fetch user and festival in parallel to avoid sequential queries
+    const [user, festival] = await Promise.all([
+      this.prisma.user.findUnique({
+        where: { id: dto.userId },
+      }),
+      this.prisma.festival.findUnique({
+        where: { id: dto.festivalId },
+      }),
+    ]);
 
     if (!user) {
       throw new NotFoundException(`User with ID ${dto.userId} not found`);
     }
-
-    // Verify the festival exists
-    const festival = await this.prisma.festival.findUnique({
-      where: { id: dto.festivalId },
-    });
 
     if (!festival) {
       throw new NotFoundException(`Festival with ID ${dto.festivalId} not found`);

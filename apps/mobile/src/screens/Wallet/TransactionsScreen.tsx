@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useCallback, memo } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,11 @@ import { useWalletStore } from '../../store';
 import { offlineService } from '../../services';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { RootStackParamList, Transaction } from '../../types';
+
+// Constants for FlatList optimization
+const TRANSACTION_ITEM_HEIGHT = 80; // Approximate height of transaction item
+const GROUP_HEADER_HEIGHT = 24; // Height of date header
+const ITEM_SEPARATOR_HEIGHT = 8; // spacing.sm
 
 type TransactionsNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Transactions'>;
 
@@ -113,13 +118,13 @@ export const TransactionsScreen: React.FC = () => {
   const transactions = storeTransactions.length > 0 ? storeTransactions : mockTransactions;
 
   const filteredTransactions = useMemo(() => {
-    if (activeFilter === 'all') return transactions;
+    if (activeFilter === 'all') {return transactions;}
     return transactions.filter((t) => t.type === activeFilter);
   }, [transactions, activeFilter]);
 
   // Group transactions by date
   const groupedTransactions = useMemo(() => {
-    const groups: { [key: string]: Transaction[] } = {};
+    const groups: Record<string, Transaction[]> = {};
 
     filteredTransactions.forEach((transaction) => {
       const date = new Date(transaction.createdAt).toLocaleDateString('fr-FR', {
@@ -140,32 +145,63 @@ export const TransactionsScreen: React.FC = () => {
     }));
   }, [filteredTransactions]);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await offlineService.syncAllData();
     setRefreshing(false);
-  };
+  }, []);
 
-  const renderFilter = ({ item }: { item: { key: FilterType; label: string } }) => (
+  const handleFilterPress = useCallback((filterKey: FilterType) => {
+    setActiveFilter(filterKey);
+  }, []);
+
+  // Memoized filter item component
+  const FilterItem = memo(({ item, isActive, onPress }: {
+    item: { key: FilterType; label: string };
+    isActive: boolean;
+    onPress: (key: FilterType) => void;
+  }) => (
     <TouchableOpacity
       style={[
         styles.filterButton,
-        activeFilter === item.key && styles.filterButtonActive,
+        isActive && styles.filterButtonActive,
       ]}
-      onPress={() => setActiveFilter(item.key)}
+      onPress={() => onPress(item.key)}
     >
       <Text
         style={[
           styles.filterText,
-          activeFilter === item.key && styles.filterTextActive,
+          isActive && styles.filterTextActive,
         ]}
       >
         {item.label}
       </Text>
     </TouchableOpacity>
-  );
+  ));
 
-  const renderEmptyState = () => (
+  const renderFilter = useCallback(({ item }: { item: { key: FilterType; label: string } }) => (
+    <FilterItem
+      item={item}
+      isActive={activeFilter === item.key}
+      onPress={handleFilterPress}
+    />
+  ), [activeFilter, handleFilterPress]);
+
+  // Memoized transaction group component
+  const TransactionGroup = memo(({ group }: { group: { date: string; data: Transaction[] } }) => (
+    <View style={styles.group}>
+      <Text style={styles.groupDate}>{group.date}</Text>
+      {group.data.map((transaction) => (
+        <TransactionItem key={transaction.id} transaction={transaction} />
+      ))}
+    </View>
+  ));
+
+  // Stable key extractors
+  const filterKeyExtractor = useCallback((item: { key: FilterType; label: string }) => item.key, []);
+  const groupKeyExtractor = useCallback((item: { date: string; data: Transaction[] }) => item.date, []);
+
+  const renderEmptyState = useCallback(() => (
     <View style={styles.emptyContainer}>
       <Text style={styles.emptyIcon}>📋</Text>
       <Text style={styles.emptyTitle}>Aucune transaction</Text>
@@ -175,7 +211,7 @@ export const TransactionsScreen: React.FC = () => {
           : `Aucune transaction de type ${filters.find((f) => f.key === activeFilter)?.label.toLowerCase()}`}
       </Text>
     </View>
-  );
+  ), [activeFilter]);
 
   return (
     <SafeAreaView style={styles.container}>
@@ -191,32 +227,35 @@ export const TransactionsScreen: React.FC = () => {
         <View style={styles.placeholder} />
       </View>
 
-      {/* Filters */}
+      {/* Filters - Optimized horizontal FlatList */}
       <FlatList
         horizontal
         data={filters}
         renderItem={renderFilter}
-        keyExtractor={(item) => item.key}
+        keyExtractor={filterKeyExtractor}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.filtersContainer}
         style={styles.filtersList}
+        // Horizontal list optimizations
+        initialNumToRender={4}
+        maxToRenderPerBatch={4}
+        windowSize={3}
       />
 
-      {/* Transactions List */}
+      {/* Transactions List - Optimized FlatList */}
       <FlatList
         data={groupedTransactions}
-        keyExtractor={(item) => item.date}
-        renderItem={({ item: group }) => (
-          <View style={styles.group}>
-            <Text style={styles.groupDate}>{group.date}</Text>
-            {group.data.map((transaction) => (
-              <TransactionItem key={transaction.id} transaction={transaction} />
-            ))}
-          </View>
-        )}
+        keyExtractor={groupKeyExtractor}
+        renderItem={({ item: group }) => <TransactionGroup group={group} />}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={renderEmptyState}
+        // Performance optimizations
+        windowSize={5}
+        maxToRenderPerBatch={5}
+        initialNumToRender={3}
+        removeClippedSubviews={true}
+        updateCellsBatchingPeriod={50}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

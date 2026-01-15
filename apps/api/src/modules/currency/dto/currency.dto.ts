@@ -1,7 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsString,
-  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsEnum,
@@ -9,9 +8,8 @@ import {
   Min,
   IsDateString,
   IsArray,
-  ValidateNested,
 } from 'class-validator';
-import { Type, Transform } from 'class-transformer';
+import { Type } from 'class-transformer';
 
 /**
  * Supported currencies

@@ -319,8 +319,8 @@ const GoogleWalletModule = NativeModules.GoogleWallet as GoogleWalletNativeModul
 
 export class GoogleWalletService {
   private config: GoogleWalletConfig | null = null;
-  private initialized: boolean = false;
-  private savedPasses: Set<string> = new Set();
+  private initialized = false;
+  private savedPasses = new Set<string>();
 
   /**
    * Initialize the Google Wallet service

@@ -3,7 +3,7 @@
  * Type definitions for authentication and authorization hooks
  */
 
-import { UserRole, UserStatus, User } from '@festival/shared/types';
+import { UserRole, User } from '@festival/shared/types';
 
 /**
  * Auth state

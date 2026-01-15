@@ -59,7 +59,7 @@ export interface ReplayResult {
   successful: number;
   failed: number;
   conflicts: number;
-  errors: Array<{ mutationId: string; error: string }>;
+  errors: { mutationId: string; error: string }[];
 }
 
 // Event types
@@ -104,11 +104,11 @@ class OfflineMutationHandler {
   private static instance: OfflineMutationHandler;
   private database: Database;
   private config: OfflineMutationConfig;
-  private mutations: Map<string, Mutation> = new Map();
+  private mutations = new Map<string, Mutation>();
   private mutationOrder: string[] = [];
-  private listeners: Set<MutationEventListener> = new Set();
-  private isReplaying: boolean = false;
-  private nextOrder: number = 0;
+  private listeners = new Set<MutationEventListener>();
+  private isReplaying = false;
+  private nextOrder = 0;
 
   private constructor(config?: Partial<OfflineMutationConfig>) {
     this.database = getDatabase();
@@ -426,8 +426,8 @@ class OfflineMutationHandler {
    */
   getMutationsByEntity(entityType: string, entityId?: string): Mutation[] {
     return Array.from(this.mutations.values()).filter((m) => {
-      if (m.entityType !== entityType) return false;
-      if (entityId && m.entityId !== entityId) return false;
+      if (m.entityType !== entityType) {return false;}
+      if (entityId && m.entityId !== entityId) {return false;}
       return true;
     });
   }
@@ -787,7 +787,7 @@ class OfflineMutationHandler {
    */
   async cancelMutation(mutationId: string): Promise<boolean> {
     const mutation = this.mutations.get(mutationId);
-    if (mutation && mutation.status === 'pending') {
+    if (mutation?.status === 'pending') {
       mutation.status = 'cancelled';
       this.mutations.set(mutationId, mutation);
       await this.persistMutations();
@@ -824,7 +824,7 @@ class OfflineMutationHandler {
     mergedData?: Record<string, unknown>
   ): Promise<MutationResult> {
     const mutation = this.mutations.get(mutationId);
-    if (!mutation || mutation.status !== 'conflict') {
+    if (mutation?.status !== 'conflict') {
       return { success: false, mutationId, error: 'Invalid mutation or not in conflict state' };
     }
 

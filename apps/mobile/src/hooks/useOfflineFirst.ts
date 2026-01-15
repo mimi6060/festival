@@ -126,7 +126,7 @@ export function useOfflineFirst<T>(
 
   // Set up refresh interval
   useEffect(() => {
-    if (refreshInterval <= 0) return;
+    if (refreshInterval <= 0) {return;}
 
     refreshIntervalRef.current = setInterval(() => {
       sync().catch((err) => {
@@ -143,7 +143,7 @@ export function useOfflineFirst<T>(
 
   // Sync with server
   const sync = useCallback(async (): Promise<void> => {
-    if (isSyncing) return;
+    if (isSyncing) {return;}
 
     setIsSyncing(true);
     setError(null);
@@ -163,7 +163,7 @@ export function useOfflineFirst<T>(
 
   // Refresh from server (pull only)
   const refresh = useCallback(async (): Promise<void> => {
-    if (isRefreshing || !fetchFromServer) return;
+    if (isRefreshing || !fetchFromServer) {return;}
 
     setIsRefreshing(true);
     setError(null);
@@ -381,7 +381,7 @@ export function useOfflineFirstRecord<T>(
   }, [collection, id]);
 
   const refresh = useCallback(async () => {
-    if (!id || !options.fetchFromServer) return;
+    if (!id || !options.fetchFromServer) {return;}
 
     try {
       const serverData = await options.fetchFromServer(id);
@@ -405,7 +405,7 @@ export function useOfflineFirstRecord<T>(
 
   const update = useCallback(
     async (updates: Partial<T>) => {
-      if (!data) return;
+      if (!data) {return;}
 
       await database.write(async () => {
         await (data as any).update((r: any) => {
@@ -452,7 +452,7 @@ export function useTickets(festivalId?: string) {
 }
 
 // Artists
-export function useArtists(festivalId?: string) {
+export function useArtists(_festivalId?: string) {
   return useOfflineFirst(TableNames.ARTISTS, {
     syncOnMount: true,
     staleAfter: 6 * 60 * 60 * 1000, // 6 hours

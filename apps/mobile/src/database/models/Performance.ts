@@ -9,7 +9,8 @@ import { Associations } from '@nozbe/watermelondb/Model';
 
 import { TableNames } from '../schema';
 import Artist from './Artist';
-import Festival from './Festival';
+// Festival relation type - referenced via festivalId relation
+// import type Festival from './Festival';
 
 /**
  * Performance model for local database
@@ -75,7 +76,7 @@ export default class Performance extends Model {
 
   get durationFormatted(): string {
     const minutes = this.durationMinutes;
-    if (minutes < 60) return `${minutes}min`;
+    if (minutes < 60) {return `${minutes}min`;}
     const hours = Math.floor(minutes / 60);
     const remainingMinutes = minutes % 60;
     return remainingMinutes > 0 ? `${hours}h ${remainingMinutes}min` : `${hours}h`;
@@ -100,19 +101,19 @@ export default class Performance extends Model {
 
   get timeUntilStartFormatted(): string {
     const ms = this.timeUntilStart;
-    if (ms === 0) return 'Now';
+    if (ms === 0) {return 'Now';}
 
     const minutes = Math.floor(ms / (1000 * 60));
     const hours = Math.floor(minutes / 60);
     const days = Math.floor(hours / 24);
 
-    if (days > 0) return `${days}d ${hours % 24}h`;
-    if (hours > 0) return `${hours}h ${minutes % 60}m`;
+    if (days > 0) {return `${days}d ${hours % 24}h`;}
+    if (hours > 0) {return `${hours}h ${minutes % 60}m`;}
     return `${minutes}m`;
   }
 
   get progressPercentage(): number {
-    if (!this.isOngoing) return this.isPast ? 100 : 0;
+    if (!this.isOngoing) {return this.isPast ? 100 : 0;}
     const total = this.endTime - this.startTime;
     const elapsed = Date.now() - this.startTime;
     return Math.round((elapsed / total) * 100);
@@ -154,7 +155,7 @@ export default class Performance extends Model {
    * Check if performance conflicts with another
    */
   conflictsWith(other: Performance): boolean {
-    if (this.id === other.id) return false;
+    if (this.id === other.id) {return false;}
     return this.startTime < other.endTime && this.endTime > other.startTime;
   }
 
@@ -191,13 +192,13 @@ export default class Performance extends Model {
     updatedAt?: string;
   }): Promise<void> {
     await this.update((performance) => {
-      if (data.startTime) performance.startTime = new Date(data.startTime).getTime();
-      if (data.endTime) performance.endTime = new Date(data.endTime).getTime();
-      if (data.description !== undefined) performance.description = data.description;
-      if (data.isCancelled !== undefined) performance.isCancelled = data.isCancelled;
-      if (data.artistName !== undefined) performance.artistName = data.artistName;
-      if (data.stageName !== undefined) performance.stageName = data.stageName;
-      if (data.updatedAt) performance.serverUpdatedAt = new Date(data.updatedAt).getTime();
+      if (data.startTime) {performance.startTime = new Date(data.startTime).getTime();}
+      if (data.endTime) {performance.endTime = new Date(data.endTime).getTime();}
+      if (data.description !== undefined) {performance.description = data.description;}
+      if (data.isCancelled !== undefined) {performance.isCancelled = data.isCancelled;}
+      if (data.artistName !== undefined) {performance.artistName = data.artistName;}
+      if (data.stageName !== undefined) {performance.stageName = data.stageName;}
+      if (data.updatedAt) {performance.serverUpdatedAt = new Date(data.updatedAt).getTime();}
       performance.isSynced = true;
       performance.lastSyncedAt = Date.now();
       performance.needsPush = false;

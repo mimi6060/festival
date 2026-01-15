@@ -243,7 +243,7 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
     };
 
     const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-      if (disabled) return;
+      if (disabled) {return;}
 
       switch (e.key) {
         case 'Enter':
@@ -314,8 +314,8 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
 
     // Build aria-describedby
     const describedByIds: string[] = [];
-    if (error) describedByIds.push(errorId);
-    if (helperText && !error) describedByIds.push(helperId);
+    if (error) {describedByIds.push(errorId);}
+    if (helperText && !error) {describedByIds.push(helperId);}
 
     let flatIndex = -1;
 
@@ -415,7 +415,7 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
           <select
             name={name}
             value={currentValue}
-            onChange={() => {}}
+            onChange={() => { /* Hidden select for form submission, controlled via custom UI */ }}
             tabIndex={-1}
             aria-hidden="true"
             className="sr-only"
@@ -476,7 +476,7 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
             <div className="max-h-60 overflow-y-auto py-1">
               {filteredOptions.map((option, groupIndex) => {
                 if (isOptionGroup(option)) {
-                  if (option.options.length === 0) return null;
+                  if (option.options.length === 0) {return null;}
                   return (
                     <div key={option.label} role="group" aria-labelledby={`${selectId}-group-${groupIndex}`}>
                       <div
@@ -487,7 +487,7 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
                         {option.label}
                       </div>
                       {option.options.map(opt => {
-                        if (!opt.disabled) flatIndex++;
+                        if (!opt.disabled) {flatIndex++;}
                         const currentFlatIndex = opt.disabled ? -1 : flatIndex;
                         return (
                           <button
@@ -526,7 +526,7 @@ export const SelectComponent = forwardRef<HTMLButtonElement, SelectProps>(
                   );
                 }
 
-                if (!option.disabled) flatIndex++;
+                if (!option.disabled) {flatIndex++;}
                 const currentFlatIndex = option.disabled ? -1 : flatIndex;
 
                 return (

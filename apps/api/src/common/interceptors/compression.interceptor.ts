@@ -17,6 +17,7 @@ import {
   NestInterceptor,
   ExecutionContext,
   CallHandler,
+  SetMetadata,
 } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -237,8 +238,6 @@ export class CompressionInterceptor implements NestInterceptor {
  * @Get('download')
  * downloadFile() { ... }
  */
-import { SetMetadata } from '@nestjs/common';
-
 export const SKIP_COMPRESSION_KEY = 'skipCompression';
 export const SkipCompression = () => SetMetadata(SKIP_COMPRESSION_KEY, true);
 

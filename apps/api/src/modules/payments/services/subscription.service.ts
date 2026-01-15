@@ -132,7 +132,7 @@ export class SubscriptionService {
    * List products
    */
   async listProducts(
-    limit: number = 10,
+    limit = 10,
     active?: boolean,
   ): Promise<ProductResponseDto[]> {
     this.ensureStripeConfigured();
@@ -523,7 +523,7 @@ export class SubscriptionService {
    */
   async listUserInvoices(
     userId: string,
-    limit: number = 10,
+    limit = 10,
   ): Promise<InvoiceResponseDto[]> {
     this.ensureStripeConfigured();
 

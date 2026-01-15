@@ -26,16 +26,16 @@ export const formatRelativeTime = (dateString: string): string => {
   const diffHours = Math.floor(diffMins / 60);
   const diffDays = Math.floor(diffHours / 24);
 
-  if (diffMins < 1) return "A l'instant";
-  if (diffMins < 60) return `Il y a ${diffMins} min`;
-  if (diffHours < 24) return `Il y a ${diffHours}h`;
-  if (diffDays === 1) return 'Hier';
-  if (diffDays < 7) return `Il y a ${diffDays} jours`;
+  if (diffMins < 1) {return "A l'instant";}
+  if (diffMins < 60) {return `Il y a ${diffMins} min`;}
+  if (diffHours < 24) {return `Il y a ${diffHours}h`;}
+  if (diffDays === 1) {return 'Hier';}
+  if (diffDays < 7) {return `Il y a ${diffDays} jours`;}
   return formatDate(dateString, { day: 'numeric', month: 'short' });
 };
 
 // Currency formatting
-export const formatCurrency = (amount: number, currency: string = 'EUR'): string => {
+export const formatCurrency = (amount: number, currency = 'EUR'): string => {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency,
@@ -44,7 +44,7 @@ export const formatCurrency = (amount: number, currency: string = 'EUR'): string
 
 // String utilities
 export const truncate = (text: string, maxLength: number): string => {
-  if (text.length <= maxLength) return text;
+  if (text.length <= maxLength) {return text;}
   return `${text.substring(0, maxLength)}...`;
 };
 

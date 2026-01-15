@@ -40,9 +40,8 @@ export function FestivalShare({ festivalName, festivalSlug }: FestivalShareProps
           text: shareText,
           url: shareUrl,
         });
-      } catch (err) {
-        // User cancelled or error
-        console.log('Share cancelled or failed:', err);
+      } catch {
+        // User cancelled or error - silently ignore
       }
     } else {
       // Fallback: copy to clipboard

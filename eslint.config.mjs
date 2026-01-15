@@ -8,7 +8,22 @@ export default [
   ...nx.configs['flat/typescript'],
   ...nx.configs['flat/javascript'],
   {
-    ignores: ['**/dist', '**/out-tsc', '**/vite.config.*.timestamp*', '**/next-env.d.ts', '.storybook/**', 'stories/**', '**/webpack.config.js', '**/__mocks__/**'],
+    ignores: [
+      '**/dist',
+      '**/out-tsc',
+      '**/vite.config.*.timestamp*',
+      '**/next-env.d.ts',
+      '.storybook/**',
+      'stories/**',
+      '**/webpack.config.js',
+      '**/__mocks__/**',
+      '**/.next/**',
+      '**/eslint.config.mjs',
+      'libs/**/eslint.config.mjs',
+      // Ignore Next.js generated types
+      'apps/web/next-env.d.ts',
+      'apps/admin/next-env.d.ts',
+    ],
   },
   {
     files: ['**/*.ts', '**/*.tsx', '**/*.js', '**/*.jsx'],
@@ -76,7 +91,46 @@ export default [
       '**/*.mjs',
     ],
     // Override or add rules here
-    rules: {},
+    rules: {
+      // Relax non-null assertion for better DX (use with care)
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      // Allow explicit any with warning instead of error
+      '@typescript-eslint/no-explicit-any': 'warn',
+      // Prefer optional chain disabled (requires type information)
+      '@typescript-eslint/prefer-optional-chain': 'off',
+      '@typescript-eslint/prefer-for-of': 'off',
+      // Allow console in development (warn only)
+      'no-console': ['warn', { allow: ['warn', 'error', 'info', 'debug'] }],
+      // Allow unused vars when prefixed with _
+      '@typescript-eslint/no-unused-vars': ['error', {
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+        caughtErrorsIgnorePattern: '^_'
+      }],
+      // Empty functions are sometimes needed for interface implementations
+      '@typescript-eslint/no-empty-function': 'warn',
+      // Triple slash references in .d.ts files are normal
+      '@typescript-eslint/triple-slash-reference': 'off',
+    },
+  },
+  // Test files: more permissive rules
+  {
+    files: [
+      '**/*.spec.ts',
+      '**/*.spec.tsx',
+      '**/*.test.ts',
+      '**/*.test.tsx',
+      '**/*.e2e-spec.ts',
+      '**/e2e/**/*.ts',
+      '**/api-e2e/**/*.ts',
+    ],
+    rules: {
+      'no-console': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-empty-function': 'off',
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    },
   },
   ...storybook.configs["flat/recommended"]
 ];

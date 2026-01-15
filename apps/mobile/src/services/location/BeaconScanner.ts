@@ -42,10 +42,10 @@ interface TrackedBeacon extends Beacon {
 export class BeaconScanner {
   private bleManager: BleManager;
   private config: BeaconScannerConfig;
-  private isScanning: boolean = false;
+  private isScanning = false;
   private scanInterval: NodeJS.Timeout | null = null;
-  private trackedBeacons: Map<string, TrackedBeacon> = new Map();
-  private beaconConfigMap: Map<string, BeaconConfig> = new Map();
+  private trackedBeacons = new Map<string, TrackedBeacon>();
+  private beaconConfigMap = new Map<string, BeaconConfig>();
 
   constructor(config: BeaconScannerConfig) {
     this.bleManager = new BleManager();
@@ -155,7 +155,7 @@ export class BeaconScanner {
 
   private startScanCycle(): void {
     const performScan = async () => {
-      if (!this.isScanning) return;
+      if (!this.isScanning) {return;}
 
       try {
         await this.performSingleScan();
@@ -212,7 +212,7 @@ export class BeaconScanner {
 
   private parseIBeacon(device: Device): Beacon | null {
     const manufacturerData = device.manufacturerData;
-    if (!manufacturerData) return null;
+    if (!manufacturerData) {return null;}
 
     try {
       // Decode base64 manufacturer data
@@ -248,7 +248,7 @@ export class BeaconScanner {
           (region.minor === undefined || region.minor === minor)
       );
 
-      if (!isMonitored) return null;
+      if (!isMonitored) {return null;}
 
       const rssi = device.rssi || -100;
       const distance = this.calculateDistance(rssi, txPower);
@@ -292,7 +292,7 @@ export class BeaconScanner {
    * Calculate distance from RSSI using log-distance path loss model
    */
   private calculateDistance(rssi: number, txPower: number): number {
-    if (rssi === 0) return -1;
+    if (rssi === 0) {return -1;}
 
     // Path loss exponent (typically 2-4 for indoor environments)
     const n = 2.5;
@@ -308,9 +308,9 @@ export class BeaconScanner {
   }
 
   private getAccuracyLevel(distance: number): BeaconAccuracy {
-    if (distance < 0) return 'unknown';
-    if (distance < 0.5) return 'immediate';
-    if (distance < 3) return 'near';
+    if (distance < 0) {return 'unknown';}
+    if (distance < 0.5) {return 'immediate';}
+    if (distance < 3) {return 'near';}
     return 'far';
   }
 
@@ -379,7 +379,7 @@ export class BeaconScanner {
    * Stop beacon scanning
    */
   stopScanning(): void {
-    if (!this.isScanning) return;
+    if (!this.isScanning) {return;}
 
     this.isScanning = false;
 
@@ -423,7 +423,7 @@ export class BeaconScanner {
    */
   calculatePositionFromBeacons(): { x: number; y: number; floor: number } | null {
     const beacons = this.getTrackedBeacons();
-    if (beacons.length < 3) return null;
+    if (beacons.length < 3) {return null;}
 
     // Get configurations for nearest beacons
     const beaconsWithConfig = beacons
@@ -434,16 +434,16 @@ export class BeaconScanner {
       }))
       .filter((b) => b.config !== undefined);
 
-    if (beaconsWithConfig.length < 3) return null;
+    if (beaconsWithConfig.length < 3) {return null;}
 
     // Weighted centroid calculation (weighted by inverse distance)
     let totalWeight = 0;
     let weightedX = 0;
     let weightedY = 0;
-    let floorVotes: Map<number, number> = new Map();
+    const floorVotes = new Map<number, number>();
 
     beaconsWithConfig.forEach(({ beacon, config }) => {
-      if (!config) return;
+      if (!config) {return;}
 
       const weight = 1 / Math.max(beacon.distance, 0.1); // Avoid division by zero
       totalWeight += weight;

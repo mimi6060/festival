@@ -1659,6 +1659,11 @@ describe('UsersService', () => {
         createdAt,
         lastLoginAt,
         status: UserStatus.ACTIVE,
+        _count: {
+          tickets: 3,
+          payments: 2,
+          auditLogs: 1,
+        },
       });
       mockPrismaService.auditLog.findMany.mockResolvedValue([
         {
@@ -1701,6 +1706,11 @@ describe('UsersService', () => {
         createdAt: new Date(),
         lastLoginAt: null,
         status: UserStatus.ACTIVE,
+        _count: {
+          tickets: 5,
+          payments: 3,
+          auditLogs: 0,
+        },
       });
       mockPrismaService.auditLog.findMany.mockResolvedValue([]);
       mockPrismaService.auditLog.count.mockResolvedValue(0);
@@ -1723,6 +1733,11 @@ describe('UsersService', () => {
         createdAt: new Date('2024-01-01'),
         lastLoginAt: new Date('2024-01-20'),
         status: UserStatus.ACTIVE,
+        _count: {
+          tickets: 0,
+          payments: 0,
+          auditLogs: 1,
+        },
       });
       mockPrismaService.auditLog.findMany.mockResolvedValue([
         {

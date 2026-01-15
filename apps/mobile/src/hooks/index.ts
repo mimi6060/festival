@@ -51,6 +51,14 @@ export { useIndoorLocation } from './useIndoorLocation';
 export { useSyncProgress } from './useSyncProgress';
 export type { SyncProgressResult } from './useSyncProgress';
 
+// Background Sync
+export { useBackgroundSync } from './useBackgroundSync';
+export type { UseBackgroundSyncResult } from './useBackgroundSync';
+
+// Ticket Cache
+export { useTicketCache } from './useTicketCache';
+export type { UseTicketCacheResult } from './useTicketCache';
+
 // Pending Mutations
 export { usePendingMutations } from './usePendingMutations';
 export type { PendingMutationsResult } from './usePendingMutations';

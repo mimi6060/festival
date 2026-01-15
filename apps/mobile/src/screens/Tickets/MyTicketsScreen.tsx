@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useCallback, memo } from 'react';
 import {
   View,
   Text,
@@ -15,6 +15,11 @@ import { useTicketStore } from '../../store';
 import { offlineService } from '../../services';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { RootStackParamList, Ticket } from '../../types';
+
+// Constants for FlatList optimization
+const TICKET_CARD_HEIGHT = 200; // Approximate height of ticket card
+const ITEM_SEPARATOR_HEIGHT = 16; // spacing.md
+const FILTER_ITEM_WIDTH = 100; // Approximate width of filter button
 
 type TicketsNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Main'>;
 
@@ -104,42 +109,70 @@ export const MyTicketsScreen: React.FC = () => {
   const tickets = hasValidTickets ? storeTickets : mockTickets;
 
   const filteredTickets = useMemo(() => {
-    if (activeFilter === 'all') return tickets;
+    if (activeFilter === 'all') {return tickets;}
     return tickets.filter((t) => t.status === activeFilter);
   }, [tickets, activeFilter]);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     await offlineService.syncAllData();
     setRefreshing(false);
-  };
+  }, []);
 
-  const handleTicketPress = (ticket: Ticket) => {
+  const handleTicketPress = useCallback((ticket: Ticket) => {
     navigation.navigate('TicketDetail', { ticketId: ticket.id });
-  };
+  }, [navigation]);
 
-  const renderFilter = ({ item }: { item: { key: FilterType; label: string } }) => (
+  const handleFilterPress = useCallback((filterKey: FilterType) => {
+    setActiveFilter(filterKey);
+  }, []);
+
+  // Memoized filter item component
+  const FilterItem = memo(({ item, isActive, onPress }: {
+    item: { key: FilterType; label: string };
+    isActive: boolean;
+    onPress: (key: FilterType) => void;
+  }) => (
     <TouchableOpacity
       style={[
         styles.filterButton,
-        activeFilter === item.key && styles.filterButtonActive,
+        isActive && styles.filterButtonActive,
       ]}
-      onPress={() => setActiveFilter(item.key)}
+      onPress={() => onPress(item.key)}
     >
       <Text
         style={[
           styles.filterText,
-          activeFilter === item.key && styles.filterTextActive,
+          isActive && styles.filterTextActive,
         ]}
       >
         {item.label}
       </Text>
     </TouchableOpacity>
-  );
+  ));
 
-  const renderTicket = ({ item }: { item: Ticket }) => (
+  const renderFilter = useCallback(({ item }: { item: { key: FilterType; label: string } }) => (
+    <FilterItem
+      item={item}
+      isActive={activeFilter === item.key}
+      onPress={handleFilterPress}
+    />
+  ), [activeFilter, handleFilterPress]);
+
+  const renderTicket = useCallback(({ item }: { item: Ticket }) => (
     <TicketCard ticket={item} onPress={() => handleTicketPress(item)} />
-  );
+  ), [handleTicketPress]);
+
+  // getItemLayout for fixed-height optimization
+  const getTicketItemLayout = useCallback((_: unknown, index: number) => ({
+    length: TICKET_CARD_HEIGHT + ITEM_SEPARATOR_HEIGHT,
+    offset: (TICKET_CARD_HEIGHT + ITEM_SEPARATOR_HEIGHT) * index,
+    index,
+  }), []);
+
+  // Stable key extractors
+  const ticketKeyExtractor = useCallback((item: Ticket) => item.id, []);
+  const filterKeyExtractor = useCallback((item: { key: FilterType; label: string }) => item.key, []);
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
@@ -163,25 +196,36 @@ export const MyTicketsScreen: React.FC = () => {
         </Text>
       </View>
 
-      {/* Filters */}
+      {/* Filters - Optimized horizontal FlatList */}
       <FlatList
         horizontal
         data={filters}
         renderItem={renderFilter}
-        keyExtractor={(item) => item.key}
+        keyExtractor={filterKeyExtractor}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.filtersContainer}
         style={styles.filtersList}
+        // Horizontal list optimizations
+        initialNumToRender={4}
+        maxToRenderPerBatch={4}
+        windowSize={3}
       />
 
-      {/* Tickets List */}
+      {/* Tickets List - Optimized FlatList */}
       <FlatList
         data={filteredTickets}
         renderItem={renderTicket}
-        keyExtractor={(item) => item.id}
+        keyExtractor={ticketKeyExtractor}
+        getItemLayout={getTicketItemLayout}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={renderEmptyState}
+        // Performance optimizations
+        windowSize={5}
+        maxToRenderPerBatch={5}
+        initialNumToRender={4}
+        removeClippedSubviews={true}
+        updateCellsBatchingPeriod={50}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

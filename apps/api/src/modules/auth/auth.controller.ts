@@ -89,8 +89,8 @@ export class AuthController {
   @Post('register')
   @Public()
   @RateLimit({
-    limit: 5,
-    windowSeconds: 60, // 5 requests per minute
+    limit: 3,
+    windowSeconds: 60, // 3 requests per minute per IP
     keyPrefix: 'auth:register',
     errorMessage: 'Too many registration attempts. Please try again later.',
   })

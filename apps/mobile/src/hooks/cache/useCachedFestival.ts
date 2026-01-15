@@ -98,8 +98,8 @@ export function useCachedFestival(
   }, [festivalId, user?.id]);
 
   // Fetch schedule
-  const fetchSchedule = useCallback(async (forceRefresh: boolean = false) => {
-    if (!isMountedRef.current) return;
+  const fetchSchedule = useCallback(async (forceRefresh = false) => {
+    if (!isMountedRef.current) {return;}
 
     setScheduleLoading(true);
     setScheduleError(null);
@@ -107,7 +107,7 @@ export function useCachedFestival(
     try {
       const result = await cacheRef.current.getSchedule(forceRefresh);
 
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current) {return;}
 
       if (result.data) {
         setSchedule(result.data);
@@ -126,7 +126,7 @@ export function useCachedFestival(
         totalSize: stats.totalSize,
       });
     } catch (error) {
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current) {return;}
 
       const err = error instanceof Error ? error : new Error('Failed to fetch schedule');
       setScheduleError(err);
@@ -144,7 +144,7 @@ export function useCachedFestival(
 
   // Auto sync
   useEffect(() => {
-    if (!autoSync || syncInterval <= 0) return;
+    if (!autoSync || syncInterval <= 0) {return;}
 
     syncIntervalRef.current = setInterval(() => {
       fetchSchedule(true);
@@ -234,7 +234,7 @@ export function useFestivalFavorites(festivalId: string) {
 /**
  * Hook for upcoming performances
  */
-export function useUpcomingPerformances(_festivalId: string, limit: number = 10) {
+export function useUpcomingPerformances(_festivalId: string, limit = 10) {
   const [performances, setPerformances] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);

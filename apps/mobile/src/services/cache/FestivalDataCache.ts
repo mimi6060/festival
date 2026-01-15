@@ -98,8 +98,8 @@ export class FestivalDataCache {
   private cacheManager: CacheManager;
   private festivalId: string | null = null;
   private userId: string | null = null;
-  private prefetchQueue: Set<string> = new Set();
-  private isPrefetching: boolean = false;
+  private prefetchQueue = new Set<string>();
+  private isPrefetching = false;
   private syncStatus: SyncStatus = {
     isConnected: true,
     lastSyncAt: null,
@@ -149,7 +149,7 @@ export class FestivalDataCache {
   /**
    * Get festival schedule
    */
-  async getSchedule(forceRefresh: boolean = false): Promise<StrategyResult<ScheduleData>> {
+  async getSchedule(forceRefresh = false): Promise<StrategyResult<ScheduleData>> {
     const cacheKey = `${CacheKeys.SCHEDULE}:${this.festivalId}`;
 
     if (forceRefresh) {
@@ -209,7 +209,7 @@ export class FestivalDataCache {
   /**
    * Get upcoming performances (prefetched)
    */
-  async getUpcomingPerformances(limit: number = 10): Promise<StrategyResult<ProgramEvent[]>> {
+  async getUpcomingPerformances(limit = 10): Promise<StrategyResult<ProgramEvent[]>> {
     const cacheKey = `${CacheKeys.UPCOMING}:${this.festivalId}:${limit}`;
 
     return executeStrategy<ProgramEvent[]>(
@@ -294,7 +294,7 @@ export class FestivalDataCache {
         }
 
         const firstPerformance = artistPerformances[0];
-        if (!firstPerformance) return null;
+        if (!firstPerformance) {return null;}
 
         return {
           artist: firstPerformance.artist,
@@ -380,7 +380,7 @@ export class FestivalDataCache {
         }
 
         const firstEvent = stageEvents[0];
-        if (!firstEvent) return null;
+        if (!firstEvent) {return null;}
 
         return {
           stage: firstEvent.stage,
@@ -403,7 +403,7 @@ export class FestivalDataCache {
   /**
    * Get user tickets with real-time sync
    */
-  async getTickets(forceRefresh: boolean = false): Promise<StrategyResult<TicketsData>> {
+  async getTickets(forceRefresh = false): Promise<StrategyResult<TicketsData>> {
     if (!this.userId) {
       return {
         data: null,
@@ -519,7 +519,7 @@ export class FestivalDataCache {
    */
   async prefetchUpcoming(): Promise<void> {
     const upcomingResult = await this.getUpcomingPerformances(20);
-    if (!upcomingResult.data) return;
+    if (!upcomingResult.data) {return;}
 
     // Prefetch artists from upcoming performances
     const artistIds = upcomingResult.data
@@ -534,7 +534,7 @@ export class FestivalDataCache {
    * Process prefetch queue
    */
   private async processPrefetchQueue(): Promise<void> {
-    if (this.isPrefetching || this.prefetchQueue.size === 0) return;
+    if (this.isPrefetching || this.prefetchQueue.size === 0) {return;}
 
     this.isPrefetching = true;
 
@@ -545,7 +545,7 @@ export class FestivalDataCache {
         this.prefetchQueue.delete(key);
 
         // Check if already cached
-        if (this.cacheManager.has(key)) continue;
+        if (this.cacheManager.has(key)) {continue;}
 
         // Determine type and fetch
         if (key.startsWith(CacheKeys.ARTIST)) {

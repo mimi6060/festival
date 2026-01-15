@@ -110,9 +110,9 @@ export class InvoiceGeneratorService {
    */
   calculateInvoice(
     items: CreateInvoiceItemDto[],
-    defaultTaxRate: number = 20,
-    taxExempt: boolean = false,
-    reverseCharge: boolean = false,
+    defaultTaxRate = 20,
+    taxExempt = false,
+    reverseCharge = false,
   ): CalculatedInvoice {
     let subtotal = 0;
     let totalTax = 0;
@@ -164,9 +164,9 @@ export class InvoiceGeneratorService {
     items: CreateInvoiceItemDto[],
     baseCurrency: string,
     targetCurrency: string,
-    defaultTaxRate: number = 20,
-    taxExempt: boolean = false,
-    reverseCharge: boolean = false,
+    defaultTaxRate = 20,
+    taxExempt = false,
+    reverseCharge = false,
   ): Promise<{
     base: CalculatedInvoice;
     original: CalculatedInvoice;
@@ -221,7 +221,7 @@ export class InvoiceGeneratorService {
   /**
    * Format price for display
    */
-  formatPrice(amount: number, currency: string, locale: string = 'fr'): string {
+  formatPrice(amount: number, currency: string, locale = 'fr'): string {
     return this.currencyService.formatPrice(
       amount,
       currency as SupportedCurrency,
@@ -412,7 +412,7 @@ export class InvoiceGeneratorService {
   /**
    * Format date for invoice
    */
-  formatDate(date: Date, locale: string = 'fr'): string {
+  formatDate(date: Date, locale = 'fr'): string {
     const options: Intl.DateTimeFormatOptions = {
       year: 'numeric',
       month: 'long',

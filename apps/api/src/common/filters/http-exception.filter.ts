@@ -175,7 +175,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     const lang = this.getLanguageFromRequest(request);
 
     let message: string;
-    let validationErrors: Array<{ field: string; message: string }> | undefined;
+    let validationErrors: { field: string; message: string }[] | undefined;
     let details: Record<string, unknown> | undefined;
 
     if (typeof exceptionResponse === 'string') {
@@ -215,7 +215,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
     };
   }
 
-  private parseValidationMessages(messages: unknown[]): Array<{ field: string; message: string }> {
+  private parseValidationMessages(messages: unknown[]): { field: string; message: string }[] {
     return messages.map((msg) => {
       if (typeof msg === 'string') {
         // Try to extract field name from message like "email should not be empty"

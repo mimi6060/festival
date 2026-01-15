@@ -1551,7 +1551,7 @@ describe('PdfService', () => {
     it('should use default company name when not configured', async () => {
       // Arrange
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'COMPANY_NAME') return undefined;
+        if (key === 'COMPANY_NAME') {return undefined;}
         return 'test-value';
       });
       mockPrismaService.payment.findUnique.mockResolvedValue(mockPayment);

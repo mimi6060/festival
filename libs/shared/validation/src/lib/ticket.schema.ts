@@ -14,7 +14,6 @@ import {
   amountSchema,
   currencySchema,
   paginationSchema,
-  PATTERNS,
 } from './common.schema';
 
 // ============================================================================

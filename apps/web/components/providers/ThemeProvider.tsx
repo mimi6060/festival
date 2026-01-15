@@ -101,7 +101,7 @@ export function ThemeProvider({
       if (typeof window !== 'undefined') {
         try {
           localStorage.setItem(storageKey, newTheme);
-        } catch (e) {
+        } catch {
           // localStorage might not be available
         }
       }
@@ -129,7 +129,7 @@ export function ThemeProvider({
       setThemeState(initialTheme);
       const resolved = initialTheme === 'system' ? getSystemTheme() : initialTheme;
       applyTheme(resolved);
-    } catch (e) {
+    } catch {
       // localStorage might not be available
       applyTheme('dark');
     }
@@ -153,7 +153,7 @@ export function ThemeProvider({
 
   // Listen for storage changes (sync across tabs)
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted) {return;}
 
     const handleStorage = (e: StorageEvent) => {
       if (e.key === storageKey && e.newValue) {

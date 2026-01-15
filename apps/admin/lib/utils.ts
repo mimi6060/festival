@@ -7,8 +7,8 @@ export function cn(...inputs: ClassValue[]) {
 
 export function formatCurrency(
   amount: number,
-  currency: string = 'EUR',
-  locale: string = 'fr-FR'
+  currency = 'EUR',
+  locale = 'fr-FR'
 ): string {
   return new Intl.NumberFormat(locale, {
     style: 'currency',
@@ -23,14 +23,14 @@ export function formatDate(
     month: 'long',
     day: 'numeric',
   },
-  locale: string = 'fr-FR'
+  locale = 'fr-FR'
 ): string {
   return new Intl.DateTimeFormat(locale, options).format(new Date(date));
 }
 
 export function formatDateTime(
   date: string | Date,
-  locale: string = 'fr-FR'
+  locale = 'fr-FR'
 ): string {
   return new Intl.DateTimeFormat(locale, {
     year: 'numeric',
@@ -43,14 +43,14 @@ export function formatDateTime(
 
 export function formatNumber(
   value: number,
-  locale: string = 'fr-FR'
+  locale = 'fr-FR'
 ): string {
   return new Intl.NumberFormat(locale).format(value);
 }
 
 export function formatPercentage(
   value: number,
-  decimals: number = 1
+  decimals = 1
 ): string {
   return `${value.toFixed(decimals)}%`;
 }
@@ -59,7 +59,7 @@ export function calculatePercentageChange(
   current: number,
   previous: number
 ): number {
-  if (previous === 0) return current > 0 ? 100 : 0;
+  if (previous === 0) {return current > 0 ? 100 : 0;}
   return ((current - previous) / previous) * 100;
 }
 
@@ -78,7 +78,7 @@ export function slugify(text: string): string {
 }
 
 export function truncate(text: string, length: number): string {
-  if (text.length <= length) return text;
+  if (text.length <= length) {return text;}
   return `${text.substring(0, length)}...`;
 }
 
@@ -148,7 +148,7 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
 }
 
 export function downloadCSV(data: Record<string, unknown>[], filename: string): void {
-  if (data.length === 0) return;
+  if (data.length === 0) {return;}
 
   const headers = Object.keys(data[0]!);
   const csvContent = [

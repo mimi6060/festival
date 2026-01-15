@@ -242,10 +242,10 @@ export function FestivalSearch({
   // Get active filter count
   const getActiveFilterCount = () => {
     let count = 0;
-    if (filters.dateRange?.start || filters.dateRange?.end) count++;
-    if (filters.priceRange?.min || filters.priceRange?.max) count++;
-    if (filters.genres && filters.genres.length > 0) count++;
-    if (filters.location) count++;
+    if (filters.dateRange?.start || filters.dateRange?.end) {count++;}
+    if (filters.priceRange?.min || filters.priceRange?.max) {count++;}
+    if (filters.genres && filters.genres.length > 0) {count++;}
+    if (filters.location) {count++;}
     return count;
   };
 

@@ -113,7 +113,7 @@ export function useKeyboardNavigation<T>({
 
   // Handle type-ahead search
   const handleTypeAhead = useCallback((char: string) => {
-    if (!typeAheadKey) return;
+    if (!typeAheadKey) {return;}
 
     typeAheadBuffer.current += char.toLowerCase();
     clearTypeAhead();
@@ -137,7 +137,7 @@ export function useKeyboardNavigation<T>({
   const navigate = useCallback((direction: 1 | -1) => {
     setHighlightedIndex((current) => {
       const itemCount = items.length;
-      if (itemCount === 0) return -1;
+      if (itemCount === 0) {return -1;}
 
       let newIndex: number;
 
@@ -158,7 +158,7 @@ export function useKeyboardNavigation<T>({
 
   // Handle keyboard events
   const handleKeyDown = useCallback((event: React.KeyboardEvent) => {
-    if (!enabled) return;
+    if (!enabled) {return;}
 
     const { key } = event;
 

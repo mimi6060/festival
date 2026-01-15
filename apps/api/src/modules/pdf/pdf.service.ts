@@ -5,16 +5,7 @@ import PDFDocument from 'pdfkit';
 import * as QRCode from 'qrcode';
 import * as crypto from 'crypto';
 import {
-  TicketPdfData,
-  InvoicePdfData,
-  ReceiptPdfData,
-  StaffBadgePdfData,
-  ProgramPdfData,
-  CampingVoucherPdfData,
-  RefundConfirmationPdfData,
   FinancialReportPdfData,
-  EnhancedTicketPdfData,
-  EnhancedStaffBadgePdfData,
   CompanyInfo,
   DEFAULT_PDF_COLORS,
   PdfColors,
@@ -42,7 +33,7 @@ export class PdfService {
     this.qrSecret = this.configService.get<string>('QR_SECRET') || 'secret';
   }
 
-  async generateTicketPdf(ticketId: string, userId: string): Promise<Buffer> {
+  async generateTicketPdf(ticketId: string, _userId: string): Promise<Buffer> {
     const ticket = await this.prisma.ticket.findUnique({
       where: { id: ticketId },
       include: {
@@ -51,7 +42,7 @@ export class PdfService {
         festival: { select: { id: true, name: true, location: true, address: true, startDate: true, endDate: true, logoUrl: true, contactEmail: true, websiteUrl: true } },
       },
     });
-    if (!ticket) throw new NotFoundException('Ticket not found');
+    if (!ticket) {throw new NotFoundException('Ticket not found');}
     return this.createTicketPdf(ticket);
   }
 
@@ -90,12 +81,12 @@ export class PdfService {
     });
   }
 
-  async generateInvoicePdf(paymentId: string, userId: string): Promise<Buffer> {
+  async generateInvoicePdf(paymentId: string, _userId: string): Promise<Buffer> {
     const payment = await this.prisma.payment.findUnique({
       where: { id: paymentId },
       include: { user: true, tickets: { include: { category: true, festival: true } } },
     });
-    if (!payment) throw new NotFoundException('Payment not found');
+    if (!payment) {throw new NotFoundException('Payment not found');}
     return this.createInvoicePdf(payment);
   }
 
@@ -120,8 +111,8 @@ export class PdfService {
         doc.fontSize(9).fillColor(this.colors.textLight).text(this.companyInfo.address, 50);
         doc.text('Tel: ' + this.companyInfo.phone);
         doc.text('Email: ' + this.companyInfo.email);
-        if (this.companyInfo.siret) doc.text('SIRET: ' + this.companyInfo.siret);
-        if (this.companyInfo.tva) doc.text('TVA: ' + this.companyInfo.tva);
+        if (this.companyInfo.siret) {doc.text('SIRET: ' + this.companyInfo.siret);}
+        if (this.companyInfo.tva) {doc.text('TVA: ' + this.companyInfo.tva);}
 
         doc.rect(350, 120, 195, 70).fillAndStroke('#f8f8f8', this.colors.border);
         doc.fontSize(10).font('Helvetica-Bold').fillColor(this.colors.primary).text('FACTURER A', 360, 130);
@@ -140,8 +131,8 @@ export class PdfService {
         for (const t of payment.tickets) {
           const key = t.festival.name + ' - ' + t.category.name;
           const ex = itemsMap.get(key);
-          if (ex) ex.qty++;
-          else itemsMap.set(key, { desc: key, qty: 1, price: Number(t.purchasePrice) });
+          if (ex) {ex.qty++;}
+          else {itemsMap.set(key, { desc: key, qty: 1, price: Number(t.purchasePrice) });}
         }
 
         for (const item of itemsMap.values()) {
@@ -182,7 +173,7 @@ export class PdfService {
       where: { id: assignmentId },
       include: { user: true, festival: true, zone: true },
     });
-    if (!assignment) throw new NotFoundException('Assignment not found');
+    if (!assignment) {throw new NotFoundException('Assignment not found');}
     return this.createBadgePdf(assignment, photoBuffer);
   }
 
@@ -255,7 +246,7 @@ export class PdfService {
       where: { id: festivalId },
       include: { stages: { include: { performances: { where: { isCancelled: false }, include: { artist: true }, orderBy: { startTime: 'asc' } } }, orderBy: { name: 'asc' } } },
     });
-    if (!festival) throw new NotFoundException('Festival not found');
+    if (!festival) {throw new NotFoundException('Festival not found');}
     return this.createProgramPdf(festival);
   }
 
@@ -276,7 +267,7 @@ export class PdfService {
         doc.fontSize(24).font('Helvetica').text('PROGRAMME OFFICIEL', 40, 180, { width: pageWidth - 80, align: 'center' });
         doc.fontSize(16).text(this.formatDate(festival.startDate) + ' - ' + this.formatDate(festival.endDate), 40, 230, { width: pageWidth - 80, align: 'center' });
         doc.fontSize(14).fillColor('#cccccc').text(festival.location, 40, 260, { width: pageWidth - 80, align: 'center' });
-        if (festival.description) doc.fontSize(11).fillColor(this.colors.textLight).text(festival.description, 60, 400, { width: pageWidth - 120, align: 'center' });
+        if (festival.description) {doc.fontSize(11).fillColor(this.colors.textLight).text(festival.description, 60, 400, { width: pageWidth - 120, align: 'center' });}
 
         const stageColors = ['#2563eb', '#dc2626', '#059669', '#7c3aed', '#d97706'];
         const performancesByDay = new Map<string, { stage: string; color: string; perfs: any[] }[]>();
@@ -286,7 +277,7 @@ export class PdfService {
           const color = stageColors[i % stageColors.length];
           for (const perf of stage.performances) {
             const dayKey = this.formatDate(perf.startTime);
-            if (!performancesByDay.has(dayKey)) performancesByDay.set(dayKey, []);
+            if (!performancesByDay.has(dayKey)) {performancesByDay.set(dayKey, []);}
             const dayPerfs = performancesByDay.get(dayKey)!;
             let stageEntry = dayPerfs.find(s => s.stage === stage.name);
             if (!stageEntry) { stageEntry = { stage: stage.name, color, perfs: [] }; dayPerfs.push(stageEntry); }
@@ -310,7 +301,7 @@ export class PdfService {
               const perfY = doc.y;
               doc.fontSize(10).font('Helvetica-Bold').fillColor(stageData.color).text(this.formatTime(perf.startTime) + ' - ' + this.formatTime(perf.endTime), 50, perfY, { width: 90 });
               doc.fontSize(12).fillColor(this.colors.text).text(perf.artist.name, 150, perfY, { width: 250 });
-              if (perf.artist.genre) doc.fontSize(9).font('Helvetica').fillColor(this.colors.textLight).text(perf.artist.genre, 150, perfY + 15, { width: 250 });
+              if (perf.artist.genre) {doc.fontSize(9).font('Helvetica').fillColor(this.colors.textLight).text(perf.artist.genre, 150, perfY + 15, { width: 250 });}
               doc.y = perfY + (perf.artist.genre ? 35 : 25);
               if (doc.y > doc.page.height - 100) { doc.addPage(); doc.y = 50; }
             }
@@ -334,9 +325,9 @@ export class PdfService {
       where: { id: festivalId },
       include: { ticketCategories: true, tickets: { include: { category: true } }, cashlessTransactions: true, vendorOrders: { include: { vendor: true } }, campingBookings: { include: { spot: { include: { zone: true } } } } },
     });
-    if (!festival) throw new NotFoundException('Festival not found');
+    if (!festival) {throw new NotFoundException('Festival not found');}
     const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { role: true, firstName: true, lastName: true } });
-    if (user?.role !== 'ADMIN' && festival.organizerId !== userId) throw new NotFoundException('Festival not found');
+    if (user?.role !== 'ADMIN' && festival.organizerId !== userId) {throw new NotFoundException('Festival not found');}
 
     const soldTickets = festival.tickets.filter(t => t.status === 'SOLD' || t.status === 'USED');
     const ticketRevenue = soldTickets.reduce((sum, t) => sum + Number(t.purchasePrice), 0);
@@ -432,9 +423,9 @@ export class PdfService {
     doc.fontSize(14).font('Helvetica-Bold').fillColor(color).text(value, x + 10, y + 40, { width: width - 20, align: 'center' });
   }
 
-  async generateReceiptPdf(paymentId: string, userId: string): Promise<Buffer> {
+  async generateReceiptPdf(paymentId: string, _userId: string): Promise<Buffer> {
     const payment = await this.prisma.payment.findUnique({ where: { id: paymentId }, include: { user: true, tickets: { include: { category: true, festival: true } } } });
-    if (!payment) throw new NotFoundException('Payment not found');
+    if (!payment) {throw new NotFoundException('Payment not found');}
     return this.createReceiptPdf(payment);
   }
 
@@ -467,9 +458,9 @@ export class PdfService {
     });
   }
 
-  async generateCampingVoucherPdf(bookingId: string, userId: string): Promise<Buffer> {
+  async generateCampingVoucherPdf(bookingId: string, _userId: string): Promise<Buffer> {
     const booking = await this.prisma.campingBooking.findUnique({ where: { id: bookingId }, include: { user: true, spot: { include: { zone: { include: { festival: true } } } } } });
-    if (!booking) throw new NotFoundException('Booking not found');
+    if (!booking) {throw new NotFoundException('Booking not found');}
     return this.createCampingVoucherPdf(booking);
   }
 
@@ -511,9 +502,9 @@ export class PdfService {
     });
   }
 
-  async generateRefundConfirmationPdf(paymentId: string, userId: string): Promise<Buffer> {
+  async generateRefundConfirmationPdf(paymentId: string, _userId: string): Promise<Buffer> {
     const payment = await this.prisma.payment.findUnique({ where: { id: paymentId }, include: { user: true, tickets: { include: { category: true, festival: true } } } });
-    if (!payment || payment.status !== 'REFUNDED') throw new NotFoundException('Payment not found or not refunded');
+    if (payment?.status !== 'REFUNDED') {throw new NotFoundException('Payment not found or not refunded');}
     return this.createRefundConfirmationPdf(payment);
   }
 

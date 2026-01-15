@@ -48,8 +48,8 @@ const mockReflector = {
 
 // Factory for creating mock ExecutionContext
 function createMockExecutionContext(
-  className: string = 'TestController',
-  methodName: string = 'testMethod',
+  className = 'TestController',
+  methodName = 'testMethod',
   args: any[] = [],
 ): ExecutionContext {
   const mockHandler = {

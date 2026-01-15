@@ -101,26 +101,26 @@ export interface ApplePassData {
   foregroundColor: string;
   backgroundColor: string;
   labelColor: string;
-  barcodes: Array<{
+  barcodes: {
     format: string;
     message: string;
     messageEncoding: string;
     altText?: string;
-  }>;
+  }[];
   eventTicket: {
-    headerFields: Array<{ key: string; label: string; value: string }>;
-    primaryFields: Array<{ key: string; label: string; value: string }>;
-    secondaryFields: Array<{ key: string; label: string; value: string }>;
-    auxiliaryFields: Array<{ key: string; label: string; value: string }>;
-    backFields: Array<{ key: string; label: string; value: string }>;
+    headerFields: { key: string; label: string; value: string }[];
+    primaryFields: { key: string; label: string; value: string }[];
+    secondaryFields: { key: string; label: string; value: string }[];
+    auxiliaryFields: { key: string; label: string; value: string }[];
+    backFields: { key: string; label: string; value: string }[];
   };
   relevantDate?: string;
   expirationDate?: string;
-  locations?: Array<{
+  locations?: {
     latitude: number;
     longitude: number;
     relevantText?: string;
-  }>;
+  }[];
 }
 
 export interface GooglePassData {
@@ -575,16 +575,16 @@ export class PassGenerator {
     const result: PassData['seatInfo'] = {};
 
     const sectionMatch = seatInfo.match(/section\s*[:\s]?\s*(\w+)/i);
-    if (sectionMatch) result.section = sectionMatch[1];
+    if (sectionMatch) {result.section = sectionMatch[1];}
 
     const rowMatch = seatInfo.match(/row\s*[:\s]?\s*(\w+)/i) || seatInfo.match(/rang\s*[:\s]?\s*(\w+)/i);
-    if (rowMatch) result.row = rowMatch[1];
+    if (rowMatch) {result.row = rowMatch[1];}
 
     const seatMatch = seatInfo.match(/seat\s*[:\s]?\s*(\w+)/i) || seatInfo.match(/place\s*[:\s]?\s*(\w+)/i);
-    if (seatMatch) result.seat = seatMatch[1];
+    if (seatMatch) {result.seat = seatMatch[1];}
 
     const gateMatch = seatInfo.match(/gate\s*[:\s]?\s*(\w+)/i) || seatInfo.match(/porte\s*[:\s]?\s*(\w+)/i);
-    if (gateMatch) result.gate = gateMatch[1];
+    if (gateMatch) {result.gate = gateMatch[1];}
 
     // If no patterns matched, use the whole string as section
     if (!result.section && !result.row && !result.seat && !result.gate) {

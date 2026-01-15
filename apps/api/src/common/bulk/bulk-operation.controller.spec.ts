@@ -33,7 +33,7 @@ const mockBulkOperationService = {
 
 describe('GenericBulkController', () => {
   let controller: GenericBulkController;
-  let service: BulkOperationService;
+  let _service: BulkOperationService;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -49,7 +49,7 @@ describe('GenericBulkController', () => {
     }).compile();
 
     controller = module.get<GenericBulkController>(GenericBulkController);
-    service = module.get<BulkOperationService>(BulkOperationService);
+    _service = module.get<BulkOperationService>(BulkOperationService);
   });
 
   describe('constructor', () => {
@@ -354,7 +354,7 @@ describe('Controller decorators', () => {
   it('should have correct method decorators for bulkDelete', () => {
     const prototype = GenericBulkController.prototype;
     // The @Post decorator should be present
-    const postMetadata = Reflect.getMetadata('method', prototype.bulkDelete);
+    const _postMetadata = Reflect.getMetadata('method', prototype.bulkDelete);
     // Check if method exists
     expect(typeof prototype.bulkDelete).toBe('function');
   });
@@ -437,7 +437,7 @@ describe('DTO validation (integration)', () => {
 
   describe('BulkExportDto', () => {
     it('should accept all valid export formats', async () => {
-      const formats: Array<'csv' | 'json' | 'xlsx'> = ['csv', 'json', 'xlsx'];
+      const formats: ('csv' | 'json' | 'xlsx')[] = ['csv', 'json', 'xlsx'];
 
       for (const format of formats) {
         const dto: BulkExportDto = { format };

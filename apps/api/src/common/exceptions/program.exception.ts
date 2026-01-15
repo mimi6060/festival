@@ -195,7 +195,7 @@ export class PerformanceAlreadyEndedException extends BaseException {
 
 export class ScheduleConflictException extends BaseException {
   constructor(
-    conflicts: Array<{ stageId: string; performanceId: string; time: string }>,
+    conflicts: { stageId: string; performanceId: string; time: string }[],
   ) {
     super(
       ErrorCodes.SCHEDULE_CONFLICT,

@@ -7,7 +7,6 @@ import {
   schemaMigrations,
   createTable,
   addColumns,
-  Migration,
 } from '@nozbe/watermelondb/Schema/migrations';
 
 /**

@@ -1668,8 +1668,8 @@ export class AnalyticsService {
     averageOrderValue: number;
   }> {
     const vendorWhere: any = { festivalId };
-    if (vendorId) vendorWhere.id = vendorId;
-    if (vendorType) vendorWhere.type = vendorType;
+    if (vendorId) {vendorWhere.id = vendorId;}
+    if (vendorType) {vendorWhere.type = vendorType;}
 
     const [vendorCount, orderStats] = await Promise.all([
       this.prisma.vendor.count({ where: vendorWhere }),
@@ -1993,7 +1993,7 @@ export class AnalyticsService {
       select: { maxCapacity: true },
     });
 
-    if (!festival) return alerts;
+    if (!festival) {return alerts;}
 
     const occupancyRate = (liveData.currentAttendees / festival.maxCapacity) * 100;
 

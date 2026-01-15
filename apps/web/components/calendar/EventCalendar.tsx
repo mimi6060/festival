@@ -549,7 +549,7 @@ interface ListViewProps {
 function ListView({ events, onEventClick }: ListViewProps) {
   // Group events by date
   const groupedEvents = useMemo(() => {
-    const groups: { [key: string]: CalendarEvent[] } = {};
+    const groups: Record<string, CalendarEvent[]> = {};
 
     const sortedEvents = [...events].sort(
       (a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime()
@@ -580,8 +580,8 @@ function ListView({ events, onEventClick }: ListViewProps) {
     const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
 
-    if (isSameDay(date, today)) return 'Today';
-    if (isSameDay(date, tomorrow)) return 'Tomorrow';
+    if (isSameDay(date, today)) {return 'Today';}
+    if (isSameDay(date, tomorrow)) {return 'Tomorrow';}
 
     return date.toLocaleDateString('en-US', {
       weekday: 'long',
@@ -724,7 +724,7 @@ export function EventCalendar({
         newDate.setMonth(newDate.getMonth() - 1);
     }
 
-    if (minDate && newDate < minDate) return;
+    if (minDate && newDate < minDate) {return;}
     setCurrentDate(newDate);
     onMonthChange?.(newDate);
   }, [currentDate, view, minDate, onMonthChange]);
@@ -745,7 +745,7 @@ export function EventCalendar({
         newDate.setMonth(newDate.getMonth() + 1);
     }
 
-    if (maxDate && newDate > maxDate) return;
+    if (maxDate && newDate > maxDate) {return;}
     setCurrentDate(newDate);
     onMonthChange?.(newDate);
   }, [currentDate, view, maxDate, onMonthChange]);
@@ -761,7 +761,7 @@ export function EventCalendar({
     switch (view) {
       case 'month':
         return `${MONTHS[currentDate.getMonth()]} ${currentDate.getFullYear()}`;
-      case 'week':
+      case 'week': {
         const weekDays = getWeekDays(currentDate);
         const start = weekDays[0];
         const end = weekDays[6];
@@ -769,6 +769,7 @@ export function EventCalendar({
           return `${MONTHS[start.getMonth()]} ${start.getDate()} - ${end.getDate()}, ${start.getFullYear()}`;
         }
         return `${MONTHS[start.getMonth()]} ${start.getDate()} - ${MONTHS[end.getMonth()]} ${end.getDate()}, ${end.getFullYear()}`;
+      }
       case 'day':
         return currentDate.toLocaleDateString('en-US', {
           weekday: 'long',

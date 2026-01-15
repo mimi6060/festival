@@ -93,9 +93,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
     // Build aria-describedby from error, helper text, and custom describedby
     const describedByIds: string[] = [];
-    if (ariaDescribedBy) describedByIds.push(ariaDescribedBy);
-    if (error) describedByIds.push(errorId);
-    if (helperText && !error) describedByIds.push(helperId);
+    if (ariaDescribedBy) {describedByIds.push(ariaDescribedBy);}
+    if (error) {describedByIds.push(errorId);}
+    if (helperText && !error) {describedByIds.push(helperId);}
 
     const baseStyles = `
       rounded-xl
@@ -240,9 +240,9 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
 
     // Build aria-describedby from error, helper text, and custom describedby
     const describedByIds: string[] = [];
-    if (ariaDescribedBy) describedByIds.push(ariaDescribedBy);
-    if (error) describedByIds.push(errorId);
-    if (helperText && !error) describedByIds.push(helperId);
+    if (ariaDescribedBy) {describedByIds.push(ariaDescribedBy);}
+    if (error) {describedByIds.push(errorId);}
+    if (helperText && !error) {describedByIds.push(helperId);}
 
     const baseStyles = `
       px-4 py-3 rounded-xl
@@ -376,8 +376,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
 
     // Build aria-describedby
     const describedByIds: string[] = [];
-    if (ariaDescribedBy) describedByIds.push(ariaDescribedBy);
-    if (error) describedByIds.push(errorId);
+    if (ariaDescribedBy) {describedByIds.push(ariaDescribedBy);}
+    if (error) {describedByIds.push(errorId);}
 
     const baseStyles = `
       rounded-xl

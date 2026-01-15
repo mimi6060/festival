@@ -134,8 +134,8 @@ class SyncService {
   private database: Database;
   private config: SyncConfig;
   private status: SyncStatus;
-  private listeners: Set<SyncEventListener> = new Set();
-  private networkListeners: Set<NetworkChangeListener> = new Set();
+  private listeners = new Set<SyncEventListener>();
+  private networkListeners = new Set<NetworkChangeListener>();
   private syncPromise: Promise<SyncResult> | null = null;
   private abortController: AbortController | null = null;
 
@@ -147,10 +147,10 @@ class SyncService {
   private appStateSubscription: { remove: () => void } | null = null;
 
   // Track last sync time for throttling
-  private lastSyncTime: number = 0;
+  private lastSyncTime = 0;
 
   // Track if we're waiting to sync after reconnection
-  private pendingReconnectionSync: boolean = false;
+  private pendingReconnectionSync = false;
 
   private constructor(config: Partial<SyncConfig> = {}) {
     this.database = getDatabase();
@@ -979,7 +979,7 @@ class SyncService {
     entityType: string,
     records: any[]
   ): Promise<void> {
-    if (!records || records.length === 0) return;
+    if (!records || records.length === 0) {return;}
 
     const collection = this.database.get(entityType);
 

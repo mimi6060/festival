@@ -54,8 +54,8 @@ export interface PendingConflict<T> {
 class ConflictResolver {
   private strategy: ConflictStrategy;
   private mergeRules: MergeRule[] = [];
-  private pendingConflicts: Map<string, PendingConflict<unknown>> = new Map();
-  private conflictListeners: Set<(conflict: PendingConflict<unknown>) => void> = new Set();
+  private pendingConflicts = new Map<string, PendingConflict<unknown>>();
+  private conflictListeners = new Set<(conflict: PendingConflict<unknown>) => void>();
 
   constructor(strategy: ConflictStrategy = 'last-write-wins') {
     this.strategy = strategy;
@@ -494,10 +494,10 @@ class ConflictResolver {
    * Check if two values are equal
    */
   private areEqual(a: unknown, b: unknown): boolean {
-    if (a === b) return true;
-    if (typeof a !== typeof b) return false;
-    if (a === null || b === null) return a === b;
-    if (typeof a !== 'object') return a === b;
+    if (a === b) {return true;}
+    if (typeof a !== typeof b) {return false;}
+    if (a === null || b === null) {return a === b;}
+    if (typeof a !== 'object') {return a === b;}
     return JSON.stringify(a) === JSON.stringify(b);
   }
 

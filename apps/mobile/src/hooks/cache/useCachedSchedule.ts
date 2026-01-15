@@ -109,8 +109,8 @@ export function useCachedSchedule(
   }, [festivalId]);
 
   // Fetch schedule
-  const fetchSchedule = useCallback(async (isRefresh: boolean = false) => {
-    if (!isMountedRef.current) return;
+  const fetchSchedule = useCallback(async (isRefresh = false) => {
+    if (!isMountedRef.current) {return;}
 
     if (isRefresh) {
       setIsRefreshing(true);
@@ -122,7 +122,7 @@ export function useCachedSchedule(
     try {
       const result = await cacheRef.current.getSchedule(isRefresh);
 
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current) {return;}
 
       if (result.data) {
         setSchedule(result.data);
@@ -131,7 +131,7 @@ export function useCachedSchedule(
         setError(result.error);
       }
     } catch (err) {
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current) {return;}
 
       const error = err instanceof Error ? err : new Error('Failed to fetch schedule');
       setError(error);
@@ -150,7 +150,7 @@ export function useCachedSchedule(
 
   // Auto refresh
   useEffect(() => {
-    if (!autoRefresh || refreshInterval <= 0) return;
+    if (!autoRefresh || refreshInterval <= 0) {return;}
 
     refreshIntervalRef.current = setInterval(() => {
       fetchSchedule(true);
@@ -324,7 +324,7 @@ export function useCachedSchedule(
   }, [events]);
 
   const getUpcomingEvents = useCallback(
-    (limit: number = 10) => {
+    (limit = 10) => {
       const now = new Date();
       return events
         .filter(event => new Date(event.startTime) > now)
@@ -448,7 +448,7 @@ export function useScheduleByStage(festivalId: string, stageId: string) {
 /**
  * Hook for currently playing events
  */
-export function useCurrentlyPlaying(festivalId: string, refreshInterval: number = 30000) {
+export function useCurrentlyPlaying(festivalId: string, refreshInterval = 30000) {
   const { getCurrentEvents, isLoading, error } = useCachedSchedule({ festivalId });
   const [currentEvents, setCurrentEvents] = useState<ProgramEvent[]>([]);
 
@@ -493,7 +493,7 @@ export function useSmartScheduleRefresh(festivalId: string) {
       }
 
       const nextEvent = upcoming[0];
-      if (!nextEvent) return;
+      if (!nextEvent) {return;}
       const timeUntilNext = new Date(nextEvent.startTime).getTime() - Date.now();
 
       // Refresh more frequently as we approach the next event

@@ -41,8 +41,8 @@ export default function TicketSalesChart({ data, loading = false }: TicketSalesC
 
   const getBarColor = (value: number) => {
     const ratio = value / maxSales;
-    if (ratio >= 0.8) return '#0ea5e9';
-    if (ratio >= 0.5) return '#38bdf8';
+    if (ratio >= 0.8) {return '#0ea5e9';}
+    if (ratio >= 0.5) {return '#38bdf8';}
     return '#7dd3fc';
   };
 
@@ -117,7 +117,7 @@ export default function TicketSalesChart({ data, loading = false }: TicketSalesC
             <Tooltip
               content={(props) => {
                 const { active, payload, label } = props;
-                if (active && payload && payload.length) {
+                if (active && payload?.length) {
                   return (
                     <div className="bg-white px-4 py-3 rounded-lg shadow-lg border border-gray-200">
                       <p className="text-sm text-gray-500 mb-1">

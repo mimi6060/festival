@@ -6,7 +6,6 @@ import {
   Body,
   Param,
   Query,
-  UseGuards,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -24,9 +23,9 @@ import { CacheInvalidationService, EntityChangeEvent, InvalidationResult } from 
 import { LRUCache, LRUStats } from './lru-cache';
 
 /**
- * DTO for cache entry details
+ * DTO for cache entry details (used in API documentation)
  */
-class CacheEntryDto {
+class _CacheEntryDto {
   key!: string;
   ttl!: number | null;
   size!: number;
@@ -73,7 +72,7 @@ class CacheDashboardDto {
     keysInvalidated: number;
     avgDuration: number;
   };
-  topKeys!: Array<{ key: string; accessCount: number }>;
+  topKeys!: { key: string; accessCount: number }[];
   tagDistribution!: Record<string, number>;
   memoryBreakdown!: {
     total: string;
@@ -403,9 +402,9 @@ export class CacheController {
     status: 200,
     description: 'Dependencies retrieved successfully',
   })
-  getDependencies(): Array<{ source: string; targets: string[] }> {
+  getDependencies(): { source: string; targets: string[] }[] {
     const deps = this.invalidationService.getDependencies();
-    const result: Array<{ source: string; targets: string[] }> = [];
+    const result: { source: string; targets: string[] }[] = [];
 
     for (const [source, depList] of deps) {
       for (const dep of depList) {
@@ -474,7 +473,7 @@ export class CacheController {
     }
   }
 
-  private getTopKeys(limit: number): Array<{ key: string; accessCount: number }> {
+  private getTopKeys(limit: number): { key: string; accessCount: number }[] {
     const entries = this.hotKeysCache.entries();
     return entries
       .sort((a, b) => b.metadata.accessCount - a.metadata.accessCount)

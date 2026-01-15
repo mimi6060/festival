@@ -195,10 +195,10 @@ export default class Ticket extends Model {
     updatedAt?: string;
   }): Promise<void> {
     await this.update((ticket) => {
-      if (data.status !== undefined) ticket.status = data.status;
-      if (data.usedAt) ticket.usedAt = new Date(data.usedAt).getTime();
-      if (data.usedByStaffId !== undefined) ticket.usedByStaffId = data.usedByStaffId;
-      if (data.updatedAt) ticket.serverUpdatedAt = new Date(data.updatedAt).getTime();
+      if (data.status !== undefined) {ticket.status = data.status;}
+      if (data.usedAt) {ticket.usedAt = new Date(data.usedAt).getTime();}
+      if (data.usedByStaffId !== undefined) {ticket.usedByStaffId = data.usedByStaffId;}
+      if (data.updatedAt) {ticket.serverUpdatedAt = new Date(data.updatedAt).getTime();}
       ticket.isSynced = true;
       ticket.lastSyncedAt = Date.now();
       ticket.needsPush = false;

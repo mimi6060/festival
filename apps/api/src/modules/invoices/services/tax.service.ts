@@ -154,7 +154,7 @@ export class TaxService {
 
     const taxableBase = this.roundToTwo(amount);
     let taxRate: number;
-    let isExempt = false;
+    const isExempt = false;
     let isReverseCharge = false;
     const taxCountry = countryCode.toUpperCase();
 

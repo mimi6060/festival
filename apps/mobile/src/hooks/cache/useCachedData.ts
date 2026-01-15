@@ -113,8 +113,8 @@ export function useCachedData<T>(
   const cacheManager = getCacheManager();
 
   // Fetch data
-  const fetchData = useCallback(async (isRefresh: boolean = false): Promise<void> => {
-    if (skip) return;
+  const fetchData = useCallback(async (isRefresh = false): Promise<void> => {
+    if (skip) {return;}
 
     if (isRefresh) {
       setIsRefreshing(true);
@@ -162,7 +162,7 @@ export function useCachedData<T>(
         }
       );
 
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current) {return;}
 
       if (result.data !== null) {
         setDataState(result.data);
@@ -181,7 +181,7 @@ export function useCachedData<T>(
         onError?.(result.error);
       }
     } catch (err) {
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current) {return;}
 
       const fetchError = err instanceof Error ? err : new Error('Failed to fetch data');
       setError(fetchError);

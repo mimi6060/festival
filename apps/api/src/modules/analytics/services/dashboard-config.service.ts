@@ -20,7 +20,7 @@ interface DashboardTemplate {
 @Injectable()
 export class DashboardConfigService {
   private readonly logger = new Logger(DashboardConfigService.name);
-  private dashboardConfigs: Map<string, DashboardConfig> = new Map();
+  private dashboardConfigs = new Map<string, DashboardConfig>();
 
   private readonly templates: DashboardTemplate[] = [
     this.createExecutiveDashboard(),
@@ -106,7 +106,7 @@ export class DashboardConfigService {
 
   async getDashboard(dashboardId: string): Promise<DashboardConfig> {
     const dashboard = this.dashboardConfigs.get(dashboardId);
-    if (!dashboard) throw new NotFoundException(`Dashboard ${dashboardId} not found`);
+    if (!dashboard) {throw new NotFoundException(`Dashboard ${dashboardId} not found`);}
     return dashboard;
   }
 
@@ -141,7 +141,7 @@ export class DashboardConfigService {
   async updateWidget(dashboardId: string, widgetId: string, updates: Partial<Omit<DashboardWidget, 'id'>>): Promise<DashboardConfig> {
     const dashboard = await this.getDashboard(dashboardId);
     const idx = dashboard.widgets.findIndex(w => w.id === widgetId);
-    if (idx === -1) throw new NotFoundException(`Widget ${widgetId} not found`);
+    if (idx === -1) {throw new NotFoundException(`Widget ${widgetId} not found`);}
     dashboard.widgets[idx] = { ...dashboard.widgets[idx], ...updates };
     dashboard.updatedAt = new Date();
     return dashboard;
@@ -150,7 +150,7 @@ export class DashboardConfigService {
   async removeWidget(dashboardId: string, widgetId: string): Promise<DashboardConfig> {
     const dashboard = await this.getDashboard(dashboardId);
     const idx = dashboard.widgets.findIndex(w => w.id === widgetId);
-    if (idx === -1) throw new NotFoundException(`Widget ${widgetId} not found`);
+    if (idx === -1) {throw new NotFoundException(`Widget ${widgetId} not found`);}
     dashboard.widgets.splice(idx, 1);
     dashboard.updatedAt = new Date();
     return dashboard;
@@ -159,7 +159,7 @@ export class DashboardConfigService {
   async setDefault(dashboardId: string): Promise<DashboardConfig> {
     const dashboard = await this.getDashboard(dashboardId);
     for (const d of this.dashboardConfigs.values()) {
-      if (d.festivalId === dashboard.festivalId) d.isDefault = false;
+      if (d.festivalId === dashboard.festivalId) {d.isDefault = false;}
     }
     dashboard.isDefault = true;
     dashboard.updatedAt = new Date();

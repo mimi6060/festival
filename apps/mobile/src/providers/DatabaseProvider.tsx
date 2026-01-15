@@ -248,7 +248,7 @@ function DatabaseLoadingView(): JSX.Element {
  */
 function DatabaseErrorView({
   error,
-  onRetry,
+  onRetry: _onRetry,
 }: {
   error: Error;
   onRetry: () => void;

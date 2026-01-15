@@ -182,7 +182,7 @@ export function useIndoorLocation(
 
   // Update location state periodically
   useEffect(() => {
-    if (!isTracking || !isInitialized) return;
+    if (!isTracking || !isInitialized) {return;}
 
     const interval = setInterval(() => {
       if (isMountedRef.current) {
@@ -238,14 +238,14 @@ export function useIndoorLocation(
 
   // Find nearest POI
   const findNearestPOI = useCallback((type?: string): POI | null => {
-    if (!location) return null;
+    if (!location) {return null;}
 
     const allPOIs = managerRef.current.getAllPOIs();
     const filteredPOIs = type
       ? allPOIs.filter((poi) => poi.type === type)
       : allPOIs;
 
-    if (filteredPOIs.length === 0) return null;
+    if (filteredPOIs.length === 0) {return null;}
 
     let nearest: POI | null = null;
     let minDistance = Infinity;
@@ -269,10 +269,10 @@ export function useIndoorLocation(
 
   // Get distance to a specific POI
   const getDistanceToPOI = useCallback((poiId: string): number | null => {
-    if (!location) return null;
+    if (!location) {return null;}
 
     const poi = pois.find((p) => p.id === poiId);
-    if (!poi) return null;
+    if (!poi) {return null;}
 
     return calculateDistanceFromCoords(
       location.latitude,
@@ -447,13 +447,13 @@ export function useZoneAlerts(
 /**
  * Hook for finding nearby points of interest
  */
-export function useNearbyPOIs(festivalId: string, maxDistance: number = 100) {
+export function useNearbyPOIs(festivalId: string, maxDistance = 100) {
   const { location, pois, isInitialized, formatDistance } = useIndoorLocation({
     festivalId,
     autoStart: true,
   });
 
-  const [nearbyPOIs, setNearbyPOIs] = useState<Array<POI & { distance: number }>>([]);
+  const [nearbyPOIs, setNearbyPOIs] = useState<(POI & { distance: number })[]>([]);
 
   useEffect(() => {
     if (!location || !isInitialized) {

@@ -636,6 +636,8 @@ export class UsersService {
   /**
    * Get user activity history with pagination.
    * Admin only.
+   *
+   * Optimized: Single query fetches user with _count aggregations to avoid N+1.
    */
   async getActivity(
     id: string,
@@ -653,6 +655,7 @@ export class UsersService {
     const page = options?.page ?? 1;
     const limit = Math.min(options?.limit ?? 20, 100);
 
+    // Optimized: Fetch user with counts in a single query to avoid N+1
     const user = await this.prisma.user.findUnique({
       where: { id },
       select: {
@@ -661,6 +664,15 @@ export class UsersService {
         createdAt: true,
         lastLoginAt: true,
         status: true,
+        _count: {
+          select: {
+            tickets: true,
+            payments: true,
+            auditLogs: {
+              where: { entityType: 'User', entityId: id },
+            },
+          },
+        },
       },
     });
 
@@ -668,7 +680,7 @@ export class UsersService {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    // Get total count of audit logs for pagination
+    // Get audit logs count for this specific user entity
     const totalAuditLogs = await this.prisma.auditLog.count({
       where: { entityId: id, entityType: 'User' },
     });
@@ -680,11 +692,9 @@ export class UsersService {
       staticEntriesCount++;
     }
 
-    // Get user's related data counts
-    const [ticketCount, paymentCount] = await Promise.all([
-      this.prisma.ticket.count({ where: { userId: id } }),
-      this.prisma.payment.count({ where: { userId: id } }),
-    ]);
+    // Use counts from the optimized query
+    const ticketCount = user._count.tickets;
+    const paymentCount = user._count.payments;
 
     if (ticketCount > 0) {
       staticEntriesCount++;

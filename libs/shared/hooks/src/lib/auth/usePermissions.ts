@@ -1,8 +1,7 @@
 'use client';
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
 import { UserRole } from '@festival/shared/types';
 import { Permission, ROLE_PERMISSIONS, UseRequireAuthOptions } from './types';
 

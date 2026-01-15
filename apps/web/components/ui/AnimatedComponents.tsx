@@ -60,7 +60,7 @@ export function Animated({
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!triggerOnView) return;
+    if (!triggerOnView) {return;}
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -129,7 +129,7 @@ export function Stagger({
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!triggerOnView) return;
+    if (!triggerOnView) {return;}
 
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -239,10 +239,10 @@ export function Ripple({
   const containerRef = useRef<HTMLDivElement>(null);
 
   const createRipple = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (disabled) return;
+    if (disabled) {return;}
 
     const container = containerRef.current;
-    if (!container) return;
+    if (!container) {return;}
 
     const rect = container.getBoundingClientRect();
     const size = Math.max(rect.width, rect.height);
@@ -591,7 +591,7 @@ export function Collapse({ isOpen, children, className = '' }: CollapseProps) {
   const [height, setHeight] = useState<number | undefined>(isOpen ? undefined : 0);
 
   useEffect(() => {
-    if (!contentRef.current) return;
+    if (!contentRef.current) {return;}
 
     if (isOpen) {
       const contentHeight = contentRef.current.scrollHeight;
@@ -662,7 +662,7 @@ export function CountUp({
   }, []);
 
   useEffect(() => {
-    if (!isInView) return;
+    if (!isInView) {return;}
 
     const startTime = Date.now();
     const difference = end - start;

@@ -81,11 +81,11 @@ export interface EmailJobData extends BaseJobData {
   subject: string;
   template: string;
   context: Record<string, unknown>;
-  attachments?: Array<{
+  attachments?: {
     filename: string;
     content?: string | Buffer;
     path?: string;
-  }>;
+  }[];
   replyTo?: string;
   cc?: string[];
   bcc?: string[];

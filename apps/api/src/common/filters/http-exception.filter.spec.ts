@@ -1,7 +1,6 @@
-import { HttpException, HttpStatus, Logger, BadRequestException, UnauthorizedException, ForbiddenException, NotFoundException as NestNotFoundException, ConflictException as NestConflictException } from '@nestjs/common';
-import { ArgumentsHost } from '@nestjs/common';
+import { HttpException, HttpStatus, Logger, BadRequestException, UnauthorizedException, ForbiddenException, NotFoundException as NestNotFoundException, ConflictException as NestConflictException, ArgumentsHost } from '@nestjs/common';
 import { HttpExceptionFilter, FlatErrorResponse } from './http-exception.filter';
-import { BaseException, ValidationException, AuthenticationException, ForbiddenException as CustomForbiddenException, NotFoundException, ConflictException } from '../exceptions/base.exception';
+import { ValidationException, AuthenticationException, ForbiddenException as CustomForbiddenException, NotFoundException, ConflictException } from '../exceptions/base.exception';
 import { ErrorCodes } from '../exceptions/error-codes';
 
 describe('HttpExceptionFilter', () => {

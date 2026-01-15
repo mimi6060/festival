@@ -9,7 +9,6 @@ import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
 import {
   syncService,
   SyncStatus,
-  SyncState,
   SyncResult,
   syncQueueService,
   QueueEvent,
@@ -91,7 +90,6 @@ export function useSync(options: SyncOptions = {}): UseSyncResult {
 
       // Sync on reconnect
       if (online && wasOffline && mergedOptions.syncOnReconnect) {
-        console.log('[useSync] Reconnected, triggering sync');
         syncService.sync().catch((error) => {
           console.error('[useSync] Reconnect sync failed:', error);
         });
@@ -110,7 +108,7 @@ export function useSync(options: SyncOptions = {}): UseSyncResult {
       setPendingChanges(stats.pending + stats.failed);
     };
 
-    const unsubscribe = syncQueueService.addListener((event: QueueEvent) => {
+    const unsubscribe = syncQueueService.addListener((_event: QueueEvent) => {
       updatePendingCount();
     });
 
@@ -206,7 +204,7 @@ export function useSync(options: SyncOptions = {}): UseSyncResult {
   }, []);
 
   const retryFailed = useCallback(async () => {
-    if (!isOnline) return;
+    if (!isOnline) {return;}
     await syncQueueService.retryFailed();
   }, [isOnline]);
 
@@ -261,7 +259,7 @@ export function useSync(options: SyncOptions = {}): UseSyncResult {
  */
 export function useEntitySyncStatus(entityType: string) {
   const [needsSync, setNeedsSync] = useState(false);
-  const [lastSyncAt, setLastSyncAt] = useState<Date | null>(null);
+  const [_lastSyncAt, _setLastSyncAt] = useState<Date | null>(null);
 
   useEffect(() => {
     const checkStatus = async () => {

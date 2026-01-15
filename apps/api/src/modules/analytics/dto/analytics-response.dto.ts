@@ -40,18 +40,18 @@ export class DashboardResponseDto {
     totalAvailable: number;
     soldPercentage: number;
     revenueTickets: number;
-    ticketsByType: Array<{
+    ticketsByType: {
       type: string;
       name: string;
       sold: number;
       available: number;
       revenue: number;
-    }>;
-    salesTrend: Array<{
+    }[];
+    salesTrend: {
       timestamp: Date;
       value: number;
       label?: string;
-    }>;
+    }[];
   };
 
   @ApiProperty({ description: 'Revenue metrics' })
@@ -110,22 +110,22 @@ export class SalesResponseDto {
   };
 
   @ApiProperty({ description: 'Daily sales breakdown' })
-  salesByDay!: Array<{
+  salesByDay!: {
     date: Date;
     ticketsSold: number;
     revenue: number;
     refunds: number;
-  }>;
+  }[];
 
   @ApiProperty({ description: 'Hourly sales distribution' })
-  salesByHour!: Array<{
+  salesByHour!: {
     hour: number;
     ticketsSold: number;
     revenue: number;
-  }>;
+  }[];
 
   @ApiProperty({ description: 'Sales by category' })
-  salesByCategory!: Array<{
+  salesByCategory!: {
     categoryId: string;
     categoryName: string;
     type: string;
@@ -133,10 +133,10 @@ export class SalesResponseDto {
     quota: number;
     revenue: number;
     percentageOfTotal: number;
-  }>;
+  }[];
 
   @ApiProperty({ description: 'Top selling categories' })
-  topSellingCategories!: Array<{
+  topSellingCategories!: {
     categoryId: string;
     categoryName: string;
     type: string;
@@ -144,7 +144,7 @@ export class SalesResponseDto {
     quota: number;
     revenue: number;
     percentageOfTotal: number;
-  }>;
+  }[];
 
   @ApiPropertyOptional({ description: 'Comparison with previous periods' })
   comparison?: {
@@ -189,49 +189,49 @@ export class CashlessResponseDto {
   };
 
   @ApiProperty({ description: 'Hourly transaction distribution' })
-  transactionsByHour!: Array<{
+  transactionsByHour!: {
     hour: number;
     topups: number;
     payments: number;
     topupAmount: number;
     paymentAmount: number;
-  }>;
+  }[];
 
   @ApiProperty({ description: 'Transactions by type' })
-  transactionsByType!: Array<{
+  transactionsByType!: {
     type: string;
     count: number;
     totalAmount: number;
     averageAmount: number;
-  }>;
+  }[];
 
   @ApiProperty({ description: 'Topup amount distribution' })
-  topupDistribution!: Array<{
+  topupDistribution!: {
     range: string;
     min: number;
     max: number;
     count: number;
     percentage: number;
-  }>;
+  }[];
 
   @ApiProperty({ description: 'Balance distribution' })
-  balanceDistribution!: Array<{
+  balanceDistribution!: {
     range: string;
     min: number;
     max: number;
     count: number;
     percentage: number;
-  }>;
+  }[];
 
   @ApiProperty({ description: 'Vendor cashless statistics' })
-  vendorBreakdown!: Array<{
+  vendorBreakdown!: {
     vendorId: string;
     vendorName: string;
     vendorType: string;
     totalTransactions: number;
     totalAmount: number;
     averageTransaction: number;
-  }>;
+  }[];
 }
 
 /**
@@ -255,32 +255,32 @@ export class AttendanceResponseDto {
   };
 
   @ApiProperty({ description: 'Hourly attendance data' })
-  hourlyAttendance!: Array<{
+  hourlyAttendance!: {
     hour: number;
     date: Date;
     entries: number;
     exits: number;
     netChange: number;
     totalInside: number;
-  }>;
+  }[];
 
   @ApiProperty({ description: 'Daily attendance summary' })
-  dailyAttendance!: Array<{
+  dailyAttendance!: {
     date: Date;
     uniqueVisitors: number;
     totalEntries: number;
     totalExits: number;
     peakOccupancy: number;
     peakTime: Date;
-  }>;
+  }[];
 
   @ApiProperty({ description: 'Entry/exit flow over time' })
-  entryExitFlow!: Array<{
+  entryExitFlow!: {
     timestamp: Date;
     entries: number;
     exits: number;
     cumulative: number;
-  }>;
+  }[];
 
   @ApiProperty({ description: 'Peak times' })
   peakTimes!: {
@@ -289,13 +289,13 @@ export class AttendanceResponseDto {
   };
 
   @ApiProperty({ description: 'Zone distribution' })
-  zoneDistribution!: Array<{
+  zoneDistribution!: {
     zoneId: string;
     zoneName: string;
     currentOccupancy: number;
     capacity: number;
     occupancyRate: number;
-  }>;
+  }[];
 }
 
 /**
@@ -312,7 +312,7 @@ export class ZoneResponseDto {
   };
 
   @ApiProperty({ description: 'Zone statistics' })
-  zones!: Array<{
+  zones!: {
     zoneId: string;
     zoneName: string;
     capacity: number | null;
@@ -323,23 +323,23 @@ export class ZoneResponseDto {
     averageTimeSpent: number;
     peakOccupancy: number;
     peakTime: Date | null;
-    hourlyOccupancy: Array<{ hour: number; occupancy: number }>;
-  }>;
+    hourlyOccupancy: { hour: number; occupancy: number }[];
+  }[];
 
   @ApiPropertyOptional({ description: 'Heatmap data for zones' })
-  heatmapData?: Array<{
+  heatmapData?: {
     zoneId: string;
     zoneName: string;
-    data: Array<{ hour: number; day: number; value: number }>;
-  }>;
+    data: { hour: number; day: number; value: number }[];
+  }[];
 
   @ApiPropertyOptional({ description: 'Zone transition analysis' })
-  zoneTransitions?: Array<{
+  zoneTransitions?: {
     fromZone: string;
     toZone: string;
     count: number;
     averageTime: number;
-  }>;
+  }[];
 }
 
 /**
@@ -364,16 +364,16 @@ export class VendorResponseDto {
   };
 
   @ApiProperty({ description: 'Statistics by vendor type' })
-  vendorsByType!: Array<{
+  vendorsByType!: {
     type: string;
     vendorCount: number;
     orderCount: number;
     revenue: number;
     percentageOfTotal: number;
-  }>;
+  }[];
 
   @ApiProperty({ description: 'Top performing vendors' })
-  topVendors!: Array<{
+  topVendors!: {
     vendorId: string;
     vendorName: string;
     vendorType: string;
@@ -381,32 +381,32 @@ export class VendorResponseDto {
     totalRevenue: number;
     averageOrderValue: number;
     completionRate: number;
-  }>;
+  }[];
 
   @ApiProperty({ description: 'Top selling products' })
-  topProducts!: Array<{
+  topProducts!: {
     vendorId: string;
     vendorName: string;
     productName: string;
     category: string;
     unitsSold: number;
     revenue: number;
-  }>;
+  }[];
 
   @ApiProperty({ description: 'Hourly order distribution' })
-  hourlyOrders!: Array<{
+  hourlyOrders!: {
     hour: number;
     orderCount: number;
     revenue: number;
     averageOrderValue: number;
-  }>;
+  }[];
 
   @ApiProperty({ description: 'Order status breakdown' })
-  orderStatusBreakdown!: Array<{
+  orderStatusBreakdown!: {
     status: string;
     count: number;
     percentage: number;
-  }>;
+  }[];
 }
 
 /**
@@ -424,13 +424,13 @@ export class RealtimeResponseDto {
     currentAttendees: number;
     lastHourEntries: number;
     lastHourExits: number;
-    activeZones: Array<{
+    activeZones: {
       zoneId: string;
       zoneName: string;
       currentOccupancy: number;
       capacity: number;
       occupancyRate: number;
-    }>;
+    }[];
   };
 
   @ApiProperty({ description: 'Last hour metrics' })
@@ -443,7 +443,7 @@ export class RealtimeResponseDto {
   };
 
   @ApiProperty({ description: 'Active alerts' })
-  alerts!: Array<{
+  alerts!: {
     id: string;
     type: string;
     severity: string;
@@ -452,7 +452,7 @@ export class RealtimeResponseDto {
     value: number;
     threshold: number;
     timestamp: Date;
-  }>;
+  }[];
 }
 
 /**

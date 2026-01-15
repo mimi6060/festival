@@ -174,13 +174,13 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
   private getConflictErrorCode(meta?: Record<string, unknown>): ErrorCode {
     const target = meta?.target as string[] | undefined;
-    if (!target) return ErrorCodes.INTERNAL_ERROR;
+    if (!target) {return ErrorCodes.INTERNAL_ERROR;}
 
     // Map unique constraint fields to specific error codes
-    if (target.includes('email')) return ErrorCodes.USER_EMAIL_EXISTS;
-    if (target.includes('phone')) return ErrorCodes.USER_PHONE_EXISTS;
-    if (target.includes('slug')) return ErrorCodes.FESTIVAL_SLUG_EXISTS;
-    if (target.includes('nfcTagId')) return ErrorCodes.CASHLESS_NFC_TAG_EXISTS;
+    if (target.includes('email')) {return ErrorCodes.USER_EMAIL_EXISTS;}
+    if (target.includes('phone')) {return ErrorCodes.USER_PHONE_EXISTS;}
+    if (target.includes('slug')) {return ErrorCodes.FESTIVAL_SLUG_EXISTS;}
+    if (target.includes('nfcTagId')) {return ErrorCodes.CASHLESS_NFC_TAG_EXISTS;}
 
     return ErrorCodes.INTERNAL_ERROR;
   }
@@ -299,7 +299,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
   }
 
   private sanitizeBody(body: unknown): unknown {
-    if (!body || typeof body !== 'object') return body;
+    if (!body || typeof body !== 'object') {return body;}
 
     const sanitized = { ...body as Record<string, unknown> };
     const sensitiveFields = ['password', 'token', 'secret', 'apiKey', 'cardNumber', 'cvv', 'pin'];

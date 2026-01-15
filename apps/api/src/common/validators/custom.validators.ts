@@ -20,7 +20,7 @@ import {
 @ValidatorConstraint({ name: 'isPhoneE164', async: false })
 export class IsPhoneE164Constraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
-    if (typeof value !== 'string') return false;
+    if (typeof value !== 'string') {return false;}
     // E.164 format: + followed by 1-15 digits
     return /^\+[1-9]\d{1,14}$/.test(value);
   }
@@ -56,7 +56,7 @@ export function IsPhoneE164(validationOptions?: ValidationOptions) {
 @ValidatorConstraint({ name: 'isSecureUrl', async: false })
 export class IsSecureUrlConstraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
-    if (typeof value !== 'string') return false;
+    if (typeof value !== 'string') {return false;}
     try {
       const url = new URL(value);
       return url.protocol === 'https:';
@@ -96,7 +96,7 @@ export function IsSecureUrl(validationOptions?: ValidationOptions) {
 @ValidatorConstraint({ name: 'isSlug', async: false })
 export class IsSlugConstraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
-    if (typeof value !== 'string') return false;
+    if (typeof value !== 'string') {return false;}
     // Slug: lowercase letters, numbers, hyphens, 3-100 chars
     return /^[a-z0-9][a-z0-9-]{1,98}[a-z0-9]$/.test(value) && !value.includes('--');
   }
@@ -137,7 +137,7 @@ const VALID_CURRENCY_CODES = [
 @ValidatorConstraint({ name: 'isCurrencyCode', async: false })
 export class IsCurrencyCodeConstraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
-    if (typeof value !== 'string') return false;
+    if (typeof value !== 'string') {return false;}
     return VALID_CURRENCY_CODES.includes(value.toUpperCase());
   }
 
@@ -172,13 +172,13 @@ export function IsCurrencyCode(validationOptions?: ValidationOptions) {
 @ValidatorConstraint({ name: 'isMonetaryAmount', async: false })
 export class IsMonetaryAmountConstraint implements ValidatorConstraintInterface {
   validate(value: unknown, args: ValidationArguments): boolean {
-    if (typeof value !== 'number') return false;
+    if (typeof value !== 'number') {return false;}
     const constraints = args.constraints[0] || {};
     const { min = 0, max = 1000000 } = constraints;
 
     // Must be positive
-    if (value < min) return false;
-    if (value > max) return false;
+    if (value < min) {return false;}
+    if (value > max) {return false;}
 
     // Max 2 decimal places
     const decimalPlaces = (value.toString().split('.')[1] || '').length;
@@ -221,7 +221,7 @@ export function IsMonetaryAmount(
 @ValidatorConstraint({ name: 'isFutureDate', async: false })
 export class IsFutureDateConstraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
-    if (!(value instanceof Date) && typeof value !== 'string') return false;
+    if (!(value instanceof Date) && typeof value !== 'string') {return false;}
     const date = value instanceof Date ? value : new Date(value);
     return date > new Date();
   }
@@ -256,7 +256,7 @@ export class IsAfterDateConstraint implements ValidatorConstraintInterface {
     const [relatedPropertyName] = args.constraints;
     const relatedValue = (args.object as Record<string, unknown>)[relatedPropertyName];
 
-    if (!value || !relatedValue) return true; // Let @IsNotEmpty handle required
+    if (!value || !relatedValue) {return true;} // Let @IsNotEmpty handle required
 
     const date = value instanceof Date ? value : new Date(value as string);
     const relatedDate =
@@ -300,7 +300,7 @@ export function IsAfterDate(
 @ValidatorConstraint({ name: 'isNfcTagUid', async: false })
 export class IsNfcTagUidConstraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
-    if (typeof value !== 'string') return false;
+    if (typeof value !== 'string') {return false;}
     // NFC UID: 4, 7, or 10 bytes in hex (8, 14, or 20 hex chars)
     return /^[0-9A-Fa-f]{8}$|^[0-9A-Fa-f]{14}$|^[0-9A-Fa-f]{20}$/.test(value);
   }
@@ -336,7 +336,7 @@ export function IsNfcTagUid(validationOptions?: ValidationOptions) {
 @ValidatorConstraint({ name: 'isLatitude', async: false })
 export class IsLatitudeConstraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
-    if (typeof value !== 'number') return false;
+    if (typeof value !== 'number') {return false;}
     return value >= -90 && value <= 90;
   }
 
@@ -367,7 +367,7 @@ export function IsLatitude(validationOptions?: ValidationOptions) {
 @ValidatorConstraint({ name: 'isLongitude', async: false })
 export class IsLongitudeConstraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
-    if (typeof value !== 'number') return false;
+    if (typeof value !== 'number') {return false;}
     return value >= -180 && value <= 180;
   }
 
@@ -402,7 +402,7 @@ export function IsLongitude(validationOptions?: ValidationOptions) {
 @ValidatorConstraint({ name: 'isHexColor', async: false })
 export class IsHexColorConstraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
-    if (typeof value !== 'string') return false;
+    if (typeof value !== 'string') {return false;}
     // Hex color: #RGB or #RRGGBB
     return /^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(value);
   }
@@ -438,7 +438,7 @@ export function IsHexColor(validationOptions?: ValidationOptions) {
 @ValidatorConstraint({ name: 'isFileExtension', async: false })
 export class IsFileExtensionConstraint implements ValidatorConstraintInterface {
   validate(value: unknown, args: ValidationArguments): boolean {
-    if (typeof value !== 'string') return false;
+    if (typeof value !== 'string') {return false;}
     const [allowedExtensions] = args.constraints;
     const ext = value.split('.').pop()?.toLowerCase();
     return ext !== undefined && allowedExtensions.includes(ext);
@@ -525,7 +525,7 @@ export function RequiredWith(
 @ValidatorConstraint({ name: 'isIBAN', async: false })
 export class IsIBANConstraint implements ValidatorConstraintInterface {
   validate(value: unknown): boolean {
-    if (typeof value !== 'string') return false;
+    if (typeof value !== 'string') {return false;}
     // IBAN: 2 letter country code, 2 check digits, up to 30 alphanumeric
     const normalized = value.replace(/\s/g, '').toUpperCase();
     return /^[A-Z]{2}\d{2}[A-Z0-9]{4,30}$/.test(normalized);

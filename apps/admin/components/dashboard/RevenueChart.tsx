@@ -116,7 +116,7 @@ export default function RevenueChart({ data, loading = false }: RevenueChartProp
             <Tooltip
               content={(props) => {
                 const { active, payload, label } = props;
-                if (active && payload && payload.length) {
+                if (active && payload?.length) {
                   return (
                     <div className="bg-white px-4 py-3 rounded-lg shadow-lg border border-gray-200">
                       <p className="text-sm text-gray-500 mb-1">

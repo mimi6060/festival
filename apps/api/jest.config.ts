@@ -56,6 +56,9 @@ const config: Config = {
     '^bullmq$': '<rootDir>/src/test/__mocks__/bullmq.ts',
     // Mock pdfkit for testing
     '^pdfkit$': '<rootDir>/src/test/__mocks__/pdfkit.ts',
+    // Fix Prisma client resolution for Jest (avoids subpath imports issue with #main-entry-point)
+    '^\\.prisma/client/default$':
+      '<rootDir>/../../node_modules/.prisma/client/index.js',
   },
 
   // Setup files to run before tests

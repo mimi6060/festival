@@ -105,9 +105,9 @@ describe('FcmService', () => {
     it('should not initialize Firebase when FCM_PROJECT_ID is missing', () => {
       // Arrange
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'FCM_PROJECT_ID') return undefined;
-        if (key === 'FCM_PRIVATE_KEY') return 'private-key';
-        if (key === 'FCM_CLIENT_EMAIL') return 'test@example.com';
+        if (key === 'FCM_PROJECT_ID') {return undefined;}
+        if (key === 'FCM_PRIVATE_KEY') {return 'private-key';}
+        if (key === 'FCM_CLIENT_EMAIL') {return 'test@example.com';}
         return undefined;
       });
 
@@ -121,9 +121,9 @@ describe('FcmService', () => {
     it('should not initialize Firebase when FCM_PRIVATE_KEY is missing', () => {
       // Arrange
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'FCM_PROJECT_ID') return 'project-id';
-        if (key === 'FCM_PRIVATE_KEY') return undefined;
-        if (key === 'FCM_CLIENT_EMAIL') return 'test@example.com';
+        if (key === 'FCM_PROJECT_ID') {return 'project-id';}
+        if (key === 'FCM_PRIVATE_KEY') {return undefined;}
+        if (key === 'FCM_CLIENT_EMAIL') {return 'test@example.com';}
         return undefined;
       });
 
@@ -137,9 +137,9 @@ describe('FcmService', () => {
     it('should not initialize Firebase when FCM_CLIENT_EMAIL is missing', () => {
       // Arrange
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'FCM_PROJECT_ID') return 'project-id';
-        if (key === 'FCM_PRIVATE_KEY') return 'private-key';
-        if (key === 'FCM_CLIENT_EMAIL') return undefined;
+        if (key === 'FCM_PROJECT_ID') {return 'project-id';}
+        if (key === 'FCM_PRIVATE_KEY') {return 'private-key';}
+        if (key === 'FCM_CLIENT_EMAIL') {return undefined;}
         return undefined;
       });
 
@@ -153,9 +153,9 @@ describe('FcmService', () => {
     it('should initialize Firebase when all config is provided', () => {
       // Arrange
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'FCM_PROJECT_ID') return 'project-id';
-        if (key === 'FCM_PRIVATE_KEY') return 'private-key\\nwith-newlines';
-        if (key === 'FCM_CLIENT_EMAIL') return 'test@example.com';
+        if (key === 'FCM_PROJECT_ID') {return 'project-id';}
+        if (key === 'FCM_PRIVATE_KEY') {return 'private-key\\nwith-newlines';}
+        if (key === 'FCM_CLIENT_EMAIL') {return 'test@example.com';}
         return undefined;
       });
 
@@ -171,9 +171,9 @@ describe('FcmService', () => {
       // Arrange
       mockApps = [{ name: 'existing-app' }];
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'FCM_PROJECT_ID') return 'project-id';
-        if (key === 'FCM_PRIVATE_KEY') return 'private-key';
-        if (key === 'FCM_CLIENT_EMAIL') return 'test@example.com';
+        if (key === 'FCM_PROJECT_ID') {return 'project-id';}
+        if (key === 'FCM_PRIVATE_KEY') {return 'private-key';}
+        if (key === 'FCM_CLIENT_EMAIL') {return 'test@example.com';}
         return undefined;
       });
 
@@ -188,9 +188,9 @@ describe('FcmService', () => {
     it('should handle Firebase initialization error', () => {
       // Arrange
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'FCM_PROJECT_ID') return 'project-id';
-        if (key === 'FCM_PRIVATE_KEY') return 'private-key';
-        if (key === 'FCM_CLIENT_EMAIL') return 'test@example.com';
+        if (key === 'FCM_PROJECT_ID') {return 'project-id';}
+        if (key === 'FCM_PRIVATE_KEY') {return 'private-key';}
+        if (key === 'FCM_CLIENT_EMAIL') {return 'test@example.com';}
         return undefined;
       });
       mockInitializeApp.mockImplementationOnce(() => {
@@ -217,9 +217,9 @@ describe('FcmService', () => {
     it('should return true when initialized', () => {
       // Arrange
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'FCM_PROJECT_ID') return 'project-id';
-        if (key === 'FCM_PRIVATE_KEY') return 'private-key';
-        if (key === 'FCM_CLIENT_EMAIL') return 'test@example.com';
+        if (key === 'FCM_PROJECT_ID') {return 'project-id';}
+        if (key === 'FCM_PRIVATE_KEY') {return 'private-key';}
+        if (key === 'FCM_CLIENT_EMAIL') {return 'test@example.com';}
         return undefined;
       });
 
@@ -238,9 +238,9 @@ describe('FcmService', () => {
   describe('sendToToken', () => {
     beforeEach(() => {
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'FCM_PROJECT_ID') return 'project-id';
-        if (key === 'FCM_PRIVATE_KEY') return 'private-key';
-        if (key === 'FCM_CLIENT_EMAIL') return 'test@example.com';
+        if (key === 'FCM_PROJECT_ID') {return 'project-id';}
+        if (key === 'FCM_PRIVATE_KEY') {return 'private-key';}
+        if (key === 'FCM_CLIENT_EMAIL') {return 'test@example.com';}
         return undefined;
       });
       fcmService.onModuleInit();
@@ -438,9 +438,9 @@ describe('FcmService', () => {
   describe('sendToTokens', () => {
     beforeEach(() => {
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'FCM_PROJECT_ID') return 'project-id';
-        if (key === 'FCM_PRIVATE_KEY') return 'private-key';
-        if (key === 'FCM_CLIENT_EMAIL') return 'test@example.com';
+        if (key === 'FCM_PROJECT_ID') {return 'project-id';}
+        if (key === 'FCM_PRIVATE_KEY') {return 'private-key';}
+        if (key === 'FCM_CLIENT_EMAIL') {return 'test@example.com';}
         return undefined;
       });
       fcmService.onModuleInit();
@@ -586,9 +586,9 @@ describe('FcmService', () => {
   describe('sendToTopic', () => {
     beforeEach(() => {
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'FCM_PROJECT_ID') return 'project-id';
-        if (key === 'FCM_PRIVATE_KEY') return 'private-key';
-        if (key === 'FCM_CLIENT_EMAIL') return 'test@example.com';
+        if (key === 'FCM_PROJECT_ID') {return 'project-id';}
+        if (key === 'FCM_PRIVATE_KEY') {return 'private-key';}
+        if (key === 'FCM_CLIENT_EMAIL') {return 'test@example.com';}
         return undefined;
       });
       fcmService.onModuleInit();
@@ -669,9 +669,9 @@ describe('FcmService', () => {
   describe('subscribeToTopic', () => {
     beforeEach(() => {
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'FCM_PROJECT_ID') return 'project-id';
-        if (key === 'FCM_PRIVATE_KEY') return 'private-key';
-        if (key === 'FCM_CLIENT_EMAIL') return 'test@example.com';
+        if (key === 'FCM_PROJECT_ID') {return 'project-id';}
+        if (key === 'FCM_PRIVATE_KEY') {return 'private-key';}
+        if (key === 'FCM_CLIENT_EMAIL') {return 'test@example.com';}
         return undefined;
       });
       fcmService.onModuleInit();
@@ -729,9 +729,9 @@ describe('FcmService', () => {
   describe('unsubscribeFromTopic', () => {
     beforeEach(() => {
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'FCM_PROJECT_ID') return 'project-id';
-        if (key === 'FCM_PRIVATE_KEY') return 'private-key';
-        if (key === 'FCM_CLIENT_EMAIL') return 'test@example.com';
+        if (key === 'FCM_PROJECT_ID') {return 'project-id';}
+        if (key === 'FCM_PRIVATE_KEY') {return 'private-key';}
+        if (key === 'FCM_CLIENT_EMAIL') {return 'test@example.com';}
         return undefined;
       });
       fcmService.onModuleInit();
@@ -789,9 +789,9 @@ describe('FcmService', () => {
   describe('getChannelId (via sendToToken)', () => {
     beforeEach(() => {
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'FCM_PROJECT_ID') return 'project-id';
-        if (key === 'FCM_PRIVATE_KEY') return 'private-key';
-        if (key === 'FCM_CLIENT_EMAIL') return 'test@example.com';
+        if (key === 'FCM_PROJECT_ID') {return 'project-id';}
+        if (key === 'FCM_PRIVATE_KEY') {return 'private-key';}
+        if (key === 'FCM_CLIENT_EMAIL') {return 'test@example.com';}
         return undefined;
       });
       fcmService.onModuleInit();
@@ -867,9 +867,9 @@ describe('FcmService', () => {
   describe('stringifyData (via sendToToken)', () => {
     beforeEach(() => {
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'FCM_PROJECT_ID') return 'project-id';
-        if (key === 'FCM_PRIVATE_KEY') return 'private-key';
-        if (key === 'FCM_CLIENT_EMAIL') return 'test@example.com';
+        if (key === 'FCM_PROJECT_ID') {return 'project-id';}
+        if (key === 'FCM_PRIVATE_KEY') {return 'private-key';}
+        if (key === 'FCM_CLIENT_EMAIL') {return 'test@example.com';}
         return undefined;
       });
       fcmService.onModuleInit();
@@ -990,9 +990,9 @@ describe('FcmService', () => {
   describe('Edge Cases', () => {
     beforeEach(() => {
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'FCM_PROJECT_ID') return 'project-id';
-        if (key === 'FCM_PRIVATE_KEY') return 'private-key';
-        if (key === 'FCM_CLIENT_EMAIL') return 'test@example.com';
+        if (key === 'FCM_PROJECT_ID') {return 'project-id';}
+        if (key === 'FCM_PRIVATE_KEY') {return 'private-key';}
+        if (key === 'FCM_CLIENT_EMAIL') {return 'test@example.com';}
         return undefined;
       });
       fcmService.onModuleInit();

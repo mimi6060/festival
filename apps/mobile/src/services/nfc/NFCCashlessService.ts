@@ -134,9 +134,9 @@ class NFCCashlessService {
   private reader: NFCReader;
   private writer: NFCWriter;
   private formatter: NFCFormatter;
-  private isInitialized: boolean = false;
+  private isInitialized = false;
   private offlineTransactions: CashlessTransaction[] = [];
-  private transactionListeners: Set<(tx: CashlessTransaction) => void> = new Set();
+  private transactionListeners = new Set<(tx: CashlessTransaction) => void>();
   private currentBraceletId: string | null = null;
 
   private constructor() {
@@ -705,7 +705,7 @@ class NFCCashlessService {
     console.log(`[NFCCashlessService] Syncing ${this.offlineTransactions.length} offline transactions`);
 
     for (const transaction of this.offlineTransactions) {
-      if (transaction.syncStatus !== 'pending') continue;
+      if (transaction.syncStatus !== 'pending') {continue;}
 
       try {
         const result = await this.processOnlineTransaction(transaction);
@@ -738,7 +738,7 @@ class NFCCashlessService {
    */
   public async getTransactionHistory(
     braceletId?: string,
-    limit: number = 50
+    limit = 50
   ): Promise<CashlessTransaction[]> {
     try {
       if (!networkDetector.isOnline()) {

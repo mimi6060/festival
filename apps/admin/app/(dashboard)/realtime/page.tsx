@@ -12,154 +12,12 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from 'recharts';
-import { useRealtimeData, RealtimeTransaction, RealtimeAlert } from '@/hooks';
-import { formatCurrency, formatNumber, formatDateTime, cn } from '@/lib/utils';
-
-// Connection status indicator
-function ConnectionStatus({
-  isConnected,
-  connectionState,
-}: {
-  isConnected: boolean;
-  connectionState: string;
-}) {
-  return (
-    <div className="flex items-center gap-2">
-      <div
-        className={cn(
-          'w-3 h-3 rounded-full',
-          isConnected
-            ? 'bg-green-500 animate-pulse'
-            : connectionState === 'connecting'
-              ? 'bg-yellow-500 animate-pulse'
-              : 'bg-red-500'
-        )}
-      />
-      <span className="text-sm text-gray-600">
-        {isConnected
-          ? 'Connecte en temps reel'
-          : connectionState === 'connecting'
-            ? 'Connexion...'
-            : 'Deconnecte'}
-      </span>
-    </div>
-  );
-}
-
-// Real-time stat card
-function RealtimeStat({
-  title,
-  value,
-  format = 'number',
-  icon,
-  trend,
-}: {
-  title: string;
-  value: number;
-  format?: 'number' | 'currency' | 'percentage';
-  icon: React.ReactNode;
-  trend?: 'up' | 'down' | 'stable';
-}) {
-  const formattedValue = useMemo(() => {
-    switch (format) {
-      case 'currency':
-        return formatCurrency(value);
-      case 'percentage':
-        return `${value.toFixed(1)}%`;
-      default:
-        return formatNumber(value);
-    }
-  }, [value, format]);
-
-  return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-      <div className="flex items-center justify-between mb-4">
-        <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center text-blue-600">
-          {icon}
-        </div>
-        {trend && (
-          <div
-            className={cn(
-              'flex items-center gap-1 text-sm font-medium',
-              trend === 'up'
-                ? 'text-green-600'
-                : trend === 'down'
-                  ? 'text-red-600'
-                  : 'text-gray-500'
-            )}
-          >
-            {trend === 'up' && (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M5 10l7-7m0 0l7 7m-7-7v18"
-                />
-              </svg>
-            )}
-            {trend === 'down' && (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                />
-              </svg>
-            )}
-            {trend === 'stable' && (
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14" />
-              </svg>
-            )}
-          </div>
-        )}
-      </div>
-      <p className="text-2xl font-bold text-gray-900">{formattedValue}</p>
-      <p className="text-sm text-gray-500 mt-1">{title}</p>
-    </div>
-  );
-}
-
-// Transaction item component
-function TransactionItem({ transaction }: { transaction: RealtimeTransaction }) {
-  const typeConfig = {
-    ticket_sale: { label: 'Vente billet', color: 'text-green-600', bg: 'bg-green-50', icon: '🎫' },
-    cashless_topup: { label: 'Recharge', color: 'text-blue-600', bg: 'bg-blue-50', icon: '💳' },
-    cashless_payment: {
-      label: 'Paiement',
-      color: 'text-purple-600',
-      bg: 'bg-purple-50',
-      icon: '💰',
-    },
-    refund: { label: 'Remboursement', color: 'text-red-600', bg: 'bg-red-50', icon: '↩️' },
-  };
-
-  const config = typeConfig[transaction.type];
-
-  return (
-    <div className="flex items-center justify-between py-3 border-b border-gray-50 last:border-0">
-      <div className="flex items-center gap-3">
-        <div
-          className={cn('w-8 h-8 rounded-full flex items-center justify-center text-sm', config.bg)}
-        >
-          {config.icon}
-        </div>
-        <div>
-          <p className="text-sm font-medium text-gray-900">{config.label}</p>
-          <p className="text-xs text-gray-500">
-            {new Date(transaction.timestamp).toLocaleTimeString('fr-FR')}
-          </p>
-        </div>
-      </div>
-      <p className={cn('text-sm font-semibold', config.color)}>
-        {transaction.type === 'refund' ? '-' : '+'}
-        {formatCurrency(transaction.amount)}
-      </p>
-    </div>
-  );
-}
+import { useRealtimeData, RealtimeAlert } from '@/hooks';
+import { ConnectionStatusIndicator } from '@/components/dashboard/ConnectionStatusIndicator';
+import { RealTimeStatCard } from '@/components/dashboard/RealTimeStatCard';
+import { ZoneOccupancyWidget } from '@/components/dashboard/ZoneOccupancyWidget';
+import { RecentTransactionsWidget } from '@/components/dashboard/RecentTransactionsWidget';
+import { formatCurrency, formatDateTime, cn } from '@/lib/utils';
 
 // Alert item component
 function AlertItem({
@@ -170,10 +28,10 @@ function AlertItem({
   onAcknowledge: (id: string) => void;
 }) {
   const typeConfig = {
-    warning: { color: 'bg-yellow-50 border-yellow-200', icon: '⚠️', textColor: 'text-yellow-800' },
-    error: { color: 'bg-red-50 border-red-200', icon: '🚨', textColor: 'text-red-800' },
-    info: { color: 'bg-blue-50 border-blue-200', icon: 'ℹ️', textColor: 'text-blue-800' },
-    success: { color: 'bg-green-50 border-green-200', icon: '✅', textColor: 'text-green-800' },
+    warning: { color: 'bg-yellow-50 border-yellow-200', icon: '!', textColor: 'text-yellow-800' },
+    error: { color: 'bg-red-50 border-red-200', icon: '!', textColor: 'text-red-800' },
+    info: { color: 'bg-blue-50 border-blue-200', icon: 'i', textColor: 'text-blue-800' },
+    success: { color: 'bg-green-50 border-green-200', icon: 'v', textColor: 'text-green-800' },
   };
 
   const config = typeConfig[alert.type];
@@ -186,7 +44,9 @@ function AlertItem({
     <div className={cn('p-4 rounded-lg border', config.color)}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2">
-          <span className="text-lg">{config.icon}</span>
+          <span className={cn('w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold', config.textColor, config.color)}>
+            {config.icon}
+          </span>
           <div>
             <p className={cn('text-sm font-medium', config.textColor)}>{alert.message}</p>
             <p className="text-xs text-gray-500 mt-1">
@@ -212,50 +72,23 @@ function AlertItem({
   );
 }
 
-// Zone occupancy bar
-function ZoneOccupancyBar({
-  name,
-  current,
-  capacity,
-}: {
-  name: string;
-  current: number;
-  capacity: number;
-}) {
-  const percentage = (current / capacity) * 100;
-  const barColor =
-    percentage > 90 ? 'bg-red-500' : percentage > 70 ? 'bg-yellow-500' : 'bg-green-500';
-
-  return (
-    <div className="mb-4 last:mb-0">
-      <div className="flex items-center justify-between mb-1">
-        <span className="text-sm font-medium text-gray-700 capitalize">
-          {name.replace(/-/g, ' ')}
-        </span>
-        <span className="text-sm text-gray-500">
-          {formatNumber(current)} / {formatNumber(capacity)}
-        </span>
-      </div>
-      <div className="w-full bg-gray-200 rounded-full h-2.5">
-        <div
-          className={cn('h-2.5 rounded-full transition-all duration-500', barColor)}
-          style={{ width: `${Math.min(percentage, 100)}%` }}
-        />
-      </div>
-      <p className="text-xs text-gray-500 mt-1 text-right">{percentage.toFixed(1)}%</p>
-    </div>
-  );
-}
-
 export default function RealtimeDashboardPage() {
-  const { stats, isConnected, connectionState, lastUpdate, refresh, acknowledgeAlert } =
-    useRealtimeData({
-      autoConnect: true,
-      pollingFallback: true,
-      pollingInterval: 5000,
-    });
+  const {
+    stats,
+    isConnected,
+    connectionState,
+    lastUpdate,
+    isLoading,
+    refresh,
+    acknowledgeAlert,
+    connect,
+  } = useRealtimeData({
+    autoConnect: true,
+    pollingFallback: true,
+    pollingInterval: 10000, // 10 second polling for real-time page
+  });
 
-  // Generate mock chart data from stats
+  // Generate chart data from stats - updates with lastUpdate
   const chartData = useMemo(() => {
     const now = new Date();
     return Array.from({ length: 12 }, (_, i) => ({
@@ -263,12 +96,12 @@ export default function RealtimeDashboardPage() {
         hour: '2-digit',
         minute: '2-digit',
       }),
-      transactions: Math.floor(Math.random() * 50) + 20,
-      revenue: Math.floor(Math.random() * 5000) + 1000,
+      transactions: Math.floor(Math.random() * 50) + 20 + (stats.ticketsSoldToday * 0.1),
+      revenue: Math.floor(Math.random() * 5000) + 1000 + (stats.revenueToday * 0.01),
     }));
-  }, [lastUpdate]);
+  }, [lastUpdate, stats.ticketsSoldToday, stats.revenueToday]);
 
-  const unacknowledgedAlerts = stats.alerts.filter((a: RealtimeAlert) => !a.acknowledged);
+  const unacknowledgedAlerts = stats.alerts.filter((a) => !a.acknowledged);
 
   return (
     <div className="space-y-6">
@@ -277,7 +110,13 @@ export default function RealtimeDashboardPage() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Tableau de Bord Temps Reel</h1>
           <div className="flex items-center gap-4 mt-2">
-            <ConnectionStatus isConnected={isConnected} connectionState={connectionState} />
+            <ConnectionStatusIndicator
+              isConnected={isConnected}
+              connectionState={connectionState}
+              lastUpdate={lastUpdate}
+              onReconnect={connect}
+              size="sm"
+            />
             {lastUpdate && (
               <span className="text-sm text-gray-500">
                 Derniere MAJ: {formatDateTime(lastUpdate)}
@@ -301,7 +140,7 @@ export default function RealtimeDashboardPage() {
       {/* Alerts */}
       {unacknowledgedAlerts.length > 0 && (
         <div className="space-y-2">
-          {unacknowledgedAlerts.map((alert: RealtimeAlert) => (
+          {unacknowledgedAlerts.map((alert) => (
             <AlertItem key={alert.id} alert={alert} onAcknowledge={acknowledgeAlert} />
           ))}
         </div>
@@ -309,7 +148,7 @@ export default function RealtimeDashboardPage() {
 
       {/* Stats Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <RealtimeStat
+        <RealTimeStatCard
           title="Connexions actives"
           value={stats.activeConnections}
           icon={
@@ -322,9 +161,12 @@ export default function RealtimeDashboardPage() {
               />
             </svg>
           }
+          color="blue"
           trend="up"
+          isLive={isConnected}
+          lastUpdate={lastUpdate}
         />
-        <RealtimeStat
+        <RealTimeStatCard
           title="Billets vendus aujourd'hui"
           value={stats.ticketsSoldToday}
           icon={
@@ -337,12 +179,15 @@ export default function RealtimeDashboardPage() {
               />
             </svg>
           }
+          color="purple"
           trend="up"
+          isLive={isConnected}
+          lastUpdate={lastUpdate}
         />
-        <RealtimeStat
+        <RealTimeStatCard
           title="Revenus aujourd'hui"
           value={stats.revenueToday}
-          format="currency"
+          type="currency"
           icon={
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -353,12 +198,15 @@ export default function RealtimeDashboardPage() {
               />
             </svg>
           }
+          color="green"
           trend="up"
+          isLive={isConnected}
+          lastUpdate={lastUpdate}
         />
-        <RealtimeStat
+        <RealTimeStatCard
           title="Solde cashless total"
           value={stats.cashlessBalance}
-          format="currency"
+          type="currency"
           icon={
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -369,9 +217,12 @@ export default function RealtimeDashboardPage() {
               />
             </svg>
           }
+          color="orange"
           trend="stable"
+          isLive={isConnected}
+          lastUpdate={lastUpdate}
         />
-        <RealtimeStat
+        <RealTimeStatCard
           title="Participants actuels"
           value={stats.currentAttendees}
           icon={
@@ -384,7 +235,10 @@ export default function RealtimeDashboardPage() {
               />
             </svg>
           }
+          color="blue"
           trend="up"
+          isLive={isConnected}
+          lastUpdate={lastUpdate}
         />
       </div>
 
@@ -392,9 +246,17 @@ export default function RealtimeDashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Transactions Chart */}
         <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Activite en temps reel (derniere heure)
-          </h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Activite en temps reel (derniere heure)
+            </h3>
+            {isConnected && (
+              <span className="flex items-center gap-1 px-2 py-0.5 bg-green-50 rounded-full">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span className="text-xs font-medium text-green-700">LIVE</span>
+              </span>
+            )}
+          </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData}>
@@ -434,42 +296,33 @@ export default function RealtimeDashboardPage() {
         </div>
 
         {/* Recent Transactions */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900">Transactions recentes</h3>
-            <span className="px-2 py-1 bg-green-50 text-green-700 text-xs font-medium rounded-full animate-pulse">
-              LIVE
-            </span>
-          </div>
-          <div className="divide-y divide-gray-50">
-            {stats.recentTransactions.length > 0 ? (
-              stats.recentTransactions.map((transaction) => (
-                <TransactionItem key={transaction.id} transaction={transaction} />
-              ))
-            ) : (
-              <p className="text-sm text-gray-500 py-4 text-center">Aucune transaction recente</p>
-            )}
-          </div>
-        </div>
+        <RecentTransactionsWidget
+          transactions={stats.recentTransactions}
+          isLive={isConnected}
+          loading={isLoading}
+          maxItems={8}
+        />
       </div>
 
-      {/* Zone Occupancy */}
+      {/* Zone Occupancy and Revenue Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Occupation des zones</h3>
-          {Object.entries(stats.zoneOccupancy).map(([name, data]) => (
-            <ZoneOccupancyBar
-              key={name}
-              name={name}
-              current={data.current}
-              capacity={data.capacity}
-            />
-          ))}
-        </div>
+        <ZoneOccupancyWidget
+          zones={stats.zoneOccupancy}
+          isLive={isConnected}
+          loading={isLoading}
+        />
 
         {/* Revenue Distribution Chart */}
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Revenus par heure</h3>
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">Revenus par heure</h3>
+            {isConnected && (
+              <span className="flex items-center gap-1 px-2 py-0.5 bg-green-50 rounded-full">
+                <span className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <span className="text-xs font-medium text-green-700">LIVE</span>
+              </span>
+            )}
+          </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={chartData}>

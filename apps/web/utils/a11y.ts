@@ -231,7 +231,7 @@ export function suggestContrastColor(
   const shouldLighten = bgLuminance < 0.5;
 
   // Adjust the foreground color until it meets the target ratio
-  let adjustedColor = { ...fgColor };
+  const adjustedColor = { ...fgColor };
   const step = shouldLighten ? 5 : -5;
   let iterations = 0;
   const maxIterations = 100;
@@ -304,7 +304,7 @@ export function getFocusableElements(
 /**
  * Focus order issue types
  */
-export type FocusOrderIssue = {
+export interface FocusOrderIssue {
   element: HTMLElement;
   issue:
     | 'positive-tabindex'
@@ -312,7 +312,7 @@ export type FocusOrderIssue = {
     | 'hidden-but-focusable'
     | 'focus-trap-exit';
   description: string;
-};
+}
 
 /**
  * Validates focus order within a container
@@ -509,10 +509,10 @@ export function validateAria(
 
   elementsWithRoles.forEach((el) => {
     const role = el.getAttribute('role');
-    if (!role) return;
+    if (!role) {return;}
 
     const requirements = ARIA_ROLE_REQUIREMENTS[role];
-    if (!requirements) return;
+    if (!requirements) {return;}
 
     // Check required attributes
     requirements.requiredAttributes.forEach((attr) => {

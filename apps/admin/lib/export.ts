@@ -77,7 +77,7 @@ function getTimestamp(): string {
  * Format date values for export
  */
 export function formatDateForExport(date: string | Date): string {
-  if (!date) return '';
+  if (!date) {return '';}
   const d = new Date(date);
   return d.toLocaleDateString('fr-FR', {
     year: 'numeric',
@@ -93,7 +93,7 @@ export function formatDateForExport(date: string | Date): string {
  */
 export function formatCurrencyForExport(
   amount: number,
-  currency: string = 'EUR'
+  currency = 'EUR'
 ): string {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
@@ -447,3 +447,232 @@ export const staffExportColumns: ExportColumn<Record<string, unknown>>[] = [
     format: (v) => formatDateForExport(v as string),
   },
 ];
+
+// ============================================
+// Server-side Excel Export API
+// ============================================
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
+
+/**
+ * Export job status response
+ */
+export interface ExportJobStatus {
+  id: string;
+  status: 'waiting' | 'active' | 'completed' | 'failed';
+  progress: number;
+  result?: {
+    downloadUrl: string;
+    filename: string;
+  };
+  error?: string;
+}
+
+/**
+ * Export request response (can be sync or async)
+ */
+export interface ExportResponse {
+  async: boolean;
+  jobId?: string;
+  message?: string;
+  totalRows?: number;
+}
+
+/**
+ * Export filter options
+ */
+export interface ExportFilters {
+  festivalId: string;
+  startDate?: string;
+  endDate?: string;
+  status?: string;
+  categoryId?: string;
+  type?: string;
+  hasTicket?: boolean;
+  hasCashless?: boolean;
+}
+
+/**
+ * Export tickets to XLSX via server
+ * For large datasets (>10K rows), returns a job ID for async processing
+ */
+export async function exportTicketsToXlsx(
+  filters: ExportFilters
+): Promise<ExportResponse | Blob> {
+  const params = new URLSearchParams();
+  params.set('festivalId', filters.festivalId);
+  if (filters.startDate) {params.set('startDate', filters.startDate);}
+  if (filters.endDate) {params.set('endDate', filters.endDate);}
+  if (filters.status) {params.set('status', filters.status);}
+  if (filters.categoryId) {params.set('categoryId', filters.categoryId);}
+
+  const response = await fetch(
+    `${API_BASE_URL}/admin/export/tickets?${params.toString()}`,
+    {
+      method: 'GET',
+      credentials: 'include',
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Export failed' }));
+    throw new Error(error.message || 'Export failed');
+  }
+
+  // Check if async response
+  const contentType = response.headers.get('Content-Type');
+  if (contentType?.includes('application/json')) {
+    return response.json() as Promise<ExportResponse>;
+  }
+
+  // Sync response - return blob for download
+  return response.blob();
+}
+
+/**
+ * Export cashless transactions to XLSX via server
+ */
+export async function exportTransactionsToXlsx(
+  filters: ExportFilters
+): Promise<ExportResponse | Blob> {
+  const params = new URLSearchParams();
+  params.set('festivalId', filters.festivalId);
+  if (filters.startDate) {params.set('startDate', filters.startDate);}
+  if (filters.endDate) {params.set('endDate', filters.endDate);}
+  if (filters.type) {params.set('type', filters.type);}
+
+  const response = await fetch(
+    `${API_BASE_URL}/admin/export/transactions?${params.toString()}`,
+    {
+      method: 'GET',
+      credentials: 'include',
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Export failed' }));
+    throw new Error(error.message || 'Export failed');
+  }
+
+  const contentType = response.headers.get('Content-Type');
+  if (contentType?.includes('application/json')) {
+    return response.json() as Promise<ExportResponse>;
+  }
+
+  return response.blob();
+}
+
+/**
+ * Export participants to XLSX via server
+ */
+export async function exportParticipantsToXlsx(
+  filters: ExportFilters
+): Promise<ExportResponse | Blob> {
+  const params = new URLSearchParams();
+  params.set('festivalId', filters.festivalId);
+  if (filters.startDate) {params.set('startDate', filters.startDate);}
+  if (filters.endDate) {params.set('endDate', filters.endDate);}
+  if (filters.hasTicket !== undefined) {params.set('hasTicket', String(filters.hasTicket));}
+  if (filters.hasCashless !== undefined) {params.set('hasCashless', String(filters.hasCashless));}
+
+  const response = await fetch(
+    `${API_BASE_URL}/admin/export/participants?${params.toString()}`,
+    {
+      method: 'GET',
+      credentials: 'include',
+    }
+  );
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Export failed' }));
+    throw new Error(error.message || 'Export failed');
+  }
+
+  const contentType = response.headers.get('Content-Type');
+  if (contentType?.includes('application/json')) {
+    return response.json() as Promise<ExportResponse>;
+  }
+
+  return response.blob();
+}
+
+/**
+ * Get export job status
+ */
+export async function getExportJobStatus(jobId: string): Promise<ExportJobStatus> {
+  const response = await fetch(`${API_BASE_URL}/admin/export/jobs/${jobId}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Failed to get job status' }));
+    throw new Error(error.message || 'Failed to get job status');
+  }
+
+  return response.json();
+}
+
+/**
+ * Download completed export file
+ */
+export async function downloadExportFile(jobId: string): Promise<Blob> {
+  const response = await fetch(`${API_BASE_URL}/admin/export/download/${jobId}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Download failed' }));
+    throw new Error(error.message || 'Download failed');
+  }
+
+  return response.blob();
+}
+
+/**
+ * Trigger file download from blob
+ */
+export function downloadBlobAsFile(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Poll export job until completed
+ */
+export async function pollExportJob(
+  jobId: string,
+  onProgress?: (progress: number) => void,
+  intervalMs = 2000,
+  maxAttempts = 60
+): Promise<ExportJobStatus> {
+  let attempts = 0;
+
+  while (attempts < maxAttempts) {
+    const status = await getExportJobStatus(jobId);
+
+    if (onProgress) {
+      onProgress(status.progress);
+    }
+
+    if (status.status === 'completed') {
+      return status;
+    }
+
+    if (status.status === 'failed') {
+      throw new Error(status.error || 'Export job failed');
+    }
+
+    await new Promise((resolve) => setTimeout(resolve, intervalMs));
+    attempts++;
+  }
+
+  throw new Error('Export job timed out');
+}

@@ -38,11 +38,11 @@ class NetworkDetector {
   private static instance: NetworkDetector;
   private currentStatus: NetworkStatus;
   private metrics: ConnectionMetrics;
-  private listeners: Set<NetworkListener> = new Set();
+  private listeners = new Set<NetworkListener>();
   private unsubscribe: (() => void) | null = null;
-  private isInitialized: boolean = false;
+  private isInitialized = false;
   private connectionCheckInterval: NodeJS.Timeout | null = null;
-  private pingEndpoint: string = 'https://www.google.com/generate_204';
+  private pingEndpoint = 'https://www.google.com/generate_204';
 
   private constructor() {
     this.currentStatus = this.getDefaultStatus();
@@ -387,7 +387,7 @@ class NetworkDetector {
   /**
    * Wait for connection to be available
    */
-  public async waitForConnection(timeoutMs: number = 30000): Promise<boolean> {
+  public async waitForConnection(timeoutMs = 30000): Promise<boolean> {
     if (this.isOnline()) {
       return true;
     }
@@ -415,7 +415,7 @@ class NetworkDetector {
    */
   public async waitForGoodConnection(
     minimumQuality: ConnectionQuality = 'fair',
-    timeoutMs: number = 30000
+    timeoutMs = 30000
   ): Promise<boolean> {
     if (this.isQualitySufficient(minimumQuality)) {
       return true;

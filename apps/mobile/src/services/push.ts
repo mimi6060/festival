@@ -5,10 +5,10 @@ import apiService from './api';
 import type { Notification } from '../types';
 
 class PushNotificationService {
-  private configured: boolean = false;
+  private configured = false;
 
   configure() {
-    if (this.configured) return;
+    if (this.configured) {return;}
 
     PushNotification.configure({
       onRegister: async (token) => {

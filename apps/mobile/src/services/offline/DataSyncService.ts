@@ -104,8 +104,8 @@ class DataSyncService {
   private static instance: DataSyncService;
   private config: DataSyncConfig;
   private deltaMeta: Record<SyncDataType, DeltaSyncMeta>;
-  private isSyncing: boolean = false;
-  private syncListeners: Set<(result: SyncResult) => void> = new Set();
+  private isSyncing = false;
+  private syncListeners = new Set<(result: SyncResult) => void>();
   private abortController: AbortController | null = null;
 
   private constructor() {
@@ -186,7 +186,7 @@ class DataSyncService {
   /**
    * Perform a full sync of all data types
    */
-  public async syncAll(force: boolean = false): Promise<FullSyncResult> {
+  public async syncAll(force = false): Promise<FullSyncResult> {
     if (this.isSyncing && !force) {
       console.log('[DataSyncService] Sync already in progress');
       return {
@@ -380,10 +380,10 @@ class DataSyncService {
     }
 
     // For arrays, merge by ID
-    const localArray = localData as Array<{ id: string; updatedAt?: number }>;
-    const serverArray = serverData as Array<{ id: string; updatedAt?: number }>;
+    const localArray = localData as { id: string; updatedAt?: number }[];
+    const serverArray = serverData as { id: string; updatedAt?: number }[];
 
-    const merged: Array<{ id: string; updatedAt?: number }> = [];
+    const merged: { id: string; updatedAt?: number }[] = [];
     const localMap = new Map(localArray.map((item) => [item.id, item]));
     let conflictCount = 0;
 
@@ -451,7 +451,7 @@ class DataSyncService {
   private async fetchWithRetry(
     url: string,
     options: RequestInit,
-    attempt: number = 1
+    attempt = 1
   ): Promise<Response> {
     try {
       const response = await fetch(url, options);

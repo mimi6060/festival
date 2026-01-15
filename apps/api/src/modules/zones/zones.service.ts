@@ -72,15 +72,18 @@ export class ZonesService {
 
   /**
    * Create a new zone for a festival
+   *
+   * Optimized: Uses select to fetch only required fields.
    */
   async create(
     festivalId: string,
     createZoneDto: CreateZoneDto,
     user: AuthenticatedUser
   ): Promise<Zone> {
-    // Verify festival exists and user has permission
+    // Verify festival exists and user has permission - only select needed fields
     const festival = await this.prisma.festival.findUnique({
       where: { id: festivalId },
+      select: { id: true, organizerId: true },
     });
 
     if (!festival) {
@@ -108,11 +111,14 @@ export class ZonesService {
 
   /**
    * Get all zones for a festival
+   *
+   * Optimized: Uses select to fetch only required fields for festival check.
    */
   async findAllByFestival(festivalId: string): Promise<ZoneWithRelations[]> {
-    // Verify festival exists
+    // Verify festival exists - only select id to minimize data transfer
     const festival = await this.prisma.festival.findUnique({
       where: { id: festivalId },
+      select: { id: true },
     });
 
     if (!festival) {

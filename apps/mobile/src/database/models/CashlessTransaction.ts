@@ -139,7 +139,7 @@ export default class CashlessTransaction extends Model {
    * Parse metadata JSON
    */
   get parsedMetadata(): Record<string, unknown> | null {
-    if (!this.metadata) return null;
+    if (!this.metadata) {return null;}
     try {
       return JSON.parse(this.metadata);
     } catch {

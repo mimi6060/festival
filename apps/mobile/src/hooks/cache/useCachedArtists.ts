@@ -67,7 +67,7 @@ export function useCachedArtists(
 
   // Fetch artists
   const fetchArtists = useCallback(async () => {
-    if (!isMountedRef.current) return;
+    if (!isMountedRef.current) {return;}
 
     setIsLoading(true);
     setError(null);
@@ -75,7 +75,7 @@ export function useCachedArtists(
     try {
       const result = await cacheRef.current.getArtists();
 
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current) {return;}
 
       if (result.data) {
         setArtists(result.data);
@@ -93,7 +93,7 @@ export function useCachedArtists(
         setError(result.error);
       }
     } catch (err) {
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current) {return;}
 
       const error = err instanceof Error ? err : new Error('Failed to fetch artists');
       setError(error);
@@ -118,7 +118,7 @@ export function useCachedArtists(
   // Search artists
   const searchArtists = useCallback(
     (query: string) => {
-      if (!query.trim()) return artists;
+      if (!query.trim()) {return artists;}
 
       const lowerQuery = query.toLowerCase();
       return artists.filter(
@@ -186,7 +186,7 @@ export function useCachedArtist(
       return;
     }
 
-    if (!isMountedRef.current) return;
+    if (!isMountedRef.current) {return;}
 
     setIsLoading(true);
     setError(null);
@@ -194,7 +194,7 @@ export function useCachedArtist(
     try {
       const result = await cacheRef.current.getArtist(artistId);
 
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current) {return;}
 
       if (result.data) {
         setArtistData(result.data);
@@ -207,7 +207,7 @@ export function useCachedArtist(
         setError(result.error);
       }
     } catch (err) {
-      if (!isMountedRef.current) return;
+      if (!isMountedRef.current) {return;}
 
       const error = err instanceof Error ? err : new Error('Failed to fetch artist');
       setError(error);
@@ -283,7 +283,7 @@ export function useArtistsByGenre(festivalId: string) {
 /**
  * Hook for artist search with debounce
  */
-export function useArtistSearch(festivalId: string, debounceMs: number = 300) {
+export function useArtistSearch(festivalId: string, debounceMs = 300) {
   const { artists, searchArtists } = useCachedArtists({ festivalId });
   const [query, setQuery] = useState('');
   const [results, setResults] = useState<Artist[]>([]);

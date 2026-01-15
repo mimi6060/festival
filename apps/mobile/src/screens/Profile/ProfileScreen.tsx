@@ -7,14 +7,12 @@ import {
   TouchableOpacity,
   Alert,
   Modal,
-  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Card } from '../../components/common';
-import { useAuthStore, useTicketStore, useWalletStore, useProgramStore, useNotificationStore, useSettingsStore, languageLabels, themeLabels } from '../../store';
-import type { Language, Theme } from '../../store';
+import { useAuthStore, useTicketStore, useWalletStore, useProgramStore, useNotificationStore, useSettingsStore, languageLabels, themeLabels, Language, Theme } from '../../store';
 import { offlineService } from '../../services';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { RootStackParamList } from '../../types';
@@ -109,7 +107,7 @@ export const ProfileScreen: React.FC = () => {
   };
 
   const getInitials = () => {
-    if (!user) return '?';
+    if (!user) {return '?';}
     return `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`.toUpperCase();
   };
 

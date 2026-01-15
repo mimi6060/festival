@@ -15,7 +15,6 @@ import { BadRequestException } from '@nestjs/common';
 import { Request, Response, NextFunction } from 'express';
 import {
   SecurityMiddleware,
-  SecurityMiddlewareConfig,
   createSecurityMiddleware,
 } from './security.middleware';
 

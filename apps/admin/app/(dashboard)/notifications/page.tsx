@@ -199,8 +199,8 @@ export default function NotificationsPage() {
   // Filter notifications
   const filteredNotifications = useMemo(() => {
     return notifications.filter((n) => {
-      if (filter === 'unread' && n.read) return false;
-      if (categoryFilter !== 'all' && n.category !== categoryFilter) return false;
+      if (filter === 'unread' && n.read) {return false;}
+      if (categoryFilter !== 'all' && n.category !== categoryFilter) {return false;}
       return true;
     });
   }, [notifications, filter, categoryFilter]);

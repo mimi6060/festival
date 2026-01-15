@@ -344,7 +344,7 @@ export default function ZonesPage() {
 
   const confirmDelete = () => {
     // Handle delete logic here
-    console.log('Deleting zone:', zoneToDelete?.id);
+    // TODO: implement delete API call for zone: zoneToDelete?.id
     setShowDeleteModal(false);
     setZoneToDelete(null);
   };

@@ -22,6 +22,9 @@ import {
   MaintenanceJobData,
 } from './queue.types';
 
+// Suppress unused parameter warning - returnvalue is part of the event signature
+// but not always needed
+
 /**
  * Queue Service
  *
@@ -54,9 +57,9 @@ import {
 @Injectable()
 export class QueueService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(QueueService.name);
-  private queues: Map<QueueName, Queue> = new Map();
-  private workers: Map<QueueName, Worker> = new Map();
-  private queueEvents: Map<QueueName, QueueEvents> = new Map();
+  private queues = new Map<QueueName, Queue>();
+  private workers = new Map<QueueName, Worker>();
+  private queueEvents = new Map<QueueName, QueueEvents>();
 
   private readonly redisConfig: { host: string; port: number; password?: string };
 
@@ -125,7 +128,7 @@ export class QueueService implements OnModuleInit, OnModuleDestroy {
     });
 
     // Set up event listeners
-    events.on('completed', ({ jobId, returnvalue }) => {
+    events.on('completed', ({ jobId }) => {
       this.logger.debug(`Job ${jobId} completed in queue ${name}`);
     });
 

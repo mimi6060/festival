@@ -10,7 +10,6 @@ import {
   NFCErrorCode,
   NFCReadResult,
   NFCReadOptions,
-  NFCTagData,
   CashlessData,
 } from '../services/nfc';
 
@@ -35,7 +34,8 @@ export function useNFCRead(options: UseNFCReadOptions = {}) {
     error: null,
   });
 
-  const abortControllerRef = useRef<AbortController | null>(null);
+  // AbortController for future cancellation support
+  const _abortControllerRef = useRef<AbortController | null>(null);
 
   /**
    * Read any NFC tag
@@ -256,7 +256,7 @@ export function useNFCRead(options: UseNFCReadOptions = {}) {
       }));
 
       return result;
-    } catch (error) {
+    } catch {
       setState(prev => ({
         ...prev,
         isReading: false,

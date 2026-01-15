@@ -49,30 +49,32 @@ export class InvoicesService {
 
   /**
    * Create a new invoice
+   *
+   * Optimized: Fetch festival and user in parallel to prevent N+1.
    */
   async create(dto: CreateInvoiceDto): Promise<InvoiceResponseDto> {
-    // Validate festival exists
-    const festival = await this.prisma.festival.findUnique({
-      where: { id: dto.festivalId },
-      select: {
-        id: true,
-        name: true,
-        currency: true,
-        contactEmail: true,
-        location: true,
-        organizerId: true,
-      },
-    });
+    // Optimized: Fetch festival and user in parallel
+    const [festival, user] = await Promise.all([
+      this.prisma.festival.findUnique({
+        where: { id: dto.festivalId },
+        select: {
+          id: true,
+          name: true,
+          currency: true,
+          contactEmail: true,
+          location: true,
+          organizerId: true,
+        },
+      }),
+      this.prisma.user.findUnique({
+        where: { id: dto.userId },
+        select: { id: true, firstName: true, lastName: true, email: true },
+      }),
+    ]);
 
     if (!festival) {
       throw NotFoundException.festival(dto.festivalId);
     }
-
-    // Validate user exists
-    const user = await this.prisma.user.findUnique({
-      where: { id: dto.userId },
-      select: { id: true, firstName: true, lastName: true, email: true },
-    });
 
     if (!user) {
       throw NotFoundException.user(dto.userId);
@@ -244,10 +246,10 @@ export class InvoicesService {
 
     const where: Prisma.InvoiceWhereInput = {};
 
-    if (festivalId) where.festivalId = festivalId;
-    if (userId) where.userId = userId;
-    if (status) where.status = status;
-    if (currency) where.currency = currency;
+    if (festivalId) {where.festivalId = festivalId;}
+    if (userId) {where.userId = userId;}
+    if (status) {where.status = status;}
+    if (currency) {where.currency = currency;}
 
     if (search) {
       where.OR = [
@@ -259,20 +261,20 @@ export class InvoicesService {
 
     if (issueDateFrom || issueDateTo) {
       where.issueDate = {};
-      if (issueDateFrom) where.issueDate.gte = new Date(issueDateFrom);
-      if (issueDateTo) where.issueDate.lte = new Date(issueDateTo);
+      if (issueDateFrom) {where.issueDate.gte = new Date(issueDateFrom);}
+      if (issueDateTo) {where.issueDate.lte = new Date(issueDateTo);}
     }
 
     if (dueDateFrom || dueDateTo) {
       where.dueDate = {};
-      if (dueDateFrom) where.dueDate.gte = new Date(dueDateFrom);
-      if (dueDateTo) where.dueDate.lte = new Date(dueDateTo);
+      if (dueDateFrom) {where.dueDate.gte = new Date(dueDateFrom);}
+      if (dueDateTo) {where.dueDate.lte = new Date(dueDateTo);}
     }
 
     if (minAmount !== undefined || maxAmount !== undefined) {
       where.total = {};
-      if (minAmount !== undefined) where.total.gte = minAmount;
-      if (maxAmount !== undefined) where.total.lte = maxAmount;
+      if (minAmount !== undefined) {where.total.gte = minAmount;}
+      if (maxAmount !== undefined) {where.total.lte = maxAmount;}
     }
 
     if (overdueOnly) {
@@ -329,20 +331,20 @@ export class InvoicesService {
 
     const updateData: Prisma.InvoiceUpdateInput = {};
 
-    if (dto.status !== undefined) updateData.status = dto.status;
-    if (dto.dueDate !== undefined) updateData.dueDate = new Date(dto.dueDate);
-    if (dto.customerName !== undefined) updateData.customerName = dto.customerName;
-    if (dto.customerEmail !== undefined) updateData.customerEmail = dto.customerEmail;
-    if (dto.customerAddress !== undefined) updateData.customerAddress = dto.customerAddress;
-    if (dto.customerPhone !== undefined) updateData.customerPhone = dto.customerPhone;
-    if (dto.customerVatNumber !== undefined) updateData.customerVatNumber = dto.customerVatNumber;
-    if (dto.taxExempt !== undefined) updateData.taxExempt = dto.taxExempt;
-    if (dto.reverseCharge !== undefined) updateData.reverseCharge = dto.reverseCharge;
-    if (dto.taxCountry !== undefined) updateData.taxCountry = dto.taxCountry;
-    if (dto.notes !== undefined) updateData.notes = dto.notes;
-    if (dto.internalNotes !== undefined) updateData.internalNotes = dto.internalNotes;
-    if (dto.termsAndConditions !== undefined) updateData.termsAndConditions = dto.termsAndConditions;
-    if (dto.metadata !== undefined) updateData.metadata = dto.metadata as Prisma.InputJsonValue;
+    if (dto.status !== undefined) {updateData.status = dto.status;}
+    if (dto.dueDate !== undefined) {updateData.dueDate = new Date(dto.dueDate);}
+    if (dto.customerName !== undefined) {updateData.customerName = dto.customerName;}
+    if (dto.customerEmail !== undefined) {updateData.customerEmail = dto.customerEmail;}
+    if (dto.customerAddress !== undefined) {updateData.customerAddress = dto.customerAddress;}
+    if (dto.customerPhone !== undefined) {updateData.customerPhone = dto.customerPhone;}
+    if (dto.customerVatNumber !== undefined) {updateData.customerVatNumber = dto.customerVatNumber;}
+    if (dto.taxExempt !== undefined) {updateData.taxExempt = dto.taxExempt;}
+    if (dto.reverseCharge !== undefined) {updateData.reverseCharge = dto.reverseCharge;}
+    if (dto.taxCountry !== undefined) {updateData.taxCountry = dto.taxCountry;}
+    if (dto.notes !== undefined) {updateData.notes = dto.notes;}
+    if (dto.internalNotes !== undefined) {updateData.internalNotes = dto.internalNotes;}
+    if (dto.termsAndConditions !== undefined) {updateData.termsAndConditions = dto.termsAndConditions;}
+    if (dto.metadata !== undefined) {updateData.metadata = dto.metadata as Prisma.InputJsonValue;}
 
     // Recalculate totals if tax settings changed
     if (dto.taxRate !== undefined || dto.taxExempt !== undefined || dto.reverseCharge !== undefined) {
@@ -582,12 +584,12 @@ export class InvoicesService {
     dateTo?: Date,
   ): Promise<InvoiceStatsDto> {
     const where: Prisma.InvoiceWhereInput = {};
-    if (festivalId) where.festivalId = festivalId;
-    if (userId) where.userId = userId;
+    if (festivalId) {where.festivalId = festivalId;}
+    if (userId) {where.userId = userId;}
     if (dateFrom || dateTo) {
       where.issueDate = {};
-      if (dateFrom) where.issueDate.gte = dateFrom;
-      if (dateTo) where.issueDate.lte = dateTo;
+      if (dateFrom) {where.issueDate.gte = dateFrom;}
+      if (dateTo) {where.issueDate.lte = dateTo;}
     }
 
     const now = new Date();

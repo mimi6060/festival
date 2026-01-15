@@ -67,7 +67,7 @@ export function FocusTrap({
 
   // Get all focusable elements within the container
   const getFocusableElements = useCallback(() => {
-    if (!containerRef.current) return [];
+    if (!containerRef.current) {return [];}
     return Array.from(
       containerRef.current.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)
     ).filter((el) => {
@@ -79,7 +79,7 @@ export function FocusTrap({
 
   // Handle initial focus when trap activates
   useEffect(() => {
-    if (!active) return;
+    if (!active) {return;}
 
     // Store the currently focused element
     previousActiveElement.current = document.activeElement as HTMLElement;
@@ -137,7 +137,7 @@ export function FocusTrap({
 
   // Handle keyboard navigation
   useEffect(() => {
-    if (!active) return;
+    if (!active) {return;}
 
     const handleKeyDown = (event: KeyboardEvent) => {
       // Handle Escape key
@@ -188,7 +188,7 @@ export function FocusTrap({
 
   // Handle click outside (optional - refocus if clicked outside)
   useEffect(() => {
-    if (!active) return;
+    if (!active) {return;}
 
     const handleFocusIn = (event: FocusEvent) => {
       if (

@@ -40,7 +40,7 @@ export default function DataTable<T extends { id: string | number }>({
 
   // Filter data based on search
   const filteredData = useMemo(() => {
-    if (!search) return data;
+    if (!search) {return data;}
     const searchLower = search.toLowerCase();
     return data.filter((row) =>
       columns.some((col) => {
@@ -52,14 +52,14 @@ export default function DataTable<T extends { id: string | number }>({
 
   // Sort data
   const sortedData = useMemo(() => {
-    if (!sortConfig) return filteredData;
+    if (!sortConfig) {return filteredData;}
     return [...filteredData].sort((a, b) => {
       const aValue = getNestedValue(a, sortConfig.key);
       const bValue = getNestedValue(b, sortConfig.key);
 
-      if (aValue === bValue) return 0;
-      if (aValue === null || aValue === undefined) return 1;
-      if (bValue === null || bValue === undefined) return -1;
+      if (aValue === bValue) {return 0;}
+      if (aValue === null || aValue === undefined) {return 1;}
+      if (bValue === null || bValue === undefined) {return -1;}
 
       const comparison = aValue < bValue ? -1 : 1;
       return sortConfig.direction === 'asc' ? comparison : -comparison;

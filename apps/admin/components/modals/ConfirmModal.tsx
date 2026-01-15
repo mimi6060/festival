@@ -25,7 +25,7 @@ export default function ConfirmModal({
   variant = 'danger',
   loading = false,
 }: ConfirmModalProps) {
-  if (!isOpen) return null;
+  if (!isOpen) {return null;}
 
   const variantStyles = {
     danger: {

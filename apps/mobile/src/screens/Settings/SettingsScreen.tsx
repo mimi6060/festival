@@ -14,9 +14,8 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Card, Button } from '../../components/common';
-import { useAuthStore, useNotificationStore, useSettingsStore, languageLabels, themeLabels } from '../../store';
-import type { Language, Theme } from '../../store';
+import { Card } from '../../components/common';
+import { useAuthStore, useNotificationStore, useSettingsStore, languageLabels, themeLabels, Language, Theme } from '../../store';
 import { offlineService } from '../../services';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { RootStackParamList } from '../../types';

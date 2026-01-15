@@ -72,8 +72,8 @@ class IndoorLocationManager {
   private config: IndoorLocationManagerConfig | null = null;
   private callbacks: IndoorLocationManagerCallbacks = {};
   private appStateSubscription: any = null;
-  private isInitialized: boolean = false;
-  private isTracking: boolean = false;
+  private isInitialized = false;
+  private isTracking = false;
 
   // Data
   private beaconConfigs: BeaconConfig[] = [];
@@ -82,7 +82,7 @@ class IndoorLocationManager {
   private zones: Zone[] = [];
   private geofences: Geofence[] = [];
   private floors: Floor[] = [];
-  private activeGeofences: Set<string> = new Set();
+  private activeGeofences = new Set<string>();
   private currentLocation: IndoorCoordinate | null = null;
 
   private constructor() {}
@@ -152,12 +152,12 @@ class IndoorLocationManager {
         AsyncStorage.getItem(STORAGE_KEYS.BATTERY_MODE),
       ]);
 
-      if (beaconConfigs) this.beaconConfigs = JSON.parse(beaconConfigs);
-      if (wifiFingerprints) this.wifiFingerprints = JSON.parse(wifiFingerprints);
-      if (zones) this.zones = JSON.parse(zones);
-      if (geofences) this.geofences = JSON.parse(geofences);
-      if (floors) this.floors = JSON.parse(floors);
-      if (lastPosition) this.currentLocation = JSON.parse(lastPosition);
+      if (beaconConfigs) {this.beaconConfigs = JSON.parse(beaconConfigs);}
+      if (wifiFingerprints) {this.wifiFingerprints = JSON.parse(wifiFingerprints);}
+      if (zones) {this.zones = JSON.parse(zones);}
+      if (geofences) {this.geofences = JSON.parse(geofences);}
+      if (floors) {this.floors = JSON.parse(floors);}
+      if (lastPosition) {this.currentLocation = JSON.parse(lastPosition);}
       if (batteryMode && this.config) {
         this.config.batteryMode = batteryMode as BatteryMode;
       }
@@ -515,7 +515,7 @@ class IndoorLocationManager {
    * Stop location tracking
    */
   stopTracking(): void {
-    if (!this.isTracking) return;
+    if (!this.isTracking) {return;}
 
     console.log('[IndoorLocationManager] Stopping tracking');
 
@@ -601,10 +601,10 @@ class IndoorLocationManager {
    * Calculate route to POI
    */
   async calculateRoute(destinationId: string): Promise<NavigationRoute | null> {
-    if (!this.currentLocation) return null;
+    if (!this.currentLocation) {return null;}
 
     const destination = this.getAllPOIs().find((poi) => poi.id === destinationId);
-    if (!destination) return null;
+    if (!destination) {return null;}
 
     // Simple A* pathfinding would be implemented here
     // For now, return a direct route
@@ -678,7 +678,7 @@ class IndoorLocationManager {
    * Report current location to server
    */
   async reportLocation(): Promise<void> {
-    if (!this.currentLocation || !this.config?.apiEndpoint) return;
+    if (!this.currentLocation || !this.config?.apiEndpoint) {return;}
 
     try {
       await fetch(

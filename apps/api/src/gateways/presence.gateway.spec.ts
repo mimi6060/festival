@@ -15,10 +15,10 @@ import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import {
   PresenceGateway,
-  UserPresence,
+  UserPresence as _UserPresence,
   PresenceStatus,
-  PresenceUpdate,
-  TypingIndicator,
+  PresenceUpdate as _PresenceUpdate,
+  TypingIndicator as _TypingIndicator,
 } from './presence.gateway';
 import { Server, Socket } from 'socket.io';
 
@@ -401,7 +401,7 @@ describe('PresenceGateway', () => {
 
       // Should not broadcast presence_update for invisible users
       const toMock = mockServer.to as jest.Mock;
-      const emitCalls = toMock.mock.results.filter((r) => r.value?.emit);
+      const _emitCalls = toMock.mock.results.filter((r) => r.value?.emit);
       // Invisible users don't broadcast their status
     });
 
@@ -981,7 +981,7 @@ describe('PresenceGateway', () => {
       // Advance time by 5 minutes
       jest.advanceTimersByTime(5 * 60 * 1000);
 
-      const presence = gateway.getUserPresence(mockUser.id);
+      const _presence = gateway.getUserPresence(mockUser.id);
 
       // Busy status should not change to away due to timeout
       // (depends on implementation - may stay busy or go away)

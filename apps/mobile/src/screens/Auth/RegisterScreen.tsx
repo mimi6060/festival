@@ -92,7 +92,7 @@ export const RegisterScreen: React.FC = () => {
   };
 
   const handleRegister = async () => {
-    if (!validate()) return;
+    if (!validate()) {return;}
 
     setLoading(true);
     try {
@@ -109,7 +109,7 @@ export const RegisterScreen: React.FC = () => {
       } else {
         Alert.alert('Erreur', response.message || 'Inscription echouee');
       }
-    } catch (error) {
+    } catch {
       Alert.alert('Erreur', 'Une erreur est survenue. Veuillez reessayer.');
     } finally {
       setLoading(false);

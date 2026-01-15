@@ -90,16 +90,16 @@ export class TierRateLimitService implements OnModuleInit, OnModuleDestroy {
   private useRedis = false;
 
   // In-memory stores for each window type
-  private minuteStore: Map<string, InMemoryWindowStore> = new Map();
-  private hourStore: Map<string, InMemoryWindowStore> = new Map();
-  private dayStore: Map<string, InMemoryWindowStore> = new Map();
+  private minuteStore = new Map<string, InMemoryWindowStore>();
+  private hourStore = new Map<string, InMemoryWindowStore>();
+  private dayStore = new Map<string, InMemoryWindowStore>();
 
   // Metrics tracking
-  private metrics: Map<ClientTier, {
+  private metrics = new Map<ClientTier, {
     totalRequests: number;
     blockedRequests: number;
     clients: Set<string>;
-  }> = new Map();
+  }>();
 
   // Cleanup interval
   private cleanupInterval: NodeJS.Timeout | null = null;
@@ -124,7 +124,7 @@ export class TierRateLimitService implements OnModuleInit, OnModuleDestroy {
         this.redis = new Redis.default(redisUrl);
         this.useRedis = true;
         this.logger.log('TierRateLimitService: Connected to Redis for distributed rate limiting');
-      } catch (error) {
+      } catch {
         this.logger.warn('TierRateLimitService: Failed to connect to Redis, using in-memory store');
         this.useRedis = false;
       }

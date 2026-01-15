@@ -81,7 +81,7 @@ export interface Notification {
 }
 
 // Navigation types
-export type RootStackParamList = {
+export interface RootStackParamList {
   Onboarding: undefined;
   Auth: undefined;
   Main: undefined;
@@ -96,20 +96,20 @@ export type RootStackParamList = {
   ChangePassword: undefined;
   HelpCenter: undefined;
   ContactUs: undefined;
-};
+}
 
-export type AuthStackParamList = {
+export interface AuthStackParamList {
   Login: undefined;
   Register: undefined;
-};
+}
 
-export type MainTabParamList = {
+export interface MainTabParamList {
   Home: undefined;
   Tickets: undefined;
   Wallet: undefined;
   Program: undefined;
   Profile: undefined;
-};
+}
 
 // API Response types
 export interface ApiResponse<T> {

@@ -1,81 +1,76 @@
-import React from 'react';
+import React, { memo, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { colors, spacing, borderRadius, typography } from '../../theme';
 import type { Ticket } from '../../types';
+
+// Status color map - memoized outside component
+const STATUS_COLORS: Record<string, string> = {
+  valid: colors.success,
+  used: colors.textMuted,
+  expired: colors.error,
+  cancelled: colors.error,
+};
+
+// Ticket type config - memoized outside component
+const TICKET_TYPE_CONFIG: Record<string, { label: string; color: string }> = {
+  vip: { label: 'VIP', color: colors.secondary },
+  backstage: { label: 'BACKSTAGE', color: colors.accent },
+  standard: { label: 'STANDARD', color: colors.primary },
+};
 
 interface TicketCardProps {
   ticket: Ticket;
   onPress: () => void;
 }
 
-export const TicketCard: React.FC<TicketCardProps> = ({ ticket, onPress }) => {
-  const getStatusColor = () => {
-    switch (ticket.status) {
-      case 'valid':
-        return colors.success;
-      case 'used':
-        return colors.textMuted;
-      case 'expired':
-        return colors.error;
-      case 'cancelled':
-        return colors.error;
-      default:
-        return colors.textMuted;
-    }
-  };
+// Memoized TicketCard component for optimal performance
+export const TicketCard = memo<TicketCardProps>(({ ticket, onPress }) => {
+  // Memoized status color
+  const statusColor = useMemo(() =>
+    STATUS_COLORS[ticket.status] || colors.textMuted,
+    [ticket.status]
+  );
 
-  const getTicketTypeLabel = () => {
-    switch (ticket.ticketType) {
-      case 'vip':
-        return 'VIP';
-      case 'backstage':
-        return 'BACKSTAGE';
-      default:
-        return 'STANDARD';
-    }
-  };
+  // Memoized ticket type config
+  const ticketTypeConfig = useMemo(() =>
+    TICKET_TYPE_CONFIG[ticket.ticketType] || TICKET_TYPE_CONFIG.standard,
+    [ticket.ticketType]
+  );
 
-  const getTicketTypeColor = () => {
-    switch (ticket.ticketType) {
-      case 'vip':
-        return colors.secondary;
-      case 'backstage':
-        return colors.accent;
-      default:
-        return colors.primary;
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    if (!dateString) return 'Date inconnue';
+  // Memoized date formatting
+  const formattedDate = useMemo(() => {
+    if (!ticket.eventDate) {return 'Date inconnue';}
 
     // Handle YYYY-MM-DD format explicitly
     let date: Date;
-    if (/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
-      const [year, month, day] = dateString.split('-').map(Number);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(ticket.eventDate)) {
+      const [year, month, day] = ticket.eventDate.split('-').map(Number);
       date = new Date(year, month - 1, day);
     } else {
-      date = new Date(dateString);
+      date = new Date(ticket.eventDate);
     }
 
-    if (isNaN(date.getTime())) return 'Date inconnue';
+    if (isNaN(date.getTime())) {return 'Date inconnue';}
 
     return date.toLocaleDateString('fr-FR', {
       weekday: 'short',
       day: 'numeric',
       month: 'short',
     });
-  };
+  }, [ticket.eventDate]);
+
+  // Memoized press handler
+  const handlePress = useCallback(() => onPress(), [onPress]);
 
   return (
     <TouchableOpacity
       style={styles.container}
-      onPress={onPress}
+      onPress={handlePress}
       activeOpacity={0.9}
     >
       {/* Ticket Type Badge */}
-      <View style={[styles.typeBadge, { backgroundColor: getTicketTypeColor() }]}>
-        <Text style={styles.typeBadgeText}>{getTicketTypeLabel()}</Text>
+      <View style={[styles.typeBadge, { backgroundColor: ticketTypeConfig.color }]}>
+        <Text style={styles.typeBadgeText}>{ticketTypeConfig.label}</Text>
       </View>
 
       {/* Main Content */}
@@ -87,7 +82,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, onPress }) => {
         <View style={styles.infoRow}>
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Date</Text>
-            <Text style={styles.infoValue}>{formatDate(ticket.eventDate)}</Text>
+            <Text style={styles.infoValue}>{formattedDate}</Text>
           </View>
           <View style={styles.infoItem}>
             <Text style={styles.infoLabel}>Heure</Text>
@@ -119,9 +114,9 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, onPress }) => {
 
       {/* Footer */}
       <View style={styles.footer}>
-        <View style={[styles.statusBadge, { backgroundColor: getStatusColor() + '20' }]}>
-          <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
-          <Text style={[styles.statusText, { color: getStatusColor() }]}>
+        <View style={[styles.statusBadge, { backgroundColor: statusColor + '20' }]}>
+          <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+          <Text style={[styles.statusText, { color: statusColor }]}>
             {ticket.status.toUpperCase()}
           </Text>
         </View>
@@ -129,7 +124,7 @@ export const TicketCard: React.FC<TicketCardProps> = ({ ticket, onPress }) => {
       </View>
     </TouchableOpacity>
   );
-};
+});
 
 const styles = StyleSheet.create({
   container: {

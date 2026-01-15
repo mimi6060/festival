@@ -118,12 +118,12 @@ class SyncManager {
   private static instance: SyncManager;
   private database: Database;
   private batchConfig: BatchConfig;
-  private listeners: Set<SyncManagerEventListener> = new Set();
-  private tasks: Map<string, SyncTask> = new Map();
+  private listeners = new Set<SyncManagerEventListener>();
+  private tasks = new Map<string, SyncTask>();
   private currentPhase: SyncPhase = 'idle';
   private progress: SyncProgress;
-  private isInitialized: boolean = false;
-  private syncStartTime: number = 0;
+  private isInitialized = false;
+  private syncStartTime = 0;
   private processedItemsHistory: { timestamp: number; count: number }[] = [];
 
   private constructor(batchConfig?: Partial<BatchConfig>) {
@@ -541,7 +541,7 @@ class SyncManager {
    */
   cancelTask(taskId: string): boolean {
     const task = this.tasks.get(taskId);
-    if (task && task.status === 'pending') {
+    if (task?.status === 'pending') {
       task.status = 'cancelled';
       this.tasks.set(taskId, task);
       return true;

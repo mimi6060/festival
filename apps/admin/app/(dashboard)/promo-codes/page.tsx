@@ -172,7 +172,7 @@ export default function PromoCodesPage() {
             >
               <option value="">Tous les festivals</option>
               <option value="null">Codes globaux</option>
-              {festivals?.data?.map((festival: any) => (
+              {festivals?.data?.map((festival: { id: string; name: string }) => (
                 <option key={festival.id} value={festival.id}>
                   {festival.name}
                 </option>
@@ -309,7 +309,7 @@ export default function PromoCodesPage() {
                       className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
                     >
                       <option value="">Tous les festivals</option>
-                      {festivals?.data?.map((festival: any) => (
+                      {festivals?.data?.map((festival: { id: string; name: string }) => (
                         <option key={festival.id} value={festival.id}>
                           {festival.name}
                         </option>

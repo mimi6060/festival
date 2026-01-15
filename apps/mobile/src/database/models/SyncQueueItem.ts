@@ -52,7 +52,7 @@ export default class SyncQueueItem extends Model {
    * Parse payload JSON
    */
   get parsedPayload(): Record<string, unknown> | null {
-    if (!this.payload) return null;
+    if (!this.payload) {return null;}
     try {
       return JSON.parse(this.payload);
     } catch {

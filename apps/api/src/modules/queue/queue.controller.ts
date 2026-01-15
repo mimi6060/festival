@@ -7,7 +7,6 @@ import {
   Query,
   HttpCode,
   HttpStatus,
-  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -159,7 +158,7 @@ export class QueueController {
     @Param('queueName') queueName: QueueName,
     @Query('start') start = 0,
     @Query('end') end = 50,
-  ): Promise<Array<{ id: string; data: unknown; failedReason: string | undefined; timestamp: number | undefined }>> {
+  ): Promise<{ id: string; data: unknown; failedReason: string | undefined; timestamp: number | undefined }[]> {
     const jobs = await this.queueService.getFailedJobs(queueName, start, end);
     return jobs.map((job) => ({
       id: job.id || '',

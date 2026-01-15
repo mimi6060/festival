@@ -12,8 +12,8 @@ import { FestivalStatus as PrismaFestivalStatus } from '@prisma/client';
 
 // Cache TTL constants (in seconds)
 const CACHE_TTL = {
-  FESTIVAL_DETAIL: 300, // 5 minutes
-  FESTIVAL_LIST: 60, // 1 minute
+  FESTIVAL_DETAIL: 30, // 30 seconds for individual festival (by ID or slug)
+  FESTIVAL_LIST: 60, // 60 seconds for festival list
   TICKET_CATEGORIES: 300, // 5 minutes
 };
 
@@ -21,10 +21,64 @@ const CACHE_TTL = {
 export class FestivalsService {
   private readonly logger = new Logger(FestivalsService.name);
 
+  // Cache metrics for monitoring
+  private cacheMetrics = {
+    hits: 0,
+    misses: 0,
+    lastReset: new Date(),
+  };
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly cacheService: CacheService
   ) {}
+
+  /**
+   * Get cache metrics
+   */
+  getCacheMetrics() {
+    const total = this.cacheMetrics.hits + this.cacheMetrics.misses;
+    const hitRate = total > 0 ? (this.cacheMetrics.hits / total) * 100 : 0;
+    return {
+      hits: this.cacheMetrics.hits,
+      misses: this.cacheMetrics.misses,
+      total,
+      hitRate: Math.round(hitRate * 100) / 100,
+      lastReset: this.cacheMetrics.lastReset,
+    };
+  }
+
+  /**
+   * Reset cache metrics
+   */
+  resetCacheMetrics() {
+    this.cacheMetrics = {
+      hits: 0,
+      misses: 0,
+      lastReset: new Date(),
+    };
+    this.logger.log('Cache metrics reset');
+  }
+
+  /**
+   * Log cache hit
+   */
+  private logCacheHit(key: string, operation: string) {
+    this.cacheMetrics.hits++;
+    this.logger.debug(
+      `[CACHE HIT] ${operation} - Key: ${key} | Total hits: ${this.cacheMetrics.hits}, misses: ${this.cacheMetrics.misses}`
+    );
+  }
+
+  /**
+   * Log cache miss
+   */
+  private logCacheMiss(key: string, operation: string) {
+    this.cacheMetrics.misses++;
+    this.logger.debug(
+      `[CACHE MISS] ${operation} - Key: ${key} | Total hits: ${this.cacheMetrics.hits}, misses: ${this.cacheMetrics.misses}`
+    );
+  }
 
   /**
    * Create a new festival
@@ -62,6 +116,7 @@ export class FestivalsService {
 
   /**
    * Find all festivals with pagination and filters
+   * Cache TTL: 60 seconds
    */
   async findAll(query: FestivalQueryDto) {
     const { page = 1, limit = 10, status, search, organizerId } = query;
@@ -72,9 +127,11 @@ export class FestivalsService {
     // Try to get from cache
     const cached = await this.cacheService.get(cacheKey);
     if (cached) {
-      this.logger.debug(`Cache hit for festivals list: ${cacheKey}`);
+      this.logCacheHit(cacheKey, 'findAll');
       return cached;
     }
+
+    this.logCacheMiss(cacheKey, 'findAll');
 
     const skip = (page - 1) * limit;
 
@@ -126,19 +183,20 @@ export class FestivalsService {
       hasPreviousPage: page > 1,
     };
 
-    // Cache the result with short TTL (1 minute)
+    // Cache the result with 60 second TTL
     await this.cacheService.set(cacheKey, result, {
       ttl: CACHE_TTL.FESTIVAL_LIST,
       tags: [CacheTag.FESTIVAL],
     });
 
-    this.logger.debug(`Cached festivals list: ${cacheKey}`);
+    this.logger.debug(`[CACHE SET] findAll - Key: ${cacheKey}, TTL: ${CACHE_TTL.FESTIVAL_LIST}s`);
 
     return result;
   }
 
   /**
    * Find a festival by ID
+   * Cache TTL: 30 seconds
    */
   async findOne(id: string) {
     const cacheKey = `festival:${id}`;
@@ -146,9 +204,11 @@ export class FestivalsService {
     // Try to get from cache
     const cached = await this.cacheService.get(cacheKey);
     if (cached) {
-      this.logger.debug(`Cache hit for festival: ${id}`);
+      this.logCacheHit(cacheKey, 'findOne');
       return cached;
     }
+
+    this.logCacheMiss(cacheKey, 'findOne');
 
     const festival = await this.prisma.festival.findUnique({
       where: { id },
@@ -169,19 +229,20 @@ export class FestivalsService {
       throw new NotFoundException(`Festival with ID "${id}" not found`);
     }
 
-    // Cache the result with 5 min TTL
+    // Cache the result with 30 second TTL
     await this.cacheService.set(cacheKey, festival, {
       ttl: CACHE_TTL.FESTIVAL_DETAIL,
       tags: [CacheTag.FESTIVAL],
     });
 
-    this.logger.debug(`Cached festival: ${id}`);
+    this.logger.debug(`[CACHE SET] findOne - Key: ${cacheKey}, TTL: ${CACHE_TTL.FESTIVAL_DETAIL}s`);
 
     return festival;
   }
 
   /**
    * Find a festival by slug
+   * Cache TTL: 30 seconds
    */
   async findBySlug(slug: string) {
     const cacheKey = `festival:slug:${slug}`;
@@ -189,9 +250,11 @@ export class FestivalsService {
     // Try to get from cache
     const cached = await this.cacheService.get(cacheKey);
     if (cached) {
-      this.logger.debug(`Cache hit for festival by slug: ${slug}`);
+      this.logCacheHit(cacheKey, 'findBySlug');
       return cached;
     }
+
+    this.logCacheMiss(cacheKey, 'findBySlug');
 
     const festival = await this.prisma.festival.findUnique({
       where: { slug },
@@ -213,13 +276,13 @@ export class FestivalsService {
       throw new NotFoundException(`Festival with slug "${slug}" not found`);
     }
 
-    // Cache the result with 5 min TTL
+    // Cache the result with 30 second TTL
     await this.cacheService.set(cacheKey, festival, {
       ttl: CACHE_TTL.FESTIVAL_DETAIL,
       tags: [CacheTag.FESTIVAL],
     });
 
-    this.logger.debug(`Cached festival by slug: ${slug}`);
+    this.logger.debug(`[CACHE SET] findBySlug - Key: ${cacheKey}, TTL: ${CACHE_TTL.FESTIVAL_DETAIL}s`);
 
     return festival;
   }
@@ -342,6 +405,7 @@ export class FestivalsService {
 
   /**
    * Get ticket categories for a festival (cached)
+   * Cache TTL: 5 minutes
    */
   async getTicketCategories(festivalId: string) {
     const cacheKey = `festival:${festivalId}:categories`;
@@ -349,9 +413,11 @@ export class FestivalsService {
     // Try to get from cache
     const cached = await this.cacheService.get(cacheKey);
     if (cached) {
-      this.logger.debug(`Cache hit for ticket categories: ${festivalId}`);
+      this.logCacheHit(cacheKey, 'getTicketCategories');
       return cached;
     }
+
+    this.logCacheMiss(cacheKey, 'getTicketCategories');
 
     // Verify festival exists
     await this.findOne(festivalId);
@@ -364,13 +430,13 @@ export class FestivalsService {
       orderBy: { price: 'asc' },
     });
 
-    // Cache the result with 5 min TTL
+    // Cache the result with 5 minute TTL
     await this.cacheService.set(cacheKey, categories, {
       ttl: CACHE_TTL.TICKET_CATEGORIES,
       tags: [CacheTag.FESTIVAL, CacheTag.TICKET],
     });
 
-    this.logger.debug(`Cached ticket categories: ${festivalId}`);
+    this.logger.debug(`[CACHE SET] getTicketCategories - Key: ${cacheKey}, TTL: ${CACHE_TTL.TICKET_CATEGORIES}s`);
 
     return categories;
   }
@@ -392,21 +458,31 @@ export class FestivalsService {
    * Invalidate all cache entries related to a festival
    */
   private async invalidateFestivalCache(festivalId: string, slug?: string): Promise<void> {
+    const invalidatedKeys: string[] = [];
+
     // Delete specific festival cache entries
     await this.cacheService.delete(`festival:${festivalId}`);
+    invalidatedKeys.push(`festival:${festivalId}`);
+
     await this.cacheService.delete(`festival:${festivalId}:categories`);
+    invalidatedKeys.push(`festival:${festivalId}:categories`);
 
     if (slug) {
       await this.cacheService.delete(`festival:slug:${slug}`);
+      invalidatedKeys.push(`festival:slug:${slug}`);
     }
 
     // Delete all festival list caches (they might contain this festival)
     await this.cacheService.deletePattern('festivals:list:*');
+    invalidatedKeys.push('festivals:list:*');
 
     // Also invalidate program cache for this festival
     await this.cacheService.deletePattern(`program:${festivalId}:*`);
+    invalidatedKeys.push(`program:${festivalId}:*`);
 
-    this.logger.debug(`Invalidated cache for festival: ${festivalId}`);
+    this.logger.log(
+      `[CACHE INVALIDATE] Festival ${festivalId} - Invalidated keys: ${invalidatedKeys.join(', ')}`
+    );
   }
 
   // ============================================================================

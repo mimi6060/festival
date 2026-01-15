@@ -238,11 +238,11 @@ export interface AnalyticsPdfData {
   ticketStats: {
     totalSold: number;
     totalRevenue: number;
-    byCategory: Array<{
+    byCategory: {
       name: string;
       sold: number;
       revenue: number;
-    }>;
+    }[];
     usageRate: number;
   };
   cashlessStats?: {
@@ -254,10 +254,10 @@ export interface AnalyticsPdfData {
   attendanceStats?: {
     peak: number;
     average: number;
-    byDay: Array<{
+    byDay: {
       date: string;
       count: number;
-    }>;
+    }[];
   };
 }
 

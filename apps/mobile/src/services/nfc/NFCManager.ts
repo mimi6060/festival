@@ -38,12 +38,12 @@ export class NFCError extends Error {
 }
 
 // NFC Event Listeners
-export type NFCEventListener = {
+export interface NFCEventListener {
   onTagDiscovered?: (tag: TagEvent) => void;
   onSessionStarted?: () => void;
   onSessionClosed?: () => void;
   onError?: (error: NFCError) => void;
-};
+}
 
 // NFC Manager Configuration
 export interface NFCManagerConfig {
@@ -62,12 +62,12 @@ const DEFAULT_CONFIG: NFCManagerConfig = {
 
 class NFCManagerService {
   private static instance: NFCManagerService;
-  private isInitialized: boolean = false;
-  private isSupported: boolean = false;
-  private isEnabled: boolean = false;
+  private isInitialized = false;
+  private isSupported = false;
+  private isEnabled = false;
   private currentStatus: NFCStatus = 'unavailable';
   private config: NFCManagerConfig = DEFAULT_CONFIG;
-  private listeners: Set<NFCEventListener> = new Set();
+  private listeners = new Set<NFCEventListener>();
 
   public reader: NFCReader;
   public writer: NFCWriter;
@@ -306,7 +306,7 @@ class NFCManagerService {
    * Provide haptic feedback
    */
   provideFeedback(type: 'success' | 'error' | 'warning' = 'success'): void {
-    if (!this.config.enableVibration) return;
+    if (!this.config.enableVibration) {return;}
 
     switch (type) {
       case 'success':

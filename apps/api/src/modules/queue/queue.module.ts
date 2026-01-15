@@ -1,8 +1,9 @@
-import { Module, Global, OnModuleInit } from '@nestjs/common';
+import { Module, Global, OnModuleInit, forwardRef } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { QueueService } from './queue.service';
 import { QueueController } from './queue.controller';
-import { EmailProcessor, NotificationProcessor } from './processors';
+import { EmailProcessor, NotificationProcessor, ExportProcessor } from './processors';
+import { AnalyticsModule } from '../analytics/analytics.module';
 
 /**
  * Queue Module
@@ -46,12 +47,13 @@ import { EmailProcessor, NotificationProcessor } from './processors';
  */
 @Global()
 @Module({
-  imports: [ConfigModule],
+  imports: [ConfigModule, forwardRef(() => AnalyticsModule)],
   controllers: [QueueController],
   providers: [
     QueueService,
     EmailProcessor,
     NotificationProcessor,
+    ExportProcessor,
   ],
   exports: [QueueService],
 })
@@ -59,6 +61,7 @@ export class QueueModule implements OnModuleInit {
   constructor(
     private readonly emailProcessor: EmailProcessor,
     private readonly notificationProcessor: NotificationProcessor,
+    private readonly exportProcessor: ExportProcessor,
   ) {}
 
   /**
@@ -69,5 +72,6 @@ export class QueueModule implements OnModuleInit {
     // Uncomment when Redis is available
     // this.emailProcessor.register();
     // this.notificationProcessor.register();
+    // this.exportProcessor.register();
   }
 }

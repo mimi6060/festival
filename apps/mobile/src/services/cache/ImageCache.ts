@@ -86,13 +86,13 @@ const getCacheDirectory = (): string => {
  */
 export class ImageCache {
   private config: ImageCacheConfig;
-  private memoryCache: Map<string, MemoryCacheEntry> = new Map();
-  private metadata: Map<string, ImageMetadata> = new Map();
-  private currentDiskSize: number = 0;
-  private currentMemorySize: number = 0;
-  private prefetchQueue: Map<string, Promise<PrefetchResult>> = new Map();
+  private memoryCache = new Map<string, MemoryCacheEntry>();
+  private metadata = new Map<string, ImageMetadata>();
+  private currentDiskSize = 0;
+  private currentMemorySize = 0;
+  private prefetchQueue = new Map<string, Promise<PrefetchResult>>();
   private stats: ImageCacheStats;
-  private initialized: boolean = false;
+  private initialized = false;
   private cacheDir: string;
 
   constructor(config: Partial<ImageCacheConfig> = {}) {
@@ -105,7 +105,7 @@ export class ImageCache {
    * Initialize image cache
    */
   async initialize(): Promise<void> {
-    if (this.initialized) return;
+    if (this.initialized) {return;}
 
     if (Platform.OS !== 'web') {
       // Ensure cache directory exists
@@ -167,7 +167,7 @@ export class ImageCache {
   async cacheImage(url: string): Promise<string | null> {
     // Check if already cached
     const existing = await this.getImage(url);
-    if (existing) return existing;
+    if (existing) {return existing;}
 
     if (Platform.OS === 'web') {
       // Web platform - use browser caching
@@ -265,7 +265,7 @@ export class ImageCache {
     const meta = this.metadata.get(url);
     if (meta?.thumbnailPath) {
       const exists = await this.fileExists(meta.thumbnailPath);
-      if (exists) return meta.thumbnailPath;
+      if (exists) {return meta.thumbnailPath;}
     }
 
     // Return a default placeholder color
@@ -381,7 +381,7 @@ export class ImageCache {
    */
   async remove(url: string): Promise<boolean> {
     const meta = this.metadata.get(url);
-    if (!meta) return false;
+    if (!meta) {return false;}
 
     try {
       // Remove from disk
@@ -504,7 +504,7 @@ export class ImageCache {
   }
 
   private async fileExists(path: string): Promise<boolean> {
-    if (Platform.OS === 'web') return false;
+    if (Platform.OS === 'web') {return false;}
 
     try {
       const info = await FileSystem.getInfoAsync(path);
@@ -546,14 +546,14 @@ export class ImageCache {
   private async ensureDiskCapacity(requiredSize: number): Promise<void> {
     while (this.currentDiskSize + requiredSize > this.config.maxDiskSize) {
       const evicted = await this.evictOldestFromDisk();
-      if (!evicted) break;
+      if (!evicted) {break;}
     }
   }
 
   private async ensureMemoryCapacity(requiredSize: number): Promise<void> {
     while (this.currentMemorySize + requiredSize > this.config.maxMemorySize) {
       const evicted = this.evictOldestFromMemory();
-      if (!evicted) break;
+      if (!evicted) {break;}
     }
   }
 
@@ -618,7 +618,7 @@ export class ImageCache {
     try {
       const stored = await AsyncStorage.getItem(this.config.storageKeyPrefix + 'metadata');
       if (stored) {
-        const data = JSON.parse(stored) as { entries: Array<[string, ImageMetadata]>; diskSize: number };
+        const data = JSON.parse(stored) as { entries: [string, ImageMetadata][]; diskSize: number };
         this.metadata = new Map(data.entries);
         this.currentDiskSize = data.diskSize;
 
@@ -679,7 +679,7 @@ export async function getCachedImageUri(url: string): Promise<string> {
   await cache.initialize();
 
   const cached = await cache.getImage(url);
-  if (cached) return cached;
+  if (cached) {return cached;}
 
   // Try to cache it
   const newCached = await cache.cacheImage(url);

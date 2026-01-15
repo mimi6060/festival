@@ -11,14 +11,13 @@ import {
   Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import type { RouteProp } from '@react-navigation/native';
 import { Card } from '../../components/common';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { RootStackParamList } from '../../types';
 
-const { width } = Dimensions.get('window');
+const { width: _width } = Dimensions.get('window');
 
 type MapNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Map'>;
 type MapRouteProp = RouteProp<RootStackParamList, 'Map'>;
@@ -699,7 +698,7 @@ const pois: POI[] = [
 
 // Composant pour l'indicateur de niveau d'affluence
 const CrowdIndicator: React.FC<{ level?: 'low' | 'medium' | 'high' }> = ({ level }) => {
-  if (!level) return null;
+  if (!level) {return null;}
 
   const config = {
     low: { color: colors.success, label: 'Calme', bars: 1 },
@@ -745,9 +744,9 @@ const RatingStars: React.FC<{ rating: number; count?: number }> = ({ rating, cou
   );
 };
 
-// Composant pour le prix
-const PriceIndicator: React.FC<{ priceRange?: PriceRange }> = ({ priceRange }) => {
-  if (!priceRange) return null;
+// Composant pour le prix - kept for future map POI details
+const _PriceIndicator: React.FC<{ priceRange?: PriceRange }> = ({ priceRange }) => {
+  if (!priceRange) {return null;}
 
   return (
     <View style={styles.priceContainer}>

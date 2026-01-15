@@ -139,7 +139,7 @@ export class FestivalsController {
   })
   @Cacheable({
     key: { prefix: 'festivals:list', paramIndices: [0] },
-    ttl: 300, // 5 minutes
+    ttl: 60, // 60 seconds
     tags: [CacheTag.FESTIVAL],
   })
   @ApiOperation({
@@ -168,6 +168,11 @@ export class FestivalsController {
     windowSeconds: 60, // 100 requests per minute
     keyPrefix: 'festivals:get',
     errorMessage: 'Too many requests. Please try again later.',
+  })
+  @Cacheable({
+    key: { prefix: 'festival', paramIndices: [0] },
+    ttl: 30, // 30 seconds
+    tags: [CacheTag.FESTIVAL],
   })
   @ApiOperation({
     summary: 'Get festival by ID',
@@ -200,6 +205,11 @@ export class FestivalsController {
     windowSeconds: 60, // 100 requests per minute
     keyPrefix: 'festivals:get-by-slug',
     errorMessage: 'Too many requests. Please try again later.',
+  })
+  @Cacheable({
+    key: { prefix: 'festival:slug', paramIndices: [0] },
+    ttl: 30, // 30 seconds
+    tags: [CacheTag.FESTIVAL],
   })
   @ApiOperation({
     summary: 'Get festival by slug',

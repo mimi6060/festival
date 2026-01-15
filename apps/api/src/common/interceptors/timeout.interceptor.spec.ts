@@ -26,7 +26,7 @@ describe('TimeoutInterceptor', () => {
     handle: () => of(response).pipe(delay(delayMs)),
   });
 
-  const createErrorCallHandler = (error: Error, delayMs = 0): CallHandler => ({
+  const _createErrorCallHandler = (error: Error, delayMs = 0): CallHandler => ({
     handle: () => of(null).pipe(
       delay(delayMs),
       () => throwError(() => error),

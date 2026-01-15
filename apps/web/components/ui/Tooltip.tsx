@@ -84,7 +84,7 @@ export function Tooltip({
   const triggerRef = useRef<HTMLDivElement>(null);
 
   const showTooltip = () => {
-    if (disabled) return;
+    if (disabled) {return;}
     timeoutRef.current = setTimeout(() => {
       setIsVisible(true);
     }, delay);

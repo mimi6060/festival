@@ -219,15 +219,15 @@ export class LocationFusion {
   }
 
   private calculateBeaconAccuracy(beacons: Beacon[]): number {
-    if (beacons.length === 0) return Infinity;
+    if (beacons.length === 0) {return Infinity;}
 
     // Calculate accuracy based on number and proximity of beacons
     const nearBeacons = beacons.filter((b) => b.distance < 5);
     const immediateBeacons = beacons.filter((b) => b.distance < 1);
 
-    if (immediateBeacons.length >= 2) return 1;
-    if (nearBeacons.length >= 3) return 2;
-    if (beacons.length >= 3) return 5;
+    if (immediateBeacons.length >= 2) {return 1;}
+    if (nearBeacons.length >= 3) {return 2;}
+    if (beacons.length >= 3) {return 5;}
     return 10;
   }
 
@@ -410,7 +410,7 @@ export class LocationFusion {
     let weightedLat = 0;
     let weightedLng = 0;
     let weightedAlt = 0;
-    const floorVotes: Map<number, number> = new Map();
+    const floorVotes = new Map<number, number>();
     let minAccuracy = Infinity;
     let bestSource: LocationSource = 'fused';
 
@@ -560,7 +560,7 @@ export class LocationFusion {
 
   private findZoneForPosition(position: IndoorCoordinate): Zone | null {
     for (const zone of this.zones) {
-      if (zone.floor !== position.floor) continue;
+      if (zone.floor !== position.floor) {continue;}
 
       if (this.isPointInPolygon(position, zone.boundary)) {
         return zone;
@@ -570,7 +570,7 @@ export class LocationFusion {
   }
 
   private isPointInPolygon(point: IndoorCoordinate, polygon: Coordinate[]): boolean {
-    if (polygon.length < 3) return false;
+    if (polygon.length < 3) {return false;}
 
     let inside = false;
     const x = point.latitude;

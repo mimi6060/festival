@@ -91,7 +91,7 @@ export function getDatabase(): Database {
       modelClasses,
     });
 
-    console.log(`[Database] Initialized with schema version ${SCHEMA_VERSION}`);
+    // Database initialized with schema version ${SCHEMA_VERSION}
   }
 
   return databaseInstance;
@@ -108,7 +108,7 @@ export async function resetDatabase(): Promise<void> {
     await database.write(async () => {
       await database.unsafeResetDatabase();
     });
-    console.log('[Database] Reset completed');
+    // Database reset completed
   } catch (error) {
     console.error('[Database] Reset failed:', error);
     throw error;
@@ -122,7 +122,7 @@ export function closeDatabase(): void {
   if (databaseInstance) {
     // WatermelonDB doesn't have explicit close, but we clear reference
     databaseInstance = null;
-    console.log('[Database] Connection closed');
+    // Database connection closed
   }
 }
 

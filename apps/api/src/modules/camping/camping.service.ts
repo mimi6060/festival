@@ -41,21 +41,23 @@ export class CampingService {
 
   /**
    * Create a new camping spot
+   *
+   * Optimized: Fetch zone and existing spot check in parallel.
    */
   async createSpot(dto: CreateCampingSpotDto) {
-    // Verify zone exists
-    const zone = await this.prisma.campingZone.findUnique({
-      where: { id: dto.zoneId },
-    });
+    // Optimized: Verify zone exists and check for duplicate in parallel
+    const [zone, existing] = await Promise.all([
+      this.prisma.campingZone.findUnique({
+        where: { id: dto.zoneId },
+      }),
+      this.prisma.campingSpot.findFirst({
+        where: { zoneId: dto.zoneId, number: dto.number },
+      }),
+    ]);
 
     if (!zone) {
       throw new NotFoundException(`Camping zone with ID ${dto.zoneId} not found`);
     }
-
-    // Check for duplicate spot number in zone
-    const existing = await this.prisma.campingSpot.findFirst({
-      where: { zoneId: dto.zoneId, number: dto.number },
-    });
 
     if (existing) {
       throw new ConflictException(
@@ -786,8 +788,8 @@ export class CampingService {
 
     const occupancyRate = totalSpots > 0 ? (occupiedSpots / totalSpots) * 100 : 0;
 
-    // Daily occupancy for last 7 days
-    const dailyOccupancy = [];
+    // Optimized: Fetch all booking counts in parallel instead of sequential loop
+    const dates: { date: Date; nextDate: Date; dateStr: string }[] = [];
     for (let i = 6; i >= 0; i--) {
       const date = new Date();
       date.setDate(date.getDate() - i);
@@ -796,40 +798,48 @@ export class CampingService {
       const nextDate = new Date(date);
       nextDate.setDate(nextDate.getDate() + 1);
 
-      const occupiedOnDay = await this.prisma.campingBooking.count({
-        where: {
-          spot: { zone: { festivalId } },
-          status: { in: ['CONFIRMED', 'CHECKED_IN'] },
-          checkIn: { lte: nextDate },
-          checkOut: { gt: date },
-        },
-      });
-
-      dailyOccupancy.push({
-        date: date.toISOString().split('T')[0],
-        occupied: occupiedOnDay,
-        total: totalSpots,
-        rate: totalSpots > 0 ? (occupiedOnDay / totalSpots) * 100 : 0,
-      });
+      dates.push({ date, nextDate, dateStr: date.toISOString().split('T')[0] });
     }
 
-    const totalBookings = await this.prisma.campingBooking.count({
-      where: { spot: { zone: { festivalId } } },
-    });
+    // Optimized: Parallel queries for daily occupancy and booking counts
+    const [dailyOccupancyCounts, totalBookings, activeBookings, pendingBookings] = await Promise.all([
+      // Batch all daily occupancy queries into Promise.all
+      Promise.all(
+        dates.map(({ date, nextDate }) =>
+          this.prisma.campingBooking.count({
+            where: {
+              spot: { zone: { festivalId } },
+              status: { in: ['CONFIRMED', 'CHECKED_IN'] },
+              checkIn: { lte: nextDate },
+              checkOut: { gt: date },
+            },
+          })
+        )
+      ),
+      this.prisma.campingBooking.count({
+        where: { spot: { zone: { festivalId } } },
+      }),
+      this.prisma.campingBooking.count({
+        where: {
+          spot: { zone: { festivalId } },
+          status: 'CHECKED_IN',
+        },
+      }),
+      this.prisma.campingBooking.count({
+        where: {
+          spot: { zone: { festivalId } },
+          status: 'PENDING',
+        },
+      }),
+    ]);
 
-    const activeBookings = await this.prisma.campingBooking.count({
-      where: {
-        spot: { zone: { festivalId } },
-        status: 'CHECKED_IN',
-      },
-    });
-
-    const pendingBookings = await this.prisma.campingBooking.count({
-      where: {
-        spot: { zone: { festivalId } },
-        status: 'PENDING',
-      },
-    });
+    // Map daily occupancy counts to results
+    const dailyOccupancy = dates.map((d, i) => ({
+      date: d.dateStr,
+      occupied: dailyOccupancyCounts[i],
+      total: totalSpots,
+      rate: totalSpots > 0 ? (dailyOccupancyCounts[i] / totalSpots) * 100 : 0,
+    }));
 
     return {
       festivalId,

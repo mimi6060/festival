@@ -56,7 +56,7 @@ export interface NotificationAnalytics {
   totalRead: number;
   readRate: number;
   byType: Record<NotificationType, { sent: number; read: number }>;
-  byDay: Array<{ date: string; sent: number; read: number }>;
+  byDay: { date: string; sent: number; read: number }[];
 }
 
 export interface NotificationPreferencesInput {

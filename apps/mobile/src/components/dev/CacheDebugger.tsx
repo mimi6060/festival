@@ -26,7 +26,7 @@ import { colors, spacing, borderRadius, typography } from '../../theme';
 
 // Format bytes to human readable string
 const formatBytes = (bytes: number): string => {
-  if (bytes === 0) return '0 B';
+  if (bytes === 0) {return '0 B';}
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -40,7 +40,7 @@ const formatPercent = (value: number): string => {
 
 // Format timestamp
 const formatTime = (timestamp: number | null): string => {
-  if (!timestamp) return 'Never';
+  if (!timestamp) {return 'Never';}
   return new Date(timestamp).toLocaleTimeString();
 };
 
@@ -112,7 +112,7 @@ export const CacheDebugger: React.FC<CacheDebuggerProps> = ({ visible, onClose }
 
   // Subscribe to events
   useEffect(() => {
-    if (!visible) return;
+    if (!visible) {return;}
 
     updateStats();
 
@@ -128,7 +128,7 @@ export const CacheDebugger: React.FC<CacheDebuggerProps> = ({ visible, onClose }
 
   // Auto refresh
   useEffect(() => {
-    if (!visible || !autoRefresh) return;
+    if (!visible || !autoRefresh) {return;}
 
     const interval = setInterval(updateStats, 1000);
     return () => clearInterval(interval);

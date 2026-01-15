@@ -115,8 +115,8 @@ const DEFAULT_ENTITY_CONFIGS: Record<string, EntityConflictConfig> = {
  */
 class ConflictResolver {
   private static instance: ConflictResolver;
-  private configs: Map<string, EntityConflictConfig> = new Map();
-  private pendingConflicts: Map<string, PendingConflict> = new Map();
+  private configs = new Map<string, EntityConflictConfig>();
+  private pendingConflicts = new Map<string, PendingConflict>();
   private defaultStrategy: ConflictStrategy = 'server-wins';
 
   private constructor() {
@@ -441,7 +441,7 @@ class ConflictResolver {
 
     for (const field of allFields) {
       // Skip metadata fields
-      if (this.isMetadataField(field)) continue;
+      if (this.isMetadataField(field)) {continue;}
 
       if (!this.deepEqual(localData[field], serverData[field])) {
         conflicts.push(field);
@@ -503,11 +503,11 @@ class ConflictResolver {
    * Deep equality check
    */
   private deepEqual(a: unknown, b: unknown): boolean {
-    if (a === b) return true;
+    if (a === b) {return true;}
 
-    if (typeof a !== typeof b) return false;
+    if (typeof a !== typeof b) {return false;}
 
-    if (a === null || b === null) return a === b;
+    if (a === null || b === null) {return a === b;}
 
     if (typeof a === 'object' && typeof b === 'object') {
       const aObj = a as Record<string, unknown>;
@@ -516,7 +516,7 @@ class ConflictResolver {
       const aKeys = Object.keys(aObj);
       const bKeys = Object.keys(bObj);
 
-      if (aKeys.length !== bKeys.length) return false;
+      if (aKeys.length !== bKeys.length) {return false;}
 
       return aKeys.every((key) => this.deepEqual(aObj[key], bObj[key]));
     }

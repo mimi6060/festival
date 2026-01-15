@@ -16,7 +16,7 @@ import { BalanceCard } from '../../components/wallet';
 import { useAuthStore, useTicketStore, useWalletStore, useNotificationStore, useProgramStore } from '../../store';
 import { offlineService, initializeDemoData } from '../../services';
 import { colors, spacing, typography } from '../../theme';
-import type { RootStackParamList, Ticket, ProgramEvent } from '../../types';
+import type { RootStackParamList, Ticket } from '../../types';
 
 type HomeNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Main'>;
 

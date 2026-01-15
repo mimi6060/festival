@@ -104,7 +104,7 @@ export function useAnnounce() {
       ? assertiveRegionRef.current
       : politeRegionRef.current;
 
-    if (!region) return;
+    if (!region) {return;}
 
     // Clear previous timeout
     if (timeoutRef.current) {

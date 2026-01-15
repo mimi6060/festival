@@ -11,7 +11,6 @@ import {
   Injectable,
   Logger,
   NotFoundException,
-  UnauthorizedException,
   BadRequestException,
   ConflictException,
 } from '@nestjs/common';
@@ -46,7 +45,7 @@ export class ApiKeysService {
   private readonly KEY_PREFIX = 'fst';
 
   // Cache for validated keys (to reduce database lookups)
-  private keyCache: Map<string, { apiKey: ApiKey; cachedAt: number }> = new Map();
+  private keyCache = new Map<string, { apiKey: ApiKey; cachedAt: number }>();
   private readonly CACHE_TTL = 60000; // 1 minute cache
 
   constructor(private readonly prisma: PrismaService) {}
@@ -424,7 +423,7 @@ export class ApiKeysService {
    */
   private getCachedKey(keyHash: string): ApiKey | null {
     const cached = this.keyCache.get(keyHash);
-    if (!cached) return null;
+    if (!cached) {return null;}
 
     // Check if cache is expired
     if (Date.now() - cached.cachedAt > this.CACHE_TTL) {

@@ -99,8 +99,8 @@ class OfflineManager {
   private localDatabase: LocalDatabase;
   private syncStatus: SyncStatus;
   private syncTimer: NodeJS.Timeout | null = null;
-  private listeners: Map<string, Set<(data: unknown) => void>> = new Map();
-  private isInitialized: boolean = false;
+  private listeners = new Map<string, Set<(data: unknown) => void>>();
+  private isInitialized = false;
 
   private constructor(config: Partial<OfflineManagerConfig> = {}) {
     this.config = { ...DEFAULT_CONFIG, ...config };
@@ -320,7 +320,7 @@ class OfflineManager {
     Logger.info(`[OfflineManager] Processing ${items.length} queued items`);
 
     for (const item of items) {
-      if (item.status === 'completed') continue;
+      if (item.status === 'completed') {continue;}
 
       try {
         await this.syncQueue.markProcessing(item.id);
@@ -371,7 +371,7 @@ class OfflineManager {
   /**
    * Sync all data from server
    */
-  public async syncAll(force: boolean = false): Promise<SyncStatus> {
+  public async syncAll(force = false): Promise<SyncStatus> {
     if (this.syncStatus.isRunning && !force) {
       Logger.debug('[OfflineManager] Sync already in progress');
       return this.syncStatus;
@@ -506,7 +506,7 @@ class OfflineManager {
    */
   public async isDataStale(key: CacheKey): Promise<boolean> {
     const item = await this.getCachedItem(key);
-    if (!item) return true;
+    if (!item) {return true;}
 
     if (item.expiresAt && item.expiresAt < Date.now()) {
       return true;

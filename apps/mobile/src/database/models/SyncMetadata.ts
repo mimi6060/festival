@@ -6,7 +6,7 @@
 import { Model } from '@nozbe/watermelondb';
 import { field, text, date, readonly, writer } from '@nozbe/watermelondb/decorators';
 
-import { TableNames, TableName } from '../schema';
+import { TableNames } from '../schema';
 
 /**
  * SyncMetadata model for tracking sync status of each entity type
@@ -68,7 +68,7 @@ export default class SyncMetadata extends Model {
    * Get time since last pull in milliseconds
    */
   get timeSinceLastPull(): number | null {
-    if (!this.lastPulledAt) return null;
+    if (!this.lastPulledAt) {return null;}
     return Date.now() - this.lastPulledAt;
   }
 
@@ -77,7 +77,7 @@ export default class SyncMetadata extends Model {
    */
   isStale(thresholdMs: number): boolean {
     const timeSince = this.timeSinceLastPull;
-    if (timeSince === null) return true;
+    if (timeSince === null) {return true;}
     return timeSince > thresholdMs;
   }
 

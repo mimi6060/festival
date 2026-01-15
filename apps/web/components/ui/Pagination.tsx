@@ -144,7 +144,7 @@ export function Pagination({
   const pages = showNumbers ? getPageNumbers(currentPage, totalPages, siblingCount) : [];
 
   const handlePageChange = (page: number) => {
-    if (disabled || page < 1 || page > totalPages || page === currentPage) return;
+    if (disabled || page < 1 || page > totalPages || page === currentPage) {return;}
     onPageChange(page);
   };
 

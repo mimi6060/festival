@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback, useMemo, memo } from 'react';
 import {
   View,
   Text,
@@ -9,10 +9,13 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
-import { Card, Button } from '../../components/common';
 import { useNotificationStore } from '../../store';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { Notification } from '../../types';
+
+// Constants for FlatList optimization
+const NOTIFICATION_ITEM_HEIGHT = 100; // Approximate height of notification card
+const ITEM_SEPARATOR_HEIGHT = 8; // spacing.sm
 
 // Mock notifications for demo
 const mockNotifications: Notification[] = [
@@ -68,10 +71,16 @@ export const NotificationsScreen: React.FC = () => {
   } = useNotificationStore();
   const [refreshing, setRefreshing] = React.useState(false);
 
-  const notifications = storeNotifications.length > 0 ? storeNotifications : mockNotifications;
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  const notifications = useMemo(() =>
+    storeNotifications.length > 0 ? storeNotifications : mockNotifications,
+    [storeNotifications]
+  );
+  const unreadCount = useMemo(() =>
+    notifications.filter((n) => !n.read).length,
+    [notifications]
+  );
 
-  const getNotificationIcon = (type: Notification['type']) => {
+  const getNotificationIcon = useCallback((type: Notification['type']) => {
     switch (type) {
       case 'alert':
         return '⚠️';
@@ -82,9 +91,9 @@ export const NotificationsScreen: React.FC = () => {
       default:
         return 'ℹ️';
     }
-  };
+  }, []);
 
-  const getNotificationColor = (type: Notification['type']) => {
+  const getNotificationColor = useCallback((type: Notification['type']) => {
     switch (type) {
       case 'alert':
         return colors.warning;
@@ -95,9 +104,9 @@ export const NotificationsScreen: React.FC = () => {
       default:
         return colors.info;
     }
-  };
+  }, []);
 
-  const formatTime = (dateString: string) => {
+  const formatTime = useCallback((dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
@@ -105,44 +114,52 @@ export const NotificationsScreen: React.FC = () => {
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
 
-    if (diffMins < 1) return "A l'instant";
-    if (diffMins < 60) return `Il y a ${diffMins} min`;
-    if (diffHours < 24) return `Il y a ${diffHours}h`;
-    if (diffDays === 1) return 'Hier';
+    if (diffMins < 1) {return "A l'instant";}
+    if (diffMins < 60) {return `Il y a ${diffMins} min`;}
+    if (diffHours < 24) {return `Il y a ${diffHours}h`;}
+    if (diffDays === 1) {return 'Hier';}
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
-  };
+  }, []);
 
-  const onRefresh = async () => {
+  const onRefresh = useCallback(async () => {
     setRefreshing(true);
     // Simulate refresh
     await new Promise((resolve) => setTimeout(resolve, 1000));
     setRefreshing(false);
-  };
+  }, []);
 
-  const handleNotificationPress = (notification: Notification) => {
+  const handleNotificationPress = useCallback((notification: Notification) => {
     if (!notification.read) {
       markAsRead(notification.id);
     }
     // Handle navigation based on actionUrl
-  };
+  }, [markAsRead]);
 
-  const handleDeleteNotification = (notificationId: string) => {
+  const handleDeleteNotification = useCallback((notificationId: string) => {
     deleteNotification(notificationId);
-  };
+  }, [deleteNotification]);
 
-  const renderNotification = ({ item }: { item: Notification }) => (
+  // Memoized notification item component
+  const NotificationItem = memo(({ item, onPress, onDelete, getIcon, getColor, formatTimeFunc }: {
+    item: Notification;
+    onPress: (notification: Notification) => void;
+    onDelete: (id: string) => void;
+    getIcon: (type: Notification['type']) => string;
+    getColor: (type: Notification['type']) => string;
+    formatTimeFunc: (dateString: string) => string;
+  }) => (
     <TouchableOpacity
       style={[styles.notificationCard, !item.read && styles.notificationUnread]}
-      onPress={() => handleNotificationPress(item)}
+      onPress={() => onPress(item)}
       activeOpacity={0.9}
     >
       <View
         style={[
           styles.iconContainer,
-          { backgroundColor: getNotificationColor(item.type) + '20' },
+          { backgroundColor: getColor(item.type) + '20' },
         ]}
       >
-        <Text style={styles.icon}>{getNotificationIcon(item.type)}</Text>
+        <Text style={styles.icon}>{getIcon(item.type)}</Text>
       </View>
 
       <View style={styles.content}>
@@ -155,19 +172,40 @@ export const NotificationsScreen: React.FC = () => {
         <Text style={styles.message} numberOfLines={2}>
           {item.message}
         </Text>
-        <Text style={styles.time}>{formatTime(item.createdAt)}</Text>
+        <Text style={styles.time}>{formatTimeFunc(item.createdAt)}</Text>
       </View>
 
       <TouchableOpacity
         style={styles.deleteButton}
-        onPress={() => handleDeleteNotification(item.id)}
+        onPress={() => onDelete(item.id)}
       >
-        <Text style={styles.deleteIcon}>×</Text>
+        <Text style={styles.deleteIcon}>x</Text>
       </TouchableOpacity>
     </TouchableOpacity>
-  );
+  ));
 
-  const renderEmptyState = () => (
+  const renderNotification = useCallback(({ item }: { item: Notification }) => (
+    <NotificationItem
+      item={item}
+      onPress={handleNotificationPress}
+      onDelete={handleDeleteNotification}
+      getIcon={getNotificationIcon}
+      getColor={getNotificationColor}
+      formatTimeFunc={formatTime}
+    />
+  ), [handleNotificationPress, handleDeleteNotification, getNotificationIcon, getNotificationColor, formatTime]);
+
+  // getItemLayout for fixed-height optimization
+  const getItemLayout = useCallback((_: unknown, index: number) => ({
+    length: NOTIFICATION_ITEM_HEIGHT + ITEM_SEPARATOR_HEIGHT,
+    offset: (NOTIFICATION_ITEM_HEIGHT + ITEM_SEPARATOR_HEIGHT) * index,
+    index,
+  }), []);
+
+  // Stable key extractor
+  const keyExtractor = useCallback((item: Notification) => item.id, []);
+
+  const renderEmptyState = useCallback(() => (
     <View style={styles.emptyContainer}>
       <Text style={styles.emptyIcon}>🔔</Text>
       <Text style={styles.emptyTitle}>Aucune notification</Text>
@@ -205,14 +243,21 @@ export const NotificationsScreen: React.FC = () => {
         </View>
       )}
 
-      {/* Notifications List */}
+      {/* Notifications List - Optimized FlatList */}
       <FlatList
         data={notifications}
         renderItem={renderNotification}
-        keyExtractor={(item) => item.id}
+        keyExtractor={keyExtractor}
+        getItemLayout={getItemLayout}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={renderEmptyState}
+        // Performance optimizations
+        windowSize={5}
+        maxToRenderPerBatch={10}
+        initialNumToRender={8}
+        removeClippedSubviews={true}
+        updateCellsBatchingPeriod={50}
         refreshControl={
           <RefreshControl
             refreshing={refreshing}

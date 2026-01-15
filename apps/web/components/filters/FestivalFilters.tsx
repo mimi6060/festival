@@ -126,7 +126,7 @@ function DropdownFilter({
   );
 
   const displayValue = useMemo(() => {
-    if (selectedValues.length === 0) return label;
+    if (selectedValues.length === 0) {return label;}
     if (selectedValues.length === 1) {
       const option = options.find((o) => o.value === selectedValues[0]);
       return option?.label || selectedValues[0];
@@ -469,7 +469,7 @@ function DateRangePicker({
   const [isOpen, setIsOpen] = useState(false);
 
   const formatDate = (date: Date | null) => {
-    if (!date) return '';
+    if (!date) {return '';}
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
@@ -767,7 +767,7 @@ function ActiveFiltersPills({
     pills.push({ key: 'priceRange', label: `${min} - ${max}` });
   }
 
-  if (pills.length === 0) return null;
+  if (pills.length === 0) {return null;}
 
   return (
     <div className="flex flex-wrap items-center gap-2">
@@ -872,11 +872,11 @@ export function FestivalFilters({
   // Count active filters
   const activeFilterCount = useMemo(() => {
     let count = 0;
-    if (filters.genres.length > 0) count++;
-    if (filters.locations.length > 0) count++;
-    if (filters.dateRange.start || filters.dateRange.end) count++;
-    if (filters.priceRange.min !== null || filters.priceRange.max !== null) count++;
-    if (filters.status.length > 0) count++;
+    if (filters.genres.length > 0) {count++;}
+    if (filters.locations.length > 0) {count++;}
+    if (filters.dateRange.start || filters.dateRange.end) {count++;}
+    if (filters.priceRange.min !== null || filters.priceRange.max !== null) {count++;}
+    if (filters.status.length > 0) {count++;}
     return count;
   }, [filters]);
 
@@ -992,14 +992,14 @@ export function FilterDrawer({
 }: FilterDrawerProps) {
   const activeFilterCount = useMemo(() => {
     let count = 0;
-    if (filters.genres.length > 0) count++;
-    if (filters.locations.length > 0) count++;
-    if (filters.dateRange.start || filters.dateRange.end) count++;
-    if (filters.priceRange.min !== null || filters.priceRange.max !== null) count++;
+    if (filters.genres.length > 0) {count++;}
+    if (filters.locations.length > 0) {count++;}
+    if (filters.dateRange.start || filters.dateRange.end) {count++;}
+    if (filters.priceRange.min !== null || filters.priceRange.max !== null) {count++;}
     return count;
   }, [filters]);
 
-  if (!isOpen) return null;
+  if (!isOpen) {return null;}
 
   return (
     <div className="fixed inset-0 z-50">

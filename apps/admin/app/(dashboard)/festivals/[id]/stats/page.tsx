@@ -163,7 +163,7 @@ export default function StatsPage({ params }: StatsPageProps) {
                   <Tooltip
                     content={(props) => {
                       const { active, payload } = props;
-                      if (active && payload && payload.length) {
+                      if (active && payload?.length) {
                         const data = payload[0]?.payload as { name: string; value: number; revenue: number } | undefined;
                         return (
                           <div className="bg-white px-4 py-3 rounded-lg shadow-lg border border-gray-200">
