@@ -42,6 +42,27 @@ curl -s http://localhost:4200 | grep -q "html" && echo "Admin OK" || echo "Admin
 2. Fix the issue before moving on
 3. Re-verify after fix
 
+## Code Quality Verification (MANDATORY)
+
+**After any code modification, ALWAYS verify:**
+
+```bash
+# ESLint check (REQUIRED after any TypeScript/JavaScript changes)
+npm run lint:all
+
+# Quick build verification for modified apps
+npx nx build <app-name> --skip-nx-cache
+
+# If ESLint fails: fix issues before committing
+npm run lint:fix
+```
+
+**This is NON-NEGOTIABLE:**
+
+- Never commit code with ESLint errors
+- Fix all errors immediately, even if they seem minor
+- Pre-existing warnings are acceptable, but new errors must be fixed
+
 ## Pre-Push Verification (MANDATORY)
 
 **Before `git push`:**
@@ -50,11 +71,14 @@ curl -s http://localhost:4200 | grep -q "html" && echo "Admin OK" || echo "Admin
 # REQUIRED: Build API
 npx nx build api --skip-nx-cache
 
+# REQUIRED: ESLint check
+npm run lint:all
+
 # RECOMMENDED: Full verification
 ./scripts/verify-ci.sh
 ```
 
-If build fails after push: fix immediately, no other changes until CI is green.
+If build or lint fails after push: fix immediately, no other changes until CI is green.
 
 ## Commit Convention
 

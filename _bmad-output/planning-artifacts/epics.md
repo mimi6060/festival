@@ -429,4 +429,170 @@ so that we benefit from security patches and features.
 
 ---
 
+---
+
+## Epic 6: Advanced Analytics & Integrations (Sprint 2)
+
+**Objective:** Enrichir les analytics et ajouter des intégrations externes
+
+**Business Value:** Permettre aux organisateurs de mieux analyser et planifier leurs événements
+
+**Acceptance Criteria:**
+
+- Dashboard analytics avec graphiques avancés
+- Intégration calendrier externe (iCal export)
+- Filtres et recherche avancés
+
+### Story 6.1: Dashboard analytics avancé
+
+**User Story:**
+As an organizer,
+I want advanced analytics visualizations,
+so that I can understand trends and make data-driven decisions.
+
+**Acceptance Criteria:**
+
+1. Graphique évolution des ventes par jour/semaine
+2. Répartition des revenus par catégorie de ticket
+3. Heatmap des heures de pointe d'affluence
+4. Comparaison avec éditions précédentes (si disponible)
+5. Filtres par période et segment
+
+**Technical Notes:**
+
+- Utiliser Recharts ou Chart.js pour visualisations
+- API endpoints pour données agrégées
+- Pagination et lazy loading pour grands datasets
+
+**Source:** [PRD Phase 2 - Dashboard analytics avancé]
+
+---
+
+### Story 6.2: Export calendrier iCal
+
+**User Story:**
+As a festival-goer,
+I want to export festival events to my calendar,
+so that I can plan my schedule with other commitments.
+
+**Acceptance Criteria:**
+
+1. Endpoint GET /festivals/:id/calendar.ics
+2. Export performances avec stage et artiste
+3. Filtrage par jour ou artistes favoris
+4. Lien partageable pour subscription calendrier
+5. Compatible Google Calendar, Apple Calendar, Outlook
+
+**Technical Notes:**
+
+- Utiliser librairie `ical-generator`
+- Format standard RFC 5545
+- Cache le fichier iCal généré (invalider sur update)
+
+**Source:** [PRD Phase 2 - Intégration calendrier externe]
+
+---
+
+### Story 6.3: Filtres et recherche avancés admin
+
+**User Story:**
+As an admin,
+I want advanced filtering and search capabilities,
+so that I can quickly find specific tickets, users, or transactions.
+
+**Acceptance Criteria:**
+
+1. Recherche full-text sur tickets (nom, email, ID)
+2. Filtres combinables (date, statut, catégorie, montant)
+3. Sauvegarde des filtres favoris
+4. Export des résultats filtrés en XLSX
+5. Autocomplétion sur champs de recherche
+
+**Technical Notes:**
+
+- PostgreSQL full-text search ou Elasticsearch
+- Debounce sur recherche live
+- Stocker filtres sauvegardés en localStorage ou DB
+
+**Source:** [PRD Phase 2 - Amélioration UX admin]
+
+---
+
+## Epic 7: Staff & Vendor Improvements (Sprint 2)
+
+**Objective:** Améliorer les fonctionnalités staff et vendors
+
+**Business Value:** Réduire le temps de formation et erreurs opérationnelles
+
+**Acceptance Criteria:**
+
+- Interface staff simplifiée
+- Gestion inventaire vendors améliorée
+
+### Story 7.1: Interface de validation tickets simplifiée
+
+**User Story:**
+As a staff member,
+I want a streamlined ticket validation interface,
+so that I can process entries faster during peak times.
+
+**Acceptance Criteria:**
+
+1. Scan QR → validation en < 2 secondes
+2. Affichage clair du statut (vert/rouge/orange)
+3. Mode hors-ligne avec sync ultérieure
+4. Son et vibration pour feedback
+5. Historique des 10 derniers scans
+
+**Technical Notes:**
+
+- Optimiser endpoint de validation
+- Cache local des tickets déjà scannés
+- WebSocket pour sync temps réel des scans
+
+**Source:** [PRD NFR - Ticket validation < 3 secondes]
+
+---
+
+### Story 7.2: Gestion inventaire vendors temps réel
+
+**User Story:**
+As a vendor,
+I want real-time inventory tracking,
+so that I know when to restock and avoid stockouts.
+
+**Acceptance Criteria:**
+
+1. Dashboard inventaire par produit
+2. Alertes stock bas configurable
+3. Historique des ventes par produit
+4. Bouton quick-restock
+5. Notifications push pour alertes
+
+**Technical Notes:**
+
+- WebSocket pour updates temps réel
+- Seuils d'alerte configurables par produit
+- Intégration module notifications existant
+
+**Source:** [PRD - Vendor Management]
+
+---
+
+## Summary (Updated)
+
+| Epic                           | Stories | Priority | Effort | Sprint |
+| ------------------------------ | ------- | -------- | ------ | ------ |
+| 1. Test Coverage               | 3       | High     | Medium | 1      |
+| 2. API Performance             | 3       | High     | Medium | 1      |
+| 3. Mobile Enhancements         | 2       | Medium   | High   | 1      |
+| 4. Admin Dashboard             | 3       | Medium   | Medium | 1      |
+| 5. Bug Fixes & Debt            | 3       | High     | Low    | 1      |
+| 6. Advanced Analytics          | 3       | Medium   | Medium | 2      |
+| 7. Staff & Vendor Improvements | 2       | Medium   | Medium | 2      |
+
+**Total Stories:** 19 (Sprint 1: 14, Sprint 2: 5)
+
+---
+
 _Document généré pour BMAD workflow_

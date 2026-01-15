@@ -13,7 +13,10 @@ import {
   UseGuards,
   Request,
   Headers,
+  Res,
+  StreamableFile,
 } from '@nestjs/common';
+import { Response } from 'express';
 import {
   ApiTags,
   ApiOperation,
@@ -32,6 +35,7 @@ import {
 } from '@nestjs/swagger';
 import { RateLimit } from '../../common/guards/rate-limit.guard';
 import { FestivalsService } from './festivals.service';
+import { ICalExportService } from './ical-export.service';
 import {
   CreateFestivalDto,
   UpdateFestivalDto,
@@ -85,7 +89,8 @@ class PaginatedFestivalsResponseDto {
 export class FestivalsController {
   constructor(
     private readonly festivalsService: FestivalsService,
-    private readonly localizedContentService: LocalizedContentService
+    private readonly localizedContentService: LocalizedContentService,
+    private readonly icalExportService: ICalExportService
   ) {}
 
   /**
@@ -539,5 +544,153 @@ export class FestivalsController {
     }
 
     return result;
+  }
+
+  // ============================================================
+  // iCal Export Endpoints
+  // ============================================================
+
+  /**
+   * Export festival program as iCal calendar (PUBLIC)
+   */
+  @Get(':id/calendar.ics')
+  @Public()
+  @RateLimit({
+    limit: 50,
+    windowSeconds: 60,
+    keyPrefix: 'festivals:calendar',
+    errorMessage: 'Too many calendar requests. Please try again later.',
+  })
+  @Cacheable({
+    key: { prefix: 'festival:calendar', paramIndices: [0] },
+    ttl: 300, // 5 minutes cache
+    tags: [CacheTag.FESTIVAL],
+  })
+  @ApiOperation({
+    summary: 'Export festival program as iCal',
+    description:
+      'Returns the festival program as an iCalendar (.ics) file that can be imported into calendar applications like Google Calendar, Apple Calendar, or Outlook. ' +
+      'Optionally filter by artist IDs or date.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Festival UUID',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiQuery({
+    name: 'artistIds',
+    description: 'Comma-separated list of artist IDs to include',
+    required: false,
+    example: 'id1,id2,id3',
+  })
+  @ApiQuery({
+    name: 'date',
+    description: 'Filter performances by date (YYYY-MM-DD)',
+    required: false,
+    example: '2025-07-15',
+  })
+  @ApiQuery({
+    name: 'includeDescription',
+    description: 'Include artist descriptions in events',
+    required: false,
+    example: 'true',
+  })
+  @ApiOkResponse({
+    description: 'iCalendar file',
+    content: {
+      'text/calendar': {
+        schema: {
+          type: 'string',
+          format: 'binary',
+        },
+      },
+    },
+  })
+  @ApiNotFoundResponse({
+    description: 'Festival not found',
+    type: NotFoundResponseDto,
+  })
+  async exportCalendar(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Query('artistIds') artistIdsQuery?: string,
+    @Query('date') date?: string,
+    @Query('includeDescription') includeDescriptionQuery?: string,
+    @Res({ passthrough: true }) res?: Response
+  ): Promise<StreamableFile> {
+    const artistIds = artistIdsQuery?.split(',').filter(Boolean);
+    const includeDescription = includeDescriptionQuery !== 'false';
+
+    const calendarString = await this.icalExportService.generateCalendarString({
+      festivalId: id,
+      artistIds,
+      date,
+      includeDescription,
+    });
+
+    // Get festival name for filename
+    const festival = await this.festivalsService.findOne(id);
+    const filename = `${festival.slug || 'festival'}-program.ics`;
+
+    res?.set({
+      'Content-Type': 'text/calendar; charset=utf-8',
+      'Content-Disposition': `attachment; filename="${filename}"`,
+    });
+
+    return new StreamableFile(Buffer.from(calendarString, 'utf-8'));
+  }
+
+  /**
+   * Get calendar subscription URL (PUBLIC)
+   */
+  @Get(':id/calendar-url')
+  @Public()
+  @ApiOperation({
+    summary: 'Get calendar subscription URL',
+    description:
+      'Returns the URL that can be used to subscribe to the festival calendar in calendar applications. ' +
+      'This allows automatic updates when the program changes.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Festival UUID',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiOkResponse({
+    description: 'Calendar subscription URL',
+    schema: {
+      type: 'object',
+      properties: {
+        url: {
+          type: 'string',
+          example: 'https://api.festival.app/festivals/123/calendar.ics',
+        },
+        webcalUrl: {
+          type: 'string',
+          example: 'webcal://api.festival.app/festivals/123/calendar.ics',
+        },
+        googleCalendarUrl: {
+          type: 'string',
+          example: 'https://calendar.google.com/calendar/r?cid=webcal://...',
+        },
+      },
+    },
+  })
+  @ApiNotFoundResponse({
+    description: 'Festival not found',
+    type: NotFoundResponseDto,
+  })
+  async getCalendarUrl(@Param('id', ParseUUIDPipe) id: string, @Headers('host') host: string) {
+    // Verify festival exists
+    await this.festivalsService.findOne(id);
+
+    const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+    const baseUrl = `${protocol}://${host}/festivals/${id}/calendar.ics`;
+    const webcalUrl = baseUrl.replace(/^https?:/, 'webcal:');
+
+    return {
+      url: baseUrl,
+      webcalUrl,
+      googleCalendarUrl: `https://calendar.google.com/calendar/r?cid=${encodeURIComponent(webcalUrl)}`,
+    };
   }
 }

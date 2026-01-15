@@ -159,6 +159,7 @@
     "firebase-admin": "^13.6.0",
     "handlebars": "^4.7.8",
     "hoist-non-react-statics": "^3.3.2",
+    "ical-generator": "^10.0.0",
     "ioredis": "^5.8.2",
     "joi": "^18.0.2",
     "merge-options": "^3.0.4",

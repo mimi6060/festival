@@ -34,6 +34,11 @@ import {
   generateRevenueChartData,
   generateTicketSalesChartData,
 } from '@/lib/mock-data';
+import {
+  TrendAnalysisChart,
+  RevenueBreakdownChart,
+  OccupancyHeatmap,
+} from '@/components/analytics';
 
 // Types
 interface ReportMetric {
@@ -148,6 +153,77 @@ function generateVendorSalesData() {
   ];
 }
 
+// Data for new analytics components
+function generateTrendData(days: number) {
+  const data = [];
+  const now = new Date();
+  const baseValue = 15000;
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
+    // Add some trend and seasonality
+    const trend = i * 50; // Upward trend
+    const weekday = date.getDay();
+    const weekendBoost = weekday === 0 || weekday === 6 ? 3000 : 0;
+    const noise = (Math.random() - 0.5) * 4000;
+    const value = Math.max(0, Math.round(baseValue + trend + weekendBoost + noise));
+
+    data.push({
+      date: date.toISOString().split('T')[0],
+      value,
+      previousPeriod: Math.round(value * (0.75 + Math.random() * 0.2)),
+    });
+  }
+  return data;
+}
+
+function generateRevenueByCategoryData(days: number) {
+  const categories = ['standard', 'vip', 'backstage', 'camping', 'cashless'];
+  const data = [];
+  const now = new Date();
+
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
+    const row: Record<string, string | number> = {
+      date: date.toISOString().split('T')[0],
+    };
+    categories.forEach((cat) => {
+      const base =
+        cat === 'standard'
+          ? 8000
+          : cat === 'vip'
+            ? 4000
+            : cat === 'backstage'
+              ? 1500
+              : cat === 'camping'
+                ? 2000
+                : 5000;
+      row[cat] = Math.round(base + Math.random() * base * 0.5);
+    });
+    data.push(row);
+  }
+  return { data, categories };
+}
+
+function generateHeatmapData() {
+  const days = ['Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam', 'Dim'];
+  const data = [];
+
+  for (const day of days) {
+    for (let hour = 0; hour < 24; hour++) {
+      // Peak hours during evening on weekends
+      const isWeekend = day === 'Sam' || day === 'Dim';
+      const isPeakHour = hour >= 16 && hour <= 23;
+      const baseValue = isWeekend && isPeakHour ? 800 : isPeakHour ? 500 : hour >= 10 ? 200 : 50;
+      const value = Math.round(baseValue + Math.random() * baseValue * 0.5);
+
+      data.push({ hour, day, value });
+    }
+  }
+  return data;
+}
+
 // Custom tooltip
 const CustomTooltip = ({
   active,
@@ -203,6 +279,11 @@ export default function ReportsPage() {
   const hourlyTrafficData = useMemo(() => generateHourlyTraffic(), []);
   const performanceRadarData = useMemo(() => generatePerformanceRadar(), []);
   const vendorSalesData = useMemo(() => generateVendorSalesData(), []);
+
+  // New analytics data
+  const trendData = useMemo(() => generateTrendData(days), [days]);
+  const revenueByCategoryResult = useMemo(() => generateRevenueByCategoryData(days), [days]);
+  const heatmapData = useMemo(() => generateHeatmapData(), []);
 
   // Calculate metrics
   const metrics: ReportMetric[] = useMemo(() => {
@@ -681,6 +762,40 @@ export default function ReportsPage() {
             </ResponsiveContainer>
           </div>
         </div>
+      </div>
+
+      {/* Advanced Analytics Section */}
+      <div className="space-y-6">
+        <h2 className="text-xl font-bold text-gray-900">Analyses avancées</h2>
+
+        {/* Trend Analysis */}
+        <TrendAnalysisChart
+          data={trendData}
+          title="Évolution des ventes"
+          valueLabel="Ventes (EUR)"
+          showMovingAverage={true}
+          showPreviousPeriod={true}
+          movingAverageDays={7}
+          period={period === 'all' ? '1y' : period}
+          onPeriodChange={(p) => setPeriod(p)}
+        />
+
+        {/* Revenue Breakdown by Category */}
+        <RevenueBreakdownChart
+          data={revenueByCategoryResult.data}
+          categories={revenueByCategoryResult.categories}
+          title="Répartition des revenus par catégorie"
+          currency="EUR"
+          viewMode="stacked"
+        />
+
+        {/* Occupancy Heatmap */}
+        <OccupancyHeatmap
+          data={heatmapData}
+          title="Affluence par heure et jour"
+          showValues={false}
+          colorScheme="blue"
+        />
       </div>
 
       {/* Data Tables Summary */}

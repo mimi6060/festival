@@ -2,6 +2,7 @@ import { Module, forwardRef } from '@nestjs/common';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { FestivalsController } from './festivals.controller';
 import { FestivalsService } from './festivals.service';
+import { ICalExportService } from './ical-export.service';
 import { CacheInterceptor } from '../cache';
 import { LanguagesModule } from '../languages';
 
@@ -10,11 +11,12 @@ import { LanguagesModule } from '../languages';
   controllers: [FestivalsController],
   providers: [
     FestivalsService,
+    ICalExportService,
     {
       provide: APP_INTERCEPTOR,
       useClass: CacheInterceptor,
     },
   ],
-  exports: [FestivalsService],
+  exports: [FestivalsService, ICalExportService],
 })
 export class FestivalsModule {}

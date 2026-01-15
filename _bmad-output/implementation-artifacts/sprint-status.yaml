@@ -17,9 +17,9 @@
 project:
   name: "festival"
   type: "brownfield"
-  current_sprint: 1
-  sprint_start: "2026-01-14"
-  sprint_goal: "Improve test coverage and fix critical issues"
+  current_sprint: 2
+  sprint_start: "2026-01-15"
+  sprint_goal: "Advanced analytics, calendar integration, and operational improvements"
 
 # Epic and Story Status Tracking
 development_status:
@@ -52,26 +52,33 @@ development_status:
   5-2-dead-code: done
   5-3-dependency-updates: done
 
+  # Epic 6: Advanced Analytics & Integrations (Sprint 2)
+  epic-6: done
+  6-1-advanced-analytics: done
+  6-2-ical-export: done
+  6-3-advanced-filters: done
+
+  # Epic 7: Staff & Vendor Improvements (Sprint 2)
+  epic-7: done
+  7-1-ticket-validation-ui: done
+  7-2-vendor-inventory: done
+
 # Sprint Metrics
 metrics:
-  total_stories: 14
-  backlog: 0
-  ready_for_dev: 0
-  in_progress: 0
-  done: 14
-  velocity_target: 4
+  total_stories: 19
+  sprint_1_done: 14
+  sprint_2_done: 5
+  all_sprints_complete: true
+  velocity_target: 5
 
 # Notes
 notes:
-  - "Brownfield project - focus on quality improvements"
-  - "14/14 stories completed in Sprint 1"
-  - "All 5 Epics fully completed"
-  - "1-2 ESLint: Config updated, 500+ pre-existing warnings need gradual cleanup"
-  - "2-1 Redis: Already implemented with @Cacheable decorators"
-  - "5-1 Flaky tests: Fixed mobile api.test.ts, adjusted coverage thresholds"
-  - "5-2 Dead code: Fixed TypeScript errors in type files, documented overlapping exports"
-  - "5-3 Dependencies: 0 high/critical vulnerabilities, latest patches"
+  - "Sprint 1: 14/14 stories completed - All 5 Epics done"
+  - "Sprint 2: 5/5 stories completed - All 2 Epics done"
+  - "Total: 19/19 stories across 7 Epics"
+  - "Epic 6: TrendAnalysisChart, RevenueBreakdownChart, OccupancyHeatmap, iCal export, AdvancedFilters"
+  - "Epic 7: StaffValidationScreen, VendorInventoryDashboard"
 
 # Last Updated
-last_updated: "2026-01-15T11:00:00.000Z"
+last_updated: "2026-01-15T14:00:00.000Z"
 updated_by: "bmad-sprint-status"
