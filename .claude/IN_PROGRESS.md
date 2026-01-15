@@ -1393,4 +1393,81 @@ apps/mobile/src/screens/Notifications/NotificationsScreen.tsx (MODIFIED - FlatLi
 
 ---
 
+## Session 2026-01-15 - Sprint 3: Staff Application & Marketing/API Publique
+
+### Stories Complétées
+
+- [x] **Story 8.1: Mode staff mobile dédié**
+  - StaffDashboardScreen avec détection de rôle
+  - StaffZonesScreen pour gestion des zones
+  - Routing conditionnel basé sur STAFF_ROLES
+  - Navigation stack staff dédiée
+
+- [x] **Story 8.2: Dashboard staff avec KPIs**
+  - Endpoint `/staff/me/dashboard` - KPIs du staff
+  - Endpoint `/staff/me/shift` - Shift actuel
+  - Statistiques: validations, temps moyen, alertes actives, zones assignées
+
+- [x] **Story 9.1: Module email campaigns**
+  - CampaignsModule complet avec DTOs
+  - CampaignsService avec storage in-memory
+  - Endpoints: CRUD, preview, send, cancel
+  - Segmentation par catégorie ticket, dates d'achat
+
+- [x] **Story 9.2: API publique pour intégrations tierces**
+  - PublicApiModule avec authentification API key
+  - Endpoints publics: festivals, artistes, schedule, stages, venues, tickets
+  - Pagination, filtres, recherche
+  - Documentation Swagger complète
+
+### Fichiers Créés
+
+```
+apps/mobile/src/screens/Staff/
+├── StaffDashboardScreen.tsx     (NEW - ~350 lines)
+└── StaffZonesScreen.tsx         (NEW - ~320 lines)
+
+apps/api/src/modules/campaigns/
+├── campaigns.controller.ts      (NEW - ~140 lines)
+├── campaigns.service.ts         (NEW - ~330 lines)
+├── campaigns.module.ts          (NEW - ~15 lines)
+├── dto/campaign.dto.ts          (NEW - ~185 lines)
+└── index.ts                     (NEW - ~5 lines)
+
+apps/api/src/modules/public-api/
+├── public-api.controller.ts     (NEW - ~255 lines)
+├── public-api.service.ts        (NEW - ~320 lines)
+├── public-api.module.ts         (NEW - ~15 lines)
+├── dto/public-api.dto.ts        (NEW - ~250 lines)
+└── index.ts                     (NEW - ~5 lines)
+```
+
+### Fichiers Modifiés
+
+```
+apps/mobile/src/components/navigation/AppNavigator.tsx  (role detection)
+apps/mobile/src/types/index.ts                          (Staff screens types)
+apps/mobile/src/screens/Staff/index.ts                  (exports)
+apps/api/src/modules/staff/staff.controller.ts          (dashboard endpoints)
+apps/api/src/modules/staff/staff.service.ts             (KPI methods)
+apps/api/src/app/app.module.ts                          (module imports)
+```
+
+### Commit
+
+- `ffc001d` feat(api,mobile): implement Sprint 3 - Staff & Marketing modules
+
+---
+
+## Résumé - Phases PRD Complétées
+
+| Phase | Description                          | Status        |
+| ----- | ------------------------------------ | ------------- |
+| 1     | Tests unitaires, perf API, bugs      | Complété      |
+| 2     | Analytics avancé, export, calendrier | Complété      |
+| 3     | App staff, campaigns, API publique   | Complété      |
+| 4     | Multi-event, AI, NFT (long-terme)    | Roadmap futur |
+
+---
+
 _Dernière mise à jour: 2026-01-15_
