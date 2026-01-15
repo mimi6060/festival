@@ -972,14 +972,14 @@ apps/mobile/package.json                              (MODIFIED - dependencies)
 
 ### Notification Types Supported
 
-| Event | Type | Category | Action URL |
-|-------|------|----------|------------|
-| new_purchase | success | purchase | /orders |
-| refund_request | warning | refund | /refunds |
-| support_ticket | info | support | /support |
-| zone_alert | alert | festival | /zones |
-| system_alert | warning/error | system | - |
-| generic notification | varies | varies | varies |
+| Event                | Type          | Category | Action URL |
+| -------------------- | ------------- | -------- | ---------- |
+| new_purchase         | success       | purchase | /orders    |
+| refund_request       | warning       | refund   | /refunds   |
+| support_ticket       | info          | support  | /support   |
+| zone_alert           | alert         | festival | /zones     |
+| system_alert         | warning/error | system   | -          |
+| generic notification | varies        | varies   | varies     |
 
 ### Files Created/Modified
 
@@ -1099,6 +1099,7 @@ package.json                                                  (MODIFIED - socket
 ### Fallback Mechanism
 
 When WebSocket is unavailable:
+
 - Auto-detects connection failure
 - Falls back to HTTP polling at configurable interval (default 30s on main dashboard, 10s on realtime page)
 - Reconnects to WebSocket when available again
@@ -1157,29 +1158,33 @@ When WebSocket is unavailable:
 
 ### API Endpoints
 
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/admin/export/tickets` | GET | Export tickets with filters |
-| `/admin/export/transactions` | GET | Export cashless transactions |
-| `/admin/export/participants` | GET | Export festival participants |
-| `/admin/export/jobs/:jobId` | GET | Check export job status |
-| `/admin/export/download/:jobId` | GET | Download completed export |
+| Endpoint                        | Method | Description                  |
+| ------------------------------- | ------ | ---------------------------- |
+| `/admin/export/tickets`         | GET    | Export tickets with filters  |
+| `/admin/export/transactions`    | GET    | Export cashless transactions |
+| `/admin/export/participants`    | GET    | Export festival participants |
+| `/admin/export/jobs/:jobId`     | GET    | Check export job status      |
+| `/admin/export/download/:jobId` | GET    | Download completed export    |
 
 ### Query Parameters
 
 **Common filters:**
+
 - `festivalId` (required) - Festival to export from
 - `startDate` - Filter by date range start (ISO)
 - `endDate` - Filter by date range end (ISO)
 
 **Tickets:**
+
 - `status` - SOLD, USED, CANCELLED, REFUNDED
 - `categoryId` - Filter by ticket category
 
 **Transactions:**
+
 - `type` - TOPUP, PAYMENT, REFUND, TRANSFER
 
 **Participants:**
+
 - `hasTicket` - Only users with tickets
 - `hasCashless` - Only users with cashless accounts
 
@@ -1336,19 +1341,55 @@ apps/mobile/src/screens/Notifications/NotificationsScreen.tsx (MODIFIED - FlatLi
 
 ### Performance Improvements Summary
 
-| Optimization | Before | After |
-|-------------|--------|-------|
-| FlatList windowSize | Default (21) | 5 (memory efficient) |
-| Navigation transitions | Default (~350ms) | 250ms |
-| QR code render | Full quality | Low ECL, optimized |
-| JS Engine | JavaScriptCore | Hermes (faster startup) |
-| Image loading | RN Image | Expo Image (caching) |
-| Component re-renders | Frequent | Minimized (memo) |
+| Optimization           | Before           | After                   |
+| ---------------------- | ---------------- | ----------------------- |
+| FlatList windowSize    | Default (21)     | 5 (memory efficient)    |
+| Navigation transitions | Default (~350ms) | 250ms                   |
+| QR code render         | Full quality     | Low ECL, optimized      |
+| JS Engine              | JavaScriptCore   | Hermes (faster startup) |
+| Image loading          | RN Image         | Expo Image (caching)    |
+| Component re-renders   | Frequent         | Minimized (memo)        |
 
 ### Story Status
 
 - **Story**: 3-2-mobile-performance-optimization
 - **Status**: COMPLETED (NOT COMMITTED per instructions)
+
+---
+
+## Session 2026-01-15 - Sprint 2: Analytics Avancés et Améliorations Staff/Vendor
+
+### Stories Complétées
+
+- [x] **Story 6.1: Dashboard analytics avancé**
+  - TrendAnalysisChart - Visualisation tendances avec moyennes mobiles
+  - RevenueBreakdownChart - Graphiques revenus (stacked, grouped, pie)
+  - OccupancyHeatmap - Carte chaleur fréquentation horaire
+  - Intégration page rapports admin
+
+- [x] **Story 6.2: Export calendrier iCal**
+  - ICalExportService - Génération calendriers iCal/RFC 5545
+  - Endpoints `/festivals/:id/calendar.ics` et `/festivals/:id/calendar-url`
+  - Filtrage par artistes et dates
+
+- [x] **Story 6.3: Filtres et recherche avancés admin**
+  - AdvancedFilters - Filtres avec sauvegarde localStorage
+  - SearchAutocomplete - Recherche avec auto-complétion
+
+- [x] **Story 7.1: Interface validation tickets simplifiée**
+  - StaffValidationScreen mobile avec support offline
+  - Indicateurs de statut (vert/rouge/orange)
+  - Feedback vibration
+  - Historique derniers scans
+
+- [x] **Story 7.2: Gestion inventaire vendors temps réel**
+  - VendorInventoryDashboard avec alertes stock bas
+  - Configuration seuils d'alerte
+  - Réapprovisionnement rapide
+
+### Commit
+
+- `8f00758` feat: Sprint 2 - Analytics avancés et améliorations staff/vendor
 
 ---
 
