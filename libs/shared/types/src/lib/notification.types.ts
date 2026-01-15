@@ -787,8 +787,8 @@ export function isInQuietHours(
   const currentMinutes = now.getMinutes();
   const currentTimeMinutes = currentHour * 60 + currentMinutes;
 
-  const [startHour, startMin] = quietHours.startTime.split(':').map(Number);
-  const [endHour, endMin] = quietHours.endTime.split(':').map(Number);
+  const [startHour = 0, startMin = 0] = quietHours.startTime.split(':').map(Number);
+  const [endHour = 0, endMin = 0] = quietHours.endTime.split(':').map(Number);
   const startTimeMinutes = startHour * 60 + startMin;
   const endTimeMinutes = endHour * 60 + endMin;
 
@@ -827,11 +827,11 @@ export function groupNotificationsByDate(
   const grouped = new Map<string, NotificationSummary[]>();
 
   for (const notification of notifications) {
-    const date = new Date(notification.createdAt).toISOString().split('T')[0];
+    const date = new Date(notification.createdAt).toISOString().split('T')[0] ?? 'unknown';
     if (!grouped.has(date)) {
       grouped.set(date, []);
     }
-    grouped.get(date)!.push(notification);
+    grouped.get(date)?.push(notification);
   }
 
   return grouped;

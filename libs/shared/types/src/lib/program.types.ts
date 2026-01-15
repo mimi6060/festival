@@ -370,8 +370,8 @@ export function isPerformanceLive(performance: Performance): boolean {
 
   const now = new Date();
   const performanceDate = new Date(performance.date);
-  const [startHour, startMin] = performance.startTime.split(':').map(Number);
-  const [endHour, endMin] = performance.endTime.split(':').map(Number);
+  const [startHour = 0, startMin = 0] = performance.startTime.split(':').map(Number);
+  const [endHour = 0, endMin = 0] = performance.endTime.split(':').map(Number);
 
   const start = new Date(performanceDate);
   start.setHours(startHour, startMin, 0);
@@ -390,7 +390,7 @@ export function isPerformanceUpcoming(performance: Performance): boolean {
 
   const now = new Date();
   const performanceDate = new Date(performance.date);
-  const [startHour, startMin] = performance.startTime.split(':').map(Number);
+  const [startHour = 0, startMin = 0] = performance.startTime.split(':').map(Number);
 
   const start = new Date(performanceDate);
   start.setHours(startHour, startMin, 0);
@@ -406,8 +406,8 @@ export function isPerformanceUpcoming(performance: Performance): boolean {
  * Get performance duration in minutes
  */
 export function getPerformanceDuration(performance: Performance): number {
-  const [startHour, startMin] = performance.startTime.split(':').map(Number);
-  const [endHour, endMin] = performance.endTime.split(':').map(Number);
+  const [startHour = 0, startMin = 0] = performance.startTime.split(':').map(Number);
+  const [endHour = 0, endMin = 0] = performance.endTime.split(':').map(Number);
 
   let duration = (endHour - startHour) * 60 + (endMin - startMin);
   if (duration < 0) {

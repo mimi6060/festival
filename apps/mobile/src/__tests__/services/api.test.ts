@@ -9,12 +9,6 @@ jest.mock('../../store/authStore', () => ({
   },
 }));
 
-// Mock Platform
-jest.mock('react-native/Libraries/Utilities/Platform', () => ({
-  OS: 'ios',
-  select: jest.fn((obj) => obj.ios || obj.default),
-}));
-
 // Mock fetch
 global.fetch = jest.fn();
 

@@ -625,8 +625,8 @@ export function getShiftStatusDisplayName(status: ShiftStatus): string {
  * Calculate shift duration in hours
  */
 export function calculateShiftDuration(shift: Shift): number {
-  const [startHour, startMin] = shift.startTime.split(':').map(Number);
-  const [endHour, endMin] = shift.endTime.split(':').map(Number);
+  const [startHour = 0, startMin = 0] = shift.startTime.split(':').map(Number);
+  const [endHour = 0, endMin = 0] = shift.endTime.split(':').map(Number);
 
   let duration = (endHour - startHour) + (endMin - startMin) / 60;
   if (duration < 0) duration += 24;
@@ -668,7 +668,7 @@ export function formatShiftTime(shift: Shift): string {
 /**
  * Get staff full name
  */
-export function getStaffFullName(staff: StaffMember, user: { firstName: string; lastName: string }): string {
+export function getStaffFullName(_staff: StaffMember, user: { firstName: string; lastName: string }): string {
   return `${user.firstName} ${user.lastName}`;
 }
 

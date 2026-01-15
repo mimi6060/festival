@@ -487,7 +487,7 @@ export function isZoneAtCapacity(zone: Zone): boolean {
 export function allowsReentry(zone: Zone, currentTime?: Date): boolean {
   if (!zone.rules.reentryAllowed) return false;
   if (zone.rules.noReentryAfter && currentTime) {
-    const [hours, minutes] = zone.rules.noReentryAfter.split(':').map(Number);
+    const [hours = 0, minutes = 0] = zone.rules.noReentryAfter.split(':').map(Number);
     const noReentryTime = new Date(currentTime);
     noReentryTime.setHours(hours, minutes, 0, 0);
     if (currentTime > noReentryTime) return false;
