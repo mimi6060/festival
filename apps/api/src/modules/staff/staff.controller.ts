@@ -165,6 +165,32 @@ export class StaffController {
   ) {
     return this.staffService.checkOut(shiftId, dto, user.id);
   }
+
+  // ============== Staff Dashboard ==============
+
+  @Get('me/dashboard')
+  @Roles(UserRole.ADMIN, UserRole.ORGANIZER, UserRole.STAFF, UserRole.CASHIER, UserRole.SECURITY)
+  @ApiOperation({ summary: 'Get personal staff dashboard with KPIs' })
+  @ApiResponse({ status: 200, description: 'Staff dashboard data' })
+  @ApiQuery({ name: 'festivalId', required: true })
+  async getMyDashboard(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('festivalId', ParseUUIDPipe) festivalId: string
+  ) {
+    return this.staffService.getStaffDashboard(user.id, festivalId);
+  }
+
+  @Get('me/shift')
+  @Roles(UserRole.ADMIN, UserRole.ORGANIZER, UserRole.STAFF, UserRole.CASHIER, UserRole.SECURITY)
+  @ApiOperation({ summary: 'Get current active shift' })
+  @ApiResponse({ status: 200, description: 'Current shift info or null' })
+  @ApiQuery({ name: 'festivalId', required: true })
+  async getMyCurrentShift(
+    @CurrentUser() user: AuthenticatedUser,
+    @Query('festivalId', ParseUUIDPipe) festivalId: string
+  ) {
+    return this.staffService.getCurrentShift(user.id, festivalId);
+  }
 }
 
 // ============== Festival Staff Controller ==============

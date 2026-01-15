@@ -651,4 +651,149 @@ export class StaffService {
       currentlyWorking: checkedInToday,
     };
   }
+
+  // ============== Staff Dashboard ==============
+
+  /**
+   * Get staff member's personal dashboard with KPIs
+   */
+  async getStaffDashboard(userId: string, festivalId: string) {
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+
+    // Get staff member
+    const staffMember = await this.prisma.staffMember.findFirst({
+      where: { userId, festivalId },
+      include: {
+        zones: { select: { id: true, name: true } },
+      },
+    });
+
+    if (!staffMember) {
+      throw new NotFoundException('Staff member not found for this festival');
+    }
+
+    // Get today's validations (tickets scanned by this user)
+    const validationsToday = await this.prisma.ticket.count({
+      where: {
+        usedByStaffId: userId,
+        usedAt: {
+          gte: todayStart,
+          lte: todayEnd,
+        },
+      },
+    });
+
+    // Get total validations
+    const validationsTotal = await this.prisma.ticket.count({
+      where: {
+        usedByStaffId: userId,
+        festivalId,
+      },
+    });
+
+    // Get current shift
+    const currentShift = await this.prisma.staffShift.findFirst({
+      where: {
+        staffMemberId: staffMember.id,
+        startTime: { lte: new Date() },
+        endTime: { gte: new Date() },
+      },
+      include: {
+        zone: { select: { id: true, name: true } },
+      },
+      orderBy: { startTime: 'desc' },
+    });
+
+    // Get zones with high occupancy as "alerts"
+    const assignedZoneIds = staffMember.zones.map((z) => z.id);
+    let activeAlerts = 0;
+    if (assignedZoneIds.length > 0) {
+      const zones = await this.prisma.zone.findMany({
+        where: { id: { in: assignedZoneIds } },
+        select: { currentOccupancy: true, maxCapacity: true },
+      });
+      activeAlerts = zones.filter((z) => z.currentOccupancy >= z.maxCapacity * 0.9).length;
+    }
+
+    // Calculate average validation time (if tracked)
+    // For now, return a mock value - in real app, would track validation durations
+    const avgValidationTime = 1.8; // seconds
+
+    return {
+      staffMemberId: staffMember.id,
+      userId,
+      festivalId,
+      validationsToday,
+      validationsTotal,
+      avgValidationTime,
+      activeAlerts,
+      assignedZones: staffMember.zones,
+      currentShift: currentShift
+        ? {
+            id: currentShift.id,
+            startTime: currentShift.startTime,
+            endTime: currentShift.endTime,
+            zone: currentShift.zone,
+            isOnShift: true,
+          }
+        : null,
+    };
+  }
+
+  /**
+   * Get current active shift for a user
+   */
+  async getCurrentShift(userId: string, festivalId: string) {
+    const staffMember = await this.prisma.staffMember.findFirst({
+      where: { userId, festivalId },
+    });
+
+    if (!staffMember) {
+      return null;
+    }
+
+    const now = new Date();
+
+    const currentShift = await this.prisma.staffShift.findFirst({
+      where: {
+        staffMemberId: staffMember.id,
+        startTime: { lte: now },
+        endTime: { gte: now },
+      },
+      include: {
+        zone: { select: { id: true, name: true } },
+        checkIns: {
+          where: {
+            checkOutTime: null,
+          },
+          orderBy: { checkInTime: 'desc' },
+          take: 1,
+        },
+      },
+      orderBy: { startTime: 'desc' },
+    });
+
+    if (!currentShift) {
+      return null;
+    }
+
+    const isCheckedIn = currentShift.checkIns.length > 0;
+    const checkInTime = isCheckedIn ? currentShift.checkIns[0].checkInTime : null;
+
+    return {
+      id: currentShift.id,
+      startTime: currentShift.startTime,
+      endTime: currentShift.endTime,
+      zone: currentShift.zone,
+      isCheckedIn,
+      checkInTime,
+      remainingMinutes: Math.max(
+        0,
+        Math.floor((currentShift.endTime.getTime() - now.getTime()) / 60000)
+      ),
+    };
+  }
 }

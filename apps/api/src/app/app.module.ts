@@ -41,6 +41,9 @@ import { GdprModule } from '../modules/gdpr';
 import { QueueModule } from '../modules/queue';
 import { WebhooksModule } from '../modules/webhooks';
 import { InvoicesModule } from '../modules/invoices';
+import { CampaignsModule } from '../modules/campaigns';
+import { ApiKeysModule } from '../modules/api-keys';
+import { PublicApiModule } from '../modules/public-api';
 
 // Guards
 import { RateLimitGuard } from '../common/guards';
@@ -94,6 +97,9 @@ import { LanguageMiddleware } from '../common/middleware';
     QueueModule,
     WebhooksModule,
     InvoicesModule,
+    CampaignsModule,
+    ApiKeysModule,
+    PublicApiModule,
   ],
   controllers: [AppController],
   providers: [

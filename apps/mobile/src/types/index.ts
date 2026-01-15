@@ -96,6 +96,12 @@ export interface RootStackParamList {
   ChangePassword: undefined;
   HelpCenter: undefined;
   ContactUs: undefined;
+  // Staff routes
+  StaffDashboard: undefined;
+  StaffValidation: undefined;
+  StaffZones: undefined;
+  Notifications: undefined;
+  Profile: undefined;
 }
 
 export interface AuthStackParamList {

@@ -1,7 +1,10 @@
 import React, { useEffect, useMemo, memo } from 'react';
 import { StatusBar, View, ActivityIndicator, StyleSheet, Platform } from 'react-native';
 import { NavigationContainer, LinkingOptions } from '@react-navigation/native';
-import { createNativeStackNavigator, NativeStackNavigationOptions } from '@react-navigation/native-stack';
+import {
+  createNativeStackNavigator,
+  NativeStackNavigationOptions,
+} from '@react-navigation/native-stack';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -15,6 +18,9 @@ import { MapScreen } from '../../screens/Map/MapScreen';
 import { SettingsScreen } from '../../screens/Settings/SettingsScreen';
 import { EditProfileScreen, ChangePasswordScreen } from '../../screens/Profile';
 import { HelpCenterScreen, ContactUsScreen } from '../../screens/Support';
+import { NotificationsScreen } from '../../screens/Notifications/NotificationsScreen';
+import { ProfileScreen } from '../../screens/Profile/ProfileScreen';
+import { StaffDashboardScreen, StaffValidationScreen, StaffZonesScreen } from '../../screens/Staff';
 
 import { useAuthStore } from '../../store';
 import { pushService } from '../../services';
@@ -85,39 +91,61 @@ const modalOptions: NativeStackNavigationOptions = {
   gestureEnabled: true,
 };
 
+// Staff roles that should see staff mode
+const STAFF_ROLES = ['STAFF', 'CASHIER', 'SECURITY', 'ORGANIZER', 'ADMIN'];
+
 export const AppNavigator: React.FC = () => {
-  const { isAuthenticated, isLoading, hasSeenOnboarding } = useAuthStore();
+  const { isAuthenticated, isLoading, hasSeenOnboarding, user } = useAuthStore();
 
   useEffect(() => {
     // Configure push notifications
     pushService.configure();
   }, []);
 
+  // Check if user is staff
+  const isStaffMember = useMemo(() => {
+    if (!user?.role) {
+      return false;
+    }
+    return STAFF_ROLES.includes(user.role);
+  }, [user?.role]);
+
   // Memoize initial route to prevent recalculation
   const initialRouteName = useMemo((): keyof RootStackParamList => {
-    if (!hasSeenOnboarding) {return 'Onboarding';}
-    if (!isAuthenticated) {return 'Auth';}
+    if (!hasSeenOnboarding) {
+      return 'Onboarding';
+    }
+    if (!isAuthenticated) {
+      return 'Auth';
+    }
+    // Staff members go to StaffDashboard, regular users to Main
+    if (isStaffMember) {
+      return 'StaffDashboard';
+    }
     return 'Main';
-  }, [hasSeenOnboarding, isAuthenticated]);
+  }, [hasSeenOnboarding, isAuthenticated, isStaffMember]);
 
   // Memoize theme to prevent unnecessary re-renders
-  const navigationTheme = useMemo(() => ({
-    dark: true,
-    colors: {
-      primary: colors.primary,
-      background: colors.background,
-      card: colors.surface,
-      text: colors.text,
-      border: colors.border,
-      notification: colors.error,
-    },
-    fonts: {
-      regular: { fontFamily: 'System', fontWeight: '400' as const },
-      medium: { fontFamily: 'System', fontWeight: '500' as const },
-      bold: { fontFamily: 'System', fontWeight: '700' as const },
-      heavy: { fontFamily: 'System', fontWeight: '900' as const },
-    },
-  }), []);
+  const navigationTheme = useMemo(
+    () => ({
+      dark: true,
+      colors: {
+        primary: colors.primary,
+        background: colors.background,
+        card: colors.surface,
+        text: colors.text,
+        border: colors.border,
+        notification: colors.error,
+      },
+      fonts: {
+        regular: { fontFamily: 'System', fontWeight: '400' as const },
+        medium: { fontFamily: 'System', fontWeight: '500' as const },
+        bold: { fontFamily: 'System', fontWeight: '700' as const },
+        heavy: { fontFamily: 'System', fontWeight: '900' as const },
+      },
+    }),
+    []
+  );
 
   if (isLoading) {
     return <LoadingScreen />;
@@ -150,18 +178,10 @@ export const AppNavigator: React.FC = () => {
             />
 
             {/* Auth Flow - Fast fade */}
-            <Stack.Screen
-              name="Auth"
-              component={AuthNavigator}
-              options={fastFadeOptions}
-            />
+            <Stack.Screen name="Auth" component={AuthNavigator} options={fastFadeOptions} />
 
             {/* Main App - Fast fade */}
-            <Stack.Screen
-              name="Main"
-              component={MainTabs}
-              options={fastFadeOptions}
-            />
+            <Stack.Screen name="Main" component={MainTabs} options={fastFadeOptions} />
 
             {/* Modal Screens - Optimized modal transitions */}
             <Stack.Screen
@@ -170,11 +190,7 @@ export const AppNavigator: React.FC = () => {
               options={modalOptions}
             />
 
-            <Stack.Screen
-              name="Topup"
-              component={TopupScreen}
-              options={modalOptions}
-            />
+            <Stack.Screen name="Topup" component={TopupScreen} options={modalOptions} />
 
             {/* Stack Screens - Fast slide transitions */}
             <Stack.Screen
@@ -183,17 +199,9 @@ export const AppNavigator: React.FC = () => {
               options={fastSlideOptions}
             />
 
-            <Stack.Screen
-              name="Map"
-              component={MapScreen}
-              options={fastSlideOptions}
-            />
+            <Stack.Screen name="Map" component={MapScreen} options={fastSlideOptions} />
 
-            <Stack.Screen
-              name="Settings"
-              component={SettingsScreen}
-              options={fastSlideOptions}
-            />
+            <Stack.Screen name="Settings" component={SettingsScreen} options={fastSlideOptions} />
 
             <Stack.Screen
               name="EditProfile"
@@ -213,11 +221,34 @@ export const AppNavigator: React.FC = () => {
               options={fastSlideOptions}
             />
 
+            <Stack.Screen name="ContactUs" component={ContactUsScreen} options={fastSlideOptions} />
+
+            {/* Staff Mode Screens */}
             <Stack.Screen
-              name="ContactUs"
-              component={ContactUsScreen}
+              name="StaffDashboard"
+              component={StaffDashboardScreen}
+              options={fastFadeOptions}
+            />
+
+            <Stack.Screen
+              name="StaffValidation"
+              component={StaffValidationScreen}
               options={fastSlideOptions}
             />
+
+            <Stack.Screen
+              name="StaffZones"
+              component={StaffZonesScreen}
+              options={fastSlideOptions}
+            />
+
+            <Stack.Screen
+              name="Notifications"
+              component={NotificationsScreen}
+              options={fastSlideOptions}
+            />
+
+            <Stack.Screen name="Profile" component={ProfileScreen} options={fastSlideOptions} />
           </Stack.Navigator>
         </NavigationContainer>
       </SafeAreaProvider>
