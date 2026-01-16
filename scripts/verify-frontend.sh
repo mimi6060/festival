@@ -10,7 +10,7 @@ set -e
 
 # Configuration
 WEB_URL="${WEB_URL:-http://localhost:3000}"
-ADMIN_URL="${ADMIN_URL:-http://localhost:4200}"
+ADMIN_URL="${ADMIN_URL:-http://localhost:4201}"
 
 # Colors for output
 RED='\033[0;31m'

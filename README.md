@@ -144,7 +144,7 @@ npx nx serve api
 # In another terminal, start web app (port 3000)
 npx nx serve web
 
-# In another terminal, start admin dashboard (port 4200)
+# In another terminal, start admin dashboard (port 4201)
 npx nx serve admin
 ```
 
@@ -155,7 +155,7 @@ npx nx serve admin
 | API         | http://localhost:3333/api      | Backend API           |
 | API Docs    | http://localhost:3333/api/docs | Swagger documentation |
 | Web         | http://localhost:3000          | Public website        |
-| Admin       | http://localhost:4200          | Admin dashboard       |
+| Admin       | http://localhost:4201          | Admin dashboard       |
 | MailDev     | http://localhost:1080          | Email testing UI      |
 
 ## API Documentation
@@ -264,7 +264,7 @@ SMTP_HOST=localhost
 SMTP_PORT=1025
 
 # Security
-CORS_ORIGINS=http://localhost:3000,http://localhost:4200
+CORS_ORIGINS=http://localhost:3000,http://localhost:4201
 ```
 
 ## Scripts

@@ -128,14 +128,14 @@ start_web() {
 
 # Start Admin
 start_admin() {
-    log_step "Starting Admin on port 4200..."
+    log_step "Starting Admin on port 4201..."
 
     cd "$PROJECT_DIR/apps/admin"
-    PORT=4200 nohup npx next dev > /tmp/festival-admin.log 2>&1 &
+    PORT=4201 nohup npx next dev > /tmp/festival-admin.log 2>&1 &
     echo $! > /tmp/festival-admin.pid
     cd "$PROJECT_DIR"
 
-    wait_for_port 4200 "Admin" 30
+    wait_for_port 4201 "Admin" 30
 }
 
 # Start Mobile
@@ -246,8 +246,8 @@ show_urls() {
         echo -e "  ${RED}○${NC} Web:      Not running"
     fi
 
-    if nc -z localhost 4200 2>/dev/null; then
-        echo -e "  ${GREEN}●${NC} Admin:    http://localhost:4200"
+    if nc -z localhost 4201 2>/dev/null; then
+        echo -e "  ${GREEN}●${NC} Admin:    http://localhost:4201"
     else
         echo -e "  ${RED}○${NC} Admin:    Not running"
     fi
@@ -290,7 +290,7 @@ verify() {
     fi
 
     # Admin
-    local admin_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4200)
+    local admin_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:4201)
     if [ "$admin_code" = "200" ] || [ "$admin_code" = "307" ]; then
         echo -e "  Admin:  ${GREEN}✓${NC} HTTP $admin_code"
     else

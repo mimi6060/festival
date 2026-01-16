@@ -719,7 +719,7 @@ res.cookie('refreshToken', token, {
 ```typescript
 // In main.ts
 app.enableCors({
-  origin: ['http://localhost:3000', 'http://localhost:4200'],
+  origin: ['http://localhost:3000', 'http://localhost:4201'],
   credentials: true, // REQUIRED for cookies
 });
 ```
@@ -1101,7 +1101,7 @@ docker compose logs api | grep -i socket
 // In WebSocket gateway configuration
 @WebSocketGateway({
   cors: {
-    origin: ['http://localhost:3000', 'http://localhost:4200'],
+    origin: ['http://localhost:3000', 'http://localhost:4201'],
     credentials: true
   },
   namespace: '/events'

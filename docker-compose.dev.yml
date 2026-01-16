@@ -100,13 +100,13 @@ services:
     # Build once then run with nodemon for simpler watch (avoids NX restart loop)
     command: sh -c "./node_modules/.bin/prisma generate && ./node_modules/.bin/nx build api && node dist/apps/api/main.js"
     ports:
-      - '3001:3000'
+      - '3333:3333'
     env_file:
       - .env.development
     environment:
       # Override specific vars for Docker networking
       NODE_ENV: development
-      PORT: 3000
+      PORT: 3333
       DATABASE_URL: postgresql://festival_user:festival_password@postgres:5432/festival_db?schema=public
       REDIS_URL: redis://redis:6379
       MINIO_ENDPOINT: minio
@@ -116,7 +116,7 @@ services:
       MINIO_BUCKET: festival-uploads
       SMTP_HOST: mailpit
       SMTP_PORT: 1025
-      CORS_ORIGINS: http://localhost:3000,http://localhost:3001,http://localhost:4202,http://localhost:4201
+      CORS_ORIGINS: http://localhost:3000,http://localhost:3333,http://localhost:4201
     volumes:
       - .:/app:cached
       - node_modules:/app/node_modules
@@ -134,13 +134,13 @@ services:
     image: festival-dev:latest
     container_name: festival-web-dev
     working_dir: /app
-    command: ./node_modules/.bin/nx serve web --host 0.0.0.0 --port 4202
+    command: ./node_modules/.bin/nx serve web --host 0.0.0.0 --port 3000
     ports:
-      - '4202:4202'
+      - '3000:3000'
     environment:
       NODE_ENV: development
-      NEXT_PUBLIC_API_URL: http://localhost:3001/api
-      NEXT_PUBLIC_APP_URL: http://localhost:4202
+      NEXT_PUBLIC_API_URL: http://localhost:3333/api
+      NEXT_PUBLIC_APP_URL: http://localhost:3000
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY:-pk_test_placeholder}
     volumes:
       - .:/app:cached
@@ -162,7 +162,7 @@ services:
       - '4201:4201'
     environment:
       NODE_ENV: development
-      NEXT_PUBLIC_API_URL: http://localhost:3001/api
+      NEXT_PUBLIC_API_URL: http://localhost:3333/api
       NEXT_PUBLIC_APP_URL: http://localhost:4201
     volumes:
       - .:/app:cached

@@ -34,7 +34,7 @@ case "${1:-up}" in
         echo ""
         print_info "Services:"
         echo "  - API:          http://localhost:3000"
-        echo "  - Web:          http://localhost:4200"
+        echo "  - Web:          http://localhost:4201"
         echo "  - Admin:        http://localhost:4300"
         echo "  - PostgreSQL:   localhost:5432"
         echo "  - Redis:        localhost:6379"

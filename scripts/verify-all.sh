@@ -189,8 +189,8 @@ check_services() {
     fi
 
     # Check Admin
-    echo -n "  Admin (localhost:4200): "
-    if curl -s -o /dev/null -w "" --connect-timeout 2 http://localhost:4200 2>/dev/null; then
+    echo -n "  Admin (localhost:4201): "
+    if curl -s -o /dev/null -w "" --connect-timeout 2 http://localhost:4201 2>/dev/null; then
         echo -e "${GREEN}RUNNING${NC}"
     else
         echo -e "${YELLOW}NOT RUNNING${NC}"

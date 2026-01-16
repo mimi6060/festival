@@ -85,7 +85,7 @@ spec:
               service:
                 name: admin
                 port:
-                  number: 4200
+                  number: 4201
 ---
 # WebSocket-specific Ingress for real-time features
 apiVersion: networking.k8s.io/v1

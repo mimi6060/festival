@@ -97,8 +97,8 @@ portForward:
   - resourceType: service
     resourceName: admin
     namespace: festival-dev
-    port: 4200
-    localPort: 4200
+    port: 4201
+    localPort: 4201
 
   - resourceType: service
     resourceName: postgresql

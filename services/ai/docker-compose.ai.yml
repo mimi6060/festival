@@ -43,7 +43,7 @@ services:
 
       # API
       - API_PREFIX=/api/v1
-      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:3001,http://localhost:4200}
+      - CORS_ORIGINS=${CORS_ORIGINS:-http://localhost:3000,http://localhost:3001,http://localhost:4201}
 
       # Models
       - MODELS_PATH=/app/models

@@ -17,7 +17,7 @@ export const validationSchema = Joi.object({
   APP_NAME: Joi.string().default('Festival Platform'),
   APP_URL: Joi.string().uri().default('http://localhost:3000'),
   API_URL: Joi.string().uri().default('http://localhost:3333'),
-  ADMIN_URL: Joi.string().uri().default('http://localhost:4200'),
+  ADMIN_URL: Joi.string().uri().default('http://localhost:4201'),
   PORT: Joi.number().port().default(3333),
   API_PREFIX: Joi.string().default('api'),
   API_VERSION: Joi.string().default('v1'),
@@ -181,7 +181,7 @@ export const validationSchema = Joi.object({
   // ==========================================================================
   // SECURITY
   // ==========================================================================
-  CORS_ORIGINS: Joi.string().default('http://localhost:3000,http://localhost:4200'),
+  CORS_ORIGINS: Joi.string().default('http://localhost:3000,http://localhost:4201'),
   RATE_LIMIT_ENABLED: Joi.boolean().default(true),
   RATE_LIMIT_WINDOW_MS: Joi.number().default(900000),
   RATE_LIMIT_MAX_REQUESTS: Joi.number().default(100),

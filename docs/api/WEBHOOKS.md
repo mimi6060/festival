@@ -32,13 +32,13 @@ Webhooks allow your application to receive real-time notifications when events o
 
 ### Supported Webhook Types
 
-| Type | Description |
-|------|-------------|
-| **Stripe Webhooks** | Payment and refund events from Stripe |
-| **Festival Webhooks** | Festival status changes |
-| **Ticket Webhooks** | Ticket purchases, validations, cancellations |
-| **Cashless Webhooks** | Top-ups, payments, transfers |
-| **Notification Webhooks** | Broadcast to external systems |
+| Type                      | Description                                  |
+| ------------------------- | -------------------------------------------- |
+| **Stripe Webhooks**       | Payment and refund events from Stripe        |
+| **Festival Webhooks**     | Festival status changes                      |
+| **Ticket Webhooks**       | Ticket purchases, validations, cancellations |
+| **Cashless Webhooks**     | Top-ups, payments, transfers                 |
+| **Notification Webhooks** | Broadcast to external systems                |
 
 ---
 
@@ -46,52 +46,52 @@ Webhooks allow your application to receive real-time notifications when events o
 
 ### Payment Events
 
-| Event | Description |
-|-------|-------------|
-| `payment.completed` | Payment successfully processed |
-| `payment.failed` | Payment failed |
-| `payment.refunded` | Payment refunded |
-| `payment.partially_refunded` | Partial refund processed |
-| `payment.disputed` | Payment dispute opened |
+| Event                        | Description                    |
+| ---------------------------- | ------------------------------ |
+| `payment.completed`          | Payment successfully processed |
+| `payment.failed`             | Payment failed                 |
+| `payment.refunded`           | Payment refunded               |
+| `payment.partially_refunded` | Partial refund processed       |
+| `payment.disputed`           | Payment dispute opened         |
 
 ### Ticket Events
 
-| Event | Description |
-|-------|-------------|
-| `ticket.purchased` | Ticket successfully purchased |
-| `ticket.validated` | Ticket scanned/validated at entry |
-| `ticket.cancelled` | Ticket cancelled |
-| `ticket.transferred` | Ticket transferred to another user |
-| `ticket.reminder` | Ticket reminder sent (1 day before) |
+| Event                | Description                         |
+| -------------------- | ----------------------------------- |
+| `ticket.purchased`   | Ticket successfully purchased       |
+| `ticket.validated`   | Ticket scanned/validated at entry   |
+| `ticket.cancelled`   | Ticket cancelled                    |
+| `ticket.transferred` | Ticket transferred to another user  |
+| `ticket.reminder`    | Ticket reminder sent (1 day before) |
 
 ### Cashless Events
 
-| Event | Description |
-|-------|-------------|
-| `cashless.topup` | Balance topped up |
-| `cashless.payment` | Cashless payment made |
-| `cashless.refund` | Cashless refund processed |
-| `cashless.transfer` | Balance transferred between accounts |
-| `cashless.low_balance` | Balance below threshold |
+| Event                  | Description                          |
+| ---------------------- | ------------------------------------ |
+| `cashless.topup`       | Balance topped up                    |
+| `cashless.payment`     | Cashless payment made                |
+| `cashless.refund`      | Cashless refund processed            |
+| `cashless.transfer`    | Balance transferred between accounts |
+| `cashless.low_balance` | Balance below threshold              |
 
 ### Festival Events
 
-| Event | Description |
-|-------|-------------|
-| `festival.published` | Festival published |
-| `festival.started` | Festival started (based on start date) |
-| `festival.ended` | Festival ended (based on end date) |
-| `festival.cancelled` | Festival cancelled |
-| `festival.capacity_alert` | Nearing capacity limit |
+| Event                     | Description                            |
+| ------------------------- | -------------------------------------- |
+| `festival.published`      | Festival published                     |
+| `festival.started`        | Festival started (based on start date) |
+| `festival.ended`          | Festival ended (based on end date)     |
+| `festival.cancelled`      | Festival cancelled                     |
+| `festival.capacity_alert` | Nearing capacity limit                 |
 
 ### Zone Events
 
-| Event | Description |
-|-------|-------------|
-| `zone.entry` | Person entered zone |
-| `zone.exit` | Person exited zone |
-| `zone.capacity_reached` | Zone at full capacity |
-| `zone.alert` | Security alert in zone |
+| Event                   | Description            |
+| ----------------------- | ---------------------- |
+| `zone.entry`            | Person entered zone    |
+| `zone.exit`             | Person exited zone     |
+| `zone.capacity_reached` | Zone at full capacity  |
+| `zone.alert`            | Security alert in zone |
 
 ---
 
@@ -130,7 +130,7 @@ POST /api/webhooks/stripe
 
 ```
 Content-Type: application/json
-Stripe-Signature: t=1704200400,v1=abc123...,v0=...
+Stripe-Signature: t=1704201400,v1=abc123...,v0=...
 ```
 
 ### Example: checkout.session.completed
@@ -160,7 +160,7 @@ Stripe-Signature: t=1704200400,v1=abc123...,v0=...
       "status": "complete"
     }
   },
-  "created": 1704200400,
+  "created": 1704201400,
   "livemode": false
 }
 ```
@@ -200,10 +200,7 @@ import Stripe from 'stripe';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-async function verifyStripeWebhook(
-  payload: Buffer,
-  signature: string
-): Promise<Stripe.Event> {
+async function verifyStripeWebhook(payload: Buffer, signature: string): Promise<Stripe.Event> {
   try {
     const event = stripe.webhooks.constructEvent(
       payload,
@@ -233,12 +230,7 @@ POST /api/festivals/:id/webhooks
 {
   "url": "https://your-server.com/webhooks/festival",
   "secret": "your_webhook_secret",
-  "events": [
-    "ticket.purchased",
-    "ticket.validated",
-    "cashless.topup",
-    "cashless.payment"
-  ],
+  "events": ["ticket.purchased", "ticket.validated", "cashless.topup", "cashless.payment"],
   "enabled": true
 }
 ```
@@ -246,6 +238,7 @@ POST /api/festivals/:id/webhooks
 ### Webhook Endpoint Requirements
 
 Your endpoint must:
+
 - Accept POST requests
 - Return 2xx status within 30 seconds
 - Handle duplicate events (idempotency)
@@ -281,7 +274,7 @@ Your endpoint must:
 All webhooks include a signature in the `X-Webhook-Signature` header:
 
 ```
-X-Webhook-Signature: t=1704200400,v1=5257a869e7ecebeda32affa62cdca3fa51cad7e77a0e56ff536d0ce8e108d8bd
+X-Webhook-Signature: t=1704201400,v1=5257a869e7ecebeda32affa62cdca3fa51cad7e77a0e56ff536d0ce8e108d8bd
 ```
 
 #### Signature Format
@@ -317,16 +310,10 @@ function verifyWebhookSignature(
 
   // Compute expected signature
   const signedPayload = `${timestamp}.${payload}`;
-  const expectedSignature = crypto
-    .createHmac('sha256', secret)
-    .update(signedPayload)
-    .digest('hex');
+  const expectedSignature = crypto.createHmac('sha256', secret).update(signedPayload).digest('hex');
 
   // Compare signatures (timing-safe)
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignature)
-  );
+  return crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
 }
 ```
 
@@ -347,13 +334,13 @@ function verifyWebhookSignature(
 
 All webhook payloads include:
 
-| Field | Type | Description |
-|-------|------|-------------|
-| `id` | string | Unique webhook event ID |
-| `type` | string | Event type |
-| `created` | string | ISO 8601 timestamp |
-| `festivalId` | string | Associated festival ID |
-| `data` | object | Event-specific data |
+| Field        | Type   | Description             |
+| ------------ | ------ | ----------------------- |
+| `id`         | string | Unique webhook event ID |
+| `type`       | string | Event type              |
+| `created`    | string | ISO 8601 timestamp      |
+| `festivalId` | string | Associated festival ID  |
+| `data`       | object | Event-specific data     |
 
 ### Event-Specific Payloads
 
@@ -479,13 +466,13 @@ If your endpoint doesn't respond with a 2xx status, we'll retry the webhook:
 
 ### Retry Schedule
 
-| Attempt | Delay |
-|---------|-------|
-| 1st retry | 1 minute |
-| 2nd retry | 5 minutes |
+| Attempt   | Delay      |
+| --------- | ---------- |
+| 1st retry | 1 minute   |
+| 2nd retry | 5 minutes  |
 | 3rd retry | 30 minutes |
-| 4th retry | 2 hours |
-| 5th retry | 24 hours |
+| 4th retry | 2 hours    |
+| 5th retry | 24 hours   |
 
 After 5 failed attempts, the webhook is marked as failed and no further retries are attempted.
 
@@ -506,7 +493,7 @@ Your endpoint should be **idempotent**. Use the webhook `id` to detect duplicate
 async function handleWebhook(payload: WebhookPayload) {
   // Check if already processed
   const existing = await db.webhookEvents.findUnique({
-    where: { webhookId: payload.id }
+    where: { webhookId: payload.id },
   });
 
   if (existing) {
@@ -522,8 +509,8 @@ async function handleWebhook(payload: WebhookPayload) {
     data: {
       webhookId: payload.id,
       type: payload.type,
-      processedAt: new Date()
-    }
+      processedAt: new Date(),
+    },
   });
 
   return { status: 'processed' };
@@ -590,6 +577,7 @@ GET /api/admin/webhooks/logs
 ```
 
 Response:
+
 ```json
 {
   "data": [
@@ -626,7 +614,7 @@ app.post('/webhooks', async (req, res) => {
   res.status(200).send('OK');
 
   // Process asynchronously
-  processWebhookAsync(req.body).catch(err => {
+  processWebhookAsync(req.body).catch((err) => {
     console.error('Webhook processing failed:', err);
   });
 });
@@ -696,7 +684,7 @@ Set up alerts for webhook failures:
 async function handleWebhookFailure(event, error) {
   // Log to monitoring service
   await sentry.captureException(error, {
-    extra: { webhookId: event.id, type: event.type }
+    extra: { webhookId: event.id, type: event.type },
   });
 
   // Send alert if critical

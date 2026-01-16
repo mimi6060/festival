@@ -9,12 +9,12 @@ metadata:
     app.kubernetes.io/part-of: festival-platform
   annotations:
     prometheus.io/scrape: "true"
-    prometheus.io/port: "4200"
+    prometheus.io/port: "4201"
 spec:
   type: ClusterIP
   ports:
     - name: http
-      port: 4200
+      port: 4201
       targetPort: http
       protocol: TCP
   selector:

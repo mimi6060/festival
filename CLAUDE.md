@@ -32,8 +32,8 @@ curl -s http://localhost:3333/api/health | grep -q "status" && echo "API OK" || 
 # Web verification (port 3000 in dev)
 curl -s http://localhost:3000 | grep -q "html" && echo "Web OK" || echo "Web FAILED"
 
-# Admin verification (port 4200 in dev)
-curl -s http://localhost:4200 | grep -q "html" && echo "Admin OK" || echo "Admin FAILED"
+# Admin verification (port 4201 in dev)
+curl -s http://localhost:4201 | grep -q "html" && echo "Admin OK" || echo "Admin FAILED"
 ```
 
 **If verification fails:**
@@ -95,7 +95,7 @@ If build or lint fails after push: fix immediately, no other changes until CI is
 # Development servers
 npx nx serve api                    # API on :3333 (Swagger: /api/docs)
 npx nx serve web                    # Web on :3000
-npx nx serve admin                  # Admin on :4200
+npx nx serve admin                  # Admin on :4201
 cd apps/mobile && npx expo start    # Mobile app
 
 # Building
@@ -143,7 +143,7 @@ festival/
 ├── apps/
 │   ├── api/           # NestJS backend (port 3333)
 │   ├── web/           # Next.js public site (port 3000)
-│   ├── admin/         # Next.js admin dashboard (port 4200)
+│   ├── admin/         # Next.js admin dashboard (port 4201)
 │   ├── mobile/        # React Native + Expo
 │   └── api-e2e/       # E2E tests
 ├── libs/shared/

@@ -21,14 +21,14 @@ Ce guide detaille les procedures de deploiement de la plateforme Festival sur di
 
 ### Outils Requis
 
-| Outil | Version Minimum | Description |
-|-------|-----------------|-------------|
-| Node.js | 20 LTS | Runtime JavaScript |
-| pnpm | 8.x | Gestionnaire de paquets |
-| Docker | 24.x | Containerisation |
-| Docker Compose | 2.20+ | Orchestration locale |
-| kubectl | 1.28+ | CLI Kubernetes |
-| Helm | 3.12+ | Package manager K8s |
+| Outil          | Version Minimum | Description             |
+| -------------- | --------------- | ----------------------- |
+| Node.js        | 20 LTS          | Runtime JavaScript      |
+| pnpm           | 8.x             | Gestionnaire de paquets |
+| Docker         | 24.x            | Containerisation        |
+| Docker Compose | 2.20+           | Orchestration locale    |
+| kubectl        | 1.28+           | CLI Kubernetes          |
+| Helm           | 3.12+           | Package manager K8s     |
 
 ### Services Externes
 
@@ -75,12 +75,12 @@ SMTP_FROM_EMAIL=noreply@festival.example.com
 
 ### Configuration par Environnement
 
-| Variable | Development | Staging | Production |
-|----------|-------------|---------|------------|
-| `NODE_ENV` | development | staging | production |
-| `LOG_LEVEL` | debug | info | warn |
-| `RATE_LIMIT_MAX` | 1000 | 200 | 100 |
-| `JWT_ACCESS_EXPIRY` | 1h | 30m | 15m |
+| Variable            | Development | Staging | Production |
+| ------------------- | ----------- | ------- | ---------- |
+| `NODE_ENV`          | development | staging | production |
+| `LOG_LEVEL`         | debug       | info    | warn       |
+| `RATE_LIMIT_MAX`    | 1000        | 200     | 100        |
+| `JWT_ACCESS_EXPIRY` | 1h          | 30m     | 15m        |
 
 ### Generation des Secrets
 
@@ -136,7 +136,7 @@ docker-compose logs -f api
 
 # Acceder aux services
 # API: http://localhost:3000
-# Web: http://localhost:4200
+# Web: http://localhost:4201
 # Admin: http://localhost:4300
 # MinIO Console: http://localhost:9001
 # MailHog: http://localhost:8025
@@ -144,17 +144,17 @@ docker-compose logs -f api
 
 ### Services Docker Compose
 
-| Service | Port | Description |
-|---------|------|-------------|
-| `api` | 3000 | Backend NestJS |
-| `web` | 4200 | Frontend public |
-| `admin` | 4300 | Dashboard admin |
-| `postgres` | 5432 | Base de donnees |
-| `redis` | 6379 | Cache et sessions |
-| `minio` | 9000/9001 | Object storage |
-| `mailhog` | 1025/8025 | Email testing |
-| `prometheus` | 9090 | Metriques |
-| `grafana` | 3001 | Dashboards |
+| Service      | Port      | Description       |
+| ------------ | --------- | ----------------- |
+| `api`        | 3000      | Backend NestJS    |
+| `web`        | 4201      | Frontend public   |
+| `admin`      | 4300      | Dashboard admin   |
+| `postgres`   | 5432      | Base de donnees   |
+| `redis`      | 6379      | Cache et sessions |
+| `minio`      | 9000/9001 | Object storage    |
+| `mailhog`    | 1025/8025 | Email testing     |
+| `prometheus` | 9090      | Metriques         |
+| `grafana`    | 3001      | Dashboards        |
 
 ### Profils Docker Compose
 
@@ -258,11 +258,11 @@ spec:
                 name: festival-secrets
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "250m"
+              memory: '512Mi'
+              cpu: '250m'
             limits:
-              memory: "1Gi"
-              cpu: "1000m"
+              memory: '1Gi'
+              cpu: '1000m'
           livenessProbe:
             httpGet:
               path: /api/health/live
@@ -320,8 +320,8 @@ metadata:
   annotations:
     kubernetes.io/ingress.class: nginx
     cert-manager.io/cluster-issuer: letsencrypt-prod
-    nginx.ingress.kubernetes.io/rate-limit: "100"
-    nginx.ingress.kubernetes.io/rate-limit-window: "1m"
+    nginx.ingress.kubernetes.io/rate-limit: '100'
+    nginx.ingress.kubernetes.io/rate-limit-window: '1m'
 spec:
   tls:
     - hosts:
@@ -720,7 +720,7 @@ scrape_configs:
         regex: festival-api
         action: keep
       - source_labels: [__meta_kubernetes_pod_annotation_prometheus_io_scrape]
-        regex: "true"
+        regex: 'true'
         action: keep
 ```
 
@@ -886,4 +886,4 @@ spec:
 
 ---
 
-*Document mis a jour: Janvier 2026*
+_Document mis a jour: Janvier 2026_

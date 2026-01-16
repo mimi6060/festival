@@ -35,7 +35,7 @@ services:
       REDIS_URL: redis://redis:6379
       JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-7d}
-      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:4200,http://localhost:4300}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:4201,http://localhost:4300}
       STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
       MINIO_ENDPOINT: minio
@@ -79,16 +79,16 @@ services:
       dockerfile: apps/web/Dockerfile
       args:
         - NEXT_PUBLIC_API_URL=http://api:3000
-        - NEXT_PUBLIC_APP_URL=http://localhost:4200
+        - NEXT_PUBLIC_APP_URL=http://localhost:4201
     image: festival/web:latest
     container_name: festival-web
     restart: unless-stopped
     ports:
-      - '4200:3000'
+      - '4201:3000'
     environment:
       NODE_ENV: production
       NEXT_PUBLIC_API_URL: http://api:3000
-      NEXT_PUBLIC_APP_URL: http://localhost:4200
+      NEXT_PUBLIC_APP_URL: http://localhost:4201
       NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY}
     depends_on:
       api:

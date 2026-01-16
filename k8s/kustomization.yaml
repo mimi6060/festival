@@ -37,7 +37,7 @@ resources:
   - web/service.yaml
   - web/hpa.yaml
 
-  # Admin (Next.js admin dashboard - port 4200)
+  # Admin (Next.js admin dashboard - port 4201)
   - admin/deployment.yaml
   - admin/service.yaml
 

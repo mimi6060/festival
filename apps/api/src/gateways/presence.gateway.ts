@@ -71,7 +71,7 @@ interface WsUser {
   cors: {
     origin: process.env.CORS_ORIGINS?.split(',') || [
       'http://localhost:3000',
-      'http://localhost:4200',
+      'http://localhost:4201',
     ],
     credentials: true,
   },

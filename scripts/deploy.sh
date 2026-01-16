@@ -218,7 +218,7 @@ if [ "$ENVIRONMENT" = "dev" ]; then
     echo -e "${BLUE}Local URLs (port-forward required):${NC}"
     echo "  API:   http://localhost:3333"
     echo "  Web:   http://localhost:3000"
-    echo "  Admin: http://localhost:4200"
+    echo "  Admin: http://localhost:4201"
     echo ""
     echo "Run: kubectl port-forward -n $NAMESPACE svc/api 3333:3333"
 fi

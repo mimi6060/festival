@@ -23,7 +23,7 @@ services:
       REDIS_URL: redis://redis:6379
       JWT_SECRET: dev-jwt-secret-not-for-production
       JWT_EXPIRES_IN: 30d
-      CORS_ORIGINS: http://localhost:4200,http://localhost:4300,http://localhost:3000
+      CORS_ORIGINS: http://localhost:4201,http://localhost:4300,http://localhost:3000
     volumes:
       # Mount source code for hot-reload
       - ./apps/api/src:/app/apps/api/src:delegated
@@ -47,7 +47,7 @@ services:
     environment:
       NODE_ENV: development
       NEXT_PUBLIC_API_URL: http://localhost:3000
-      NEXT_PUBLIC_APP_URL: http://localhost:4200
+      NEXT_PUBLIC_APP_URL: http://localhost:4201
       WATCHPACK_POLLING: 'true'
     volumes:
       # Mount source code for hot-reload

@@ -23,7 +23,7 @@ data:
 
   # Frontend Configuration
   WEB_PORT: "3000"
-  ADMIN_PORT: "4200"
+  ADMIN_PORT: "4201"
 
   # API URLs (for frontend apps)
   NEXT_PUBLIC_API_URL: "https://api.festival.example.com"

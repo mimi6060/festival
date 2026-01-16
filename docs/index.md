@@ -38,7 +38,7 @@
 
 ### Dashboard Admin (Next.js)
 
-- **Port**: 4200
+- **Port**: 4201
 - **25 pages** de gestion
 - Tableaux de bord temps réel avec WebSocket
 - Graphiques Recharts pour analytics
@@ -179,7 +179,7 @@ npx prisma db seed
 # Démarrer les applications
 npx nx serve api              # API sur :3333
 npx nx serve web              # Web sur :3000
-npx nx serve admin            # Admin sur :4200
+npx nx serve admin            # Admin sur :4201
 cd apps/mobile && npx expo start  # Mobile
 ```
 

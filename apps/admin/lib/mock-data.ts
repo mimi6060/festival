@@ -73,7 +73,8 @@ export const mockFestivals: Festival[] = [
     id: 'electric-dreams-2025',
     name: 'Electric Dreams 2025',
     slug: 'electric-dreams-2025',
-    description: 'Le festival electro le plus innovant de l\'annee. Experience immersive avec mapping 3D, installations artistiques et les meilleurs artistes de la scene electronique mondiale.',
+    description:
+      "Le festival electro le plus innovant de l'annee. Experience immersive avec mapping 3D, installations artistiques et les meilleurs artistes de la scene electronique mondiale.",
     startDate: '2025-08-20T16:00:00Z',
     endDate: '2025-08-23T06:00:00Z',
     location: {
@@ -96,7 +97,8 @@ export const mockFestivals: Festival[] = [
     id: '1',
     name: 'Summer Beats Festival',
     slug: 'summer-beats-festival-2025',
-    description: 'Le plus grand festival de musique electronique de France. 3 jours de fete non-stop avec les meilleurs DJs internationaux.',
+    description:
+      'Le plus grand festival de musique electronique de France. 3 jours de fete non-stop avec les meilleurs DJs internationaux.',
     startDate: '2025-07-15T14:00:00Z',
     endDate: '2025-07-17T23:59:00Z',
     location: {
@@ -150,7 +152,7 @@ export const mockFestivals: Festival[] = [
       address: '93216 Saint-Denis',
       city: 'Saint-Denis',
       country: 'France',
-      coordinates: { lat: 48.924, lng: 2.360 },
+      coordinates: { lat: 48.924, lng: 2.36 },
     },
     status: 'draft',
     coverImage: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=800',
@@ -299,7 +301,7 @@ export const mockTicketCategories: TicketCategory[] = [
     price: 35,
     currency: 'EUR',
     quantity: 5000,
-    sold: 4200,
+    sold: 4201,
     maxPerOrder: 6,
     salesStart: '2025-01-01T00:00:00Z',
     salesEnd: '2025-06-19T23:59:00Z',
@@ -386,9 +388,7 @@ export const mockOrders: Order[] = [
     orderNumber: 'ORD-2025-001234',
     userId: '4',
     festivalId: '1',
-    items: [
-      { id: '1', categoryId: '2', quantity: 2, unitPrice: 120, total: 240 },
-    ],
+    items: [{ id: '1', categoryId: '2', quantity: 2, unitPrice: 120, total: 240 }],
     subtotal: 240,
     fees: 12,
     total: 252,
@@ -404,9 +404,7 @@ export const mockOrders: Order[] = [
     orderNumber: 'ORD-2025-001235',
     userId: '5',
     festivalId: '1',
-    items: [
-      { id: '2', categoryId: '3', quantity: 1, unitPrice: 299, total: 299 },
-    ],
+    items: [{ id: '2', categoryId: '3', quantity: 1, unitPrice: 299, total: 299 }],
     subtotal: 299,
     fees: 15,
     total: 314,
@@ -421,9 +419,7 @@ export const mockOrders: Order[] = [
     orderNumber: 'ORD-2025-001236',
     userId: '4',
     festivalId: '2',
-    items: [
-      { id: '3', categoryId: '5', quantity: 2, unitPrice: 85, total: 170 },
-    ],
+    items: [{ id: '3', categoryId: '5', quantity: 2, unitPrice: 85, total: 170 }],
     subtotal: 170,
     fees: 8.5,
     total: 178.5,

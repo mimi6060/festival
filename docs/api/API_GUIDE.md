@@ -37,11 +37,11 @@ The API follows semantic versioning. Breaking changes will be communicated in ad
 
 ## Base URLs
 
-| Environment | URL |
-|-------------|-----|
-| Production | `https://api.festival-platform.com/api` |
-| Staging | `https://staging-api.festival-platform.com/api` |
-| Local Development | `http://localhost:3333/api` |
+| Environment       | URL                                             |
+| ----------------- | ----------------------------------------------- |
+| Production        | `https://api.festival-platform.com/api`         |
+| Staging           | `https://staging-api.festival-platform.com/api` |
+| Local Development | `http://localhost:3333/api`                     |
 
 ### Interactive Documentation
 
@@ -56,11 +56,13 @@ The API follows semantic versioning. Breaking changes will be communicated in ad
 The API uses JWT (JSON Web Tokens) for authentication. There are two types of tokens:
 
 ### Access Token
+
 - Short-lived (15 minutes)
 - Used for API requests
 - Passed in the `Authorization` header
 
 ### Refresh Token
+
 - Long-lived (7 days)
 - Used to obtain new access tokens
 - Stored securely (HttpOnly cookie recommended)
@@ -99,6 +101,7 @@ curl -X POST https://api.festival-platform.com/api/auth/login \
 ```
 
 Response:
+
 ```json
 {
   "user": {
@@ -139,6 +142,7 @@ curl -X GET https://api.festival-platform.com/api/auth/me \
 ### Content Type
 
 All requests must include:
+
 ```
 Content-Type: application/json
 Accept: application/json
@@ -183,6 +187,7 @@ Accept: application/json
 ### Date Format
 
 All dates are in ISO 8601 format with timezone:
+
 ```
 2025-07-15T14:00:00.000Z
 ```
@@ -190,9 +195,10 @@ All dates are in ISO 8601 format with timezone:
 ### Currency
 
 Monetary values are in **cents** (smallest currency unit):
+
 ```json
 {
-  "amount": 5000,  // 50.00 EUR
+  "amount": 5000, // 50.00 EUR
   "currency": "EUR"
 }
 ```
@@ -205,19 +211,19 @@ The API implements rate limiting to ensure fair usage and protect against abuse.
 
 ### Rate Limits
 
-| Endpoint Type | Limit | Window |
-|--------------|-------|--------|
-| Anonymous | 100 requests | 1 minute |
-| Authenticated | 1000 requests | 1 minute |
-| Payment endpoints | 10 requests | 1 minute |
-| Login attempts | 5 requests | 15 minutes |
+| Endpoint Type     | Limit         | Window     |
+| ----------------- | ------------- | ---------- |
+| Anonymous         | 100 requests  | 1 minute   |
+| Authenticated     | 1000 requests | 1 minute   |
+| Payment endpoints | 10 requests   | 1 minute   |
+| Login attempts    | 5 requests    | 15 minutes |
 
 ### Rate Limit Headers
 
 ```
 X-RateLimit-Limit: 1000
 X-RateLimit-Remaining: 999
-X-RateLimit-Reset: 1704200400
+X-RateLimit-Reset: 1704201400
 ```
 
 ### Handling Rate Limits
@@ -241,37 +247,37 @@ When you exceed the rate limit, you'll receive a `429 Too Many Requests` respons
 
 ### HTTP Status Codes
 
-| Code | Meaning | Description |
-|------|---------|-------------|
-| 200 | OK | Request successful |
-| 201 | Created | Resource created successfully |
-| 204 | No Content | Request successful, no response body |
-| 400 | Bad Request | Invalid request data |
-| 401 | Unauthorized | Authentication required or failed |
-| 403 | Forbidden | Insufficient permissions |
-| 404 | Not Found | Resource not found |
-| 409 | Conflict | Resource already exists |
-| 422 | Unprocessable Entity | Validation failed |
-| 429 | Too Many Requests | Rate limit exceeded |
-| 500 | Internal Server Error | Server error |
-| 503 | Service Unavailable | Service temporarily unavailable |
+| Code | Meaning               | Description                          |
+| ---- | --------------------- | ------------------------------------ |
+| 200  | OK                    | Request successful                   |
+| 201  | Created               | Resource created successfully        |
+| 204  | No Content            | Request successful, no response body |
+| 400  | Bad Request           | Invalid request data                 |
+| 401  | Unauthorized          | Authentication required or failed    |
+| 403  | Forbidden             | Insufficient permissions             |
+| 404  | Not Found             | Resource not found                   |
+| 409  | Conflict              | Resource already exists              |
+| 422  | Unprocessable Entity  | Validation failed                    |
+| 429  | Too Many Requests     | Rate limit exceeded                  |
+| 500  | Internal Server Error | Server error                         |
+| 503  | Service Unavailable   | Service temporarily unavailable      |
 
 ### Error Codes
 
-| Code | Description | Resolution |
-|------|-------------|------------|
-| `AUTH_INVALID_CREDENTIALS` | Email or password incorrect | Check credentials |
-| `AUTH_EMAIL_NOT_VERIFIED` | Email not verified | Verify email first |
-| `AUTH_ACCOUNT_LOCKED` | Too many failed attempts | Wait or contact support |
-| `AUTH_TOKEN_EXPIRED` | JWT token expired | Refresh token |
-| `AUTH_TOKEN_INVALID` | Invalid JWT token | Re-authenticate |
-| `RESOURCE_NOT_FOUND` | Resource doesn't exist | Check ID/slug |
-| `RESOURCE_ALREADY_EXISTS` | Duplicate resource | Use unique values |
-| `VALIDATION_FAILED` | Input validation failed | Check error details |
-| `PERMISSION_DENIED` | Insufficient permissions | Check user role |
-| `RATE_LIMIT_EXCEEDED` | Too many requests | Wait and retry |
-| `PAYMENT_FAILED` | Payment processing failed | Check payment details |
-| `QUOTA_EXCEEDED` | Ticket quota reached | No more availability |
+| Code                       | Description                 | Resolution              |
+| -------------------------- | --------------------------- | ----------------------- |
+| `AUTH_INVALID_CREDENTIALS` | Email or password incorrect | Check credentials       |
+| `AUTH_EMAIL_NOT_VERIFIED`  | Email not verified          | Verify email first      |
+| `AUTH_ACCOUNT_LOCKED`      | Too many failed attempts    | Wait or contact support |
+| `AUTH_TOKEN_EXPIRED`       | JWT token expired           | Refresh token           |
+| `AUTH_TOKEN_INVALID`       | Invalid JWT token           | Re-authenticate         |
+| `RESOURCE_NOT_FOUND`       | Resource doesn't exist      | Check ID/slug           |
+| `RESOURCE_ALREADY_EXISTS`  | Duplicate resource          | Use unique values       |
+| `VALIDATION_FAILED`        | Input validation failed     | Check error details     |
+| `PERMISSION_DENIED`        | Insufficient permissions    | Check user role         |
+| `RATE_LIMIT_EXCEEDED`      | Too many requests           | Wait and retry          |
+| `PAYMENT_FAILED`           | Payment processing failed   | Check payment details   |
+| `QUOTA_EXCEEDED`           | Ticket quota reached        | No more availability    |
 
 ### Validation Error Details
 
@@ -297,12 +303,12 @@ List endpoints support cursor-based pagination.
 
 ### Query Parameters
 
-| Parameter | Type | Default | Description |
-|-----------|------|---------|-------------|
-| `page` | number | 1 | Page number |
-| `limit` | number | 20 | Items per page (max: 100) |
-| `sortBy` | string | varies | Field to sort by |
-| `sortOrder` | string | asc | Sort order: asc, desc |
+| Parameter   | Type   | Default | Description               |
+| ----------- | ------ | ------- | ------------------------- |
+| `page`      | number | 1       | Page number               |
+| `limit`     | number | 20      | Items per page (max: 100) |
+| `sortBy`    | string | varies  | Field to sort by          |
+| `sortOrder` | string | asc     | Sort order: asc, desc     |
 
 ### Example Request
 
@@ -335,128 +341,128 @@ curl "https://api.festival-platform.com/api/festivals?page=2&limit=10&sortBy=sta
 
 ### Authentication
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/auth/register` | Register new user |
-| POST | `/auth/login` | Login with credentials |
-| POST | `/auth/logout` | Logout current session |
-| POST | `/auth/refresh` | Refresh access token |
-| GET | `/auth/me` | Get current user profile |
-| POST | `/auth/verify-email` | Verify email address |
-| POST | `/auth/forgot-password` | Request password reset |
-| POST | `/auth/reset-password` | Reset password with token |
-| POST | `/auth/change-password` | Change current password |
+| Method | Endpoint                | Description               |
+| ------ | ----------------------- | ------------------------- |
+| POST   | `/auth/register`        | Register new user         |
+| POST   | `/auth/login`           | Login with credentials    |
+| POST   | `/auth/logout`          | Logout current session    |
+| POST   | `/auth/refresh`         | Refresh access token      |
+| GET    | `/auth/me`              | Get current user profile  |
+| POST   | `/auth/verify-email`    | Verify email address      |
+| POST   | `/auth/forgot-password` | Request password reset    |
+| POST   | `/auth/reset-password`  | Reset password with token |
+| POST   | `/auth/change-password` | Change current password   |
 
 ### Users
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/users` | List users (admin) |
-| GET | `/users/:id` | Get user by ID |
-| PUT | `/users/:id` | Update user |
-| DELETE | `/users/:id` | Delete user |
-| POST | `/users/:id/ban` | Ban user (admin) |
-| POST | `/users/:id/unban` | Unban user (admin) |
+| Method | Endpoint           | Description        |
+| ------ | ------------------ | ------------------ |
+| GET    | `/users`           | List users (admin) |
+| GET    | `/users/:id`       | Get user by ID     |
+| PUT    | `/users/:id`       | Update user        |
+| DELETE | `/users/:id`       | Delete user        |
+| POST   | `/users/:id/ban`   | Ban user (admin)   |
+| POST   | `/users/:id/unban` | Unban user (admin) |
 
 ### Festivals
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/festivals` | List festivals |
-| POST | `/festivals` | Create festival |
-| GET | `/festivals/:id` | Get festival by ID |
-| GET | `/festivals/by-slug/:slug` | Get festival by slug |
-| PUT | `/festivals/:id` | Update festival |
-| DELETE | `/festivals/:id` | Delete festival |
-| GET | `/festivals/:id/stats` | Get festival statistics |
-| POST | `/festivals/:id/publish` | Publish festival |
-| POST | `/festivals/:id/cancel` | Cancel festival |
+| Method | Endpoint                   | Description             |
+| ------ | -------------------------- | ----------------------- |
+| GET    | `/festivals`               | List festivals          |
+| POST   | `/festivals`               | Create festival         |
+| GET    | `/festivals/:id`           | Get festival by ID      |
+| GET    | `/festivals/by-slug/:slug` | Get festival by slug    |
+| PUT    | `/festivals/:id`           | Update festival         |
+| DELETE | `/festivals/:id`           | Delete festival         |
+| GET    | `/festivals/:id/stats`     | Get festival statistics |
+| POST   | `/festivals/:id/publish`   | Publish festival        |
+| POST   | `/festivals/:id/cancel`    | Cancel festival         |
 
 ### Tickets
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/tickets/categories` | List ticket categories |
-| POST | `/tickets/categories` | Create ticket category |
-| POST | `/tickets/purchase` | Purchase tickets |
-| GET | `/tickets/me` | Get my tickets |
-| GET | `/tickets/:id` | Get ticket details |
-| GET | `/tickets/:id/qr` | Get ticket QR code |
-| POST | `/tickets/:id/validate` | Validate ticket (scan) |
-| POST | `/tickets/:id/cancel` | Cancel/refund ticket |
+| Method | Endpoint                | Description            |
+| ------ | ----------------------- | ---------------------- |
+| GET    | `/tickets/categories`   | List ticket categories |
+| POST   | `/tickets/categories`   | Create ticket category |
+| POST   | `/tickets/purchase`     | Purchase tickets       |
+| GET    | `/tickets/me`           | Get my tickets         |
+| GET    | `/tickets/:id`          | Get ticket details     |
+| GET    | `/tickets/:id/qr`       | Get ticket QR code     |
+| POST   | `/tickets/:id/validate` | Validate ticket (scan) |
+| POST   | `/tickets/:id/cancel`   | Cancel/refund ticket   |
 
 ### Payments
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| POST | `/payments/create-session` | Create Stripe session |
-| GET | `/payments/:id` | Get payment details |
-| GET | `/payments/me` | Get my payments |
-| POST | `/payments/:id/refund` | Request refund |
-| POST | `/webhooks/stripe` | Stripe webhook handler |
+| Method | Endpoint                   | Description            |
+| ------ | -------------------------- | ---------------------- |
+| POST   | `/payments/create-session` | Create Stripe session  |
+| GET    | `/payments/:id`            | Get payment details    |
+| GET    | `/payments/me`             | Get my payments        |
+| POST   | `/payments/:id/refund`     | Request refund         |
+| POST   | `/webhooks/stripe`         | Stripe webhook handler |
 
 ### Cashless
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/cashless/account` | Get my cashless account |
-| POST | `/cashless/topup` | Top up balance |
-| POST | `/cashless/pay` | Make cashless payment |
-| GET | `/cashless/transactions` | Get transactions |
-| POST | `/cashless/transfer` | Transfer to another user |
-| POST | `/cashless/link-nfc` | Link NFC tag/bracelet |
+| Method | Endpoint                 | Description              |
+| ------ | ------------------------ | ------------------------ |
+| GET    | `/cashless/account`      | Get my cashless account  |
+| POST   | `/cashless/topup`        | Top up balance           |
+| POST   | `/cashless/pay`          | Make cashless payment    |
+| GET    | `/cashless/transactions` | Get transactions         |
+| POST   | `/cashless/transfer`     | Transfer to another user |
+| POST   | `/cashless/link-nfc`     | Link NFC tag/bracelet    |
 
 ### Zones & Access Control
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/zones` | List zones |
-| POST | `/zones` | Create zone |
-| GET | `/zones/:id` | Get zone details |
-| PUT | `/zones/:id` | Update zone |
-| POST | `/zones/:id/scan` | Scan entry/exit |
-| GET | `/zones/:id/count` | Get current occupancy |
+| Method | Endpoint           | Description           |
+| ------ | ------------------ | --------------------- |
+| GET    | `/zones`           | List zones            |
+| POST   | `/zones`           | Create zone           |
+| GET    | `/zones/:id`       | Get zone details      |
+| PUT    | `/zones/:id`       | Update zone           |
+| POST   | `/zones/:id/scan`  | Scan entry/exit       |
+| GET    | `/zones/:id/count` | Get current occupancy |
 
 ### Staff
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/staff` | List staff members |
-| POST | `/staff` | Add staff member |
-| GET | `/staff/shifts` | Get shift schedule |
-| POST | `/staff/shifts` | Create shift |
-| POST | `/staff/checkin` | Staff check-in |
-| POST | `/staff/checkout` | Staff check-out |
+| Method | Endpoint          | Description        |
+| ------ | ----------------- | ------------------ |
+| GET    | `/staff`          | List staff members |
+| POST   | `/staff`          | Add staff member   |
+| GET    | `/staff/shifts`   | Get shift schedule |
+| POST   | `/staff/shifts`   | Create shift       |
+| POST   | `/staff/checkin`  | Staff check-in     |
+| POST   | `/staff/checkout` | Staff check-out    |
 
 ### Program (Artists & Performances)
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/program/artists` | List artists |
-| GET | `/program/stages` | List stages |
-| GET | `/program/schedule` | Get full schedule |
-| GET | `/program/schedule/:day` | Get schedule for day |
-| POST | `/program/favorites` | Add to favorites |
-| GET | `/program/favorites` | Get my favorites |
+| Method | Endpoint                 | Description          |
+| ------ | ------------------------ | -------------------- |
+| GET    | `/program/artists`       | List artists         |
+| GET    | `/program/stages`        | List stages          |
+| GET    | `/program/schedule`      | Get full schedule    |
+| GET    | `/program/schedule/:day` | Get schedule for day |
+| POST   | `/program/favorites`     | Add to favorites     |
+| GET    | `/program/favorites`     | Get my favorites     |
 
 ### Notifications
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/notifications` | Get my notifications |
-| PUT | `/notifications/:id/read` | Mark as read |
-| POST | `/notifications/settings` | Update preferences |
-| POST | `/notifications/register-device` | Register push token |
+| Method | Endpoint                         | Description          |
+| ------ | -------------------------------- | -------------------- |
+| GET    | `/notifications`                 | Get my notifications |
+| PUT    | `/notifications/:id/read`        | Mark as read         |
+| POST   | `/notifications/settings`        | Update preferences   |
+| POST   | `/notifications/register-device` | Register push token  |
 
 ### Support
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/support/faq` | Get FAQ |
-| POST | `/support/tickets` | Create support ticket |
-| GET | `/support/tickets` | Get my tickets |
-| POST | `/support/tickets/:id/reply` | Reply to ticket |
-| POST | `/support/lost-items` | Report lost item |
+| Method | Endpoint                     | Description           |
+| ------ | ---------------------------- | --------------------- |
+| GET    | `/support/faq`               | Get FAQ               |
+| POST   | `/support/tickets`           | Create support ticket |
+| GET    | `/support/tickets`           | Get my tickets        |
+| POST   | `/support/tickets/:id/reply` | Reply to ticket       |
+| POST   | `/support/lost-items`        | Report lost item      |
 
 ---
 
@@ -489,7 +495,7 @@ async function login(email: string, password: string) {
 async function getFestivals(accessToken: string) {
   const response = await fetch(`${API_BASE}/festivals`, {
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
+      Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
   });
@@ -512,7 +518,7 @@ async function purchaseTickets(
   const response = await fetch(`${API_BASE}/tickets/purchase`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${accessToken}`,
+      Authorization: `Bearer ${accessToken}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({
@@ -648,6 +654,7 @@ curl -X POST https://api.festival-platform.com/api/cashless/topup \
 ### Official SDKs
 
 Coming soon:
+
 - JavaScript/TypeScript SDK
 - Python SDK
 - React Native SDK
@@ -670,6 +677,7 @@ If you've built an SDK, let us know and we'll list it here!
 ## Changelog
 
 ### v1.0.0 (2025-01-02)
+
 - Initial API release
 - Authentication with JWT
 - Festival management

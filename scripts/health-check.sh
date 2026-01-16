@@ -43,7 +43,7 @@ API_URLS[staging]="https://api-staging.festival.app"
 API_URLS[production]="https://api.festival.app"
 
 declare -A WEB_URLS
-WEB_URLS[local]="http://localhost:4200"
+WEB_URLS[local]="http://localhost:4201"
 WEB_URLS[staging]="https://staging.festival.app"
 WEB_URLS[production]="https://festival.app"
 

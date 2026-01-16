@@ -39,7 +39,7 @@ const mockZones: Zone[] = [
   {
     id: '1',
     name: 'Entree Principale',
-    description: 'Point d\'entree principal du festival',
+    description: "Point d'entree principal du festival",
     type: 'entrance',
     festivalId: '1',
     festivalName: 'Summer Beats Festival',
@@ -100,7 +100,7 @@ const mockZones: Zone[] = [
     festivalId: '1',
     festivalName: 'Summer Beats Festival',
     capacity: 5000,
-    currentOccupancy: 4200,
+    currentOccupancy: 4201,
     accessLevel: 'ticket',
     checkpoints: 2,
     status: 'active',
@@ -169,9 +169,8 @@ export default function ZonesPage() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [zoneToDelete, setZoneToDelete] = useState<Zone | null>(null);
 
-  const filteredZones = typeFilter === 'all'
-    ? mockZones
-    : mockZones.filter((z) => z.type === typeFilter);
+  const filteredZones =
+    typeFilter === 'all' ? mockZones : mockZones.filter((z) => z.type === typeFilter);
 
   const typeLabels: Record<string, string> = {
     entrance: 'Entree',
@@ -237,12 +236,10 @@ export default function ZonesPage() {
     },
     {
       key: 'accessLevel',
-      label: 'Niveau d\'acces',
+      label: "Niveau d'acces",
       sortable: true,
       render: (value) => (
-        <span className="text-sm text-gray-600">
-          {accessLevelLabels[value as string]}
-        </span>
+        <span className="text-sm text-gray-600">{accessLevelLabels[value as string]}</span>
       ),
     },
     {
@@ -261,7 +258,11 @@ export default function ZonesPage() {
               <div
                 className={cn(
                   'h-2 rounded-full transition-all',
-                  percentage >= 90 ? 'bg-red-500' : percentage >= 70 ? 'bg-yellow-500' : 'bg-green-500'
+                  percentage >= 90
+                    ? 'bg-red-500'
+                    : percentage >= 70
+                      ? 'bg-yellow-500'
+                      : 'bg-green-500'
                 )}
                 style={{ width: `${Math.min(percentage, 100)}%` }}
               />
@@ -274,9 +275,7 @@ export default function ZonesPage() {
       key: 'checkpoints',
       label: 'Checkpoints',
       sortable: true,
-      render: (value) => (
-        <span className="text-gray-600">{value as number}</span>
-      ),
+      render: (value) => <span className="text-gray-600">{value as number}</span>,
     },
     {
       key: 'status',
@@ -327,10 +326,7 @@ export default function ZonesPage() {
       label: 'Action',
       sortable: true,
       render: (value) => (
-        <span className={cn(
-          'badge',
-          value === 'entry' ? 'badge-success' : 'badge-info'
-        )}>
+        <span className={cn('badge', value === 'entry' ? 'badge-success' : 'badge-info')}>
           {value === 'entry' ? 'Entree' : 'Sortie'}
         </span>
       ),
@@ -456,7 +452,9 @@ export default function ZonesPage() {
               >
                 <option value="all">Tous les types</option>
                 {Object.entries(typeLabels).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
                 ))}
               </select>
             </div>
@@ -481,8 +479,18 @@ export default function ZonesPage() {
                   }}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                  <svg
+                    className="w-4 h-4 text-gray-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                    />
                   </svg>
                 </button>
                 <button
@@ -492,8 +500,18 @@ export default function ZonesPage() {
                   }}
                   className="p-2 hover:bg-red-50 rounded-lg transition-colors"
                 >
-                  <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  <svg
+                    className="w-4 h-4 text-red-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                    />
                   </svg>
                 </button>
               </div>
@@ -521,8 +539,18 @@ export default function ZonesPage() {
                 onClick={() => setShowZoneModal(false)}
                 className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg
+                  className="w-5 h-5 text-gray-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -550,15 +578,22 @@ export default function ZonesPage() {
                   <label className="form-label">Type</label>
                   <select className="input-field" defaultValue={selectedZone?.type || 'entrance'}>
                     {Object.entries(typeLabels).map(([value, label]) => (
-                      <option key={value} value={value}>{label}</option>
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
                     ))}
                   </select>
                 </div>
                 <div>
                   <label className="form-label">Niveau d'acces</label>
-                  <select className="input-field" defaultValue={selectedZone?.accessLevel || 'ticket'}>
+                  <select
+                    className="input-field"
+                    defaultValue={selectedZone?.accessLevel || 'ticket'}
+                  >
                     {Object.entries(accessLevelLabels).map(([value, label]) => (
-                      <option key={value} value={value}>{label}</option>
+                      <option key={value} value={value}>
+                        {label}
+                      </option>
                     ))}
                   </select>
                 </div>
@@ -592,15 +627,10 @@ export default function ZonesPage() {
               </div>
             </form>
             <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
-              <button
-                onClick={() => setShowZoneModal(false)}
-                className="btn-secondary"
-              >
+              <button onClick={() => setShowZoneModal(false)} className="btn-secondary">
                 Annuler
               </button>
-              <button className="btn-primary">
-                {selectedZone ? 'Enregistrer' : 'Creer'}
-              </button>
+              <button className="btn-primary">{selectedZone ? 'Enregistrer' : 'Creer'}</button>
             </div>
           </div>
         </div>
