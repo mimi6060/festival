@@ -1,0 +1,70 @@
+# ============================================
+# Kind Cluster Configuration
+# ============================================
+# Creates a local Kubernetes cluster for development
+# Usage: kind create cluster --config=k8s/kind-config.yaml --name festival
+# ============================================
+
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+
+# Cluster name (can be overridden via --name flag)
+name: festival
+
+# Node configuration
+nodes:
+  # Control plane node
+  - role: control-plane
+    kubeadmConfigPatches:
+      - |
+        kind: InitConfiguration
+        nodeRegistration:
+          kubeletExtraArgs:
+            node-labels: "ingress-ready=true"
+    extraPortMappings:
+      # API
+      - containerPort: 30333
+        hostPort: 3333
+        protocol: TCP
+      # Web
+      - containerPort: 30000
+        hostPort: 3000
+        protocol: TCP
+      # Admin
+      - containerPort: 30201
+        hostPort: 4201
+        protocol: TCP
+      # PostgreSQL
+      - containerPort: 30432
+        hostPort: 5432
+        protocol: TCP
+      # Redis
+      - containerPort: 30379
+        hostPort: 6379
+        protocol: TCP
+      # HTTP Ingress
+      - containerPort: 80
+        hostPort: 80
+        protocol: TCP
+      # HTTPS Ingress
+      - containerPort: 443
+        hostPort: 443
+        protocol: TCP
+
+  # Worker node (optional, comment out for lighter setup)
+  - role: worker
+
+# Networking configuration
+networking:
+  # Use default CNI (kindnet)
+  disableDefaultCNI: false
+  # Pod subnet
+  podSubnet: "10.244.0.0/16"
+  # Service subnet
+  serviceSubnet: "10.96.0.0/12"
+
+# Container registry configuration for local development
+containerdConfigPatches:
+  - |-
+    [plugins."io.containerd.grpc.v1.cri".registry.mirrors."localhost:5000"]
+      endpoint = ["http://localhost:5000"]
