@@ -10,19 +10,23 @@ export default [
   {
     ignores: [
       '**/dist',
+      '**/dist/**',
       '**/out-tsc',
       '**/vite.config.*.timestamp*',
       '**/next-env.d.ts',
+      '**/*.d.ts',
       '.storybook/**',
       'stories/**',
       '**/webpack.config.js',
       '**/__mocks__/**',
       '**/.next/**',
+      '**/.next',
       '**/eslint.config.mjs',
       'libs/**/eslint.config.mjs',
-      // Ignore Next.js generated types
-      'apps/web/next-env.d.ts',
-      'apps/admin/next-env.d.ts',
+      // Ignore Next.js generated files completely
+      'apps/web/.next/**',
+      'apps/admin/.next/**',
+      'dist/apps/**',
     ],
   },
   {

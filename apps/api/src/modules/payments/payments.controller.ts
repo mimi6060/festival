@@ -73,6 +73,15 @@ import {
   InvoiceResponseDto,
 } from './dto/subscription.dto';
 import { CreateRefundDto, PartialRefundDto, BulkRefundDto } from './dto/refund.dto';
+import type { Request } from 'express';
+
+interface AuthenticatedRequest extends Request {
+  user: { id: string; role: UserRole };
+}
+
+interface RawBodyRequest extends Request {
+  rawBody?: Buffer;
+}
 
 @ApiTags('Payments')
 @Controller('payments')
@@ -223,10 +232,8 @@ export class PaymentsController {
     @Param('userId', ParseUUIDPipe) userId: string,
     @Query('limit') limit?: number,
     @Query('offset') offset?: number,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    @Req() req: any
+    @Req() req: AuthenticatedRequest
   ) {
-    // Authorization: user can only access their own payments, unless they are ADMIN
     const requestingUser = req.user;
     if (requestingUser.id !== userId && requestingUser.role !== UserRole.ADMIN) {
       throw new ForbiddenException('You can only access your own payment history');
@@ -638,10 +645,9 @@ export class PaymentsController {
   @ApiResponse({ status: 400, description: 'Invalid signature' })
   async handleWebhook(
     @Headers('stripe-signature') signature: string,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    @Req() req: any
+    @Req() req: RawBodyRequest
   ): Promise<void> {
-    const payload = req.rawBody as Buffer | undefined;
+    const payload = req.rawBody;
     if (!payload) {
       throw new Error('Raw body not available');
     }

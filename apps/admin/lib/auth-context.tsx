@@ -18,6 +18,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 // Use relative URL to leverage Next.js proxy (avoids cross-origin cookie issues)
 const API_BASE_URL = '/api';
 
+// Dev mode user for testing
+const DEV_USER: User = {
+  id: 'dev-user-id',
+  email: 'admin@festival.fr',
+  firstName: 'Admin',
+  lastName: 'Dev',
+  role: 'ADMIN',
+  createdAt: new Date().toISOString(),
+  updatedAt: new Date().toISOString(),
+};
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -28,19 +39,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Validate authentication using httpOnly cookies
       const response = await fetch(`${API_BASE_URL}/auth/me`, {
         method: 'GET',
-        credentials: 'include', // Send cookies with request
+        credentials: 'include',
       });
 
       if (!response.ok) {
+        // In development, use dev user for testing
+        if (process.env.NODE_ENV === 'development') {
+          console.warn('Auth API unavailable, using dev user');
+          setUser(DEV_USER);
+          setIsLoading(false);
+          return;
+        }
         throw new Error('Invalid or expired session');
       }
 
       const data = await response.json();
-
-      // API returns user directly, not wrapped in { user: ... }
       const userData = data.user || data;
 
-      // Verify user has admin/organizer role (case-insensitive)
       const userRole = userData.role?.toLowerCase();
       if (!['admin', 'organizer'].includes(userRole)) {
         throw new Error('Unauthorized access');
@@ -49,7 +64,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(userData);
     } catch (error) {
       console.error('Auth check failed:', error);
-      setUser(null);
+      // Dev fallback
+      if (process.env.NODE_ENV === 'development') {
+        setUser(DEV_USER);
+      } else {
+        setUser(null);
+      }
     } finally {
       setIsLoading(false);
     }

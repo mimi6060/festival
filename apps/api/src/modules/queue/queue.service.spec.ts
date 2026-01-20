@@ -14,6 +14,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import {
   QueueName,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   JobPriority,
   EmailJobData,
   NotificationJobData,
@@ -50,10 +51,7 @@ describe('QueueService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        QueueService,
-        { provide: ConfigService, useValue: mockConfigService },
-      ],
+      providers: [QueueService, { provide: ConfigService, useValue: mockConfigService }],
     }).compile();
 
     queueService = module.get<QueueService>(QueueService);
@@ -166,9 +164,7 @@ describe('QueueService', () => {
     it('should throw error when queue not initialized', async () => {
       // Don't call onModuleInit
       // Act & Assert
-      await expect(queueService.addEmailJob(emailJobData)).rejects.toThrow(
-        'Queue email not found',
-      );
+      await expect(queueService.addEmailJob(emailJobData)).rejects.toThrow('Queue email not found');
     });
   });
 
@@ -470,9 +466,9 @@ describe('QueueService', () => {
     it('should throw error for non-existent queue', async () => {
       // Don't call onModuleInit
       // Act & Assert
-      await expect(
-        queueService.getQueueStats('non-existent' as QueueName),
-      ).rejects.toThrow('Queue non-existent not found');
+      await expect(queueService.getQueueStats('non-existent' as QueueName)).rejects.toThrow(
+        'Queue non-existent not found'
+      );
     });
   });
 
@@ -524,9 +520,9 @@ describe('QueueService', () => {
 
     it('should throw error for non-existent queue', async () => {
       // Act & Assert
-      await expect(
-        queueService.pauseQueue('non-existent' as QueueName),
-      ).rejects.toThrow('Queue non-existent not found');
+      await expect(queueService.pauseQueue('non-existent' as QueueName)).rejects.toThrow(
+        'Queue non-existent not found'
+      );
     });
   });
 
@@ -541,9 +537,9 @@ describe('QueueService', () => {
 
     it('should throw error for non-existent queue', async () => {
       // Act & Assert
-      await expect(
-        queueService.resumeQueue('non-existent' as QueueName),
-      ).rejects.toThrow('Queue non-existent not found');
+      await expect(queueService.resumeQueue('non-existent' as QueueName)).rejects.toThrow(
+        'Queue non-existent not found'
+      );
     });
   });
 
@@ -558,9 +554,9 @@ describe('QueueService', () => {
 
     it('should throw error for non-existent queue', async () => {
       // Act & Assert
-      await expect(
-        queueService.clearQueue('non-existent' as QueueName),
-      ).rejects.toThrow('Queue non-existent not found');
+      await expect(queueService.clearQueue('non-existent' as QueueName)).rejects.toThrow(
+        'Queue non-existent not found'
+      );
     });
   });
 
@@ -582,9 +578,9 @@ describe('QueueService', () => {
 
     it('should throw error for non-existent queue', async () => {
       // Act & Assert
-      await expect(
-        queueService.retryFailedJobs('non-existent' as QueueName),
-      ).rejects.toThrow('Queue non-existent not found');
+      await expect(queueService.retryFailedJobs('non-existent' as QueueName)).rejects.toThrow(
+        'Queue non-existent not found'
+      );
     });
   });
 
@@ -602,9 +598,9 @@ describe('QueueService', () => {
 
     it('should throw error for non-existent queue', async () => {
       // Act & Assert
-      await expect(
-        queueService.getFailedJobs('non-existent' as QueueName),
-      ).rejects.toThrow('Queue non-existent not found');
+      await expect(queueService.getFailedJobs('non-existent' as QueueName)).rejects.toThrow(
+        'Queue non-existent not found'
+      );
     });
   });
 
@@ -623,9 +619,7 @@ describe('QueueService', () => {
       };
 
       // Act & Assert
-      await expect(queueService.addEmailJob(emailJobData)).rejects.toThrow(
-        'Queue email not found',
-      );
+      await expect(queueService.addEmailJob(emailJobData)).rejects.toThrow('Queue email not found');
     });
   });
 });

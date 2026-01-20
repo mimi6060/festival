@@ -18,8 +18,8 @@ import {
   ZonesGateway,
   ZoneOccupancy as _ZoneOccupancy,
   ZoneStatus as _ZoneStatus,
-  ZoneAlert,
-  StaffPosition,
+  ZoneAlert as _ZoneAlert,
+  StaffPosition as _StaffPosition,
 } from './zones.gateway';
 import { Server, Socket } from 'socket.io';
 
@@ -1000,7 +1000,7 @@ describe('ZonesGateway', () => {
       gateway.recordEntry(testFestivalId, testZoneId, testZoneName, 100);
 
       const alertsAfterFirst = gateway.handleGetAlerts({ festivalId: testFestivalId });
-      const initialAlertCount = alertsAfterFirst.alerts.length;
+      const _initialAlertCount = alertsAfterFirst.alerts.length;
 
       // Record more entries (same alert type should not be duplicated)
       gateway.recordEntry(testFestivalId, testZoneId, testZoneName, 100);

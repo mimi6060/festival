@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { colors, spacing, borderRadius, typography } from '../../theme';
 
@@ -7,7 +7,9 @@ const QRPlaceholder = memo(({ value, size }: { value: string; size: number }) =>
   <View style={[placeholderStyles.qrPlaceholder, { width: size, height: size }]}>
     <Text style={placeholderStyles.qrIcon}>📱</Text>
     <Text style={placeholderStyles.qrText}>QR Code</Text>
-    <Text style={placeholderStyles.qrValue} numberOfLines={2}>{value}</Text>
+    <Text style={placeholderStyles.qrValue} numberOfLines={2}>
+      {value}
+    </Text>
   </View>
 ));
 
@@ -70,42 +72,36 @@ interface QRCodeDisplayProps {
 }
 
 // Memoized QRCodeDisplay component for optimized re-renders
-export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = memo(({
-  value,
-  size = 200,
-  title,
-  subtitle,
-  showBorder = true,
-}) => {
-  // Memoize container style to prevent unnecessary recalculations
-  const containerStyle = useMemo(
-    () => [styles.qrContainer, showBorder && styles.qrBorder],
-    [showBorder]
-  );
+export const QRCodeDisplay: React.FC<QRCodeDisplayProps> = memo(
+  ({ value, size = 200, title, subtitle, showBorder = true }) => {
+    // Memoize container style to prevent unnecessary recalculations
+    const containerStyle = useMemo(
+      () => [styles.qrContainer, showBorder && styles.qrBorder],
+      [showBorder]
+    );
 
-  return (
-    <View style={styles.container}>
-      {title && <Text style={styles.title}>{title}</Text>}
-      {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
+    return (
+      <View style={styles.container}>
+        {title && <Text style={styles.title}>{title}</Text>}
+        {subtitle && <Text style={styles.subtitle}>{subtitle}</Text>}
 
-      <View style={containerStyle}>
-        <View style={styles.qrBackground}>
-          <QRCodeComponent value={value} size={size} />
+        <View style={containerStyle}>
+          <View style={styles.qrBackground}>
+            <QRCodeComponent value={value} size={size} />
+          </View>
+
+          {/* Corner decorations - static, no need to memoize */}
+          <View style={[styles.corner, styles.topLeft]} />
+          <View style={[styles.corner, styles.topRight]} />
+          <View style={[styles.corner, styles.bottomLeft]} />
+          <View style={[styles.corner, styles.bottomRight]} />
         </View>
 
-        {/* Corner decorations - static, no need to memoize */}
-        <View style={[styles.corner, styles.topLeft]} />
-        <View style={[styles.corner, styles.topRight]} />
-        <View style={[styles.corner, styles.bottomLeft]} />
-        <View style={[styles.corner, styles.bottomRight]} />
+        <Text style={styles.instruction}>Presentez ce code a l'entree</Text>
       </View>
-
-      <Text style={styles.instruction}>
-        Presentez ce code a l'entree
-      </Text>
-    </View>
-  );
-});
+    );
+  }
+);
 
 const cornerSize = 20;
 const cornerWidth = 3;

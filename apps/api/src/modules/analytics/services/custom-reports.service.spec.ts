@@ -175,7 +175,7 @@ describe('CustomReportsService', () => {
       const result = await service.getReports(festivalId);
 
       expect(result.length).toBe(2);
-      expect(result.every(r => r.festivalId === festivalId)).toBe(true);
+      expect(result.every((r) => r.festivalId === festivalId)).toBe(true);
     });
 
     it('should return empty array if no reports exist', async () => {
@@ -226,9 +226,9 @@ describe('CustomReportsService', () => {
     });
 
     it('should throw NotFoundException if report not found', async () => {
-      await expect(
-        service.updateReport('non-existent-id', { name: 'New Name' })
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.updateReport('non-existent-id', { name: 'New Name' })).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
@@ -272,9 +272,28 @@ describe('CustomReportsService', () => {
         festivalId,
         festivalName: 'Test Festival',
         generatedAt: new Date(),
-        ticketing: { totalSold: 100, totalAvailable: 900, soldPercentage: 10, revenueTickets: 10000, ticketsByType: [], salesTrend: [] },
-        revenue: { totalRevenue: 10000, ticketRevenue: 8000, cashlessRevenue: 1500, vendorRevenue: 500, currency: 'EUR' },
-        attendance: { currentAttendees: 50, maxCapacity: 1000, occupancyRate: 5, peakAttendance: 75, peakTime: null },
+        ticketing: {
+          totalSold: 100,
+          totalAvailable: 900,
+          soldPercentage: 10,
+          revenueTickets: 10000,
+          ticketsByType: [],
+          salesTrend: [],
+        },
+        revenue: {
+          totalRevenue: 10000,
+          ticketRevenue: 8000,
+          cashlessRevenue: 1500,
+          vendorRevenue: 500,
+          currency: 'EUR',
+        },
+        attendance: {
+          currentAttendees: 50,
+          maxCapacity: 1000,
+          occupancyRate: 5,
+          peakAttendance: 75,
+          peakTime: null,
+        },
         cashless: { totalTopups: 5000, totalSpent: 3000, averageBalance: 50, activeAccounts: 100 },
         conversion: { visitorsToCart: 0, cartToPurchase: 0, overallConversion: 0 },
       });
@@ -299,7 +318,12 @@ describe('CustomReportsService', () => {
       mockAnalyticsService.getSalesAnalytics!.mockResolvedValue({
         festivalId,
         period: { startDate, endDate },
-        summary: { totalSales: 100, totalRevenue: 10000, averageOrderValue: 100, uniqueCustomers: 90 },
+        summary: {
+          totalSales: 100,
+          totalRevenue: 10000,
+          averageOrderValue: 100,
+          uniqueCustomers: 90,
+        },
         salesByDay: [],
         salesByHour: [],
         salesByCategory: [],
@@ -308,7 +332,15 @@ describe('CustomReportsService', () => {
       mockAnalyticsService.getCashlessAnalytics!.mockResolvedValue({
         festivalId,
         period: { startDate, endDate },
-        summary: { totalTopups: 5000, totalPayments: 3000, totalTransfers: 500, totalRefunds: 200, averageTopup: 50, averageBalance: 25, activeAccounts: 100 },
+        summary: {
+          totalTopups: 5000,
+          totalPayments: 3000,
+          totalTransfers: 500,
+          totalRefunds: 200,
+          averageTopup: 50,
+          averageBalance: 25,
+          activeAccounts: 100,
+        },
         transactionsByHour: [],
         transactionsByType: [],
         topupDistribution: [],
@@ -336,7 +368,11 @@ describe('CustomReportsService', () => {
         reportName: 'Cached Report',
         generatedAt: new Date(),
         period: { startDate, endDate },
-        data: { dashboard: { /* mock data */ } },
+        data: {
+          dashboard: {
+            /* mock data */
+          },
+        },
       };
       mockCacheService.get.mockResolvedValue(cachedData);
 
@@ -391,12 +427,12 @@ describe('CustomReportsService', () => {
       });
 
       const timeRange = { startDate, endDate };
-      const result = await service.executeReport(created.id, timeRange);
+      const _result = await service.executeReport(created.id, timeRange);
 
       expect(mockAdvancedMetricsService.getRevenueMetrics).toHaveBeenCalledWith(
         festivalId,
         startDate,
-        endDate,
+        endDate
       );
     });
   });
@@ -430,7 +466,7 @@ describe('CustomReportsService', () => {
         festivalId,
         currentPeriod,
         comparisonPeriod,
-        ['totalSales', 'totalRevenue'],
+        ['totalSales', 'totalRevenue']
       );
 
       expect(result).toBeDefined();
@@ -445,7 +481,14 @@ describe('CustomReportsService', () => {
         currentPeriod,
         comparisonPeriod,
         metrics: [
-          { name: 'totalSales', current: 100, previous: 80, change: 20, changePercentage: 25, trend: 'up' },
+          {
+            name: 'totalSales',
+            current: 100,
+            previous: 80,
+            change: 20,
+            changePercentage: 25,
+            trend: 'up',
+          },
         ],
       };
       mockCacheService.get.mockResolvedValue(cachedData);
@@ -454,7 +497,7 @@ describe('CustomReportsService', () => {
         festivalId,
         currentPeriod,
         comparisonPeriod,
-        ['totalSales'],
+        ['totalSales']
       );
 
       expect(result).toEqual(cachedData);
@@ -464,16 +507,16 @@ describe('CustomReportsService', () => {
     it('should calculate trend direction correctly', async () => {
       mockPrismaService.ticket.count
         .mockResolvedValueOnce(100) // current
-        .mockResolvedValueOnce(80);  // previous
+        .mockResolvedValueOnce(80); // previous
 
       const result = await service.getComparisonAnalytics(
         festivalId,
         currentPeriod,
         comparisonPeriod,
-        ['totalSales'],
+        ['totalSales']
       );
 
-      const salesMetric = result.metrics.find(m => m.name === 'totalSales');
+      const salesMetric = result.metrics.find((m) => m.name === 'totalSales');
       expect(salesMetric?.trend).toBe('up');
       expect(salesMetric?.change).toBe(20);
       expect(salesMetric?.changePercentage).toBe(25);
@@ -488,10 +531,10 @@ describe('CustomReportsService', () => {
         festivalId,
         currentPeriod,
         comparisonPeriod,
-        ['totalSales'],
+        ['totalSales']
       );
 
-      const salesMetric = result.metrics.find(m => m.name === 'totalSales');
+      const salesMetric = result.metrics.find((m) => m.name === 'totalSales');
       expect(salesMetric?.trend).toBe('stable');
       expect(salesMetric?.change).toBe(0);
     });
@@ -499,16 +542,16 @@ describe('CustomReportsService', () => {
     it('should handle zero previous value gracefully', async () => {
       mockPrismaService.ticket.count
         .mockResolvedValueOnce(100) // current
-        .mockResolvedValueOnce(0);   // previous
+        .mockResolvedValueOnce(0); // previous
 
       const result = await service.getComparisonAnalytics(
         festivalId,
         currentPeriod,
         comparisonPeriod,
-        ['totalSales'],
+        ['totalSales']
       );
 
-      const salesMetric = result.metrics.find(m => m.name === 'totalSales');
+      const salesMetric = result.metrics.find((m) => m.name === 'totalSales');
       expect(salesMetric?.changePercentage).toBe(0);
     });
   });
@@ -541,9 +584,24 @@ describe('CustomReportsService', () => {
 
     it('should return ticket type cohorts', async () => {
       mockPrismaService.ticket.findMany.mockResolvedValue([
-        { userId: 'user1', createdAt: new Date('2024-07-01'), purchasePrice: createDecimal(100), category: { type: 'STANDARD' } },
-        { userId: 'user2', createdAt: new Date('2024-07-01'), purchasePrice: createDecimal(200), category: { type: 'VIP' } },
-        { userId: 'user3', createdAt: new Date('2024-07-02'), purchasePrice: createDecimal(100), category: { type: 'STANDARD' } },
+        {
+          userId: 'user1',
+          createdAt: new Date('2024-07-01'),
+          purchasePrice: createDecimal(100),
+          category: { type: 'STANDARD' },
+        },
+        {
+          userId: 'user2',
+          createdAt: new Date('2024-07-01'),
+          purchasePrice: createDecimal(200),
+          category: { type: 'VIP' },
+        },
+        {
+          userId: 'user3',
+          createdAt: new Date('2024-07-02'),
+          purchasePrice: createDecimal(100),
+          category: { type: 'STANDARD' },
+        },
       ]);
 
       const result = await service.getCohortAnalysis(festivalId, 'ticket_type', timeRange);
@@ -568,7 +626,13 @@ describe('CustomReportsService', () => {
       const cachedData = {
         cohortType: 'acquisition_date' as const,
         cohorts: [
-          { name: 'Week of 2024-07-01', size: 100, retention: [100], revenue: [10000], avgSpending: 100 },
+          {
+            name: 'Week of 2024-07-01',
+            size: 100,
+            retention: [100],
+            revenue: [10000],
+            avgSpending: 100,
+          },
         ],
         periods: ['2024-07-01'],
       };
@@ -643,7 +707,9 @@ describe('CustomReportsService', () => {
     });
 
     it('should throw BadRequestException for unknown funnel', async () => {
-      await expect(service.getFunnelAnalysis(festivalId, 'unknown')).rejects.toThrow(BadRequestException);
+      await expect(service.getFunnelAnalysis(festivalId, 'unknown')).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should return cached data if available', async () => {
@@ -747,9 +813,11 @@ describe('CustomReportsService', () => {
     });
 
     it('should identify possible causes for anomalies', async () => {
-      const salesData = Array(20).fill(null).map((_, i) => ({
-        createdAt: new Date(`2024-07-01T${String(i % 24).padStart(2, '0')}:00:00Z`),
-      }));
+      const salesData = Array(20)
+        .fill(null)
+        .map((_, i) => ({
+          createdAt: new Date(`2024-07-01T${String(i % 24).padStart(2, '0')}:00:00Z`),
+        }));
       // Add spike
       for (let i = 0; i < 50; i++) {
         salesData.push({ createdAt: new Date('2024-07-01T14:00:00Z') });
@@ -824,7 +892,7 @@ describe('CustomReportsService', () => {
 
       const result = await service.getBenchmarks(festivalId);
 
-      const sellOutBenchmark = result.find(b => b.metric === 'Sell-out Rate');
+      const sellOutBenchmark = result.find((b) => b.metric === 'Sell-out Rate');
       expect(sellOutBenchmark?.percentile).toBeGreaterThanOrEqual(0);
       expect(sellOutBenchmark?.percentile).toBeLessThanOrEqual(100);
     });
@@ -842,7 +910,7 @@ describe('CustomReportsService', () => {
 
       const result = await service.getBenchmarks(festivalId);
 
-      const priceBenchmark = result.find(b => b.metric === 'Average Ticket Price');
+      const priceBenchmark = result.find((b) => b.metric === 'Average Ticket Price');
       if (priceBenchmark && priceBenchmark.festivalValue < priceBenchmark.industryAverage) {
         expect(priceBenchmark.recommendation).toBeDefined();
       }

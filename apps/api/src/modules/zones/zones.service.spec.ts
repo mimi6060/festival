@@ -11,32 +11,24 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ZonesService, AuthenticatedUser } from './zones.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import {
-  TicketType,
-  TicketStatus,
-  UserRole,
-  ZoneAccessAction,
-} from '@prisma/client';
-import {
-  NotFoundException,
-  BadRequestException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { TicketType, TicketStatus, UserRole, ZoneAccessAction } from '@prisma/client';
+import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import {
   regularUser,
   adminUser,
   organizerUser,
   staffUser,
-} from '../../test/fixtures';
-import {
   publishedFestival,
   vipLounge,
   mainStageZone,
   backstageArea,
-  vipCategory,
-  standardCategory,
+  vipCategory as _vipCategory,
+  standardCategory as _standardCategory,
+  soldTicket,
+  usedTicket,
+  vipTicket,
+  cancelledTicket,
 } from '../../test/fixtures';
-import { soldTicket, usedTicket, vipTicket, cancelledTicket } from '../../test/fixtures';
 
 // ============================================================================
 // Mock Setup
@@ -98,10 +90,7 @@ describe('ZonesService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        ZonesService,
-        { provide: PrismaService, useValue: mockPrismaService },
-      ],
+      providers: [ZonesService, { provide: PrismaService, useValue: mockPrismaService }],
     }).compile();
 
     zonesService = module.get<ZonesService>(ZonesService);
@@ -240,8 +229,24 @@ describe('ZonesService', () => {
     it('should return all zones for a festival', async () => {
       // Arrange
       const zones = [
-        { ...mainStageZone, festival: { id: publishedFestival.id, name: publishedFestival.name, organizerId: organizerUser.id }, _count: { accessLogs: 100 } },
-        { ...vipLounge, festival: { id: publishedFestival.id, name: publishedFestival.name, organizerId: organizerUser.id }, _count: { accessLogs: 50 } },
+        {
+          ...mainStageZone,
+          festival: {
+            id: publishedFestival.id,
+            name: publishedFestival.name,
+            organizerId: organizerUser.id,
+          },
+          _count: { accessLogs: 100 },
+        },
+        {
+          ...vipLounge,
+          festival: {
+            id: publishedFestival.id,
+            name: publishedFestival.name,
+            organizerId: organizerUser.id,
+          },
+          _count: { accessLogs: 50 },
+        },
       ];
       mockPrismaService.festival.findUnique.mockResolvedValue(publishedFestival);
       mockPrismaService.zone.findMany.mockResolvedValue(zones);
@@ -264,9 +269,9 @@ describe('ZonesService', () => {
       mockPrismaService.festival.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        zonesService.findAllByFestival('non-existent-festival')
-      ).rejects.toThrow(NotFoundException);
+      await expect(zonesService.findAllByFestival('non-existent-festival')).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should return empty array if no zones exist', async () => {
@@ -291,7 +296,11 @@ describe('ZonesService', () => {
       // Arrange
       const zoneWithRelations = {
         ...vipLounge,
-        festival: { id: publishedFestival.id, name: publishedFestival.name, organizerId: organizerUser.id },
+        festival: {
+          id: publishedFestival.id,
+          name: publishedFestival.name,
+          organizerId: organizerUser.id,
+        },
         _count: { accessLogs: 50 },
       };
       mockPrismaService.zone.findUnique.mockResolvedValue(zoneWithRelations);
@@ -309,9 +318,7 @@ describe('ZonesService', () => {
       mockPrismaService.zone.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(zonesService.findOne('non-existent-zone')).rejects.toThrow(
-        NotFoundException
-      );
+      await expect(zonesService.findOne('non-existent-zone')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -329,7 +336,11 @@ describe('ZonesService', () => {
       // Arrange
       const zoneWithRelations = {
         ...vipLounge,
-        festival: { id: publishedFestival.id, name: publishedFestival.name, organizerId: mockOrganizerUser.id },
+        festival: {
+          id: publishedFestival.id,
+          name: publishedFestival.name,
+          organizerId: mockOrganizerUser.id,
+        },
         _count: { accessLogs: 50 },
       };
       mockPrismaService.zone.findUnique.mockResolvedValue(zoneWithRelations);
@@ -350,7 +361,11 @@ describe('ZonesService', () => {
       // Arrange
       const zoneWithRelations = {
         ...vipLounge,
-        festival: { id: publishedFestival.id, name: publishedFestival.name, organizerId: 'different-organizer' },
+        festival: {
+          id: publishedFestival.id,
+          name: publishedFestival.name,
+          organizerId: 'different-organizer',
+        },
         _count: { accessLogs: 50 },
       };
       mockPrismaService.zone.findUnique.mockResolvedValue(zoneWithRelations);
@@ -370,7 +385,11 @@ describe('ZonesService', () => {
       // Arrange
       const zoneWithRelations = {
         ...vipLounge,
-        festival: { id: publishedFestival.id, name: publishedFestival.name, organizerId: 'different-organizer' },
+        festival: {
+          id: publishedFestival.id,
+          name: publishedFestival.name,
+          organizerId: 'different-organizer',
+        },
         _count: { accessLogs: 50 },
       };
       mockPrismaService.zone.findUnique.mockResolvedValue(zoneWithRelations);
@@ -396,7 +415,11 @@ describe('ZonesService', () => {
       const partialUpdate = { isActive: false };
       const zoneWithRelations = {
         ...vipLounge,
-        festival: { id: publishedFestival.id, name: publishedFestival.name, organizerId: mockOrganizerUser.id },
+        festival: {
+          id: publishedFestival.id,
+          name: publishedFestival.name,
+          organizerId: mockOrganizerUser.id,
+        },
         _count: { accessLogs: 50 },
       };
       mockPrismaService.zone.findUnique.mockResolvedValue(zoneWithRelations);
@@ -427,7 +450,11 @@ describe('ZonesService', () => {
       // Arrange
       const zoneWithRelations = {
         ...vipLounge,
-        festival: { id: publishedFestival.id, name: publishedFestival.name, organizerId: mockOrganizerUser.id },
+        festival: {
+          id: publishedFestival.id,
+          name: publishedFestival.name,
+          organizerId: mockOrganizerUser.id,
+        },
         _count: { accessLogs: 50 },
       };
       mockPrismaService.zone.findUnique.mockResolvedValue(zoneWithRelations);
@@ -446,7 +473,11 @@ describe('ZonesService', () => {
       // Arrange
       const zoneWithRelations = {
         ...vipLounge,
-        festival: { id: publishedFestival.id, name: publishedFestival.name, organizerId: 'different-organizer' },
+        festival: {
+          id: publishedFestival.id,
+          name: publishedFestival.name,
+          organizerId: 'different-organizer',
+        },
         _count: { accessLogs: 50 },
       };
       mockPrismaService.zone.findUnique.mockResolvedValue(zoneWithRelations);
@@ -463,15 +494,19 @@ describe('ZonesService', () => {
       // Arrange
       const zoneWithRelations = {
         ...vipLounge,
-        festival: { id: publishedFestival.id, name: publishedFestival.name, organizerId: 'different-organizer' },
+        festival: {
+          id: publishedFestival.id,
+          name: publishedFestival.name,
+          organizerId: 'different-organizer',
+        },
         _count: { accessLogs: 50 },
       };
       mockPrismaService.zone.findUnique.mockResolvedValue(zoneWithRelations);
 
       // Act & Assert
-      await expect(
-        zonesService.remove(vipLounge.id, mockRegularUser)
-      ).rejects.toThrow(ForbiddenException);
+      await expect(zonesService.remove(vipLounge.id, mockRegularUser)).rejects.toThrow(
+        ForbiddenException
+      );
     });
 
     it('should throw NotFoundException if zone does not exist', async () => {
@@ -479,9 +514,9 @@ describe('ZonesService', () => {
       mockPrismaService.zone.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        zonesService.remove('non-existent-zone', mockAdminUser)
-      ).rejects.toThrow(NotFoundException);
+      await expect(zonesService.remove('non-existent-zone', mockAdminUser)).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
@@ -586,7 +621,9 @@ describe('ZonesService', () => {
       });
 
       // Act
-      const result = await zonesService.checkAccess(nearCapacityZone.id, { ticketId: mockTicket.id });
+      const result = await zonesService.checkAccess(nearCapacityZone.id, {
+        ticketId: mockTicket.id,
+      });
 
       // Assert
       expect(result.granted).toBe(true);
@@ -607,7 +644,9 @@ describe('ZonesService', () => {
       mockPrismaService.ticket.findUnique.mockResolvedValue(cancelledTicketData);
 
       // Act
-      const result = await zonesService.checkAccess(mockZone.id, { ticketId: cancelledTicketData.id });
+      const result = await zonesService.checkAccess(mockZone.id, {
+        ticketId: cancelledTicketData.id,
+      });
 
       // Assert
       expect(result.granted).toBe(false);
@@ -624,7 +663,9 @@ describe('ZonesService', () => {
       mockPrismaService.ticket.findUnique.mockResolvedValue(differentFestivalTicket);
 
       // Act
-      const result = await zonesService.checkAccess(mockZone.id, { ticketId: differentFestivalTicket.id });
+      const result = await zonesService.checkAccess(mockZone.id, {
+        ticketId: differentFestivalTicket.id,
+      });
 
       // Assert
       expect(result.granted).toBe(false);
@@ -669,9 +710,7 @@ describe('ZonesService', () => {
       mockPrismaService.zone.findUnique.mockResolvedValue(mockZone);
 
       // Act & Assert
-      await expect(zonesService.checkAccess(mockZone.id, {})).rejects.toThrow(
-        BadRequestException
-      );
+      await expect(zonesService.checkAccess(mockZone.id, {})).rejects.toThrow(BadRequestException);
     });
 
     it('should throw NotFoundException if zone does not exist', async () => {
@@ -940,10 +979,10 @@ describe('ZonesService', () => {
       });
 
       // Act
-      const result = await zonesService.logAccess(
-        mockZone.id,
-        { qrCode: mockTicket.qrCode, action: ZoneAccessAction.ENTRY }
-      );
+      const result = await zonesService.logAccess(mockZone.id, {
+        qrCode: mockTicket.qrCode,
+        action: ZoneAccessAction.ENTRY,
+      });
 
       // Assert
       expect(result.log).toBeDefined();
@@ -955,10 +994,10 @@ describe('ZonesService', () => {
 
       // Act & Assert
       await expect(
-        zonesService.logAccess(
-          mockZone.id,
-          { qrCode: 'invalid-qr', action: ZoneAccessAction.ENTRY }
-        )
+        zonesService.logAccess(mockZone.id, {
+          qrCode: 'invalid-qr',
+          action: ZoneAccessAction.ENTRY,
+        })
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -1140,9 +1179,9 @@ describe('ZonesService', () => {
       mockPrismaService.zone.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        zonesService.getCapacityStatus('non-existent-zone')
-      ).rejects.toThrow(NotFoundException);
+      await expect(zonesService.getCapacityStatus('non-existent-zone')).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
@@ -1279,9 +1318,9 @@ describe('ZonesService', () => {
       mockPrismaService.zone.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        zonesService.getAccessLog('non-existent-zone')
-      ).rejects.toThrow(NotFoundException);
+      await expect(zonesService.getAccessLog('non-existent-zone')).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should apply default pagination when not provided', async () => {
@@ -1308,10 +1347,26 @@ describe('ZonesService', () => {
       // Arrange
       const zone = { ...vipLounge, currentOccupancy: 100, capacity: 1000 };
       const logs = [
-        { ticketId: 'ticket-1', action: ZoneAccessAction.ENTRY, timestamp: new Date('2024-07-15T10:00:00Z') },
-        { ticketId: 'ticket-2', action: ZoneAccessAction.ENTRY, timestamp: new Date('2024-07-15T11:00:00Z') },
-        { ticketId: 'ticket-1', action: ZoneAccessAction.EXIT, timestamp: new Date('2024-07-15T12:00:00Z') },
-        { ticketId: 'ticket-3', action: ZoneAccessAction.ENTRY, timestamp: new Date('2024-07-15T14:00:00Z') },
+        {
+          ticketId: 'ticket-1',
+          action: ZoneAccessAction.ENTRY,
+          timestamp: new Date('2024-07-15T10:00:00Z'),
+        },
+        {
+          ticketId: 'ticket-2',
+          action: ZoneAccessAction.ENTRY,
+          timestamp: new Date('2024-07-15T11:00:00Z'),
+        },
+        {
+          ticketId: 'ticket-1',
+          action: ZoneAccessAction.EXIT,
+          timestamp: new Date('2024-07-15T12:00:00Z'),
+        },
+        {
+          ticketId: 'ticket-3',
+          action: ZoneAccessAction.ENTRY,
+          timestamp: new Date('2024-07-15T14:00:00Z'),
+        },
       ];
 
       mockPrismaService.zone.findUnique.mockResolvedValue(zone);
@@ -1364,9 +1419,9 @@ describe('ZonesService', () => {
       mockPrismaService.zone.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        zonesService.getAccessStats('non-existent-zone')
-      ).rejects.toThrow(NotFoundException);
+      await expect(zonesService.getAccessStats('non-existent-zone')).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should calculate average stay duration correctly', async () => {
@@ -1374,10 +1429,26 @@ describe('ZonesService', () => {
       const zone = { ...vipLounge, currentOccupancy: 50, capacity: 1000 };
       // Two entries and two exits with 1 hour stay each
       const logs = [
-        { ticketId: 'ticket-1', action: ZoneAccessAction.ENTRY, timestamp: new Date('2024-07-15T10:00:00Z') },
-        { ticketId: 'ticket-1', action: ZoneAccessAction.EXIT, timestamp: new Date('2024-07-15T11:00:00Z') },
-        { ticketId: 'ticket-2', action: ZoneAccessAction.ENTRY, timestamp: new Date('2024-07-15T12:00:00Z') },
-        { ticketId: 'ticket-2', action: ZoneAccessAction.EXIT, timestamp: new Date('2024-07-15T13:00:00Z') },
+        {
+          ticketId: 'ticket-1',
+          action: ZoneAccessAction.ENTRY,
+          timestamp: new Date('2024-07-15T10:00:00Z'),
+        },
+        {
+          ticketId: 'ticket-1',
+          action: ZoneAccessAction.EXIT,
+          timestamp: new Date('2024-07-15T11:00:00Z'),
+        },
+        {
+          ticketId: 'ticket-2',
+          action: ZoneAccessAction.ENTRY,
+          timestamp: new Date('2024-07-15T12:00:00Z'),
+        },
+        {
+          ticketId: 'ticket-2',
+          action: ZoneAccessAction.EXIT,
+          timestamp: new Date('2024-07-15T13:00:00Z'),
+        },
       ];
 
       mockPrismaService.zone.findUnique.mockResolvedValue(zone);
@@ -1401,8 +1472,16 @@ describe('ZonesService', () => {
       // Arrange
       const zone = { ...vipLounge, currentOccupancy: 100, capacity: 1000 };
       const logs = [
-        { ticketId: 'ticket-1', action: ZoneAccessAction.ENTRY, timestamp: new Date('2024-07-15T10:00:00Z') },
-        { ticketId: 'ticket-2', action: ZoneAccessAction.ENTRY, timestamp: new Date('2024-07-15T11:00:00Z') },
+        {
+          ticketId: 'ticket-1',
+          action: ZoneAccessAction.ENTRY,
+          timestamp: new Date('2024-07-15T10:00:00Z'),
+        },
+        {
+          ticketId: 'ticket-2',
+          action: ZoneAccessAction.ENTRY,
+          timestamp: new Date('2024-07-15T11:00:00Z'),
+        },
       ];
 
       mockPrismaService.zone.findUnique.mockResolvedValue(zone);
@@ -1433,7 +1512,11 @@ describe('ZonesService', () => {
       const zoneWithRelations = {
         ...vipLounge,
         currentOccupancy: 500,
-        festival: { id: publishedFestival.id, name: publishedFestival.name, organizerId: organizerUser.id },
+        festival: {
+          id: publishedFestival.id,
+          name: publishedFestival.name,
+          organizerId: organizerUser.id,
+        },
         _count: { accessLogs: 1000 },
       };
       mockPrismaService.zone.findUnique.mockResolvedValue(zoneWithRelations);
@@ -1457,15 +1540,19 @@ describe('ZonesService', () => {
       // Arrange
       const zoneWithRelations = {
         ...vipLounge,
-        festival: { id: publishedFestival.id, name: publishedFestival.name, organizerId: organizerUser.id },
+        festival: {
+          id: publishedFestival.id,
+          name: publishedFestival.name,
+          organizerId: organizerUser.id,
+        },
         _count: { accessLogs: 500 },
       };
       mockPrismaService.zone.findUnique.mockResolvedValue(zoneWithRelations);
 
       // Act & Assert
-      await expect(
-        zonesService.resetOccupancy(vipLounge.id, mockOrganizerUser)
-      ).rejects.toThrow(ForbiddenException);
+      await expect(zonesService.resetOccupancy(vipLounge.id, mockOrganizerUser)).rejects.toThrow(
+        ForbiddenException
+      );
     });
 
     it('should throw NotFoundException if zone does not exist', async () => {
@@ -1473,9 +1560,9 @@ describe('ZonesService', () => {
       mockPrismaService.zone.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        zonesService.resetOccupancy('non-existent-zone', mockAdminUser)
-      ).rejects.toThrow(NotFoundException);
+      await expect(zonesService.resetOccupancy('non-existent-zone', mockAdminUser)).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
@@ -1487,7 +1574,11 @@ describe('ZonesService', () => {
     const zoneWithRelations = {
       ...vipLounge,
       currentOccupancy: 500,
-      festival: { id: publishedFestival.id, name: publishedFestival.name, organizerId: mockOrganizerUser.id },
+      festival: {
+        id: publishedFestival.id,
+        name: publishedFestival.name,
+        organizerId: mockOrganizerUser.id,
+      },
       _count: { accessLogs: 1000 },
     };
 
@@ -1526,9 +1617,9 @@ describe('ZonesService', () => {
       mockPrismaService.zone.findUnique.mockResolvedValue(zoneWithRelations);
 
       // Act & Assert
-      await expect(
-        zonesService.adjustOccupancy(vipLounge.id, 10, mockRegularUser)
-      ).rejects.toThrow(ForbiddenException);
+      await expect(zonesService.adjustOccupancy(vipLounge.id, 10, mockRegularUser)).rejects.toThrow(
+        ForbiddenException
+      );
     });
 
     it('should throw ForbiddenException if user is staff', async () => {
@@ -1536,9 +1627,9 @@ describe('ZonesService', () => {
       mockPrismaService.zone.findUnique.mockResolvedValue(zoneWithRelations);
 
       // Act & Assert
-      await expect(
-        zonesService.adjustOccupancy(vipLounge.id, 10, mockStaffUser)
-      ).rejects.toThrow(ForbiddenException);
+      await expect(zonesService.adjustOccupancy(vipLounge.id, 10, mockStaffUser)).rejects.toThrow(
+        ForbiddenException
+      );
     });
 
     it('should prevent negative occupancy', async () => {

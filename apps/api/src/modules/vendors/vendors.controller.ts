@@ -36,15 +36,7 @@ import {
   QueryExportDto,
 } from './dto';
 
-// Placeholder for auth decorators - will be integrated with auth module
-// import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-// import { RolesGuard } from '../auth/guards/roles.guard';
-// import { Roles } from '../auth/decorators/roles.decorator';
-// import { CurrentUser } from '../auth/decorators/current-user.decorator';
-
-// Temporary decorator for development
-// eslint-disable-next-line @typescript-eslint/no-empty-function
-const CurrentUser = () => (_target: object, _key: string, _index: number) => {};
+import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @ApiTags('Vendors')
 @Controller('vendors')

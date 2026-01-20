@@ -1,12 +1,5 @@
 import React, { useState, useMemo, useCallback, memo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  RefreshControl,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -16,10 +9,10 @@ import { offlineService } from '../../services';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { RootStackParamList, Transaction } from '../../types';
 
-// Constants for FlatList optimization
-const TRANSACTION_ITEM_HEIGHT = 80; // Approximate height of transaction item
-const GROUP_HEADER_HEIGHT = 24; // Height of date header
-const ITEM_SEPARATOR_HEIGHT = 8; // spacing.sm
+// Constants for FlatList optimization (prefixed with _ as they're reserved for future use)
+const _TRANSACTION_ITEM_HEIGHT = 80; // Approximate height of transaction item
+const _GROUP_HEADER_HEIGHT = 24; // Height of date header
+const _ITEM_SEPARATOR_HEIGHT = 8; // spacing.sm
 
 type TransactionsNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Transactions'>;
 
@@ -31,6 +24,40 @@ const filters: { key: FilterType; label: string }[] = [
   { key: 'purchase', label: 'Achats' },
   { key: 'refund', label: 'Remboursements' },
 ];
+
+// Memoized filter item component - defined OUTSIDE the main component
+interface FilterItemProps {
+  item: { key: FilterType; label: string };
+  isActive: boolean;
+  onPress: (key: FilterType) => void;
+}
+
+const FilterItem = memo<FilterItemProps>(({ item, isActive, onPress }) => (
+  <TouchableOpacity
+    style={[styles.filterButton, isActive && styles.filterButtonActive]}
+    onPress={() => onPress(item.key)}
+  >
+    <Text style={[styles.filterText, isActive && styles.filterTextActive]}>{item.label}</Text>
+  </TouchableOpacity>
+));
+
+FilterItem.displayName = 'FilterItem';
+
+// Memoized transaction group component - defined OUTSIDE the main component
+interface TransactionGroupProps {
+  group: { date: string; data: Transaction[] };
+}
+
+const TransactionGroup = memo<TransactionGroupProps>(({ group }) => (
+  <View style={styles.group}>
+    <Text style={styles.groupDate}>{group.date}</Text>
+    {group.data.map((transaction) => (
+      <TransactionItem key={transaction.id} transaction={transaction} />
+    ))}
+  </View>
+));
+
+TransactionGroup.displayName = 'TransactionGroup';
 
 // Mock transactions for demo
 const mockTransactions: Transaction[] = [
@@ -118,7 +145,9 @@ export const TransactionsScreen: React.FC = () => {
   const transactions = storeTransactions.length > 0 ? storeTransactions : mockTransactions;
 
   const filteredTransactions = useMemo(() => {
-    if (activeFilter === 'all') {return transactions;}
+    if (activeFilter === 'all') {
+      return transactions;
+    }
     return transactions.filter((t) => t.type === activeFilter);
   }, [transactions, activeFilter]);
 
@@ -155,72 +184,52 @@ export const TransactionsScreen: React.FC = () => {
     setActiveFilter(filterKey);
   }, []);
 
-  // Memoized filter item component
-  const FilterItem = memo(({ item, isActive, onPress }: {
-    item: { key: FilterType; label: string };
-    isActive: boolean;
-    onPress: (key: FilterType) => void;
-  }) => (
-    <TouchableOpacity
-      style={[
-        styles.filterButton,
-        isActive && styles.filterButtonActive,
-      ]}
-      onPress={() => onPress(item.key)}
-    >
-      <Text
-        style={[
-          styles.filterText,
-          isActive && styles.filterTextActive,
-        ]}
-      >
-        {item.label}
-      </Text>
-    </TouchableOpacity>
-  ));
+  // Render filter using the external memoized component
+  const renderFilter = useCallback(
+    ({ item }: { item: { key: FilterType; label: string } }) => (
+      <FilterItem item={item} isActive={activeFilter === item.key} onPress={handleFilterPress} />
+    ),
+    [activeFilter, handleFilterPress]
+  );
 
-  const renderFilter = useCallback(({ item }: { item: { key: FilterType; label: string } }) => (
-    <FilterItem
-      item={item}
-      isActive={activeFilter === item.key}
-      onPress={handleFilterPress}
-    />
-  ), [activeFilter, handleFilterPress]);
-
-  // Memoized transaction group component
-  const TransactionGroup = memo(({ group }: { group: { date: string; data: Transaction[] } }) => (
-    <View style={styles.group}>
-      <Text style={styles.groupDate}>{group.date}</Text>
-      {group.data.map((transaction) => (
-        <TransactionItem key={transaction.id} transaction={transaction} />
-      ))}
-    </View>
-  ));
+  // Render transaction group using the external memoized component
+  const renderTransactionGroup = useCallback(
+    ({ item: group }: { item: { date: string; data: Transaction[] } }) => (
+      <TransactionGroup group={group} />
+    ),
+    []
+  );
 
   // Stable key extractors
-  const filterKeyExtractor = useCallback((item: { key: FilterType; label: string }) => item.key, []);
-  const groupKeyExtractor = useCallback((item: { date: string; data: Transaction[] }) => item.date, []);
+  const filterKeyExtractor = useCallback(
+    (item: { key: FilterType; label: string }) => item.key,
+    []
+  );
+  const groupKeyExtractor = useCallback(
+    (item: { date: string; data: Transaction[] }) => item.date,
+    []
+  );
 
-  const renderEmptyState = useCallback(() => (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.emptyIcon}>📋</Text>
-      <Text style={styles.emptyTitle}>Aucune transaction</Text>
-      <Text style={styles.emptySubtitle}>
-        {activeFilter === 'all'
-          ? "Vous n'avez pas encore de transactions"
-          : `Aucune transaction de type ${filters.find((f) => f.key === activeFilter)?.label.toLowerCase()}`}
-      </Text>
-    </View>
-  ), [activeFilter]);
+  const renderEmptyState = useCallback(
+    () => (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyIcon}>📋</Text>
+        <Text style={styles.emptyTitle}>Aucune transaction</Text>
+        <Text style={styles.emptySubtitle}>
+          {activeFilter === 'all'
+            ? "Vous n'avez pas encore de transactions"
+            : `Aucune transaction de type ${filters.find((f) => f.key === activeFilter)?.label.toLowerCase()}`}
+        </Text>
+      </View>
+    ),
+    [activeFilter]
+  );
 
   return (
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Transactions</Text>
@@ -246,7 +255,7 @@ export const TransactionsScreen: React.FC = () => {
       <FlatList
         data={groupedTransactions}
         keyExtractor={groupKeyExtractor}
-        renderItem={({ item: group }) => <TransactionGroup group={group} />}
+        renderItem={renderTransactionGroup}
         contentContainerStyle={styles.listContent}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={renderEmptyState}

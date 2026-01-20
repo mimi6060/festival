@@ -74,9 +74,7 @@ export interface UseCachedDataResult<T> {
 /**
  * Generic cached data hook
  */
-export function useCachedData<T>(
-  options: UseCachedDataOptions<T>
-): UseCachedDataResult<T> {
+export function useCachedData<T>(options: UseCachedDataOptions<T>): UseCachedDataResult<T> {
   const {
     cacheKey,
     fetchFn,
@@ -113,99 +111,96 @@ export function useCachedData<T>(
   const cacheManager = getCacheManager();
 
   // Fetch data
-  const fetchData = useCallback(async (isRefresh = false): Promise<void> => {
-    if (skip) {return;}
+  const fetchData = useCallback(
+    async (isRefresh = false): Promise<void> => {
+      if (skip) {
+        return;
+      }
 
-    if (isRefresh) {
-      setIsRefreshing(true);
-    } else if (isFirstFetchRef.current) {
-      setIsLoading(true);
-    }
+      if (isRefresh) {
+        setIsRefreshing(true);
+      } else if (isFirstFetchRef.current) {
+        setIsLoading(true);
+      }
 
-    setError(null);
+      setError(null);
 
-    try {
-      const result: StrategyResult<T> = await executeStrategy<T>(
-        strategy,
-        async () => {
-          const freshData = await fetchFn();
-          return transform ? transform(freshData) : freshData;
-        },
-        {
-          cacheKey,
-          ttl,
-          priority,
-          tags,
-          onCacheHit: () => {
-            if (isMountedRef.current) {
-              setFromCache(true);
-            }
+      try {
+        const result: StrategyResult<T> = await executeStrategy<T>(
+          strategy,
+          async () => {
+            const freshData = await fetchFn();
+            return transform ? transform(freshData) : freshData;
           },
-          onCacheMiss: () => {
-            if (isMountedRef.current) {
-              setFromCache(false);
-            }
-          },
-          onBackgroundUpdate: (updatedData) => {
-            if (isMountedRef.current) {
-              setDataState(updatedData as T);
-              setLastUpdatedAt(Date.now());
-              onSuccess?.(updatedData as T);
-            }
-          },
-          onNetworkError: (err) => {
-            if (isMountedRef.current) {
-              setError(err);
-              onError?.(err);
-            }
-          },
-        }
-      );
+          {
+            cacheKey,
+            ttl,
+            priority,
+            tags,
+            onCacheHit: () => {
+              if (isMountedRef.current) {
+                setFromCache(true);
+              }
+            },
+            onCacheMiss: () => {
+              if (isMountedRef.current) {
+                setFromCache(false);
+              }
+            },
+            onBackgroundUpdate: (updatedData) => {
+              if (isMountedRef.current) {
+                setDataState(updatedData as T);
+                setLastUpdatedAt(Date.now());
+                onSuccess?.(updatedData as T);
+              }
+            },
+            onNetworkError: (err) => {
+              if (isMountedRef.current) {
+                setError(err);
+                onError?.(err);
+              }
+            },
+          }
+        );
 
-      if (!isMountedRef.current) {return;}
-
-      if (result.data !== null) {
-        setDataState(result.data);
-        setSource(result.source);
-        setFromCache(result.fromCache);
-        setIsStale(result.isStale);
-        setLastUpdatedAt(Date.now());
-
-        if (result.isStale) {
-          onStale?.();
+        if (!isMountedRef.current) {
+          return;
         }
 
-        onSuccess?.(result.data);
-      } else if (result.error) {
-        setError(result.error);
-        onError?.(result.error);
-      }
-    } catch (err) {
-      if (!isMountedRef.current) {return;}
+        if (result.data !== null) {
+          setDataState(result.data);
+          setSource(result.source);
+          setFromCache(result.fromCache);
+          setIsStale(result.isStale);
+          setLastUpdatedAt(Date.now());
 
-      const fetchError = err instanceof Error ? err : new Error('Failed to fetch data');
-      setError(fetchError);
-      onError?.(fetchError);
-    } finally {
-      if (isMountedRef.current) {
-        setIsLoading(false);
-        setIsRefreshing(false);
-        isFirstFetchRef.current = false;
+          if (result.isStale) {
+            onStale?.();
+          }
+
+          onSuccess?.(result.data);
+        } else if (result.error) {
+          setError(result.error);
+          onError?.(result.error);
+        }
+      } catch (err) {
+        if (!isMountedRef.current) {
+          return;
+        }
+
+        const fetchError = err instanceof Error ? err : new Error('Failed to fetch data');
+        setError(fetchError);
+        onError?.(fetchError);
+      } finally {
+        if (isMountedRef.current) {
+          setIsLoading(false);
+          setIsRefreshing(false);
+          isFirstFetchRef.current = false;
+        }
       }
-    }
-  }, [
-    skip,
-    strategy,
-    fetchFn,
-    transform,
-    cacheKey,
-    ttl,
-    priority,
-    tags,
-    onSuccess,
-    onError,
-    onStale,
-  ]);
+    },
+    [skip, strategy, fetchFn, transform, cacheKey, ttl, priority, tags, onSuccess, onError, onStale]
+  );
 
   // Refresh function
   const refresh = useCallback(async (): Promise<void> => {
@@ -223,21 +218,24 @@ export function useCachedData<T>(
   }, [cacheManager, cacheKey]);
 
   // Manually set data
-  const setData = useCallback(async (newData: T): Promise<void> => {
-    await cacheManager.set(cacheKey, newData, { ttl, priority, tags });
-    setDataState(newData);
-    setSource('cache');
-    setFromCache(true);
-    setIsStale(false);
-    setLastUpdatedAt(Date.now());
-  }, [cacheManager, cacheKey, ttl, priority, tags]);
+  const setData = useCallback(
+    async (newData: T): Promise<void> => {
+      await cacheManager.set(cacheKey, newData, { ttl, priority, tags });
+      setDataState(newData);
+      setSource('cache');
+      setFromCache(true);
+      setIsStale(false);
+      setLastUpdatedAt(Date.now());
+    },
+    [cacheManager, cacheKey, ttl, priority, tags]
+  );
 
   // Initial fetch
   useEffect(() => {
     if (fetchOnMount && !skip) {
       fetchData();
     }
-  }, [fetchOnMount, skip]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [fetchOnMount, skip]);
 
   // Polling
   useEffect(() => {
@@ -282,9 +280,7 @@ export function useCachedData<T>(
  * Hook to get cache statistics
  */
 export function useCacheStats(): CacheStatistics {
-  const [stats, setStats] = useState<CacheStatistics>(() =>
-    getCacheManager().getStatistics()
-  );
+  const [stats, setStats] = useState<CacheStatistics>(() => getCacheManager().getStatistics());
 
   useEffect(() => {
     const cacheManager = getCacheManager();
@@ -314,13 +310,19 @@ export function useCacheClear(): {
     await cacheManager.clear();
   }, [cacheManager]);
 
-  const clearByTag = useCallback(async (tag: string) => {
-    return cacheManager.deleteByTag(tag);
-  }, [cacheManager]);
+  const clearByTag = useCallback(
+    async (tag: string) => {
+      return cacheManager.deleteByTag(tag);
+    },
+    [cacheManager]
+  );
 
-  const clearByKey = useCallback(async (key: string) => {
-    return cacheManager.delete(key);
-  }, [cacheManager]);
+  const clearByKey = useCallback(
+    async (key: string) => {
+      return cacheManager.delete(key);
+    },
+    [cacheManager]
+  );
 
   return { clearAll, clearByTag, clearByKey };
 }

@@ -17,11 +17,7 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  NotFoundException,
-  BadRequestException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { SupportTicketController } from './support-ticket.controller';
 import { SupportTicketService } from '../services/support-ticket.service';
 import {
@@ -44,8 +40,8 @@ import {
   staffUser,
   adminUser,
   organizerUser,
+  publishedFestival,
 } from '../../../test/fixtures';
-import { publishedFestival } from '../../../test/fixtures';
 
 // ============================================================================
 // Mock Setup
@@ -190,9 +186,7 @@ describe('SupportTicketController', () => {
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [SupportTicketController],
-      providers: [
-        { provide: SupportTicketService, useValue: mockSupportTicketService },
-      ],
+      providers: [{ provide: SupportTicketService, useValue: mockSupportTicketService }],
     }).compile();
 
     controller = module.get<SupportTicketController>(SupportTicketController);
@@ -222,10 +216,7 @@ describe('SupportTicketController', () => {
       // Assert
       expect(result.subject).toBe(dto.subject);
       expect(result.priority).toBe(dto.priority);
-      expect(mockSupportTicketService.create).toHaveBeenCalledWith(
-        mockRegularUser.id,
-        dto,
-      );
+      expect(mockSupportTicketService.create).toHaveBeenCalledWith(mockRegularUser.id, dto);
     });
 
     it('should create ticket without festival ID', async () => {
@@ -290,7 +281,7 @@ describe('SupportTicketController', () => {
       expect(mockSupportTicketService.findAll).toHaveBeenCalledWith(
         query,
         mockRegularUser.id,
-        false,
+        false
       );
     });
 
@@ -318,14 +309,10 @@ describe('SupportTicketController', () => {
       });
 
       // Act
-      const result = await controller.findMyTickets(mockStaffUser, query);
+      const _result = await controller.findMyTickets(mockStaffUser, query);
 
       // Assert
-      expect(mockSupportTicketService.findAll).toHaveBeenCalledWith(
-        query,
-        mockStaffUser.id,
-        true,
-      );
+      expect(mockSupportTicketService.findAll).toHaveBeenCalledWith(query, mockStaffUser.id, true);
     });
 
     it('should paginate results', async () => {
@@ -337,13 +324,13 @@ describe('SupportTicketController', () => {
       });
 
       // Act
-      const result = await controller.findMyTickets(mockRegularUser, query);
+      const _result = await controller.findMyTickets(mockRegularUser, query);
 
       // Assert
       expect(mockSupportTicketService.findAll).toHaveBeenCalledWith(
         query,
         mockRegularUser.id,
-        false,
+        false
       );
     });
 
@@ -356,13 +343,13 @@ describe('SupportTicketController', () => {
       });
 
       // Act
-      const result = await controller.findMyTickets(mockRegularUser, query);
+      const _result = await controller.findMyTickets(mockRegularUser, query);
 
       // Assert
       expect(mockSupportTicketService.findAll).toHaveBeenCalledWith(
         query,
         mockRegularUser.id,
-        false,
+        false
       );
     });
   });
@@ -384,7 +371,7 @@ describe('SupportTicketController', () => {
       expect(mockSupportTicketService.findById).toHaveBeenCalledWith(
         mockTicket.id,
         mockRegularUser.id,
-        false,
+        false
       );
     });
 
@@ -393,13 +380,13 @@ describe('SupportTicketController', () => {
       mockSupportTicketService.findById.mockResolvedValue(mockTicket);
 
       // Act
-      const result = await controller.findById(mockStaffUser, mockTicket.id);
+      const _result = await controller.findById(mockStaffUser, mockTicket.id);
 
       // Assert
       expect(mockSupportTicketService.findById).toHaveBeenCalledWith(
         mockTicket.id,
         mockStaffUser.id,
-        true,
+        true
       );
     });
 
@@ -409,9 +396,9 @@ describe('SupportTicketController', () => {
       mockSupportTicketService.findById.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.findById(mockRegularUser, 'non-existent-id'),
-      ).rejects.toThrow('Ticket not found');
+      await expect(controller.findById(mockRegularUser, 'non-existent-id')).rejects.toThrow(
+        'Ticket not found'
+      );
     });
 
     it('should propagate ForbiddenException for access denied', async () => {
@@ -420,9 +407,9 @@ describe('SupportTicketController', () => {
       mockSupportTicketService.findById.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.findById(mockRegularUser, mockTicket.id),
-      ).rejects.toThrow('Access denied');
+      await expect(controller.findById(mockRegularUser, mockTicket.id)).rejects.toThrow(
+        'Access denied'
+      );
     });
   });
 
@@ -439,11 +426,7 @@ describe('SupportTicketController', () => {
       mockSupportTicketService.addMessage.mockResolvedValue(mockMessage);
 
       // Act
-      const result = await controller.addMessage(
-        mockRegularUser,
-        mockTicket.id,
-        dto,
-      );
+      const result = await controller.addMessage(mockRegularUser, mockTicket.id, dto);
 
       // Assert
       expect(result.message).toBe(mockMessage.message);
@@ -452,7 +435,7 @@ describe('SupportTicketController', () => {
         mockTicket.id,
         mockRegularUser.id,
         dto,
-        false,
+        false
       );
     });
 
@@ -464,11 +447,7 @@ describe('SupportTicketController', () => {
       mockSupportTicketService.addMessage.mockResolvedValue(mockStaffMessage);
 
       // Act
-      const result = await controller.addMessage(
-        mockStaffUser,
-        mockTicket.id,
-        dto,
-      );
+      const result = await controller.addMessage(mockStaffUser, mockTicket.id, dto);
 
       // Assert
       expect(result.isStaff).toBe(true);
@@ -476,7 +455,7 @@ describe('SupportTicketController', () => {
         mockTicket.id,
         mockStaffUser.id,
         dto,
-        true,
+        true
       );
     });
 
@@ -492,18 +471,14 @@ describe('SupportTicketController', () => {
       });
 
       // Act
-      const result = await controller.addMessage(
-        mockRegularUser,
-        mockTicket.id,
-        dto,
-      );
+      const _result = await controller.addMessage(mockRegularUser, mockTicket.id, dto);
 
       // Assert
       expect(mockSupportTicketService.addMessage).toHaveBeenCalledWith(
         mockTicket.id,
         mockRegularUser.id,
         dto,
-        false,
+        false
       );
     });
 
@@ -514,9 +489,9 @@ describe('SupportTicketController', () => {
       mockSupportTicketService.addMessage.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.addMessage(mockRegularUser, 'non-existent-id', dto),
-      ).rejects.toThrow('Ticket not found');
+      await expect(controller.addMessage(mockRegularUser, 'non-existent-id', dto)).rejects.toThrow(
+        'Ticket not found'
+      );
     });
 
     it('should propagate ForbiddenException for access denied', async () => {
@@ -526,9 +501,9 @@ describe('SupportTicketController', () => {
       mockSupportTicketService.addMessage.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.addMessage(mockRegularUser, mockTicket.id, dto),
-      ).rejects.toThrow('Access denied');
+      await expect(controller.addMessage(mockRegularUser, mockTicket.id, dto)).rejects.toThrow(
+        'Access denied'
+      );
     });
   });
 
@@ -539,10 +514,7 @@ describe('SupportTicketController', () => {
   describe('GET /support/tickets/:id/messages', () => {
     it('should return ticket messages for owner', async () => {
       // Arrange
-      mockSupportTicketService.getMessages.mockResolvedValue([
-        mockMessage,
-        mockStaffMessage,
-      ]);
+      mockSupportTicketService.getMessages.mockResolvedValue([mockMessage, mockStaffMessage]);
 
       // Act
       const result = await controller.getMessages(mockRegularUser, mockTicket.id);
@@ -552,7 +524,7 @@ describe('SupportTicketController', () => {
       expect(mockSupportTicketService.getMessages).toHaveBeenCalledWith(
         mockTicket.id,
         mockRegularUser.id,
-        false,
+        false
       );
     });
 
@@ -561,13 +533,13 @@ describe('SupportTicketController', () => {
       mockSupportTicketService.getMessages.mockResolvedValue([mockMessage]);
 
       // Act
-      const result = await controller.getMessages(mockStaffUser, mockTicket.id);
+      const _result = await controller.getMessages(mockStaffUser, mockTicket.id);
 
       // Assert
       expect(mockSupportTicketService.getMessages).toHaveBeenCalledWith(
         mockTicket.id,
         mockStaffUser.id,
-        true,
+        true
       );
     });
 
@@ -588,9 +560,9 @@ describe('SupportTicketController', () => {
       mockSupportTicketService.getMessages.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.getMessages(mockRegularUser, 'non-existent-id'),
-      ).rejects.toThrow('Ticket not found');
+      await expect(controller.getMessages(mockRegularUser, 'non-existent-id')).rejects.toThrow(
+        'Ticket not found'
+      );
     });
 
     it('should propagate ForbiddenException for access denied', async () => {
@@ -599,9 +571,9 @@ describe('SupportTicketController', () => {
       mockSupportTicketService.getMessages.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.getMessages(mockRegularUser, mockTicket.id),
-      ).rejects.toThrow('Access denied');
+      await expect(controller.getMessages(mockRegularUser, mockTicket.id)).rejects.toThrow(
+        'Access denied'
+      );
     });
   });
 
@@ -626,7 +598,7 @@ describe('SupportTicketController', () => {
       expect(mockSupportTicketService.update).toHaveBeenCalledWith(
         mockTicket.id,
         dto,
-        mockStaffUser.id,
+        mockStaffUser.id
       );
     });
 
@@ -664,9 +636,9 @@ describe('SupportTicketController', () => {
       mockSupportTicketService.update.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.update(mockStaffUser, 'non-existent-id', dto),
-      ).rejects.toThrow('Ticket not found');
+      await expect(controller.update(mockStaffUser, 'non-existent-id', dto)).rejects.toThrow(
+        'Ticket not found'
+      );
     });
   });
 
@@ -686,18 +658,14 @@ describe('SupportTicketController', () => {
       });
 
       // Act
-      const result = await controller.changeStatus(
-        mockStaffUser,
-        mockTicket.id,
-        dto,
-      );
+      const result = await controller.changeStatus(mockStaffUser, mockTicket.id, dto);
 
       // Assert
       expect(result.status).toBe(SupportTicketStatus.IN_PROGRESS);
       expect(mockSupportTicketService.changeStatus).toHaveBeenCalledWith(
         mockTicket.id,
         dto,
-        mockStaffUser.id,
+        mockStaffUser.id
       );
     });
 
@@ -713,11 +681,7 @@ describe('SupportTicketController', () => {
       });
 
       // Act
-      const result = await controller.changeStatus(
-        mockStaffUser,
-        mockTicket.id,
-        dto,
-      );
+      const result = await controller.changeStatus(mockStaffUser, mockTicket.id, dto);
 
       // Assert
       expect(result.status).toBe(SupportTicketStatus.RESOLVED);
@@ -734,11 +698,7 @@ describe('SupportTicketController', () => {
       });
 
       // Act
-      const result = await controller.changeStatus(
-        mockStaffUser,
-        mockTicket.id,
-        dto,
-      );
+      const result = await controller.changeStatus(mockStaffUser, mockTicket.id, dto);
 
       // Assert
       expect(result.status).toBe(SupportTicketStatus.WAITING_FOR_USER);
@@ -753,9 +713,9 @@ describe('SupportTicketController', () => {
       mockSupportTicketService.changeStatus.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.changeStatus(mockStaffUser, mockTicket.id, dto),
-      ).rejects.toThrow('Invalid status transition');
+      await expect(controller.changeStatus(mockStaffUser, mockTicket.id, dto)).rejects.toThrow(
+        'Invalid status transition'
+      );
     });
 
     it('should propagate NotFoundException for non-existent ticket', async () => {
@@ -767,9 +727,9 @@ describe('SupportTicketController', () => {
       mockSupportTicketService.changeStatus.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.changeStatus(mockStaffUser, 'non-existent-id', dto),
-      ).rejects.toThrow('Ticket not found');
+      await expect(controller.changeStatus(mockStaffUser, 'non-existent-id', dto)).rejects.toThrow(
+        'Ticket not found'
+      );
     });
   });
 
@@ -791,7 +751,7 @@ describe('SupportTicketController', () => {
       expect(mockSupportTicketService.assign).toHaveBeenCalledWith(
         mockTicket.id,
         dto.staffId,
-        mockAdminUser.id,
+        mockAdminUser.id
       );
     });
 
@@ -804,11 +764,7 @@ describe('SupportTicketController', () => {
       });
 
       // Act
-      const result = await controller.assign(
-        mockOrganizerUser,
-        mockAssignedTicket.id,
-        dto,
-      );
+      const result = await controller.assign(mockOrganizerUser, mockAssignedTicket.id, dto);
 
       // Assert
       expect(result.assignedTo).toBe(adminUser.id);
@@ -821,9 +777,9 @@ describe('SupportTicketController', () => {
       mockSupportTicketService.assign.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.assign(mockStaffUser, 'non-existent-id', dto),
-      ).rejects.toThrow('Ticket not found');
+      await expect(controller.assign(mockStaffUser, 'non-existent-id', dto)).rejects.toThrow(
+        'Ticket not found'
+      );
     });
 
     it('should propagate NotFoundException for non-existent staff', async () => {
@@ -833,9 +789,9 @@ describe('SupportTicketController', () => {
       mockSupportTicketService.assign.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.assign(mockStaffUser, mockTicket.id, dto),
-      ).rejects.toThrow('Staff not found');
+      await expect(controller.assign(mockStaffUser, mockTicket.id, dto)).rejects.toThrow(
+        'Staff not found'
+      );
     });
   });
 
@@ -857,11 +813,7 @@ describe('SupportTicketController', () => {
 
       // Assert
       expect(result.tickets).toHaveLength(2);
-      expect(mockSupportTicketService.findAll).toHaveBeenCalledWith(
-        query,
-        undefined,
-        true,
-      );
+      expect(mockSupportTicketService.findAll).toHaveBeenCalledWith(query, undefined, true);
     });
 
     it('should filter by unassigned tickets', async () => {
@@ -904,14 +856,10 @@ describe('SupportTicketController', () => {
       });
 
       // Act
-      const result = await controller.findAllTickets(query);
+      const _result = await controller.findAllTickets(query);
 
       // Assert
-      expect(mockSupportTicketService.findAll).toHaveBeenCalledWith(
-        query,
-        undefined,
-        true,
-      );
+      expect(mockSupportTicketService.findAll).toHaveBeenCalledWith(query, undefined, true);
     });
   });
 
@@ -970,12 +918,10 @@ describe('SupportTicketController', () => {
       mockSupportTicketService.getStatistics.mockResolvedValue(mockStatistics);
 
       // Act
-      const result = await controller.getStatistics(publishedFestival.id);
+      const _result = await controller.getStatistics(publishedFestival.id);
 
       // Assert
-      expect(mockSupportTicketService.getStatistics).toHaveBeenCalledWith(
-        publishedFestival.id,
-      );
+      expect(mockSupportTicketService.getStatistics).toHaveBeenCalledWith(publishedFestival.id);
     });
 
     it('should return correct statistics structure', async () => {
@@ -1056,11 +1002,7 @@ describe('SupportTicketController', () => {
       await controller.findMyTickets(mockAdminUser, query);
 
       // Assert
-      expect(mockSupportTicketService.findAll).toHaveBeenCalledWith(
-        query,
-        mockAdminUser.id,
-        true,
-      );
+      expect(mockSupportTicketService.findAll).toHaveBeenCalledWith(query, mockAdminUser.id, true);
     });
 
     it('should identify ORGANIZER as staff role', async () => {
@@ -1078,7 +1020,7 @@ describe('SupportTicketController', () => {
       expect(mockSupportTicketService.findAll).toHaveBeenCalledWith(
         query,
         mockOrganizerUser.id,
-        true,
+        true
       );
     });
 
@@ -1094,11 +1036,7 @@ describe('SupportTicketController', () => {
       await controller.findMyTickets(mockStaffUser, query);
 
       // Assert
-      expect(mockSupportTicketService.findAll).toHaveBeenCalledWith(
-        query,
-        mockStaffUser.id,
-        true,
-      );
+      expect(mockSupportTicketService.findAll).toHaveBeenCalledWith(query, mockStaffUser.id, true);
     });
 
     it('should identify USER as non-staff role', async () => {
@@ -1116,7 +1054,7 @@ describe('SupportTicketController', () => {
       expect(mockSupportTicketService.findAll).toHaveBeenCalledWith(
         query,
         mockRegularUser.id,
-        false,
+        false
       );
     });
   });

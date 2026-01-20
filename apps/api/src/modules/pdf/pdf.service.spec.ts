@@ -23,7 +23,9 @@ import {
   adminUser,
   staffUser,
   publishedFestival,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   standardCategory,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   vipCategory,
 } from '../../test/fixtures';
 
@@ -31,7 +33,11 @@ import {
 
 // Mock QRCode
 jest.mock('qrcode', () => ({
-  toDataURL: jest.fn().mockResolvedValue('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='),
+  toDataURL: jest
+    .fn()
+    .mockResolvedValue(
+      'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='
+    ),
 }));
 
 // ============================================================================
@@ -207,14 +213,14 @@ const mockFestivalWithStats = {
     { id: 't-4', status: 'REFUNDED', purchasePrice: 149.99, categoryId: 'cat-1' },
   ],
   cashlessTransactions: [
-    { id: 'ct-1', type: 'TOPUP', amount: 50.00 },
-    { id: 'ct-2', type: 'TOPUP', amount: 100.00 },
-    { id: 'ct-3', type: 'PAYMENT', amount: -30.00 },
-    { id: 'ct-4', type: 'PAYMENT', amount: -45.00 },
+    { id: 'ct-1', type: 'TOPUP', amount: 50.0 },
+    { id: 'ct-2', type: 'TOPUP', amount: 100.0 },
+    { id: 'ct-3', type: 'PAYMENT', amount: -30.0 },
+    { id: 'ct-4', type: 'PAYMENT', amount: -45.0 },
   ],
   vendorOrders: [
-    { id: 'vo-1', total: 25.00, vendor: { name: 'Food Stand A' } },
-    { id: 'vo-2', total: 35.00, vendor: { name: 'Drinks Bar B' } },
+    { id: 'vo-1', total: 25.0, vendor: { name: 'Food Stand A' } },
+    { id: 'vo-2', total: 35.0, vendor: { name: 'Drinks Bar B' } },
   ],
   campingBookings: [
     { id: 'cb-1', status: 'CONFIRMED', totalPrice: 79.99, spot: { zone: { type: 'TENT' } } },
@@ -258,8 +264,8 @@ const mockCampingBooking = {
 
 describe('PdfService', () => {
   let pdfService: PdfService;
-  let prismaService: jest.Mocked<PrismaService>;
-  let configService: jest.Mocked<ConfigService>;
+  let _prismaService: jest.Mocked<PrismaService>;
+  let _configService: jest.Mocked<ConfigService>;
 
   const mockPrismaService = {
     ticket: {
@@ -309,8 +315,8 @@ describe('PdfService', () => {
     }).compile();
 
     pdfService = module.get<PdfService>(PdfService);
-    prismaService = module.get(PrismaService);
-    configService = module.get(ConfigService);
+    _prismaService = module.get(PrismaService);
+    _configService = module.get(ConfigService);
   });
 
   // ==========================================================================
@@ -332,7 +338,19 @@ describe('PdfService', () => {
         include: {
           category: { select: { name: true, type: true } },
           user: { select: { firstName: true, lastName: true, email: true } },
-          festival: { select: { id: true, name: true, location: true, address: true, startDate: true, endDate: true, logoUrl: true, contactEmail: true, websiteUrl: true } },
+          festival: {
+            select: {
+              id: true,
+              name: true,
+              location: true,
+              address: true,
+              startDate: true,
+              endDate: true,
+              logoUrl: true,
+              contactEmail: true,
+              websiteUrl: true,
+            },
+          },
         },
       });
     });
@@ -342,9 +360,9 @@ describe('PdfService', () => {
       mockPrismaService.ticket.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        pdfService.generateTicketPdf('non-existent-id', regularUser.id)
-      ).rejects.toThrow(NotFoundException);
+      await expect(pdfService.generateTicketPdf('non-existent-id', regularUser.id)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should include QR code data in the ticket PDF', async () => {
@@ -513,9 +531,27 @@ describe('PdfService', () => {
       const paymentWithSameCategories = {
         ...mockPayment,
         tickets: [
-          { id: 't-1', purchasePrice: 149.99, status: 'SOLD', category: { name: 'Standard Pass' }, festival: { name: 'Rock Nation' } },
-          { id: 't-2', purchasePrice: 149.99, status: 'SOLD', category: { name: 'Standard Pass' }, festival: { name: 'Rock Nation' } },
-          { id: 't-3', purchasePrice: 149.99, status: 'SOLD', category: { name: 'Standard Pass' }, festival: { name: 'Rock Nation' } },
+          {
+            id: 't-1',
+            purchasePrice: 149.99,
+            status: 'SOLD',
+            category: { name: 'Standard Pass' },
+            festival: { name: 'Rock Nation' },
+          },
+          {
+            id: 't-2',
+            purchasePrice: 149.99,
+            status: 'SOLD',
+            category: { name: 'Standard Pass' },
+            festival: { name: 'Rock Nation' },
+          },
+          {
+            id: 't-3',
+            purchasePrice: 149.99,
+            status: 'SOLD',
+            category: { name: 'Standard Pass' },
+            festival: { name: 'Rock Nation' },
+          },
         ],
       };
       mockPrismaService.payment.findUnique.mockResolvedValue(paymentWithSameCategories);
@@ -532,9 +568,27 @@ describe('PdfService', () => {
       const paymentWithMixedCategories = {
         ...mockPayment,
         tickets: [
-          { id: 't-1', purchasePrice: 149.99, status: 'SOLD', category: { name: 'Standard Pass' }, festival: { name: 'Rock Nation' } },
-          { id: 't-2', purchasePrice: 399.99, status: 'SOLD', category: { name: 'VIP Pass' }, festival: { name: 'Rock Nation' } },
-          { id: 't-3', purchasePrice: 79.99, status: 'SOLD', category: { name: 'Camping Add-on' }, festival: { name: 'Rock Nation' } },
+          {
+            id: 't-1',
+            purchasePrice: 149.99,
+            status: 'SOLD',
+            category: { name: 'Standard Pass' },
+            festival: { name: 'Rock Nation' },
+          },
+          {
+            id: 't-2',
+            purchasePrice: 399.99,
+            status: 'SOLD',
+            category: { name: 'VIP Pass' },
+            festival: { name: 'Rock Nation' },
+          },
+          {
+            id: 't-3',
+            purchasePrice: 79.99,
+            status: 'SOLD',
+            category: { name: 'Camping Add-on' },
+            festival: { name: 'Rock Nation' },
+          },
         ],
       };
       mockPrismaService.payment.findUnique.mockResolvedValue(paymentWithMixedCategories);
@@ -635,9 +689,9 @@ describe('PdfService', () => {
       mockPrismaService.festival.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        pdfService.generateReportPdf('non-existent-id', adminUser.id)
-      ).rejects.toThrow(NotFoundException);
+      await expect(pdfService.generateReportPdf('non-existent-id', adminUser.id)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should allow organizer to generate report for their festival', async () => {
@@ -669,9 +723,9 @@ describe('PdfService', () => {
       });
 
       // Act & Assert
-      await expect(
-        pdfService.generateReportPdf(otherFestival.id, regularUser.id)
-      ).rejects.toThrow(NotFoundException);
+      await expect(pdfService.generateReportPdf(otherFestival.id, regularUser.id)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should calculate ticket revenue correctly', async () => {
@@ -789,9 +843,9 @@ describe('PdfService', () => {
       mockPrismaService.staffAssignment.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        pdfService.generateBadgePdf('non-existent-id', staffUser.id)
-      ).rejects.toThrow(NotFoundException);
+      await expect(pdfService.generateBadgePdf('non-existent-id', staffUser.id)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should generate badge with ADMIN role styling', async () => {
@@ -903,7 +957,11 @@ describe('PdfService', () => {
       const photoBuffer = Buffer.from('fake-photo-data');
 
       // Act
-      const result = await pdfService.generateBadgePdf(mockStaffAssignment.id, staffUser.id, photoBuffer);
+      const result = await pdfService.generateBadgePdf(
+        mockStaffAssignment.id,
+        staffUser.id,
+        photoBuffer
+      );
 
       // Assert
       expect(result).toBeInstanceOf(Buffer);
@@ -1065,9 +1123,9 @@ describe('PdfService', () => {
       mockPrismaService.festival.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        pdfService.generateProgramPdf('non-existent-id')
-      ).rejects.toThrow(NotFoundException);
+      await expect(pdfService.generateProgramPdf('non-existent-id')).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should exclude cancelled performances', async () => {
@@ -1124,9 +1182,7 @@ describe('PdfService', () => {
       // Arrange
       const festivalWithEmptyStage = {
         ...mockFestivalWithProgram,
-        stages: [
-          { id: 'stage-1', name: 'Empty Stage', performances: [] },
-        ],
+        stages: [{ id: 'stage-1', name: 'Empty Stage', performances: [] }],
       };
       mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithEmptyStage);
 
@@ -1196,7 +1252,10 @@ describe('PdfService', () => {
       mockPrismaService.campingBooking.findUnique.mockResolvedValue(mockCampingBooking);
 
       // Act
-      const result = await pdfService.generateCampingVoucherPdf(mockCampingBooking.id, regularUser.id);
+      const result = await pdfService.generateCampingVoucherPdf(
+        mockCampingBooking.id,
+        regularUser.id
+      );
 
       // Assert
       expect(result).toBeInstanceOf(Buffer);
@@ -1236,7 +1295,10 @@ describe('PdfService', () => {
       mockPrismaService.campingBooking.findUnique.mockResolvedValue(mockCampingBooking);
 
       // Act
-      const result = await pdfService.generateCampingVoucherPdf(mockCampingBooking.id, regularUser.id);
+      const result = await pdfService.generateCampingVoucherPdf(
+        mockCampingBooking.id,
+        regularUser.id
+      );
 
       // Assert
       expect(result).toBeInstanceOf(Buffer);
@@ -1247,7 +1309,10 @@ describe('PdfService', () => {
       mockPrismaService.campingBooking.findUnique.mockResolvedValue(mockCampingBooking);
 
       // Act
-      const result = await pdfService.generateCampingVoucherPdf(mockCampingBooking.id, regularUser.id);
+      const result = await pdfService.generateCampingVoucherPdf(
+        mockCampingBooking.id,
+        regularUser.id
+      );
 
       // Assert
       expect(result).toBeInstanceOf(Buffer);
@@ -1258,7 +1323,10 @@ describe('PdfService', () => {
       mockPrismaService.campingBooking.findUnique.mockResolvedValue(mockCampingBooking);
 
       // Act
-      const result = await pdfService.generateCampingVoucherPdf(mockCampingBooking.id, regularUser.id);
+      const result = await pdfService.generateCampingVoucherPdf(
+        mockCampingBooking.id,
+        regularUser.id
+      );
 
       // Assert
       expect(result).toBeInstanceOf(Buffer);
@@ -1269,7 +1337,10 @@ describe('PdfService', () => {
       mockPrismaService.campingBooking.findUnique.mockResolvedValue(mockCampingBooking);
 
       // Act
-      const result = await pdfService.generateCampingVoucherPdf(mockCampingBooking.id, regularUser.id);
+      const result = await pdfService.generateCampingVoucherPdf(
+        mockCampingBooking.id,
+        regularUser.id
+      );
 
       // Assert
       expect(result).toBeInstanceOf(Buffer);
@@ -1286,7 +1357,10 @@ describe('PdfService', () => {
       mockPrismaService.payment.findUnique.mockResolvedValue(mockRefundedPayment);
 
       // Act
-      const result = await pdfService.generateRefundConfirmationPdf(mockRefundedPayment.id, regularUser.id);
+      const result = await pdfService.generateRefundConfirmationPdf(
+        mockRefundedPayment.id,
+        regularUser.id
+      );
 
       // Assert
       expect(result).toBeInstanceOf(Buffer);
@@ -1317,7 +1391,10 @@ describe('PdfService', () => {
       mockPrismaService.payment.findUnique.mockResolvedValue(mockRefundedPayment);
 
       // Act
-      const result = await pdfService.generateRefundConfirmationPdf(mockRefundedPayment.id, regularUser.id);
+      const result = await pdfService.generateRefundConfirmationPdf(
+        mockRefundedPayment.id,
+        regularUser.id
+      );
 
       // Assert
       expect(result).toBeInstanceOf(Buffer);
@@ -1328,7 +1405,10 @@ describe('PdfService', () => {
       mockPrismaService.payment.findUnique.mockResolvedValue(mockRefundedPayment);
 
       // Act
-      const result = await pdfService.generateRefundConfirmationPdf(mockRefundedPayment.id, regularUser.id);
+      const result = await pdfService.generateRefundConfirmationPdf(
+        mockRefundedPayment.id,
+        regularUser.id
+      );
 
       // Assert
       expect(result).toBeInstanceOf(Buffer);
@@ -1339,7 +1419,10 @@ describe('PdfService', () => {
       mockPrismaService.payment.findUnique.mockResolvedValue(mockRefundedPayment);
 
       // Act
-      const result = await pdfService.generateRefundConfirmationPdf(mockRefundedPayment.id, regularUser.id);
+      const result = await pdfService.generateRefundConfirmationPdf(
+        mockRefundedPayment.id,
+        regularUser.id
+      );
 
       // Assert
       expect(result).toBeInstanceOf(Buffer);
@@ -1350,7 +1433,10 @@ describe('PdfService', () => {
       mockPrismaService.payment.findUnique.mockResolvedValue(mockRefundedPayment);
 
       // Act
-      const result = await pdfService.generateRefundConfirmationPdf(mockRefundedPayment.id, regularUser.id);
+      const result = await pdfService.generateRefundConfirmationPdf(
+        mockRefundedPayment.id,
+        regularUser.id
+      );
 
       // Assert
       expect(result).toBeInstanceOf(Buffer);
@@ -1365,7 +1451,10 @@ describe('PdfService', () => {
       mockPrismaService.payment.findUnique.mockResolvedValue(refundWithoutDate);
 
       // Act
-      const result = await pdfService.generateRefundConfirmationPdf(refundWithoutDate.id, regularUser.id);
+      const result = await pdfService.generateRefundConfirmationPdf(
+        refundWithoutDate.id,
+        regularUser.id
+      );
 
       // Assert
       expect(result).toBeInstanceOf(Buffer);
@@ -1388,7 +1477,10 @@ describe('PdfService', () => {
 
     it('should generate a financial report PDF successfully', async () => {
       // Act
-      const result = await pdfService.generateFinancialReportPdf(mockFestivalWithStats.id, adminUser.id);
+      const result = await pdfService.generateFinancialReportPdf(
+        mockFestivalWithStats.id,
+        adminUser.id
+      );
 
       // Assert
       expect(result).toBeInstanceOf(Buffer);
@@ -1396,7 +1488,10 @@ describe('PdfService', () => {
 
     it('should include revenue breakdown by category', async () => {
       // Act
-      const result = await pdfService.generateFinancialReportPdf(mockFestivalWithStats.id, adminUser.id);
+      const result = await pdfService.generateFinancialReportPdf(
+        mockFestivalWithStats.id,
+        adminUser.id
+      );
 
       // Assert
       expect(result).toBeInstanceOf(Buffer);
@@ -1405,7 +1500,10 @@ describe('PdfService', () => {
     it('should include cashless commission calculation', async () => {
       // Commission on payments: 2%
       // Act
-      const result = await pdfService.generateFinancialReportPdf(mockFestivalWithStats.id, adminUser.id);
+      const result = await pdfService.generateFinancialReportPdf(
+        mockFestivalWithStats.id,
+        adminUser.id
+      );
 
       // Assert
       expect(result).toBeInstanceOf(Buffer);
@@ -1414,7 +1512,10 @@ describe('PdfService', () => {
     it('should include vendor commission calculation', async () => {
       // Commission on vendor sales: 10%
       // Act
-      const result = await pdfService.generateFinancialReportPdf(mockFestivalWithStats.id, adminUser.id);
+      const result = await pdfService.generateFinancialReportPdf(
+        mockFestivalWithStats.id,
+        adminUser.id
+      );
 
       // Assert
       expect(result).toBeInstanceOf(Buffer);
@@ -1422,7 +1523,10 @@ describe('PdfService', () => {
 
     it('should include total revenue summary', async () => {
       // Act
-      const result = await pdfService.generateFinancialReportPdf(mockFestivalWithStats.id, adminUser.id);
+      const result = await pdfService.generateFinancialReportPdf(
+        mockFestivalWithStats.id,
+        adminUser.id
+      );
 
       // Assert
       expect(result).toBeInstanceOf(Buffer);
@@ -1480,7 +1584,10 @@ describe('PdfService', () => {
       mockPrismaService.ticket.findUnique.mockResolvedValue(ticketWithLongDescription);
 
       // Act
-      const result = await pdfService.generateTicketPdf(ticketWithLongDescription.id, regularUser.id);
+      const result = await pdfService.generateTicketPdf(
+        ticketWithLongDescription.id,
+        regularUser.id
+      );
 
       // Assert
       expect(result).toBeInstanceOf(Buffer);
@@ -1492,7 +1599,13 @@ describe('PdfService', () => {
         ...mockPayment,
         amount: 0,
         tickets: [
-          { id: 't-1', purchasePrice: 0, status: 'SOLD', category: { name: 'Free Pass' }, festival: { name: 'Free Event' } },
+          {
+            id: 't-1',
+            purchasePrice: 0,
+            status: 'SOLD',
+            category: { name: 'Free Pass' },
+            festival: { name: 'Free Event' },
+          },
         ],
       };
       mockPrismaService.payment.findUnique.mockResolvedValue(freePayment);
@@ -1508,17 +1621,21 @@ describe('PdfService', () => {
       // Arrange - create a festival with many performances
       const festivalWithManyPerformances = {
         ...mockFestivalWithProgram,
-        stages: Array(5).fill(null).map((_, i) => ({
-          id: `stage-${i}`,
-          name: `Stage ${i}`,
-          performances: Array(10).fill(null).map((_, j) => ({
-            id: `perf-${i}-${j}`,
-            startTime: new Date('2026-07-15T10:00:00Z'),
-            endTime: new Date('2026-07-15T12:00:00Z'),
-            isCancelled: false,
-            artist: { name: `Artist ${i}-${j}`, genre: 'Rock' },
+        stages: Array(5)
+          .fill(null)
+          .map((_, i) => ({
+            id: `stage-${i}`,
+            name: `Stage ${i}`,
+            performances: Array(10)
+              .fill(null)
+              .map((_, j) => ({
+                id: `perf-${i}-${j}`,
+                startTime: new Date('2026-07-15T10:00:00Z'),
+                endTime: new Date('2026-07-15T12:00:00Z'),
+                isCancelled: false,
+                artist: { name: `Artist ${i}-${j}`, genre: 'Rock' },
+              })),
           })),
-        })),
       };
       mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithManyPerformances);
 
@@ -1551,7 +1668,9 @@ describe('PdfService', () => {
     it('should use default company name when not configured', async () => {
       // Arrange
       mockConfigService.get.mockImplementation((key: string) => {
-        if (key === 'COMPANY_NAME') {return undefined;}
+        if (key === 'COMPANY_NAME') {
+          return undefined;
+        }
         return 'test-value';
       });
       mockPrismaService.payment.findUnique.mockResolvedValue(mockPayment);

@@ -31,11 +31,8 @@ module.exports = {
     // Enable New Architecture (Fabric + TurboModules) for better performance
     reactCompiler: true,
   },
-  // Plugins for performance
-  plugins: [
-    // Enable reanimated plugin for optimized animations
-    'react-native-reanimated',
-  ],
+  // Plugins for performance (reanimated disabled temporarily)
+  plugins: [],
   extra: {
     apiUrl: process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3333',
   },

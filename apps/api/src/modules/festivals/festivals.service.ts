@@ -163,6 +163,12 @@ export class FestivalsService {
           organizer: {
             select: { id: true, firstName: true, lastName: true, email: true },
           },
+          ticketCategories: {
+            where: { isActive: true },
+            select: { id: true, name: true, price: true, isActive: true },
+            orderBy: { price: 'asc' },
+            take: 5,
+          },
           _count: {
             select: { tickets: true, ticketCategories: true },
           },
@@ -282,7 +288,9 @@ export class FestivalsService {
       tags: [CacheTag.FESTIVAL],
     });
 
-    this.logger.debug(`[CACHE SET] findBySlug - Key: ${cacheKey}, TTL: ${CACHE_TTL.FESTIVAL_DETAIL}s`);
+    this.logger.debug(
+      `[CACHE SET] findBySlug - Key: ${cacheKey}, TTL: ${CACHE_TTL.FESTIVAL_DETAIL}s`
+    );
 
     return festival;
   }
@@ -436,7 +444,9 @@ export class FestivalsService {
       tags: [CacheTag.FESTIVAL, CacheTag.TICKET],
     });
 
-    this.logger.debug(`[CACHE SET] getTicketCategories - Key: ${cacheKey}, TTL: ${CACHE_TTL.TICKET_CATEGORIES}s`);
+    this.logger.debug(
+      `[CACHE SET] getTicketCategories - Key: ${cacheKey}, TTL: ${CACHE_TTL.TICKET_CATEGORIES}s`
+    );
 
     return categories;
   }

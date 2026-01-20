@@ -17,11 +17,7 @@
  */
 
 import { Test, TestingModule } from '@nestjs/testing';
-import {
-  NotFoundException,
-  BadRequestException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { LostItemController } from './lost-item.controller';
 import { LostItemService } from '../services/lost-item.service';
 import {
@@ -41,8 +37,8 @@ import {
   adminUser,
   organizerUser,
   securityUser,
+  publishedFestival,
 } from '../../../test/fixtures';
-import { publishedFestival } from '../../../test/fixtures';
 
 // ============================================================================
 // Mock Setup
@@ -171,9 +167,7 @@ describe('LostItemController', () => {
 
       // Assert
       expect(result).toEqual([mockFoundItem]);
-      expect(mockLostItemService.getFoundItems).toHaveBeenCalledWith(
-        publishedFestival.id,
-      );
+      expect(mockLostItemService.getFoundItems).toHaveBeenCalledWith(publishedFestival.id);
     });
 
     it('should return empty array when no found items exist', async () => {
@@ -226,10 +220,7 @@ describe('LostItemController', () => {
 
       // Assert
       expect(result.description).toBe(dto.description);
-      expect(mockLostItemService.create).toHaveBeenCalledWith(
-        mockRegularUser.id,
-        dto,
-      );
+      expect(mockLostItemService.create).toHaveBeenCalledWith(mockRegularUser.id, dto);
     });
 
     it('should create lost item with image URL', async () => {
@@ -261,9 +252,7 @@ describe('LostItemController', () => {
       mockLostItemService.create.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.create(mockRegularUser, dto)).rejects.toThrow(
-        'Festival not found',
-      );
+      await expect(controller.create(mockRegularUser, dto)).rejects.toThrow('Festival not found');
     });
   });
 
@@ -286,10 +275,7 @@ describe('LostItemController', () => {
       // Assert
       expect(result.items).toHaveLength(1);
       expect(result.total).toBe(1);
-      expect(mockLostItemService.findAll).toHaveBeenCalledWith(
-        query,
-        mockRegularUser.id,
-      );
+      expect(mockLostItemService.findAll).toHaveBeenCalledWith(query, mockRegularUser.id);
     });
 
     it('should filter by status', async () => {
@@ -316,13 +302,10 @@ describe('LostItemController', () => {
       });
 
       // Act
-      const result = await controller.findAll(mockRegularUser, query);
+      const _result = await controller.findAll(mockRegularUser, query);
 
       // Assert
-      expect(mockLostItemService.findAll).toHaveBeenCalledWith(
-        query,
-        mockRegularUser.id,
-      );
+      expect(mockLostItemService.findAll).toHaveBeenCalledWith(query, mockRegularUser.id);
     });
 
     it('should search by description', async () => {
@@ -334,13 +317,10 @@ describe('LostItemController', () => {
       });
 
       // Act
-      const result = await controller.findAll(mockRegularUser, query);
+      const _result = await controller.findAll(mockRegularUser, query);
 
       // Assert
-      expect(mockLostItemService.findAll).toHaveBeenCalledWith(
-        query,
-        mockRegularUser.id,
-      );
+      expect(mockLostItemService.findAll).toHaveBeenCalledWith(query, mockRegularUser.id);
     });
   });
 
@@ -358,9 +338,7 @@ describe('LostItemController', () => {
 
       // Assert
       expect(result).toEqual([mockLostItem]);
-      expect(mockLostItemService.getMyReportedItems).toHaveBeenCalledWith(
-        mockRegularUser.id,
-      );
+      expect(mockLostItemService.getMyReportedItems).toHaveBeenCalledWith(mockRegularUser.id);
     });
 
     it('should return empty array when user has no reports', async () => {
@@ -398,9 +376,7 @@ describe('LostItemController', () => {
       mockLostItemService.findById.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.findById('non-existent-id')).rejects.toThrow(
-        'Item not found',
-      );
+      await expect(controller.findById('non-existent-id')).rejects.toThrow('Item not found');
     });
   });
 
@@ -421,11 +397,7 @@ describe('LostItemController', () => {
       });
 
       // Act
-      const result = await controller.update(
-        mockRegularUser,
-        mockLostItem.id,
-        dto,
-      );
+      const result = await controller.update(mockRegularUser, mockLostItem.id, dto);
 
       // Assert
       expect(result.description).toBe(dto.description);
@@ -433,7 +405,7 @@ describe('LostItemController', () => {
         mockLostItem.id,
         dto,
         mockRegularUser.id,
-        false,
+        false
       );
     });
 
@@ -454,7 +426,7 @@ describe('LostItemController', () => {
         mockLostItem.id,
         dto,
         mockStaffUser.id,
-        true,
+        true
       );
     });
 
@@ -467,14 +439,14 @@ describe('LostItemController', () => {
       });
 
       // Act
-      const result = await controller.update(mockAdminUser, mockLostItem.id, dto);
+      const _result = await controller.update(mockAdminUser, mockLostItem.id, dto);
 
       // Assert
       expect(mockLostItemService.update).toHaveBeenCalledWith(
         mockLostItem.id,
         dto,
         mockAdminUser.id,
-        true,
+        true
       );
     });
 
@@ -485,9 +457,9 @@ describe('LostItemController', () => {
       mockLostItemService.update.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.update(mockRegularUser, mockLostItem.id, dto),
-      ).rejects.toThrow('Not authorized');
+      await expect(controller.update(mockRegularUser, mockLostItem.id, dto)).rejects.toThrow(
+        'Not authorized'
+      );
     });
 
     it('should propagate NotFoundException for non-existent item', async () => {
@@ -497,9 +469,9 @@ describe('LostItemController', () => {
       mockLostItemService.update.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.update(mockRegularUser, 'non-existent-id', dto),
-      ).rejects.toThrow('Item not found');
+      await expect(controller.update(mockRegularUser, 'non-existent-id', dto)).rejects.toThrow(
+        'Item not found'
+      );
     });
   });
 
@@ -520,7 +492,7 @@ describe('LostItemController', () => {
       expect(mockLostItemService.delete).toHaveBeenCalledWith(
         mockLostItem.id,
         mockRegularUser.id,
-        false,
+        false
       );
     });
 
@@ -535,7 +507,7 @@ describe('LostItemController', () => {
       expect(mockLostItemService.delete).toHaveBeenCalledWith(
         mockLostItem.id,
         mockStaffUser.id,
-        true,
+        true
       );
     });
 
@@ -545,9 +517,9 @@ describe('LostItemController', () => {
       mockLostItemService.delete.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.delete(mockRegularUser, mockLostItem.id),
-      ).rejects.toThrow('Not authorized');
+      await expect(controller.delete(mockRegularUser, mockLostItem.id)).rejects.toThrow(
+        'Not authorized'
+      );
     });
 
     it('should propagate NotFoundException for non-existent item', async () => {
@@ -556,9 +528,9 @@ describe('LostItemController', () => {
       mockLostItemService.delete.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.delete(mockRegularUser, 'non-existent-id'),
-      ).rejects.toThrow('Item not found');
+      await expect(controller.delete(mockRegularUser, 'non-existent-id')).rejects.toThrow(
+        'Item not found'
+      );
     });
   });
 
@@ -570,8 +542,7 @@ describe('LostItemController', () => {
     it('should claim a found item', async () => {
       // Arrange
       const dto: ClaimLostItemDto = {
-        proofOfOwnership:
-          'Le portefeuille contient ma carte avec mon nom et adresse...',
+        proofOfOwnership: 'Le portefeuille contient ma carte avec mon nom et adresse...',
         contactInfo: 'Disponible au stand info',
       };
       mockLostItemService.claim.mockResolvedValue({
@@ -580,18 +551,14 @@ describe('LostItemController', () => {
       });
 
       // Act
-      const result = await controller.claim(
-        mockRegularUser,
-        mockFoundItem.id,
-        dto,
-      );
+      const result = await controller.claim(mockRegularUser, mockFoundItem.id, dto);
 
       // Assert
       expect(result.claimedAt).toBeDefined();
       expect(mockLostItemService.claim).toHaveBeenCalledWith(
         mockFoundItem.id,
         mockRegularUser.id,
-        dto,
+        dto
       );
     });
 
@@ -604,9 +571,9 @@ describe('LostItemController', () => {
       mockLostItemService.claim.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.claim(mockRegularUser, mockLostItem.id, dto),
-      ).rejects.toThrow('Item cannot be claimed');
+      await expect(controller.claim(mockRegularUser, mockLostItem.id, dto)).rejects.toThrow(
+        'Item cannot be claimed'
+      );
     });
 
     it('should propagate NotFoundException for non-existent item', async () => {
@@ -618,9 +585,9 @@ describe('LostItemController', () => {
       mockLostItemService.claim.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.claim(mockRegularUser, 'non-existent-id', dto),
-      ).rejects.toThrow('Item not found');
+      await expect(controller.claim(mockRegularUser, 'non-existent-id', dto)).rejects.toThrow(
+        'Item not found'
+      );
     });
   });
 
@@ -638,18 +605,14 @@ describe('LostItemController', () => {
       mockLostItemService.markAsFound.mockResolvedValue(mockFoundItem);
 
       // Act
-      const result = await controller.markAsFound(
-        mockStaffUser,
-        mockLostItem.id,
-        dto,
-      );
+      const result = await controller.markAsFound(mockStaffUser, mockLostItem.id, dto);
 
       // Assert
       expect(result.status).toBe(LostItemStatus.FOUND);
       expect(mockLostItemService.markAsFound).toHaveBeenCalledWith(
         mockLostItem.id,
         mockStaffUser.id,
-        dto,
+        dto
       );
     });
 
@@ -667,7 +630,7 @@ describe('LostItemController', () => {
       expect(mockLostItemService.markAsFound).toHaveBeenCalledWith(
         mockLostItem.id,
         mockSecurityUser.id,
-        dto,
+        dto
       );
     });
 
@@ -678,9 +641,9 @@ describe('LostItemController', () => {
       mockLostItemService.markAsFound.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.markAsFound(mockStaffUser, mockLostItem.id, dto),
-      ).rejects.toThrow('Item already processed');
+      await expect(controller.markAsFound(mockStaffUser, mockLostItem.id, dto)).rejects.toThrow(
+        'Item already processed'
+      );
     });
 
     it('should propagate NotFoundException for non-existent item', async () => {
@@ -690,9 +653,9 @@ describe('LostItemController', () => {
       mockLostItemService.markAsFound.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.markAsFound(mockStaffUser, 'non-existent-id', dto),
-      ).rejects.toThrow('Item not found');
+      await expect(controller.markAsFound(mockStaffUser, 'non-existent-id', dto)).rejects.toThrow(
+        'Item not found'
+      );
     });
   });
 
@@ -709,16 +672,13 @@ describe('LostItemController', () => {
       });
 
       // Act
-      const result = await controller.markAsReturned(
-        mockStaffUser,
-        mockFoundItem.id,
-      );
+      const result = await controller.markAsReturned(mockStaffUser, mockFoundItem.id);
 
       // Assert
       expect(result.status).toBe(LostItemStatus.RETURNED);
       expect(mockLostItemService.markAsReturned).toHaveBeenCalledWith(
         mockFoundItem.id,
-        mockStaffUser.id,
+        mockStaffUser.id
       );
     });
 
@@ -728,9 +688,9 @@ describe('LostItemController', () => {
       mockLostItemService.markAsReturned.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.markAsReturned(mockStaffUser, mockLostItem.id),
-      ).rejects.toThrow('Item not in FOUND status');
+      await expect(controller.markAsReturned(mockStaffUser, mockLostItem.id)).rejects.toThrow(
+        'Item not in FOUND status'
+      );
     });
 
     it('should propagate NotFoundException for non-existent item', async () => {
@@ -739,9 +699,9 @@ describe('LostItemController', () => {
       mockLostItemService.markAsReturned.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.markAsReturned(mockStaffUser, 'non-existent-id'),
-      ).rejects.toThrow('Item not found');
+      await expect(controller.markAsReturned(mockStaffUser, 'non-existent-id')).rejects.toThrow(
+        'Item not found'
+      );
     });
   });
 
@@ -762,9 +722,7 @@ describe('LostItemController', () => {
 
       // Assert
       expect(result.status).toBe(LostItemStatus.UNCLAIMED);
-      expect(mockLostItemService.markAsUnclaimed).toHaveBeenCalledWith(
-        mockFoundItem.id,
-      );
+      expect(mockLostItemService.markAsUnclaimed).toHaveBeenCalledWith(mockFoundItem.id);
     });
 
     it('should propagate NotFoundException for non-existent item', async () => {
@@ -773,9 +731,7 @@ describe('LostItemController', () => {
       mockLostItemService.markAsUnclaimed.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(
-        controller.markAsUnclaimed('non-existent-id'),
-      ).rejects.toThrow('Item not found');
+      await expect(controller.markAsUnclaimed('non-existent-id')).rejects.toThrow('Item not found');
     });
   });
 
@@ -805,9 +761,7 @@ describe('LostItemController', () => {
 
       // Assert
       expect(result).toEqual(mockStatistics);
-      expect(mockLostItemService.getStatistics).toHaveBeenCalledWith(
-        publishedFestival.id,
-      );
+      expect(mockLostItemService.getStatistics).toHaveBeenCalledWith(publishedFestival.id);
     });
 
     it('should return correct statistics structure', async () => {
@@ -845,7 +799,7 @@ describe('LostItemController', () => {
         mockLostItem.id,
         dto,
         mockAdminUser.id,
-        true,
+        true
       );
     });
 
@@ -867,7 +821,7 @@ describe('LostItemController', () => {
         mockLostItem.id,
         dto,
         mockOrganizerUser.id,
-        true,
+        true
       );
     });
 
@@ -884,7 +838,7 @@ describe('LostItemController', () => {
         mockLostItem.id,
         dto,
         mockStaffUser.id,
-        true,
+        true
       );
     });
 
@@ -901,7 +855,7 @@ describe('LostItemController', () => {
         mockLostItem.id,
         dto,
         mockSecurityUser.id,
-        true,
+        true
       );
     });
 
@@ -918,7 +872,7 @@ describe('LostItemController', () => {
         mockLostItem.id,
         dto,
         mockRegularUser.id,
-        false,
+        false
       );
     });
   });

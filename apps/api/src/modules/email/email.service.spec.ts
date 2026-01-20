@@ -43,7 +43,7 @@ jest.mock('fs', () => ({
 }));
 
 // Mock handlebars - keep the actual registerHelper to test helpers
-const originalHandlebars = jest.requireActual('handlebars');
+const _originalHandlebars = jest.requireActual('handlebars');
 jest.mock('handlebars', () => ({
   compile: jest.fn(),
   registerPartial: jest.fn(),
@@ -148,17 +148,18 @@ describe('EmailService', () => {
       setupMocks();
       const noHostConfig = {
         get: jest.fn((key: string) => {
-          if (key === 'SMTP_HOST') {return undefined;}
-          if (key === 'SMTP_PORT') {return 587;}
+          if (key === 'SMTP_HOST') {
+            return undefined;
+          }
+          if (key === 'SMTP_PORT') {
+            return 587;
+          }
           return undefined;
         }),
       };
 
       const module = await Test.createTestingModule({
-        providers: [
-          EmailService,
-          { provide: ConfigService, useValue: noHostConfig },
-        ],
+        providers: [EmailService, { provide: ConfigService, useValue: noHostConfig }],
       }).compile();
 
       const service = module.get<EmailService>(EmailService);
@@ -178,7 +179,10 @@ describe('EmailService', () => {
     it('should register Handlebars helpers', () => {
       // Assert
       expect(handlebars.registerHelper).toHaveBeenCalledWith('formatDate', expect.any(Function));
-      expect(handlebars.registerHelper).toHaveBeenCalledWith('formatCurrency', expect.any(Function));
+      expect(handlebars.registerHelper).toHaveBeenCalledWith(
+        'formatCurrency',
+        expect.any(Function)
+      );
       expect(handlebars.registerHelper).toHaveBeenCalledWith('ifEquals', expect.any(Function));
       expect(handlebars.registerHelper).toHaveBeenCalledWith('uppercase', expect.any(Function));
       expect(handlebars.registerHelper).toHaveBeenCalledWith('lowercase', expect.any(Function));
@@ -210,10 +214,7 @@ describe('EmailService', () => {
       };
 
       const module = await Test.createTestingModule({
-        providers: [
-          EmailService,
-          { provide: ConfigService, useValue: secureConfig },
-        ],
+        providers: [EmailService, { provide: ConfigService, useValue: secureConfig }],
       }).compile();
 
       const service = module.get<EmailService>(EmailService);
@@ -223,7 +224,7 @@ describe('EmailService', () => {
       expect(nodemailer.createTransport).toHaveBeenCalledWith(
         expect.objectContaining({
           secure: true,
-        }),
+        })
       );
     });
   });
@@ -254,7 +255,7 @@ describe('EmailService', () => {
           to: 'user@example.com',
           subject: 'Test Subject',
           from: 'Festival Platform <noreply@festival.com>',
-        }),
+        })
       );
     });
 
@@ -266,10 +267,7 @@ describe('EmailService', () => {
       };
 
       const module = await Test.createTestingModule({
-        providers: [
-          EmailService,
-          { provide: ConfigService, useValue: noSmtpConfig },
-        ],
+        providers: [EmailService, { provide: ConfigService, useValue: noSmtpConfig }],
       }).compile();
 
       const service = module.get<EmailService>(EmailService);
@@ -341,7 +339,7 @@ describe('EmailService', () => {
       expect(mockTransporter.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           to: ['user1@example.com', 'user2@example.com', 'user3@example.com'],
-        }),
+        })
       );
     });
 
@@ -366,7 +364,7 @@ describe('EmailService', () => {
         expect.objectContaining({
           cc: 'cc@example.com',
           bcc: ['bcc1@example.com', 'bcc2@example.com'],
-        }),
+        })
       );
     });
 
@@ -389,7 +387,7 @@ describe('EmailService', () => {
       expect(mockTransporter.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           replyTo: 'custom-reply@example.com',
-        }),
+        })
       );
     });
 
@@ -425,13 +423,15 @@ describe('EmailService', () => {
               contentType: 'application/pdf',
             }),
           ],
-        }),
+        })
       );
     });
 
     it('should generate plain text version from HTML', async () => {
       // Arrange
-      mockCompiledTemplate.mockReturnValue('<html><body><p>Hello</p><style>.test{}</style></body></html>');
+      mockCompiledTemplate.mockReturnValue(
+        '<html><body><p>Hello</p><style>.test{}</style></body></html>'
+      );
       mockTransporter.sendMail.mockResolvedValue({ messageId: 'text-version-id' });
 
       // Act
@@ -447,7 +447,7 @@ describe('EmailService', () => {
         expect.objectContaining({
           html: expect.any(String),
           text: expect.any(String),
-        }),
+        })
       );
     });
 
@@ -470,7 +470,7 @@ describe('EmailService', () => {
           currentYear: new Date().getFullYear(),
           companyName: 'Festival Platform',
           websiteUrl: 'https://festival.com',
-        }),
+        })
       );
     });
   });
@@ -499,7 +499,7 @@ describe('EmailService', () => {
           firstName: 'John',
           lastName: 'Doe',
           email: 'john.doe@example.com',
-        }),
+        })
       );
     });
 
@@ -518,7 +518,7 @@ describe('EmailService', () => {
       expect(mockTransporter.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           subject: 'Bienvenue sur Festival Platform!',
-        }),
+        })
       );
     });
   });
@@ -547,7 +547,7 @@ describe('EmailService', () => {
           firstName: 'John',
           resetUrl: 'https://festival.com/reset/token123',
           expiresIn: '1 hour',
-        }),
+        })
       );
     });
 
@@ -566,7 +566,7 @@ describe('EmailService', () => {
       expect(mockTransporter.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           subject: 'Reinitialisation de votre mot de passe',
-        }),
+        })
       );
     });
   });
@@ -594,7 +594,7 @@ describe('EmailService', () => {
         expect.objectContaining({
           firstName: 'Alice',
           verificationUrl: 'https://festival.com/verify/token456',
-        }),
+        })
       );
     });
 
@@ -613,7 +613,7 @@ describe('EmailService', () => {
       expect(mockTransporter.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           subject: 'Verifiez votre adresse email',
-        }),
+        })
       );
     });
   });
@@ -640,7 +640,10 @@ describe('EmailService', () => {
       mockTransporter.sendMail.mockResolvedValue({ messageId: 'ticket-id' });
 
       // Act
-      const result = await emailService.sendTicketConfirmationEmail('john@example.com', ticketContext);
+      const result = await emailService.sendTicketConfirmationEmail(
+        'john@example.com',
+        ticketContext
+      );
 
       // Assert
       expect(result.success).toBe(true);
@@ -651,7 +654,7 @@ describe('EmailService', () => {
           festivalName: 'Summer Festival 2024',
           ticketType: 'VIP Pass',
           ticketCode: 'TKT-2024-001',
-        }),
+        })
       );
     });
 
@@ -666,7 +669,7 @@ describe('EmailService', () => {
       expect(mockTransporter.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           subject: 'Votre billet pour Summer Festival 2024',
-        }),
+        })
       );
     });
 
@@ -679,7 +682,7 @@ describe('EmailService', () => {
       const result = await emailService.sendTicketConfirmationEmail(
         'john@example.com',
         ticketContext,
-        pdfBuffer,
+        pdfBuffer
       );
 
       // Assert
@@ -693,7 +696,7 @@ describe('EmailService', () => {
               contentType: 'application/pdf',
             }),
           ],
-        }),
+        })
       );
     });
 
@@ -708,7 +711,7 @@ describe('EmailService', () => {
       expect(mockTransporter.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           attachments: undefined,
-        }),
+        })
       );
     });
   });
@@ -725,9 +728,7 @@ describe('EmailService', () => {
       amount: 300,
       currency: 'EUR',
       paymentMethod: 'Credit Card',
-      items: [
-        { name: 'VIP Ticket', quantity: 2, price: 150 },
-      ],
+      items: [{ name: 'VIP Ticket', quantity: 2, price: 150 }],
       festivalName: 'Summer Festival 2024',
     };
 
@@ -736,7 +737,10 @@ describe('EmailService', () => {
       mockTransporter.sendMail.mockResolvedValue({ messageId: 'payment-id' });
 
       // Act
-      const result = await emailService.sendPaymentConfirmationEmail('jane@example.com', paymentContext);
+      const result = await emailService.sendPaymentConfirmationEmail(
+        'jane@example.com',
+        paymentContext
+      );
 
       // Assert
       expect(result.success).toBe(true);
@@ -747,7 +751,7 @@ describe('EmailService', () => {
           paymentId: 'PAY-2024-123456',
           amount: 300,
           totalAmount: 300,
-        }),
+        })
       );
     });
 
@@ -762,7 +766,7 @@ describe('EmailService', () => {
       expect(mockTransporter.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           subject: 'Confirmation de paiement',
-        }),
+        })
       );
     });
 
@@ -775,7 +779,7 @@ describe('EmailService', () => {
       const result = await emailService.sendPaymentConfirmationEmail(
         'jane@example.com',
         paymentContext,
-        invoicePdf,
+        invoicePdf
       );
 
       // Assert
@@ -789,7 +793,7 @@ describe('EmailService', () => {
               contentType: 'application/pdf',
             }),
           ],
-        }),
+        })
       );
     });
   });
@@ -820,7 +824,7 @@ describe('EmailService', () => {
       expect(mockTransporter.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           subject: 'Confirmation de remboursement',
-        }),
+        })
       );
     });
   });
@@ -849,14 +853,14 @@ describe('EmailService', () => {
       expect(mockTransporter.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           subject: 'Recharge cashless confirmee',
-        }),
+        })
       );
       expect(mockCompiledTemplate).toHaveBeenCalledWith(
         expect.objectContaining({
           firstName: 'Charlie',
           amount: 50,
           newBalance: 150,
-        }),
+        })
       );
     });
   });
@@ -888,7 +892,7 @@ describe('EmailService', () => {
       expect(mockTransporter.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           subject: 'Affectation staff - Summer Festival 2024',
-        }),
+        })
       );
     });
   });
@@ -917,7 +921,7 @@ describe('EmailService', () => {
       expect(mockTransporter.sendMail).toHaveBeenCalledWith(
         expect.objectContaining({
           subject: 'Re: Refund Request',
-        }),
+        })
       );
     });
   });
@@ -958,10 +962,7 @@ describe('EmailService', () => {
       };
 
       const module = await Test.createTestingModule({
-        providers: [
-          EmailService,
-          { provide: ConfigService, useValue: noSmtpConfig },
-        ],
+        providers: [EmailService, { provide: ConfigService, useValue: noSmtpConfig }],
       }).compile();
 
       const service = module.get<EmailService>(EmailService);
@@ -993,10 +994,7 @@ describe('EmailService', () => {
       };
 
       const module = await Test.createTestingModule({
-        providers: [
-          EmailService,
-          { provide: ConfigService, useValue: noSmtpConfig },
-        ],
+        providers: [EmailService, { provide: ConfigService, useValue: noSmtpConfig }],
       }).compile();
 
       const service = module.get<EmailService>(EmailService);
@@ -1152,10 +1150,7 @@ describe('EmailService', () => {
       (fs.existsSync as jest.Mock).mockReturnValue(false);
 
       const module = await Test.createTestingModule({
-        providers: [
-          EmailService,
-          { provide: ConfigService, useValue: createMockConfigService() },
-        ],
+        providers: [EmailService, { provide: ConfigService, useValue: createMockConfigService() }],
       }).compile();
 
       const service = module.get<EmailService>(EmailService);
@@ -1174,10 +1169,7 @@ describe('EmailService', () => {
       (fs.readdirSync as jest.Mock).mockReturnValue([]);
 
       const module = await Test.createTestingModule({
-        providers: [
-          EmailService,
-          { provide: ConfigService, useValue: createMockConfigService() },
-        ],
+        providers: [EmailService, { provide: ConfigService, useValue: createMockConfigService() }],
       }).compile();
 
       const service = module.get<EmailService>(EmailService);

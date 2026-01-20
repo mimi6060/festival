@@ -11,6 +11,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ExecutionContext, CallHandler } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { of, throwError } from 'rxjs';
 import {
   CacheInterceptor,
@@ -50,7 +51,7 @@ const mockReflector = {
 function createMockExecutionContext(
   className = 'TestController',
   methodName = 'testMethod',
-  args: any[] = [],
+  args: any[] = []
 ): ExecutionContext {
   const mockHandler = {
     name: methodName,
@@ -83,8 +84,8 @@ function createMockCallHandler(returnValue: any = { data: 'test' }): CallHandler
 
 describe('CacheInterceptor', () => {
   let interceptor: CacheInterceptor;
-  let cacheService: CacheService;
-  let reflector: Reflector;
+  let _cacheService: CacheService;
+  let _reflector: Reflector;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -98,8 +99,8 @@ describe('CacheInterceptor', () => {
     }).compile();
 
     interceptor = module.get<CacheInterceptor>(CacheInterceptor);
-    cacheService = module.get<CacheService>(CacheService);
-    reflector = module.get<Reflector>(Reflector);
+    _cacheService = module.get<CacheService>(CacheService);
+    _reflector = module.get<Reflector>(Reflector);
   });
 
   // ==========================================================================
@@ -139,16 +140,15 @@ describe('CacheInterceptor', () => {
 
   describe('@Cacheable decorator', () => {
     it('should return cached value when cache hit', (done) => {
-      mockReflector.get
-        .mockImplementation((key: string) => {
-          if (key === CACHE_OPTIONS_METADATA) {
-            return { ttl: 300, tags: [CacheTag.USER] };
-          }
-          if (key === CACHE_KEY_METADATA) {
-            return 'test:key';
-          }
-          return undefined;
-        });
+      mockReflector.get.mockImplementation((key: string) => {
+        if (key === CACHE_OPTIONS_METADATA) {
+          return { ttl: 300, tags: [CacheTag.USER] };
+        }
+        if (key === CACHE_KEY_METADATA) {
+          return 'test:key';
+        }
+        return undefined;
+      });
 
       mockCacheService.get.mockResolvedValue({ cached: 'data' });
 
@@ -165,16 +165,15 @@ describe('CacheInterceptor', () => {
     });
 
     it('should execute method and cache result on cache miss', (done) => {
-      mockReflector.get
-        .mockImplementation((key: string) => {
-          if (key === CACHE_OPTIONS_METADATA) {
-            return { ttl: 300 };
-          }
-          if (key === CACHE_KEY_METADATA) {
-            return 'test:key';
-          }
-          return undefined;
-        });
+      mockReflector.get.mockImplementation((key: string) => {
+        if (key === CACHE_OPTIONS_METADATA) {
+          return { ttl: 300 };
+        }
+        if (key === CACHE_KEY_METADATA) {
+          return 'test:key';
+        }
+        return undefined;
+      });
 
       mockCacheService.get.mockResolvedValue(null);
       mockCacheService.set.mockResolvedValue(undefined);
@@ -196,16 +195,15 @@ describe('CacheInterceptor', () => {
     });
 
     it('should use sync mode with getOrSet to prevent stampede', (done) => {
-      mockReflector.get
-        .mockImplementation((key: string) => {
-          if (key === CACHE_OPTIONS_METADATA) {
-            return { ttl: 300, sync: true };
-          }
-          if (key === CACHE_KEY_METADATA) {
-            return 'test:key';
-          }
-          return undefined;
-        });
+      mockReflector.get.mockImplementation((key: string) => {
+        if (key === CACHE_OPTIONS_METADATA) {
+          return { ttl: 300, sync: true };
+        }
+        if (key === CACHE_KEY_METADATA) {
+          return 'test:key';
+        }
+        return undefined;
+      });
 
       mockCacheService.get.mockResolvedValue(null);
       mockCacheService.getOrSet.mockResolvedValue({ computed: 'value' });
@@ -224,16 +222,15 @@ describe('CacheInterceptor', () => {
 
     it('should respect condition option', (done) => {
       const condition = jest.fn().mockReturnValue(false);
-      mockReflector.get
-        .mockImplementation((key: string) => {
-          if (key === CACHE_OPTIONS_METADATA) {
-            return { ttl: 300, condition };
-          }
-          if (key === CACHE_KEY_METADATA) {
-            return 'test:key';
-          }
-          return undefined;
-        });
+      mockReflector.get.mockImplementation((key: string) => {
+        if (key === CACHE_OPTIONS_METADATA) {
+          return { ttl: 300, condition };
+        }
+        if (key === CACHE_KEY_METADATA) {
+          return 'test:key';
+        }
+        return undefined;
+      });
 
       mockCacheService.get.mockResolvedValue(null);
 
@@ -252,16 +249,15 @@ describe('CacheInterceptor', () => {
 
     it('should respect unless option', (done) => {
       const unless = jest.fn().mockReturnValue(true);
-      mockReflector.get
-        .mockImplementation((key: string) => {
-          if (key === CACHE_OPTIONS_METADATA) {
-            return { ttl: 300, unless };
-          }
-          if (key === CACHE_KEY_METADATA) {
-            return 'test:key';
-          }
-          return undefined;
-        });
+      mockReflector.get.mockImplementation((key: string) => {
+        if (key === CACHE_OPTIONS_METADATA) {
+          return { ttl: 300, unless };
+        }
+        if (key === CACHE_KEY_METADATA) {
+          return 'test:key';
+        }
+        return undefined;
+      });
 
       mockCacheService.get.mockResolvedValue(null);
 
@@ -279,16 +275,15 @@ describe('CacheInterceptor', () => {
     });
 
     it('should cache with tags', (done) => {
-      mockReflector.get
-        .mockImplementation((key: string) => {
-          if (key === CACHE_OPTIONS_METADATA) {
-            return { ttl: 300, tags: [CacheTag.FESTIVAL, CacheTag.TICKET] };
-          }
-          if (key === CACHE_KEY_METADATA) {
-            return 'test:key';
-          }
-          return undefined;
-        });
+      mockReflector.get.mockImplementation((key: string) => {
+        if (key === CACHE_OPTIONS_METADATA) {
+          return { ttl: 300, tags: [CacheTag.FESTIVAL, CacheTag.TICKET] };
+        }
+        if (key === CACHE_KEY_METADATA) {
+          return 'test:key';
+        }
+        return undefined;
+      });
 
       mockCacheService.get.mockResolvedValue(null);
       mockCacheService.set.mockResolvedValue(undefined);
@@ -304,7 +299,7 @@ describe('CacheInterceptor', () => {
               expect.any(Object),
               expect.objectContaining({
                 tags: [CacheTag.FESTIVAL, CacheTag.TICKET],
-              }),
+              })
             );
             done();
           }, 10);
@@ -319,13 +314,12 @@ describe('CacheInterceptor', () => {
 
   describe('@CacheEvict decorator', () => {
     it('should evict cache by key after method execution', (done) => {
-      mockReflector.get
-        .mockImplementation((key: string) => {
-          if (key === CACHE_EVICT_METADATA) {
-            return { key: 'evict:key' };
-          }
-          return undefined;
-        });
+      mockReflector.get.mockImplementation((key: string) => {
+        if (key === CACHE_EVICT_METADATA) {
+          return { key: 'evict:key' };
+        }
+        return undefined;
+      });
 
       mockCacheService.delete.mockResolvedValue(undefined);
 
@@ -343,13 +337,12 @@ describe('CacheInterceptor', () => {
     });
 
     it('should evict cache by pattern', (done) => {
-      mockReflector.get
-        .mockImplementation((key: string) => {
-          if (key === CACHE_EVICT_METADATA) {
-            return { pattern: 'user:*' };
-          }
-          return undefined;
-        });
+      mockReflector.get.mockImplementation((key: string) => {
+        if (key === CACHE_EVICT_METADATA) {
+          return { pattern: 'user:*' };
+        }
+        return undefined;
+      });
 
       mockCacheService.deletePattern.mockResolvedValue(undefined);
 
@@ -367,13 +360,12 @@ describe('CacheInterceptor', () => {
     });
 
     it('should evict cache by tags', (done) => {
-      mockReflector.get
-        .mockImplementation((key: string) => {
-          if (key === CACHE_EVICT_METADATA) {
-            return { tags: [CacheTag.USER, CacheTag.SESSION] };
-          }
-          return undefined;
-        });
+      mockReflector.get.mockImplementation((key: string) => {
+        if (key === CACHE_EVICT_METADATA) {
+          return { tags: [CacheTag.USER, CacheTag.SESSION] };
+        }
+        return undefined;
+      });
 
       mockCacheService.invalidateByTag.mockResolvedValue(5);
 
@@ -392,13 +384,12 @@ describe('CacheInterceptor', () => {
     });
 
     it('should clear all entries when allEntries is true', (done) => {
-      mockReflector.get
-        .mockImplementation((key: string) => {
-          if (key === CACHE_EVICT_METADATA) {
-            return { allEntries: true };
-          }
-          return undefined;
-        });
+      mockReflector.get.mockImplementation((key: string) => {
+        if (key === CACHE_EVICT_METADATA) {
+          return { allEntries: true };
+        }
+        return undefined;
+      });
 
       mockCacheService.clear.mockResolvedValue(undefined);
 
@@ -416,13 +407,12 @@ describe('CacheInterceptor', () => {
     });
 
     it('should evict before invocation when beforeInvocation is true', (done) => {
-      mockReflector.get
-        .mockImplementation((key: string) => {
-          if (key === CACHE_EVICT_METADATA) {
-            return { key: 'evict:key', beforeInvocation: true };
-          }
-          return undefined;
-        });
+      mockReflector.get.mockImplementation((key: string) => {
+        if (key === CACHE_EVICT_METADATA) {
+          return { key: 'evict:key', beforeInvocation: true };
+        }
+        return undefined;
+      });
 
       mockCacheService.delete.mockResolvedValue(undefined);
 
@@ -440,13 +430,12 @@ describe('CacheInterceptor', () => {
 
     it('should respect condition option for eviction', (done) => {
       const condition = jest.fn().mockReturnValue(false);
-      mockReflector.get
-        .mockImplementation((key: string) => {
-          if (key === CACHE_EVICT_METADATA) {
-            return { key: 'evict:key', condition };
-          }
-          return undefined;
-        });
+      mockReflector.get.mockImplementation((key: string) => {
+        if (key === CACHE_EVICT_METADATA) {
+          return { key: 'evict:key', condition };
+        }
+        return undefined;
+      });
 
       const context = createMockExecutionContext();
       const handler = createMockCallHandler({ result: 'data' });
@@ -468,13 +457,12 @@ describe('CacheInterceptor', () => {
 
   describe('@CachePut decorator', () => {
     it('should always execute method and update cache', (done) => {
-      mockReflector.get
-        .mockImplementation((key: string) => {
-          if (key === CACHE_PUT_METADATA) {
-            return { key: 'put:key', ttl: 300 };
-          }
-          return undefined;
-        });
+      mockReflector.get.mockImplementation((key: string) => {
+        if (key === CACHE_PUT_METADATA) {
+          return { key: 'put:key', ttl: 300 };
+        }
+        return undefined;
+      });
 
       mockCacheService.set.mockResolvedValue(undefined);
 
@@ -495,13 +483,12 @@ describe('CacheInterceptor', () => {
 
     it('should respect condition option', (done) => {
       const condition = jest.fn().mockReturnValue(false);
-      mockReflector.get
-        .mockImplementation((key: string) => {
-          if (key === CACHE_PUT_METADATA) {
-            return { key: 'put:key', ttl: 300, condition };
-          }
-          return undefined;
-        });
+      mockReflector.get.mockImplementation((key: string) => {
+        if (key === CACHE_PUT_METADATA) {
+          return { key: 'put:key', ttl: 300, condition };
+        }
+        return undefined;
+      });
 
       const context = createMockExecutionContext();
       const handler = createMockCallHandler({ result: 'data' });
@@ -518,13 +505,12 @@ describe('CacheInterceptor', () => {
 
     it('should respect unless option', (done) => {
       const unless = jest.fn().mockReturnValue(true);
-      mockReflector.get
-        .mockImplementation((key: string) => {
-          if (key === CACHE_PUT_METADATA) {
-            return { key: 'put:key', ttl: 300, unless };
-          }
-          return undefined;
-        });
+      mockReflector.get.mockImplementation((key: string) => {
+        if (key === CACHE_PUT_METADATA) {
+          return { key: 'put:key', ttl: 300, unless };
+        }
+        return undefined;
+      });
 
       const context = createMockExecutionContext();
       const handler = createMockCallHandler({ result: 'data' });
@@ -540,13 +526,12 @@ describe('CacheInterceptor', () => {
     });
 
     it('should cache with tags', (done) => {
-      mockReflector.get
-        .mockImplementation((key: string) => {
-          if (key === CACHE_PUT_METADATA) {
-            return { key: 'put:key', ttl: 300, tags: [CacheTag.USER] };
-          }
-          return undefined;
-        });
+      mockReflector.get.mockImplementation((key: string) => {
+        if (key === CACHE_PUT_METADATA) {
+          return { key: 'put:key', ttl: 300, tags: [CacheTag.USER] };
+        }
+        return undefined;
+      });
 
       mockCacheService.set.mockResolvedValue(undefined);
 
@@ -561,7 +546,7 @@ describe('CacheInterceptor', () => {
               expect.any(Object),
               expect.objectContaining({
                 tags: [CacheTag.USER],
-              }),
+              })
             );
             done();
           }, 10);
@@ -576,13 +561,12 @@ describe('CacheInterceptor', () => {
 
   describe('@InvalidateTags decorator', () => {
     it('should invalidate specified tags after method execution', (done) => {
-      mockReflector.get
-        .mockImplementation((key: string) => {
-          if (key === CACHE_INVALIDATE_TAGS_METADATA) {
-            return [CacheTag.FESTIVAL, CacheTag.TICKET];
-          }
-          return undefined;
-        });
+      mockReflector.get.mockImplementation((key: string) => {
+        if (key === CACHE_INVALIDATE_TAGS_METADATA) {
+          return [CacheTag.FESTIVAL, CacheTag.TICKET];
+        }
+        return undefined;
+      });
 
       mockCacheService.invalidateByTag.mockResolvedValue(5);
 
@@ -601,13 +585,12 @@ describe('CacheInterceptor', () => {
     });
 
     it('should not invalidate when tags array is empty', (done) => {
-      mockReflector.get
-        .mockImplementation((key: string) => {
-          if (key === CACHE_INVALIDATE_TAGS_METADATA) {
-            return [];
-          }
-          return undefined;
-        });
+      mockReflector.get.mockImplementation((key: string) => {
+        if (key === CACHE_INVALIDATE_TAGS_METADATA) {
+          return [];
+        }
+        return undefined;
+      });
 
       const context = createMockExecutionContext();
       const handler = createMockCallHandler({ result: 'data' });
@@ -629,16 +612,15 @@ describe('CacheInterceptor', () => {
 
   describe('cache key generation', () => {
     it('should generate key from string template', (done) => {
-      mockReflector.get
-        .mockImplementation((key: string) => {
-          if (key === CACHE_OPTIONS_METADATA) {
-            return { ttl: 300 };
-          }
-          if (key === CACHE_KEY_METADATA) {
-            return 'users:${0}';
-          }
-          return undefined;
-        });
+      mockReflector.get.mockImplementation((key: string) => {
+        if (key === CACHE_OPTIONS_METADATA) {
+          return { ttl: 300 };
+        }
+        if (key === CACHE_KEY_METADATA) {
+          return 'users:${0}';
+        }
+        return undefined;
+      });
 
       mockCacheService.get.mockResolvedValue(null);
 
@@ -654,13 +636,12 @@ describe('CacheInterceptor', () => {
     });
 
     it('should generate default key when no key specified', (done) => {
-      mockReflector.get
-        .mockImplementation((key: string) => {
-          if (key === CACHE_OPTIONS_METADATA) {
-            return { ttl: 300 };
-          }
-          return undefined;
-        });
+      mockReflector.get.mockImplementation((key: string) => {
+        if (key === CACHE_OPTIONS_METADATA) {
+          return { ttl: 300 };
+        }
+        return undefined;
+      });
 
       mockCacheService.get.mockResolvedValue(null);
 
@@ -685,8 +666,8 @@ describe('CacheInterceptor', () => {
 
 describe('MultiLevelCacheInterceptor', () => {
   let interceptor: MultiLevelCacheInterceptor;
-  let cacheService: CacheService;
-  let reflector: Reflector;
+  let _cacheService: CacheService;
+  let _reflector: Reflector;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -700,8 +681,8 @@ describe('MultiLevelCacheInterceptor', () => {
     }).compile();
 
     interceptor = module.get<MultiLevelCacheInterceptor>(MultiLevelCacheInterceptor);
-    cacheService = module.get<CacheService>(CacheService);
-    reflector = module.get<Reflector>(Reflector);
+    _cacheService = module.get<CacheService>(CacheService);
+    _reflector = module.get<Reflector>(Reflector);
   });
 
   describe('initialization', () => {
@@ -819,8 +800,8 @@ describe('MultiLevelCacheInterceptor', () => {
 
 describe('SWRCacheInterceptor', () => {
   let interceptor: SWRCacheInterceptor;
-  let cacheService: CacheService;
-  let reflector: Reflector;
+  let _cacheService: CacheService;
+  let _reflector: Reflector;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -834,8 +815,8 @@ describe('SWRCacheInterceptor', () => {
     }).compile();
 
     interceptor = module.get<SWRCacheInterceptor>(SWRCacheInterceptor);
-    cacheService = module.get<CacheService>(CacheService);
-    reflector = module.get<Reflector>(Reflector);
+    _cacheService = module.get<CacheService>(CacheService);
+    _reflector = module.get<Reflector>(Reflector);
   });
 
   describe('initialization', () => {
@@ -937,8 +918,8 @@ describe('SWRCacheInterceptor', () => {
 
 describe('BatchCacheInterceptor', () => {
   let interceptor: BatchCacheInterceptor;
-  let cacheService: CacheService;
-  let reflector: Reflector;
+  let _cacheService: CacheService;
+  let _reflector: Reflector;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -952,8 +933,8 @@ describe('BatchCacheInterceptor', () => {
     }).compile();
 
     interceptor = module.get<BatchCacheInterceptor>(BatchCacheInterceptor);
-    cacheService = module.get<CacheService>(CacheService);
-    reflector = module.get<Reflector>(Reflector);
+    _cacheService = module.get<CacheService>(CacheService);
+    _reflector = module.get<Reflector>(Reflector);
   });
 
   describe('initialization', () => {

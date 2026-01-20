@@ -12,10 +12,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CacheController } from './cache.controller';
 import { CacheService, CacheTag, CacheStats } from './cache.service';
-import {
-  CacheInvalidationService,
-  InvalidationResult,
-} from './cache-invalidation.service';
+import { CacheInvalidationService, InvalidationResult } from './cache-invalidation.service';
 
 // ============================================================================
 // Mock Setup
@@ -60,8 +57,8 @@ const mockInvalidationMetrics = {
 
 describe('CacheController', () => {
   let controller: CacheController;
-  let cacheService: CacheService;
-  let invalidationService: CacheInvalidationService;
+  let _cacheService: CacheService;
+  let _invalidationService: CacheInvalidationService;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -75,10 +72,12 @@ describe('CacheController', () => {
     mockCacheService.invalidateByTag.mockResolvedValue(5);
 
     mockInvalidationService.getMetrics.mockReturnValue(mockInvalidationMetrics);
-    mockInvalidationService.getDependencies.mockReturnValue(new Map([
-      ['user:*', [{ source: 'user:*', targets: ['session:${id}'] }]],
-      ['festival:*', [{ source: 'festival:*', targets: ['tickets:festival:${id}:*'] }]],
-    ]));
+    mockInvalidationService.getDependencies.mockReturnValue(
+      new Map([
+        ['user:*', [{ source: 'user:*', targets: ['session:${id}'] }]],
+        ['festival:*', [{ source: 'festival:*', targets: ['tickets:festival:${id}:*'] }]],
+      ])
+    );
 
     const module: TestingModule = await Test.createTestingModule({
       controllers: [CacheController],
@@ -89,8 +88,8 @@ describe('CacheController', () => {
     }).compile();
 
     controller = module.get<CacheController>(CacheController);
-    cacheService = module.get<CacheService>(CacheService);
-    invalidationService = module.get<CacheInvalidationService>(CacheInvalidationService);
+    _cacheService = module.get<CacheService>(CacheService);
+    _invalidationService = module.get<CacheInvalidationService>(CacheInvalidationService);
   });
 
   // ==========================================================================
@@ -341,7 +340,7 @@ describe('CacheController', () => {
           cascaded: false,
         });
 
-        const result = await controller.invalidateByTag({ tag: tag as CacheTag });
+        const _result = await controller.invalidateByTag({ tag: tag as CacheTag });
 
         expect(mockInvalidationService.invalidateByTag).toHaveBeenCalledWith(tag);
       }
@@ -451,7 +450,7 @@ describe('CacheController', () => {
       expect(mockInvalidationService.onEntityChange).toHaveBeenCalledWith(
         expect.objectContaining({
           changedFields: ['email', 'role'],
-        }),
+        })
       );
     });
 
@@ -475,7 +474,7 @@ describe('CacheController', () => {
       expect(mockInvalidationService.onEntityChange).toHaveBeenCalledWith(
         expect.objectContaining({
           context: { festivalId: 'fest-456', userId: 'user-789' },
-        }),
+        })
       );
     });
 
@@ -498,7 +497,7 @@ describe('CacheController', () => {
       expect(mockInvalidationService.onEntityChange).toHaveBeenCalledWith(
         expect.objectContaining({
           changeType: 'delete',
-        }),
+        })
       );
     });
   });
@@ -619,12 +618,17 @@ describe('CacheController', () => {
     });
 
     it('should flatten nested dependencies', () => {
-      mockInvalidationService.getDependencies.mockReturnValue(new Map([
-        ['source:*', [
-          { source: 'source:*', targets: ['target1:*', 'target2:*'] },
-          { source: 'source:*', targets: ['target3:*'] },
-        ]],
-      ]));
+      mockInvalidationService.getDependencies.mockReturnValue(
+        new Map([
+          [
+            'source:*',
+            [
+              { source: 'source:*', targets: ['target1:*', 'target2:*'] },
+              { source: 'source:*', targets: ['target3:*'] },
+            ],
+          ],
+        ])
+      );
 
       const result = controller.getDependencies();
 
@@ -673,7 +677,7 @@ describe('CacheController', () => {
       const specialKey = 'key:with:colons:and/slashes?query=1';
       mockCacheService.get.mockResolvedValue('value');
 
-      const result = await controller.getKeyDetails(specialKey);
+      const _result = await controller.getKeyDetails(specialKey);
 
       expect(mockCacheService.get).toHaveBeenCalledWith(specialKey);
     });
@@ -753,9 +757,7 @@ describe('CacheController', () => {
       });
 
       const tags = [CacheTag.FESTIVAL, CacheTag.USER, CacheTag.TICKET];
-      const results = await Promise.all(
-        tags.map((tag) => controller.invalidateByTag({ tag }))
-      );
+      const results = await Promise.all(tags.map((tag) => controller.invalidateByTag({ tag })));
 
       expect(results.length).toBe(3);
     });

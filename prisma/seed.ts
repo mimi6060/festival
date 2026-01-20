@@ -124,6 +124,25 @@ function slugify(text: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
+// Real Unsplash festival images
+const FESTIVAL_IMAGES = [
+  'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&h=600&fit=crop', // Concert crowd
+  'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=800&h=600&fit=crop', // Rock stage
+  'https://images.unsplash.com/photo-1511192336575-5a79af67a629?w=800&h=600&fit=crop', // Jazz performance
+  'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=600&fit=crop', // Metal concert
+  'https://images.unsplash.com/photo-1429962714451-bb934ecdc4ec?w=800&h=600&fit=crop', // Festival lights
+  'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&h=600&fit=crop', // DJ set
+  'https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&h=600&fit=crop', // Festival crowd
+  'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&h=600&fit=crop', // Stage lights
+  'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=800&h=600&fit=crop', // Concert energy
+  'https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?w=800&h=600&fit=crop', // Electronic music
+];
+
+function getFestivalImageUrl(index: number): string {
+  const imageIndex = index % FESTIVAL_IMAGES.length;
+  return FESTIVAL_IMAGES[imageIndex];
+}
+
 function log(message: string, indent = 0): void {
   const prefix = '  '.repeat(indent);
   console.log(`${prefix}${message}`);
@@ -1298,8 +1317,8 @@ async function seedFestivals(ctx: SeedContext): Promise<void> {
         maxCapacity: festivalDef.maxCapacity,
         currentAttendees:
           festivalDef.status === FestivalStatus.ONGOING ? randomInt(10000, 25000) : 0,
-        logoUrl: `https://example.com/festivals/${festivalDef.slug}/logo.png`,
-        bannerUrl: `https://example.com/festivals/${festivalDef.slug}/banner.jpg`,
+        logoUrl: getFestivalImageUrl(i),
+        bannerUrl: getFestivalImageUrl(i),
         websiteUrl: `https://${festivalDef.slug}.fr`,
         contactEmail: `contact@${festivalDef.slug}.fr`,
         timezone: 'Europe/Paris',

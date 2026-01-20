@@ -100,7 +100,7 @@ const mockInactiveItem = {
 
 describe('FaqService', () => {
   let service: FaqService;
-  let prismaService: jest.Mocked<PrismaService>;
+  let _prismaService: jest.Mocked<PrismaService>;
 
   const mockPrismaService = {
     faqCategory: {
@@ -127,14 +127,11 @@ describe('FaqService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        FaqService,
-        { provide: PrismaService, useValue: mockPrismaService },
-      ],
+      providers: [FaqService, { provide: PrismaService, useValue: mockPrismaService }],
     }).compile();
 
     service = module.get<FaqService>(FaqService);
-    prismaService = module.get(PrismaService);
+    _prismaService = module.get(PrismaService);
   });
 
   // ==========================================================================
@@ -301,9 +298,7 @@ describe('FaqService', () => {
       mockPrismaService.faqCategory.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.findCategoryById('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findCategoryById('non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -329,9 +324,9 @@ describe('FaqService', () => {
       mockPrismaService.faqCategory.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        service.updateCategory('non-existent', { name: 'Test' }),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.updateCategory('non-existent', { name: 'Test' })).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should update order when specified', async () => {
@@ -379,9 +374,7 @@ describe('FaqService', () => {
       mockPrismaService.faqItem.count.mockResolvedValue(2);
 
       // Act & Assert
-      await expect(service.deleteCategory(mockCategory1.id)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(service.deleteCategory(mockCategory1.id)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw NotFoundException when category not found', async () => {
@@ -389,9 +382,7 @@ describe('FaqService', () => {
       mockPrismaService.faqCategory.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.deleteCategory('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.deleteCategory('non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -672,9 +663,7 @@ describe('FaqService', () => {
       mockPrismaService.faqItem.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.findItemById('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.findItemById('non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -702,9 +691,9 @@ describe('FaqService', () => {
       mockPrismaService.faqItem.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        service.updateItem('non-existent', { question: 'Test?' }),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.updateItem('non-existent', { question: 'Test?' })).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should verify new category exists when changing category', async () => {
@@ -736,9 +725,9 @@ describe('FaqService', () => {
       mockPrismaService.faqCategory.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        service.updateItem(mockFaqItem1.id, updateDto),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.updateItem(mockFaqItem1.id, updateDto)).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
@@ -763,9 +752,7 @@ describe('FaqService', () => {
       mockPrismaService.faqItem.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(service.deleteItem('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(service.deleteItem('non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -830,15 +817,10 @@ describe('FaqService', () => {
       // Arrange
       const categoryId = mockCategory1.id;
       const itemIds = [mockFaqItem1.id, mockFaqItem3.id]; // faqItem3 belongs to category2
-      mockPrismaService.faqItem.findMany.mockResolvedValue([
-        mockFaqItem1,
-        mockFaqItem3,
-      ]);
+      mockPrismaService.faqItem.findMany.mockResolvedValue([mockFaqItem1, mockFaqItem3]);
 
       // Act & Assert
-      await expect(
-        service.reorderItems(categoryId, itemIds),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.reorderItems(categoryId, itemIds)).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -965,15 +947,15 @@ describe('FaqService', () => {
       mockPrismaService.faqItem.findMany.mockResolvedValue([]);
 
       // Act
-      await service.searchFaq("test's \"query\"");
+      await service.searchFaq('test\'s "query"');
 
       // Assert
       expect(mockPrismaService.faqItem.findMany).toHaveBeenCalledWith({
         where: {
           isActive: true,
           OR: [
-            { question: { contains: "test's \"query\"", mode: 'insensitive' } },
-            { answer: { contains: "test's \"query\"", mode: 'insensitive' } },
+            { question: { contains: 'test\'s "query"', mode: 'insensitive' } },
+            { answer: { contains: 'test\'s "query"', mode: 'insensitive' } },
           ],
         },
         orderBy: { order: 'asc' },

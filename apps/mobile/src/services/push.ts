@@ -1,14 +1,32 @@
 import { Platform } from 'react-native';
-import PushNotification, { Importance } from 'react-native-push-notification';
 import { useNotificationStore } from '../store';
 import apiService from './api';
 import type { Notification } from '../types';
+
+// Only import PushNotification on native platforms
+let PushNotification: typeof import('react-native-push-notification').default | null = null;
+let Importance: typeof import('react-native-push-notification').Importance | null = null;
+
+if (Platform.OS !== 'web') {
+  // Dynamic import for native platforms only
+  const pushModule = require('react-native-push-notification');
+  PushNotification = pushModule.default;
+  Importance = pushModule.Importance;
+}
 
 class PushNotificationService {
   private configured = false;
 
   configure() {
-    if (this.configured) {return;}
+    if (this.configured) {
+      return;
+    }
+
+    // Skip push notification setup on web
+    if (Platform.OS === 'web' || !PushNotification) {
+      this.configured = true;
+      return;
+    }
 
     PushNotification.configure({
       onRegister: async (token) => {
@@ -55,7 +73,7 @@ class PushNotificationService {
     });
 
     // Create notification channel for Android
-    if (Platform.OS === 'android') {
+    if (Platform.OS === 'android' && Importance) {
       PushNotification.createChannel(
         {
           channelId: 'festival-channel',
@@ -74,14 +92,26 @@ class PushNotificationService {
   }
 
   requestPermissions() {
+    if (!PushNotification) {
+      return Promise.resolve({ alert: false, badge: false, sound: false });
+    }
     return PushNotification.requestPermissions();
   }
 
-  checkPermissions(callback: (permissions: { alert: boolean; badge: boolean; sound: boolean }) => void) {
+  checkPermissions(
+    callback: (permissions: { alert: boolean; badge: boolean; sound: boolean }) => void
+  ) {
+    if (!PushNotification) {
+      callback({ alert: false, badge: false, sound: false });
+      return;
+    }
     PushNotification.checkPermissions(callback);
   }
 
   localNotification(title: string, message: string, data?: object) {
+    if (!PushNotification) {
+      return;
+    }
     PushNotification.localNotification({
       channelId: 'festival-channel',
       title,
@@ -92,12 +122,10 @@ class PushNotificationService {
     });
   }
 
-  scheduleNotification(
-    title: string,
-    message: string,
-    date: Date,
-    data?: object
-  ) {
+  scheduleNotification(title: string, message: string, date: Date, data?: object) {
+    if (!PushNotification) {
+      return;
+    }
     PushNotification.localNotificationSchedule({
       channelId: 'festival-channel',
       title,
@@ -110,18 +138,30 @@ class PushNotificationService {
   }
 
   cancelAllNotifications() {
+    if (!PushNotification) {
+      return;
+    }
     PushNotification.cancelAllLocalNotifications();
   }
 
   cancelNotification(notificationId: string) {
+    if (!PushNotification) {
+      return;
+    }
     PushNotification.cancelLocalNotification(notificationId);
   }
 
   removeAllDeliveredNotifications() {
+    if (!PushNotification) {
+      return;
+    }
     PushNotification.removeAllDeliveredNotifications();
   }
 
   setBadgeCount(count: number) {
+    if (!PushNotification) {
+      return;
+    }
     PushNotification.setApplicationIconBadgeNumber(count);
   }
 }

@@ -464,7 +464,7 @@ export function createMockSession(overrides: Record<string, unknown> = {}) {
 /**
  * Mocks a Prisma transaction
  */
-export function mockTransaction<T>(callback: (tx: MockPrismaClient) => T): void {
+export function mockTransaction<T>(_callback: (tx: MockPrismaClient) => T): void {
   prismaMock.$transaction.mockImplementation(async (fn: any) => {
     if (typeof fn === 'function') {
       return fn(prismaMock);

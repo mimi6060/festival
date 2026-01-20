@@ -1,12 +1,5 @@
 import React, { useCallback, useMemo, memo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  RefreshControl,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useNotificationStore } from '../../store';
@@ -30,7 +23,7 @@ const mockNotifications: Notification[] = [
   {
     id: '2',
     title: 'Offre speciale',
-    message: 'Profitez de -20% sur les cocktails au Bar Central jusqu\'a 19h!',
+    message: "Profitez de -20% sur les cocktails au Bar Central jusqu'a 19h!",
     type: 'promo',
     read: false,
     createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
@@ -71,14 +64,11 @@ export const NotificationsScreen: React.FC = () => {
   } = useNotificationStore();
   const [refreshing, setRefreshing] = React.useState(false);
 
-  const notifications = useMemo(() =>
-    storeNotifications.length > 0 ? storeNotifications : mockNotifications,
+  const notifications = useMemo(
+    () => (storeNotifications.length > 0 ? storeNotifications : mockNotifications),
     [storeNotifications]
   );
-  const unreadCount = useMemo(() =>
-    notifications.filter((n) => !n.read).length,
-    [notifications]
-  );
+  const unreadCount = useMemo(() => notifications.filter((n) => !n.read).length, [notifications]);
 
   const getNotificationIcon = useCallback((type: Notification['type']) => {
     switch (type) {
@@ -114,10 +104,18 @@ export const NotificationsScreen: React.FC = () => {
     const diffHours = Math.floor(diffMins / 60);
     const diffDays = Math.floor(diffHours / 24);
 
-    if (diffMins < 1) {return "A l'instant";}
-    if (diffMins < 60) {return `Il y a ${diffMins} min`;}
-    if (diffHours < 24) {return `Il y a ${diffHours}h`;}
-    if (diffDays === 1) {return 'Hier';}
+    if (diffMins < 1) {
+      return "A l'instant";
+    }
+    if (diffMins < 60) {
+      return `Il y a ${diffMins} min`;
+    }
+    if (diffHours < 24) {
+      return `Il y a ${diffHours}h`;
+    }
+    if (diffDays === 1) {
+      return 'Hier';
+    }
     return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' });
   }, []);
 
@@ -128,101 +126,120 @@ export const NotificationsScreen: React.FC = () => {
     setRefreshing(false);
   }, []);
 
-  const handleNotificationPress = useCallback((notification: Notification) => {
-    if (!notification.read) {
-      markAsRead(notification.id);
-    }
-    // Handle navigation based on actionUrl
-  }, [markAsRead]);
+  const handleNotificationPress = useCallback(
+    (notification: Notification) => {
+      if (!notification.read) {
+        markAsRead(notification.id);
+      }
+      // Handle navigation based on actionUrl
+    },
+    [markAsRead]
+  );
 
-  const handleDeleteNotification = useCallback((notificationId: string) => {
-    deleteNotification(notificationId);
-  }, [deleteNotification]);
+  const handleDeleteNotification = useCallback(
+    (notificationId: string) => {
+      deleteNotification(notificationId);
+    },
+    [deleteNotification]
+  );
 
   // Memoized notification item component
-  const NotificationItem = memo(({ item, onPress, onDelete, getIcon, getColor, formatTimeFunc }: {
-    item: Notification;
-    onPress: (notification: Notification) => void;
-    onDelete: (id: string) => void;
-    getIcon: (type: Notification['type']) => string;
-    getColor: (type: Notification['type']) => string;
-    formatTimeFunc: (dateString: string) => string;
-  }) => (
-    <TouchableOpacity
-      style={[styles.notificationCard, !item.read && styles.notificationUnread]}
-      onPress={() => onPress(item)}
-      activeOpacity={0.9}
-    >
-      <View
-        style={[
-          styles.iconContainer,
-          { backgroundColor: getColor(item.type) + '20' },
-        ]}
-      >
-        <Text style={styles.icon}>{getIcon(item.type)}</Text>
-      </View>
-
-      <View style={styles.content}>
-        <View style={styles.header}>
-          <Text style={styles.title} numberOfLines={1}>
-            {item.title}
-          </Text>
-          {!item.read && <View style={styles.unreadDot} />}
-        </View>
-        <Text style={styles.message} numberOfLines={2}>
-          {item.message}
-        </Text>
-        <Text style={styles.time}>{formatTimeFunc(item.createdAt)}</Text>
-      </View>
-
+  const NotificationItem = memo(
+    ({
+      item,
+      onPress,
+      onDelete,
+      getIcon,
+      getColor,
+      formatTimeFunc,
+    }: {
+      item: Notification;
+      onPress: (notification: Notification) => void;
+      onDelete: (id: string) => void;
+      getIcon: (type: Notification['type']) => string;
+      getColor: (type: Notification['type']) => string;
+      formatTimeFunc: (dateString: string) => string;
+    }) => (
       <TouchableOpacity
-        style={styles.deleteButton}
-        onPress={() => onDelete(item.id)}
+        style={[styles.notificationCard, !item.read && styles.notificationUnread]}
+        onPress={() => onPress(item)}
+        activeOpacity={0.9}
       >
-        <Text style={styles.deleteIcon}>x</Text>
-      </TouchableOpacity>
-    </TouchableOpacity>
-  ));
+        <View style={[styles.iconContainer, { backgroundColor: getColor(item.type) + '20' }]}>
+          <Text style={styles.icon}>{getIcon(item.type)}</Text>
+        </View>
 
-  const renderNotification = useCallback(({ item }: { item: Notification }) => (
-    <NotificationItem
-      item={item}
-      onPress={handleNotificationPress}
-      onDelete={handleDeleteNotification}
-      getIcon={getNotificationIcon}
-      getColor={getNotificationColor}
-      formatTimeFunc={formatTime}
-    />
-  ), [handleNotificationPress, handleDeleteNotification, getNotificationIcon, getNotificationColor, formatTime]);
+        <View style={styles.content}>
+          <View style={styles.header}>
+            <Text style={styles.title} numberOfLines={1}>
+              {item.title}
+            </Text>
+            {!item.read && <View style={styles.unreadDot} />}
+          </View>
+          <Text style={styles.message} numberOfLines={2}>
+            {item.message}
+          </Text>
+          <Text style={styles.time}>{formatTimeFunc(item.createdAt)}</Text>
+        </View>
+
+        <TouchableOpacity style={styles.deleteButton} onPress={() => onDelete(item.id)}>
+          <Text style={styles.deleteIcon}>x</Text>
+        </TouchableOpacity>
+      </TouchableOpacity>
+    )
+  );
+
+  const renderNotification = useCallback(
+    ({ item }: { item: Notification }) => (
+      <NotificationItem
+        item={item}
+        onPress={handleNotificationPress}
+        onDelete={handleDeleteNotification}
+        getIcon={getNotificationIcon}
+        getColor={getNotificationColor}
+        formatTimeFunc={formatTime}
+      />
+    ),
+    [
+      handleNotificationPress,
+      handleDeleteNotification,
+      getNotificationIcon,
+      getNotificationColor,
+      formatTime,
+    ]
+  );
 
   // getItemLayout for fixed-height optimization
-  const getItemLayout = useCallback((_: unknown, index: number) => ({
-    length: NOTIFICATION_ITEM_HEIGHT + ITEM_SEPARATOR_HEIGHT,
-    offset: (NOTIFICATION_ITEM_HEIGHT + ITEM_SEPARATOR_HEIGHT) * index,
-    index,
-  }), []);
+  const getItemLayout = useCallback(
+    (_: unknown, index: number) => ({
+      length: NOTIFICATION_ITEM_HEIGHT + ITEM_SEPARATOR_HEIGHT,
+      offset: (NOTIFICATION_ITEM_HEIGHT + ITEM_SEPARATOR_HEIGHT) * index,
+      index,
+    }),
+    []
+  );
 
   // Stable key extractor
   const keyExtractor = useCallback((item: Notification) => item.id, []);
 
-  const renderEmptyState = useCallback(() => (
-    <View style={styles.emptyContainer}>
-      <Text style={styles.emptyIcon}>🔔</Text>
-      <Text style={styles.emptyTitle}>Aucune notification</Text>
-      <Text style={styles.emptySubtitle}>
-        Vous recevrez ici les alertes et informations importantes
-      </Text>
-    </View>
+  const renderEmptyState = useCallback(
+    () => (
+      <View style={styles.emptyContainer}>
+        <Text style={styles.emptyIcon}>🔔</Text>
+        <Text style={styles.emptyTitle}>Aucune notification</Text>
+        <Text style={styles.emptySubtitle}>
+          Vous recevrez ici les alertes et informations importantes
+        </Text>
+      </View>
+    ),
+    []
   );
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.screenHeader}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.screenTitle}>Notifications</Text>
@@ -238,7 +255,8 @@ export const NotificationsScreen: React.FC = () => {
       {unreadCount > 0 && (
         <View style={styles.unreadBanner}>
           <Text style={styles.unreadText}>
-            {unreadCount} notification{unreadCount > 1 ? 's' : ''} non lue{unreadCount > 1 ? 's' : ''}
+            {unreadCount} notification{unreadCount > 1 ? 's' : ''} non lue
+            {unreadCount > 1 ? 's' : ''}
           </Text>
         </View>
       )}

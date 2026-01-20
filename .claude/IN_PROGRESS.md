@@ -1470,4 +1470,319 @@ apps/api/src/app/app.module.ts                          (module imports)
 
 ---
 
-_Dernière mise à jour: 2026-01-15_
+## Session 2026-01-16 - Sprint 4 Stabilization & Infrastructure Improvements
+
+### Infrastructure Changes
+
+- [x] **Port Migration 4200 -> 4201**
+  - Admin dashboard now runs on port 4201 to avoid conflicts
+  - Updated configuration files and documentation
+
+- [x] **New start.sh Script**
+  - Created unified startup script for development environment
+  - Manages Docker services, API, web, and admin apps
+  - Simplifies local development setup
+
+- [x] **Documentation: DEVELOPMENT.md**
+  - Created comprehensive development guide
+  - Documented start.sh commands (docker, k8s, local, status, stop)
+  - Port reference table for all services
+  - Troubleshooting tips
+  - Updated docs/index.md with Getting Started section
+
+### In Progress
+
+- [ ] **Sprint 4 Stabilization Work**
+  - Addressing stability issues identified during Sprint 3
+  - Fixing integration bugs between modules
+  - Improving error handling and edge cases
+
+- [ ] **ESLint Configuration Improvements**
+  - Updating ESLint rules for better code quality
+  - Addressing new linting warnings
+  - Ensuring consistent code style across all apps
+
+---
+
+## Session 2026-01-16 - Sprint 5 Planning: Unified Design System
+
+### Epic 11: Unified Design System - Stories Created
+
+- [x] **Story 11.1: Create libs/ui Foundation**
+  - Nx React library setup with Rollup bundler
+  - Path alias @festival/ui configuration
+  - Storybook setup, folder structure, barrel exports
+
+- [x] **Story 11.2: Create Design Tokens Library**
+  - CSS custom properties (--festival-\* convention)
+  - Colors, spacing, typography, shadows, transitions
+  - Dark mode support, TypeScript exports, Tailwind preset
+
+- [x] **Story 11.3: Extract Button Component**
+  - Variants: primary, secondary, outline, ghost, danger
+  - Sizes: sm, md, lg
+  - States: loading, disabled, with icons
+  - cva for variant management, forwardRef
+
+- [x] **Story 11.4: Extract Card Component**
+  - Compound component pattern (Card.Header, Card.Body, Card.Footer)
+  - Variants: default, elevated, outlined
+  - Interactive cards with keyboard navigation
+
+- [x] **Story 11.5: Extract Input Component**
+  - Types: text, email, password, number, search, tel, url
+  - Label, error, helper text, icons
+  - react-hook-form integration via forwardRef
+
+- [x] **Story 11.6: Extract Modal Component**
+  - Compound components (Modal.Header, Modal.Body, Modal.Footer)
+  - Sizes: sm, md, lg, xl, full
+  - Focus trap, escape key, overlay click
+  - createPortal for body rendering
+
+- [x] **Story 11.7: Migrate Web App to Use libs/ui**
+  - Replace local UI components with @festival/ui imports
+  - Update Tailwind config with shared preset
+  - Keep domain-specific components (FestivalCard, etc.)
+
+- [x] **Story 11.8: Migrate Admin App to Use libs/ui**
+  - Replace local UI components with @festival/ui imports
+  - Admin theme overrides support
+  - Keep admin-specific components (DataTable, Charts)
+
+### Files Modified
+
+- `_bmad-output/planning-artifacts/epics.md` - Added Epic 10 (Stabilization) and Epic 11 (Design System)
+
+---
+
+## Session 2026-01-16 - Sprint 5: libs/ui Foundation Implementation
+
+### Story 11.1: Create libs/ui Foundation - COMPLETED
+
+**Directory Structure Created:**
+
+```
+libs/ui/
+├── src/
+│   ├── index.ts              # Main entry - exports all components and theme
+│   ├── components/
+│   │   ├── index.ts          # Component barrel exports
+│   │   └── Button.tsx        # Button component placeholder
+│   └── theme/
+│       └── index.ts          # Design tokens (colors, spacing, typography, etc.)
+├── project.json              # NX project configuration
+├── package.json              # Package definition (@festival/ui)
+├── tsconfig.json             # TypeScript configuration
+├── tsconfig.lib.json         # Library build config
+├── tsconfig.spec.json        # Test config
+└── jest.config.ts            # Jest configuration
+```
+
+**Path Alias Added:**
+
+- `@festival/ui` -> `libs/ui/src/index.ts` in `tsconfig.base.json`
+
+**Theme/Design Tokens:**
+
+- Color palette (primary, secondary, neutral, semantic colors)
+- Spacing scale (0-24)
+- Typography (font family, size, weight, line height)
+- Border radius scale
+- Shadow scale
+- Transition definitions
+- Breakpoints
+- Z-index scale
+
+**Button Component:**
+
+- Variants: primary, secondary, outline, ghost, danger
+- Sizes: sm, md, lg
+- Features: fullWidth, isLoading, leftIcon, rightIcon
+- Tailwind CSS classes ready
+- forwardRef implementation
+
+**Verification:**
+
+- ESLint: PASSED
+- TypeScript: PASSED
+
+---
+
+## Session 2026-01-16 - Sprint 5: Shared Design Tokens Library
+
+### Story 11.2: Create Design Tokens Library - COMPLETED
+
+**Directory Structure Created:**
+
+```
+libs/shared/design-tokens/
+├── src/
+│   ├── index.ts              # Main entry - exports all tokens and utilities
+│   └── lib/
+│       ├── colors.ts         # Unified color palette (primary, secondary, semantic, festival)
+│       ├── spacing.ts        # Spacing scale (rem and px values, semantic names)
+│       ├── typography.ts     # Font families, sizes, weights, line heights, presets
+│       ├── shadows.ts        # Box shadows, colored shadows, mobile shadows
+│       ├── borders.ts        # Border radius and width scales
+│       ├── animations.ts     # Durations, easing functions, transitions
+│       └── breakpoints.ts    # Responsive breakpoints and media queries
+├── project.json              # NX project configuration
+├── package.json              # Package definition (@festival/shared/design-tokens)
+├── tsconfig.json             # TypeScript configuration
+└── jest.config.ts            # Jest configuration
+```
+
+**Path Alias Added:**
+
+- `@festival/shared/design-tokens` -> `libs/shared/design-tokens/src/index.ts`
+
+**Token Modules:**
+
+1. **Colors** (`colors.ts`)
+   - Brand colors: primary (purple/fuchsia), secondary (pink), accent (sky blue)
+   - Neutrals: neutral, slate, gray scales
+   - Semantic: success, warning, error, info
+   - Festival-specific: dark theme, zone colors
+   - Light/dark theme semantic mappings
+
+2. **Spacing** (`spacing.ts`)
+   - Base scale (0-96) in rem and px
+   - Semantic spacing (xs, sm, md, lg, xl, 2xl, 3xl, 4xl)
+   - Component-specific spacing (button, card, input, modal, section)
+   - Gap utilities for flex/grid
+
+3. **Typography** (`typography.ts`)
+   - Font families: sans, mono, serif, display
+   - Font sizes: xs through 9xl
+   - Font weights: thin through black
+   - Line heights and letter spacing
+   - Pre-configured text styles (display, heading, body, caption, label, button, code)
+   - Mobile-specific styles for React Native
+
+4. **Shadows** (`shadows.ts`)
+   - Standard box shadows: sm through 2xl
+   - Colored glow shadows for each brand color
+   - Dark mode optimized shadows
+   - React Native shadow properties (iOS + Android elevation)
+   - Focus ring shadows for accessibility
+
+5. **Borders** (`borders.ts`)
+   - Border radius scale (none through full)
+   - Border width scale (0-8px)
+   - Component-specific radius presets
+   - Outline styles for focus states
+
+6. **Animations** (`animations.ts`)
+   - Duration scale (0-1000ms)
+   - Semantic durations (instant, fast, normal, slow)
+   - Easing functions (standard, decelerate, accelerate, bounce, spring)
+   - Transition presets
+   - React Native animation config (spring, timing)
+   - Keyframe definitions (fadeIn, slideUp, spin, pulse, bounce, shake)
+
+7. **Breakpoints** (`breakpoints.ts`)
+   - Breakpoint values (xs through 3xl)
+   - Min-width and max-width queries
+   - Range queries (between breakpoints)
+   - Device-based queries (mobile, tablet, desktop, touch)
+   - User preference queries (dark mode, reduced motion)
+   - Container max-widths
+   - Utility functions (getCurrentBreakpoint, isBreakpoint)
+
+**Theme Presets:**
+
+- `lightTheme` - Semantic colors for light mode
+- `darkTheme` - Semantic colors for dark mode
+- `festivalTheme` - Immersive dark theme for festival experience
+
+**Tailwind Integration:**
+
+- `tailwindColors` - Ready to spread into tailwind.config.js
+- `tailwindSpacing` - Compatible spacing scale
+- `tailwindBorderRadius` - Compatible border radius scale
+- `tailwindFontFamily` - Compatible font family config
+
+**Verification:**
+
+- ESLint: PASSED
+- TypeScript: PASSED
+
+---
+
+## Session 2026-01-20 - Fix: Web App 404 Pages
+
+### Issue
+
+- Routes `/tickets`, `/orders`, `/profile` were protected in middleware but pages did not exist
+- Users would get 404 errors when accessing these routes after authentication
+
+### Solution Implemented
+
+- Created redirect pages for all protected routes in middleware:
+  - `/tickets` -> redirects to `/account/tickets`
+  - `/orders` -> redirects to `/account/orders`
+  - `/profile` -> redirects to `/account`
+
+### Files Created
+
+```
+apps/web/app/tickets/page.tsx   (NEW - redirect to /account/tickets)
+apps/web/app/orders/page.tsx    (NEW - redirect to /account/orders)
+apps/web/app/profile/page.tsx   (NEW - redirect to /account)
+```
+
+### Verification
+
+- ESLint: PASSED
+- Build: PASSED
+- All routes now return proper responses (307 redirect to login when unauthenticated)
+
+---
+
+## Session 2026-01-20 - Bug Fix: Admin Dashboard Export Button
+
+### Issue
+
+- **Problem**: The "Exporter" button on the Admin Dashboard was not responding to clicks
+- **Cause**: The button had no `onClick` handler attached
+
+### Solution Implemented
+
+- Added `handleExport` function with CSV export functionality
+- Added `exportToast` state for visual feedback
+- Button now exports dashboard statistics to CSV file
+- Toast notification confirms successful export
+
+### Changes Made
+
+**File Modified:** `apps/admin/app/(dashboard)/page.tsx`
+
+1. Added imports: `useState`, `useCallback`
+2. Added `exportToast` state for toast notifications
+3. Added `handleExport` function that:
+   - Creates CSV content with dashboard statistics
+   - Triggers browser download of CSV file
+   - Shows success toast notification
+4. Added `onClick={handleExport}` to the Export button
+5. Added toast notification UI component
+
+### Exported Data
+
+- Date d'export
+- Festivals actifs
+- Billets vendus ce mois
+- Revenus ce mois (EUR)
+- Nouveaux utilisateurs ce mois
+- Participants actuels
+- Solde cashless total (EUR)
+
+### Verification
+
+- ESLint: PASSED
+- Build: PASSED
+- Admin app responds on port 4201
+
+---
+
+_Derniere mise a jour: 2026-01-20_

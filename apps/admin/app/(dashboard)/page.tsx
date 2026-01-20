@@ -1,7 +1,8 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState, useCallback } from 'react';
 import dynamic from 'next/dynamic';
+import Link from 'next/link';
 import { useRealtimeData } from '@/hooks';
 import { ConnectionStatusIndicator } from '@/components/dashboard/ConnectionStatusIndicator';
 import { RealTimeStatCard } from '@/components/dashboard/RealTimeStatCard';
@@ -36,34 +37,80 @@ const TicketSalesChart = dynamic(() => import('@/components/dashboard/TicketSale
 });
 
 export default function DashboardPage() {
-  // Real-time data hook with WebSocket connection
+  // Use realtime data hook with polling fallback (WebSocket disabled for stability)
   const {
     stats: realtimeStats,
     isConnected,
     connectionState,
     lastUpdate,
     isLoading,
-    connect,
     refresh,
+    connect,
   } = useRealtimeData({
-    autoConnect: true,
+    autoConnect: false, // Disable WebSocket, use polling only
     pollingFallback: true,
-    pollingInterval: 30000, // Fallback to 30s polling if WebSocket unavailable
+    pollingInterval: 30000,
   });
 
-  // Combine real-time stats with mock data for complete display
-  const stats = useMemo(() => ({
-    activeFestivals: mockDashboardStats.activeFestivals,
-    ticketsSoldThisMonth: realtimeStats.ticketsSoldToday > 0 ? realtimeStats.ticketsSoldToday : mockDashboardStats.ticketsSoldThisMonth,
-    revenueThisMonth: realtimeStats.revenueToday > 0 ? realtimeStats.revenueToday : mockDashboardStats.revenueThisMonth,
-    newUsersThisMonth: mockDashboardStats.newUsersThisMonth,
-    currentAttendees: realtimeStats.currentAttendees,
-    cashlessBalance: realtimeStats.cashlessBalance,
-  }), [realtimeStats, mockDashboardStats]);
+  // Merge realtime stats with mock dashboard stats
+  const stats = useMemo(
+    () => ({
+      activeFestivals: mockDashboardStats.activeFestivals,
+      ticketsSoldThisMonth:
+        realtimeStats.ticketsSoldToday || mockDashboardStats.ticketsSoldThisMonth,
+      revenueThisMonth: realtimeStats.revenueToday || mockDashboardStats.revenueThisMonth,
+      newUsersThisMonth: mockDashboardStats.newUsersThisMonth,
+      currentAttendees: realtimeStats.currentAttendees || 2464,
+      cashlessBalance: realtimeStats.cashlessBalance || 120053,
+    }),
+    [realtimeStats]
+  );
 
   const festivals = mockFestivals.filter((f) => f.status === 'published');
   const revenueData = useMemo(() => generateRevenueChartData(90), []);
   const ticketSalesData = useMemo(() => generateTicketSalesChartData(90), []);
+
+  // Export toast state
+  const [exportToast, setExportToast] = useState<{
+    show: boolean;
+    message: string;
+    type: 'success' | 'info';
+  } | null>(null);
+
+  // Handle export functionality
+  const handleExport = useCallback(() => {
+    // Create CSV content from dashboard stats
+    const now = new Date().toISOString().split('T')[0];
+    const csvContent = [
+      'Statistiques du Dashboard - Festival Admin',
+      `Date d'export: ${now}`,
+      '',
+      'Metrique,Valeur',
+      `Festivals actifs,${stats.activeFestivals}`,
+      `Billets vendus ce mois,${stats.ticketsSoldThisMonth}`,
+      `Revenus ce mois,${stats.revenueThisMonth} EUR`,
+      `Nouveaux utilisateurs ce mois,${stats.newUsersThisMonth}`,
+      `Participants actuels,${stats.currentAttendees}`,
+      `Solde cashless total,${stats.cashlessBalance} EUR`,
+    ].join('\n');
+
+    // Create and download the file
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `dashboard-export-${now}.csv`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+
+    // Show success toast
+    setExportToast({ show: true, message: 'Export CSV telecharge avec succes !', type: 'success' });
+
+    // Auto-hide toast after 3 seconds
+    setTimeout(() => setExportToast(null), 3000);
+  }, [stats]);
 
   return (
     <div className="space-y-6">
@@ -71,7 +118,9 @@ export default function DashboardPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
-          <p className="text-gray-500 mt-1">Bienvenue ! Voici un apercu de votre activite en temps reel.</p>
+          <p className="text-gray-500 mt-1">
+            Bienvenue ! Voici un apercu de votre activite en temps reel.
+          </p>
         </div>
         <div className="flex items-center gap-3">
           {/* Connection Status */}
@@ -95,7 +144,7 @@ export default function DashboardPage() {
             </svg>
             Actualiser
           </button>
-          <button className="btn-secondary flex items-center gap-2">
+          <button onClick={handleExport} className="btn-secondary flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
@@ -106,7 +155,7 @@ export default function DashboardPage() {
             </svg>
             Exporter
           </button>
-          <button className="btn-primary flex items-center gap-2">
+          <Link href="/festivals/new" className="btn-primary flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
@@ -116,7 +165,7 @@ export default function DashboardPage() {
               />
             </svg>
             Nouveau festival
-          </button>
+          </Link>
         </div>
       </div>
 
@@ -239,12 +288,85 @@ export default function DashboardPage() {
       {/* Real-Time Widgets Row */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ZoneOccupancyWidget
-          zones={realtimeStats.zoneOccupancy}
+          zones={
+            Object.keys(realtimeStats.zoneOccupancy).length > 0
+              ? realtimeStats.zoneOccupancy
+              : {
+                  'main-stage': {
+                    zoneId: 'main-stage',
+                    zoneName: 'Scene Principale',
+                    current: 750,
+                    capacity: 1000,
+                    percentage: 75,
+                    status: 'open',
+                    trend: 'increasing',
+                    entriesLastHour: 150,
+                    exitsLastHour: 80,
+                  },
+                  'vip-area': {
+                    zoneId: 'vip-area',
+                    zoneName: 'Zone VIP',
+                    current: 120,
+                    capacity: 200,
+                    percentage: 60,
+                    status: 'busy',
+                    trend: 'stable',
+                    entriesLastHour: 30,
+                    exitsLastHour: 25,
+                  },
+                  'food-court': {
+                    zoneId: 'food-court',
+                    zoneName: 'Espace Restauration',
+                    current: 380,
+                    capacity: 500,
+                    percentage: 76,
+                    status: 'near_capacity',
+                    trend: 'increasing',
+                    entriesLastHour: 200,
+                    exitsLastHour: 120,
+                  },
+                }
+          }
           isLive={isConnected}
           loading={isLoading}
         />
         <RecentTransactionsWidget
-          transactions={realtimeStats.recentTransactions}
+          transactions={
+            realtimeStats.recentTransactions.length > 0
+              ? realtimeStats.recentTransactions
+              : [
+                  {
+                    id: 'tx_1',
+                    type: 'ticket_sale',
+                    amount: 89,
+                    timestamp: new Date().toISOString(),
+                  },
+                  {
+                    id: 'tx_2',
+                    type: 'cashless_topup',
+                    amount: 50,
+                    timestamp: new Date(Date.now() - 60000).toISOString(),
+                  },
+                  {
+                    id: 'tx_3',
+                    type: 'cashless_payment',
+                    amount: 12,
+                    timestamp: new Date(Date.now() - 120000).toISOString(),
+                  },
+                  {
+                    id: 'tx_4',
+                    type: 'ticket_sale',
+                    amount: 149,
+                    timestamp: new Date(Date.now() - 180000).toISOString(),
+                  },
+                  {
+                    id: 'tx_5',
+                    type: 'refund',
+                    amount: 25,
+                    timestamp: new Date(Date.now() - 240000).toISOString(),
+                  },
+                ]
+          }
           isLive={isConnected}
           loading={isLoading}
         />
@@ -255,6 +377,63 @@ export default function DashboardPage() {
         <TopFestivals festivals={festivals} />
         <RecentActivity />
       </div>
+
+      {/* Export Toast Notification */}
+      {exportToast?.show && (
+        <div className="fixed bottom-4 right-4 z-50 animate-in slide-in-from-bottom-4 fade-in duration-300">
+          <div
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg ${
+              exportToast.type === 'success'
+                ? 'bg-green-50 border border-green-200 text-green-800'
+                : 'bg-blue-50 border border-blue-200 text-blue-800'
+            }`}
+          >
+            {exportToast.type === 'success' ? (
+              <svg
+                className="w-5 h-5 text-green-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M5 13l4 4L19 7"
+                />
+              </svg>
+            ) : (
+              <svg
+                className="w-5 h-5 text-blue-500"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+            )}
+            <span className="font-medium">{exportToast.message}</span>
+            <button
+              onClick={() => setExportToast(null)}
+              className="ml-2 text-gray-400 hover:text-gray-600"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -42,7 +42,7 @@ export const TicketDetailScreen: React.FC = () => {
   const navigation = useNavigation<TicketDetailNavigationProp>();
   const route = useRoute<TicketDetailRouteProp>();
   const { tickets, selectTicket } = useTicketStore();
-  const [_brightness, _setBrightness] = useState(100);
+  const [_brightness, setBrightness] = useState(100);
 
   const ticketId = route.params?.ticketId;
   const ticket = tickets.find((t) => t.id === ticketId) || mockTicket;
@@ -117,10 +117,7 @@ export const TicketDetailScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Detail du billet</Text>

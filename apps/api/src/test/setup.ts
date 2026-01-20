@@ -34,7 +34,9 @@ const originalConsole = { ...console };
 beforeAll(() => {
   // Suppress console.log in tests unless DEBUG_TESTS is set
   if (!process.env.DEBUG_TESTS) {
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     jest.spyOn(console, 'log').mockImplementation(() => {});
+    // eslint-disable-next-line @typescript-eslint/no-empty-function
     jest.spyOn(console, 'debug').mockImplementation(() => {});
   }
 
@@ -75,8 +77,7 @@ expect.extend({
    * Check if a value is a valid UUID
    */
   toBeUUID(received: unknown) {
-    const uuidRegex =
-      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
     const pass = typeof received === 'string' && uuidRegex.test(received);
 
     return {

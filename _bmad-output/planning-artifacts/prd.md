@@ -2,8 +2,8 @@
 
 # Festival Management Platform
 
-**Version:** 1.0.0
-**Date:** 2026-01-14
+**Version:** 1.1.0
+**Date:** 2026-01-16
 **Status:** Brownfield Documentation
 **Type:** Existing System Documentation
 
@@ -247,6 +247,63 @@ Festival est une plateforme complète de gestion de festivals musicaux multi-ten
 - Multi-event ticketing packages
 - AI-powered recommendations
 - Blockchain ticketing (NFT)
+
+### Phase 5 - Design System Unification
+
+#### 5.1 Goals & Objectives
+
+- **Unified Component Library:** Create a shared design system library (`@festival/ui`) that provides consistent, reusable components across web and admin applications
+- **Design Token Standardization:** Establish a single source of truth for colors, typography, spacing, shadows, and other design tokens
+- **Developer Experience:** Reduce duplication and accelerate feature development through pre-built, well-documented components
+- **Visual Consistency:** Ensure a cohesive user experience across all frontend applications (web, admin, future mobile web)
+
+#### 5.2 Success Metrics
+
+| Metric                        | Target      | Baseline |
+| ----------------------------- | ----------- | -------- |
+| **Bundle Size Reduction**     | 15-20%      | Current  |
+| **Component Reuse Rate**      | 80%+        | ~40%     |
+| **Dev Time for New Features** | -30%        | Current  |
+| **Design Inconsistencies**    | < 5         | ~25+     |
+| **Accessibility Compliance**  | WCAG 2.1 AA | Partial  |
+| **Component Documentation**   | 100%        | ~20%     |
+
+#### 5.3 User Impact
+
+- **Festival-goers (Web):** Consistent, polished interface with improved accessibility, faster page loads, and more intuitive interactions
+- **Organizers & Staff (Admin):** Streamlined dashboard experience with consistent patterns for forms, tables, and navigation
+- **Developers:** Faster feature development, reduced cognitive load, and clearer component APIs
+
+#### 5.4 Technical Requirements
+
+| ID     | Requirement                                            | Priority |
+| ------ | ------------------------------------------------------ | -------- |
+| DS-001 | Shared UI library (`libs/ui/`) with Nx workspace setup | P0       |
+| DS-002 | Design tokens (colors, typography, spacing, shadows)   | P0       |
+| DS-003 | Core components: Button, Input, Select, Modal, Card    | P0       |
+| DS-004 | Form components: FormField, FormError, FormGroup       | P0       |
+| DS-005 | Data display: Table, Badge, Avatar, Stat               | P1       |
+| DS-006 | Navigation: Navbar, Sidebar, Breadcrumb, Tabs          | P1       |
+| DS-007 | Feedback: Toast, Alert, Spinner, Skeleton              | P1       |
+| DS-008 | Storybook documentation for all components             | P0       |
+| DS-009 | Tailwind preset for design system tokens               | P0       |
+| DS-010 | Migration guide from existing components               | P1       |
+| DS-011 | Dark mode support via CSS variables                    | P2       |
+| DS-012 | RTL (right-to-left) layout support                     | P2       |
+
+#### 5.5 Implementation Approach
+
+1. **Audit Phase:** Inventory existing components across web and admin apps
+2. **Design Phase:** Define design tokens and component API specifications
+3. **Build Phase:** Implement shared library with Storybook documentation
+4. **Migration Phase:** Gradually replace duplicated components in web and admin
+5. **Validation Phase:** Verify bundle size reduction and visual consistency
+
+#### 5.6 Dependencies
+
+- Nx workspace already configured for shared libraries
+- Tailwind CSS setup in both web and admin apps
+- React 18 with TypeScript for type-safe component APIs
 
 ---
 

@@ -5,8 +5,8 @@
  * Includes various booking states, date scenarios, and availability testing.
  */
 
-import { regularUser, staffUser, organizerUser } from './users.fixture';
-import { publishedFestival, ongoingFestival } from './festivals.fixture';
+import { regularUser } from './users.fixture';
+import { publishedFestival } from './festivals.fixture';
 
 // ============================================================================
 // Types (matching Prisma enums)
@@ -293,8 +293,8 @@ export const inactiveSpot: CampingSpotFixture = {
 // ============================================================================
 
 // Base dates for testing
-const festivalStartDate = new Date('2024-07-15T00:00:00Z');
-const festivalEndDate = new Date('2024-07-20T00:00:00Z');
+const _festivalStartDate = new Date('2024-07-15T00:00:00Z');
+const _festivalEndDate = new Date('2024-07-20T00:00:00Z');
 
 export const pendingBooking: CampingBookingFixture = {
   id: 'camping-booking-uuid-00000000-0000-0000-0000-000000000001',
@@ -508,7 +508,7 @@ let bookingCounter = 0;
  * Creates a unique camping zone fixture
  */
 export function createCampingZoneFixture(
-  overrides: Partial<CampingZoneFixture> = {},
+  overrides: Partial<CampingZoneFixture> = {}
 ): CampingZoneFixture {
   zoneCounter++;
   const timestamp = Date.now();
@@ -539,7 +539,7 @@ export function createCampingZoneFixture(
  * Creates a unique camping spot fixture
  */
 export function createCampingSpotFixture(
-  overrides: Partial<CampingSpotFixture> = {},
+  overrides: Partial<CampingSpotFixture> = {}
 ): CampingSpotFixture {
   spotCounter++;
   const timestamp = Date.now();
@@ -568,16 +568,14 @@ export function createCampingSpotFixture(
  * Creates a unique camping booking fixture
  */
 export function createCampingBookingFixture(
-  overrides: Partial<CampingBookingFixture> = {},
+  overrides: Partial<CampingBookingFixture> = {}
 ): CampingBookingFixture {
   bookingCounter++;
   const timestamp = Date.now();
   const uniqueId = `test-${timestamp}-${bookingCounter}`;
   const checkIn = overrides.checkIn ?? new Date('2024-07-15T14:00:00Z');
   const checkOut = overrides.checkOut ?? new Date('2024-07-17T11:00:00Z');
-  const nights = Math.ceil(
-    (checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24),
-  );
+  const nights = Math.ceil((checkOut.getTime() - checkIn.getTime()) / (1000 * 60 * 60 * 24));
 
   return {
     id: `camping-booking-uuid-${uniqueId}`,

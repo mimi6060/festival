@@ -26,7 +26,7 @@ export class CustomReportsService {
     private readonly prisma: PrismaService,
     private readonly cacheService: CacheService,
     private readonly analyticsService: AnalyticsService,
-    private readonly advancedMetricsService: AdvancedMetricsService,
+    private readonly advancedMetricsService: AdvancedMetricsService
   ) {}
 
   /**
@@ -35,7 +35,7 @@ export class CustomReportsService {
   async createReport(
     festivalId: string,
     userId: string,
-    config: Omit<CustomReportConfig, 'id' | 'createdAt' | 'updatedAt' | 'createdBy'>,
+    config: Omit<CustomReportConfig, 'id' | 'createdAt' | 'updatedAt' | 'createdBy'>
   ): Promise<CustomReportConfig> {
     const id = `report_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -58,8 +58,7 @@ export class CustomReportsService {
    * Get all reports for a festival
    */
   async getReports(festivalId: string): Promise<CustomReportConfig[]> {
-    return Array.from(this.reportConfigs.values())
-      .filter(r => r.festivalId === festivalId);
+    return Array.from(this.reportConfigs.values()).filter((r) => r.festivalId === festivalId);
   }
 
   /**
@@ -78,7 +77,7 @@ export class CustomReportsService {
    */
   async updateReport(
     reportId: string,
-    updates: Partial<Omit<CustomReportConfig, 'id' | 'createdAt' | 'createdBy'>>,
+    updates: Partial<Omit<CustomReportConfig, 'id' | 'createdAt' | 'createdBy'>>
   ): Promise<CustomReportConfig> {
     const existing = await this.getReport(reportId);
 
@@ -105,15 +104,14 @@ export class CustomReportsService {
   /**
    * Execute a custom report and return results
    */
-  async executeReport(
-    reportId: string,
-    timeRange?: TimeRange,
-  ): Promise<Record<string, unknown>> {
+  async executeReport(reportId: string, timeRange?: TimeRange): Promise<Record<string, unknown>> {
     const config = await this.getReport(reportId);
 
     const cacheKey = `report:${reportId}:${JSON.stringify(timeRange)}`;
     const cached = await this.cacheService.get<Record<string, unknown>>(cacheKey);
-    if (cached) {return cached;}
+    if (cached) {
+      return cached;
+    }
 
     const effectiveTimeRange = timeRange || this.getDefaultTimeRange();
     const results: Record<string, unknown> = {
@@ -131,7 +129,7 @@ export class CustomReportsService {
           config.festivalId,
           metric,
           effectiveTimeRange,
-          config.filters,
+          config.filters
         );
         (results.data as Record<string, unknown>)[metric] = metricData;
       } catch (error) {
@@ -152,7 +150,7 @@ export class CustomReportsService {
     festivalId: string,
     metric: string,
     timeRange: TimeRange,
-    _filters?: ReportFilter[],
+    _filters?: ReportFilter[]
   ): Promise<unknown> {
     switch (metric) {
       case 'dashboard':
@@ -195,35 +193,35 @@ export class CustomReportsService {
         return this.advancedMetricsService.getRevenueMetrics(
           festivalId,
           timeRange.startDate,
-          timeRange.endDate,
+          timeRange.endDate
         );
 
       case 'customers':
         return this.advancedMetricsService.getCustomerMetrics(
           festivalId,
           timeRange.startDate,
-          timeRange.endDate,
+          timeRange.endDate
         );
 
       case 'performance':
         return this.advancedMetricsService.getPerformanceMetrics(
           festivalId,
           timeRange.startDate,
-          timeRange.endDate,
+          timeRange.endDate
         );
 
       case 'fraud':
         return this.advancedMetricsService.getFraudMetrics(
           festivalId,
           timeRange.startDate,
-          timeRange.endDate,
+          timeRange.endDate
         );
 
       case 'growth':
         return this.advancedMetricsService.getGrowthMetrics(
           festivalId,
           timeRange.startDate,
-          timeRange.endDate,
+          timeRange.endDate
         );
 
       case 'forecast':
@@ -233,28 +231,28 @@ export class CustomReportsService {
         return this.advancedMetricsService.getStaffMetrics(
           festivalId,
           timeRange.startDate,
-          timeRange.endDate,
+          timeRange.endDate
         );
 
       case 'environmental':
         return this.advancedMetricsService.getEnvironmentalMetrics(
           festivalId,
           timeRange.startDate,
-          timeRange.endDate,
+          timeRange.endDate
         );
 
       case 'security':
         return this.advancedMetricsService.getSecurityMetrics(
           festivalId,
           timeRange.startDate,
-          timeRange.endDate,
+          timeRange.endDate
         );
 
       case 'comprehensive':
         return this.advancedMetricsService.getComprehensiveAnalytics(
           festivalId,
           timeRange.startDate,
-          timeRange.endDate,
+          timeRange.endDate
         );
 
       default:
@@ -269,12 +267,14 @@ export class CustomReportsService {
     festivalId: string,
     currentPeriod: TimeRange,
     comparisonPeriod: TimeRange,
-    metrics: string[],
+    metrics: string[]
   ): Promise<ComparisonAnalytics> {
     const cacheKey = `comparison:${festivalId}:${JSON.stringify({ currentPeriod, comparisonPeriod, metrics })}`;
 
     const cached = await this.cacheService.get<ComparisonAnalytics>(cacheKey);
-    if (cached) {return cached;}
+    if (cached) {
+      return cached;
+    }
 
     const comparisonMetrics: ComparisonAnalytics['metrics'] = [];
 
@@ -317,10 +317,10 @@ export class CustomReportsService {
   private async getSimpleMetricValue(
     festivalId: string,
     metric: string,
-    timeRange: TimeRange,
+    timeRange: TimeRange
   ): Promise<number> {
     switch (metric) {
-      case 'totalSales':
+      case 'totalSales': {
         const sales = await this.prisma.ticket.count({
           where: {
             festivalId,
@@ -329,8 +329,9 @@ export class CustomReportsService {
           },
         });
         return sales;
+      }
 
-      case 'totalRevenue':
+      case 'totalRevenue': {
         const revenue = await this.prisma.ticket.aggregate({
           where: {
             festivalId,
@@ -340,8 +341,9 @@ export class CustomReportsService {
           _sum: { purchasePrice: true },
         });
         return Number(revenue._sum.purchasePrice) || 0;
+      }
 
-      case 'totalAttendees':
+      case 'totalAttendees': {
         const attendance = await this.prisma.zoneAccessLog.findMany({
           where: {
             zone: { festivalId },
@@ -352,8 +354,9 @@ export class CustomReportsService {
           distinct: ['ticketId'],
         });
         return attendance.length;
+      }
 
-      case 'cashlessTransactions':
+      case 'cashlessTransactions': {
         const transactions = await this.prisma.cashlessTransaction.count({
           where: {
             festivalId,
@@ -361,8 +364,9 @@ export class CustomReportsService {
           },
         });
         return transactions;
+      }
 
-      case 'vendorOrders':
+      case 'vendorOrders': {
         const orders = await this.prisma.vendorOrder.count({
           where: {
             vendor: { festivalId },
@@ -370,8 +374,9 @@ export class CustomReportsService {
           },
         });
         return orders;
+      }
 
-      case 'supportTickets':
+      case 'supportTickets': {
         const tickets = await this.prisma.supportTicket.count({
           where: {
             festivalId,
@@ -379,6 +384,7 @@ export class CustomReportsService {
           },
         });
         return tickets;
+      }
 
       default:
         return 0;
@@ -391,34 +397,39 @@ export class CustomReportsService {
   async getCohortAnalysis(
     festivalId: string,
     cohortType: CohortAnalysis['cohortType'],
-    timeRange: TimeRange,
+    timeRange: TimeRange
   ): Promise<CohortAnalysis> {
     const cacheKey = `cohort:${festivalId}:${cohortType}:${JSON.stringify(timeRange)}`;
 
     const cached = await this.cacheService.get<CohortAnalysis>(cacheKey);
-    if (cached) {return cached;}
+    if (cached) {
+      return cached;
+    }
 
     let cohorts: CohortAnalysis['cohorts'] = [];
     let periods: string[] = [];
 
     switch (cohortType) {
-      case 'acquisition_date':
+      case 'acquisition_date': {
         const result = await this.getAcquisitionDateCohorts(festivalId, timeRange);
         cohorts = result.cohorts;
         periods = result.periods;
         break;
+      }
 
-      case 'ticket_type':
+      case 'ticket_type': {
         const ticketResult = await this.getTicketTypeCohorts(festivalId, timeRange);
         cohorts = ticketResult.cohorts;
         periods = ticketResult.periods;
         break;
+      }
 
-      case 'first_purchase':
+      case 'first_purchase': {
         const purchaseResult = await this.getFirstPurchaseCohorts(festivalId, timeRange);
         cohorts = purchaseResult.cohorts;
         periods = purchaseResult.periods;
         break;
+      }
     }
 
     const analysis: CohortAnalysis = {
@@ -433,7 +444,7 @@ export class CustomReportsService {
 
   private async getAcquisitionDateCohorts(
     festivalId: string,
-    timeRange: TimeRange,
+    timeRange: TimeRange
   ): Promise<{ cohorts: CohortAnalysis['cohorts']; periods: string[] }> {
     // Get tickets grouped by week of purchase
     const tickets = await this.prisma.ticket.findMany({
@@ -451,7 +462,7 @@ export class CustomReportsService {
 
     // Group by week
     const weeklyGroups = new Map<string, { users: Set<string>; revenue: number }>();
-    tickets.forEach(t => {
+    tickets.forEach((t) => {
       const weekStart = this.getWeekStart(t.createdAt);
       const key = weekStart.toISOString().split('T')[0];
       const current = weeklyGroups.get(key) || { users: new Set(), revenue: 0 };
@@ -461,7 +472,7 @@ export class CustomReportsService {
     });
 
     const periods = Array.from(weeklyGroups.keys()).sort();
-    const cohorts: CohortAnalysis['cohorts'] = periods.map(period => {
+    const cohorts: CohortAnalysis['cohorts'] = periods.map((period) => {
       const group = weeklyGroups.get(period)!;
       return {
         name: `Week of ${period}`,
@@ -477,7 +488,7 @@ export class CustomReportsService {
 
   private async getTicketTypeCohorts(
     festivalId: string,
-    timeRange: TimeRange,
+    timeRange: TimeRange
   ): Promise<{ cohorts: CohortAnalysis['cohorts']; periods: string[] }> {
     const tickets = await this.prisma.ticket.findMany({
       where: {
@@ -489,7 +500,7 @@ export class CustomReportsService {
     });
 
     const typeGroups = new Map<string, { users: Set<string>; revenue: number; count: number }>();
-    tickets.forEach(t => {
+    tickets.forEach((t) => {
       const type = t.category.type;
       const current = typeGroups.get(type) || { users: new Set(), revenue: 0, count: 0 };
       current.users.add(t.userId);
@@ -499,7 +510,7 @@ export class CustomReportsService {
     });
 
     const periods = Array.from(typeGroups.keys()).sort();
-    const cohorts: CohortAnalysis['cohorts'] = periods.map(type => {
+    const cohorts: CohortAnalysis['cohorts'] = periods.map((type) => {
       const group = typeGroups.get(type)!;
       return {
         name: type,
@@ -515,7 +526,7 @@ export class CustomReportsService {
 
   private async getFirstPurchaseCohorts(
     festivalId: string,
-    timeRange: TimeRange,
+    timeRange: TimeRange
   ): Promise<{ cohorts: CohortAnalysis['cohorts']; periods: string[] }> {
     // Get first purchase date per user
     const firstPurchases = await this.prisma.ticket.groupBy({
@@ -529,12 +540,12 @@ export class CustomReportsService {
 
     // Filter to users who first purchased in the time range
     const usersInRange = firstPurchases.filter(
-      p => p._min.createdAt! >= timeRange.startDate && p._min.createdAt! <= timeRange.endDate
+      (p) => p._min.createdAt! >= timeRange.startDate && p._min.createdAt! <= timeRange.endDate
     );
 
     // Group by month
     const monthlyGroups = new Map<string, Set<string>>();
-    usersInRange.forEach(p => {
+    usersInRange.forEach((p) => {
       const month = p._min.createdAt!.toISOString().slice(0, 7);
       const current = monthlyGroups.get(month) || new Set();
       current.add(p.userId);
@@ -542,7 +553,7 @@ export class CustomReportsService {
     });
 
     const periods = Array.from(monthlyGroups.keys()).sort();
-    const cohorts: CohortAnalysis['cohorts'] = periods.map(month => {
+    const cohorts: CohortAnalysis['cohorts'] = periods.map((month) => {
       const users = monthlyGroups.get(month)!;
       return {
         name: month,
@@ -559,14 +570,13 @@ export class CustomReportsService {
   /**
    * Perform funnel analysis
    */
-  async getFunnelAnalysis(
-    festivalId: string,
-    funnelName: string,
-  ): Promise<FunnelAnalysis> {
+  async getFunnelAnalysis(festivalId: string, funnelName: string): Promise<FunnelAnalysis> {
     const cacheKey = `funnel:${festivalId}:${funnelName}`;
 
     const cached = await this.cacheService.get<FunnelAnalysis>(cacheKey);
-    if (cached) {return cached;}
+    if (cached) {
+      return cached;
+    }
 
     let analysis: FunnelAnalysis;
 
@@ -592,11 +602,7 @@ export class CustomReportsService {
     // This would typically use session/event tracking data
     // Simplified version using ticket data
 
-    const [
-      uniqueUsers,
-      usersWithTickets,
-      usersAttended,
-    ] = await Promise.all([
+    const [uniqueUsers, usersWithTickets, usersAttended] = await Promise.all([
       // Users who viewed (estimated from sessions)
       this.prisma.user.count(),
       // Users who purchased
@@ -631,11 +637,7 @@ export class CustomReportsService {
   }
 
   private async getEntryFunnel(festivalId: string): Promise<FunnelAnalysis> {
-    const [
-      totalTickets,
-      validatedTickets,
-      usedTickets,
-    ] = await Promise.all([
+    const [totalTickets, validatedTickets, usedTickets] = await Promise.all([
       this.prisma.ticket.count({
         where: { festivalId, status: { in: ['SOLD', 'USED'] } },
       }),
@@ -665,12 +667,7 @@ export class CustomReportsService {
   }
 
   private async getCashlessFunnel(festivalId: string): Promise<FunnelAnalysis> {
-    const [
-      totalAttendees,
-      accountsCreated,
-      accountsToppedUp,
-      accountsUsed,
-    ] = await Promise.all([
+    const [totalAttendees, accountsCreated, accountsToppedUp, accountsUsed] = await Promise.all([
       this.prisma.ticket.count({
         where: { festivalId, status: 'USED' },
       }),
@@ -715,12 +712,14 @@ export class CustomReportsService {
   async detectAnomalies(
     festivalId: string,
     metric: string,
-    timeRange: TimeRange,
+    timeRange: TimeRange
   ): Promise<AnomalyDetection[]> {
     const cacheKey = `anomalies:${festivalId}:${metric}:${JSON.stringify(timeRange)}`;
 
     const cached = await this.cacheService.get<AnomalyDetection[]>(cacheKey);
-    if (cached) {return cached;}
+    if (cached) {
+      return cached;
+    }
 
     // Get historical data
     const historicalData = await this.getMetricTimeSeries(festivalId, metric, timeRange);
@@ -731,20 +730,26 @@ export class CustomReportsService {
 
     // Calculate statistics
     const mean = historicalData.reduce((a, b) => a + b.value, 0) / historicalData.length;
-    const variance = historicalData.reduce((sum, d) => sum + Math.pow(d.value - mean, 2), 0) / historicalData.length;
+    const variance =
+      historicalData.reduce((sum, d) => sum + Math.pow(d.value - mean, 2), 0) /
+      historicalData.length;
     const stdDev = Math.sqrt(variance);
 
     // Detect anomalies using z-score
     const anomalies: AnomalyDetection[] = [];
     const threshold = 2; // Standard deviations
 
-    historicalData.forEach(dataPoint => {
+    historicalData.forEach((dataPoint) => {
       const zScore = Math.abs((dataPoint.value - mean) / stdDev);
       if (zScore > threshold) {
         let severity: AnomalyDetection['severity'] = 'low';
-        if (zScore > 3) {severity = 'critical';}
-        else if (zScore > 2.5) {severity = 'high';}
-        else if (zScore > 2) {severity = 'medium';}
+        if (zScore > 3) {
+          severity = 'critical';
+        } else if (zScore > 2.5) {
+          severity = 'high';
+        } else if (zScore > 2) {
+          severity = 'medium';
+        }
 
         anomalies.push({
           metric,
@@ -765,10 +770,10 @@ export class CustomReportsService {
   private async getMetricTimeSeries(
     festivalId: string,
     metric: string,
-    timeRange: TimeRange,
+    timeRange: TimeRange
   ): Promise<{ timestamp: Date; value: number }[]> {
     switch (metric) {
-      case 'sales':
+      case 'sales': {
         const sales = await this.prisma.ticket.findMany({
           where: {
             festivalId,
@@ -780,7 +785,7 @@ export class CustomReportsService {
 
         // Group by hour
         const hourlyMap = new Map<string, number>();
-        sales.forEach(s => {
+        sales.forEach((s) => {
           const hour = s.createdAt.toISOString().slice(0, 13);
           hourlyMap.set(hour, (hourlyMap.get(hour) || 0) + 1);
         });
@@ -791,6 +796,7 @@ export class CustomReportsService {
             value: count,
           }))
           .sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+      }
 
       default:
         return [];
@@ -834,7 +840,9 @@ export class CustomReportsService {
     const cacheKey = `benchmarks:${festivalId}`;
 
     const cached = await this.cacheService.get<BenchmarkData[]>(cacheKey);
-    if (cached) {return cached;}
+    if (cached) {
+      return cached;
+    }
 
     const festival = await this.prisma.festival.findUnique({
       where: { id: festivalId },
@@ -852,9 +860,7 @@ export class CustomReportsService {
       (sum, t) => sum + (Number(t.purchasePrice) || 0),
       0
     );
-    const avgTicketPrice = festival.tickets.length > 0
-      ? totalRevenue / festival.tickets.length
-      : 0;
+    const avgTicketPrice = festival.tickets.length > 0 ? totalRevenue / festival.tickets.length : 0;
 
     // Industry averages (would be from actual benchmark database)
     const benchmarks: BenchmarkData[] = [
@@ -899,7 +905,7 @@ export class CustomReportsService {
     // Simplified percentile calculation using normal distribution
     const zScore = (value - average) / stdDev;
     // Approximate CDF
-    const percentile = 50 + (50 * Math.tanh(zScore * 0.8));
+    const percentile = 50 + 50 * Math.tanh(zScore * 0.8);
     return Math.max(0, Math.min(100, Math.round(percentile)));
   }
 

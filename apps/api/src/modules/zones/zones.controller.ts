@@ -22,8 +22,7 @@ import {
   ApiQuery,
 } from '@nestjs/swagger';
 import { ZoneAccessAction } from '@prisma/client';
-import { ZonesService } from './zones.service';
-import type { AuthenticatedUser } from './zones.service';
+import { ZonesService, type AuthenticatedUser } from './zones.service';
 import {
   CreateZoneDto,
   UpdateZoneDto,
@@ -31,12 +30,7 @@ import {
   LogAccessDto,
   ConfigureAccessDto,
 } from './dto';
-import {
-  ZoneEntity,
-  ZoneWithStatsEntity,
-  ZoneAccessLogEntity,
-  ZoneStatsEntity,
-} from './entities';
+import { ZoneEntity, ZoneWithStatsEntity, ZoneAccessLogEntity, ZoneStatsEntity } from './entities';
 
 // Note: In a real implementation, these decorators would come from the auth module
 // For now, we'll create placeholder types that can be replaced later
@@ -100,8 +94,7 @@ export class FestivalZonesController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Create a new zone',
-    description:
-      'Creates a new zone for a festival. Only accessible by ADMIN and ORGANIZER roles.',
+    description: 'Creates a new zone for a festival. Only accessible by ADMIN and ORGANIZER roles.',
   })
   @ApiParam({
     name: 'festivalId',
@@ -193,11 +186,8 @@ export class FestivalZonesController {
     status: HttpStatus.OK,
     description: 'Capacity status for all zones',
   })
-  async getAllZonesCapacity(
-    @Param('festivalId', ParseUUIDPipe) festivalId: string
-  ) {
-    const capacityStatus =
-      await this.zonesService.getAllZonesCapacityStatus(festivalId);
+  async getAllZonesCapacity(@Param('festivalId', ParseUUIDPipe) festivalId: string) {
+    const capacityStatus = await this.zonesService.getAllZonesCapacityStatus(festivalId);
     return {
       success: true,
       data: capacityStatus,
@@ -253,8 +243,7 @@ export class ZonesController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Update a zone',
-    description:
-      'Updates a zone. Only accessible by the festival owner or ADMIN.',
+    description: 'Updates a zone. Only accessible by the festival owner or ADMIN.',
   })
   @ApiParam({
     name: 'id',
@@ -299,8 +288,7 @@ export class ZonesController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Delete a zone',
-    description:
-      'Deletes a zone. Only accessible by the festival owner or ADMIN.',
+    description: 'Deletes a zone. Only accessible by the festival owner or ADMIN.',
   })
   @ApiParam({
     name: 'id',
@@ -447,8 +435,7 @@ export class ZonesController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Configure zone access rules',
-    description:
-      'Configure which ticket categories and staff roles can access this zone.',
+    description: 'Configure which ticket categories and staff roles can access this zone.',
   })
   @ApiParam({
     name: 'id',
@@ -637,8 +624,7 @@ export class ZonesController {
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Reset zone occupancy',
-    description:
-      'Resets zone occupancy to zero. Admin only - useful for fixing sync issues.',
+    description: 'Resets zone occupancy to zero. Admin only - useful for fixing sync issues.',
   })
   @ApiParam({
     name: 'id',
@@ -688,8 +674,7 @@ export class ZonesController {
   @ApiQuery({
     name: 'adjustment',
     required: true,
-    description:
-      'Number to add (positive) or subtract (negative) from occupancy',
+    description: 'Number to add (positive) or subtract (negative) from occupancy',
     type: Number,
   })
   @ApiResponse({

@@ -16,9 +16,9 @@ import { PrismaService } from './prisma.service';
 describe('PrismaService', () => {
   let prismaService: PrismaService;
   let loggerLogSpy: jest.SpyInstance;
-  let loggerDebugSpy: jest.SpyInstance;
-  let loggerErrorSpy: jest.SpyInstance;
-  let loggerWarnSpy: jest.SpyInstance;
+  let _loggerDebugSpy: jest.SpyInstance;
+  let _loggerErrorSpy: jest.SpyInstance;
+  let _loggerWarnSpy: jest.SpyInstance;
 
   // Store original NODE_ENV
   const originalNodeEnv = process.env.NODE_ENV;
@@ -35,9 +35,9 @@ describe('PrismaService', () => {
 
     // Spy on logger methods
     loggerLogSpy = jest.spyOn(Logger.prototype, 'log').mockImplementation();
-    loggerDebugSpy = jest.spyOn(Logger.prototype, 'debug').mockImplementation();
-    loggerErrorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation();
-    loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation();
+    _loggerDebugSpy = jest.spyOn(Logger.prototype, 'debug').mockImplementation();
+    _loggerErrorSpy = jest.spyOn(Logger.prototype, 'error').mockImplementation();
+    _loggerWarnSpy = jest.spyOn(Logger.prototype, 'warn').mockImplementation();
   });
 
   afterEach(async () => {
@@ -104,6 +104,7 @@ describe('PrismaService', () => {
       expect(devPrismaService).toBeDefined();
 
       // Cleanup
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
       await devPrismaService.$disconnect().catch(() => {});
     });
 
@@ -122,6 +123,7 @@ describe('PrismaService', () => {
       expect(prodPrismaService).toBeDefined();
 
       // Cleanup
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
       await prodPrismaService.$disconnect().catch(() => {});
     });
   });
@@ -133,9 +135,7 @@ describe('PrismaService', () => {
   describe('onModuleInit', () => {
     it('should call $connect when module initializes', async () => {
       // Arrange
-      const connectSpy = jest
-        .spyOn(prismaService, '$connect')
-        .mockResolvedValue();
+      const connectSpy = jest.spyOn(prismaService, '$connect').mockResolvedValue();
 
       // Act
       await prismaService.onModuleInit();
@@ -163,9 +163,7 @@ describe('PrismaService', () => {
       await prismaService.onModuleInit();
 
       // Assert
-      expect(loggerLogSpy).toHaveBeenCalledWith(
-        'Database connection established'
-      );
+      expect(loggerLogSpy).toHaveBeenCalledWith('Database connection established');
     });
 
     it('should propagate connection errors', async () => {
@@ -174,9 +172,7 @@ describe('PrismaService', () => {
       jest.spyOn(prismaService, '$connect').mockRejectedValue(connectionError);
 
       // Act & Assert
-      await expect(prismaService.onModuleInit()).rejects.toThrow(
-        'Connection failed'
-      );
+      await expect(prismaService.onModuleInit()).rejects.toThrow('Connection failed');
     });
 
     it('should implement OnModuleInit interface', () => {
@@ -192,9 +188,7 @@ describe('PrismaService', () => {
   describe('onModuleDestroy', () => {
     it('should call $disconnect when module is destroyed', async () => {
       // Arrange
-      const disconnectSpy = jest
-        .spyOn(prismaService, '$disconnect')
-        .mockResolvedValue();
+      const disconnectSpy = jest.spyOn(prismaService, '$disconnect').mockResolvedValue();
 
       // Act
       await prismaService.onModuleDestroy();
@@ -211,9 +205,7 @@ describe('PrismaService', () => {
       await prismaService.onModuleDestroy();
 
       // Assert
-      expect(loggerLogSpy).toHaveBeenCalledWith(
-        'Disconnecting from database...'
-      );
+      expect(loggerLogSpy).toHaveBeenCalledWith('Disconnecting from database...');
     });
 
     it('should log successful disconnection', async () => {
@@ -230,14 +222,10 @@ describe('PrismaService', () => {
     it('should propagate disconnection errors', async () => {
       // Arrange
       const disconnectError = new Error('Disconnection failed');
-      jest
-        .spyOn(prismaService, '$disconnect')
-        .mockRejectedValue(disconnectError);
+      jest.spyOn(prismaService, '$disconnect').mockRejectedValue(disconnectError);
 
       // Act & Assert
-      await expect(prismaService.onModuleDestroy()).rejects.toThrow(
-        'Disconnection failed'
-      );
+      await expect(prismaService.onModuleDestroy()).rejects.toThrow('Disconnection failed');
     });
 
     it('should implement OnModuleDestroy interface', () => {
@@ -272,10 +260,7 @@ describe('PrismaService', () => {
         await prismaService.cleanDatabase();
       } catch (error) {
         // Only throw if it's the production error
-        if (
-          error instanceof Error &&
-          error.message === 'Cannot clean database in production!'
-        ) {
+        if (error instanceof Error && error.message === 'Cannot clean database in production!') {
           throw error;
         }
         // Other errors are expected since we're not connected to a real DB
@@ -291,10 +276,7 @@ describe('PrismaService', () => {
         await prismaService.cleanDatabase();
       } catch (error) {
         // Only throw if it's the production error
-        if (
-          error instanceof Error &&
-          error.message === 'Cannot clean database in production!'
-        ) {
+        if (error instanceof Error && error.message === 'Cannot clean database in production!') {
           throw error;
         }
         // Other errors are expected since we're not connected to a real DB
@@ -310,10 +292,7 @@ describe('PrismaService', () => {
         await prismaService.cleanDatabase();
       } catch (error) {
         // Only throw if it's the production error
-        if (
-          error instanceof Error &&
-          error.message === 'Cannot clean database in production!'
-        ) {
+        if (error instanceof Error && error.message === 'Cannot clean database in production!') {
           throw error;
         }
         // Other errors are expected
@@ -324,9 +303,7 @@ describe('PrismaService', () => {
       // This test verifies the filtering logic
       // The implementation filters keys that don't start with '_' or '$'
       const mockKeys = ['user', '_internal', '$queryRaw', 'ticket', '_engine'];
-      const filteredKeys = mockKeys.filter(
-        (key) => !key.startsWith('_') && !key.startsWith('$')
-      );
+      const filteredKeys = mockKeys.filter((key) => !key.startsWith('_') && !key.startsWith('$'));
 
       expect(filteredKeys).toEqual(['user', 'ticket']);
     });
@@ -334,9 +311,7 @@ describe('PrismaService', () => {
     it('should filter out internal properties starting with dollar sign', () => {
       // This test verifies the filtering logic
       const mockKeys = ['$connect', '$disconnect', 'user', '$on', 'festival'];
-      const filteredKeys = mockKeys.filter(
-        (key) => !key.startsWith('_') && !key.startsWith('$')
-      );
+      const filteredKeys = mockKeys.filter((key) => !key.startsWith('_') && !key.startsWith('$'));
 
       expect(filteredKeys).toEqual(['user', 'festival']);
     });
@@ -366,14 +341,10 @@ describe('PrismaService', () => {
     it('should return the result from the transaction', async () => {
       // Arrange
       const mockResult = { id: 'test-id', data: 'test-data' };
-      jest
-        .spyOn(prismaService, '$transaction')
-        .mockResolvedValue(mockResult);
+      jest.spyOn(prismaService, '$transaction').mockResolvedValue(mockResult);
 
       // Act
-      const result = await prismaService.executeInTransaction(
-        async () => mockResult
-      );
+      const result = await prismaService.executeInTransaction(async () => mockResult);
 
       // Assert
       expect(result).toEqual(mockResult);
@@ -382,9 +353,7 @@ describe('PrismaService', () => {
     it('should propagate errors from the transaction', async () => {
       // Arrange
       const transactionError = new Error('Transaction failed');
-      jest
-        .spyOn(prismaService, '$transaction')
-        .mockRejectedValue(transactionError);
+      jest.spyOn(prismaService, '$transaction').mockRejectedValue(transactionError);
 
       // Act & Assert
       await expect(
@@ -404,9 +373,7 @@ describe('PrismaService', () => {
       jest.spyOn(prismaService, '$transaction').mockResolvedValue(mockUser);
 
       // Act
-      const result = await prismaService.executeInTransaction<TestUser>(
-        async () => mockUser
-      );
+      const result = await prismaService.executeInTransaction<TestUser>(async () => mockUser);
 
       // Assert
       expect(result).toEqual(mockUser);
@@ -423,9 +390,7 @@ describe('PrismaService', () => {
       jest.spyOn(prismaService, '$transaction').mockResolvedValue(mockUsers);
 
       // Act
-      const result = await prismaService.executeInTransaction(
-        async () => mockUsers
-      );
+      const result = await prismaService.executeInTransaction(async () => mockUsers);
 
       // Assert
       expect(Array.isArray(result)).toBe(true);
@@ -457,9 +422,7 @@ describe('PrismaService', () => {
       jest.spyOn(prismaService, '$connect').mockRejectedValue(timeoutError);
 
       // Act & Assert
-      await expect(prismaService.onModuleInit()).rejects.toThrow(
-        'Connection timeout'
-      );
+      await expect(prismaService.onModuleInit()).rejects.toThrow('Connection timeout');
     });
 
     it('should handle authentication errors', async () => {
@@ -468,9 +431,7 @@ describe('PrismaService', () => {
       jest.spyOn(prismaService, '$connect').mockRejectedValue(authError);
 
       // Act & Assert
-      await expect(prismaService.onModuleInit()).rejects.toThrow(
-        'Authentication failed'
-      );
+      await expect(prismaService.onModuleInit()).rejects.toThrow('Authentication failed');
     });
 
     it('should handle database not found errors', async () => {
@@ -479,9 +440,7 @@ describe('PrismaService', () => {
       jest.spyOn(prismaService, '$connect').mockRejectedValue(dbNotFoundError);
 
       // Act & Assert
-      await expect(prismaService.onModuleInit()).rejects.toThrow(
-        'Database does not exist'
-      );
+      await expect(prismaService.onModuleInit()).rejects.toThrow('Database does not exist');
     });
   });
 
@@ -502,10 +461,7 @@ describe('PrismaService', () => {
       await prismaService.onModuleInit();
 
       // Assert
-      expect(callOrder).toEqual([
-        'Connecting to database...',
-        'Database connection established',
-      ]);
+      expect(callOrder).toEqual(['Connecting to database...', 'Database connection established']);
     });
 
     it('should log in correct order during destruction', async () => {
@@ -520,17 +476,12 @@ describe('PrismaService', () => {
       await prismaService.onModuleDestroy();
 
       // Assert
-      expect(callOrder).toEqual([
-        'Disconnecting from database...',
-        'Database disconnected',
-      ]);
+      expect(callOrder).toEqual(['Disconnecting from database...', 'Database disconnected']);
     });
 
     it('should only log connecting message if connection fails', async () => {
       // Arrange
-      jest
-        .spyOn(prismaService, '$connect')
-        .mockRejectedValue(new Error('Failed'));
+      jest.spyOn(prismaService, '$connect').mockRejectedValue(new Error('Failed'));
       const logMessages: string[] = [];
       loggerLogSpy.mockImplementation((message: string) => {
         logMessages.push(message);
@@ -566,6 +517,7 @@ describe('PrismaService', () => {
       expect(prismaService).not.toBe(prismaService2);
 
       // Cleanup
+      // eslint-disable-next-line @typescript-eslint/no-empty-function
       await prismaService2.$disconnect().catch(() => {});
     });
 

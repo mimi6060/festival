@@ -595,4 +595,427 @@ so that I know when to restock and avoid stockouts.
 
 ---
 
+## Epic 8: Staff Application (Sprint 3)
+
+**Objective:** Créer une expérience dédiée pour le personnel du festival
+
+**Business Value:** Réduire le temps de formation et améliorer l'efficacité opérationnelle
+
+**Acceptance Criteria:**
+
+- Mode staff dans l'app mobile
+- Dashboard staff avec métriques clés
+- Accès rapide aux fonctions critiques
+
+### Story 8.1: Mode staff mobile dédié
+
+**User Story:**
+As a staff member,
+I want a dedicated staff mode in the mobile app,
+so that I can quickly access my work functions without navigation complexity.
+
+**Acceptance Criteria:**
+
+1. Login staff avec rôle automatiquement détecté
+2. Dashboard staff avec stats du jour (scans, alertes, tâches)
+3. Navigation simplifiée (Scan, Zones, Alertes, Profil)
+4. Mode sombre par défaut pour économie batterie
+5. Indicateur de shift actif avec heures restantes
+
+**Technical Notes:**
+
+- Réutiliser StaffValidationScreen existant
+- Ajouter StaffDashboard et StaffZonesScreen
+- Détection rôle via JWT claims
+
+**Source:** [PRD Phase 3 - Application staff dédiée]
+
+---
+
+### Story 8.2: Dashboard staff avec KPIs
+
+**User Story:**
+As a staff manager,
+I want a staff dashboard with key metrics,
+so that I can monitor team performance and festival status.
+
+**Acceptance Criteria:**
+
+1. Nombre de validations par staff membre
+2. Temps moyen de validation
+3. Alertes actives par zone
+4. Occupation zones assignées
+5. Export rapport de shift
+
+**Technical Notes:**
+
+- Endpoint GET /staff/dashboard
+- WebSocket pour updates temps réel
+- Agrégations Prisma pour métriques
+
+**Source:** [PRD Phase 3 - Application staff dédiée]
+
+---
+
+## Epic 9: Marketing & Public API (Sprint 3)
+
+**Objective:** Ajouter des outils marketing et une API publique
+
+**Business Value:** Permettre l'acquisition utilisateurs et intégrations tierces
+
+**Acceptance Criteria:**
+
+- Module email campaigns fonctionnel
+- API publique documentée avec rate limiting
+- SDK JavaScript pour intégrations
+
+### Story 9.1: Module email campaigns
+
+**User Story:**
+As an organizer,
+I want to send email campaigns to my festival attendees,
+so that I can communicate updates and promotions.
+
+**Acceptance Criteria:**
+
+1. Création de campagne avec éditeur WYSIWYG
+2. Segmentation par type de ticket, date d'achat
+3. Templates prédéfinis (annonce, rappel, promo)
+4. Planification envoi différé
+5. Métriques (envoyés, ouverts, cliqués)
+
+**Technical Notes:**
+
+- Intégration SendGrid ou Mailchimp API
+- BullMQ pour envois en lot
+- Tracking pixels pour métriques
+
+**Source:** [PRD Phase 3 - Module marketing]
+
+---
+
+### Story 9.2: API publique pour intégrations
+
+**User Story:**
+As a third-party developer,
+I want a public API with documentation,
+so that I can build integrations with the festival platform.
+
+**Acceptance Criteria:**
+
+1. Endpoints publics: festivals, artists, schedule
+2. Authentification via API keys
+3. Rate limiting par tier (free: 100/h, pro: 1000/h)
+4. Documentation OpenAPI/Swagger publique
+5. SDK JavaScript npm package
+
+**Technical Notes:**
+
+- Réutiliser ApiKeysModule existant
+- Ajouter tier-based rate limiting
+- Générer SDK avec openapi-generator
+
+**Source:** [PRD Phase 3 - API publique]
+
+---
+
+## Summary (Updated)
+
+| Epic                           | Stories | Priority | Effort | Sprint |
+| ------------------------------ | ------- | -------- | ------ | ------ |
+| 1. Test Coverage               | 3       | High     | Medium | 1      |
+| 2. API Performance             | 3       | High     | Medium | 1      |
+| 3. Mobile Enhancements         | 2       | Medium   | High   | 1      |
+| 4. Admin Dashboard             | 3       | Medium   | Medium | 1      |
+| 5. Bug Fixes & Debt            | 3       | High     | Low    | 1      |
+| 6. Advanced Analytics          | 3       | Medium   | Medium | 2      |
+| 7. Staff & Vendor Improvements | 2       | Medium   | Medium | 2      |
+| 8. Staff Application           | 2       | Medium   | Medium | 3      |
+| 9. Marketing & Public API      | 2       | Medium   | High   | 3      |
+
+**Total Stories:** 31 (Sprint 1: 14, Sprint 2: 5, Sprint 3: 4, Sprint 5: 8)
+
+---
+
+## Epic 10: Sprint 4 Stabilization (Sprint 4)
+
+**Objective:** Stabiliser la plateforme après les développements des Sprints 1-3
+
+**Business Value:** Assurer la fiabilité et la qualité avant d'ajouter de nouvelles fonctionnalités
+
+**Acceptance Criteria:**
+
+- Tous les tests passent en CI
+- Build stable pour API, Web et Admin
+- Documentation à jour
+
+_Note: Epic 10 représente les travaux de stabilisation en cours du Sprint 4._
+
+---
+
+## Epic 11: Unified Design System (Sprint 5)
+
+**Objective:** Créer une bibliothèque de composants UI partagée pour harmoniser l'interface utilisateur entre les applications web et admin
+
+**Business Value:** Réduire la duplication de code, accélérer le développement frontend, assurer une expérience utilisateur cohérente
+
+**Acceptance Criteria:**
+
+- Bibliothèque libs/ui fonctionnelle avec Nx
+- Design tokens centralisés et utilisés partout
+- Composants Button, Card, Input, Modal extraits et partagés
+- Applications web et admin migrées vers libs/ui
+- Storybook documentant tous les composants
+
+### Story 11.1: Create libs/ui Foundation
+
+**User Story:**
+As a frontend developer,
+I want a shared UI component library,
+so that I can reuse components across web and admin applications without code duplication.
+
+**Acceptance Criteria:**
+
+1. Créer `libs/ui` avec Nx generator (`nx g @nx/react:library ui`)
+2. Configurer path alias `@festival/ui` dans tsconfig.base.json
+3. Setup Storybook pour libs/ui avec configuration partagée
+4. Créer structure de dossiers: `components/`, `hooks/`, `utils/`, `styles/`
+5. Exporter index.ts avec barrel exports
+6. Build de la lib réussit (`nx build ui`)
+7. Tests de la lib réussissent (`nx test ui`)
+
+**Technical Notes:**
+
+- Utiliser `@nx/react:library` avec `--bundler=rollup` pour tree-shaking
+- Configurer `compilerOptions.jsx: "react-jsx"` dans tsconfig
+- Ajouter peer dependencies: react, react-dom, tailwindcss
+- Setup Jest avec @testing-library/react
+- Configurer ESLint avec règles partagées
+
+**Source:** [Architecture - libs/shared structure]
+
+---
+
+### Story 11.2: Create Design Tokens Library
+
+**User Story:**
+As a designer/developer,
+I want centralized design tokens,
+so that colors, spacing, typography, and other design values are consistent across all applications.
+
+**Acceptance Criteria:**
+
+1. Créer `libs/ui/src/styles/tokens.css` avec CSS custom properties
+2. Définir tokens pour: colors (primary, secondary, neutral, semantic), spacing (scale 0-96), typography (sizes, weights, line-heights), shadows, border-radius, transitions
+3. Support dark mode via `[data-theme="dark"]` ou `prefers-color-scheme`
+4. Créer `tokens.ts` pour export JavaScript des valeurs
+5. Documenter tokens dans Storybook avec addon-docs
+6. Créer Tailwind preset `libs/ui/tailwind.preset.js` utilisant les tokens
+
+**Technical Notes:**
+
+- Baser sur les tokens existants dans `apps/web/styles/tokens.css`
+- Utiliser la convention `--festival-{category}-{name}` pour les custom properties
+- Exemple: `--festival-color-primary-500`, `--festival-spacing-4`
+- Créer un fichier `tokens.d.ts` pour TypeScript
+- Prévoir support RTL avec logical properties
+
+**Source:** [Design Tokens - apps/web/styles/tokens.css]
+
+---
+
+### Story 11.3: Extract Button Component
+
+**User Story:**
+As a frontend developer,
+I want a reusable Button component,
+so that all buttons across the platform have consistent styling and behavior.
+
+**Acceptance Criteria:**
+
+1. Créer `libs/ui/src/components/Button/Button.tsx`
+2. Props supportées: variant (primary, secondary, outline, ghost, danger), size (sm, md, lg), disabled, loading, leftIcon, rightIcon, fullWidth
+3. States visuels: default, hover, focus, active, disabled, loading
+4. Accessibilité: focus visible, aria-disabled, aria-busy pour loading
+5. Tests unitaires couvrant tous les variants et states
+6. Stories Storybook pour chaque variant/size combinaison
+7. Export depuis `@festival/ui`
+
+**Technical Notes:**
+
+- Utiliser `forwardRef` pour ref forwarding
+- Utiliser `cva` (class-variance-authority) pour variants Tailwind
+- Pattern: `<Button variant="primary" size="md" loading>Submit</Button>`
+- Spinner interne pour état loading
+- Extraire du composant existant dans `apps/web/components/ui/Button.tsx`
+
+**Source:** [Web Button - apps/web/components/ui/Button.tsx]
+
+---
+
+### Story 11.4: Extract Card Component
+
+**User Story:**
+As a frontend developer,
+I want a reusable Card component,
+so that content containers have consistent styling across applications.
+
+**Acceptance Criteria:**
+
+1. Créer `libs/ui/src/components/Card/Card.tsx`
+2. Composants: Card (container), Card.Header, Card.Body, Card.Footer
+3. Props: variant (default, elevated, outlined), padding (none, sm, md, lg), interactive (hover effect)
+4. Support pour Card.Image avec aspect ratio configurable
+5. Tests unitaires pour composition et variants
+6. Stories Storybook avec exemples de compositions
+7. Export depuis `@festival/ui`
+
+**Technical Notes:**
+
+- Pattern compound component: `<Card><Card.Header>...</Card.Header></Card>`
+- Utiliser context pour passer variant aux sous-composants
+- Extraire des patterns existants dans `apps/web/components/` et `apps/admin/components/`
+- Support clickable card avec keyboard navigation
+
+**Source:** [Web Components - apps/web/components/festivals/]
+
+---
+
+### Story 11.5: Extract Input Component
+
+**User Story:**
+As a frontend developer,
+I want a reusable Input component,
+so that form fields are consistent and accessible.
+
+**Acceptance Criteria:**
+
+1. Créer `libs/ui/src/components/Input/Input.tsx`
+2. Types supportés: text, email, password, number, search, tel, url
+3. Props: label, placeholder, error, helperText, disabled, required, leftIcon, rightIcon, clearable
+4. Validation visuelle: error state avec message, success state
+5. Accessibilité: label lié via id/htmlFor, aria-describedby pour error/helper
+6. Tests unitaires pour interactions et validation
+7. Stories Storybook pour tous les états
+
+**Technical Notes:**
+
+- Utiliser `useId()` pour génération d'IDs uniques
+- Intégrer avec react-hook-form via `forwardRef`
+- Pattern: `<Input label="Email" type="email" error="Invalid email" />`
+- Extraire de `apps/web/components/ui/` et harmoniser avec admin
+
+**Source:** [Web Forms - apps/web/components/auth/]
+
+---
+
+### Story 11.6: Extract Modal Component
+
+**User Story:**
+As a frontend developer,
+I want a reusable Modal component,
+so that dialogs and overlays are consistent and accessible.
+
+**Acceptance Criteria:**
+
+1. Créer `libs/ui/src/components/Modal/Modal.tsx`
+2. Composants: Modal, Modal.Header, Modal.Body, Modal.Footer
+3. Props: isOpen, onClose, size (sm, md, lg, xl, full), closeOnOverlayClick, closeOnEscape
+4. Animations: fade-in/out pour overlay, slide-in pour content
+5. Focus trap et restoration après fermeture
+6. Accessibilité: role="dialog", aria-modal, aria-labelledby
+7. Tests unitaires pour open/close, focus trap, escape key
+8. Stories Storybook avec exemples de tailles et contenus
+
+**Technical Notes:**
+
+- Utiliser `createPortal` pour render dans document.body
+- Utiliser `@headlessui/react` Dialog ou implémenter focus trap manuellement
+- Pattern: `<Modal isOpen={open} onClose={close}><Modal.Body>...</Modal.Body></Modal>`
+- Bloquer scroll du body quand modal ouvert
+- Support stack de modals (z-index management)
+
+**Source:** [Headless UI - existing patterns in admin]
+
+---
+
+### Story 11.7: Migrate Web App to Use libs/ui
+
+**User Story:**
+As a frontend developer,
+I want the web application to use the shared UI library,
+so that we maintain a single source of truth for UI components.
+
+**Acceptance Criteria:**
+
+1. Remplacer imports locaux par `@festival/ui` pour Button, Card, Input, Modal
+2. Supprimer composants dupliqués de `apps/web/components/ui/`
+3. Importer design tokens de `@festival/ui/styles`
+4. Mettre à jour Tailwind config pour utiliser preset `@festival/ui`
+5. Tous les tests existants passent après migration
+6. Aucune régression visuelle (vérification manuelle ou screenshot tests)
+7. Build de production réussit
+
+**Technical Notes:**
+
+- Migration progressive: un composant à la fois
+- Garder les composants métier (FestivalCard, TicketCard) dans apps/web
+- Seuls les composants UI primitifs migrent vers libs/ui
+- Mettre à jour les imports: `import { Button } from '@festival/ui'`
+- Vérifier bundle size avant/après migration
+
+**Source:** [Web App - apps/web/]
+
+---
+
+### Story 11.8: Migrate Admin App to Use libs/ui
+
+**User Story:**
+As a frontend developer,
+I want the admin application to use the shared UI library,
+so that admin and public interfaces share consistent components.
+
+**Acceptance Criteria:**
+
+1. Remplacer imports locaux par `@festival/ui` pour Button, Card, Input, Modal
+2. Supprimer composants dupliqués de `apps/admin/components/ui/`
+3. Importer design tokens de `@festival/ui/styles`
+4. Mettre à jour Tailwind config pour utiliser preset `@festival/ui`
+5. Tous les tests existants passent après migration
+6. Aucune régression visuelle dans le dashboard admin
+7. Build de production réussit
+8. Thème admin (couleurs spécifiques) toujours fonctionnel
+
+**Technical Notes:**
+
+- L'admin peut avoir des overrides de tokens pour branding différent
+- Migration progressive comme pour web app
+- Garder composants admin-spécifiques (DataTable, Charts) dans apps/admin
+- Pattern d'override: `libs/ui` fournit base, admin extends avec variables CSS
+- Vérifier compatibilité dark mode
+
+**Source:** [Admin App - apps/admin/]
+
+---
+
+## Summary (Final)
+
+| Epic                           | Stories | Priority | Effort | Sprint |
+| ------------------------------ | ------- | -------- | ------ | ------ |
+| 1. Test Coverage               | 3       | High     | Medium | 1      |
+| 2. API Performance             | 3       | High     | Medium | 1      |
+| 3. Mobile Enhancements         | 2       | Medium   | High   | 1      |
+| 4. Admin Dashboard             | 3       | Medium   | Medium | 1      |
+| 5. Bug Fixes & Debt            | 3       | High     | Low    | 1      |
+| 6. Advanced Analytics          | 3       | Medium   | Medium | 2      |
+| 7. Staff & Vendor Improvements | 2       | Medium   | Medium | 2      |
+| 8. Staff Application           | 2       | Medium   | Medium | 3      |
+| 9. Marketing & Public API      | 2       | Medium   | High   | 3      |
+| 10. Stabilization              | -       | High     | Medium | 4      |
+| 11. Unified Design System      | 8       | High     | Medium | 5      |
+
+**Total Stories:** 31 (Sprint 1: 14, Sprint 2: 5, Sprint 3: 4, Sprint 4: Stabilization, Sprint 5: 8)
+
+---
+
 _Document généré pour BMAD workflow_

@@ -1,0 +1,61 @@
+{
+  "name": "@festival/shared/design-tokens",
+  "version": "1.0.0",
+  "description": "Shared design tokens for Festival Platform - colors, spacing, typography, and more",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "require": "./src/index.ts",
+      "types": "./src/index.ts"
+    },
+    "./colors": {
+      "import": "./src/lib/colors.ts",
+      "require": "./src/lib/colors.ts",
+      "types": "./src/lib/colors.ts"
+    },
+    "./spacing": {
+      "import": "./src/lib/spacing.ts",
+      "require": "./src/lib/spacing.ts",
+      "types": "./src/lib/spacing.ts"
+    },
+    "./typography": {
+      "import": "./src/lib/typography.ts",
+      "require": "./src/lib/typography.ts",
+      "types": "./src/lib/typography.ts"
+    },
+    "./shadows": {
+      "import": "./src/lib/shadows.ts",
+      "require": "./src/lib/shadows.ts",
+      "types": "./src/lib/shadows.ts"
+    },
+    "./borders": {
+      "import": "./src/lib/borders.ts",
+      "require": "./src/lib/borders.ts",
+      "types": "./src/lib/borders.ts"
+    },
+    "./animations": {
+      "import": "./src/lib/animations.ts",
+      "require": "./src/lib/animations.ts",
+      "types": "./src/lib/animations.ts"
+    },
+    "./breakpoints": {
+      "import": "./src/lib/breakpoints.ts",
+      "require": "./src/lib/breakpoints.ts",
+      "types": "./src/lib/breakpoints.ts"
+    }
+  },
+  "keywords": [
+    "design-tokens",
+    "design-system",
+    "colors",
+    "spacing",
+    "typography",
+    "tailwind",
+    "react-native",
+    "festival"
+  ],
+  "license": "MIT",
+  "peerDependencies": {}
+}

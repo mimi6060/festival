@@ -351,7 +351,7 @@ curl -s http://localhost:3333/api/health | grep -q "status"
 curl -s http://localhost:3000 | grep -q "html"
 
 # Admin
-curl -s http://localhost:4200 | grep -q "html"
+curl -s http://localhost:4201 | grep -q "html"
 ```
 
 ### Session Tracking
@@ -378,7 +378,7 @@ curl -s http://localhost:4200 | grep -q "html"
 | ------- | ------------- |
 | API     | 3333          |
 | Web     | 3000          |
-| Admin   | 4200          |
+| Admin   | 4201          |
 | Swagger | 3333/api/docs |
 
 ## Critical Don't-Miss Rules

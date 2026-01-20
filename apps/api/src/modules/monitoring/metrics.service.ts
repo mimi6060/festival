@@ -56,7 +56,9 @@ export class MetricsService implements OnModuleInit {
   private metrics = new Map<string, MetricData>();
 
   // Default histogram buckets (in milliseconds for latency)
-  private readonly DEFAULT_LATENCY_BUCKETS = [5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000];
+  private readonly DEFAULT_LATENCY_BUCKETS = [
+    5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000,
+  ];
   private readonly DEFAULT_SIZE_BUCKETS = [100, 500, 1000, 5000, 10000, 50000, 100000];
 
   // Start time for uptime calculation
@@ -416,12 +418,7 @@ export class MetricsService implements OnModuleInit {
   /**
    * Record HTTP request metrics
    */
-  recordHttpRequest(
-    method: string,
-    path: string,
-    statusCode: number,
-    durationMs: number,
-  ): void {
+  recordHttpRequest(method: string, path: string, statusCode: number, durationMs: number): void {
     const status = String(statusCode);
     const labels = { method, path, status };
 
@@ -475,7 +472,10 @@ export class MetricsService implements OnModuleInit {
    * Record ticket sale
    */
   recordTicketSale(festivalId: string, ticketType: string): void {
-    this.incrementCounter('tickets_sold_total', { festival_id: festivalId, ticket_type: ticketType });
+    this.incrementCounter('tickets_sold_total', {
+      festival_id: festivalId,
+      ticket_type: ticketType,
+    });
   }
 
   /**
@@ -493,11 +493,15 @@ export class MetricsService implements OnModuleInit {
     provider: string,
     status: string,
     amountCents: number,
-    currency: string,
+    currency: string
   ): void {
     this.incrementCounter('payments_total', { festival_id: festivalId, provider, status });
     if (status === 'completed') {
-      this.incrementCounter('payments_amount_total', { festival_id: festivalId, provider, currency }, amountCents);
+      this.incrementCounter(
+        'payments_amount_total',
+        { festival_id: festivalId, provider, currency },
+        amountCents
+      );
     }
   }
 
@@ -506,7 +510,11 @@ export class MetricsService implements OnModuleInit {
    */
   recordCashlessTopup(festivalId: string, amountCents: number, currency: string): void {
     this.incrementCounter('cashless_topups_total', { festival_id: festivalId });
-    this.incrementCounter('cashless_topup_amount_total', { festival_id: festivalId, currency }, amountCents);
+    this.incrementCounter(
+      'cashless_topup_amount_total',
+      { festival_id: festivalId, currency },
+      amountCents
+    );
   }
 
   /**
@@ -516,10 +524,17 @@ export class MetricsService implements OnModuleInit {
     festivalId: string,
     vendorType: string,
     amountCents: number,
-    currency: string,
+    currency: string
   ): void {
-    this.incrementCounter('cashless_payments_total', { festival_id: festivalId, vendor_type: vendorType });
-    this.incrementCounter('cashless_payment_amount_total', { festival_id: festivalId, currency }, amountCents);
+    this.incrementCounter('cashless_payments_total', {
+      festival_id: festivalId,
+      vendor_type: vendorType,
+    });
+    this.incrementCounter(
+      'cashless_payment_amount_total',
+      { festival_id: festivalId, currency },
+      amountCents
+    );
   }
 
   /**
@@ -530,11 +545,15 @@ export class MetricsService implements OnModuleInit {
     zoneId: string,
     zoneName: string,
     current: number,
-    capacity: number,
+    capacity: number
   ): void {
     const labels = { festival_id: festivalId, zone_id: zoneId, zone_name: zoneName };
     this.setGauge('zone_occupancy_current', current, labels);
-    this.setGauge('zone_occupancy_percentage', capacity > 0 ? (current / capacity) * 100 : 0, labels);
+    this.setGauge(
+      'zone_occupancy_percentage',
+      capacity > 0 ? (current / capacity) * 100 : 0,
+      labels
+    );
   }
 
   /**
@@ -556,7 +575,11 @@ export class MetricsService implements OnModuleInit {
    */
   updateFestivalAttendance(festivalId: string, current: number, maxCapacity: number): void {
     this.setGauge('festival_attendees_current', current, { festival_id: festivalId });
-    this.setGauge('festival_capacity_percentage', maxCapacity > 0 ? (current / maxCapacity) * 100 : 0, { festival_id: festivalId });
+    this.setGauge(
+      'festival_capacity_percentage',
+      maxCapacity > 0 ? (current / maxCapacity) * 100 : 0,
+      { festival_id: festivalId }
+    );
   }
 
   /**
@@ -592,7 +615,9 @@ export class MetricsService implements OnModuleInit {
 
     for (const [name, metric] of this.metrics.entries()) {
       // Skip bucket configuration metrics
-      if (name.endsWith('_buckets')) {continue;}
+      if (name.endsWith('_buckets')) {
+        continue;
+      }
 
       // Add HELP and TYPE
       lines.push(`# HELP ${name} ${metric.help}`);
@@ -650,7 +675,9 @@ export class MetricsService implements OnModuleInit {
     const result: Record<string, any> = {};
 
     for (const [name, metric] of this.metrics.entries()) {
-      if (name.endsWith('_buckets')) {continue;}
+      if (name.endsWith('_buckets')) {
+        continue;
+      }
 
       if (metric.type === MetricType.HISTOGRAM) {
         result[name] = {
@@ -686,7 +713,7 @@ export class MetricsService implements OnModuleInit {
     this.setGauge('process_memory_heap_bytes', memUsage.heapUsed);
     this.setGauge('process_memory_rss_bytes', memUsage.rss);
 
-    // @ts-ignore - _getActiveHandles is internal but useful
+    // @ts-expect-error - _getActiveHandles is internal but useful
     const activeHandles = process._getActiveHandles?.()?.length || 0;
     this.setGauge('nodejs_active_handles', activeHandles);
   }
@@ -706,7 +733,9 @@ export class MetricsService implements OnModuleInit {
   }
 
   private keyToLabels(key: string, _labelNames: string[]): Record<string, string> {
-    if (!key) {return {};}
+    if (!key) {
+      return {};
+    }
 
     const labels: Record<string, string> = {};
     const pairs = key.split(',');

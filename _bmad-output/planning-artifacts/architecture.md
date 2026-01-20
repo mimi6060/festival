@@ -18,7 +18,7 @@
 ├─────────────┬─────────────┬─────────────┬─────────────────────────┤
 │  Next.js    │  Next.js    │  React      │                         │
 │  Web App    │  Admin      │  Native     │  Third-party Clients    │
-│  (Port 3000)│  (Port 4200)│  Mobile     │  (via API)              │
+│  (Port 3000)│  (Port 4201)│  Mobile     │  (via API)              │
 └──────┬──────┴──────┬──────┴──────┬──────┴────────────┬───────────┘
        │             │             │                    │
        └─────────────┴──────┬──────┴────────────────────┘
@@ -373,7 +373,7 @@ services:
 
   admin:
     image: festival-admin:latest
-    ports: ['4200:4200']
+    ports: ['4201:4201']
 
   postgres:
     image: postgres:16

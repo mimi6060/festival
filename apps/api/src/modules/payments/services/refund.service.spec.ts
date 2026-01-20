@@ -21,10 +21,10 @@ import {
 } from '@nestjs/common';
 import { RefundReason, RefundStatus } from '../dto/refund.dto';
 import {
-  regularUser,
+  regularUser as _regularUser,
   completedPayment,
   pendingPayment,
-  refundedPayment,
+  refundedPayment as _refundedPayment,
   publishedFestival,
 } from '../../../test/fixtures';
 import Stripe from 'stripe';
@@ -172,9 +172,7 @@ describe('RefundService', () => {
         tickets: [],
       });
 
-      await expect(refundService.createRefund(validDto)).rejects.toThrow(
-        BadRequestException
-      );
+      await expect(refundService.createRefund(validDto)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException when amount exceeds maximum', async () => {
@@ -235,10 +233,9 @@ describe('RefundService', () => {
         idempotencyKey: 'unique-key-123',
       });
 
-      expect(mockStripe.refunds.create).toHaveBeenCalledWith(
-        expect.any(Object),
-        { idempotencyKey: 'unique-key-123' }
-      );
+      expect(mockStripe.refunds.create).toHaveBeenCalledWith(expect.any(Object), {
+        idempotencyKey: 'unique-key-123',
+      });
     });
 
     it('should update payment status to REFUNDED for full refund', async () => {
@@ -281,9 +278,7 @@ describe('RefundService', () => {
       });
       mockStripe.refunds.create.mockRejectedValue(stripeError);
 
-      await expect(refundService.createRefund(validDto)).rejects.toThrow(
-        BadRequestException
-      );
+      await expect(refundService.createRefund(validDto)).rejects.toThrow(BadRequestException);
     });
 
     it('should map refund reasons correctly', async () => {
@@ -467,9 +462,9 @@ describe('RefundService', () => {
     it('should throw NotFoundException for non-existent payment', async () => {
       mockPrismaService.payment.findUnique.mockResolvedValue(null);
 
-      await expect(
-        refundService.checkRefundEligibility('non-existent')
-      ).rejects.toThrow(NotFoundException);
+      await expect(refundService.checkRefundEligibility('non-existent')).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should return ineligible for pending payment', async () => {
@@ -571,9 +566,9 @@ describe('RefundService', () => {
         providerPaymentId: null,
       });
 
-      await expect(
-        refundService.getRefundHistory(completedPayment.id)
-      ).rejects.toThrow(NotFoundException);
+      await expect(refundService.getRefundHistory(completedPayment.id)).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
@@ -597,9 +592,7 @@ describe('RefundService', () => {
       });
       mockStripe.refunds.retrieve.mockRejectedValue(stripeError);
 
-      await expect(refundService.getRefund('invalid_refund')).rejects.toThrow(
-        NotFoundException
-      );
+      await expect(refundService.getRefund('invalid_refund')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException for other Stripe errors', async () => {
@@ -609,9 +602,7 @@ describe('RefundService', () => {
       });
       mockStripe.refunds.retrieve.mockRejectedValue(stripeError);
 
-      await expect(refundService.getRefund('re_test_123')).rejects.toThrow(
-        BadRequestException
-      );
+      await expect(refundService.getRefund('re_test_123')).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -634,9 +625,7 @@ describe('RefundService', () => {
       });
       mockStripe.refunds.cancel.mockRejectedValue(stripeError);
 
-      await expect(refundService.cancelRefund('re_test_123')).rejects.toThrow(
-        BadRequestException
-      );
+      await expect(refundService.cancelRefund('re_test_123')).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -736,9 +725,9 @@ describe('RefundService', () => {
     it('should throw InternalServerErrorException when getting refund history without Stripe', async () => {
       mockPrismaService.payment.findUnique.mockResolvedValue(completedPayment);
 
-      await expect(
-        serviceNoStripe.getRefundHistory(completedPayment.id)
-      ).rejects.toThrow(InternalServerErrorException);
+      await expect(serviceNoStripe.getRefundHistory(completedPayment.id)).rejects.toThrow(
+        InternalServerErrorException
+      );
     });
 
     it('should throw InternalServerErrorException when getting refund without Stripe', async () => {

@@ -251,9 +251,7 @@ describe('SubscriptionService', () => {
       });
       mockStripe.prices.create.mockRejectedValue(stripeError);
 
-      await expect(subscriptionService.createPrice(validDto)).rejects.toThrow(
-        BadRequestException
-      );
+      await expect(subscriptionService.createPrice(validDto)).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -326,9 +324,9 @@ describe('SubscriptionService', () => {
     it('should throw NotFoundException if user not found', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      await expect(
-        subscriptionService.getOrCreateCustomer('invalid-user')
-      ).rejects.toThrow(NotFoundException);
+      await expect(subscriptionService.getOrCreateCustomer('invalid-user')).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
@@ -427,9 +425,9 @@ describe('SubscriptionService', () => {
       });
       mockStripe.subscriptions.create.mockRejectedValue(stripeError);
 
-      await expect(
-        subscriptionService.createSubscription(validDto)
-      ).rejects.toThrow(BadRequestException);
+      await expect(subscriptionService.createSubscription(validDto)).rejects.toThrow(
+        BadRequestException
+      );
     });
   });
 
@@ -439,10 +437,9 @@ describe('SubscriptionService', () => {
 
       expect(result.subscriptionId).toBe(mockStripeSubscription.id);
       expect(result.status).toBe(SubscriptionStatus.ACTIVE);
-      expect(mockStripe.subscriptions.retrieve).toHaveBeenCalledWith(
-        'sub_test_123',
-        { expand: ['items.data.price.product'] }
-      );
+      expect(mockStripe.subscriptions.retrieve).toHaveBeenCalledWith('sub_test_123', {
+        expand: ['items.data.price.product'],
+      });
     });
 
     it('should throw NotFoundException for missing subscription', async () => {
@@ -453,9 +450,9 @@ describe('SubscriptionService', () => {
       });
       mockStripe.subscriptions.retrieve.mockRejectedValue(stripeError);
 
-      await expect(
-        subscriptionService.getSubscription('invalid_sub')
-      ).rejects.toThrow(NotFoundException);
+      await expect(subscriptionService.getSubscription('invalid_sub')).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
@@ -585,7 +582,7 @@ describe('SubscriptionService', () => {
     });
 
     it('should apply retention coupon instead of canceling', async () => {
-      const result = await subscriptionService.cancelSubscription('sub_test_123', {
+      const _result = await subscriptionService.cancelSubscription('sub_test_123', {
         retentionCouponCode: 'RETENTION50',
       });
 
@@ -626,9 +623,9 @@ describe('SubscriptionService', () => {
       });
       mockStripe.subscriptions.update.mockRejectedValue(stripeError);
 
-      await expect(
-        subscriptionService.resumeSubscription('sub_test_123')
-      ).rejects.toThrow(BadRequestException);
+      await expect(subscriptionService.resumeSubscription('sub_test_123')).rejects.toThrow(
+        BadRequestException
+      );
     });
   });
 
@@ -673,9 +670,9 @@ describe('SubscriptionService', () => {
       });
       mockStripe.invoices.retrieveUpcoming.mockRejectedValue(stripeError);
 
-      await expect(
-        subscriptionService.getUpcomingInvoice('sub_test_123')
-      ).rejects.toThrow(BadRequestException);
+      await expect(subscriptionService.getUpcomingInvoice('sub_test_123')).rejects.toThrow(
+        BadRequestException
+      );
     });
   });
 
@@ -834,9 +831,9 @@ describe('SubscriptionService', () => {
     });
 
     it('should throw InternalServerErrorException when creating product without Stripe', async () => {
-      await expect(
-        serviceNoStripe.createProduct({ name: 'Test' })
-      ).rejects.toThrow(InternalServerErrorException);
+      await expect(serviceNoStripe.createProduct({ name: 'Test' })).rejects.toThrow(
+        InternalServerErrorException
+      );
     });
 
     it('should throw InternalServerErrorException when creating price without Stripe', async () => {
@@ -863,9 +860,9 @@ describe('SubscriptionService', () => {
     it('should throw InternalServerErrorException when listing invoices without Stripe', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(mockUser);
 
-      await expect(
-        serviceNoStripe.listUserInvoices(mockUser.id)
-      ).rejects.toThrow(InternalServerErrorException);
+      await expect(serviceNoStripe.listUserInvoices(mockUser.id)).rejects.toThrow(
+        InternalServerErrorException
+      );
     });
   });
 });

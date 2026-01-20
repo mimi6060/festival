@@ -21,13 +21,7 @@ import {
   HttpStatus,
   ParseUUIDPipe,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiParam,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiParam } from '@nestjs/swagger';
 import { ApiKeysService } from './api-keys.service';
 import {
   CreateApiKeyDto,
@@ -38,8 +32,10 @@ import {
   ApiKeyQueryDto,
 } from './dto/api-key.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../../common/decorators/current-user.decorator';
-import type { AuthenticatedUser } from '../../common/decorators/current-user.decorator';
+import {
+  CurrentUser,
+  type AuthenticatedUser,
+} from '../../common/decorators/current-user.decorator';
 
 // ============================================================================
 // Controller
@@ -87,7 +83,7 @@ Store it securely - it cannot be retrieved later.
   })
   async create(
     @Body() dto: CreateApiKeyDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ): Promise<CreateApiKeyResponseDto> {
     const result = await this.apiKeysService.create({
       ...dto,
@@ -116,7 +112,7 @@ Store it securely - it cannot be retrieved later.
   })
   async findAll(
     @CurrentUser() user: AuthenticatedUser,
-    @Query() _query: ApiKeyQueryDto,
+    @Query() _query: ApiKeyQueryDto
   ): Promise<ApiKeyResponseDto[]> {
     // TODO: Add filtering by query params when needed
     const apiKeys = await this.apiKeysService.findByUserId(user.id);
@@ -158,7 +154,7 @@ Store it securely - it cannot be retrieved later.
   })
   async findById(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ): Promise<ApiKeyResponseDto> {
     const apiKey = await this.apiKeysService.findById(id, user.id);
     return this.toResponseDto(apiKey);
@@ -194,7 +190,7 @@ Store it securely - it cannot be retrieved later.
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() dto: UpdateApiKeyDto,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ): Promise<ApiKeyResponseDto> {
     const apiKey = await this.apiKeysService.update(id, user.id, dto);
     return this.toResponseDto(apiKey);
@@ -208,7 +204,8 @@ Store it securely - it cannot be retrieved later.
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Revoke an API key',
-    description: 'Revokes an API key. The key will no longer be usable but is preserved for audit purposes.',
+    description:
+      'Revokes an API key. The key will no longer be usable but is preserved for audit purposes.',
   })
   @ApiParam({
     name: 'id',
@@ -225,7 +222,7 @@ Store it securely - it cannot be retrieved later.
   })
   async revoke(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ): Promise<void> {
     await this.apiKeysService.revoke(id, user.id);
   }
@@ -251,7 +248,7 @@ Store it securely - it cannot be retrieved later.
   })
   async delete(
     @Param('id', ParseUUIDPipe) id: string,
-    @CurrentUser() user: AuthenticatedUser,
+    @CurrentUser() user: AuthenticatedUser
   ): Promise<void> {
     await this.apiKeysService.delete(id, user.id);
   }

@@ -45,7 +45,9 @@
       "@festival/shared/i18n": ["libs/shared/i18n/src/index.ts"],
       "@festival/shared/hooks": ["libs/shared/hooks/src/index.ts"],
       "@festival/shared/api-client": ["libs/shared/api-client/src/index.ts"],
-      "@festival/shared/validation": ["libs/shared/validation/src/index.ts"]
+      "@festival/shared/validation": ["libs/shared/validation/src/index.ts"],
+      "@festival/shared/design-tokens": ["libs/shared/design-tokens/src/index.ts"],
+      "@festival/ui": ["libs/ui/src/index.ts"]
     }
   }
 }

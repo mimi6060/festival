@@ -16,11 +16,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { SupportTicketService } from './support-ticket.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import {
-  NotFoundException,
-  ForbiddenException,
-  BadRequestException,
-} from '@nestjs/common';
+import { NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import {
   SupportTicketStatus,
   Priority,
@@ -108,8 +104,8 @@ const mockMessage = {
 
 describe('SupportTicketService', () => {
   let service: SupportTicketService;
-  let prismaService: jest.Mocked<PrismaService>;
-  let eventEmitter: jest.Mocked<EventEmitter2>;
+  let _prismaService: jest.Mocked<PrismaService>;
+  let _eventEmitter: jest.Mocked<EventEmitter2>;
 
   const mockPrismaService = {
     supportTicket: {
@@ -145,8 +141,8 @@ describe('SupportTicketService', () => {
     }).compile();
 
     service = module.get<SupportTicketService>(SupportTicketService);
-    prismaService = module.get(PrismaService);
-    eventEmitter = module.get(EventEmitter2);
+    _prismaService = module.get(PrismaService);
+    _eventEmitter = module.get(EventEmitter2);
   });
 
   // ==========================================================================
@@ -223,7 +219,7 @@ describe('SupportTicketService', () => {
           ticketId: mockTicket.id,
           userId: mockUser.id,
           subject: createDto.subject,
-        }),
+        })
       );
     });
 
@@ -314,7 +310,7 @@ describe('SupportTicketService', () => {
           where: expect.objectContaining({
             userId: mockUser.id,
           }),
-        }),
+        })
       );
     });
 
@@ -333,7 +329,7 @@ describe('SupportTicketService', () => {
           where: expect.objectContaining({
             festivalId: mockFestival.id,
           }),
-        }),
+        })
       );
     });
 
@@ -352,7 +348,7 @@ describe('SupportTicketService', () => {
           where: expect.objectContaining({
             status: SupportTicketStatus.OPEN,
           }),
-        }),
+        })
       );
     });
 
@@ -371,7 +367,7 @@ describe('SupportTicketService', () => {
           where: expect.objectContaining({
             priority: Priority.HIGH,
           }),
-        }),
+        })
       );
     });
 
@@ -390,7 +386,7 @@ describe('SupportTicketService', () => {
           where: expect.objectContaining({
             assignedTo: mockStaffUser.id,
           }),
-        }),
+        })
       );
     });
 
@@ -409,7 +405,7 @@ describe('SupportTicketService', () => {
           where: expect.objectContaining({
             assignedTo: null,
           }),
-        }),
+        })
       );
     });
 
@@ -431,7 +427,7 @@ describe('SupportTicketService', () => {
               { description: { contains: 'payment', mode: 'insensitive' } },
             ],
           }),
-        }),
+        })
       );
     });
 
@@ -448,7 +444,7 @@ describe('SupportTicketService', () => {
       expect(mockPrismaService.supportTicket.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           orderBy: { priority: 'asc' },
-        }),
+        })
       );
     });
 
@@ -466,7 +462,7 @@ describe('SupportTicketService', () => {
         expect.objectContaining({
           skip: 0,
           take: 20,
-        }),
+        })
       );
     });
 
@@ -484,7 +480,7 @@ describe('SupportTicketService', () => {
         expect.objectContaining({
           skip: 20, // (3-1) * 10
           take: 10,
-        }),
+        })
       );
     });
   });
@@ -525,9 +521,9 @@ describe('SupportTicketService', () => {
       mockPrismaService.supportTicket.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        service.findById('non-existent', mockStaffUser.id, true),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.findById('non-existent', mockStaffUser.id, true)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw ForbiddenException when non-owner non-staff tries to access', async () => {
@@ -536,9 +532,9 @@ describe('SupportTicketService', () => {
       mockPrismaService.supportTicket.findUnique.mockResolvedValue(ticketWithMessages);
 
       // Act & Assert
-      await expect(
-        service.findById(mockTicket.id, 'other-user-id', false),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.findById(mockTicket.id, 'other-user-id', false)).rejects.toThrow(
+        ForbiddenException
+      );
     });
 
     it('should include messages ordered by creation date', async () => {
@@ -588,9 +584,9 @@ describe('SupportTicketService', () => {
       mockPrismaService.supportTicket.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        service.update('non-existent', updateDto, mockStaffUser.id),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.update('non-existent', updateDto, mockStaffUser.id)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should emit status-changed event when status changes', async () => {
@@ -612,7 +608,7 @@ describe('SupportTicketService', () => {
           ticketId: mockTicket.id,
           oldStatus: SupportTicketStatus.OPEN,
           newStatus: SupportTicketStatus.IN_PROGRESS,
-        }),
+        })
       );
     });
 
@@ -635,7 +631,7 @@ describe('SupportTicketService', () => {
           ticketId: mockTicket.id,
           assignedTo: mockStaffUser.id,
           assignedBy: mockAdminUser.id,
-        }),
+        })
       );
     });
   });
@@ -671,7 +667,7 @@ describe('SupportTicketService', () => {
 
       // Act & Assert
       await expect(
-        service.changeStatus('non-existent', changeDto, mockStaffUser.id),
+        service.changeStatus('non-existent', changeDto, mockStaffUser.id)
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -721,7 +717,7 @@ describe('SupportTicketService', () => {
           oldStatus: SupportTicketStatus.OPEN,
           newStatus: SupportTicketStatus.IN_PROGRESS,
           changedBy: mockStaffUser.id,
-        }),
+        })
       );
     });
 
@@ -734,7 +730,7 @@ describe('SupportTicketService', () => {
 
       // Act & Assert
       await expect(
-        service.changeStatus(mockTicket.id, changeDto, mockStaffUser.id),
+        service.changeStatus(mockTicket.id, changeDto, mockStaffUser.id)
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -822,7 +818,7 @@ describe('SupportTicketService', () => {
 
       // Act & Assert
       await expect(
-        service.assign('non-existent', mockStaffUser.id, mockAdminUser.id),
+        service.assign('non-existent', mockStaffUser.id, mockAdminUser.id)
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -833,7 +829,7 @@ describe('SupportTicketService', () => {
 
       // Act & Assert
       await expect(
-        service.assign(mockTicket.id, 'non-existent-staff', mockAdminUser.id),
+        service.assign(mockTicket.id, 'non-existent-staff', mockAdminUser.id)
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -843,9 +839,9 @@ describe('SupportTicketService', () => {
       mockPrismaService.user.findUnique.mockResolvedValue(mockUser); // Regular USER role
 
       // Act & Assert
-      await expect(
-        service.assign(mockTicket.id, mockUser.id, mockAdminUser.id),
-      ).rejects.toThrow(BadRequestException);
+      await expect(service.assign(mockTicket.id, mockUser.id, mockAdminUser.id)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should change status to IN_PROGRESS when assigning OPEN ticket', async () => {
@@ -916,7 +912,7 @@ describe('SupportTicketService', () => {
           ticketId: mockTicket.id,
           assignedTo: mockStaffUser.id,
           assignedBy: mockAdminUser.id,
-        }),
+        })
       );
     });
 
@@ -971,12 +967,7 @@ describe('SupportTicketService', () => {
       mockPrismaService.supportTicket.update.mockResolvedValue(mockTicket);
 
       // Act
-      const result = await service.addMessage(
-        mockTicket.id,
-        mockUser.id,
-        messageDto,
-        false,
-      );
+      const result = await service.addMessage(mockTicket.id, mockUser.id, messageDto, false);
 
       // Assert
       expect(result).toBeDefined();
@@ -991,12 +982,7 @@ describe('SupportTicketService', () => {
       mockPrismaService.supportTicket.update.mockResolvedValue(mockTicket);
 
       // Act
-      const result = await service.addMessage(
-        mockTicket.id,
-        mockStaffUser.id,
-        messageDto,
-        true,
-      );
+      const result = await service.addMessage(mockTicket.id, mockStaffUser.id, messageDto, true);
 
       // Assert
       expect(result.isStaff).toBe(true);
@@ -1008,7 +994,7 @@ describe('SupportTicketService', () => {
 
       // Act & Assert
       await expect(
-        service.addMessage('non-existent', mockUser.id, messageDto, false),
+        service.addMessage('non-existent', mockUser.id, messageDto, false)
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -1018,7 +1004,7 @@ describe('SupportTicketService', () => {
 
       // Act & Assert
       await expect(
-        service.addMessage(mockTicket.id, 'other-user-id', messageDto, false),
+        service.addMessage(mockTicket.id, 'other-user-id', messageDto, false)
       ).rejects.toThrow(ForbiddenException);
     });
 
@@ -1107,7 +1093,7 @@ describe('SupportTicketService', () => {
           messageId: mockMessage.id,
           senderId: mockUser.id,
           isStaff: false,
-        }),
+        })
       );
     });
   });
@@ -1147,9 +1133,9 @@ describe('SupportTicketService', () => {
       mockPrismaService.supportTicket.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        service.getMessages('non-existent', mockUser.id, false),
-      ).rejects.toThrow(NotFoundException);
+      await expect(service.getMessages('non-existent', mockUser.id, false)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw ForbiddenException when non-owner non-staff tries to get messages', async () => {
@@ -1157,9 +1143,9 @@ describe('SupportTicketService', () => {
       mockPrismaService.supportTicket.findUnique.mockResolvedValue(mockTicket);
 
       // Act & Assert
-      await expect(
-        service.getMessages(mockTicket.id, 'other-user-id', false),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(service.getMessages(mockTicket.id, 'other-user-id', false)).rejects.toThrow(
+        ForbiddenException
+      );
     });
 
     it('should return messages ordered by creation date ascending', async () => {
@@ -1318,16 +1304,15 @@ describe('SupportTicketService', () => {
         .mockResolvedValueOnce(10); // closed
 
       // GroupBy mocks - priority first, then by staff
-      (mockPrismaService.supportTicket as any).groupBy = jest.fn()
+      (mockPrismaService.supportTicket as any).groupBy = jest
+        .fn()
         .mockResolvedValueOnce([
           { priority: 'LOW', _count: 25 },
           { priority: 'MEDIUM', _count: 50 },
           { priority: 'HIGH', _count: 20 },
           { priority: 'URGENT', _count: 5 },
         ])
-        .mockResolvedValueOnce([
-          { assignedTo: mockStaffUser.id, _count: 30 },
-        ]);
+        .mockResolvedValueOnce([{ assignedTo: mockStaffUser.id, _count: 30 }]);
 
       mockPrismaService.supportTicket.findMany.mockResolvedValue([
         {
@@ -1405,7 +1390,8 @@ describe('SupportTicketService', () => {
     it('should include staff assignment stats', async () => {
       // Arrange
       mockPrismaService.supportTicket.count.mockResolvedValue(50);
-      (mockPrismaService.supportTicket as any).groupBy = jest.fn()
+      (mockPrismaService.supportTicket as any).groupBy = jest
+        .fn()
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([
           { assignedTo: mockStaffUser.id, _count: 30 },
@@ -1445,7 +1431,7 @@ describe('SupportTicketService', () => {
 
     it('should handle special characters in search', async () => {
       // Arrange
-      const query: SupportTicketQueryDto = { search: "test's \"query\"" };
+      const query: SupportTicketQueryDto = { search: 'test\'s "query"' };
       mockPrismaService.supportTicket.findMany.mockResolvedValue([]);
       mockPrismaService.supportTicket.count.mockResolvedValue(0);
 
@@ -1457,11 +1443,11 @@ describe('SupportTicketService', () => {
         expect.objectContaining({
           where: expect.objectContaining({
             OR: [
-              { subject: { contains: "test's \"query\"", mode: 'insensitive' } },
-              { description: { contains: "test's \"query\"", mode: 'insensitive' } },
+              { subject: { contains: 'test\'s "query"', mode: 'insensitive' } },
+              { description: { contains: 'test\'s "query"', mode: 'insensitive' } },
             ],
           }),
-        }),
+        })
       );
     });
 
@@ -1477,12 +1463,12 @@ describe('SupportTicketService', () => {
       const updatePromise1 = service.update(
         mockTicket.id,
         { priority: Priority.HIGH },
-        mockStaffUser.id,
+        mockStaffUser.id
       );
       const updatePromise2 = service.update(
         mockTicket.id,
         { priority: Priority.URGENT },
-        mockStaffUser.id,
+        mockStaffUser.id
       );
 
       // Assert - Both should complete (Prisma handles locking)

@@ -9,30 +9,19 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ZonesController, FestivalZonesController } from './zones.controller';
 import { ZonesService, AuthenticatedUser } from './zones.service';
-import {
-  TicketType,
-  TicketStatus,
-  UserRole,
-  ZoneAccessAction,
-} from '@prisma/client';
-import {
-  NotFoundException,
-  BadRequestException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { TicketType, TicketStatus, UserRole, ZoneAccessAction } from '@prisma/client';
+import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import {
   regularUser,
   adminUser,
   organizerUser,
   staffUser,
-} from '../../test/fixtures';
-import {
   publishedFestival,
   vipLounge,
   mainStageZone,
-  backstageArea,
+  backstageArea as _backstageArea,
+  vipTicket,
 } from '../../test/fixtures';
-import { vipTicket } from '../../test/fixtures';
 
 // ============================================================================
 // Mock Setup
@@ -41,7 +30,7 @@ import { vipTicket } from '../../test/fixtures';
 describe('ZonesController', () => {
   let zonesController: ZonesController;
   let festivalZonesController: FestivalZonesController;
-  let zonesService: jest.Mocked<ZonesService>;
+  let _zonesService: jest.Mocked<ZonesService>;
 
   // Mock user fixtures for testing
   const mockAdminUser: AuthenticatedUser = {
@@ -87,10 +76,8 @@ describe('ZonesController', () => {
     }).compile();
 
     zonesController = module.get<ZonesController>(ZonesController);
-    festivalZonesController = module.get<FestivalZonesController>(
-      FestivalZonesController
-    );
-    zonesService = module.get(ZonesService);
+    festivalZonesController = module.get<FestivalZonesController>(FestivalZonesController);
+    _zonesService = module.get(ZonesService);
   });
 
   // ==========================================================================
@@ -139,17 +126,11 @@ describe('ZonesController', () => {
 
       it('should throw NotFoundException when festival does not exist', async () => {
         // Arrange
-        mockZonesService.create.mockRejectedValue(
-          new NotFoundException('Festival not found')
-        );
+        mockZonesService.create.mockRejectedValue(new NotFoundException('Festival not found'));
 
         // Act & Assert
         await expect(
-          festivalZonesController.create(
-            'non-existent-festival',
-            createZoneDto,
-            mockOrganizerUser
-          )
+          festivalZonesController.create('non-existent-festival', createZoneDto, mockOrganizerUser)
         ).rejects.toThrow(NotFoundException);
       });
 
@@ -160,17 +141,11 @@ describe('ZonesController', () => {
           email: regularUser.email,
           role: UserRole.USER,
         };
-        mockZonesService.create.mockRejectedValue(
-          new ForbiddenException('Not authorized')
-        );
+        mockZonesService.create.mockRejectedValue(new ForbiddenException('Not authorized'));
 
         // Act & Assert
         await expect(
-          festivalZonesController.create(
-            publishedFestival.id,
-            createZoneDto,
-            regularUserAuth
-          )
+          festivalZonesController.create(publishedFestival.id, createZoneDto, regularUserAuth)
         ).rejects.toThrow(ForbiddenException);
       });
     });
@@ -179,8 +154,22 @@ describe('ZonesController', () => {
       it('should return all zones for a festival', async () => {
         // Arrange
         const zones = [
-          { ...mainStageZone, festival: { id: publishedFestival.id, name: publishedFestival.name, organizerId: organizerUser.id } },
-          { ...vipLounge, festival: { id: publishedFestival.id, name: publishedFestival.name, organizerId: organizerUser.id } },
+          {
+            ...mainStageZone,
+            festival: {
+              id: publishedFestival.id,
+              name: publishedFestival.name,
+              organizerId: organizerUser.id,
+            },
+          },
+          {
+            ...vipLounge,
+            festival: {
+              id: publishedFestival.id,
+              name: publishedFestival.name,
+              organizerId: organizerUser.id,
+            },
+          },
         ];
         mockZonesService.findAllByFestival.mockResolvedValue(zones);
 
@@ -213,9 +202,9 @@ describe('ZonesController', () => {
         );
 
         // Act & Assert
-        await expect(
-          festivalZonesController.findAll('non-existent-festival')
-        ).rejects.toThrow(NotFoundException);
+        await expect(festivalZonesController.findAll('non-existent-festival')).rejects.toThrow(
+          NotFoundException
+        );
       });
     });
 
@@ -245,9 +234,7 @@ describe('ZonesController', () => {
         mockZonesService.getAllZonesCapacityStatus.mockResolvedValue(capacityStatus);
 
         // Act
-        const result = await festivalZonesController.getAllZonesCapacity(
-          publishedFestival.id
-        );
+        const result = await festivalZonesController.getAllZonesCapacity(publishedFestival.id);
 
         // Assert
         expect(result.success).toBe(true);
@@ -260,9 +247,7 @@ describe('ZonesController', () => {
         mockZonesService.getAllZonesCapacityStatus.mockResolvedValue([]);
 
         // Act
-        const result = await festivalZonesController.getAllZonesCapacity(
-          publishedFestival.id
-        );
+        const result = await festivalZonesController.getAllZonesCapacity(publishedFestival.id);
 
         // Assert
         expect(result.success).toBe(true);
@@ -282,7 +267,11 @@ describe('ZonesController', () => {
         // Arrange
         const zone = {
           ...vipLounge,
-          festival: { id: publishedFestival.id, name: publishedFestival.name, organizerId: organizerUser.id },
+          festival: {
+            id: publishedFestival.id,
+            name: publishedFestival.name,
+            organizerId: organizerUser.id,
+          },
           _count: { accessLogs: 100 },
         };
         mockZonesService.findOne.mockResolvedValue(zone);
@@ -297,14 +286,12 @@ describe('ZonesController', () => {
 
       it('should throw NotFoundException when zone does not exist', async () => {
         // Arrange
-        mockZonesService.findOne.mockRejectedValue(
-          new NotFoundException('Zone not found')
-        );
+        mockZonesService.findOne.mockRejectedValue(new NotFoundException('Zone not found'));
 
         // Act & Assert
-        await expect(
-          zonesController.findOne('non-existent-zone')
-        ).rejects.toThrow(NotFoundException);
+        await expect(zonesController.findOne('non-existent-zone')).rejects.toThrow(
+          NotFoundException
+        );
       });
     });
 
@@ -320,11 +307,7 @@ describe('ZonesController', () => {
         mockZonesService.update.mockResolvedValue(updatedZone);
 
         // Act
-        const result = await zonesController.update(
-          vipLounge.id,
-          updateZoneDto,
-          mockOrganizerUser
-        );
+        const result = await zonesController.update(vipLounge.id, updateZoneDto, mockOrganizerUser);
 
         // Assert
         expect(result.success).toBe(true);
@@ -334,9 +317,7 @@ describe('ZonesController', () => {
 
       it('should throw ForbiddenException when user is not authorized', async () => {
         // Arrange
-        mockZonesService.update.mockRejectedValue(
-          new ForbiddenException('Not authorized')
-        );
+        mockZonesService.update.mockRejectedValue(new ForbiddenException('Not authorized'));
 
         // Act & Assert
         await expect(
@@ -346,9 +327,7 @@ describe('ZonesController', () => {
 
       it('should throw NotFoundException when zone does not exist', async () => {
         // Arrange
-        mockZonesService.update.mockRejectedValue(
-          new NotFoundException('Zone not found')
-        );
+        mockZonesService.update.mockRejectedValue(new NotFoundException('Zone not found'));
 
         // Act & Assert
         await expect(
@@ -366,34 +345,27 @@ describe('ZonesController', () => {
         await zonesController.remove(vipLounge.id, mockOrganizerUser);
 
         // Assert
-        expect(mockZonesService.remove).toHaveBeenCalledWith(
-          vipLounge.id,
-          mockOrganizerUser
-        );
+        expect(mockZonesService.remove).toHaveBeenCalledWith(vipLounge.id, mockOrganizerUser);
       });
 
       it('should throw ForbiddenException when user is not authorized', async () => {
         // Arrange
-        mockZonesService.remove.mockRejectedValue(
-          new ForbiddenException('Not authorized')
-        );
+        mockZonesService.remove.mockRejectedValue(new ForbiddenException('Not authorized'));
 
         // Act & Assert
-        await expect(
-          zonesController.remove(vipLounge.id, mockStaffUser)
-        ).rejects.toThrow(ForbiddenException);
+        await expect(zonesController.remove(vipLounge.id, mockStaffUser)).rejects.toThrow(
+          ForbiddenException
+        );
       });
 
       it('should throw NotFoundException when zone does not exist', async () => {
         // Arrange
-        mockZonesService.remove.mockRejectedValue(
-          new NotFoundException('Zone not found')
-        );
+        mockZonesService.remove.mockRejectedValue(new NotFoundException('Zone not found'));
 
         // Act & Assert
-        await expect(
-          zonesController.remove('non-existent-zone', mockAdminUser)
-        ).rejects.toThrow(NotFoundException);
+        await expect(zonesController.remove('non-existent-zone', mockAdminUser)).rejects.toThrow(
+          NotFoundException
+        );
       });
     });
 
@@ -428,9 +400,9 @@ describe('ZonesController', () => {
         );
 
         // Act & Assert
-        await expect(
-          zonesController.getCapacity('non-existent-zone')
-        ).rejects.toThrow(NotFoundException);
+        await expect(zonesController.getCapacity('non-existent-zone')).rejects.toThrow(
+          NotFoundException
+        );
       });
     });
 
@@ -538,9 +510,7 @@ describe('ZonesController', () => {
 
       it('should throw NotFoundException when zone does not exist', async () => {
         // Arrange
-        mockZonesService.checkAccess.mockRejectedValue(
-          new NotFoundException('Zone not found')
-        );
+        mockZonesService.checkAccess.mockRejectedValue(new NotFoundException('Zone not found'));
 
         // Act & Assert
         await expect(
@@ -619,9 +589,7 @@ describe('ZonesController', () => {
 
       it('should throw BadRequestException when access is denied', async () => {
         // Arrange
-        mockZonesService.logAccess.mockRejectedValue(
-          new BadRequestException('Access denied')
-        );
+        mockZonesService.logAccess.mockRejectedValue(new BadRequestException('Access denied'));
 
         // Act & Assert
         await expect(
@@ -635,9 +603,7 @@ describe('ZonesController', () => {
 
       it('should throw NotFoundException when zone does not exist', async () => {
         // Arrange
-        mockZonesService.logAccess.mockRejectedValue(
-          new NotFoundException('Zone not found')
-        );
+        mockZonesService.logAccess.mockRejectedValue(new NotFoundException('Zone not found'));
 
         // Act & Assert
         await expect(
@@ -670,9 +636,7 @@ describe('ZonesController', () => {
 
       it('should throw ForbiddenException when user is not authorized', async () => {
         // Arrange
-        mockZonesService.update.mockRejectedValue(
-          new ForbiddenException('Not authorized')
-        );
+        mockZonesService.update.mockRejectedValue(new ForbiddenException('Not authorized'));
 
         // Act & Assert
         await expect(
@@ -781,14 +745,12 @@ describe('ZonesController', () => {
 
       it('should throw NotFoundException when zone does not exist', async () => {
         // Arrange
-        mockZonesService.getAccessLog.mockRejectedValue(
-          new NotFoundException('Zone not found')
-        );
+        mockZonesService.getAccessLog.mockRejectedValue(new NotFoundException('Zone not found'));
 
         // Act & Assert
-        await expect(
-          zonesController.getAccessLog('non-existent-zone', 1, 50)
-        ).rejects.toThrow(NotFoundException);
+        await expect(zonesController.getAccessLog('non-existent-zone', 1, 50)).rejects.toThrow(
+          NotFoundException
+        );
       });
     });
 
@@ -831,7 +793,13 @@ describe('ZonesController', () => {
         const endDate = '2024-07-15T23:59:59Z';
         const stats = {
           zone: { id: vipLounge.id, name: vipLounge.name, capacity: 1000, currentOccupancy: 500 },
-          stats: { totalEntries: 100, totalExits: 50, uniqueVisitors: 75, peakOccupancy: 60, averageStayDurationMinutes: 30 },
+          stats: {
+            totalEntries: 100,
+            totalExits: 50,
+            uniqueVisitors: 75,
+            peakOccupancy: 60,
+            averageStayDurationMinutes: 30,
+          },
           hourlyDistribution: [],
         };
         mockZonesService.getAccessStats.mockResolvedValue(stats);
@@ -851,14 +819,12 @@ describe('ZonesController', () => {
 
       it('should throw NotFoundException when zone does not exist', async () => {
         // Arrange
-        mockZonesService.getAccessStats.mockRejectedValue(
-          new NotFoundException('Zone not found')
-        );
+        mockZonesService.getAccessStats.mockRejectedValue(new NotFoundException('Zone not found'));
 
         // Act & Assert
-        await expect(
-          zonesController.getStats('non-existent-zone')
-        ).rejects.toThrow(NotFoundException);
+        await expect(zonesController.getStats('non-existent-zone')).rejects.toThrow(
+          NotFoundException
+        );
       });
     });
 
@@ -869,10 +835,7 @@ describe('ZonesController', () => {
         mockZonesService.resetOccupancy.mockResolvedValue(resetZone);
 
         // Act
-        const result = await zonesController.resetOccupancy(
-          vipLounge.id,
-          mockAdminUser
-        );
+        const result = await zonesController.resetOccupancy(vipLounge.id, mockAdminUser);
 
         // Assert
         expect(result.success).toBe(true);
@@ -894,9 +857,7 @@ describe('ZonesController', () => {
 
       it('should throw NotFoundException when zone does not exist', async () => {
         // Arrange
-        mockZonesService.resetOccupancy.mockRejectedValue(
-          new NotFoundException('Zone not found')
-        );
+        mockZonesService.resetOccupancy.mockRejectedValue(new NotFoundException('Zone not found'));
 
         // Act & Assert
         await expect(
@@ -912,11 +873,7 @@ describe('ZonesController', () => {
         mockZonesService.adjustOccupancy.mockResolvedValue(adjustedZone);
 
         // Act
-        const result = await zonesController.adjustOccupancy(
-          vipLounge.id,
-          10,
-          mockAdminUser
-        );
+        const result = await zonesController.adjustOccupancy(vipLounge.id, 10, mockAdminUser);
 
         // Assert
         expect(result.success).toBe(true);
@@ -930,11 +887,7 @@ describe('ZonesController', () => {
         mockZonesService.adjustOccupancy.mockResolvedValue(adjustedZone);
 
         // Act
-        const result = await zonesController.adjustOccupancy(
-          vipLounge.id,
-          -10,
-          mockOrganizerUser
-        );
+        const result = await zonesController.adjustOccupancy(vipLounge.id, -10, mockOrganizerUser);
 
         // Assert
         expect(result.success).toBe(true);
@@ -955,9 +908,7 @@ describe('ZonesController', () => {
 
       it('should throw NotFoundException when zone does not exist', async () => {
         // Arrange
-        mockZonesService.adjustOccupancy.mockRejectedValue(
-          new NotFoundException('Zone not found')
-        );
+        mockZonesService.adjustOccupancy.mockRejectedValue(new NotFoundException('Zone not found'));
 
         // Act & Assert
         await expect(

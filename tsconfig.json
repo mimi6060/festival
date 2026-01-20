@@ -35,6 +35,12 @@
     },
     {
       "path": "./libs/shared/validation"
+    },
+    {
+      "path": "./libs/shared/design-tokens"
+    },
+    {
+      "path": "./libs/ui"
     }
   ]
 }

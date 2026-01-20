@@ -17,9 +17,9 @@
 project:
   name: "festival"
   type: "brownfield"
-  current_sprint: 2
-  sprint_start: "2026-01-15"
-  sprint_goal: "Advanced analytics, calendar integration, and operational improvements"
+  current_sprint: 4
+  sprint_start: "2026-01-16"
+  sprint_goal: "Stabilization - ESLint fixes, test stability, design system preparation"
 
 # Epic and Story Status Tracking
 development_status:
@@ -63,22 +63,41 @@ development_status:
   7-1-ticket-validation-ui: done
   7-2-vendor-inventory: done
 
+  # Epic 8: Staff Application (Sprint 3)
+  epic-8: done
+  8-1-staff-mobile-mode: done
+  8-2-staff-dashboard-kpis: done
+
+  # Epic 9: Marketing & Public API (Sprint 3)
+  epic-9: done
+  9-1-email-campaigns: done
+  9-2-public-api: done
+
+  # Epic 10: Stabilization & Polish (Sprint 4)
+  epic-10: in-progress
+  10-1-eslint-fixes: in-progress
+  10-2-test-stability: ready-for-dev
+  10-3-design-system-prep: ready-for-dev
+  10-4-ci-pipeline-fixes: ready-for-dev
+
 # Sprint Metrics
 metrics:
-  total_stories: 19
+  total_stories: 27
   sprint_1_done: 14
   sprint_2_done: 5
-  all_sprints_complete: true
-  velocity_target: 5
+  sprint_3_done: 4
+  sprint_4_done: 0
+  all_sprints_complete: false
+  velocity_target: 4
 
 # Notes
 notes:
   - "Sprint 1: 14/14 stories completed - All 5 Epics done"
   - "Sprint 2: 5/5 stories completed - All 2 Epics done"
-  - "Total: 19/19 stories across 7 Epics"
-  - "Epic 6: TrendAnalysisChart, RevenueBreakdownChart, OccupancyHeatmap, iCal export, AdvancedFilters"
-  - "Epic 7: StaffValidationScreen, VendorInventoryDashboard"
+  - "Sprint 3: 4/4 stories completed - Staff & Marketing modules done"
+  - "Sprint 4: 0/4 stories - Stabilization phase started"
+  - "Epic 10: ESLint fixes, test stability, design system prep, CI fixes"
 
 # Last Updated
-last_updated: "2026-01-15T14:00:00.000Z"
+last_updated: "2026-01-16T10:00:00.000Z"
 updated_by: "bmad-sprint-status"

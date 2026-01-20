@@ -388,7 +388,7 @@ export const useUIStore = create<UIStore>()(
         setGlobalLoading: (loading, message) => {
           set((state) => {
             state.globalLoading = loading;
-            state.loadingMessage = loading ? (message || null) : null;
+            state.loadingMessage = loading ? message || null : null;
           });
         },
 
@@ -397,7 +397,8 @@ export const useUIStore = create<UIStore>()(
           set((state) => {
             const previousY = state.scrollY;
             state.scrollY = y;
-            state.scrollDirection = y > previousY ? 'down' : y < previousY ? 'up' : state.scrollDirection;
+            state.scrollDirection =
+              y > previousY ? 'down' : y < previousY ? 'up' : state.scrollDirection;
           });
         },
 
@@ -415,10 +416,8 @@ export const useUIStore = create<UIStore>()(
           }
           return {
             getItem: () => null,
-            // eslint-disable-next-line @typescript-eslint/no-empty-function
-            setItem: () => {},
-            // eslint-disable-next-line @typescript-eslint/no-empty-function
-            removeItem: () => {},
+            setItem: () => undefined,
+            removeItem: () => undefined,
           };
         }),
         partialize: (state) => ({

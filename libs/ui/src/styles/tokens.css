@@ -1,0 +1,404 @@
+/**
+ * Festival Platform - Shared Design Tokens (CSS Custom Properties)
+ * @module @festival/ui/styles/tokens.css
+ *
+ * This file is the single source of truth for design tokens used across:
+ * - Web app (public site)
+ * - Admin app (dashboard)
+ *
+ * Import this file in your app's globals.css or layout to use these tokens.
+ *
+ * Note: For React Native (mobile), use the TypeScript tokens from
+ * @festival/shared/design-tokens instead (CSS variables are not supported).
+ */
+
+:root {
+  /* ============================================
+   * BRAND COLORS
+   * ============================================ */
+
+  /* Primary - Purple/Fuchsia (main brand color) */
+  --festival-color-primary-50: #fdf4ff;
+  --festival-color-primary-100: #fae8ff;
+  --festival-color-primary-200: #f5d0fe;
+  --festival-color-primary-300: #f0abfc;
+  --festival-color-primary-400: #e879f9;
+  --festival-color-primary-500: #d946ef;
+  --festival-color-primary-600: #c026d3;
+  --festival-color-primary-700: #a21caf;
+  --festival-color-primary-800: #86198f;
+  --festival-color-primary-900: #701a75;
+  --festival-color-primary-950: #4a044e;
+
+  /* Secondary - Pink */
+  --festival-color-secondary-50: #fdf2f8;
+  --festival-color-secondary-100: #fce7f3;
+  --festival-color-secondary-200: #fbcfe8;
+  --festival-color-secondary-300: #f9a8d4;
+  --festival-color-secondary-400: #f472b6;
+  --festival-color-secondary-500: #ec4899;
+  --festival-color-secondary-600: #db2777;
+  --festival-color-secondary-700: #be185d;
+  --festival-color-secondary-800: #9d174d;
+  --festival-color-secondary-900: #831843;
+  --festival-color-secondary-950: #500724;
+
+  /* Accent - Sky Blue (admin primary) */
+  --festival-color-accent-50: #f0f9ff;
+  --festival-color-accent-100: #e0f2fe;
+  --festival-color-accent-200: #bae6fd;
+  --festival-color-accent-300: #7dd3fc;
+  --festival-color-accent-400: #38bdf8;
+  --festival-color-accent-500: #0ea5e9;
+  --festival-color-accent-600: #0284c7;
+  --festival-color-accent-700: #0369a1;
+  --festival-color-accent-800: #075985;
+  --festival-color-accent-900: #0c4a6e;
+  --festival-color-accent-950: #082f49;
+
+  /* ============================================
+   * NEUTRAL COLORS
+   * ============================================ */
+
+  --festival-color-neutral-50: #fafafa;
+  --festival-color-neutral-100: #f5f5f5;
+  --festival-color-neutral-200: #e5e5e5;
+  --festival-color-neutral-300: #d4d4d4;
+  --festival-color-neutral-400: #a3a3a3;
+  --festival-color-neutral-500: #737373;
+  --festival-color-neutral-600: #525252;
+  --festival-color-neutral-700: #404040;
+  --festival-color-neutral-800: #262626;
+  --festival-color-neutral-900: #171717;
+  --festival-color-neutral-950: #0a0a0a;
+
+  /* Gray (slightly cooler) */
+  --festival-color-gray-50: #f9fafb;
+  --festival-color-gray-100: #f3f4f6;
+  --festival-color-gray-200: #e5e7eb;
+  --festival-color-gray-300: #d1d5db;
+  --festival-color-gray-400: #9ca3af;
+  --festival-color-gray-500: #6b7280;
+  --festival-color-gray-600: #4b5563;
+  --festival-color-gray-700: #374151;
+  --festival-color-gray-800: #1f2937;
+  --festival-color-gray-900: #111827;
+  --festival-color-gray-950: #030712;
+
+  /* ============================================
+   * SEMANTIC COLORS
+   * ============================================ */
+
+  /* Success */
+  --festival-color-success-50: #f0fdf4;
+  --festival-color-success-100: #dcfce7;
+  --festival-color-success-200: #bbf7d0;
+  --festival-color-success-300: #86efac;
+  --festival-color-success-400: #4ade80;
+  --festival-color-success-500: #22c55e;
+  --festival-color-success-600: #16a34a;
+  --festival-color-success-700: #15803d;
+  --festival-color-success-800: #166534;
+  --festival-color-success-900: #14532d;
+
+  /* Warning */
+  --festival-color-warning-50: #fffbeb;
+  --festival-color-warning-100: #fef3c7;
+  --festival-color-warning-200: #fde68a;
+  --festival-color-warning-300: #fcd34d;
+  --festival-color-warning-400: #fbbf24;
+  --festival-color-warning-500: #f59e0b;
+  --festival-color-warning-600: #d97706;
+  --festival-color-warning-700: #b45309;
+  --festival-color-warning-800: #92400e;
+  --festival-color-warning-900: #78350f;
+
+  /* Error */
+  --festival-color-error-50: #fef2f2;
+  --festival-color-error-100: #fee2e2;
+  --festival-color-error-200: #fecaca;
+  --festival-color-error-300: #fca5a5;
+  --festival-color-error-400: #f87171;
+  --festival-color-error-500: #ef4444;
+  --festival-color-error-600: #dc2626;
+  --festival-color-error-700: #b91c1c;
+  --festival-color-error-800: #991b1b;
+  --festival-color-error-900: #7f1d1d;
+
+  /* Info */
+  --festival-color-info-50: #eff6ff;
+  --festival-color-info-100: #dbeafe;
+  --festival-color-info-200: #bfdbfe;
+  --festival-color-info-300: #93c5fd;
+  --festival-color-info-400: #60a5fa;
+  --festival-color-info-500: #3b82f6;
+  --festival-color-info-600: #2563eb;
+  --festival-color-info-700: #1d4ed8;
+  --festival-color-info-800: #1e40af;
+  --festival-color-info-900: #1e3a8a;
+
+  /* ============================================
+   * FESTIVAL THEME COLORS (Immersive Dark)
+   * ============================================ */
+
+  --festival-color-festival-dark: #1a1a2e;
+  --festival-color-festival-darker: #12121f;
+  --festival-color-festival-medium: #16213e;
+  --festival-color-festival-light: #0f3460;
+  --festival-color-festival-accent: #e94560;
+
+  /* ============================================
+   * SPACING SCALE
+   * ============================================ */
+
+  --festival-spacing-0: 0;
+  --festival-spacing-px: 1px;
+  --festival-spacing-0-5: 0.125rem;
+  --festival-spacing-1: 0.25rem;
+  --festival-spacing-1-5: 0.375rem;
+  --festival-spacing-2: 0.5rem;
+  --festival-spacing-2-5: 0.625rem;
+  --festival-spacing-3: 0.75rem;
+  --festival-spacing-3-5: 0.875rem;
+  --festival-spacing-4: 1rem;
+  --festival-spacing-5: 1.25rem;
+  --festival-spacing-6: 1.5rem;
+  --festival-spacing-7: 1.75rem;
+  --festival-spacing-8: 2rem;
+  --festival-spacing-9: 2.25rem;
+  --festival-spacing-10: 2.5rem;
+  --festival-spacing-11: 2.75rem;
+  --festival-spacing-12: 3rem;
+  --festival-spacing-14: 3.5rem;
+  --festival-spacing-16: 4rem;
+  --festival-spacing-20: 5rem;
+  --festival-spacing-24: 6rem;
+  --festival-spacing-28: 7rem;
+  --festival-spacing-32: 8rem;
+
+  /* ============================================
+   * TYPOGRAPHY
+   * ============================================ */
+
+  /* Font Families */
+  --festival-font-sans:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    sans-serif;
+  --festival-font-mono: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+  --festival-font-display: var(--festival-font-sans);
+
+  /* Font Sizes */
+  --festival-text-xs: 0.75rem;
+  --festival-text-sm: 0.875rem;
+  --festival-text-base: 1rem;
+  --festival-text-lg: 1.125rem;
+  --festival-text-xl: 1.25rem;
+  --festival-text-2xl: 1.5rem;
+  --festival-text-3xl: 1.875rem;
+  --festival-text-4xl: 2.25rem;
+  --festival-text-5xl: 3rem;
+  --festival-text-6xl: 3.75rem;
+
+  /* Line Heights */
+  --festival-leading-none: 1;
+  --festival-leading-tight: 1.25;
+  --festival-leading-snug: 1.375;
+  --festival-leading-normal: 1.5;
+  --festival-leading-relaxed: 1.625;
+  --festival-leading-loose: 2;
+
+  /* Font Weights */
+  --festival-font-thin: 100;
+  --festival-font-light: 300;
+  --festival-font-normal: 400;
+  --festival-font-medium: 500;
+  --festival-font-semibold: 600;
+  --festival-font-bold: 700;
+  --festival-font-extrabold: 800;
+  --festival-font-black: 900;
+
+  /* ============================================
+   * BORDER RADIUS
+   * ============================================ */
+
+  --festival-radius-none: 0;
+  --festival-radius-sm: 0.125rem;
+  --festival-radius-md: 0.375rem;
+  --festival-radius-lg: 0.5rem;
+  --festival-radius-xl: 0.75rem;
+  --festival-radius-2xl: 1rem;
+  --festival-radius-3xl: 1.5rem;
+  --festival-radius-full: 9999px;
+
+  /* ============================================
+   * SHADOWS
+   * ============================================ */
+
+  --festival-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --festival-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --festival-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --festival-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --festival-shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --festival-shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+
+  /* Glow Shadows (brand) */
+  --festival-shadow-glow-primary: 0 0 20px rgb(217 70 239 / 0.3);
+  --festival-shadow-glow-secondary: 0 0 20px rgb(236 72 153 / 0.3);
+  --festival-shadow-glow-accent: 0 0 20px rgb(14 165 233 / 0.3);
+  --festival-shadow-glow-success: 0 0 20px rgb(34 197 94 / 0.3);
+  --festival-shadow-glow-error: 0 0 20px rgb(239 68 68 / 0.3);
+
+  /* ============================================
+   * TRANSITIONS
+   * ============================================ */
+
+  --festival-duration-75: 75ms;
+  --festival-duration-100: 100ms;
+  --festival-duration-150: 150ms;
+  --festival-duration-200: 200ms;
+  --festival-duration-300: 300ms;
+  --festival-duration-500: 500ms;
+  --festival-duration-700: 700ms;
+  --festival-duration-1000: 1000ms;
+
+  --festival-ease-linear: linear;
+  --festival-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --festival-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --festival-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --festival-ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* ============================================
+   * Z-INDEX
+   * ============================================ */
+
+  --festival-z-0: 0;
+  --festival-z-10: 10;
+  --festival-z-20: 20;
+  --festival-z-30: 30;
+  --festival-z-40: 40;
+  --festival-z-50: 50;
+  --festival-z-dropdown: 100;
+  --festival-z-sticky: 200;
+  --festival-z-modal: 300;
+  --festival-z-popover: 400;
+  --festival-z-tooltip: 500;
+  --festival-z-toast: 600;
+
+  /* ============================================
+   * COMPONENT TOKENS
+   * ============================================ */
+
+  /* Button */
+  --festival-button-radius: var(--festival-radius-xl);
+  --festival-button-font-weight: var(--festival-font-semibold);
+
+  /* Card */
+  --festival-card-radius: var(--festival-radius-2xl);
+  --festival-card-shadow: var(--festival-shadow-md);
+
+  /* Input */
+  --festival-input-radius: var(--festival-radius-xl);
+  --festival-input-border-width: 1px;
+
+  /* Modal */
+  --festival-modal-radius: var(--festival-radius-2xl);
+  --festival-modal-backdrop: rgba(0, 0, 0, 0.7);
+}
+
+/* ============================================
+ * LIGHT THEME SEMANTIC TOKENS
+ * ============================================ */
+
+:root,
+[data-theme='light'] {
+  /* Backgrounds */
+  --festival-bg: #ffffff;
+  --festival-bg-secondary: var(--festival-color-gray-50);
+  --festival-bg-tertiary: var(--festival-color-gray-100);
+  --festival-bg-elevated: #ffffff;
+  --festival-bg-hover: var(--festival-color-gray-100);
+
+  /* Surfaces */
+  --festival-surface: #ffffff;
+  --festival-surface-hover: var(--festival-color-gray-50);
+  --festival-surface-active: var(--festival-color-gray-100);
+
+  /* Text */
+  --festival-text-primary: var(--festival-color-gray-900);
+  --festival-text-secondary: var(--festival-color-gray-600);
+  --festival-text-tertiary: var(--festival-color-gray-500);
+  --festival-text-muted: var(--festival-color-gray-400);
+
+  /* Borders */
+  --festival-border: var(--festival-color-gray-200);
+  --festival-border-hover: var(--festival-color-gray-300);
+  --festival-border-focus: var(--festival-color-primary-500);
+
+  /* Cards & Inputs */
+  --festival-card-bg: #ffffff;
+  --festival-card-border: var(--festival-color-gray-100);
+  --festival-input-bg: #ffffff;
+  --festival-input-border: var(--festival-color-gray-300);
+  --festival-input-placeholder: var(--festival-color-gray-400);
+}
+
+/* ============================================
+ * DARK THEME SEMANTIC TOKENS
+ * ============================================ */
+
+.dark,
+[data-theme='dark'] {
+  /* Backgrounds */
+  --festival-bg: var(--festival-color-gray-900);
+  --festival-bg-secondary: var(--festival-color-gray-800);
+  --festival-bg-tertiary: var(--festival-color-gray-700);
+  --festival-bg-elevated: var(--festival-color-gray-800);
+  --festival-bg-hover: var(--festival-color-gray-800);
+
+  /* Surfaces */
+  --festival-surface: var(--festival-color-gray-800);
+  --festival-surface-hover: var(--festival-color-gray-700);
+  --festival-surface-active: var(--festival-color-gray-600);
+
+  /* Text */
+  --festival-text-primary: var(--festival-color-gray-50);
+  --festival-text-secondary: var(--festival-color-gray-300);
+  --festival-text-tertiary: var(--festival-color-gray-400);
+  --festival-text-muted: var(--festival-color-gray-500);
+
+  /* Borders */
+  --festival-border: var(--festival-color-gray-700);
+  --festival-border-hover: var(--festival-color-gray-600);
+  --festival-border-focus: var(--festival-color-primary-400);
+
+  /* Cards & Inputs */
+  --festival-card-bg: var(--festival-color-gray-800);
+  --festival-card-border: var(--festival-color-gray-700);
+  --festival-input-bg: var(--festival-color-gray-800);
+  --festival-input-border: var(--festival-color-gray-600);
+  --festival-input-placeholder: var(--festival-color-gray-500);
+
+  /* Shadows (darker for dark mode) */
+  --festival-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.2);
+  --festival-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
+  --festival-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.2);
+  --festival-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.3), 0 8px 10px -6px rgb(0 0 0 / 0.2);
+}
+
+/* ============================================
+ * ADMIN THEME (uses accent as primary)
+ * ============================================ */
+
+[data-app='admin'] {
+  --festival-color-primary-50: var(--festival-color-accent-50);
+  --festival-color-primary-100: var(--festival-color-accent-100);
+  --festival-color-primary-200: var(--festival-color-accent-200);
+  --festival-color-primary-300: var(--festival-color-accent-300);
+  --festival-color-primary-400: var(--festival-color-accent-400);
+  --festival-color-primary-500: var(--festival-color-accent-500);
+  --festival-color-primary-600: var(--festival-color-accent-600);
+  --festival-color-primary-700: var(--festival-color-accent-700);
+  --festival-color-primary-800: var(--festival-color-accent-800);
+  --festival-color-primary-900: var(--festival-color-accent-900);
+  --festival-color-primary-950: var(--festival-color-accent-950);
+}

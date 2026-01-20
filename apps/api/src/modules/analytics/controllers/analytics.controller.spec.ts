@@ -22,11 +22,7 @@ import { Response } from 'express';
 import { NotFoundException } from '@nestjs/common';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
-import {
-  adminUser,
-  organizerUser,
-  ongoingFestival,
-} from '../../../test/fixtures';
+import { adminUser, organizerUser, ongoingFestival } from '../../../test/fixtures';
 
 // ============================================================================
 // Mock Setup
@@ -35,11 +31,11 @@ import {
 describe('AnalyticsController', () => {
   let controller: AnalyticsController;
   let analyticsService: jest.Mocked<AnalyticsService>;
-  let advancedMetricsService: jest.Mocked<AdvancedMetricsService>;
-  let customReportsService: jest.Mocked<CustomReportsService>;
-  let realtimeService: jest.Mocked<RealtimeAggregationService>;
-  let exportService: jest.Mocked<ExportService>;
-  let dashboardConfigService: jest.Mocked<DashboardConfigService>;
+  let _advancedMetricsService: jest.Mocked<AdvancedMetricsService>;
+  let _customReportsService: jest.Mocked<CustomReportsService>;
+  let _realtimeService: jest.Mocked<RealtimeAggregationService>;
+  let _exportService: jest.Mocked<ExportService>;
+  let _dashboardConfigService: jest.Mocked<DashboardConfigService>;
 
   const mockAnalyticsService = {
     getDashboardKPIs: jest.fn().mockResolvedValue({}),
@@ -155,11 +151,11 @@ describe('AnalyticsController', () => {
 
     controller = module.get<AnalyticsController>(AnalyticsController);
     analyticsService = module.get(AnalyticsService);
-    advancedMetricsService = module.get(AdvancedMetricsService);
-    customReportsService = module.get(CustomReportsService);
-    realtimeService = module.get(RealtimeAggregationService);
-    exportService = module.get(ExportService);
-    dashboardConfigService = module.get(DashboardConfigService);
+    _advancedMetricsService = module.get(AdvancedMetricsService);
+    _customReportsService = module.get(CustomReportsService);
+    _realtimeService = module.get(RealtimeAggregationService);
+    _exportService = module.get(ExportService);
+    _dashboardConfigService = module.get(DashboardConfigService);
   });
 
   // ==========================================================================
@@ -173,7 +169,12 @@ describe('AnalyticsController', () => {
         const mockSales = {
           festivalId: ongoingFestival.id,
           period: { startDate: new Date(), endDate: new Date() },
-          summary: { totalSales: 1000, totalRevenue: 50000, averageOrderValue: 50, uniqueCustomers: 900 },
+          summary: {
+            totalSales: 1000,
+            totalRevenue: 50000,
+            averageOrderValue: 50,
+            uniqueCustomers: 900,
+          },
           salesByDay: [],
           salesByHour: [],
           salesByCategory: [],
@@ -187,10 +188,9 @@ describe('AnalyticsController', () => {
         // Assert
         expect(result.festivalId).toBe(ongoingFestival.id);
         expect(result.summary.totalSales).toBe(1000);
-        expect(mockAnalyticsService.getSalesAnalytics).toHaveBeenCalledWith(
-          ongoingFestival.id,
-          { groupBy: 'day' },
-        );
+        expect(mockAnalyticsService.getSalesAnalytics).toHaveBeenCalledWith(ongoingFestival.id, {
+          groupBy: 'day',
+        });
       });
     });
 
@@ -207,19 +207,20 @@ describe('AnalyticsController', () => {
         mockAnalyticsService.getDashboardKPIs.mockImplementation(() => Promise.resolve(mockKPIs));
 
         // Debug: check what service the controller is using
-        // @ts-ignore - accessing private property for testing
+        // @ts-expect-error - accessing private property for testing
         const injectedService = controller['analyticsService'];
         expect(injectedService).toBe(mockAnalyticsService);
         expect(injectedService.getDashboardKPIs).toBe(mockAnalyticsService.getDashboardKPIs);
 
         // Act
-        const result = await controller.getFestivalDashboardKPIs(ongoingFestival.id, { includeTrends: true } as any);
+        const result = await controller.getFestivalDashboardKPIs(ongoingFestival.id, {
+          includeTrends: true,
+        } as any);
 
         // Assert
-        expect(mockAnalyticsService.getDashboardKPIs).toHaveBeenCalledWith(
-          ongoingFestival.id,
-          { includeTrends: true },
-        );
+        expect(mockAnalyticsService.getDashboardKPIs).toHaveBeenCalledWith(ongoingFestival.id, {
+          includeTrends: true,
+        });
         expect(result).toEqual(mockKPIs);
       });
 
@@ -231,7 +232,7 @@ describe('AnalyticsController', () => {
 
         // Act & Assert
         await expect(
-          controller.getFestivalDashboardKPIs('non-existent', {} as any),
+          controller.getFestivalDashboardKPIs('non-existent', {} as any)
         ).rejects.toThrow(NotFoundException);
       });
     });
@@ -263,15 +264,16 @@ describe('AnalyticsController', () => {
         mockAnalyticsService.getCashlessAnalytics.mockResolvedValue(mockCashless);
 
         // Act
-        const result = await controller.getCashlessAnalytics(ongoingFestival.id, { groupBy: 'hour' });
+        const result = await controller.getCashlessAnalytics(ongoingFestival.id, {
+          groupBy: 'hour',
+        });
 
         // Assert
         expect(result.festivalId).toBe(ongoingFestival.id);
         expect(result.summary.totalTopups).toBe(500);
-        expect(mockAnalyticsService.getCashlessAnalytics).toHaveBeenCalledWith(
-          ongoingFestival.id,
-          { groupBy: 'hour' },
-        );
+        expect(mockAnalyticsService.getCashlessAnalytics).toHaveBeenCalledWith(ongoingFestival.id, {
+          groupBy: 'hour',
+        });
       });
     });
 
@@ -285,20 +287,26 @@ describe('AnalyticsController', () => {
           hourlyAttendance: [],
           dailyAttendance: [],
           entryExitFlow: [],
-          peakTimes: { peak: { time: new Date(), count: 3000 }, lowest: { time: new Date(), count: 500 } },
+          peakTimes: {
+            peak: { time: new Date(), count: 3000 },
+            lowest: { time: new Date(), count: 500 },
+          },
           zoneDistribution: [],
         };
         mockAnalyticsService.getAttendanceAnalytics.mockResolvedValue(mockAttendance);
 
         // Act
-        const result = await controller.getAttendanceAnalytics(ongoingFestival.id, { granularity: 'hour', includeFlow: true });
+        const result = await controller.getAttendanceAnalytics(ongoingFestival.id, {
+          granularity: 'hour',
+          includeFlow: true,
+        });
 
         // Assert
         expect(result.festivalId).toBe(ongoingFestival.id);
         expect(result.current.totalInside).toBe(2500);
         expect(mockAnalyticsService.getAttendanceAnalytics).toHaveBeenCalledWith(
           ongoingFestival.id,
-          { granularity: 'hour', includeFlow: true },
+          { granularity: 'hour', includeFlow: true }
         );
       });
     });
@@ -330,16 +338,19 @@ describe('AnalyticsController', () => {
         mockAnalyticsService.getZoneAnalytics.mockResolvedValue(mockZones);
 
         // Act
-        const result = await controller.getZoneAnalytics(ongoingFestival.id, { includeHeatmap: false, includeTransitions: false });
+        const result = await controller.getZoneAnalytics(ongoingFestival.id, {
+          includeHeatmap: false,
+          includeTransitions: false,
+        });
 
         // Assert
         expect(result.festivalId).toBe(ongoingFestival.id);
         expect(result.zones).toHaveLength(1);
         expect(result.zones[0].zoneName).toBe('Main Stage');
-        expect(mockAnalyticsService.getZoneAnalytics).toHaveBeenCalledWith(
-          ongoingFestival.id,
-          { includeHeatmap: false, includeTransitions: false },
-        );
+        expect(mockAnalyticsService.getZoneAnalytics).toHaveBeenCalledWith(ongoingFestival.id, {
+          includeHeatmap: false,
+          includeTransitions: false,
+        });
       });
     });
 
@@ -349,7 +360,12 @@ describe('AnalyticsController', () => {
         const mockVendors = {
           festivalId: ongoingFestival.id,
           period: { startDate: new Date(), endDate: new Date() },
-          summary: { totalVendors: 15, totalOrders: 2000, totalRevenue: 50000, averageOrderValue: 25 },
+          summary: {
+            totalVendors: 15,
+            totalOrders: 2000,
+            totalRevenue: 50000,
+            averageOrderValue: 25,
+          },
           vendorsByType: [],
           topVendors: [],
           topProducts: [],
@@ -359,15 +375,18 @@ describe('AnalyticsController', () => {
         mockAnalyticsService.getVendorAnalytics.mockResolvedValue(mockVendors);
 
         // Act
-        const result = await controller.getVendorAnalytics(ongoingFestival.id, { topLimit: 10, topProductsLimit: 20 });
+        const result = await controller.getVendorAnalytics(ongoingFestival.id, {
+          topLimit: 10,
+          topProductsLimit: 20,
+        });
 
         // Assert
         expect(result.festivalId).toBe(ongoingFestival.id);
         expect(result.summary.totalVendors).toBe(15);
-        expect(mockAnalyticsService.getVendorAnalytics).toHaveBeenCalledWith(
-          ongoingFestival.id,
-          { topLimit: 10, topProductsLimit: 20 },
-        );
+        expect(mockAnalyticsService.getVendorAnalytics).toHaveBeenCalledWith(ongoingFestival.id, {
+          topLimit: 10,
+          topProductsLimit: 20,
+        });
       });
     });
   });
@@ -407,7 +426,7 @@ describe('AnalyticsController', () => {
         expect(mockAdvancedMetricsService.getRevenueMetrics).toHaveBeenCalledWith(
           ongoingFestival.id,
           new Date(startDate),
-          new Date(endDate),
+          new Date(endDate)
         );
       });
     });
@@ -435,7 +454,7 @@ describe('AnalyticsController', () => {
         expect(mockAdvancedMetricsService.getCustomerMetrics).toHaveBeenCalledWith(
           ongoingFestival.id,
           new Date(startDate),
-          new Date(endDate),
+          new Date(endDate)
         );
       });
     });
@@ -454,7 +473,11 @@ describe('AnalyticsController', () => {
         mockAdvancedMetricsService.getPerformanceMetrics.mockResolvedValue(mockMetrics);
 
         // Act
-        const result = await controller.getPerformanceMetrics(ongoingFestival.id, startDate, endDate);
+        const result = await controller.getPerformanceMetrics(
+          ongoingFestival.id,
+          startDate,
+          endDate
+        );
 
         // Assert
         expect(result.systemUptime).toBe(99.9);
@@ -525,7 +548,7 @@ describe('AnalyticsController', () => {
         expect(result.projectedRevenue).toBe(200000);
         expect(mockAdvancedMetricsService.getForecastMetrics).toHaveBeenCalledWith(
           ongoingFestival.id,
-          7,
+          7
         );
       });
 
@@ -542,7 +565,7 @@ describe('AnalyticsController', () => {
         // Assert
         expect(mockAdvancedMetricsService.getForecastMetrics).toHaveBeenCalledWith(
           ongoingFestival.id,
-          undefined,
+          undefined
         );
       });
     });
@@ -583,7 +606,11 @@ describe('AnalyticsController', () => {
         mockAdvancedMetricsService.getEnvironmentalMetrics.mockResolvedValue(mockMetrics);
 
         // Act
-        const result = await controller.getEnvironmentalMetrics(ongoingFestival.id, startDate, endDate);
+        const result = await controller.getEnvironmentalMetrics(
+          ongoingFestival.id,
+          startDate,
+          endDate
+        );
 
         // Assert
         expect(result.recyclingRate).toBe(65);
@@ -627,14 +654,18 @@ describe('AnalyticsController', () => {
         mockAdvancedMetricsService.getComprehensiveAnalytics.mockResolvedValue(mockMetrics);
 
         // Act
-        const result = await controller.getComprehensiveAnalytics(ongoingFestival.id, startDate, endDate);
+        const result = await controller.getComprehensiveAnalytics(
+          ongoingFestival.id,
+          startDate,
+          endDate
+        );
 
         // Assert
         expect(result.festivalId).toBe(ongoingFestival.id);
         expect(mockAdvancedMetricsService.getComprehensiveAnalytics).toHaveBeenCalledWith(
           ongoingFestival.id,
           new Date(startDate),
-          new Date(endDate),
+          new Date(endDate)
         );
       });
     });
@@ -649,8 +680,20 @@ describe('AnalyticsController', () => {
       it('should return all reports for a festival', async () => {
         // Arrange
         const mockReports = [
-          { id: 'report1', name: 'Sales Report', festivalId: ongoingFestival.id, metrics: ['sales'], format: 'pdf' },
-          { id: 'report2', name: 'Attendance Report', festivalId: ongoingFestival.id, metrics: ['attendance'], format: 'xlsx' },
+          {
+            id: 'report1',
+            name: 'Sales Report',
+            festivalId: ongoingFestival.id,
+            metrics: ['sales'],
+            format: 'pdf',
+          },
+          {
+            id: 'report2',
+            name: 'Attendance Report',
+            festivalId: ongoingFestival.id,
+            metrics: ['attendance'],
+            format: 'xlsx',
+          },
         ];
         mockCustomReportsService.getReports.mockResolvedValue(mockReports);
 
@@ -666,7 +709,12 @@ describe('AnalyticsController', () => {
     describe('POST /analytics/festivals/:festivalId/reports', () => {
       it('should create a custom report', async () => {
         // Arrange
-        const reportData = { name: 'New Report', description: 'Test report', metrics: ['sales', 'revenue'], format: 'pdf' };
+        const reportData = {
+          name: 'New Report',
+          description: 'Test report',
+          metrics: ['sales', 'revenue'],
+          format: 'pdf',
+        };
         const createdReport = {
           id: 'new-report-id',
           ...reportData,
@@ -678,7 +726,11 @@ describe('AnalyticsController', () => {
         mockCustomReportsService.createReport.mockResolvedValue(createdReport);
 
         // Act
-        const result = await controller.createReport(ongoingFestival.id, mockOrganizerUser, reportData);
+        const result = await controller.createReport(
+          ongoingFestival.id,
+          mockOrganizerUser,
+          reportData
+        );
 
         // Assert
         expect(result.id).toBe('new-report-id');
@@ -686,7 +738,7 @@ describe('AnalyticsController', () => {
         expect(mockCustomReportsService.createReport).toHaveBeenCalledWith(
           ongoingFestival.id,
           mockOrganizerUser.id,
-          reportData,
+          reportData
         );
       });
     });
@@ -708,7 +760,7 @@ describe('AnalyticsController', () => {
       it('should throw NotFoundException when report not found', async () => {
         // Arrange
         mockCustomReportsService.getReport.mockRejectedValue(
-          new NotFoundException('Report not found'),
+          new NotFoundException('Report not found')
         );
 
         // Act & Assert
@@ -728,10 +780,10 @@ describe('AnalyticsController', () => {
 
         // Assert
         expect(result.reportId).toBe('report1');
-        expect(mockCustomReportsService.executeReport).toHaveBeenCalledWith(
-          'report1',
-          { startDate: new Date(body.startDate), endDate: new Date(body.endDate) },
-        );
+        expect(mockCustomReportsService.executeReport).toHaveBeenCalledWith('report1', {
+          startDate: new Date(body.startDate),
+          endDate: new Date(body.endDate),
+        });
       });
 
       it('should execute a report without time range', async () => {
@@ -778,7 +830,7 @@ describe('AnalyticsController', () => {
           '2024-07-07',
           '2024-06-24',
           '2024-06-30',
-          'revenue,sales',
+          'revenue,sales'
         );
 
         // Assert
@@ -787,7 +839,7 @@ describe('AnalyticsController', () => {
           ongoingFestival.id,
           { startDate: new Date('2024-07-01'), endDate: new Date('2024-07-07') },
           { startDate: new Date('2024-06-24'), endDate: new Date('2024-06-30') },
-          ['revenue', 'sales'],
+          ['revenue', 'sales']
         );
       });
     });
@@ -807,7 +859,7 @@ describe('AnalyticsController', () => {
           ongoingFestival.id,
           'acquisition_date',
           '2024-07-01',
-          '2024-07-07',
+          '2024-07-07'
         );
 
         // Assert
@@ -815,7 +867,7 @@ describe('AnalyticsController', () => {
         expect(mockCustomReportsService.getCohortAnalysis).toHaveBeenCalledWith(
           ongoingFestival.id,
           'acquisition_date',
-          { startDate: new Date('2024-07-01'), endDate: new Date('2024-07-07') },
+          { startDate: new Date('2024-07-01'), endDate: new Date('2024-07-07') }
         );
       });
     });
@@ -841,7 +893,7 @@ describe('AnalyticsController', () => {
         expect(result.overallConversion).toBe(10);
         expect(mockCustomReportsService.getFunnelAnalysis).toHaveBeenCalledWith(
           ongoingFestival.id,
-          'purchase',
+          'purchase'
         );
       });
     });
@@ -863,7 +915,7 @@ describe('AnalyticsController', () => {
           ongoingFestival.id,
           'revenue',
           '2024-07-01',
-          '2024-07-07',
+          '2024-07-07'
         );
 
         // Assert
@@ -871,7 +923,7 @@ describe('AnalyticsController', () => {
         expect(mockCustomReportsService.detectAnomalies).toHaveBeenCalledWith(
           ongoingFestival.id,
           'revenue',
-          { startDate: new Date('2024-07-01'), endDate: new Date('2024-07-07') },
+          { startDate: new Date('2024-07-01'), endDate: new Date('2024-07-07') }
         );
       });
     });
@@ -908,21 +960,35 @@ describe('AnalyticsController', () => {
         const mockRealtime = {
           festivalId: ongoingFestival.id,
           timestamp: new Date(),
-          live: { currentAttendees: 5000, lastHourEntries: 500, lastHourExits: 200, activeZones: [] },
-          lastHour: { ticketsSold: 50, ticketRevenue: 2500, cashlessTopups: 100, cashlessPayments: 300, vendorOrders: 150 },
+          live: {
+            currentAttendees: 5000,
+            lastHourEntries: 500,
+            lastHourExits: 200,
+            activeZones: [],
+          },
+          lastHour: {
+            ticketsSold: 50,
+            ticketRevenue: 2500,
+            cashlessTopups: 100,
+            cashlessPayments: 300,
+            vendorOrders: 150,
+          },
           alerts: [],
         };
         mockAnalyticsService.getRealtimeAnalytics.mockResolvedValue(mockRealtime);
 
         // Act
-        const result = await controller.getRealtimeAnalytics(ongoingFestival.id, { includeAlerts: true, includeZones: true });
+        const result = await controller.getRealtimeAnalytics(ongoingFestival.id, {
+          includeAlerts: true,
+          includeZones: true,
+        });
 
         // Assert
         expect(result.live.currentAttendees).toBe(5000);
-        expect(mockAnalyticsService.getRealtimeAnalytics).toHaveBeenCalledWith(
-          ongoingFestival.id,
-          { includeAlerts: true, includeZones: true },
-        );
+        expect(mockAnalyticsService.getRealtimeAnalytics).toHaveBeenCalledWith(ongoingFestival.id, {
+          includeAlerts: true,
+          includeZones: true,
+        });
       });
     });
 
@@ -952,8 +1018,20 @@ describe('AnalyticsController', () => {
       it('should return live zone metrics', async () => {
         // Arrange
         const mockZones = [
-          { zoneId: 'zone1', zoneName: 'Main Stage', currentOccupancy: 2000, capacity: 5000, trend: 'up' },
-          { zoneId: 'zone2', zoneName: 'VIP Area', currentOccupancy: 300, capacity: 500, trend: 'stable' },
+          {
+            zoneId: 'zone1',
+            zoneName: 'Main Stage',
+            currentOccupancy: 2000,
+            capacity: 5000,
+            trend: 'up',
+          },
+          {
+            zoneId: 'zone2',
+            zoneName: 'VIP Area',
+            currentOccupancy: 300,
+            capacity: 500,
+            trend: 'stable',
+          },
         ];
         mockRealtimeService.getLiveZoneMetrics.mockResolvedValue(mockZones);
 
@@ -1001,12 +1079,15 @@ describe('AnalyticsController', () => {
         await controller.exportAnalytics(
           ongoingFestival.id,
           { format: 'csv', dataType: 'sales', startDate: '2024-07-01', endDate: '2024-07-07' },
-          res,
+          res
         );
 
         // Assert
         expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'text/csv');
-        expect(res.setHeader).toHaveBeenCalledWith('Content-Disposition', 'attachment; filename="analytics_2024-07-01.csv"');
+        expect(res.setHeader).toHaveBeenCalledWith(
+          'Content-Disposition',
+          'attachment; filename="analytics_2024-07-01.csv"'
+        );
         expect(res.send).toHaveBeenCalledWith(mockResult.data);
       });
     });
@@ -1023,37 +1104,41 @@ describe('AnalyticsController', () => {
         const res = mockResponse();
 
         // Act
-        await controller.exportSales(
-          ongoingFestival.id,
-          '2024-07-01',
-          '2024-07-07',
-          'csv',
-          res,
-        );
+        await controller.exportSales(ongoingFestival.id, '2024-07-01', '2024-07-07', 'csv', res);
 
         // Assert
         expect(mockExportService.exportSalesData).toHaveBeenCalledWith(
           ongoingFestival.id,
           { startDate: new Date('2024-07-01'), endDate: new Date('2024-07-07') },
-          'csv',
+          'csv'
         );
         expect(res.send).toHaveBeenCalledWith(mockResult.data);
       });
 
       it('should default to CSV format', async () => {
         // Arrange
-        const mockResult = { data: Buffer.from('data'), mimeType: 'text/csv', filename: 'sales.csv' };
+        const mockResult = {
+          data: Buffer.from('data'),
+          mimeType: 'text/csv',
+          filename: 'sales.csv',
+        };
         mockExportService.exportSalesData.mockResolvedValue(mockResult);
         const res = mockResponse();
 
         // Act
-        await controller.exportSales(ongoingFestival.id, '2024-07-01', '2024-07-07', undefined as any, res);
+        await controller.exportSales(
+          ongoingFestival.id,
+          '2024-07-01',
+          '2024-07-07',
+          undefined as any,
+          res
+        );
 
         // Assert
         expect(mockExportService.exportSalesData).toHaveBeenCalledWith(
           ongoingFestival.id,
           expect.any(Object),
-          'csv',
+          'csv'
         );
       });
     });
@@ -1070,13 +1155,19 @@ describe('AnalyticsController', () => {
         const res = mockResponse();
 
         // Act
-        await controller.exportCashless(ongoingFestival.id, '2024-07-01', '2024-07-07', 'xlsx', res);
+        await controller.exportCashless(
+          ongoingFestival.id,
+          '2024-07-01',
+          '2024-07-07',
+          'xlsx',
+          res
+        );
 
         // Assert
         expect(mockExportService.exportCashlessData).toHaveBeenCalledWith(
           ongoingFestival.id,
           { startDate: new Date('2024-07-01'), endDate: new Date('2024-07-07') },
-          'xlsx',
+          'xlsx'
         );
       });
     });
@@ -1084,18 +1175,28 @@ describe('AnalyticsController', () => {
     describe('GET /analytics/festivals/:festivalId/export/attendance', () => {
       it('should export attendance data', async () => {
         // Arrange
-        const mockResult = { data: Buffer.from('attendance data'), mimeType: 'text/csv', filename: 'attendance.csv' };
+        const mockResult = {
+          data: Buffer.from('attendance data'),
+          mimeType: 'text/csv',
+          filename: 'attendance.csv',
+        };
         mockExportService.exportAttendanceData.mockResolvedValue(mockResult);
         const res = mockResponse();
 
         // Act
-        await controller.exportAttendance(ongoingFestival.id, '2024-07-01', '2024-07-07', 'csv', res);
+        await controller.exportAttendance(
+          ongoingFestival.id,
+          '2024-07-01',
+          '2024-07-07',
+          'csv',
+          res
+        );
 
         // Assert
         expect(mockExportService.exportAttendanceData).toHaveBeenCalledWith(
           ongoingFestival.id,
           { startDate: new Date('2024-07-01'), endDate: new Date('2024-07-07') },
-          'csv',
+          'csv'
         );
       });
     });
@@ -1103,7 +1204,11 @@ describe('AnalyticsController', () => {
     describe('GET /analytics/festivals/:festivalId/export/vendors', () => {
       it('should export vendor data', async () => {
         // Arrange
-        const mockResult = { data: Buffer.from('vendor data'), mimeType: 'text/csv', filename: 'vendors.csv' };
+        const mockResult = {
+          data: Buffer.from('vendor data'),
+          mimeType: 'text/csv',
+          filename: 'vendors.csv',
+        };
         mockExportService.exportVendorData.mockResolvedValue(mockResult);
         const res = mockResponse();
 
@@ -1114,7 +1219,7 @@ describe('AnalyticsController', () => {
         expect(mockExportService.exportVendorData).toHaveBeenCalledWith(
           ongoingFestival.id,
           { startDate: new Date('2024-07-01'), endDate: new Date('2024-07-07') },
-          'csv',
+          'csv'
         );
       });
     });
@@ -1131,13 +1236,19 @@ describe('AnalyticsController', () => {
         const res = mockResponse();
 
         // Act
-        await controller.exportFinancial(ongoingFestival.id, '2024-07-01', '2024-07-07', 'pdf', res);
+        await controller.exportFinancial(
+          ongoingFestival.id,
+          '2024-07-01',
+          '2024-07-07',
+          'pdf',
+          res
+        );
 
         // Assert
         expect(mockExportService.exportFinancialSummary).toHaveBeenCalledWith(
           ongoingFestival.id,
           { startDate: new Date('2024-07-01'), endDate: new Date('2024-07-07') },
-          'pdf',
+          'pdf'
         );
         expect(res.setHeader).toHaveBeenCalledWith('Content-Type', 'application/pdf');
       });
@@ -1155,13 +1266,19 @@ describe('AnalyticsController', () => {
         const res = mockResponse();
 
         // Act
-        await controller.exportComprehensive(ongoingFestival.id, '2024-07-01', '2024-07-07', 'pdf', res);
+        await controller.exportComprehensive(
+          ongoingFestival.id,
+          '2024-07-01',
+          '2024-07-07',
+          'pdf',
+          res
+        );
 
         // Assert
         expect(mockExportService.exportComprehensiveReport).toHaveBeenCalledWith(
           ongoingFestival.id,
           { startDate: new Date('2024-07-01'), endDate: new Date('2024-07-07') },
-          'pdf',
+          'pdf'
         );
       });
     });
@@ -1290,14 +1407,18 @@ describe('AnalyticsController', () => {
         mockDashboardConfigService.createDashboard.mockResolvedValue(createdDashboard);
 
         // Act
-        const result = await controller.createDashboard(ongoingFestival.id, mockOrganizerUser, dashboardData);
+        const result = await controller.createDashboard(
+          ongoingFestival.id,
+          mockOrganizerUser,
+          dashboardData
+        );
 
         // Assert
         expect(result.id).toBe('new-dash-id');
         expect(mockDashboardConfigService.createDashboard).toHaveBeenCalledWith(
           ongoingFestival.id,
           mockOrganizerUser.id,
-          dashboardData,
+          dashboardData
         );
       });
     });
@@ -1315,7 +1436,11 @@ describe('AnalyticsController', () => {
         mockDashboardConfigService.createFromTemplate.mockResolvedValue(createdDashboard);
 
         // Act
-        const result = await controller.createFromTemplate(ongoingFestival.id, mockOrganizerUser, body);
+        const result = await controller.createFromTemplate(
+          ongoingFestival.id,
+          mockOrganizerUser,
+          body
+        );
 
         // Assert
         expect(result.name).toBe('My Executive Dashboard');
@@ -1323,7 +1448,7 @@ describe('AnalyticsController', () => {
           ongoingFestival.id,
           mockOrganizerUser.id,
           'executive',
-          'My Executive Dashboard',
+          'My Executive Dashboard'
         );
       });
     });
@@ -1398,7 +1523,10 @@ describe('AnalyticsController', () => {
       it('should update a widget', async () => {
         // Arrange
         const updates = { title: 'Updated Title' };
-        const updatedDashboard = { id: 'dash1', widgets: [{ id: 'widget1', title: 'Updated Title' }] };
+        const updatedDashboard = {
+          id: 'dash1',
+          widgets: [{ id: 'widget1', title: 'Updated Title' }],
+        };
         mockDashboardConfigService.updateWidget.mockResolvedValue(updatedDashboard);
 
         // Act
@@ -1406,7 +1534,11 @@ describe('AnalyticsController', () => {
 
         // Assert
         expect(result.widgets[0].title).toBe('Updated Title');
-        expect(mockDashboardConfigService.updateWidget).toHaveBeenCalledWith('dash1', 'widget1', updates);
+        expect(mockDashboardConfigService.updateWidget).toHaveBeenCalledWith(
+          'dash1',
+          'widget1',
+          updates
+        );
       });
     });
 
@@ -1444,7 +1576,11 @@ describe('AnalyticsController', () => {
       it('should clone a dashboard', async () => {
         // Arrange
         const body = { newName: 'Cloned Dashboard', targetFestivalId: 'festival2' };
-        const clonedDashboard = { id: 'cloned-dash', name: 'Cloned Dashboard', festivalId: 'festival2' };
+        const clonedDashboard = {
+          id: 'cloned-dash',
+          name: 'Cloned Dashboard',
+          festivalId: 'festival2',
+        };
         mockDashboardConfigService.cloneDashboard.mockResolvedValue(clonedDashboard);
 
         // Act
@@ -1455,14 +1591,17 @@ describe('AnalyticsController', () => {
         expect(mockDashboardConfigService.cloneDashboard).toHaveBeenCalledWith(
           'dash1',
           'Cloned Dashboard',
-          'festival2',
+          'festival2'
         );
       });
 
       it('should clone to same festival when targetFestivalId not provided', async () => {
         // Arrange
         const body = { newName: 'Cloned Dashboard' };
-        mockDashboardConfigService.cloneDashboard.mockResolvedValue({ id: 'cloned', name: 'Cloned Dashboard' });
+        mockDashboardConfigService.cloneDashboard.mockResolvedValue({
+          id: 'cloned',
+          name: 'Cloned Dashboard',
+        });
 
         // Act
         await controller.cloneDashboard('dash1', body);
@@ -1471,7 +1610,7 @@ describe('AnalyticsController', () => {
         expect(mockDashboardConfigService.cloneDashboard).toHaveBeenCalledWith(
           'dash1',
           'Cloned Dashboard',
-          undefined,
+          undefined
         );
       });
     });
@@ -1485,37 +1624,33 @@ describe('AnalyticsController', () => {
     it('should propagate NotFoundException from services', async () => {
       // Arrange
       (analyticsService.getDashboardKPIs as jest.Mock).mockRejectedValue(
-        new NotFoundException('Festival not found'),
+        new NotFoundException('Festival not found')
       );
 
       // Act & Assert
-      await expect(
-        controller.getFestivalDashboardKPIs('non-existent', {}),
-      ).rejects.toThrow(NotFoundException);
+      await expect(controller.getFestivalDashboardKPIs('non-existent', {})).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should propagate errors from advanced metrics service', async () => {
       // Arrange
-      mockAdvancedMetricsService.getRevenueMetrics.mockRejectedValue(
-        new Error('Database error'),
-      );
+      mockAdvancedMetricsService.getRevenueMetrics.mockRejectedValue(new Error('Database error'));
 
       // Act & Assert
       await expect(
-        controller.getRevenueMetrics(ongoingFestival.id, '2024-07-01', '2024-07-07'),
+        controller.getRevenueMetrics(ongoingFestival.id, '2024-07-01', '2024-07-07')
       ).rejects.toThrow('Database error');
     });
 
     it('should propagate errors from export service', async () => {
       // Arrange
-      mockExportService.exportSalesData.mockRejectedValue(
-        new Error('Export failed'),
-      );
+      mockExportService.exportSalesData.mockRejectedValue(new Error('Export failed'));
       const res = mockResponse();
 
       // Act & Assert
       await expect(
-        controller.exportSales(ongoingFestival.id, '2024-07-01', '2024-07-07', 'csv', res),
+        controller.exportSales(ongoingFestival.id, '2024-07-01', '2024-07-07', 'csv', res)
       ).rejects.toThrow('Export failed');
     });
   });
@@ -1533,13 +1668,17 @@ describe('AnalyticsController', () => {
       });
 
       // Act
-      await controller.createReport(ongoingFestival.id, mockAdminUser, { name: 'Test', metrics: [], format: 'pdf' });
+      await controller.createReport(ongoingFestival.id, mockAdminUser, {
+        name: 'Test',
+        metrics: [],
+        format: 'pdf',
+      });
 
       // Assert
       expect(mockCustomReportsService.createReport).toHaveBeenCalledWith(
         ongoingFestival.id,
         mockAdminUser.id,
-        expect.any(Object),
+        expect.any(Object)
       );
     });
 
@@ -1557,7 +1696,7 @@ describe('AnalyticsController', () => {
       expect(mockDashboardConfigService.createDashboard).toHaveBeenCalledWith(
         ongoingFestival.id,
         mockAdminUser.id,
-        expect.any(Object),
+        expect.any(Object)
       );
     });
   });
@@ -1583,19 +1722,29 @@ describe('AnalyticsController', () => {
 
     it('should handle default export format values', async () => {
       // Arrange
-      const mockResult = { data: Buffer.from('data'), mimeType: 'application/pdf', filename: 'report.pdf' };
+      const mockResult = {
+        data: Buffer.from('data'),
+        mimeType: 'application/pdf',
+        filename: 'report.pdf',
+      };
       mockExportService.exportFinancialSummary.mockResolvedValue(mockResult);
       const res = mockResponse();
 
       // Act
-      await controller.exportFinancial(ongoingFestival.id, '2024-07-01', '2024-07-07', undefined as any, res);
+      await controller.exportFinancial(
+        ongoingFestival.id,
+        '2024-07-01',
+        '2024-07-07',
+        undefined as any,
+        res
+      );
 
       // Assert
       // Default is 'pdf' for financial export
       expect(mockExportService.exportFinancialSummary).toHaveBeenCalledWith(
         ongoingFestival.id,
         expect.any(Object),
-        'pdf',
+        'pdf'
       );
     });
 
@@ -1613,7 +1762,7 @@ describe('AnalyticsController', () => {
       expect(result.projectedRevenue).toBe(100000);
       expect(mockAdvancedMetricsService.getForecastMetrics).toHaveBeenCalledWith(
         ongoingFestival.id,
-        undefined,
+        undefined
       );
     });
 
@@ -1628,7 +1777,7 @@ describe('AnalyticsController', () => {
         '2024-07-07',
         '2024-06-24',
         '2024-06-30',
-        'revenue,sales,attendance',
+        'revenue,sales,attendance'
       );
 
       // Assert
@@ -1636,13 +1785,17 @@ describe('AnalyticsController', () => {
         expect.any(String),
         expect.any(Object),
         expect.any(Object),
-        ['revenue', 'sales', 'attendance'],
+        ['revenue', 'sales', 'attendance']
       );
     });
 
     it('should handle includeCharts option in export', async () => {
       // Arrange
-      const mockResult = { data: Buffer.from('data'), mimeType: 'text/csv', filename: 'export.csv' };
+      const mockResult = {
+        data: Buffer.from('data'),
+        mimeType: 'text/csv',
+        filename: 'export.csv',
+      };
       mockExportService.exportData.mockResolvedValue(mockResult);
       const res = mockResponse();
 
@@ -1650,7 +1803,7 @@ describe('AnalyticsController', () => {
       await controller.exportAnalytics(
         ongoingFestival.id,
         { format: 'csv', dataType: 'sales', includeCharts: true },
-        res,
+        res
       );
 
       // Assert
@@ -1658,7 +1811,7 @@ describe('AnalyticsController', () => {
         ongoingFestival.id,
         expect.objectContaining({
           includeCharts: true,
-        }),
+        })
       );
     });
   });

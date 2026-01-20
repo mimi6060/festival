@@ -14,18 +14,16 @@ import {
   FestivalCampingController,
 } from './camping.controller';
 import { CampingService } from './camping.service';
-import {
-  NotFoundException,
-  BadRequestException,
-  ConflictException,
-} from '@nestjs/common';
+import { NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import {
   // Zone fixtures
   tentZone,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   caravanZone,
   // Spot fixtures
   availableSpot,
   occupiedSpot,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   caravanSpot,
   spotWithZone,
   occupiedSpotWithZone,
@@ -51,10 +49,12 @@ import {
   // Users
   regularUser,
   staffUser,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   organizerUser,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   adminUser,
+  publishedFestival,
 } from '../../test/fixtures';
-import { publishedFestival } from '../../test/fixtures';
 
 // ============================================================================
 // Mock Setup
@@ -107,32 +107,30 @@ describe('CampingSpotsController', () => {
 
       // Assert
       expect(result).toEqual(spotWithZone);
-      expect(mockCampingService.createSpot).toHaveBeenCalledWith(
-        validCreateSpotInput,
-      );
+      expect(mockCampingService.createSpot).toHaveBeenCalledWith(validCreateSpotInput);
     });
 
     it('should throw NotFoundException when zone does not exist', async () => {
       // Arrange
       mockCampingService.createSpot.mockRejectedValue(
-        new NotFoundException('Camping zone with ID non-existent not found'),
+        new NotFoundException('Camping zone with ID non-existent not found')
       );
 
       // Act & Assert
       await expect(
-        controller.createSpot({ ...validCreateSpotInput, zoneId: 'non-existent' }),
+        controller.createSpot({ ...validCreateSpotInput, zoneId: 'non-existent' })
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw ConflictException when spot number already exists in zone', async () => {
       // Arrange
       mockCampingService.createSpot.mockRejectedValue(
-        new ConflictException('Spot number A1 already exists in this zone'),
+        new ConflictException('Spot number A1 already exists in this zone')
       );
 
       // Act & Assert
       await expect(
-        controller.createSpot({ ...validCreateSpotInput, number: 'A1' }),
+        controller.createSpot({ ...validCreateSpotInput, number: 'A1' })
       ).rejects.toThrow(ConflictException);
     });
 
@@ -177,15 +175,13 @@ describe('CampingSpotsController', () => {
 
       // Assert
       expect(result).toEqual(bulkResult);
-      expect(mockCampingService.bulkCreateSpots).toHaveBeenCalledWith(
-        validBulkCreateSpotsInput,
-      );
+      expect(mockCampingService.bulkCreateSpots).toHaveBeenCalledWith(validBulkCreateSpotsInput);
     });
 
     it('should throw NotFoundException when zone does not exist', async () => {
       // Arrange
       mockCampingService.bulkCreateSpots.mockRejectedValue(
-        new NotFoundException('Camping zone with ID non-existent not found'),
+        new NotFoundException('Camping zone with ID non-existent not found')
       );
 
       // Act & Assert
@@ -193,7 +189,7 @@ describe('CampingSpotsController', () => {
         controller.bulkCreateSpots({
           ...validBulkCreateSpotsInput,
           zoneId: 'non-existent',
-        }),
+        })
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -373,7 +369,7 @@ describe('CampingSpotsController', () => {
 
       // Assert
       expect(mockCampingService.getAvailableSpots).toHaveBeenCalledWith(
-        expect.objectContaining({ requireElectricity: true }),
+        expect.objectContaining({ requireElectricity: true })
       );
     });
 
@@ -391,7 +387,7 @@ describe('CampingSpotsController', () => {
 
       // Assert
       expect(mockCampingService.getAvailableSpots).toHaveBeenCalledWith(
-        expect.objectContaining({ vehicleLength: 7.0 }),
+        expect.objectContaining({ vehicleLength: 7.0 })
       );
     });
 
@@ -430,13 +426,11 @@ describe('CampingSpotsController', () => {
     it('should throw NotFoundException when spot does not exist', async () => {
       // Arrange
       mockCampingService.getSpot.mockRejectedValue(
-        new NotFoundException('Camping spot with ID non-existent not found'),
+        new NotFoundException('Camping spot with ID non-existent not found')
       );
 
       // Act & Assert
-      await expect(controller.getSpot('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(controller.getSpot('non-existent')).rejects.toThrow(NotFoundException);
     });
 
     it('should return spot with active bookings', async () => {
@@ -482,34 +476,33 @@ describe('CampingSpotsController', () => {
 
       // Assert
       expect(result.notes).toBe('Updated notes');
-      expect(mockCampingService.updateSpot).toHaveBeenCalledWith(
-        availableSpot.id,
-        { notes: 'Updated notes' },
-      );
+      expect(mockCampingService.updateSpot).toHaveBeenCalledWith(availableSpot.id, {
+        notes: 'Updated notes',
+      });
     });
 
     it('should throw NotFoundException when spot does not exist', async () => {
       // Arrange
       mockCampingService.updateSpot.mockRejectedValue(
-        new NotFoundException('Camping spot with ID non-existent not found'),
+        new NotFoundException('Camping spot with ID non-existent not found')
       );
 
       // Act & Assert
-      await expect(
-        controller.updateSpot('non-existent', { notes: 'Test' }),
-      ).rejects.toThrow(NotFoundException);
+      await expect(controller.updateSpot('non-existent', { notes: 'Test' })).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw ConflictException when changing to existing number', async () => {
       // Arrange
       mockCampingService.updateSpot.mockRejectedValue(
-        new ConflictException('Spot number A2 already exists in this zone'),
+        new ConflictException('Spot number A2 already exists in this zone')
       );
 
       // Act & Assert
-      await expect(
-        controller.updateSpot(availableSpot.id, { number: 'A2' }),
-      ).rejects.toThrow(ConflictException);
+      await expect(controller.updateSpot(availableSpot.id, { number: 'A2' })).rejects.toThrow(
+        ConflictException
+      );
     });
 
     it('should update status to MAINTENANCE', async () => {
@@ -572,25 +565,21 @@ describe('CampingSpotsController', () => {
     it('should throw NotFoundException when spot does not exist', async () => {
       // Arrange
       mockCampingService.deleteSpot.mockRejectedValue(
-        new NotFoundException('Camping spot with ID non-existent not found'),
+        new NotFoundException('Camping spot with ID non-existent not found')
       );
 
       // Act & Assert
-      await expect(controller.deleteSpot('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(controller.deleteSpot('non-existent')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException when spot has active bookings', async () => {
       // Arrange
       mockCampingService.deleteSpot.mockRejectedValue(
-        new BadRequestException('Cannot delete spot with active bookings'),
+        new BadRequestException('Cannot delete spot with active bookings')
       );
 
       // Act & Assert
-      await expect(controller.deleteSpot(occupiedSpot.id)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(controller.deleteSpot(occupiedSpot.id)).rejects.toThrow(BadRequestException);
     });
   });
 });
@@ -627,7 +616,7 @@ describe('CampingBookingsController', () => {
     role: regularUser.role,
   };
 
-  const mockStaffUser = {
+  const _mockStaffUser = {
     id: staffUser.id,
     email: staffUser.email,
     role: staffUser.role,
@@ -670,29 +659,26 @@ describe('CampingBookingsController', () => {
       expect(result.status).toBe(BookingStatus.PENDING);
       expect(mockCampingService.createBooking).toHaveBeenCalledWith(
         validBookingInput,
-        regularUser.id,
+        regularUser.id
       );
     });
 
     it('should throw NotFoundException when spot does not exist', async () => {
       // Arrange
       mockCampingService.createBooking.mockRejectedValue(
-        new NotFoundException('Camping spot with ID non-existent not found'),
+        new NotFoundException('Camping spot with ID non-existent not found')
       );
 
       // Act & Assert
       await expect(
-        controller.createBooking(
-          { ...validBookingInput, spotId: 'non-existent' },
-          mockUser,
-        ),
+        controller.createBooking({ ...validBookingInput, spotId: 'non-existent' }, mockUser)
       ).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException when checkOut before checkIn', async () => {
       // Arrange
       mockCampingService.createBooking.mockRejectedValue(
-        new BadRequestException('Check-out must be after check-in'),
+        new BadRequestException('Check-out must be after check-in')
       );
 
       // Act & Assert
@@ -703,15 +689,15 @@ describe('CampingBookingsController', () => {
             checkIn: new Date('2024-07-22T14:00:00Z'),
             checkOut: new Date('2024-07-20T11:00:00Z'),
           },
-          mockUser,
-        ),
+          mockUser
+        )
       ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw ConflictException when spot not available for dates', async () => {
       // Arrange
       mockCampingService.createBooking.mockRejectedValue(
-        new ConflictException('Spot is not available for these dates'),
+        new ConflictException('Spot is not available for these dates')
       );
 
       // Act & Assert
@@ -721,8 +707,8 @@ describe('CampingBookingsController', () => {
             ...validBookingInput,
             spotId: occupiedSpot.id,
           },
-          mockUser,
-        ),
+          mockUser
+        )
       ).rejects.toThrow(ConflictException);
     });
 
@@ -741,7 +727,7 @@ describe('CampingBookingsController', () => {
       // Assert
       expect(mockCampingService.createBooking).toHaveBeenCalledWith(
         validBookingInput,
-        regularUser.id,
+        regularUser.id
       );
     });
   });
@@ -909,13 +895,11 @@ describe('CampingBookingsController', () => {
     it('should throw NotFoundException when booking does not exist', async () => {
       // Arrange
       mockCampingService.getBooking.mockRejectedValue(
-        new NotFoundException('Camping booking with ID non-existent not found'),
+        new NotFoundException('Camping booking with ID non-existent not found')
       );
 
       // Act & Assert
-      await expect(controller.getBooking('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(controller.getBooking('non-existent')).rejects.toThrow(NotFoundException);
     });
 
     it('should return booking with spot and user relations', async () => {
@@ -951,40 +935,39 @@ describe('CampingBookingsController', () => {
 
       // Assert
       expect(result.notes).toBe('Updated notes');
-      expect(mockCampingService.updateBooking).toHaveBeenCalledWith(
-        confirmedBooking.id,
-        { notes: 'Updated notes' },
-      );
+      expect(mockCampingService.updateBooking).toHaveBeenCalledWith(confirmedBooking.id, {
+        notes: 'Updated notes',
+      });
     });
 
     it('should throw NotFoundException when booking does not exist', async () => {
       // Arrange
       mockCampingService.updateBooking.mockRejectedValue(
-        new NotFoundException('Camping booking with ID non-existent not found'),
+        new NotFoundException('Camping booking with ID non-existent not found')
       );
 
       // Act & Assert
-      await expect(
-        controller.updateBooking('non-existent', { notes: 'Test' }),
-      ).rejects.toThrow(NotFoundException);
+      await expect(controller.updateBooking('non-existent', { notes: 'Test' })).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw BadRequestException when updating cancelled booking', async () => {
       // Arrange
       mockCampingService.updateBooking.mockRejectedValue(
-        new BadRequestException('Cannot update a cancelled or completed booking'),
+        new BadRequestException('Cannot update a cancelled or completed booking')
       );
 
       // Act & Assert
       await expect(
-        controller.updateBooking(cancelledBooking.id, { notes: 'Test' }),
+        controller.updateBooking(cancelledBooking.id, { notes: 'Test' })
       ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw ConflictException when new dates conflict', async () => {
       // Arrange
       mockCampingService.updateBooking.mockRejectedValue(
-        new ConflictException('Spot is not available for these dates'),
+        new ConflictException('Spot is not available for these dates')
       );
 
       // Act & Assert
@@ -992,7 +975,7 @@ describe('CampingBookingsController', () => {
         controller.updateBooking(confirmedBooking.id, {
           checkIn: new Date('2024-07-15T14:00:00Z'),
           checkOut: new Date('2024-07-19T11:00:00Z'),
-        }),
+        })
       ).rejects.toThrow(ConflictException);
     });
 
@@ -1033,33 +1016,29 @@ describe('CampingBookingsController', () => {
 
       // Assert
       expect(result.status).toBe(BookingStatus.CONFIRMED);
-      expect(mockCampingService.confirmBooking).toHaveBeenCalledWith(
-        pendingBooking.id,
-      );
+      expect(mockCampingService.confirmBooking).toHaveBeenCalledWith(pendingBooking.id);
     });
 
     it('should throw NotFoundException when booking does not exist', async () => {
       // Arrange
       mockCampingService.confirmBooking.mockRejectedValue(
-        new NotFoundException('Camping booking with ID non-existent not found'),
+        new NotFoundException('Camping booking with ID non-existent not found')
       );
 
       // Act & Assert
-      await expect(controller.confirmBooking('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(controller.confirmBooking('non-existent')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException when booking is not pending', async () => {
       // Arrange
       mockCampingService.confirmBooking.mockRejectedValue(
-        new BadRequestException('Only pending bookings can be confirmed'),
+        new BadRequestException('Only pending bookings can be confirmed')
       );
 
       // Act & Assert
-      await expect(
-        controller.confirmBooking(confirmedBooking.id),
-      ).rejects.toThrow(BadRequestException);
+      await expect(controller.confirmBooking(confirmedBooking.id)).rejects.toThrow(
+        BadRequestException
+      );
     });
   });
 
@@ -1084,32 +1063,32 @@ describe('CampingBookingsController', () => {
       expect(result.checkedInAt).toBeDefined();
       expect(mockCampingService.checkIn).toHaveBeenCalledWith(
         confirmedBooking.id,
-        validCheckInInput,
+        validCheckInInput
       );
     });
 
     it('should throw NotFoundException when booking does not exist', async () => {
       // Arrange
       mockCampingService.checkIn.mockRejectedValue(
-        new NotFoundException('Camping booking with ID non-existent not found'),
+        new NotFoundException('Camping booking with ID non-existent not found')
       );
 
       // Act & Assert
-      await expect(
-        controller.checkIn('non-existent', validCheckInInput),
-      ).rejects.toThrow(NotFoundException);
+      await expect(controller.checkIn('non-existent', validCheckInInput)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw BadRequestException when booking is not confirmed', async () => {
       // Arrange
       mockCampingService.checkIn.mockRejectedValue(
-        new BadRequestException('Only confirmed bookings can be checked in'),
+        new BadRequestException('Only confirmed bookings can be checked in')
       );
 
       // Act & Assert
-      await expect(
-        controller.checkIn(pendingBooking.id, validCheckInInput),
-      ).rejects.toThrow(BadRequestException);
+      await expect(controller.checkIn(pendingBooking.id, validCheckInInput)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should override vehicle plate at check-in', async () => {
@@ -1144,42 +1123,39 @@ describe('CampingBookingsController', () => {
       });
 
       // Act
-      const result = await controller.checkOut(
-        checkedInBooking.id,
-        validCheckOutInput,
-      );
+      const result = await controller.checkOut(checkedInBooking.id, validCheckOutInput);
 
       // Assert
       expect(result.status).toBe(BookingStatus.CHECKED_OUT);
       expect(result.checkedOutAt).toBeDefined();
       expect(mockCampingService.checkOut).toHaveBeenCalledWith(
         checkedInBooking.id,
-        validCheckOutInput,
+        validCheckOutInput
       );
     });
 
     it('should throw NotFoundException when booking does not exist', async () => {
       // Arrange
       mockCampingService.checkOut.mockRejectedValue(
-        new NotFoundException('Camping booking with ID non-existent not found'),
+        new NotFoundException('Camping booking with ID non-existent not found')
       );
 
       // Act & Assert
-      await expect(
-        controller.checkOut('non-existent', validCheckOutInput),
-      ).rejects.toThrow(NotFoundException);
+      await expect(controller.checkOut('non-existent', validCheckOutInput)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw BadRequestException when booking is not checked in', async () => {
       // Arrange
       mockCampingService.checkOut.mockRejectedValue(
-        new BadRequestException('Only checked-in bookings can be checked out'),
+        new BadRequestException('Only checked-in bookings can be checked out')
       );
 
       // Act & Assert
-      await expect(
-        controller.checkOut(confirmedBooking.id, validCheckOutInput),
-      ).rejects.toThrow(BadRequestException);
+      await expect(controller.checkOut(confirmedBooking.id, validCheckOutInput)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should record damage report at checkout', async () => {
@@ -1216,17 +1192,14 @@ describe('CampingBookingsController', () => {
       });
 
       // Act
-      const result = await controller.cancelBooking(
-        pendingBooking.id,
-        validCancelInput,
-      );
+      const result = await controller.cancelBooking(pendingBooking.id, validCancelInput);
 
       // Assert
       expect(result.status).toBe(BookingStatus.CANCELLED);
       expect(result.cancelReason).toBe(validCancelInput.reason);
       expect(mockCampingService.cancelBooking).toHaveBeenCalledWith(
         pendingBooking.id,
-        validCancelInput,
+        validCancelInput
       );
     });
 
@@ -1239,10 +1212,7 @@ describe('CampingBookingsController', () => {
       });
 
       // Act
-      const result = await controller.cancelBooking(
-        confirmedBooking.id,
-        validCancelInput,
-      );
+      const result = await controller.cancelBooking(confirmedBooking.id, validCancelInput);
 
       // Assert
       expect(result.status).toBe(BookingStatus.CANCELLED);
@@ -1257,10 +1227,7 @@ describe('CampingBookingsController', () => {
       });
 
       // Act
-      const result = await controller.cancelBooking(
-        checkedInBooking.id,
-        validCancelInput,
-      );
+      const result = await controller.cancelBooking(checkedInBooking.id, validCancelInput);
 
       // Assert
       expect(result.status).toBe(BookingStatus.CANCELLED);
@@ -1269,36 +1236,36 @@ describe('CampingBookingsController', () => {
     it('should throw NotFoundException when booking does not exist', async () => {
       // Arrange
       mockCampingService.cancelBooking.mockRejectedValue(
-        new NotFoundException('Camping booking with ID non-existent not found'),
+        new NotFoundException('Camping booking with ID non-existent not found')
       );
 
       // Act & Assert
-      await expect(
-        controller.cancelBooking('non-existent', validCancelInput),
-      ).rejects.toThrow(NotFoundException);
+      await expect(controller.cancelBooking('non-existent', validCancelInput)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw BadRequestException when booking is already cancelled', async () => {
       // Arrange
       mockCampingService.cancelBooking.mockRejectedValue(
-        new BadRequestException('Cannot cancel this booking'),
+        new BadRequestException('Cannot cancel this booking')
       );
 
       // Act & Assert
-      await expect(
-        controller.cancelBooking(cancelledBooking.id, validCancelInput),
-      ).rejects.toThrow(BadRequestException);
+      await expect(controller.cancelBooking(cancelledBooking.id, validCancelInput)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should throw BadRequestException when booking is already checked out', async () => {
       // Arrange
       mockCampingService.cancelBooking.mockRejectedValue(
-        new BadRequestException('Cannot cancel this booking'),
+        new BadRequestException('Cannot cancel this booking')
       );
 
       // Act & Assert
       await expect(
-        controller.cancelBooking(checkedOutBooking.id, validCancelInput),
+        controller.cancelBooking(checkedOutBooking.id, validCancelInput)
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -1377,9 +1344,7 @@ describe('FestivalCampingController', () => {
 
       // Assert
       expect(result).toEqual(stats);
-      expect(mockCampingService.getStatistics).toHaveBeenCalledWith(
-        publishedFestival.id,
-      );
+      expect(mockCampingService.getStatistics).toHaveBeenCalledWith(publishedFestival.id);
     });
 
     it('should return empty statistics for festival with no camping', async () => {
@@ -1633,21 +1598,13 @@ describe('Error Propagation', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      controllers: [
-        CampingSpotsController,
-        CampingBookingsController,
-        FestivalCampingController,
-      ],
+      controllers: [CampingSpotsController, CampingBookingsController, FestivalCampingController],
       providers: [{ provide: CampingService, useValue: mockCampingService }],
     }).compile();
 
     spotsController = module.get<CampingSpotsController>(CampingSpotsController);
-    bookingsController = module.get<CampingBookingsController>(
-      CampingBookingsController,
-    );
-    festivalController = module.get<FestivalCampingController>(
-      FestivalCampingController,
-    );
+    bookingsController = module.get<CampingBookingsController>(CampingBookingsController);
+    festivalController = module.get<FestivalCampingController>(FestivalCampingController);
   });
 
   it('should propagate NotFoundException from service', async () => {
@@ -1656,9 +1613,7 @@ describe('Error Propagation', () => {
     mockCampingService.getSpot.mockRejectedValue(error);
 
     // Act & Assert
-    await expect(spotsController.getSpot('non-existent')).rejects.toThrow(
-      NotFoundException,
-    );
+    await expect(spotsController.getSpot('non-existent')).rejects.toThrow(NotFoundException);
   });
 
   it('should propagate BadRequestException from service', async () => {
@@ -1667,9 +1622,9 @@ describe('Error Propagation', () => {
     mockCampingService.createBooking.mockRejectedValue(error);
 
     // Act & Assert
-    await expect(
-      bookingsController.createBooking(validBookingInput, mockUser),
-    ).rejects.toThrow(BadRequestException);
+    await expect(bookingsController.createBooking(validBookingInput, mockUser)).rejects.toThrow(
+      BadRequestException
+    );
   });
 
   it('should propagate ConflictException from service', async () => {
@@ -1678,9 +1633,9 @@ describe('Error Propagation', () => {
     mockCampingService.createSpot.mockRejectedValue(error);
 
     // Act & Assert
-    await expect(
-      spotsController.createSpot(validCreateSpotInput),
-    ).rejects.toThrow(ConflictException);
+    await expect(spotsController.createSpot(validCreateSpotInput)).rejects.toThrow(
+      ConflictException
+    );
   });
 
   it('should propagate unexpected errors from service', async () => {
@@ -1689,8 +1644,8 @@ describe('Error Propagation', () => {
     mockCampingService.getStatistics.mockRejectedValue(error);
 
     // Act & Assert
-    await expect(
-      festivalController.getStatistics(publishedFestival.id),
-    ).rejects.toThrow('Unexpected database error');
+    await expect(festivalController.getStatistics(publishedFestival.id)).rejects.toThrow(
+      'Unexpected database error'
+    );
   });
 });

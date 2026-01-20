@@ -17,7 +17,9 @@ import {
   CacheService,
   CacheTag,
   CacheStrategy,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   CacheOptions,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   CacheStats,
 } from './cache.service';
 
@@ -50,7 +52,7 @@ jest.mock('redis', () => ({
 
 describe('CacheService', () => {
   let service: CacheService;
-  let configService: ConfigService;
+  let _configService: ConfigService;
 
   const mockConfigService = {
     get: jest.fn((key: string) => {
@@ -66,14 +68,11 @@ describe('CacheService', () => {
     jest.useFakeTimers();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        CacheService,
-        { provide: ConfigService, useValue: mockConfigService },
-      ],
+      providers: [CacheService, { provide: ConfigService, useValue: mockConfigService }],
     }).compile();
 
     service = module.get<CacheService>(CacheService);
-    configService = module.get<ConfigService>(ConfigService);
+    _configService = module.get<ConfigService>(ConfigService);
   });
 
   afterEach(async () => {
@@ -418,9 +417,7 @@ describe('CacheService', () => {
     });
 
     it('should handle festival with no cached data', async () => {
-      await expect(
-        service.invalidateFestivalCache('non-existent-festival')
-      ).resolves.not.toThrow();
+      await expect(service.invalidateFestivalCache('non-existent-festival')).resolves.not.toThrow();
     });
   });
 
@@ -467,9 +464,7 @@ describe('CacheService', () => {
     it('should handle factory throwing error', async () => {
       const factory = jest.fn().mockRejectedValue(new Error('Factory error'));
 
-      await expect(service.getOrSet('error-key', factory)).rejects.toThrow(
-        'Factory error'
-      );
+      await expect(service.getOrSet('error-key', factory)).rejects.toThrow('Factory error');
     });
 
     it('should handle async factory function', async () => {
@@ -512,9 +507,7 @@ describe('CacheService', () => {
       const persistFn = jest.fn().mockRejectedValue(new Error('DB Error'));
       const value = { id: 1, name: 'Test' };
 
-      await expect(
-        service.writeThrough('fail-key', value, persistFn)
-      ).rejects.toThrow('DB Error');
+      await expect(service.writeThrough('fail-key', value, persistFn)).rejects.toThrow('DB Error');
     });
 
     it('should pass options to cache set', async () => {
@@ -860,10 +853,7 @@ describe('CacheService', () => {
     it('should clean up resources on destroy', async () => {
       // Create a new service instance to test destroy
       const module: TestingModule = await Test.createTestingModule({
-        providers: [
-          CacheService,
-          { provide: ConfigService, useValue: mockConfigService },
-        ],
+        providers: [CacheService, { provide: ConfigService, useValue: mockConfigService }],
       }).compile();
 
       const testService = module.get<CacheService>(CacheService);
@@ -938,9 +928,9 @@ describe('CacheService', () => {
     });
 
     it('should handle concurrent getOrSet calls for same key', async () => {
-      let callCount = 0;
+      let _callCount = 0;
       const factory = jest.fn().mockImplementation(async () => {
-        callCount++;
+        _callCount++;
         return 'value';
       });
 
@@ -1024,10 +1014,7 @@ describe('CacheService with Redis', () => {
     mockRedisClient.set.mockResolvedValue('OK');
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        CacheService,
-        { provide: ConfigService, useValue: mockConfigServiceWithRedis },
-      ],
+      providers: [CacheService, { provide: ConfigService, useValue: mockConfigServiceWithRedis }],
     }).compile();
 
     service = module.get<CacheService>(CacheService);
@@ -1045,7 +1032,7 @@ describe('CacheService with Redis', () => {
     mockRedisClient.get.mockResolvedValue(JSON.stringify({ test: 'data' }));
 
     // Wait for Redis to connect
-    await new Promise(resolve => setImmediate(resolve));
+    await new Promise((resolve) => setImmediate(resolve));
 
     // The service should attempt Redis operation
     await service.get('test-key');
@@ -1065,7 +1052,7 @@ describe('CacheService with Redis', () => {
 
   it('should store tags in Redis when connected', async () => {
     // Wait for connection
-    await new Promise(resolve => setImmediate(resolve));
+    await new Promise((resolve) => setImmediate(resolve));
 
     await service.set('tagged-key', 'value', { tags: [CacheTag.FESTIVAL] });
 

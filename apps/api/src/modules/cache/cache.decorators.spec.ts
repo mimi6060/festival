@@ -9,6 +9,7 @@
  * - Metadata key constants
  */
 
+/* eslint-disable @typescript-eslint/no-empty-function */
 import 'reflect-metadata';
 import {
   Cacheable,
@@ -29,8 +30,11 @@ import {
   CACHE_PUT_METADATA,
   CACHE_INVALIDATE_TAGS_METADATA,
   CacheKeyOptions,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   CacheableOptions,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   CacheEvictOptions,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   CachePutOptions,
 } from './cache.decorators';
 import { CacheTag, CacheStrategy } from './cache.service';
@@ -39,6 +43,7 @@ import { CacheTag, CacheStrategy } from './cache.service';
 // Test Classes for Decorator Testing
 // ============================================================================
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 class TestTarget {
   constructor() {}
 }
@@ -498,7 +503,10 @@ describe('@InvalidateTags decorator', () => {
       method() {}
     }
 
-    const metadata = Reflect.getMetadata(CACHE_INVALIDATE_TAGS_METADATA, TestClass.prototype.method);
+    const metadata = Reflect.getMetadata(
+      CACHE_INVALIDATE_TAGS_METADATA,
+      TestClass.prototype.method
+    );
     expect(metadata).toEqual([CacheTag.TICKET, CacheTag.ANALYTICS]);
   });
 
@@ -508,7 +516,10 @@ describe('@InvalidateTags decorator', () => {
       method() {}
     }
 
-    const metadata = Reflect.getMetadata(CACHE_INVALIDATE_TAGS_METADATA, TestClass.prototype.method);
+    const metadata = Reflect.getMetadata(
+      CACHE_INVALIDATE_TAGS_METADATA,
+      TestClass.prototype.method
+    );
     expect(metadata).toEqual([CacheTag.USER]);
   });
 
@@ -518,7 +529,10 @@ describe('@InvalidateTags decorator', () => {
       method() {}
     }
 
-    const metadata = Reflect.getMetadata(CACHE_INVALIDATE_TAGS_METADATA, TestClass.prototype.method);
+    const metadata = Reflect.getMetadata(
+      CACHE_INVALIDATE_TAGS_METADATA,
+      TestClass.prototype.method
+    );
     expect(metadata).toEqual([]);
   });
 
@@ -529,7 +543,10 @@ describe('@InvalidateTags decorator', () => {
       method() {}
     }
 
-    const metadata = Reflect.getMetadata(CACHE_INVALIDATE_TAGS_METADATA, TestClass.prototype.method);
+    const metadata = Reflect.getMetadata(
+      CACHE_INVALIDATE_TAGS_METADATA,
+      TestClass.prototype.method
+    );
     expect(metadata).toEqual(allTags);
   });
 });
@@ -801,7 +818,10 @@ describe('edge cases', () => {
       }
 
       const keyMeta = Reflect.getMetadata(CACHE_KEY_METADATA, TestClass.prototype.method);
-      const tagsMeta = Reflect.getMetadata(CACHE_INVALIDATE_TAGS_METADATA, TestClass.prototype.method);
+      const tagsMeta = Reflect.getMetadata(
+        CACHE_INVALIDATE_TAGS_METADATA,
+        TestClass.prototype.method
+      );
 
       expect(keyMeta).toBe('test:key');
       expect(tagsMeta).toEqual([CacheTag.USER]);

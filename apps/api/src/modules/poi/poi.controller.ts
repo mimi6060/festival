@@ -20,9 +20,8 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { PoiType } from '@prisma/client';
-import { PoiService } from './poi.service';
-import type { AuthenticatedUser } from './poi.service';
+import { PoiType, UserRole } from '@prisma/client';
+import { PoiService, type AuthenticatedUser } from './poi.service';
 import { CreatePoiDto, UpdatePoiDto, PoiQueryDto } from './dto';
 import { PoiEntity, PoiWithFestivalEntity, PoiCategoryCountEntity } from './entities';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -30,7 +29,6 @@ import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { Public } from '../auth/decorators/public.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-import { UserRole } from '@prisma/client';
 
 /**
  * Controller for festival-scoped POI endpoints
@@ -202,9 +200,7 @@ export class FestivalPoiController {
     status: HttpStatus.NOT_FOUND,
     description: 'Festival not found',
   })
-  async getCategoryCounts(
-    @Param('festivalId', ParseUUIDPipe) festivalId: string
-  ) {
+  async getCategoryCounts(@Param('festivalId', ParseUUIDPipe) festivalId: string) {
     const counts = await this.poiService.getCategoryCounts(festivalId);
     return {
       success: true,
@@ -261,8 +257,7 @@ export class FestivalPoiController {
   @Public()
   @ApiOperation({
     summary: 'Find POIs near a location',
-    description:
-      'Returns POIs within a specified radius of a location, sorted by distance.',
+    description: 'Returns POIs within a specified radius of a location, sorted by distance.',
   })
   @ApiParam({
     name: 'festivalId',
@@ -363,8 +358,7 @@ export class PoiController {
   @Roles(UserRole.ADMIN, UserRole.ORGANIZER)
   @ApiOperation({
     summary: 'Update a POI',
-    description:
-      'Updates a POI. Only accessible by the festival owner or ADMIN.',
+    description: 'Updates a POI. Only accessible by the festival owner or ADMIN.',
   })
   @ApiParam({
     name: 'id',
@@ -408,8 +402,7 @@ export class PoiController {
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({
     summary: 'Delete a POI',
-    description:
-      'Deletes a POI. Only accessible by the festival owner or ADMIN.',
+    description: 'Deletes a POI. Only accessible by the festival owner or ADMIN.',
   })
   @ApiParam({
     name: 'id',

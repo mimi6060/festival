@@ -5,8 +5,6 @@ import {
   createNativeStackNavigator,
   NativeStackNavigationOptions,
 } from '@react-navigation/native-stack';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
-import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
 import { OnboardingScreen } from '../../screens/Onboarding/OnboardingScreen';
 import { AuthNavigator } from './AuthNavigator';
@@ -29,7 +27,12 @@ import type { RootStackParamList } from '../../types';
 
 // URL Linking configuration for web
 const linking: LinkingOptions<RootStackParamList> = {
-  prefixes: ['http://localhost:4101', 'https://festival.com', 'festival://'],
+  prefixes: [
+    'http://localhost:8083',
+    'http://localhost:4101',
+    'https://festival.com',
+    'festival://',
+  ],
   config: {
     screens: {
       Onboarding: 'onboarding',
@@ -152,107 +155,89 @@ export const AppNavigator: React.FC = () => {
   }
 
   return (
-    <GestureHandlerRootView style={styles.container}>
-      <SafeAreaProvider>
-        <StatusBar barStyle="light-content" backgroundColor={colors.background} />
-        <NavigationContainer
-          linking={Platform.OS === 'web' ? linking : undefined}
-          theme={navigationTheme}
+    <View style={styles.container}>
+      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+      <NavigationContainer
+        linking={Platform.OS === 'web' ? linking : undefined}
+        theme={navigationTheme}
+      >
+        <Stack.Navigator
+          initialRouteName={initialRouteName}
+          screenOptions={{
+            headerShown: false,
+            animation: 'slide_from_right',
+            animationDuration: 250, // Optimized for < 300ms transitions
+            contentStyle: { backgroundColor: colors.background },
+            // Enable native driver for smoother animations
+            freezeOnBlur: true, // Freeze inactive screens to save memory
+          }}
         >
-          <Stack.Navigator
-            initialRouteName={initialRouteName}
-            screenOptions={{
-              headerShown: false,
-              animation: 'slide_from_right',
-              animationDuration: 250, // Optimized for < 300ms transitions
-              contentStyle: { backgroundColor: colors.background },
-              // Enable native driver for smoother animations
-              freezeOnBlur: true, // Freeze inactive screens to save memory
-            }}
-          >
-            {/* Onboarding - Fast fade */}
-            <Stack.Screen
-              name="Onboarding"
-              component={OnboardingScreen}
-              options={fastFadeOptions}
-            />
+          {/* Onboarding - Fast fade */}
+          <Stack.Screen name="Onboarding" component={OnboardingScreen} options={fastFadeOptions} />
 
-            {/* Auth Flow - Fast fade */}
-            <Stack.Screen name="Auth" component={AuthNavigator} options={fastFadeOptions} />
+          {/* Auth Flow - Fast fade */}
+          <Stack.Screen name="Auth" component={AuthNavigator} options={fastFadeOptions} />
 
-            {/* Main App - Fast fade */}
-            <Stack.Screen name="Main" component={MainTabs} options={fastFadeOptions} />
+          {/* Main App - Fast fade */}
+          <Stack.Screen name="Main" component={MainTabs} options={fastFadeOptions} />
 
-            {/* Modal Screens - Optimized modal transitions */}
-            <Stack.Screen
-              name="TicketDetail"
-              component={TicketDetailScreen}
-              options={modalOptions}
-            />
+          {/* Modal Screens - Optimized modal transitions */}
+          <Stack.Screen name="TicketDetail" component={TicketDetailScreen} options={modalOptions} />
 
-            <Stack.Screen name="Topup" component={TopupScreen} options={modalOptions} />
+          <Stack.Screen name="Topup" component={TopupScreen} options={modalOptions} />
 
-            {/* Stack Screens - Fast slide transitions */}
-            <Stack.Screen
-              name="Transactions"
-              component={TransactionsScreen}
-              options={fastSlideOptions}
-            />
+          {/* Stack Screens - Fast slide transitions */}
+          <Stack.Screen
+            name="Transactions"
+            component={TransactionsScreen}
+            options={fastSlideOptions}
+          />
 
-            <Stack.Screen name="Map" component={MapScreen} options={fastSlideOptions} />
+          <Stack.Screen name="Map" component={MapScreen} options={fastSlideOptions} />
 
-            <Stack.Screen name="Settings" component={SettingsScreen} options={fastSlideOptions} />
+          <Stack.Screen name="Settings" component={SettingsScreen} options={fastSlideOptions} />
 
-            <Stack.Screen
-              name="EditProfile"
-              component={EditProfileScreen}
-              options={fastSlideOptions}
-            />
+          <Stack.Screen
+            name="EditProfile"
+            component={EditProfileScreen}
+            options={fastSlideOptions}
+          />
 
-            <Stack.Screen
-              name="ChangePassword"
-              component={ChangePasswordScreen}
-              options={fastSlideOptions}
-            />
+          <Stack.Screen
+            name="ChangePassword"
+            component={ChangePasswordScreen}
+            options={fastSlideOptions}
+          />
 
-            <Stack.Screen
-              name="HelpCenter"
-              component={HelpCenterScreen}
-              options={fastSlideOptions}
-            />
+          <Stack.Screen name="HelpCenter" component={HelpCenterScreen} options={fastSlideOptions} />
 
-            <Stack.Screen name="ContactUs" component={ContactUsScreen} options={fastSlideOptions} />
+          <Stack.Screen name="ContactUs" component={ContactUsScreen} options={fastSlideOptions} />
 
-            {/* Staff Mode Screens */}
-            <Stack.Screen
-              name="StaffDashboard"
-              component={StaffDashboardScreen}
-              options={fastFadeOptions}
-            />
+          {/* Staff Mode Screens */}
+          <Stack.Screen
+            name="StaffDashboard"
+            component={StaffDashboardScreen}
+            options={fastFadeOptions}
+          />
 
-            <Stack.Screen
-              name="StaffValidation"
-              component={StaffValidationScreen}
-              options={fastSlideOptions}
-            />
+          <Stack.Screen
+            name="StaffValidation"
+            component={StaffValidationScreen}
+            options={fastSlideOptions}
+          />
 
-            <Stack.Screen
-              name="StaffZones"
-              component={StaffZonesScreen}
-              options={fastSlideOptions}
-            />
+          <Stack.Screen name="StaffZones" component={StaffZonesScreen} options={fastSlideOptions} />
 
-            <Stack.Screen
-              name="Notifications"
-              component={NotificationsScreen}
-              options={fastSlideOptions}
-            />
+          <Stack.Screen
+            name="Notifications"
+            component={NotificationsScreen}
+            options={fastSlideOptions}
+          />
 
-            <Stack.Screen name="Profile" component={ProfileScreen} options={fastSlideOptions} />
-          </Stack.Navigator>
-        </NavigationContainer>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+          <Stack.Screen name="Profile" component={ProfileScreen} options={fastSlideOptions} />
+        </Stack.Navigator>
+      </NavigationContainer>
+    </View>
   );
 };
 

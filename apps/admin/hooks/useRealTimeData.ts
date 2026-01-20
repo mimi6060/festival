@@ -165,7 +165,7 @@ function generateMockStats(): RealtimeStats {
         entriesLastHour: 200,
         exitsLastHour: 120,
       },
-      'camping': {
+      camping: {
         zoneId: 'camping',
         zoneName: 'Camping',
         current: Math.floor(Math.random() * 1500) + 500,
@@ -272,16 +272,25 @@ export function useRealtimeData(options: UseRealtimeDataOptions = {}): UseRealti
     },
   });
 
-  // Start polling fallback
+  // Start polling fallback - uses fetchData via closure
   const startPolling = useCallback(() => {
-    if (pollingRef.current) { return; }
-    // Starting polling fallback
-    pollingRef.current = setInterval(() => {
-      if (isMounted.current) {
-        fetchData();
+    if (pollingRef.current) {
+      return;
+    }
+    pollingRef.current = setInterval(async () => {
+      if (isMounted.current && festivalId) {
+        try {
+          const newStats = await fetchRealtimeStats(festivalId);
+          if (isMounted.current) {
+            setStats(newStats);
+            setLastUpdate(new Date());
+          }
+        } catch (err) {
+          console.error('Polling error:', err);
+        }
       }
     }, pollingInterval);
-  }, [pollingInterval]);
+  }, [pollingInterval, festivalId]);
 
   // Stop polling
   const stopPolling = useCallback(() => {
@@ -294,7 +303,9 @@ export function useRealtimeData(options: UseRealtimeDataOptions = {}): UseRealti
 
   // Fetch data from API
   const fetchData = useCallback(async () => {
-    if (!isMounted.current) { return; }
+    if (!isMounted.current) {
+      return;
+    }
 
     setIsLoading(true);
     setError(null);
@@ -330,11 +341,15 @@ export function useRealtimeData(options: UseRealtimeDataOptions = {}): UseRealti
 
   // Setup WebSocket event listeners
   useEffect(() => {
-    if (!zonesConnected) { return; }
+    if (!zonesConnected) {
+      return;
+    }
 
     // Zone occupancy updates
     const handleOccupancyUpdate = (data: ZoneOccupancyData) => {
-      if (!isMounted.current) { return; }
+      if (!isMounted.current) {
+        return;
+      }
       setStats((prev) => ({
         ...prev,
         zoneOccupancy: {
@@ -354,14 +369,17 @@ export function useRealtimeData(options: UseRealtimeDataOptions = {}): UseRealti
 
     // Zone alerts
     const handleZoneAlert = (alert: RealtimeAlert) => {
-      if (!isMounted.current) { return; }
+      if (!isMounted.current) {
+        return;
+      }
       setStats((prev) => ({
         ...prev,
         alerts: [
           {
             ...alert,
             acknowledged: false,
-            type: alert.level === 'critical' ? 'error' : alert.level === 'warning' ? 'warning' : 'info',
+            type:
+              alert.level === 'critical' ? 'error' : alert.level === 'warning' ? 'warning' : 'info',
           },
           ...prev.alerts.filter((a) => a.id !== alert.id),
         ],
@@ -370,7 +388,9 @@ export function useRealtimeData(options: UseRealtimeDataOptions = {}): UseRealti
 
     // All occupancy data
     const handleAllOccupancy = (data: { zones: ZoneOccupancyData[] }) => {
-      if (!isMounted.current) { return; }
+      if (!isMounted.current) {
+        return;
+      }
       const zoneOccupancy: Record<string, ZoneOccupancyData> = {};
       let totalAttendees = 0;
 
@@ -403,11 +423,15 @@ export function useRealtimeData(options: UseRealtimeDataOptions = {}): UseRealti
 
   // Setup events gateway listeners
   useEffect(() => {
-    if (!eventsConnected) { return; }
+    if (!eventsConnected) {
+      return;
+    }
 
     // Notification/transaction events
     const handleNotification = (data: { type: string; payload: unknown }) => {
-      if (!isMounted.current) { return; }
+      if (!isMounted.current) {
+        return;
+      }
 
       switch (data.type) {
         case 'ticket_sale':
@@ -447,28 +471,41 @@ export function useRealtimeData(options: UseRealtimeDataOptions = {}): UseRealti
     };
   }, [eventsConnected, eventsOn, eventsOff]);
 
-  // Connect on mount
+  // Track if initial fetch has been done
+  const hasInitialFetch = useRef(false);
+
+  // Connect on mount - run only once
   useEffect(() => {
     isMounted.current = true;
 
-    // Initial fetch
-    fetchData();
-
-    if (autoConnect) {
-      zonesConnect();
-      eventsConnect();
-    }
-
-    // Start polling if not connected
-    if (pollingFallback && !zonesConnected) {
-      startPolling();
+    // Initial fetch only once
+    if (!hasInitialFetch.current) {
+      hasInitialFetch.current = true;
+      fetchData();
     }
 
     return () => {
       isMounted.current = false;
+    };
+  }, []);
+
+  // Handle auto connect separately
+  useEffect(() => {
+    if (autoConnect) {
+      zonesConnect();
+      eventsConnect();
+    }
+  }, [autoConnect, zonesConnect, eventsConnect]);
+
+  // Handle polling separately
+  useEffect(() => {
+    if (pollingFallback && !zonesConnected) {
+      startPolling();
+    }
+    return () => {
       stopPolling();
     };
-  }, [autoConnect, zonesConnect, eventsConnect, fetchData, pollingFallback, startPolling, stopPolling, zonesConnected]);
+  }, [pollingFallback, zonesConnected, startPolling, stopPolling]);
 
   // Acknowledge alert
   const acknowledgeAlert = useCallback(

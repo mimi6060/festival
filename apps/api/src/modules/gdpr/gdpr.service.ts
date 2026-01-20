@@ -54,7 +54,7 @@ export class GdprService {
       const consent = consents.find((c) => c.type === type);
       return {
         type,
-        granted: consent?.granted ?? (type === ConsentType.ESSENTIAL),
+        granted: consent?.granted ?? type === ConsentType.ESSENTIAL,
         grantedAt: consent?.grantedAt ?? null,
         revokedAt: consent?.revokedAt ?? null,
         ipAddress: consent?.ipAddress ?? null,
@@ -69,7 +69,7 @@ export class GdprService {
   async updateConsent(
     userId: string,
     dto: UpdateConsentDto,
-    metadata: { ipAddress?: string; userAgent?: string },
+    metadata: { ipAddress?: string; userAgent?: string }
   ) {
     // Essential consent cannot be revoked
     if (dto.type === ConsentType.ESSENTIAL && !dto.granted) {
@@ -108,7 +108,7 @@ export class GdprService {
     });
 
     this.logger.log(
-      `User ${userId} ${dto.granted ? 'granted' : 'revoked'} consent for ${dto.type}`,
+      `User ${userId} ${dto.granted ? 'granted' : 'revoked'} consent for ${dto.type}`
     );
 
     return consent;
@@ -120,12 +120,10 @@ export class GdprService {
   async updateConsents(
     userId: string,
     dto: BulkUpdateConsentsDto,
-    metadata: { ipAddress?: string; userAgent?: string },
+    metadata: { ipAddress?: string; userAgent?: string }
   ) {
     const results = await Promise.all(
-      dto.consents.map((consent) =>
-        this.updateConsent(userId, consent, metadata),
-      ),
+      dto.consents.map((consent) => this.updateConsent(userId, consent, metadata))
     );
 
     return results;
@@ -147,9 +145,7 @@ export class GdprService {
     });
 
     if (existingRequest) {
-      throw new BadRequestException(
-        `You already have a pending ${dto.type} request`,
-      );
+      throw new BadRequestException(`You already have a pending ${dto.type} request`);
     }
 
     const request = await this.prisma.gdprRequest.create({
@@ -236,11 +232,7 @@ export class GdprService {
   /**
    * Process a GDPR request (admin only)
    */
-  async processRequest(
-    requestId: string,
-    dto: ProcessDataRequestDto,
-    adminId: string,
-  ) {
+  async processRequest(requestId: string, dto: ProcessDataRequestDto, adminId: string) {
     const request = await this.getRequest(requestId);
 
     if (request.status !== GdprRequestStatus.PENDING) {
@@ -347,94 +339,87 @@ export class GdprService {
    * Collect all user data for export
    */
   private async collectUserData(userId: string) {
-    const [
-      user,
-      tickets,
-      payments,
-      cashlessTransactions,
-      supportTickets,
-      consents,
-      notifications,
-    ] = await Promise.all([
-      this.prisma.user.findUnique({
-        where: { id: userId },
-        select: {
-          id: true,
-          email: true,
-          firstName: true,
-          lastName: true,
-          phone: true,
-          createdAt: true,
-          updatedAt: true,
-          lastLoginAt: true,
-        },
-      }),
-      this.prisma.ticket.findMany({
-        where: { userId },
-        select: {
-          id: true,
-          qrCode: true,
-          status: true,
-          purchasePrice: true,
-          createdAt: true,
-          category: {
-            select: { name: true, type: true },
+    const [user, tickets, payments, cashlessTransactions, supportTickets, consents, notifications] =
+      await Promise.all([
+        this.prisma.user.findUnique({
+          where: { id: userId },
+          select: {
+            id: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            createdAt: true,
+            updatedAt: true,
+            lastLoginAt: true,
           },
-          festival: {
-            select: { name: true },
+        }),
+        this.prisma.ticket.findMany({
+          where: { userId },
+          select: {
+            id: true,
+            qrCode: true,
+            status: true,
+            purchasePrice: true,
+            createdAt: true,
+            category: {
+              select: { name: true, type: true },
+            },
+            festival: {
+              select: { name: true },
+            },
           },
-        },
-      }),
-      this.prisma.payment.findMany({
-        where: { userId },
-        select: {
-          id: true,
-          amount: true,
-          currency: true,
-          status: true,
-          provider: true,
-          createdAt: true,
-        },
-      }),
-      this.prisma.cashlessTransaction.findMany({
-        where: { account: { userId } },
-        select: {
-          id: true,
-          type: true,
-          amount: true,
-          description: true,
-          createdAt: true,
-        },
-      }),
-      this.prisma.supportTicket.findMany({
-        where: { userId },
-        select: {
-          id: true,
-          subject: true,
-          status: true,
-          createdAt: true,
-        },
-      }),
-      this.prisma.userConsent.findMany({
-        where: { userId },
-        select: {
-          type: true,
-          granted: true,
-          grantedAt: true,
-          revokedAt: true,
-        },
-      }),
-      this.prisma.notification.findMany({
-        where: { userId },
-        select: {
-          id: true,
-          title: true,
-          type: true,
-          createdAt: true,
-          isRead: true,
-        },
-      }),
-    ]);
+        }),
+        this.prisma.payment.findMany({
+          where: { userId },
+          select: {
+            id: true,
+            amount: true,
+            currency: true,
+            status: true,
+            provider: true,
+            createdAt: true,
+          },
+        }),
+        this.prisma.cashlessTransaction.findMany({
+          where: { account: { userId } },
+          select: {
+            id: true,
+            type: true,
+            amount: true,
+            description: true,
+            createdAt: true,
+          },
+        }),
+        this.prisma.supportTicket.findMany({
+          where: { userId },
+          select: {
+            id: true,
+            subject: true,
+            status: true,
+            createdAt: true,
+          },
+        }),
+        this.prisma.userConsent.findMany({
+          where: { userId },
+          select: {
+            type: true,
+            granted: true,
+            grantedAt: true,
+            revokedAt: true,
+          },
+        }),
+        this.prisma.notification.findMany({
+          where: { userId },
+          select: {
+            id: true,
+            title: true,
+            type: true,
+            createdAt: true,
+            isRead: true,
+          },
+        }),
+      ]);
 
     return {
       exportDate: new Date().toISOString(),
@@ -456,7 +441,7 @@ export class GdprService {
       case ExportFormat.JSON:
         return JSON.stringify(data, null, 2);
 
-      case ExportFormat.CSV:
+      case ExportFormat.CSV: {
         // Simple CSV conversion for user data
         const rows: string[] = [];
         rows.push('Section,Field,Value');
@@ -476,6 +461,7 @@ export class GdprService {
 
         flattenObject(data);
         return rows.join('\n');
+      }
 
       case ExportFormat.PDF:
         // PDF generation would require a PDF library
@@ -588,10 +574,7 @@ export class GdprService {
   /**
    * Create a data rectification request
    */
-  async createRectificationRequest(
-    userId: string,
-    dto: CreateRectificationRequestDto,
-  ) {
+  async createRectificationRequest(userId: string, dto: CreateRectificationRequestDto) {
     const request = await this.prisma.gdprRequest.create({
       data: {
         userId,
@@ -614,11 +597,7 @@ export class GdprService {
   /**
    * Log a GDPR action for audit purposes
    */
-  private async logGdprAction(
-    userId: string,
-    action: string,
-    details: Record<string, unknown>,
-  ) {
+  private async logGdprAction(userId: string, action: string, details: Record<string, unknown>) {
     await this.prisma.auditLog.create({
       data: {
         userId,
@@ -655,13 +634,7 @@ export class GdprService {
    * Get GDPR statistics (admin only)
    */
   async getStatistics() {
-    const [
-      totalRequests,
-      pendingRequests,
-      byType,
-      byStatus,
-      recentRequests,
-    ] = await Promise.all([
+    const [totalRequests, pendingRequests, byType, byStatus, recentRequests] = await Promise.all([
       this.prisma.gdprRequest.count(),
       this.prisma.gdprRequest.count({
         where: { status: GdprRequestStatus.PENDING },
@@ -683,14 +656,8 @@ export class GdprService {
     return {
       totalRequests,
       pendingRequests,
-      byType: byType.reduce(
-        (acc, t) => ({ ...acc, [t.type]: t._count }),
-        {},
-      ),
-      byStatus: byStatus.reduce(
-        (acc, s) => ({ ...acc, [s.status]: s._count }),
-        {},
-      ),
+      byType: byType.reduce((acc, t) => ({ ...acc, [t.type]: t._count }), {}),
+      byStatus: byStatus.reduce((acc, s) => ({ ...acc, [s.status]: s._count }), {}),
       recentRequests,
     };
   }

@@ -360,7 +360,10 @@ export function createUserFixture(overrides: Partial<UserFixture> = {}): UserFix
 /**
  * Creates multiple unique user fixtures
  */
-export function createUserFixtures(count: number, overrides: Partial<UserFixture> = {}): UserFixture[] {
+export function createUserFixtures(
+  count: number,
+  overrides: Partial<UserFixture> = {}
+): UserFixture[] {
   return Array.from({ length: count }, () => createUserFixture(overrides));
 }
 
@@ -368,7 +371,7 @@ export function createUserFixtures(count: number, overrides: Partial<UserFixture
  * Converts a UserFixture to the format expected by Prisma (without plainPassword)
  */
 export function toPrismaUser(fixture: UserFixture) {
-  const { plainPassword, ...prismaUser } = fixture;
+  const { plainPassword: _plainPassword, ...prismaUser } = fixture;
   return prismaUser;
 }
 

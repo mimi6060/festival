@@ -17,6 +17,7 @@ import {
   CacheDependencyType,
   CacheDependency,
   EntityChangeEvent,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   InvalidationResult,
 } from './cache-invalidation.service';
 import { CacheService, CacheTag } from './cache.service';
@@ -38,7 +39,7 @@ const mockCacheService = {
 
 describe('CacheInvalidationService', () => {
   let service: CacheInvalidationService;
-  let cacheService: CacheService;
+  let _cacheService: CacheService;
 
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -47,14 +48,11 @@ describe('CacheInvalidationService', () => {
     mockCacheService.invalidateByTag.mockResolvedValue(5);
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        CacheInvalidationService,
-        { provide: CacheService, useValue: mockCacheService },
-      ],
+      providers: [CacheInvalidationService, { provide: CacheService, useValue: mockCacheService }],
     }).compile();
 
     service = module.get<CacheInvalidationService>(CacheInvalidationService);
-    cacheService = module.get<CacheService>(CacheService);
+    _cacheService = module.get<CacheService>(CacheService);
   });
 
   // ==========================================================================
@@ -234,10 +232,10 @@ describe('CacheInvalidationService', () => {
 
       // Check that patterns with resolved IDs were called
       const calls = mockCacheService.deletePattern.mock.calls;
-      const patterns = calls.map(call => call[0]);
+      const patterns = calls.map((call) => call[0]);
 
       // Should contain patterns with the user ID
-      expect(patterns.some(p => p.includes('user-456') || p.includes('*'))).toBe(true);
+      expect(patterns.some((p) => p.includes('user-456') || p.includes('*'))).toBe(true);
     });
 
     it('should respect dependency conditions', async () => {
@@ -279,7 +277,7 @@ describe('CacheInvalidationService', () => {
         changeType: 'update',
       };
 
-      const result = await service.onEntityChange(event);
+      const _result = await service.onEntityChange(event);
 
       expect(mockCacheService.deletePattern).toHaveBeenCalled();
     });
@@ -297,7 +295,7 @@ describe('CacheInvalidationService', () => {
       await service.onEntityChange(event);
 
       const calls = mockCacheService.deletePattern.mock.calls;
-      const patterns = calls.map(call => call[0]);
+      const patterns = calls.map((call) => call[0]);
 
       // Should use context variables in pattern resolution
       expect(patterns.length).toBeGreaterThan(0);
@@ -422,12 +420,12 @@ describe('CacheInvalidationService', () => {
     it('should invalidate all festival-related patterns', async () => {
       const festivalId = 'fest-123';
 
-      const result = await service.invalidateByFestival(festivalId);
+      const _result = await service.invalidateByFestival(festivalId);
 
       expect(mockCacheService.deletePattern).toHaveBeenCalled();
 
       const calls = mockCacheService.deletePattern.mock.calls;
-      const patterns = calls.map(call => call[0]);
+      const patterns = calls.map((call) => call[0]);
 
       expect(patterns).toContain(`festival:${festivalId}:*`);
       expect(patterns).toContain(`tickets:festival:${festivalId}:*`);
@@ -471,10 +469,10 @@ describe('CacheInvalidationService', () => {
     it('should invalidate all user-related patterns', async () => {
       const userId = 'user-123';
 
-      const result = await service.invalidateByUser(userId);
+      const _result = await service.invalidateByUser(userId);
 
       const calls = mockCacheService.deletePattern.mock.calls;
-      const patterns = calls.map(call => call[0]);
+      const patterns = calls.map((call) => call[0]);
 
       expect(patterns).toContain(`session:${userId}`);
       expect(patterns).toContain(`user:${userId}:*`);
@@ -533,7 +531,7 @@ describe('CacheInvalidationService', () => {
 
       // Should use pattern invalidation for >10 events of same type
       const calls = mockCacheService.deletePattern.mock.calls;
-      const patterns = calls.map(call => call[0]);
+      const patterns = calls.map((call) => call[0]);
 
       expect(patterns).toContain('user:*');
     });
@@ -595,42 +593,38 @@ describe('CacheInvalidationService', () => {
 
   describe('smartInvalidate', () => {
     it('should invalidate based on changed fields', async () => {
-      const result = await service.smartInvalidate(
-        'festival',
-        'fest-123',
-        ['status'],
-      );
+      const _result = await service.smartInvalidate('festival', 'fest-123', ['status']);
 
       const calls = mockCacheService.deletePattern.mock.calls;
-      const patterns = calls.map(call => call[0]);
+      const patterns = calls.map((call) => call[0]);
 
       // Status field should invalidate active and public festival caches
-      expect(patterns.some(p => p.includes('festivals:active') || p.includes('festivals:public'))).toBe(true);
+      expect(
+        patterns.some((p) => p.includes('festivals:active') || p.includes('festivals:public'))
+      ).toBe(true);
     });
 
     it('should use context for pattern resolution', async () => {
-      const result = await service.smartInvalidate(
-        'ticket',
-        'ticket-123',
-        ['status'],
-        { userId: 'user-456', festivalId: 'fest-789' },
-      );
+      const _result = await service.smartInvalidate('ticket', 'ticket-123', ['status'], {
+        userId: 'user-456',
+        festivalId: 'fest-789',
+      });
 
       const calls = mockCacheService.deletePattern.mock.calls;
-      const patterns = calls.map(call => call[0]);
+      const patterns = calls.map((call) => call[0]);
 
-      expect(patterns.some(p => p.includes('user-456') || p.includes('fest-789') || p.includes('*'))).toBe(true);
+      expect(
+        patterns.some((p) => p.includes('user-456') || p.includes('fest-789') || p.includes('*'))
+      ).toBe(true);
     });
 
     it('should fallback to entity-level invalidation when no rules', async () => {
-      const result = await service.smartInvalidate(
-        'unknownEntity',
-        'entity-123',
-        ['unknownField'],
-      );
+      const _result = await service.smartInvalidate('unknownEntity', 'entity-123', [
+        'unknownField',
+      ]);
 
       const calls = mockCacheService.deletePattern.mock.calls;
-      const patterns = calls.map(call => call[0]);
+      const patterns = calls.map((call) => call[0]);
 
       expect(patterns).toContain('unknownEntity:entity-123:*');
     });
@@ -645,7 +639,7 @@ describe('CacheInvalidationService', () => {
       await service.smartInvalidate('festival', 'fest-1', ['name']);
 
       const calls = mockCacheService.deletePattern.mock.calls;
-      const patterns = calls.map(call => call[0]);
+      const patterns = calls.map((call) => call[0]);
 
       expect(patterns).toContain('festival:fest-1:config');
     });
@@ -666,7 +660,7 @@ describe('CacheInvalidationService', () => {
       await service.smartInvalidate('user', 'user-1', ['email']);
 
       const calls = mockCacheService.deletePattern.mock.calls;
-      const patterns = calls.map(call => call[0]);
+      const patterns = calls.map((call) => call[0]);
 
       expect(patterns).toContain('session:user-1');
     });
@@ -710,7 +704,7 @@ describe('CacheInvalidationService', () => {
       await service.smartInvalidate('cashlessAccount', 'account-1', ['status']);
 
       const calls = mockCacheService.deletePattern.mock.calls;
-      const patterns = calls.map(call => call[0]);
+      const patterns = calls.map((call) => call[0]);
 
       expect(patterns).toContain('cashless:account:account-1');
     });
@@ -918,12 +912,10 @@ describe('CacheInvalidationService', () => {
         changeType: 'update' as const,
       }));
 
-      const results = await Promise.all(
-        events.map(event => service.onEntityChange(event))
-      );
+      const results = await Promise.all(events.map((event) => service.onEntityChange(event)));
 
       expect(results.length).toBe(5);
-      results.forEach(result => {
+      results.forEach((result) => {
         expect(result).toBeDefined();
       });
     });
@@ -974,10 +966,10 @@ describe('CacheInvalidationService', () => {
       await service.onEntityChange(event);
 
       const calls = mockCacheService.deletePattern.mock.calls;
-      const patterns = calls.map(call => call[0]);
+      const patterns = calls.map((call) => call[0]);
 
       // Check that patterns were resolved with the ID
-      expect(patterns.some(p => !p.includes('${'))).toBe(true);
+      expect(patterns.some((p) => !p.includes('${'))).toBe(true);
     });
 
     it('should resolve context variables in patterns', async () => {
@@ -993,10 +985,10 @@ describe('CacheInvalidationService', () => {
       await service.onEntityChange(event);
 
       const calls = mockCacheService.deletePattern.mock.calls;
-      const patterns = calls.map(call => call[0]);
+      const patterns = calls.map((call) => call[0]);
 
       // festivalId should be resolved or replaced with *
-      expect(patterns.some(p => p.includes('fest-999') || p.includes('*'))).toBe(true);
+      expect(patterns.some((p) => p.includes('fest-999') || p.includes('*'))).toBe(true);
     });
   });
 });

@@ -1,24 +1,23 @@
 import React, { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  RefreshControl,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Card, Button } from '../../components/common';
 import { TicketCard } from '../../components/tickets';
 import { BalanceCard } from '../../components/wallet';
-import { useAuthStore, useTicketStore, useWalletStore, useNotificationStore, useProgramStore } from '../../store';
+import {
+  useAuthStore,
+  useTicketStore,
+  useWalletStore,
+  useNotificationStore,
+  useProgramStore,
+} from '../../store';
 import { offlineService, initializeDemoData } from '../../services';
 import { colors, spacing, typography } from '../../theme';
-import type { RootStackParamList, Ticket } from '../../types';
+import type { RootStackParamList, MainTabParamList, Ticket } from '../../types';
 
-type HomeNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Main'>;
+type HomeNavigationProp = NativeStackNavigationProp<RootStackParamList & MainTabParamList, 'Home'>;
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<HomeNavigationProp>();
@@ -86,11 +85,12 @@ export const HomeScreen: React.FC = () => {
         <View style={styles.header}>
           <View>
             <Text style={styles.greeting}>Bonjour,</Text>
-            <Text style={styles.userName}>
-              {user?.firstName || 'Festivalier'} 👋
-            </Text>
+            <Text style={styles.userName}>{user?.firstName || 'Festivalier'} 👋</Text>
           </View>
-          <TouchableOpacity style={styles.notificationButton}>
+          <TouchableOpacity
+            style={styles.notificationButton}
+            onPress={() => navigation.navigate('Notifications')}
+          >
             <Text style={styles.notificationIcon}>🔔</Text>
             {unreadCount > 0 && (
               <View style={styles.notificationBadge}>
@@ -108,9 +108,7 @@ export const HomeScreen: React.FC = () => {
             <Text style={styles.countdownIcon}>🎉</Text>
             <View style={styles.countdownText}>
               <Text style={styles.countdownTitle}>Festival en cours!</Text>
-              <Text style={styles.countdownSubtitle}>
-                Profitez de chaque moment
-              </Text>
+              <Text style={styles.countdownSubtitle}>Profitez de chaque moment</Text>
             </View>
           </View>
         </Card>
@@ -129,7 +127,7 @@ export const HomeScreen: React.FC = () => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Mes billets actifs</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Tickets')}>
               <Text style={styles.seeAll}>Voir tout →</Text>
             </TouchableOpacity>
           </View>
@@ -146,12 +144,10 @@ export const HomeScreen: React.FC = () => {
             <Card style={styles.emptyCard}>
               <Text style={styles.emptyIcon}>🎟️</Text>
               <Text style={styles.emptyTitle}>Aucun billet actif</Text>
-              <Text style={styles.emptySubtitle}>
-                Achetez vos billets pour acceder au festival
-              </Text>
+              <Text style={styles.emptySubtitle}>Achetez vos billets pour acceder au festival</Text>
               <Button
                 title="Acheter des billets"
-                onPress={() => {}}
+                onPress={() => console.warn('Navigate to tickets purchase')}
                 variant="outline"
                 size="sm"
                 style={styles.emptyButton}
@@ -164,7 +160,7 @@ export const HomeScreen: React.FC = () => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Prochains concerts</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => navigation.navigate('Program')}>
               <Text style={styles.seeAll}>Programme →</Text>
             </TouchableOpacity>
           </View>
@@ -180,18 +176,14 @@ export const HomeScreen: React.FC = () => {
                   </View>
                   <View style={styles.eventInfo}>
                     <Text style={styles.eventArtist}>{event.artist.name}</Text>
-                    <Text style={styles.eventStage}>
-                      📍 {event.stage.name}
-                    </Text>
+                    <Text style={styles.eventStage}>📍 {event.stage.name}</Text>
                     <Text style={styles.eventGenre}>{event.artist.genre}</Text>
                   </View>
                   <TouchableOpacity
                     style={styles.favoriteButton}
                     onPress={() => toggleFavorite(event.id)}
                   >
-                    <Text style={styles.favoriteIcon}>
-                      {isFavorite ? '❤️' : '🤍'}
-                    </Text>
+                    <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
                   </TouchableOpacity>
                 </View>
               </Card>
@@ -211,11 +203,17 @@ export const HomeScreen: React.FC = () => {
               <Text style={styles.quickActionIcon}>🍔</Text>
               <Text style={styles.quickActionLabel}>Food</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.quickAction} onPress={() => handleQuickAction('toilettes')}>
+            <TouchableOpacity
+              style={styles.quickAction}
+              onPress={() => handleQuickAction('toilettes')}
+            >
               <Text style={styles.quickActionIcon}>🚻</Text>
               <Text style={styles.quickActionLabel}>Toilettes</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.quickAction} onPress={() => handleQuickAction('secours')}>
+            <TouchableOpacity
+              style={styles.quickAction}
+              onPress={() => handleQuickAction('secours')}
+            >
               <Text style={styles.quickActionIcon}>🏥</Text>
               <Text style={styles.quickActionLabel}>Secours</Text>
             </TouchableOpacity>

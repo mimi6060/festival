@@ -254,9 +254,7 @@ describe('FaqController', () => {
       mockFaqService.createCategory.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.createCategory(dto)).rejects.toThrow(
-        'Category name already exists',
-      );
+      await expect(controller.createCategory(dto)).rejects.toThrow('Category name already exists');
     });
   });
 
@@ -326,7 +324,7 @@ describe('FaqController', () => {
 
       // Act & Assert
       await expect(controller.getCategoryById('non-existent-id')).rejects.toThrow(
-        'Category not found',
+        'Category not found'
       );
     });
   });
@@ -376,7 +374,7 @@ describe('FaqController', () => {
 
       // Act & Assert
       await expect(controller.updateCategory('non-existent-id', dto)).rejects.toThrow(
-        'Category not found',
+        'Category not found'
       );
     });
   });
@@ -405,7 +403,7 @@ describe('FaqController', () => {
 
       // Act & Assert
       await expect(controller.deleteCategory('non-existent-id')).rejects.toThrow(
-        'Category not found',
+        'Category not found'
       );
     });
 
@@ -416,7 +414,7 @@ describe('FaqController', () => {
 
       // Act & Assert
       await expect(controller.deleteCategory(mockCategory.id)).rejects.toThrow(
-        'Cannot delete category with items',
+        'Cannot delete category with items'
       );
     });
   });
@@ -568,7 +566,7 @@ describe('FaqController', () => {
       mockFaqService.findAllItems.mockResolvedValue([mockItem]);
 
       // Act
-      const result = await controller.getAllItems(query);
+      const _result = await controller.getAllItems(query);
 
       // Assert
       expect(mockFaqService.findAllItems).toHaveBeenCalledWith(query);
@@ -598,9 +596,7 @@ describe('FaqController', () => {
       mockFaqService.findItemById.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.getItemById('non-existent-id')).rejects.toThrow(
-        'Item not found',
-      );
+      await expect(controller.getItemById('non-existent-id')).rejects.toThrow('Item not found');
     });
   });
 
@@ -652,9 +648,7 @@ describe('FaqController', () => {
       mockFaqService.updateItem.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.updateItem('non-existent-id', dto)).rejects.toThrow(
-        'Item not found',
-      );
+      await expect(controller.updateItem('non-existent-id', dto)).rejects.toThrow('Item not found');
     });
   });
 
@@ -681,9 +675,7 @@ describe('FaqController', () => {
       mockFaqService.deleteItem.mockRejectedValue(error);
 
       // Act & Assert
-      await expect(controller.deleteItem('non-existent-id')).rejects.toThrow(
-        'Item not found',
-      );
+      await expect(controller.deleteItem('non-existent-id')).rejects.toThrow('Item not found');
     });
   });
 
@@ -728,7 +720,7 @@ describe('FaqController', () => {
 
       // Act & Assert
       await expect(controller.toggleItemActive('non-existent-id')).rejects.toThrow(
-        'Item not found',
+        'Item not found'
       );
     });
   });
@@ -778,7 +770,7 @@ describe('FaqController', () => {
 
       // Act & Assert
       await expect(
-        controller.reorderItems('non-existent-id', { itemIds: ['item-1'] }),
+        controller.reorderItems('non-existent-id', { itemIds: ['item-1'] })
       ).rejects.toThrow('Category not found');
     });
   });

@@ -11,15 +11,12 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { CampingService } from './camping.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import {
-  NotFoundException,
-  BadRequestException,
-  ConflictException,
-} from '@nestjs/common';
+import { NotFoundException, BadRequestException, ConflictException } from '@nestjs/common';
 import {
   // Zone fixtures
   tentZone,
   caravanZone,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   glampingZone,
   // Spot fixtures
   availableSpot,
@@ -27,6 +24,7 @@ import {
   reservedSpot,
   maintenanceSpot,
   caravanSpot,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   inactiveSpot,
   spotWithZone,
   occupiedSpotWithZone,
@@ -37,6 +35,7 @@ import {
   checkedInBooking,
   checkedOutBooking,
   cancelledBooking,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   caravanBooking,
   bookingWithRelations,
   checkedInBookingWithRelations,
@@ -53,9 +52,10 @@ import {
   BookingStatus,
   // Users
   regularUser,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   staffUser,
+  publishedFestival,
 } from '../../test/fixtures';
-import { publishedFestival } from '../../test/fixtures';
 
 // ============================================================================
 // Mock Setup
@@ -95,10 +95,7 @@ describe('CampingService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        CampingService,
-        { provide: PrismaService, useValue: mockPrismaService },
-      ],
+      providers: [CampingService, { provide: PrismaService, useValue: mockPrismaService }],
     }).compile();
 
     campingService = module.get<CampingService>(CampingService);
@@ -135,7 +132,7 @@ describe('CampingService', () => {
 
       // Act & Assert
       await expect(
-        campingService.createSpot({ ...validCreateSpotInput, zoneId: 'non-existent' }),
+        campingService.createSpot({ ...validCreateSpotInput, zoneId: 'non-existent' })
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -146,7 +143,7 @@ describe('CampingService', () => {
 
       // Act & Assert
       await expect(
-        campingService.createSpot({ ...validCreateSpotInput, number: availableSpot.number }),
+        campingService.createSpot({ ...validCreateSpotInput, number: availableSpot.number })
       ).rejects.toThrow(ConflictException);
     });
 
@@ -166,7 +163,7 @@ describe('CampingService', () => {
       });
 
       // Act
-      const result = await campingService.createSpot(inputWithHooks);
+      const _result = await campingService.createSpot(inputWithHooks);
 
       // Assert
       expect(mockPrismaService.campingSpot.create).toHaveBeenCalledWith(
@@ -175,7 +172,7 @@ describe('CampingService', () => {
             electricityHook: true,
             waterHook: true,
           }),
-        }),
+        })
       );
     });
 
@@ -205,7 +202,7 @@ describe('CampingService', () => {
           data: expect.objectContaining({
             maxVehicleLength: 8.5,
           }),
-        }),
+        })
       );
     });
   });
@@ -235,7 +232,7 @@ describe('CampingService', () => {
 
       // Act & Assert
       await expect(
-        campingService.bulkCreateSpots({ ...validBulkCreateSpotsInput, zoneId: 'non-existent' }),
+        campingService.bulkCreateSpots({ ...validBulkCreateSpotsInput, zoneId: 'non-existent' })
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -267,10 +264,8 @@ describe('CampingService', () => {
       // Assert
       expect(mockPrismaService.campingSpot.createMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          data: expect.arrayContaining([
-            expect.objectContaining({ number: 'A1' }),
-          ]),
-        }),
+          data: expect.arrayContaining([expect.objectContaining({ number: 'A1' })]),
+        })
       );
     });
   });
@@ -308,7 +303,7 @@ describe('CampingService', () => {
       expect(mockPrismaService.campingSpot.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ zoneId: tentZone.id }),
-        }),
+        })
       );
     });
 
@@ -326,7 +321,7 @@ describe('CampingService', () => {
           where: expect.objectContaining({
             zone: { festivalId: publishedFestival.id },
           }),
-        }),
+        })
       );
     });
 
@@ -342,7 +337,7 @@ describe('CampingService', () => {
       expect(mockPrismaService.campingSpot.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ status: CampingSpotStatus.AVAILABLE }),
-        }),
+        })
       );
     });
 
@@ -358,7 +353,7 @@ describe('CampingService', () => {
       expect(mockPrismaService.campingSpot.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ electricityHook: true }),
-        }),
+        })
       );
     });
 
@@ -374,7 +369,7 @@ describe('CampingService', () => {
       expect(mockPrismaService.campingSpot.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ waterHook: true }),
-        }),
+        })
       );
     });
 
@@ -390,7 +385,7 @@ describe('CampingService', () => {
       expect(mockPrismaService.campingSpot.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ isActive: true }),
-        }),
+        })
       );
     });
 
@@ -433,9 +428,7 @@ describe('CampingService', () => {
       mockPrismaService.campingSpot.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(campingService.getSpot('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(campingService.getSpot('non-existent')).rejects.toThrow(NotFoundException);
     });
 
     it('should include active bookings', async () => {
@@ -498,7 +491,7 @@ describe('CampingService', () => {
 
       // Act & Assert
       await expect(
-        campingService.updateSpot(availableSpot.id, { number: occupiedSpot.number }),
+        campingService.updateSpot(availableSpot.id, { number: occupiedSpot.number })
       ).rejects.toThrow(ConflictException);
     });
 
@@ -597,9 +590,7 @@ describe('CampingService', () => {
       mockPrismaService.campingBooking.count.mockResolvedValue(1);
 
       // Act & Assert
-      await expect(campingService.deleteSpot(occupiedSpot.id)).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(campingService.deleteSpot(occupiedSpot.id)).rejects.toThrow(BadRequestException);
     });
 
     it('should throw NotFoundException if spot does not exist', async () => {
@@ -607,9 +598,7 @@ describe('CampingService', () => {
       mockPrismaService.campingSpot.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(campingService.deleteSpot('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(campingService.deleteSpot('non-existent')).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -654,7 +643,7 @@ describe('CampingService', () => {
           where: expect.objectContaining({
             zone: expect.objectContaining({ id: tentZone.id }),
           }),
-        }),
+        })
       );
     });
 
@@ -676,7 +665,7 @@ describe('CampingService', () => {
           where: expect.objectContaining({
             electricityHook: true,
           }),
-        }),
+        })
       );
     });
 
@@ -698,7 +687,7 @@ describe('CampingService', () => {
           where: expect.objectContaining({
             waterHook: true,
           }),
-        }),
+        })
       );
     });
 
@@ -720,7 +709,7 @@ describe('CampingService', () => {
           where: expect.objectContaining({
             maxVehicleLength: { gte: 7.0 },
           }),
-        }),
+        })
       );
     });
 
@@ -798,7 +787,7 @@ describe('CampingService', () => {
 
       // Act & Assert
       await expect(
-        campingService.createBooking(invalidBookingInputs.checkOutBeforeCheckIn, regularUser.id),
+        campingService.createBooking(invalidBookingInputs.checkOutBeforeCheckIn, regularUser.id)
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -812,7 +801,7 @@ describe('CampingService', () => {
 
       // Act & Assert
       await expect(
-        campingService.createBooking(invalidBookingInputs.overlappingDates, regularUser.id),
+        campingService.createBooking(invalidBookingInputs.overlappingDates, regularUser.id)
       ).rejects.toThrow(ConflictException);
     });
 
@@ -878,8 +867,8 @@ describe('CampingService', () => {
       await expect(
         campingService.createBooking(
           { ...validBookingInput, spotId: 'non-existent' },
-          regularUser.id,
-        ),
+          regularUser.id
+        )
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -918,7 +907,7 @@ describe('CampingService', () => {
           where: expect.objectContaining({
             spot: { zone: { festivalId: publishedFestival.id } },
           }),
-        }),
+        })
       );
     });
 
@@ -934,7 +923,7 @@ describe('CampingService', () => {
       expect(mockPrismaService.campingBooking.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ userId: regularUser.id }),
-        }),
+        })
       );
     });
 
@@ -950,7 +939,7 @@ describe('CampingService', () => {
       expect(mockPrismaService.campingBooking.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({ status: BookingStatus.CHECKED_IN }),
-        }),
+        })
       );
     });
 
@@ -969,7 +958,7 @@ describe('CampingService', () => {
           where: expect.objectContaining({
             checkIn: { gte: checkInFrom },
           }),
-        }),
+        })
       );
     });
 
@@ -988,7 +977,7 @@ describe('CampingService', () => {
           where: expect.objectContaining({
             checkIn: { lte: checkInTo },
           }),
-        }),
+        })
       );
     });
 
@@ -1009,7 +998,7 @@ describe('CampingService', () => {
               { vehiclePlate: { contains: 'AB-123', mode: 'insensitive' } },
             ],
           }),
-        }),
+        })
       );
     });
 
@@ -1025,7 +1014,7 @@ describe('CampingService', () => {
       expect(mockPrismaService.campingBooking.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           orderBy: { createdAt: 'asc' },
-        }),
+        })
       );
     });
   });
@@ -1052,9 +1041,7 @@ describe('CampingService', () => {
       mockPrismaService.campingBooking.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(campingService.getBooking('non-existent')).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(campingService.getBooking('non-existent')).rejects.toThrow(NotFoundException);
     });
 
     it('should include spot and user relations', async () => {
@@ -1104,7 +1091,7 @@ describe('CampingService', () => {
 
       // Act & Assert
       await expect(
-        campingService.updateBooking(cancelledBooking.id, { notes: 'Updated' }),
+        campingService.updateBooking(cancelledBooking.id, { notes: 'Updated' })
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -1118,7 +1105,7 @@ describe('CampingService', () => {
 
       // Act & Assert
       await expect(
-        campingService.updateBooking(checkedOutBooking.id, { notes: 'Updated' }),
+        campingService.updateBooking(checkedOutBooking.id, { notes: 'Updated' })
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -1149,7 +1136,7 @@ describe('CampingService', () => {
       await expect(
         campingService.updateBooking(confirmedBooking.id, {
           checkOut: new Date('2024-07-14T11:00:00Z'), // Before checkIn
-        }),
+        })
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -1163,7 +1150,7 @@ describe('CampingService', () => {
         campingService.updateBooking(confirmedBooking.id, {
           checkIn: new Date('2024-07-15T14:00:00Z'),
           checkOut: new Date('2024-07-19T11:00:00Z'),
-        }),
+        })
       ).rejects.toThrow(ConflictException);
     });
 
@@ -1239,7 +1226,7 @@ describe('CampingService', () => {
 
       // Act & Assert
       await expect(campingService.confirmBooking(confirmedBooking.id)).rejects.toThrow(
-        BadRequestException,
+        BadRequestException
       );
     });
   });
@@ -1309,9 +1296,9 @@ describe('CampingService', () => {
       });
 
       // Act & Assert
-      await expect(
-        campingService.checkIn(pendingBooking.id, validCheckInInput),
-      ).rejects.toThrow(BadRequestException);
+      await expect(campingService.checkIn(pendingBooking.id, validCheckInInput)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should override vehicle plate at check-in', async () => {
@@ -1407,7 +1394,7 @@ describe('CampingService', () => {
 
       // Act & Assert
       await expect(
-        campingService.checkOut(confirmedBooking.id, validCheckOutInput),
+        campingService.checkOut(confirmedBooking.id, validCheckOutInput)
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -1465,7 +1452,7 @@ describe('CampingService', () => {
           data: expect.objectContaining({
             staffNotes: expect.stringContaining('[Checkout]'),
           }),
-        }),
+        })
       );
     });
   });
@@ -1553,7 +1540,7 @@ describe('CampingService', () => {
 
       // Act & Assert
       await expect(
-        campingService.cancelBooking(cancelledBooking.id, validCancelInput),
+        campingService.cancelBooking(cancelledBooking.id, validCancelInput)
       ).rejects.toThrow(BadRequestException);
     });
 
@@ -1567,7 +1554,7 @@ describe('CampingService', () => {
 
       // Act & Assert
       await expect(
-        campingService.cancelBooking(checkedOutBooking.id, validCancelInput),
+        campingService.cancelBooking(checkedOutBooking.id, validCancelInput)
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -1732,8 +1719,8 @@ describe('CampingService', () => {
             checkOut: new Date('2024-07-20T11:00:00Z'),
             guestCount: 2,
           },
-          regularUser.id,
-        ),
+          regularUser.id
+        )
       ).rejects.toThrow(ConflictException);
     });
 
@@ -1754,8 +1741,8 @@ describe('CampingService', () => {
             checkOut: new Date('2024-07-16T11:00:00Z'),
             guestCount: 2,
           },
-          regularUser.id,
-        ),
+          regularUser.id
+        )
       ).rejects.toThrow(ConflictException);
     });
 
@@ -1776,8 +1763,8 @@ describe('CampingService', () => {
             checkOut: new Date('2024-07-20T11:00:00Z'),
             guestCount: 2,
           },
-          regularUser.id,
-        ),
+          regularUser.id
+        )
       ).rejects.toThrow(ConflictException);
     });
 
@@ -1798,8 +1785,8 @@ describe('CampingService', () => {
             checkOut: new Date('2024-07-17T11:00:00Z'),
             guestCount: 2,
           },
-          regularUser.id,
-        ),
+          regularUser.id
+        )
       ).rejects.toThrow(ConflictException);
     });
 
@@ -1832,7 +1819,7 @@ describe('CampingService', () => {
           checkOut: new Date('2024-07-22T11:00:00Z'),
           guestCount: 2,
         },
-        regularUser.id,
+        regularUser.id
       );
 
       expect(result.status).toBe(BookingStatus.PENDING);
@@ -1867,7 +1854,7 @@ describe('CampingService', () => {
           checkOut: new Date('2024-07-19T11:00:00Z'),
           guestCount: 2,
         },
-        regularUser.id,
+        regularUser.id
       );
 
       expect(result).toBeDefined();

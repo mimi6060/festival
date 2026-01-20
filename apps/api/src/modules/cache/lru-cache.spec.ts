@@ -13,7 +13,9 @@
 import {
   LRUCache,
   PatternLRUCache,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   LRUCacheOptions,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   LRUStats,
   EvictionReason,
 } from './lru-cache';
@@ -150,7 +152,7 @@ describe('LRUCache', () => {
       cache.get('key');
 
       const entries = cache.entries();
-      const entry = entries.find(e => e.key === 'key');
+      const entry = entries.find((e) => e.key === 'key');
       expect(entry?.metadata.lastAccessed).toBeGreaterThanOrEqual(initialTime + 1000);
     });
 
@@ -161,7 +163,7 @@ describe('LRUCache', () => {
       cache.get('key');
 
       const entries = cache.entries();
-      const entry = entries.find(e => e.key === 'key');
+      const entry = entries.find((e) => e.key === 'key');
       expect(entry?.metadata.accessCount).toBe(4); // 1 from set + 3 from gets
     });
 
@@ -256,7 +258,7 @@ describe('LRUCache', () => {
       cache.set('key', 'value');
 
       const entries = cache.entries();
-      const entry = entries.find(e => e.key === 'key');
+      const entry = entries.find((e) => e.key === 'key');
       expect(entry?.metadata.accessCount).toBe(1);
     });
 
@@ -266,7 +268,7 @@ describe('LRUCache', () => {
       const afterSet = Date.now();
 
       const entries = cache.entries();
-      const entry = entries.find(e => e.key === 'key');
+      const entry = entries.find((e) => e.key === 'key');
       expect(entry?.metadata.createdAt).toBeGreaterThanOrEqual(beforeSet);
       expect(entry?.metadata.createdAt).toBeLessThanOrEqual(afterSet);
     });
@@ -275,7 +277,7 @@ describe('LRUCache', () => {
       cache.set('key', 'small value');
 
       const entries = cache.entries();
-      const entry = entries.find(e => e.key === 'key');
+      const entry = entries.find((e) => e.key === 'key');
       expect(entry?.metadata.size).toBeGreaterThan(0);
     });
   });
@@ -347,7 +349,7 @@ describe('LRUCache', () => {
 
       // accessCount should still be 1 (from initial set)
       const entries = cache.entries();
-      const entry = entries.find(e => e.key === 'key');
+      const entry = entries.find((e) => e.key === 'key');
       expect(entry?.metadata.accessCount).toBe(1);
     });
   });
@@ -821,7 +823,7 @@ describe('LRUCache', () => {
       cache.touch('key');
 
       const entries = cache.entries();
-      const entry = entries.find(e => e.key === 'key');
+      const entry = entries.find((e) => e.key === 'key');
       expect(entry?.metadata.lastAccessed).toBeGreaterThanOrEqual(initialTime + 1000);
     });
 

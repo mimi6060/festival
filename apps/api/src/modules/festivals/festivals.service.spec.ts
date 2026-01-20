@@ -20,13 +20,17 @@ import { NotFoundException, ConflictException, ForbiddenException } from '@nestj
 import {
   organizerUser,
   regularUser,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   adminUser,
   draftFestival,
   publishedFestival,
   ongoingFestival,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   completedFestival,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   cancelledFestival,
   deletedFestival,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   validFestivalInput,
   createFestivalFixture,
 } from '../../test/fixtures';
@@ -37,8 +41,8 @@ import {
 
 describe('FestivalsService', () => {
   let festivalsService: FestivalsService;
-  let prismaService: jest.Mocked<PrismaService>;
-  let cacheService: jest.Mocked<CacheService>;
+  let _prismaService: jest.Mocked<PrismaService>;
+  let _cacheService: jest.Mocked<CacheService>;
 
   const mockPrismaService = {
     festival: {
@@ -85,8 +89,8 @@ describe('FestivalsService', () => {
     }).compile();
 
     festivalsService = module.get<FestivalsService>(FestivalsService);
-    prismaService = module.get(PrismaService);
-    cacheService = module.get(CacheService);
+    _prismaService = module.get(PrismaService);
+    _cacheService = module.get(CacheService);
   });
 
   // ==========================================================================
@@ -174,7 +178,7 @@ describe('FestivalsService', () => {
       });
 
       // Act
-      const result = await festivalsService.create(createDto, organizerUser.id);
+      const _result = await festivalsService.create(createDto, organizerUser.id);
 
       // Assert
       expect(mockPrismaService.festival.create).toHaveBeenCalledWith({
@@ -227,9 +231,9 @@ describe('FestivalsService', () => {
       mockPrismaService.festival.findUnique.mockResolvedValue(publishedFestival);
 
       // Act & Assert
-      await expect(
-        festivalsService.create(createDto, organizerUser.id)
-      ).rejects.toThrow(ConflictException);
+      await expect(festivalsService.create(createDto, organizerUser.id)).rejects.toThrow(
+        ConflictException
+      );
       expect(mockPrismaService.festival.create).not.toHaveBeenCalled();
     });
 
@@ -383,9 +387,9 @@ describe('FestivalsService', () => {
 
     it('should apply pagination correctly', async () => {
       // Arrange
-      const allFestivals = Array(25).fill(null).map((_, i) =>
-        createFestivalFixture({ name: `Festival ${i}` })
-      );
+      const allFestivals = Array(25)
+        .fill(null)
+        .map((_, i) => createFestivalFixture({ name: `Festival ${i}` }));
       mockPrismaService.festival.findMany.mockResolvedValue(allFestivals.slice(10, 20));
       mockPrismaService.festival.count.mockResolvedValue(25);
 
@@ -495,9 +499,7 @@ describe('FestivalsService', () => {
       mockPrismaService.festival.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        festivalsService.findOne('non-existent-id')
-      ).rejects.toThrow(NotFoundException);
+      await expect(festivalsService.findOne('non-existent-id')).rejects.toThrow(NotFoundException);
     });
 
     it('should throw NotFoundException for soft-deleted festival', async () => {
@@ -505,9 +507,7 @@ describe('FestivalsService', () => {
       mockPrismaService.festival.findUnique.mockResolvedValue(deletedFestival);
 
       // Act & Assert
-      await expect(
-        festivalsService.findOne(deletedFestival.id)
-      ).rejects.toThrow(NotFoundException);
+      await expect(festivalsService.findOne(deletedFestival.id)).rejects.toThrow(NotFoundException);
     });
 
     it('should include related entities in response', async () => {
@@ -566,9 +566,9 @@ describe('FestivalsService', () => {
       mockPrismaService.festival.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        festivalsService.findBySlug('non-existent-slug')
-      ).rejects.toThrow(NotFoundException);
+      await expect(festivalsService.findBySlug('non-existent-slug')).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw NotFoundException for soft-deleted festival by slug', async () => {
@@ -576,9 +576,9 @@ describe('FestivalsService', () => {
       mockPrismaService.festival.findUnique.mockResolvedValue(deletedFestival);
 
       // Act & Assert
-      await expect(
-        festivalsService.findBySlug(deletedFestival.slug)
-      ).rejects.toThrow(NotFoundException);
+      await expect(festivalsService.findBySlug(deletedFestival.slug)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should only include active ticket categories', async () => {
@@ -878,9 +878,9 @@ describe('FestivalsService', () => {
       });
 
       // Act & Assert
-      await expect(
-        festivalsService.remove(draftFestival.id, regularUser.id)
-      ).rejects.toThrow(ForbiddenException);
+      await expect(festivalsService.remove(draftFestival.id, regularUser.id)).rejects.toThrow(
+        ForbiddenException
+      );
     });
 
     it('should throw NotFoundException when festival does not exist', async () => {
@@ -888,9 +888,9 @@ describe('FestivalsService', () => {
       mockPrismaService.festival.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        festivalsService.remove('non-existent', organizerUser.id)
-      ).rejects.toThrow(NotFoundException);
+      await expect(festivalsService.remove('non-existent', organizerUser.id)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should throw NotFoundException when trying to delete already deleted festival', async () => {
@@ -898,9 +898,9 @@ describe('FestivalsService', () => {
       mockPrismaService.festival.findUnique.mockResolvedValue(deletedFestival);
 
       // Act & Assert
-      await expect(
-        festivalsService.remove(deletedFestival.id, organizerUser.id)
-      ).rejects.toThrow(NotFoundException);
+      await expect(festivalsService.remove(deletedFestival.id, organizerUser.id)).rejects.toThrow(
+        NotFoundException
+      );
     });
   });
 
@@ -948,9 +948,7 @@ describe('FestivalsService', () => {
       mockPrismaService.festival.findUnique.mockResolvedValue(null);
 
       // Act & Assert
-      await expect(
-        festivalsService.getStats('non-existent')
-      ).rejects.toThrow(NotFoundException);
+      await expect(festivalsService.getStats('non-existent')).rejects.toThrow(NotFoundException);
     });
 
     it('should calculate occupancy rate correctly', async () => {
@@ -1212,7 +1210,9 @@ describe('FestivalsService', () => {
       mockPrismaService.festival.findUnique.mockResolvedValue(null); // Slug check passes initially
 
       // But create fails due to Prisma unique constraint error (race condition)
-      const prismaUniqueError = new Error('Unique constraint failed on the constraint: `Festival_slug_key`');
+      const prismaUniqueError = new Error(
+        'Unique constraint failed on the constraint: `Festival_slug_key`'
+      );
       (prismaUniqueError as any).code = 'P2002';
       (prismaUniqueError as any).meta = { target: ['slug'] };
       mockPrismaService.festival.create.mockRejectedValueOnce(prismaUniqueError);
@@ -1367,7 +1367,9 @@ describe('FestivalsService', () => {
 
         // Assert
         expect(result).toEqual(cachedFestival);
-        expect(mockCacheService.get).toHaveBeenCalledWith(`festival:slug:${publishedFestival.slug}`);
+        expect(mockCacheService.get).toHaveBeenCalledWith(
+          `festival:slug:${publishedFestival.slug}`
+        );
         expect(mockPrismaService.festival.findUnique).not.toHaveBeenCalled();
       });
 
@@ -1471,11 +1473,7 @@ describe('FestivalsService', () => {
         });
 
         // Act
-        await festivalsService.updateStatus(
-          draftFestival.id,
-          'PUBLISHED' as any,
-          organizerUser.id
-        );
+        await festivalsService.updateStatus(draftFestival.id, 'PUBLISHED' as any, organizerUser.id);
 
         // Assert
         expect(mockCacheService.delete).toHaveBeenCalledWith(`festival:${draftFestival.id}`);

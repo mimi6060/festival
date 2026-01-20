@@ -62,11 +62,18 @@
 
 ## Documentation Technique
 
+### Getting Started
+
+| Document                                | Description                  |
+| --------------------------------------- | ---------------------------- |
+| [Development Guide](./DEVELOPMENT.md)   | Quick start, commands, ports |
+| [Troubleshooting](./TROUBLESHOOTING.md) | Common issues and solutions  |
+
 ### Architecture
 
 | Document                                 | Description                        |
 | ---------------------------------------- | ---------------------------------- |
-| [Architecture](./architecture.md)        | Diagrammes Mermaid et flux système |
+| [Architecture](./ARCHITECTURE.md)        | Diagrammes Mermaid et flux système |
 | [Arborescence Source](./source-tree.md)  | Structure détaillée du code        |
 | [Base de données](../prisma/DATABASE.md) | Schéma Prisma et modèles           |
 

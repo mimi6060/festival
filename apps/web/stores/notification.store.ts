@@ -373,10 +373,8 @@ export const useNotificationStore = create<NotificationStore>()(
           }
           return {
             getItem: () => null,
-            // eslint-disable-next-line @typescript-eslint/no-empty-function
-            setItem: () => {},
-            // eslint-disable-next-line @typescript-eslint/no-empty-function
-            removeItem: () => {},
+            setItem: () => undefined,
+            removeItem: () => undefined,
           };
         }),
         partialize: (state) => ({

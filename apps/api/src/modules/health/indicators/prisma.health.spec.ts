@@ -13,7 +13,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 
 describe('PrismaHealthIndicator', () => {
   let indicator: PrismaHealthIndicator;
-  let prismaService: jest.Mocked<PrismaService>;
+  let _prismaService: jest.Mocked<PrismaService>;
 
   const mockPrismaService = {
     $queryRaw: jest.fn(),
@@ -23,14 +23,11 @@ describe('PrismaHealthIndicator', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        PrismaHealthIndicator,
-        { provide: PrismaService, useValue: mockPrismaService },
-      ],
+      providers: [PrismaHealthIndicator, { provide: PrismaService, useValue: mockPrismaService }],
     }).compile();
 
     indicator = module.get<PrismaHealthIndicator>(PrismaHealthIndicator);
-    prismaService = module.get(PrismaService);
+    _prismaService = module.get(PrismaService);
   });
 
   // ==========================================================================
@@ -122,9 +119,7 @@ describe('PrismaHealthIndicator', () => {
 
     it('should return down status when database credentials are invalid', async () => {
       // Arrange
-      mockPrismaService.$queryRaw.mockRejectedValue(
-        new Error('password authentication failed')
-      );
+      mockPrismaService.$queryRaw.mockRejectedValue(new Error('password authentication failed'));
 
       // Act
       const result = await indicator.isHealthy('database');

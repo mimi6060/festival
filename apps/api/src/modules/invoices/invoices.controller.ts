@@ -37,11 +37,9 @@ import {
   CreateInvoiceDto,
   UpdateInvoiceDto,
   InvoiceFilterDto,
-} from './dto';
-import type {
-  InvoiceResponseDto,
-  InvoiceDetailResponseDto,
-  InvoiceStatsDto,
+  type InvoiceResponseDto,
+  type InvoiceDetailResponseDto,
+  type InvoiceStatsDto,
 } from './dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -55,14 +53,15 @@ import { UserRole } from '@prisma/client';
 export class InvoicesController {
   constructor(
     private readonly invoicesService: InvoicesService,
-    private readonly taxService: TaxService,
+    private readonly taxService: TaxService
   ) {}
 
   @Post()
   @Roles(UserRole.ADMIN, UserRole.ORGANIZER)
   @ApiOperation({
     summary: 'Create a new invoice',
-    description: 'Create a multi-currency invoice with line items. Supports tax calculation, currency conversion, and B2B reverse charge.',
+    description:
+      'Create a multi-currency invoice with line items. Supports tax calculation, currency conversion, and B2B reverse charge.',
   })
   @ApiResponse({
     status: 201,
@@ -98,7 +97,8 @@ export class InvoicesController {
   @Roles(UserRole.ADMIN, UserRole.ORGANIZER)
   @ApiOperation({
     summary: 'Get invoice statistics',
-    description: 'Get aggregated statistics for invoices including totals, status breakdown, and currency distribution.',
+    description:
+      'Get aggregated statistics for invoices including totals, status breakdown, and currency distribution.',
   })
   @ApiQuery({
     name: 'festivalId',
@@ -128,13 +128,13 @@ export class InvoicesController {
     @Query('festivalId') festivalId?: string,
     @Query('userId') userId?: string,
     @Query('dateFrom') dateFrom?: string,
-    @Query('dateTo') dateTo?: string,
+    @Query('dateTo') dateTo?: string
   ): Promise<InvoiceStatsDto> {
     return this.invoicesService.getStats(
       festivalId,
       userId,
       dateFrom ? new Date(dateFrom) : undefined,
-      dateTo ? new Date(dateTo) : undefined,
+      dateTo ? new Date(dateTo) : undefined
     );
   }
 
@@ -232,7 +232,7 @@ export class InvoicesController {
   async downloadPdf(
     @Param('id') id: string,
     @Query('template') template: 'standard' | 'detailed' | 'minimal' = 'standard',
-    @Res() res: Response,
+    @Res() res: Response
   ) {
     const invoice = await this.invoicesService.findOne(id);
     const pdfBuffer = await this.invoicesService.generatePdf(id, template);
@@ -240,7 +240,7 @@ export class InvoicesController {
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader(
       'Content-Disposition',
-      `attachment; filename="facture-${invoice.invoiceNumber}.pdf"`,
+      `attachment; filename="facture-${invoice.invoiceNumber}.pdf"`
     );
     res.send(pdfBuffer);
   }
@@ -297,7 +297,7 @@ export class InvoicesController {
   })
   async markAsPaid(
     @Param('id') id: string,
-    @Body() body?: { paymentMethod?: string; transactionId?: string },
+    @Body() body?: { paymentMethod?: string; transactionId?: string }
   ): Promise<InvoiceResponseDto> {
     return this.invoicesService.markAsPaid(id, body);
   }
@@ -327,7 +327,7 @@ export class InvoicesController {
   })
   async cancel(
     @Param('id') id: string,
-    @Body() body?: { reason?: string },
+    @Body() body?: { reason?: string }
   ): Promise<InvoiceResponseDto> {
     return this.invoicesService.cancel(id, body?.reason);
   }
@@ -356,7 +356,7 @@ export class InvoicesController {
   })
   async update(
     @Param('id') id: string,
-    @Body() dto: UpdateInvoiceDto,
+    @Body() dto: UpdateInvoiceDto
   ): Promise<InvoiceResponseDto> {
     return this.invoicesService.update(id, dto);
   }
@@ -422,7 +422,7 @@ export class InvoicesController {
       isB2B?: boolean;
       sellerCountry?: string;
       customerVatNumber?: string;
-    },
+    }
   ) {
     return this.taxService.calculateTax(body.amount, body.countryCode, {
       useReducedRate: body.useReducedRate,

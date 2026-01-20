@@ -1,17 +1,5 @@
-import {
-  Controller,
-  Post,
-  Body,
-  HttpCode,
-  HttpStatus,
-} from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiResponse,
-  ApiBearerAuth,
-  ApiBody,
-} from '@nestjs/swagger';
+import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
+import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
 import { BulkOperationService } from './bulk-operation.service';
 import {
   BulkDeleteDto,
@@ -91,9 +79,8 @@ export class GenericBulkController {
   })
   async bulkDelete(@Body() dto: BulkDeleteDto): Promise<BulkOperationResponseDto> {
     // This is a placeholder - real implementation would use actual repository
-    return this.bulkService.bulkDelete(dto, async (id) => {
-      // Placeholder delete logic
-      console.log(`Would delete: ${id}`);
+    return this.bulkService.bulkDelete(dto, async (_id) => {
+      // Placeholder delete logic - real implementation would delete the item by _id
       return true;
     });
   }
@@ -102,7 +89,8 @@ export class GenericBulkController {
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Validate import data',
-    description: 'Validate import data before processing. Returns validation errors without making changes.',
+    description:
+      'Validate import data before processing. Returns validation errors without making changes.',
   })
   @ApiBody({ type: BulkImportDto })
   @ApiResponse({
@@ -172,7 +160,9 @@ export class GenericBulkController {
     status: 200,
     description: 'Export completed - returns file or download URL',
   })
-  async bulkExport(@Body() dto: BulkExportDto): Promise<{ downloadUrl: string; format: string; recordCount: number }> {
+  async bulkExport(
+    @Body() dto: BulkExportDto
+  ): Promise<{ downloadUrl: string; format: string; recordCount: number }> {
     // Placeholder - real implementation would generate actual export file
     return {
       downloadUrl: `/api/exports/download/export-${Date.now()}.${dto.format}`,

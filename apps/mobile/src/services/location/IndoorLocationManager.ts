@@ -4,7 +4,7 @@
  * Manages BeaconScanner, WiFiPositioning, and LocationFusion
  */
 
-import { AppState, AppStateStatus, NativeEventEmitter, NativeModules } from 'react-native';
+import { AppState, AppStateStatus } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { BeaconScanner } from './BeaconScanner';
 import { WiFiPositioning } from './WiFiPositioning';
@@ -42,7 +42,7 @@ const STORAGE_KEYS = {
 // Default configuration
 const DEFAULT_SCAN_INTERVAL = 2000;
 const DEFAULT_SCAN_DURATION = 1500;
-const DEFAULT_BEACON_UUID = 'FDA50693-A4E2-4FB1-AFCF-C6EB07647825'; // Example iBeacon UUID
+const _DEFAULT_BEACON_UUID = 'FDA50693-A4E2-4FB1-AFCF-C6EB07647825'; // Example iBeacon UUID
 
 export interface IndoorLocationManagerConfig {
   festivalId: string;
@@ -85,7 +85,9 @@ class IndoorLocationManager {
   private activeGeofences = new Set<string>();
   private currentLocation: IndoorCoordinate | null = null;
 
-  private constructor() {}
+  private constructor() {
+    // Singleton - use getInstance()
+  }
 
   static getInstance(): IndoorLocationManager {
     if (!IndoorLocationManager.instance) {
@@ -134,30 +136,35 @@ class IndoorLocationManager {
    */
   private async loadCachedData(): Promise<void> {
     try {
-      const [
-        beaconConfigs,
-        wifiFingerprints,
-        zones,
-        geofences,
-        floors,
-        lastPosition,
-        batteryMode,
-      ] = await Promise.all([
-        AsyncStorage.getItem(STORAGE_KEYS.BEACON_CONFIGS),
-        AsyncStorage.getItem(STORAGE_KEYS.WIFI_FINGERPRINTS),
-        AsyncStorage.getItem(STORAGE_KEYS.ZONES),
-        AsyncStorage.getItem(STORAGE_KEYS.GEOFENCES),
-        AsyncStorage.getItem(STORAGE_KEYS.FLOORS),
-        AsyncStorage.getItem(STORAGE_KEYS.LAST_POSITION),
-        AsyncStorage.getItem(STORAGE_KEYS.BATTERY_MODE),
-      ]);
+      const [beaconConfigs, wifiFingerprints, zones, geofences, floors, lastPosition, batteryMode] =
+        await Promise.all([
+          AsyncStorage.getItem(STORAGE_KEYS.BEACON_CONFIGS),
+          AsyncStorage.getItem(STORAGE_KEYS.WIFI_FINGERPRINTS),
+          AsyncStorage.getItem(STORAGE_KEYS.ZONES),
+          AsyncStorage.getItem(STORAGE_KEYS.GEOFENCES),
+          AsyncStorage.getItem(STORAGE_KEYS.FLOORS),
+          AsyncStorage.getItem(STORAGE_KEYS.LAST_POSITION),
+          AsyncStorage.getItem(STORAGE_KEYS.BATTERY_MODE),
+        ]);
 
-      if (beaconConfigs) {this.beaconConfigs = JSON.parse(beaconConfigs);}
-      if (wifiFingerprints) {this.wifiFingerprints = JSON.parse(wifiFingerprints);}
-      if (zones) {this.zones = JSON.parse(zones);}
-      if (geofences) {this.geofences = JSON.parse(geofences);}
-      if (floors) {this.floors = JSON.parse(floors);}
-      if (lastPosition) {this.currentLocation = JSON.parse(lastPosition);}
+      if (beaconConfigs) {
+        this.beaconConfigs = JSON.parse(beaconConfigs);
+      }
+      if (wifiFingerprints) {
+        this.wifiFingerprints = JSON.parse(wifiFingerprints);
+      }
+      if (zones) {
+        this.zones = JSON.parse(zones);
+      }
+      if (geofences) {
+        this.geofences = JSON.parse(geofences);
+      }
+      if (floors) {
+        this.floors = JSON.parse(floors);
+      }
+      if (lastPosition) {
+        this.currentLocation = JSON.parse(lastPosition);
+      }
       if (batteryMode && this.config) {
         this.config.batteryMode = batteryMode as BatteryMode;
       }
@@ -210,10 +217,7 @@ class IndoorLocationManager {
       // Update local data
       if (data.beaconConfigs) {
         this.beaconConfigs = data.beaconConfigs;
-        await AsyncStorage.setItem(
-          STORAGE_KEYS.BEACON_CONFIGS,
-          JSON.stringify(this.beaconConfigs)
-        );
+        await AsyncStorage.setItem(STORAGE_KEYS.BEACON_CONFIGS, JSON.stringify(this.beaconConfigs));
       }
 
       if (data.wifiFingerprints) {
@@ -231,10 +235,7 @@ class IndoorLocationManager {
 
       if (data.geofences) {
         this.geofences = data.geofences;
-        await AsyncStorage.setItem(
-          STORAGE_KEYS.GEOFENCES,
-          JSON.stringify(this.geofences)
-        );
+        await AsyncStorage.setItem(STORAGE_KEYS.GEOFENCES, JSON.stringify(this.geofences));
       }
 
       if (data.floors) {
@@ -352,10 +353,7 @@ class IndoorLocationManager {
     this.currentLocation = location;
 
     // Save last position
-    AsyncStorage.setItem(
-      STORAGE_KEYS.LAST_POSITION,
-      JSON.stringify(location)
-    ).catch(console.error);
+    AsyncStorage.setItem(STORAGE_KEYS.LAST_POSITION, JSON.stringify(location)).catch(console.error);
 
     // Check geofences
     this.checkGeofences(location);
@@ -382,10 +380,7 @@ class IndoorLocationManager {
     });
   }
 
-  private isInsideGeofence(
-    location: IndoorCoordinate,
-    geofence: Geofence
-  ): boolean {
+  private isInsideGeofence(location: IndoorCoordinate, geofence: Geofence): boolean {
     // Check floor if specified
     if (geofence.floor !== undefined && location.floor !== geofence.floor) {
       return false;
@@ -402,12 +397,7 @@ class IndoorLocationManager {
     return distance <= geofence.radius;
   }
 
-  private calculateDistance(
-    lat1: number,
-    lon1: number,
-    lat2: number,
-    lon2: number
-  ): number {
+  private calculateDistance(lat1: number, lon1: number, lat2: number, lon2: number): number {
     const R = 6371000; // Earth radius in meters
     const dLat = ((lat2 - lat1) * Math.PI) / 180;
     const dLon = ((lon2 - lon1) * Math.PI) / 180;
@@ -444,9 +434,7 @@ class IndoorLocationManager {
     }
   }
 
-  private async showGeofenceNotification(
-    notification: GeofenceNotification
-  ): Promise<void> {
+  private async showGeofenceNotification(notification: GeofenceNotification): Promise<void> {
     // This would integrate with push notification service
     console.log('[IndoorLocationManager] Notification:', notification.title);
     // Implementation would depend on notification library (e.g., notifee, react-native-push-notification)
@@ -515,7 +503,9 @@ class IndoorLocationManager {
    * Stop location tracking
    */
   stopTracking(): void {
-    if (!this.isTracking) {return;}
+    if (!this.isTracking) {
+      return;
+    }
 
     console.log('[IndoorLocationManager] Stopping tracking');
 
@@ -601,10 +591,14 @@ class IndoorLocationManager {
    * Calculate route to POI
    */
   async calculateRoute(destinationId: string): Promise<NavigationRoute | null> {
-    if (!this.currentLocation) {return null;}
+    if (!this.currentLocation) {
+      return null;
+    }
 
     const destination = this.getAllPOIs().find((poi) => poi.id === destinationId);
-    if (!destination) {return null;}
+    if (!destination) {
+      return null;
+    }
 
     // Simple A* pathfinding would be implemented here
     // For now, return a direct route
@@ -678,23 +672,22 @@ class IndoorLocationManager {
    * Report current location to server
    */
   async reportLocation(): Promise<void> {
-    if (!this.currentLocation || !this.config?.apiEndpoint) {return;}
+    if (!this.currentLocation || !this.config?.apiEndpoint) {
+      return;
+    }
 
     try {
-      await fetch(
-        `${this.config.apiEndpoint}/festivals/${this.config?.festivalId}/location`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            latitude: this.currentLocation.latitude,
-            longitude: this.currentLocation.longitude,
-            floor: this.currentLocation.floor,
-            accuracy: this.currentLocation.accuracy,
-            timestamp: this.currentLocation.timestamp,
-          }),
-        }
-      );
+      await fetch(`${this.config.apiEndpoint}/festivals/${this.config?.festivalId}/location`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          latitude: this.currentLocation.latitude,
+          longitude: this.currentLocation.longitude,
+          floor: this.currentLocation.floor,
+          accuracy: this.currentLocation.accuracy,
+          timestamp: this.currentLocation.timestamp,
+        }),
+      });
     } catch (error) {
       console.error('[IndoorLocationManager] Error reporting location:', error);
     }

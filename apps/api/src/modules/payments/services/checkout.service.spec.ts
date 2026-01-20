@@ -12,7 +12,10 @@
 
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
-import { CheckoutService, CheckoutSessionStatus } from './checkout.service';
+import {
+  CheckoutService,
+  CheckoutSessionStatus as _CheckoutSessionStatus,
+} from './checkout.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { PromoCodesService } from '../../promo-codes/promo-codes.service';
 import { PaymentStatus, PaymentProvider } from '@prisma/client';
@@ -152,9 +155,9 @@ describe('CheckoutService', () => {
     it('should throw NotFoundException if user not found', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      await expect(
-        checkoutService.createCheckoutSession(validDto)
-      ).rejects.toThrow(NotFoundException);
+      await expect(checkoutService.createCheckoutSession(validDto)).rejects.toThrow(
+        NotFoundException
+      );
     });
 
     it('should use customer email from user if not provided', async () => {
@@ -324,20 +327,18 @@ describe('CheckoutService', () => {
       });
       mockStripe.checkout.sessions.create.mockRejectedValue(stripeError);
 
-      await expect(
-        checkoutService.createCheckoutSession(validDto)
-      ).rejects.toThrow(BadRequestException);
+      await expect(checkoutService.createCheckoutSession(validDto)).rejects.toThrow(
+        BadRequestException
+      );
     });
 
     it('should throw InternalServerErrorException on unknown error', async () => {
       mockPrismaService.user.findUnique.mockResolvedValue(regularUser);
-      mockStripe.checkout.sessions.create.mockRejectedValue(
-        new Error('Unknown error')
-      );
+      mockStripe.checkout.sessions.create.mockRejectedValue(new Error('Unknown error'));
 
-      await expect(
-        checkoutService.createCheckoutSession(validDto)
-      ).rejects.toThrow(InternalServerErrorException);
+      await expect(checkoutService.createCheckoutSession(validDto)).rejects.toThrow(
+        InternalServerErrorException
+      );
     });
 
     it('should create subscription checkout session', async () => {
@@ -537,10 +538,9 @@ describe('CheckoutService', () => {
 
       expect(result.status).toBe(mockStripeSession.status);
       expect(result.paymentStatus).toBe(mockStripeSession.payment_status);
-      expect(mockStripe.checkout.sessions.retrieve).toHaveBeenCalledWith(
-        'cs_test_session_123',
-        { expand: ['payment_intent', 'subscription'] }
-      );
+      expect(mockStripe.checkout.sessions.retrieve).toHaveBeenCalledWith('cs_test_session_123', {
+        expand: ['payment_intent', 'subscription'],
+      });
     });
 
     it('should return customerId when available', async () => {
@@ -572,9 +572,9 @@ describe('CheckoutService', () => {
       });
       mockStripe.checkout.sessions.retrieve.mockRejectedValue(stripeError);
 
-      await expect(
-        checkoutService.getCheckoutSession('invalid_session')
-      ).rejects.toThrow(BadRequestException);
+      await expect(checkoutService.getCheckoutSession('invalid_session')).rejects.toThrow(
+        BadRequestException
+      );
     });
   });
 
@@ -588,9 +588,7 @@ describe('CheckoutService', () => {
 
       await checkoutService.expireCheckoutSession('cs_test_session_123');
 
-      expect(mockStripe.checkout.sessions.expire).toHaveBeenCalledWith(
-        'cs_test_session_123'
-      );
+      expect(mockStripe.checkout.sessions.expire).toHaveBeenCalledWith('cs_test_session_123');
       expect(mockPrismaService.payment.updateMany).toHaveBeenCalledWith({
         where: {
           providerPaymentId: 'cs_test_session_123',
@@ -607,9 +605,9 @@ describe('CheckoutService', () => {
       });
       mockStripe.checkout.sessions.expire.mockRejectedValue(stripeError);
 
-      await expect(
-        checkoutService.expireCheckoutSession('cs_test_session_123')
-      ).rejects.toThrow(BadRequestException);
+      await expect(checkoutService.expireCheckoutSession('cs_test_session_123')).rejects.toThrow(
+        BadRequestException
+      );
     });
   });
 
@@ -641,10 +639,7 @@ describe('CheckoutService', () => {
         .mockResolvedValueOnce({ ...mockStripeSession, id: 'cs_session_1' })
         .mockResolvedValueOnce({ ...mockStripeSession, id: 'cs_session_2' });
 
-      const result = await checkoutService.listUserCheckoutSessions(
-        regularUser.id,
-        10
-      );
+      const result = await checkoutService.listUserCheckoutSessions(regularUser.id, 10);
 
       expect(result).toHaveLength(2);
       expect(mockPrismaService.payment.findMany).toHaveBeenCalledWith({
@@ -669,13 +664,9 @@ describe('CheckoutService', () => {
       ];
 
       mockPrismaService.payment.findMany.mockResolvedValue(mockPayments);
-      mockStripe.checkout.sessions.retrieve.mockRejectedValue(
-        new Error('Session expired')
-      );
+      mockStripe.checkout.sessions.retrieve.mockRejectedValue(new Error('Session expired'));
 
-      const result = await checkoutService.listUserCheckoutSessions(
-        regularUser.id
-      );
+      const result = await checkoutService.listUserCheckoutSessions(regularUser.id);
 
       expect(result).toHaveLength(0);
     });
@@ -715,9 +706,7 @@ describe('CheckoutService', () => {
         status: PaymentStatus.COMPLETED,
       });
 
-      await checkoutService.handleCheckoutCompleted(
-        mockSession as Stripe.Checkout.Session
-      );
+      await checkoutService.handleCheckoutCompleted(mockSession as Stripe.Checkout.Session);
 
       expect(mockPrismaService.payment.update).toHaveBeenCalledWith({
         where: { id: mockPayment.id },
@@ -751,9 +740,7 @@ describe('CheckoutService', () => {
     it('should handle missing payment gracefully', async () => {
       mockPrismaService.payment.findFirst.mockResolvedValue(null);
 
-      await checkoutService.handleCheckoutCompleted(
-        mockSession as Stripe.Checkout.Session
-      );
+      await checkoutService.handleCheckoutCompleted(mockSession as Stripe.Checkout.Session);
 
       expect(mockPrismaService.payment.update).not.toHaveBeenCalled();
     });
@@ -765,9 +752,7 @@ describe('CheckoutService', () => {
         status: PaymentStatus.COMPLETED,
       });
 
-      await checkoutService.handleCheckoutCompleted(
-        mockSession as Stripe.Checkout.Session
-      );
+      await checkoutService.handleCheckoutCompleted(mockSession as Stripe.Checkout.Session);
 
       expect(mockPrismaService.payment.update).toHaveBeenCalledWith({
         where: { id: mockPayment.id },
@@ -790,9 +775,7 @@ describe('CheckoutService', () => {
     it('should update payment status to CANCELLED', async () => {
       mockPrismaService.payment.updateMany.mockResolvedValue({ count: 1 });
 
-      await checkoutService.handleCheckoutExpired(
-        mockSession as Stripe.Checkout.Session
-      );
+      await checkoutService.handleCheckoutExpired(mockSession as Stripe.Checkout.Session);
 
       expect(mockPrismaService.payment.updateMany).toHaveBeenCalledWith({
         where: { providerPaymentId: 'cs_test_session_123' },
@@ -838,15 +821,15 @@ describe('CheckoutService', () => {
     });
 
     it('should throw InternalServerErrorException when getting session without Stripe', async () => {
-      await expect(
-        serviceNoStripe.getCheckoutSession('cs_test_123')
-      ).rejects.toThrow(InternalServerErrorException);
+      await expect(serviceNoStripe.getCheckoutSession('cs_test_123')).rejects.toThrow(
+        InternalServerErrorException
+      );
     });
 
     it('should throw InternalServerErrorException when expiring session without Stripe', async () => {
-      await expect(
-        serviceNoStripe.expireCheckoutSession('cs_test_123')
-      ).rejects.toThrow(InternalServerErrorException);
+      await expect(serviceNoStripe.expireCheckoutSession('cs_test_123')).rejects.toThrow(
+        InternalServerErrorException
+      );
     });
   });
 });
