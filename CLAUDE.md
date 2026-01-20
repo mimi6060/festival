@@ -60,8 +60,10 @@ npm run lint:fix
 **This is NON-NEGOTIABLE:**
 
 - Never commit code with ESLint errors
-- Fix all errors immediately, even if they seem minor
-- Pre-existing warnings are acceptable, but new errors must be fixed
+- Never introduce new ESLint warnings
+- When modifying a file that has existing warnings or errors, fix ALL of them before committing
+- Run `npx eslint <file>` on each modified file to verify zero issues
+- If a file has too many pre-existing issues, fix them in a separate commit first
 
 ## Pre-Push Verification (MANDATORY)
 
