@@ -1,13 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect, useCallback } from 'react';
-import {
-  apiKeysApi,
-  sessionsApi,
-  twoFactorApi,
-  passwordApi,
-  webhooksApi,
-} from '../../../lib/api';
+import { apiKeysApi, sessionsApi, twoFactorApi, passwordApi, webhooksApi } from '../../../lib/api';
+import { useTheme } from '../../../components/Providers';
 import type {
   ApiKey,
   Session,
@@ -80,7 +75,9 @@ function Modal({
   title: string;
   children: React.ReactNode;
 }) {
-  if (!isOpen) return null;
+  if (!isOpen) {
+    return null;
+  }
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
@@ -107,6 +104,95 @@ function Modal({
   );
 }
 
+// Theme Selector Component
+function ThemeSelector() {
+  const { theme, setTheme } = useTheme();
+
+  const themes = [
+    {
+      value: 'light' as const,
+      label: 'Clair',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+          />
+        </svg>
+      ),
+    },
+    {
+      value: 'dark' as const,
+      label: 'Sombre',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+          />
+        </svg>
+      ),
+    },
+    {
+      value: 'system' as const,
+      label: 'Systeme',
+      icon: (
+        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            strokeWidth={2}
+            d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+          />
+        </svg>
+      ),
+    },
+  ];
+
+  return (
+    <div>
+      <label className="form-label">Theme</label>
+      <div className="grid grid-cols-3 gap-3 mt-2">
+        {themes.map((t) => (
+          <button
+            key={t.value}
+            type="button"
+            onClick={() => setTheme(t.value)}
+            className={`flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all ${
+              theme === t.value
+                ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/20'
+                : 'border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600'
+            }`}
+          >
+            <div
+              className={`p-2 rounded-lg ${
+                theme === t.value
+                  ? 'bg-primary-100 text-primary-600 dark:bg-primary-800 dark:text-primary-300'
+                  : 'bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400'
+              }`}
+            >
+              {t.icon}
+            </div>
+            <span
+              className={`text-sm font-medium ${
+                theme === t.value
+                  ? 'text-primary-700 dark:text-primary-300'
+                  : 'text-gray-700 dark:text-gray-300'
+              }`}
+            >
+              {t.label}
+            </span>
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 // Logo Upload Component
 function LogoUpload() {
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
@@ -116,7 +202,9 @@ function LogoUpload() {
 
   const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      return;
+    }
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
@@ -158,7 +246,12 @@ function LogoUpload() {
           {logoUrl ? (
             <img src={logoUrl} alt="Logo" className="w-full h-full object-cover" />
           ) : (
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="w-8 h-8 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -497,7 +590,9 @@ function ActiveSessions() {
   };
 
   const handleRevokeAll = async () => {
-    if (!confirm('Etes-vous sur de vouloir deconnecter toutes les autres sessions?')) return;
+    if (!confirm('Etes-vous sur de vouloir deconnecter toutes les autres sessions?')) {
+      return;
+    }
 
     try {
       await sessionsApi.revokeAll();
@@ -587,7 +682,8 @@ function ActiveSessions() {
                             )}
                           </p>
                           <p className="text-sm text-gray-500">
-                            {session.ipAddress} - Derniere activite: {formatDate(session.lastActiveAt)}
+                            {session.ipAddress} - Derniere activite:{' '}
+                            {formatDate(session.lastActiveAt)}
                           </p>
                         </div>
                       </div>
@@ -785,12 +881,17 @@ function ApiKeysManager() {
   };
 
   const handleRevokeKey = async (keyId: string) => {
-    if (!confirm('Etes-vous sur de vouloir revoquer cette cle API? Cette action est irreversible.'))
+    if (
+      !confirm('Etes-vous sur de vouloir revoquer cette cle API? Cette action est irreversible.')
+    ) {
       return;
+    }
 
     try {
       await apiKeysApi.revoke(keyId);
-      setApiKeys((prev) => prev.map((k) => (k.id === keyId ? { ...k, status: 'REVOKED' as const } : k)));
+      setApiKeys((prev) =>
+        prev.map((k) => (k.id === keyId ? { ...k, status: 'REVOKED' as const } : k))
+      );
       setSuccess('Cle API revoquee avec succes');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erreur lors de la revocation');
@@ -847,7 +948,9 @@ function ApiKeysManager() {
                       {key.tier}
                     </span>
                   </div>
-                  {key.description && <p className="text-sm text-gray-500 mt-1">{key.description}</p>}
+                  {key.description && (
+                    <p className="text-sm text-gray-500 mt-1">{key.description}</p>
+                  )}
                   <div className="flex items-center gap-2 mt-2">
                     <code className="text-sm font-mono bg-gray-100 px-2 py-1 rounded">
                       {key.keyPrefix}...
@@ -856,7 +959,12 @@ function ApiKeysManager() {
                       onClick={() => copyToClipboard(key.key)}
                       className="text-gray-400 hover:text-gray-600"
                     >
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        className="w-4 h-4"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -1069,7 +1177,9 @@ function WebhookManager() {
   };
 
   const handleDeleteWebhook = async (webhookId: string) => {
-    if (!confirm('Etes-vous sur de vouloir supprimer ce webhook?')) return;
+    if (!confirm('Etes-vous sur de vouloir supprimer ce webhook?')) {
+      return;
+    }
 
     try {
       await webhooksApi.delete(festivalId, webhookId);
@@ -1175,7 +1285,12 @@ function WebhookManager() {
                     title={webhook.isActive ? 'Desactiver' : 'Activer'}
                   >
                     {webhook.isActive ? (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -1184,7 +1299,12 @@ function WebhookManager() {
                         />
                       </svg>
                     ) : (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
                         <path
                           strokeLinecap="round"
                           strokeLinejoin="round"
@@ -1257,7 +1377,12 @@ function WebhookManager() {
           setCreatedSecret(null);
           setWebhookUrl('');
           setWebhookName('');
-          setWebhookEvents(['order.created', 'order.completed', 'order.refunded', 'ticket.scanned']);
+          setWebhookEvents([
+            'order.created',
+            'order.completed',
+            'order.refunded',
+            'ticket.scanned',
+          ]);
         }}
         title={createdSecret ? 'Webhook cree' : 'Nouveau webhook'}
       >
@@ -1330,7 +1455,11 @@ function WebhookManager() {
               <button onClick={() => setShowCreateModal(false)} className="btn-secondary flex-1">
                 Annuler
               </button>
-              <button onClick={handleCreateWebhook} disabled={creating} className="btn-primary flex-1">
+              <button
+                onClick={handleCreateWebhook}
+                disabled={creating}
+                className="btn-primary flex-1"
+              >
                 {creating ? <LoadingSpinner size="sm" /> : 'Creer'}
               </button>
             </div>
@@ -1502,45 +1631,15 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="pt-4 border-t border-gray-100">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">Apparence</h2>
+                  <h2 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    Apparence
+                  </h2>
                   <div className="space-y-4">
                     <div>
                       <label className="form-label">Logo</label>
                       <LogoUpload />
                     </div>
-                    <div>
-                      <label className="form-label">Theme</label>
-                      <div className="flex gap-4">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="theme"
-                            value="light"
-                            defaultChecked
-                            className="w-4 h-4 text-primary-600"
-                          />
-                          <span className="text-gray-700">Clair</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="theme"
-                            value="dark"
-                            className="w-4 h-4 text-primary-600"
-                          />
-                          <span className="text-gray-700">Sombre</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="radio"
-                            name="theme"
-                            value="system"
-                            className="w-4 h-4 text-primary-600"
-                          />
-                          <span className="text-gray-700">Systeme</span>
-                        </label>
-                      </div>
-                    </div>
+                    <ThemeSelector />
                   </div>
                 </div>
               </div>
