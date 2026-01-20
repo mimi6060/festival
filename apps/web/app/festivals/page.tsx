@@ -120,7 +120,7 @@ function transformFestival(festival: Festival): FestivalCardType {
     id: festival.id,
     slug: festival.slug,
     name: festival.name,
-    description: festival.description || 'Découvrez ce festival incroyable',
+    description: festival.description || 'Decouvrez ce festival incroyable',
     location: festival.location,
     startDate: festival.startDate,
     endDate: festival.endDate,
@@ -131,9 +131,9 @@ function transformFestival(festival: Festival): FestivalCardType {
       from: minPrice,
       currency: festival.currency || 'EUR',
     },
-    genres: [],
+    genres: festival.genres || [],
     isSoldOut: festival.currentAttendees >= festival.maxCapacity,
-    isFeatured: festival.status === 'ONGOING',
+    isFeatured: festival.isFeatured || false,
   };
 }
 

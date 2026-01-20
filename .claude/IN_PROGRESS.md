@@ -2,6 +2,88 @@
 
 ---
 
+## Session 2026-01-21 - Web App Forms and Notifications Implementation
+
+### Completed
+
+- [x] **Contact Form API** - Implemented real API endpoint for contact form
+  - Created `/api/contact` public POST endpoint in support module
+  - Created `ContactController` with Public decorator for unauthenticated access
+  - Created `ContactService` with email notifications and Slack webhook support
+  - Generates unique ticket ID for tracking (CONTACT-timestamp-random)
+  - Sends confirmation email to user using EmailService
+  - Notifies support team via email and optional Slack webhook
+  - Created `contact-confirmation.hbs` email template (FR/EN)
+  - Created `contact-notification.hbs` email template for support team
+
+- [x] **Newsletter Subscription API** - Implemented newsletter subscription endpoint
+  - Created `/api/contact/newsletter` public POST endpoint
+  - Stores subscriptions in memory (ready for database integration)
+  - Sends welcome email to new subscribers using EmailService
+  - Handles duplicate subscriptions gracefully
+  - Created `newsletter-welcome.hbs` email template (FR/EN)
+  - Optional Slack notification for new subscribers
+
+- [x] **Contact Form Frontend** - Connected web contact form to real API
+  - Updated `apps/web/app/contact/page.tsx` to call `/api/contact`
+  - Added ticket ID display in success message
+  - Added message length validation (min 10 characters)
+  - Proper error handling with user-friendly messages
+
+- [x] **Newsletter Frontend** - Connected Footer newsletter to real API
+  - Updated `apps/web/components/layout/Footer.tsx` to call `/api/contact/newsletter`
+  - Added error state handling and display
+  - Clears error on input change
+
+- [x] **Beta Signup Email** - Implemented real welcome email for beta signups
+  - Implemented `sendWelcomeEmail()` function using nodemailer
+  - Full HTML email with responsive design and bilingual support
+  - Includes beta program benefits and next steps
+  - Graceful fallback when SMTP not configured
+
+- [x] **Beta Team Notifications** - Implemented team notification system
+  - Implemented `notifyTeam()` with multiple notification channels:
+    - Slack webhook (rich formatting with blocks)
+    - Discord webhook (embeds with fields)
+    - Email notification to team
+  - Uses environment variables: SLACK_WEBHOOK_URL, DISCORD_WEBHOOK_URL, TEAM_NOTIFICATION_EMAIL
+  - All channels fail gracefully if not configured
+  - Created `beta-welcome.hbs` email template for API service
+
+### Modified Files
+
+**API (apps/api/src/modules/support/):**
+
+- `controllers/contact.controller.ts` - New contact/newsletter endpoints
+- `services/contact.service.ts` - Contact form and newsletter logic
+- `dto/contact.dto.ts` - DTOs for contact form and newsletter
+- `dto/index.ts` - Export new DTOs
+- `controllers/index.ts` - Export new controller
+- `services/index.ts` - Export new service
+- `support.module.ts` - Added ContactController, ContactService, EmailModule
+
+**Email Templates (apps/api/src/modules/email/templates/):**
+
+- `contact-confirmation.hbs` - User confirmation email
+- `contact-notification.hbs` - Support team notification
+- `newsletter-welcome.hbs` - Newsletter welcome email
+- `beta-welcome.hbs` - Beta program welcome email
+
+**Web (apps/web/):**
+
+- `app/contact/page.tsx` - Real API integration
+- `components/layout/Footer.tsx` - Newsletter API integration
+- `app/api/beta-signup/route.ts` - Full email and notification implementation
+
+### Environment Variables Added
+
+- `SLACK_WEBHOOK_URL` - Optional: Slack webhook for team notifications
+- `DISCORD_WEBHOOK_URL` - Optional: Discord webhook for team notifications
+- `TEAM_NOTIFICATION_EMAIL` - Optional: Email for team notifications
+- `SUPPORT_EMAIL` - Optional: Support team email (fallback for team notifications)
+
+---
+
 ## Session 2026-01-21 - Festival Data Migration to Database
 
 ### Completed

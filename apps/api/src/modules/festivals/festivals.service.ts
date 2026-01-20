@@ -119,6 +119,7 @@ export class FestivalsService {
         contactEmail: dto.contactEmail,
         logoUrl: dto.logoUrl,
         bannerUrl: dto.bannerUrl,
+        genres: dto.genres || [],
       },
     });
   }
@@ -418,6 +419,57 @@ export class FestivalsService {
    */
   async findPublished(query: FestivalQueryDto) {
     return this.findAll({ ...query, status: FestivalStatus.PUBLISHED });
+  }
+
+  /**
+   * Get featured festivals for homepage (public endpoint)
+   * Returns published festivals that are marked as featured
+   * Cache TTL: 60 seconds
+   */
+  async findFeatured(limit = 6) {
+    const cacheKey = `festivals:featured:${limit}`;
+
+    // Try to get from cache
+    const cached = await this.cacheService.get(cacheKey);
+    if (cached) {
+      this.logCacheHit(cacheKey, 'findFeatured');
+      return cached;
+    }
+
+    this.logCacheMiss(cacheKey, 'findFeatured');
+
+    const festivals = await this.prisma.festival.findMany({
+      where: {
+        isDeleted: false,
+        isFeatured: true,
+        status: { in: ['PUBLISHED', 'ONGOING'] },
+      },
+      take: limit,
+      orderBy: { startDate: 'asc' },
+      include: {
+        organizer: {
+          select: { id: true, firstName: true, lastName: true, email: true },
+        },
+        ticketCategories: {
+          where: { isActive: true },
+          select: { id: true, name: true, price: true, isActive: true },
+          orderBy: { price: 'asc' },
+          take: 5,
+        },
+      },
+    });
+
+    // Cache the result with 60 second TTL
+    await this.cacheService.set(cacheKey, festivals, {
+      ttl: CACHE_TTL.FESTIVAL_LIST,
+      tags: [CacheTag.FESTIVAL],
+    });
+
+    this.logger.debug(
+      `[CACHE SET] findFeatured - Key: ${cacheKey}, TTL: ${CACHE_TTL.FESTIVAL_LIST}s`
+    );
+
+    return festivals;
   }
 
   /**

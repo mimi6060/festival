@@ -7,7 +7,6 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
 }
 
 // Enums
@@ -266,6 +265,8 @@ model Festival {
   contactEmail    String?
   timezone        String          @default("Europe/Paris")
   currency        String          @default("EUR")
+  genres          String[]        @default([])     // Music genres/categories
+  isFeatured      Boolean         @default(false)  // Featured on homepage
   isDeleted       Boolean         @default(false)  // Soft delete
   deletedAt       DateTime?
   createdAt       DateTime        @default(now())
@@ -291,6 +292,7 @@ model Festival {
   @@index([status])
   @@index([startDate, endDate])
   @@index([isDeleted])
+  @@index([isFeatured])
 }
 
 // PromoCode model for discount codes
@@ -840,6 +842,9 @@ model Vendor {
   isActive        Boolean     @default(true)
   openingHours    Json?       // {"monday": {"open": "09:00", "close": "22:00"}, ...}
   qrMenuCode      String?     @unique // Unique QR code for digital menu
+  // Stripe Connect integration
+  stripeAccountId String?     @unique // Stripe Connect account ID (acct_xxx)
+  stripeOnboardingComplete Boolean @default(false) // Whether Stripe onboarding is complete
   // Soft delete
   isDeleted       Boolean     @default(false)
   deletedAt       DateTime?
@@ -860,6 +865,7 @@ model Vendor {
   @@index([isOpen])
   @@index([isActive])
   @@index([isDeleted])
+  @@index([stripeAccountId])
 }
 
 model VendorProduct {

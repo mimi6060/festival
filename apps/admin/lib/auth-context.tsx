@@ -13,6 +13,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
   setRememberMe: (value: boolean) => void;
+  updateUser: (userData: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -287,6 +288,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     router.push('/login');
   };
 
+  const updateUser = useCallback(
+    (userData: Partial<User>) => {
+      setUser((currentUser) => {
+        if (!currentUser) {
+          return currentUser;
+        }
+        const updatedUser = { ...currentUser, ...userData };
+        // Update localStorage if remember me is enabled
+        if (rememberMe && typeof window !== 'undefined') {
+          localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+        }
+        return updatedUser;
+      });
+    },
+    [rememberMe]
+  );
+
   return (
     <AuthContext.Provider
       value={{
@@ -298,6 +316,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         logout,
         checkAuth,
         setRememberMe,
+        updateUser,
       }}
     >
       {children}

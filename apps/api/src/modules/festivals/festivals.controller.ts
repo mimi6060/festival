@@ -169,6 +169,42 @@ export class FestivalsController {
   }
 
   /**
+   * Get featured festivals for homepage (PUBLIC)
+   */
+  @Get('featured')
+  @Public()
+  @RateLimit({
+    limit: 100,
+    windowSeconds: 60, // 100 requests per minute
+    keyPrefix: 'festivals:featured',
+    errorMessage: 'Too many requests. Please try again later.',
+  })
+  @Cacheable({
+    key: { prefix: 'festivals:featured', paramIndices: [0] },
+    ttl: 60, // 60 seconds
+    tags: [CacheTag.FESTIVAL],
+  })
+  @ApiOperation({
+    summary: 'Get featured festivals',
+    description: 'Returns a list of featured festivals for the homepage. Public endpoint.',
+  })
+  @ApiQuery({
+    name: 'limit',
+    description: 'Maximum number of featured festivals to return',
+    required: false,
+    example: 6,
+    type: Number,
+  })
+  @ApiOkResponse({
+    description: 'List of featured festivals',
+    type: [FestivalResponseDto],
+  })
+  async findFeatured(@Query('limit') limit?: string) {
+    const parsedLimit = limit ? parseInt(limit, 10) : 6;
+    return this.festivalsService.findFeatured(Math.min(parsedLimit, 20));
+  }
+
+  /**
    * Get festival by ID
    */
   @Get(':id')

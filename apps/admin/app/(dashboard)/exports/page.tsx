@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { ExportButton } from '@/components/export';
 import {
   userExportColumns,
@@ -11,6 +11,7 @@ import {
 } from '@/lib/export';
 import { mockUsers, mockFestivals, mockOrders, mockStaff } from '@/lib/mock-data';
 import { formatDateTime, cn } from '@/lib/utils';
+import { usersApi, festivalsApi, ordersApi, cashlessApi, staffApi } from '@/lib/api';
 
 // Types for export configurations
 interface ExportConfig {
@@ -64,6 +65,66 @@ export default function ExportsPage() {
     { name: string; format: string; date: Date }[]
   >([]);
 
+  // State for API data
+  const [users, setUsers] = useState<Record<string, unknown>[]>(
+    mockUsers as unknown as Record<string, unknown>[]
+  );
+  const [festivals, setFestivals] = useState<Record<string, unknown>[]>(
+    mockFestivals as unknown as Record<string, unknown>[]
+  );
+  const [orders, setOrders] = useState<Record<string, unknown>[]>(
+    mockOrders as unknown as Record<string, unknown>[]
+  );
+  const [cashlessTransactions, setCashlessTransactions] = useState<Record<string, unknown>[]>(
+    mockCashlessTransactions as unknown as Record<string, unknown>[]
+  );
+  const [staff, setStaff] = useState<Record<string, unknown>[]>(
+    mockStaff as unknown as Record<string, unknown>[]
+  );
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch all data for exports
+  const fetchData = useCallback(async () => {
+    try {
+      const [usersRes, festivalsRes, ordersRes, cashlessRes, staffRes] = await Promise.allSettled([
+        usersApi.getAll({ limit: 1000 }),
+        festivalsApi.getAll({ limit: 100 }),
+        ordersApi.getAll({ limit: 1000 }),
+        cashlessApi.getTransactions({ limit: 1000 }),
+        staffApi.getAll({ limit: 500 }),
+      ]);
+
+      if (usersRes.status === 'fulfilled') {
+        setUsers(usersRes.value.data as unknown as Record<string, unknown>[]);
+      }
+      if (festivalsRes.status === 'fulfilled') {
+        setFestivals(festivalsRes.value.data as unknown as Record<string, unknown>[]);
+      }
+      if (ordersRes.status === 'fulfilled') {
+        setOrders(ordersRes.value.data as unknown as Record<string, unknown>[]);
+      }
+      if (cashlessRes.status === 'fulfilled') {
+        setCashlessTransactions(cashlessRes.value.data as unknown as Record<string, unknown>[]);
+      }
+      if (staffRes.status === 'fulfilled') {
+        setStaff(staffRes.value.data as unknown as Record<string, unknown>[]);
+      }
+
+      setError(null);
+    } catch (err) {
+      console.error('Failed to fetch export data:', err);
+      setError('Failed to load some data. Using cached data.');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
   // Export configurations
   const exportConfigs: ExportConfig[] = useMemo(
     () => [
@@ -74,8 +135,8 @@ export default function ExportsPage() {
         icon: '👥',
         category: 'users',
         columns: userExportColumns,
-        getData: () => mockUsers as unknown as Record<string, unknown>[],
-        recordCount: mockUsers.length,
+        getData: () => users,
+        recordCount: users.length,
       },
       {
         id: 'festivals',
@@ -84,8 +145,8 @@ export default function ExportsPage() {
         icon: '🎪',
         category: 'operations',
         columns: festivalExportColumns,
-        getData: () => mockFestivals as unknown as Record<string, unknown>[],
-        recordCount: mockFestivals.length,
+        getData: () => festivals,
+        recordCount: festivals.length,
       },
       {
         id: 'orders',
@@ -94,8 +155,8 @@ export default function ExportsPage() {
         icon: '🛒',
         category: 'sales',
         columns: orderExportColumns,
-        getData: () => mockOrders as unknown as Record<string, unknown>[],
-        recordCount: mockOrders.length,
+        getData: () => orders,
+        recordCount: orders.length,
       },
       {
         id: 'cashless',
@@ -104,8 +165,8 @@ export default function ExportsPage() {
         icon: '💳',
         category: 'finance',
         columns: cashlessExportColumns,
-        getData: () => mockCashlessTransactions as unknown as Record<string, unknown>[],
-        recordCount: mockCashlessTransactions.length,
+        getData: () => cashlessTransactions,
+        recordCount: cashlessTransactions.length,
       },
       {
         id: 'staff',
@@ -114,11 +175,11 @@ export default function ExportsPage() {
         icon: '👔',
         category: 'operations',
         columns: staffExportColumns,
-        getData: () => mockStaff as unknown as Record<string, unknown>[],
-        recordCount: mockStaff.length,
+        getData: () => staff,
+        recordCount: staff.length,
       },
     ],
-    []
+    [users, festivals, orders, cashlessTransactions, staff]
   );
 
   // Filter by category
@@ -155,6 +216,34 @@ export default function ExportsPage() {
           <p className="text-gray-500 mt-1">Exportez vos donnees en CSV, Excel ou JSON</p>
         </div>
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-center gap-3">
+          <svg
+            className="w-5 h-5 text-yellow-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+          <span className="text-yellow-800">{error}</span>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <span className="ml-3 text-gray-600">Loading export data...</span>
+        </div>
+      )}
 
       {/* Category Filter */}
       <div className="flex gap-2 overflow-x-auto pb-2">

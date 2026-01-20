@@ -7,8 +7,11 @@ import { FestivalHero, FestivalLineup, FestivalShare, type Festival } from '@/co
 
 export const dynamic = 'force-dynamic';
 
-// Mock data - in production this would come from an API
-const festivals: Record<
+// API URL for server-side fetching
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
+
+// Fallback mock data for when API is unavailable (for initial development)
+const FALLBACK_FESTIVALS: Record<
   string,
   Festival & {
     lineup: { name: string; genre: string; time: string; stage: string }[];
@@ -20,7 +23,7 @@ const festivals: Record<
     slug: 'electric-dreams-2025',
     name: 'Electric Dreams Festival',
     description:
-      'Experience the ultimate electronic music festival featuring world-renowned DJs and immersive art installations across 5 stages. Join us for 4 days of non-stop music, art, and unforgettable memories in the heart of Barcelona.',
+      'Experience the ultimate electronic music festival featuring world-renowned DJs and immersive art installations across 5 stages. Join us for 4 days of non-stop music, art, and unforgettable memories.',
     location: 'Barcelona, Spain',
     startDate: '2025-07-15',
     endDate: '2025-07-18',
@@ -33,244 +36,100 @@ const festivals: Record<
       { name: 'Charlotte de Witte', genre: 'Techno', time: 'Friday 22:00', stage: 'Techno Arena' },
       { name: 'Fisher', genre: 'House', time: 'Saturday 21:00', stage: 'Main Stage' },
       { name: 'Amelie Lens', genre: 'Techno', time: 'Sunday 00:00', stage: 'Techno Arena' },
-      { name: 'Martin Garrix', genre: 'EDM', time: 'Friday 23:30', stage: 'Main Stage' },
-      {
-        name: 'Tale Of Us',
-        genre: 'Melodic Techno',
-        time: 'Saturday 02:00',
-        stage: 'Secret Garden',
-      },
     ],
-    schedule: [
-      {
-        date: '2025-07-15',
-        events: [
-          { time: '16:00', title: 'Gates Open', stage: 'All Stages' },
-          { time: '18:00', title: 'Opening Ceremony', stage: 'Main Stage' },
-          { time: '20:00', title: 'Local DJs Showcase', stage: 'Beach Stage' },
-        ],
-      },
-      {
-        date: '2025-07-16',
-        events: [
-          { time: '14:00', title: 'Yoga Session', stage: 'Wellness Area' },
-          { time: '16:00', title: 'Afternoon Beats', stage: 'Beach Stage' },
-          { time: '22:00', title: 'Charlotte de Witte', stage: 'Techno Arena' },
-          { time: '23:30', title: 'Martin Garrix', stage: 'Main Stage' },
-        ],
-      },
-    ],
-  },
-  'rock-revolution-2025': {
-    id: '2',
-    slug: 'rock-revolution-2025',
-    name: 'Rock Revolution',
-    description:
-      'The biggest rock festival in Europe with legendary headliners and emerging artists. Three days of pure rock energy featuring multiple stages and unforgettable performances.',
-    location: 'London, UK',
-    startDate: '2025-08-22',
-    endDate: '2025-08-24',
-    imageUrl: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=1920&h=1080&fit=crop',
-    price: { from: 149, currency: 'GBP' },
-    genres: ['Rock', 'Alternative', 'Metal'],
-    lineup: [
-      { name: 'Foo Fighters', genre: 'Rock', time: 'Saturday 22:00', stage: 'Main Stage' },
-      { name: 'Arctic Monkeys', genre: 'Indie Rock', time: 'Sunday 21:00', stage: 'Main Stage' },
-      { name: 'Royal Blood', genre: 'Rock', time: 'Friday 20:00', stage: 'Rock Arena' },
-      {
-        name: 'Bring Me The Horizon',
-        genre: 'Metal',
-        time: 'Saturday 19:00',
-        stage: 'Heavy Stage',
-      },
-    ],
-    schedule: [
-      {
-        date: '2025-08-22',
-        events: [
-          { time: '14:00', title: 'Gates Open', stage: 'All Stages' },
-          { time: '16:00', title: 'Local Bands', stage: 'Discovery Stage' },
-          { time: '20:00', title: 'Royal Blood', stage: 'Rock Arena' },
-        ],
-      },
-    ],
-  },
-  'summer-beats-2025': {
-    id: '3',
-    slug: 'summer-beats-2025',
-    name: 'Summer Beats Festival',
-    description:
-      'A celebration of hip-hop, R&B, and urban music under the summer sun. Join us in Paris for three days of the hottest urban acts.',
-    location: 'Paris, France',
-    startDate: '2025-06-28',
-    endDate: '2025-06-30',
-    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=1920&h=1080&fit=crop',
-    price: { from: 129, currency: 'EUR' },
-    genres: ['Hip-Hop', 'R&B', 'Urban'],
-    lineup: [
-      { name: 'Kendrick Lamar', genre: 'Hip-Hop', time: 'Saturday 23:00', stage: 'Main Stage' },
-      { name: 'SZA', genre: 'R&B', time: 'Sunday 21:00', stage: 'Main Stage' },
-      { name: 'Tyler, The Creator', genre: 'Hip-Hop', time: 'Friday 22:00', stage: 'Urban Arena' },
-      { name: 'Doja Cat', genre: 'Pop/R&B', time: 'Saturday 20:00', stage: 'Main Stage' },
-    ],
-    schedule: [
-      {
-        date: '2025-06-28',
-        events: [
-          { time: '15:00', title: 'Gates Open', stage: 'All Stages' },
-          { time: '18:00', title: 'DJ Sets', stage: 'Beach Stage' },
-          { time: '22:00', title: 'Tyler, The Creator', stage: 'Urban Arena' },
-        ],
-      },
-    ],
-  },
-  'jazz-nights-2025': {
-    id: '4',
-    slug: 'jazz-nights-2025',
-    name: 'Jazz Nights',
-    description:
-      'An intimate jazz experience in the heart of Amsterdam with international artists. Three nights of smooth jazz, soul, and blues.',
-    location: 'Amsterdam, Netherlands',
-    startDate: '2025-09-05',
-    endDate: '2025-09-07',
-    imageUrl: 'https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=1920&h=1080&fit=crop',
-    price: { from: 89, currency: 'EUR' },
-    genres: ['Jazz', 'Soul', 'Blues'],
-    lineup: [
-      { name: 'Kamasi Washington', genre: 'Jazz', time: 'Saturday 21:00', stage: 'Main Stage' },
-      { name: 'Gregory Porter', genre: 'Jazz/Soul', time: 'Friday 20:00', stage: 'Main Stage' },
-      { name: 'Snarky Puppy', genre: 'Jazz Fusion', time: 'Sunday 19:00', stage: 'Club Stage' },
-      { name: 'Robert Glasper', genre: 'Jazz', time: 'Saturday 18:00', stage: 'Intimate Stage' },
-    ],
-    schedule: [
-      {
-        date: '2025-09-05',
-        events: [
-          { time: '17:00', title: 'Doors Open', stage: 'All Venues' },
-          { time: '19:00', title: 'Opening Act', stage: 'Club Stage' },
-          { time: '20:00', title: 'Gregory Porter', stage: 'Main Stage' },
-        ],
-      },
-    ],
-  },
-  'indie-vibes-2025': {
-    id: '5',
-    slug: 'indie-vibes-2025',
-    name: 'Indie Vibes',
-    description:
-      'Discover the best indie and alternative artists in a beautiful coastal setting. Three days of unique sounds and ocean views in Lisbon.',
-    location: 'Lisbon, Portugal',
-    startDate: '2025-07-01',
-    endDate: '2025-07-03',
-    imageUrl: 'https://images.unsplash.com/photo-1506157786151-b8491531f063?w=1920&h=1080&fit=crop',
-    price: { from: 99, currency: 'EUR' },
-    genres: ['Indie', 'Alternative', 'Folk'],
-    lineup: [
-      { name: 'Tame Impala', genre: 'Psychedelic', time: 'Saturday 22:00', stage: 'Ocean Stage' },
-      { name: 'Bon Iver', genre: 'Indie Folk', time: 'Sunday 21:00', stage: 'Forest Stage' },
-      { name: 'Mac DeMarco', genre: 'Indie Rock', time: 'Friday 20:00', stage: 'Beach Stage' },
-      { name: 'Phoebe Bridgers', genre: 'Indie', time: 'Saturday 19:00', stage: 'Ocean Stage' },
-    ],
-    schedule: [
-      {
-        date: '2025-07-01',
-        events: [
-          { time: '14:00', title: 'Festival Opens', stage: 'All Stages' },
-          { time: '17:00', title: 'Sunset Session', stage: 'Beach Stage' },
-          { time: '20:00', title: 'Mac DeMarco', stage: 'Beach Stage' },
-        ],
-      },
-    ],
-  },
-  'tropical-bass-2025': {
-    id: '6',
-    slug: 'tropical-bass-2025',
-    name: 'Tropical Bass Festival',
-    description:
-      'Where electronic beats meet tropical vibes. Dance on the beach all day and night in the world capital of electronic music - Ibiza.',
-    location: 'Ibiza, Spain',
-    startDate: '2025-08-10',
-    endDate: '2025-08-14',
-    imageUrl: 'https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=1920&h=1080&fit=crop',
-    price: { from: 249, currency: 'EUR' },
-    genres: ['Electronic', 'Tropical', 'Bass'],
-    isFeatured: true,
-    lineup: [
-      { name: 'Diplo', genre: 'Electronic', time: 'Saturday 23:00', stage: 'Beach Stage' },
-      { name: 'Major Lazer', genre: 'Electronic', time: 'Sunday 22:00', stage: 'Main Stage' },
-      { name: 'Kaytranada', genre: 'Electronic/R&B', time: 'Friday 21:00', stage: 'Sunset Stage' },
-      { name: 'Disclosure', genre: 'House', time: 'Saturday 20:00', stage: 'Pool Stage' },
-      { name: 'Jamie xx', genre: 'Electronic', time: 'Sunday 00:00', stage: 'Club Stage' },
-      { name: 'Four Tet', genre: 'Electronic', time: 'Monday 02:00', stage: 'Secret Stage' },
-    ],
-    schedule: [
-      {
-        date: '2025-08-10',
-        events: [
-          { time: '12:00', title: 'Beach Party Starts', stage: 'Beach Stage' },
-          { time: '16:00', title: 'Pool Party', stage: 'Pool Stage' },
-          { time: '21:00', title: 'Kaytranada', stage: 'Sunset Stage' },
-        ],
-      },
-      {
-        date: '2025-08-11',
-        events: [
-          { time: '14:00', title: 'Day Party', stage: 'Beach Stage' },
-          { time: '20:00', title: 'Disclosure', stage: 'Pool Stage' },
-          { time: '23:00', title: 'Diplo', stage: 'Beach Stage' },
-        ],
-      },
-    ],
-  },
-  'summer-vibes-2025': {
-    id: '7',
-    slug: 'summer-vibes-2025',
-    name: 'Summer Vibes Festival',
-    description:
-      'The ultimate summer music celebration featuring chart-topping artists across multiple genres. Experience three days of sun, music, and unforgettable moments in the beautiful city of Nice.',
-    location: 'Nice, France',
-    startDate: '2025-07-25',
-    endDate: '2025-07-27',
-    imageUrl: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1920&h=1080&fit=crop',
-    price: { from: 159, currency: 'EUR' },
-    genres: ['Pop', 'Electronic', 'Hip-Hop', 'R&B'],
-    isFeatured: true,
-    lineup: [
-      { name: 'Dua Lipa', genre: 'Pop', time: 'Saturday 22:00', stage: 'Main Stage' },
-      { name: 'The Weeknd', genre: 'R&B', time: 'Sunday 22:30', stage: 'Main Stage' },
-      { name: 'Calvin Harris', genre: 'Electronic', time: 'Saturday 00:00', stage: 'Beach Stage' },
-      { name: 'Post Malone', genre: 'Hip-Hop', time: 'Friday 21:00', stage: 'Main Stage' },
-      { name: 'Kygo', genre: 'Tropical House', time: 'Sunday 19:00', stage: 'Sunset Stage' },
-      { name: 'Billie Eilish', genre: 'Pop', time: 'Saturday 20:00', stage: 'Main Stage' },
-    ],
-    schedule: [
-      {
-        date: '2025-07-25',
-        events: [
-          { time: '15:00', title: 'Gates Open', stage: 'All Stages' },
-          { time: '17:00', title: 'Opening Acts', stage: 'Discovery Stage' },
-          { time: '21:00', title: 'Post Malone', stage: 'Main Stage' },
-        ],
-      },
-      {
-        date: '2025-07-26',
-        events: [
-          { time: '14:00', title: 'Beach Party', stage: 'Beach Stage' },
-          { time: '20:00', title: 'Billie Eilish', stage: 'Main Stage' },
-          { time: '22:00', title: 'Dua Lipa', stage: 'Main Stage' },
-        ],
-      },
-      {
-        date: '2025-07-27',
-        events: [
-          { time: '16:00', title: 'Afternoon Sessions', stage: 'Chill Zone' },
-          { time: '19:00', title: 'Kygo', stage: 'Sunset Stage' },
-          { time: '22:30', title: 'The Weeknd', stage: 'Main Stage' },
-        ],
-      },
-    ],
+    schedule: [],
   },
 };
+
+interface ApiFestival {
+  id: string;
+  slug: string;
+  name: string;
+  description: string | null;
+  location: string;
+  address: string | null;
+  startDate: string;
+  endDate: string;
+  status: string;
+  maxCapacity: number;
+  currentAttendees: number;
+  logoUrl: string | null;
+  bannerUrl: string | null;
+  websiteUrl: string | null;
+  contactEmail: string | null;
+  timezone: string;
+  currency: string;
+  genres?: string[];
+  isFeatured?: boolean;
+  ticketCategories?: {
+    id: string;
+    name: string;
+    price: string;
+    isActive: boolean;
+  }[];
+  stages?: {
+    id: string;
+    name: string;
+    capacity: number | null;
+  }[];
+}
+
+// Fetch festival from API
+async function fetchFestival(slug: string): Promise<ApiFestival | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/festivals/by-slug/${slug}`, {
+      next: { revalidate: 60 }, // Cache for 60 seconds
+    });
+
+    if (!res.ok) {
+      return null;
+    }
+
+    return res.json();
+  } catch {
+    console.error('Failed to fetch festival from API');
+    return null;
+  }
+}
+
+// Transform API festival to component format
+function transformApiFestival(apiFestival: ApiFestival): Festival & {
+  lineup: { name: string; genre: string; time: string; stage: string }[];
+  schedule: { date: string; events: { time: string; title: string; stage: string }[] }[];
+} {
+  // Get minimum price from ticket categories
+  let minPrice = 0;
+  if (apiFestival.ticketCategories && apiFestival.ticketCategories.length > 0) {
+    const prices = apiFestival.ticketCategories
+      .filter((tc) => tc.isActive)
+      .map((tc) => parseFloat(tc.price));
+    minPrice = prices.length > 0 ? Math.min(...prices) : 0;
+  }
+
+  return {
+    id: apiFestival.id,
+    slug: apiFestival.slug,
+    name: apiFestival.name,
+    description:
+      apiFestival.description || 'Decouvrez ce festival incroyable avec les meilleurs artistes.',
+    location: apiFestival.location,
+    startDate: apiFestival.startDate,
+    endDate: apiFestival.endDate,
+    imageUrl:
+      apiFestival.bannerUrl ||
+      'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=1920&h=1080&fit=crop',
+    price: {
+      from: minPrice,
+      currency: apiFestival.currency || 'EUR',
+    },
+    genres: apiFestival.genres || [],
+    isFeatured: apiFestival.isFeatured || false,
+    isSoldOut: apiFestival.currentAttendees >= apiFestival.maxCapacity,
+    // TODO: Fetch lineup from performances API when available
+    lineup: [],
+    schedule: [],
+  };
+}
 
 interface PageProps {
   params: Promise<{ slug: string }>;
@@ -278,8 +137,23 @@ interface PageProps {
 
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
-  const festival = festivals[slug];
 
+  // Try to fetch from API first
+  const apiFestival = await fetchFestival(slug);
+  if (apiFestival) {
+    return {
+      title: apiFestival.name,
+      description: apiFestival.description || `Decouvrez ${apiFestival.name}`,
+      openGraph: {
+        title: apiFestival.name,
+        description: apiFestival.description || `Decouvrez ${apiFestival.name}`,
+        images: apiFestival.bannerUrl ? [apiFestival.bannerUrl] : [],
+      },
+    };
+  }
+
+  // Fall back to mock data
+  const festival = FALLBACK_FESTIVALS[slug];
   if (!festival) {
     return {
       title: 'Festival Not Found',
@@ -299,11 +173,33 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
 
 export default async function FestivalDetailPage({ params }: PageProps) {
   const { slug } = await params;
-  const festival = festivals[slug];
+
+  // Try to fetch from API first
+  const apiFestival = await fetchFestival(slug);
+  let festival:
+    | (Festival & {
+        lineup: { name: string; genre: string; time: string; stage: string }[];
+        schedule: { date: string; events: { time: string; title: string; stage: string }[] }[];
+      })
+    | null = null;
+
+  if (apiFestival) {
+    festival = transformApiFestival(apiFestival);
+  } else {
+    // Fall back to mock data
+    festival = FALLBACK_FESTIVALS[slug] || null;
+  }
 
   if (!festival) {
     notFound();
   }
+
+  // Calculate stats from festival data
+  const festivalDays =
+    Math.ceil(
+      (new Date(festival.endDate).getTime() - new Date(festival.startDate).getTime()) /
+        (1000 * 60 * 60 * 24)
+    ) + 1;
 
   return (
     <div className="min-h-screen">
@@ -322,7 +218,9 @@ export default async function FestivalDetailPage({ params }: PageProps) {
                 <p className="text-white/70 leading-relaxed">{festival.description}</p>
                 <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center p-4 rounded-xl bg-white/5">
-                    <div className="text-2xl font-bold text-primary-400">5</div>
+                    <div className="text-2xl font-bold text-primary-400">
+                      {apiFestival?.stages?.length || 5}
+                    </div>
                     <div className="text-white/50 text-sm">Stages</div>
                   </div>
                   <div className="text-center p-4 rounded-xl bg-white/5">
@@ -330,19 +228,23 @@ export default async function FestivalDetailPage({ params }: PageProps) {
                     <div className="text-white/50 text-sm">Artists</div>
                   </div>
                   <div className="text-center p-4 rounded-xl bg-white/5">
-                    <div className="text-2xl font-bold text-primary-400">4</div>
+                    <div className="text-2xl font-bold text-primary-400">{festivalDays}</div>
                     <div className="text-white/50 text-sm">Days</div>
                   </div>
                   <div className="text-center p-4 rounded-xl bg-white/5">
-                    <div className="text-2xl font-bold text-primary-400">50K</div>
+                    <div className="text-2xl font-bold text-primary-400">
+                      {apiFestival ? Math.round(apiFestival.maxCapacity / 1000) + 'K' : '50K'}
+                    </div>
                     <div className="text-white/50 text-sm">Capacity</div>
                   </div>
                 </div>
               </Card>
             </section>
 
-            {/* Lineup */}
-            <FestivalLineup artists={festival.lineup} initialCount={4} />
+            {/* Lineup - only show if we have lineup data */}
+            {festival.lineup && festival.lineup.length > 0 && (
+              <FestivalLineup artists={festival.lineup} initialCount={4} />
+            )}
 
             {/* Location */}
             <section id="location-section">
@@ -459,14 +361,7 @@ export default async function FestivalDetailPage({ params }: PageProps) {
                   </svg>
                   <div>
                     <div className="text-white text-sm font-medium">Duration</div>
-                    <div className="text-white/60 text-sm">
-                      {Math.ceil(
-                        (new Date(festival.endDate).getTime() -
-                          new Date(festival.startDate).getTime()) /
-                          (1000 * 60 * 60 * 24)
-                      ) + 1}{' '}
-                      days
-                    </div>
+                    <div className="text-white/60 text-sm">{festivalDays} days</div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">

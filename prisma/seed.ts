@@ -298,19 +298,217 @@ function randomPhoneNumber(): string {
 // ============================================================================
 
 const FESTIVAL_DATA = [
+  // Featured festivals from homepage mock data
   {
-    name: 'Electric Dreams 2025',
+    name: 'Summer Vibes 2026',
+    slug: 'summer-vibes-2026',
+    description:
+      "Le plus grand festival de musique electronique de l'ete. 3 jours de fete non-stop avec les meilleurs DJs internationaux.",
+    location: 'Marseille, France',
+    address: 'Plage du Prado, 13008 Marseille',
+    city: FRENCH_CITIES[1], // Marseille
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 180, // ~6 months from now
+    duration: 3,
+    maxCapacity: 45000,
+    genres: ['Electronic', 'House', 'Techno'],
+    isFeatured: true,
+    imageIndex: 0,
+  },
+  {
+    name: 'Rock en Seine 2026',
+    slug: 'rock-en-seine-2026',
+    description:
+      'Le festival rock incontournable de la rentree. Decouvrez les plus grands groupes de rock et indie.',
+    location: 'Paris, France',
+    address: 'Domaine national de Saint-Cloud, 92210 Saint-Cloud',
+    city: FRENCH_CITIES[0], // Paris
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 210, // ~7 months from now
+    duration: 3,
+    maxCapacity: 40000,
+    genres: ['Rock', 'Indie', 'Alternative'],
+    isFeatured: true,
+    imageIndex: 1,
+  },
+  {
+    name: 'Jazz a Vienne 2026',
+    slug: 'jazz-a-vienne-2026',
+    description:
+      'Festival de jazz de renommee mondiale dans le cadre unique du theatre antique de Vienne.',
+    location: 'Vienne, France',
+    address: 'Theatre Antique de Vienne, 38200 Vienne',
+    city: FRENCH_CITIES[2], // Lyon area
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 160, // ~5 months from now
+    duration: 16,
+    maxCapacity: 8000,
+    genres: ['Jazz', 'Blues', 'Soul'],
+    isFeatured: false,
+    imageIndex: 2,
+  },
+  {
+    name: 'Hellfest 2026',
+    slug: 'hellfest-2026',
+    description:
+      'Le plus grand festival de metal en France. Une experience unique pour les fans de musique extreme.',
+    location: 'Clisson, France',
+    address: 'Le Val de Moine, 44190 Clisson',
+    city: FRENCH_CITIES[5], // Nantes area
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 150, // ~5 months from now
+    duration: 4,
+    maxCapacity: 60000,
+    genres: ['Metal', 'Hard Rock', 'Punk'],
+    isFeatured: true,
+    imageIndex: 3,
+  },
+  {
+    name: 'Les Vieilles Charrues 2026',
+    slug: 'les-vieilles-charrues-2026',
+    description:
+      'Le plus grand festival de France en termes de frequentation. Un programme eclectique pour tous les gouts.',
+    location: 'Carhaix, France',
+    address: 'Site de Kerampuilh, 29270 Carhaix-Plouguer',
+    city: { name: 'Carhaix', lat: 48.2758, lng: -3.5717 },
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 175, // ~6 months from now
+    duration: 4,
+    maxCapacity: 55000,
+    genres: ['Pop', 'Rock', 'Electro', 'World'],
+    isFeatured: false,
+    imageIndex: 4,
+  },
+  {
+    name: 'Solidays 2026',
+    slug: 'solidays-2026',
+    description:
+      "Festival engage contre le SIDA. Musique, solidarite et bonne humeur a l'hippodrome de Longchamp.",
+    location: 'Paris, France',
+    address: "Hippodrome de Longchamp, 75016 Paris",
+    city: FRENCH_CITIES[0], // Paris
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 155, // ~5 months from now
+    duration: 3,
+    maxCapacity: 45000,
+    genres: ['Electro', 'Hip-Hop', 'Pop'],
+    isFeatured: false,
+    imageIndex: 5,
+  },
+  // Detail page mock festivals
+  {
+    name: 'Electric Dreams Festival',
     slug: 'electric-dreams-2025',
     description:
-      "Le festival electro le plus innovant de l'annee ! Experience immersive avec mapping 3D, installations artistiques interactives et les meilleurs artistes de la scene electronique mondiale.",
-    location: 'Chambord',
-    address: 'Domaine National de Chambord, 41250 Chambord',
-    city: { name: 'Chambord', lat: 47.616, lng: 1.517 },
+      'Experience the ultimate electronic music festival featuring world-renowned DJs and immersive art installations across 5 stages. Join us for 4 days of non-stop music, art, and unforgettable memories in the heart of Barcelona.',
+    location: 'Barcelona, Spain',
+    address: 'Parc del Forum, 08019 Barcelona',
+    city: { name: 'Barcelona', lat: 41.4098, lng: 2.2201 },
     status: FestivalStatus.PUBLISHED,
-    daysOffset: 230, // About 7.5 months from now
+    daysOffset: 170, // Future
     duration: 4,
-    maxCapacity: 40000,
+    maxCapacity: 50000,
+    genres: ['Electronic', 'House', 'Techno', 'Trance'],
+    isFeatured: true,
+    imageIndex: 0,
   },
+  {
+    name: 'Rock Revolution',
+    slug: 'rock-revolution-2025',
+    description:
+      'The biggest rock festival in Europe with legendary headliners and emerging artists. Three days of pure rock energy featuring multiple stages and unforgettable performances.',
+    location: 'London, UK',
+    address: 'Olympic Park, London E20',
+    city: { name: 'London', lat: 51.5425, lng: -0.0158 },
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 200, // Future
+    duration: 3,
+    maxCapacity: 65000,
+    genres: ['Rock', 'Alternative', 'Metal'],
+    isFeatured: false,
+    imageIndex: 1,
+  },
+  {
+    name: 'Summer Beats Festival',
+    slug: 'summer-beats-2025',
+    description:
+      'A celebration of hip-hop, RnB, and urban music under the summer sun. Join us in Paris for three days of the hottest urban acts.',
+    location: 'Paris, France',
+    address: 'Parc de la Villette, 75019 Paris',
+    city: FRENCH_CITIES[0], // Paris
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 155, // Future
+    duration: 3,
+    maxCapacity: 35000,
+    genres: ['Hip-Hop', 'R&B', 'Urban'],
+    isFeatured: false,
+    imageIndex: 6,
+  },
+  {
+    name: 'Jazz Nights',
+    slug: 'jazz-nights-2025',
+    description:
+      'An intimate jazz experience in the heart of Amsterdam with international artists. Three nights of smooth jazz, soul, and blues.',
+    location: 'Amsterdam, Netherlands',
+    address: 'Vondelpark, Amsterdam',
+    city: { name: 'Amsterdam', lat: 52.3583, lng: 4.8690 },
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 220, // Future
+    duration: 3,
+    maxCapacity: 5000,
+    genres: ['Jazz', 'Soul', 'Blues'],
+    isFeatured: false,
+    imageIndex: 2,
+  },
+  {
+    name: 'Indie Vibes',
+    slug: 'indie-vibes-2025',
+    description:
+      'Discover the best indie and alternative artists in a beautiful coastal setting. Three days of unique sounds and ocean views in Lisbon.',
+    location: 'Lisbon, Portugal',
+    address: 'Praia de Carcavelos, Lisbon',
+    city: { name: 'Lisbon', lat: 38.6751, lng: -9.3309 },
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 160, // Future
+    duration: 3,
+    maxCapacity: 25000,
+    genres: ['Indie', 'Alternative', 'Folk'],
+    isFeatured: false,
+    imageIndex: 7,
+  },
+  {
+    name: 'Tropical Bass Festival',
+    slug: 'tropical-bass-2025',
+    description:
+      'Where electronic beats meet tropical vibes. Dance on the beach all day and night in the world capital of electronic music - Ibiza.',
+    location: 'Ibiza, Spain',
+    address: 'Playa den Bossa, Ibiza',
+    city: { name: 'Ibiza', lat: 38.9067, lng: 1.4206 },
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 195, // Future
+    duration: 5,
+    maxCapacity: 15000,
+    genres: ['Electronic', 'Tropical', 'Bass'],
+    isFeatured: true,
+    imageIndex: 8,
+  },
+  {
+    name: 'Summer Vibes Festival',
+    slug: 'summer-vibes-2025',
+    description:
+      'The ultimate summer music celebration featuring chart-topping artists across multiple genres. Experience three days of sun, music, and unforgettable moments in the beautiful city of Nice.',
+    location: 'Nice, France',
+    address: 'Promenade des Anglais, 06000 Nice',
+    city: FRENCH_CITIES[4], // Nice
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 185, // Future
+    duration: 3,
+    maxCapacity: 40000,
+    genres: ['Pop', 'Electronic', 'Hip-Hop', 'R&B'],
+    isFeatured: true,
+    imageIndex: 9,
+  },
+  // Original seed festivals (kept for backwards compatibility)
   {
     name: 'Les Nuits Electriques',
     slug: 'nuits-electriques-2024',
@@ -323,6 +521,9 @@ const FESTIVAL_DATA = [
     daysOffset: -60, // 60 days ago
     duration: 3,
     maxCapacity: 45000,
+    genres: ['Electronic', 'House', 'Techno'],
+    isFeatured: false,
+    imageIndex: 0,
   },
   {
     name: 'Rock en Provence',
@@ -336,19 +537,9 @@ const FESTIVAL_DATA = [
     daysOffset: -1, // Started yesterday
     duration: 4,
     maxCapacity: 35000,
-  },
-  {
-    name: 'Summer Vibes Festival',
-    slug: 'summer-vibes-2025',
-    description:
-      'Le rendez-vous estival des amateurs de pop, hip-hop et RnB. 3 jours de concerts, ateliers, food trucks et bonne ambiance. Venez vibrer avec nous !',
-    location: 'La Rochelle',
-    address: 'Esplanade Saint-Jean-dAcre, 17000 La Rochelle',
-    city: { name: 'La Rochelle', lat: 46.1603, lng: -1.1511 },
-    status: FestivalStatus.PUBLISHED, // Future festival
-    daysOffset: 45, // In 45 days
-    duration: 3,
-    maxCapacity: 55000,
+    genres: ['Rock', 'Metal', 'Punk'],
+    isFeatured: false,
+    imageIndex: 1,
   },
 ];
 
@@ -1303,6 +1494,9 @@ async function seedFestivals(ctx: SeedContext): Promise<void> {
     const startDate = new Date(now.getTime() + festivalDef.daysOffset * 24 * 60 * 60 * 1000);
     const endDate = new Date(startDate.getTime() + festivalDef.duration * 24 * 60 * 60 * 1000);
 
+    // Use imageIndex from festival data if available, otherwise use loop index
+    const imageIndex = (festivalDef as any).imageIndex ?? i;
+
     const festival = await prisma.festival.create({
       data: {
         organizerId: organizer.id,
@@ -1317,12 +1511,14 @@ async function seedFestivals(ctx: SeedContext): Promise<void> {
         maxCapacity: festivalDef.maxCapacity,
         currentAttendees:
           festivalDef.status === FestivalStatus.ONGOING ? randomInt(10000, 25000) : 0,
-        logoUrl: getFestivalImageUrl(i),
-        bannerUrl: getFestivalImageUrl(i),
+        logoUrl: getFestivalImageUrl(imageIndex),
+        bannerUrl: getFestivalImageUrl(imageIndex),
         websiteUrl: `https://${festivalDef.slug}.fr`,
         contactEmail: `contact@${festivalDef.slug}.fr`,
         timezone: 'Europe/Paris',
         currency: 'EUR',
+        genres: (festivalDef as any).genres || [],
+        isFeatured: (festivalDef as any).isFeatured || false,
       },
     });
 

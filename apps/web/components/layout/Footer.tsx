@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
+
 const footerLinks = {
   product: {
     title: 'Product',
@@ -97,21 +99,41 @@ export function Footer() {
   const [email, setEmail] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email?.includes('@')) {
+      setError('Please enter a valid email address');
       return;
     }
 
     setIsLoading(true);
+    setError(null);
+
     try {
-      // TODO: Implement actual newsletter subscription API
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await fetch(`${API_URL}/contact/newsletter`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email,
+          language: 'en',
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok && response.status !== 409) {
+        throw new Error(data.message || 'Subscription failed');
+      }
+
       setIsSubscribed(true);
       setEmail('');
-    } catch (error) {
-      console.error('Newsletter subscription failed:', error);
+    } catch (err) {
+      console.error('Newsletter subscription failed:', err);
+      setError(err instanceof Error ? err.message : 'Subscription failed');
     } finally {
       setIsLoading(false);
     }
@@ -205,22 +227,28 @@ export function Footer() {
                 <span className="text-sm font-medium">Thanks for subscribing!</span>
               </div>
             ) : (
-              <form onSubmit={handleNewsletterSubmit} className="flex gap-3 w-full md:w-auto">
-                <input
-                  type="email"
-                  placeholder="Enter your email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="flex-1 md:w-64 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-primary-500 transition-colors"
-                />
-                <button
-                  type="submit"
-                  disabled={isLoading}
-                  className="px-6 py-3 rounded-xl bg-primary-500 hover:bg-primary-600 disabled:bg-primary-500/50 text-white font-semibold transition-colors"
-                >
-                  {isLoading ? 'Subscribing...' : 'Subscribe'}
-                </button>
-              </form>
+              <div className="w-full md:w-auto">
+                <form onSubmit={handleNewsletterSubmit} className="flex gap-3">
+                  <input
+                    type="email"
+                    placeholder="Enter your email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      setError(null);
+                    }}
+                    className="flex-1 md:w-64 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-primary-500 transition-colors"
+                  />
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="px-6 py-3 rounded-xl bg-primary-500 hover:bg-primary-600 disabled:bg-primary-500/50 text-white font-semibold transition-colors"
+                  >
+                    {isLoading ? 'Subscribing...' : 'Subscribe'}
+                  </button>
+                </form>
+                {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
+              </div>
             )}
           </div>
         </div>

@@ -77,7 +77,9 @@ function getTimestamp(): string {
  * Format date values for export
  */
 export function formatDateForExport(date: string | Date): string {
-  if (!date) {return '';}
+  if (!date) {
+    return '';
+  }
   const d = new Date(date);
   return d.toLocaleDateString('fr-FR', {
     year: 'numeric',
@@ -91,10 +93,7 @@ export function formatDateForExport(date: string | Date): string {
 /**
  * Format currency values for export
  */
-export function formatCurrencyForExport(
-  amount: number,
-  currency = 'EUR'
-): string {
+export function formatCurrencyForExport(amount: number, currency = 'EUR'): string {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency,
@@ -126,9 +125,7 @@ export function exportToCSV<T extends Record<string, unknown>>(
     return columns
       .map((col) => {
         const rawValue = getNestedValue(row, col.key as string);
-        const formattedValue = col.format
-          ? col.format(rawValue, row)
-          : rawValue;
+        const formattedValue = col.format ? col.format(rawValue, row) : rawValue;
         return formatCSVValue(formattedValue, opts.delimiter!);
       })
       .join(opts.delimiter);
@@ -227,9 +224,7 @@ function buildExcelXML<T extends Record<string, unknown>>(
       const cells = columns
         .map((col) => {
           const rawValue = getNestedValue(row, col.key as string);
-          const formattedValue = col.format
-            ? col.format(rawValue, row)
-            : rawValue;
+          const formattedValue = col.format ? col.format(rawValue, row) : rawValue;
 
           // Determine cell type
           const isNumber =
@@ -270,10 +265,7 @@ function buildExcelXML<T extends Record<string, unknown>>(
 /**
  * Export data to JSON format
  */
-export function exportToJSON<T>(
-  data: T[],
-  options: Partial<ExportOptions> = {}
-): void {
+export function exportToJSON<T>(data: T[], options: Partial<ExportOptions> = {}): void {
   const opts = { ...defaultOptions, ...options };
 
   if (data.length === 0) {
@@ -448,6 +440,84 @@ export const staffExportColumns: ExportColumn<Record<string, unknown>>[] = [
   },
 ];
 
+export const paymentExportColumns: ExportColumn<Record<string, unknown>>[] = [
+  { key: 'id', label: 'ID' },
+  { key: 'providerTransactionId', label: 'ID Transaction' },
+  { key: 'order.orderNumber', label: 'Numero commande' },
+  {
+    key: 'amount',
+    label: 'Montant',
+    format: (v, row) =>
+      formatCurrencyForExport(v as number, (row as Record<string, unknown>).currency as string),
+  },
+  { key: 'currency', label: 'Devise' },
+  { key: 'status', label: 'Statut' },
+  { key: 'provider', label: 'Methode paiement' },
+  {
+    key: 'createdAt',
+    label: 'Date creation',
+    format: (v) => formatDateForExport(v as string),
+  },
+  {
+    key: 'completedAt',
+    label: 'Date completion',
+    format: (v) => (v ? formatDateForExport(v as string) : '-'),
+  },
+];
+
+export const cashlessAccountExportColumns: ExportColumn<Record<string, unknown>>[] = [
+  { key: 'id', label: 'ID' },
+  { key: 'userName', label: 'Nom utilisateur' },
+  { key: 'userEmail', label: 'Email' },
+  { key: 'nfcTagId', label: 'Tag NFC' },
+  {
+    key: 'balance',
+    label: 'Solde actuel',
+    format: (v) => formatCurrencyForExport(v as number),
+  },
+  {
+    key: 'totalTopUp',
+    label: 'Total recharges',
+    format: (v) => formatCurrencyForExport(v as number),
+  },
+  {
+    key: 'totalSpent',
+    label: 'Total depenses',
+    format: (v) => formatCurrencyForExport(v as number),
+  },
+  { key: 'festivalName', label: 'Festival' },
+  { key: 'status', label: 'Statut' },
+  {
+    key: 'createdAt',
+    label: 'Date creation',
+    format: (v) => formatDateForExport(v as string),
+  },
+  {
+    key: 'lastTransaction',
+    label: 'Derniere transaction',
+    format: (v) => (v ? formatDateForExport(v as string) : '-'),
+  },
+];
+
+export const cashlessTransactionExportColumns: ExportColumn<Record<string, unknown>>[] = [
+  { key: 'id', label: 'ID' },
+  {
+    key: 'timestamp',
+    label: 'Date/Heure',
+    format: (v) => formatDateForExport(v as string),
+  },
+  { key: 'userName', label: 'Utilisateur' },
+  { key: 'type', label: 'Type' },
+  {
+    key: 'amount',
+    label: 'Montant',
+    format: (v) => formatCurrencyForExport(v as number),
+  },
+  { key: 'vendorName', label: 'Vendeur' },
+  { key: 'description', label: 'Description' },
+  { key: 'status', label: 'Statut' },
+];
+
 // ============================================
 // Server-side Excel Export API
 // ============================================
@@ -496,23 +566,26 @@ export interface ExportFilters {
  * Export tickets to XLSX via server
  * For large datasets (>10K rows), returns a job ID for async processing
  */
-export async function exportTicketsToXlsx(
-  filters: ExportFilters
-): Promise<ExportResponse | Blob> {
+export async function exportTicketsToXlsx(filters: ExportFilters): Promise<ExportResponse | Blob> {
   const params = new URLSearchParams();
   params.set('festivalId', filters.festivalId);
-  if (filters.startDate) {params.set('startDate', filters.startDate);}
-  if (filters.endDate) {params.set('endDate', filters.endDate);}
-  if (filters.status) {params.set('status', filters.status);}
-  if (filters.categoryId) {params.set('categoryId', filters.categoryId);}
+  if (filters.startDate) {
+    params.set('startDate', filters.startDate);
+  }
+  if (filters.endDate) {
+    params.set('endDate', filters.endDate);
+  }
+  if (filters.status) {
+    params.set('status', filters.status);
+  }
+  if (filters.categoryId) {
+    params.set('categoryId', filters.categoryId);
+  }
 
-  const response = await fetch(
-    `${API_BASE_URL}/admin/export/tickets?${params.toString()}`,
-    {
-      method: 'GET',
-      credentials: 'include',
-    }
-  );
+  const response = await fetch(`${API_BASE_URL}/admin/export/tickets?${params.toString()}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Export failed' }));
@@ -537,17 +610,20 @@ export async function exportTransactionsToXlsx(
 ): Promise<ExportResponse | Blob> {
   const params = new URLSearchParams();
   params.set('festivalId', filters.festivalId);
-  if (filters.startDate) {params.set('startDate', filters.startDate);}
-  if (filters.endDate) {params.set('endDate', filters.endDate);}
-  if (filters.type) {params.set('type', filters.type);}
+  if (filters.startDate) {
+    params.set('startDate', filters.startDate);
+  }
+  if (filters.endDate) {
+    params.set('endDate', filters.endDate);
+  }
+  if (filters.type) {
+    params.set('type', filters.type);
+  }
 
-  const response = await fetch(
-    `${API_BASE_URL}/admin/export/transactions?${params.toString()}`,
-    {
-      method: 'GET',
-      credentials: 'include',
-    }
-  );
+  const response = await fetch(`${API_BASE_URL}/admin/export/transactions?${params.toString()}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Export failed' }));
@@ -570,18 +646,23 @@ export async function exportParticipantsToXlsx(
 ): Promise<ExportResponse | Blob> {
   const params = new URLSearchParams();
   params.set('festivalId', filters.festivalId);
-  if (filters.startDate) {params.set('startDate', filters.startDate);}
-  if (filters.endDate) {params.set('endDate', filters.endDate);}
-  if (filters.hasTicket !== undefined) {params.set('hasTicket', String(filters.hasTicket));}
-  if (filters.hasCashless !== undefined) {params.set('hasCashless', String(filters.hasCashless));}
+  if (filters.startDate) {
+    params.set('startDate', filters.startDate);
+  }
+  if (filters.endDate) {
+    params.set('endDate', filters.endDate);
+  }
+  if (filters.hasTicket !== undefined) {
+    params.set('hasTicket', String(filters.hasTicket));
+  }
+  if (filters.hasCashless !== undefined) {
+    params.set('hasCashless', String(filters.hasCashless));
+  }
 
-  const response = await fetch(
-    `${API_BASE_URL}/admin/export/participants?${params.toString()}`,
-    {
-      method: 'GET',
-      credentials: 'include',
-    }
-  );
+  const response = await fetch(`${API_BASE_URL}/admin/export/participants?${params.toString()}`, {
+    method: 'GET',
+    credentials: 'include',
+  });
 
   if (!response.ok) {
     const error = await response.json().catch(() => ({ message: 'Export failed' }));

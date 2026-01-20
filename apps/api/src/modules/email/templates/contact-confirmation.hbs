@@ -1,0 +1,112 @@
+{{!--
+  Contact Form Confirmation Email Template
+  Sent after a user submits a contact form
+
+  Variables:
+  - name: User's name
+  - ticketId: Reference ticket ID
+  - subjectType: The category/subject of the message
+  - message: Preview of the message (truncated)
+  - lang_fr: Boolean for French language
+--}}
+
+{{#if lang_fr}}
+<!-- French Version -->
+<h1 style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a2e; line-height: 36px;">
+  Message recu !
+</h1>
+
+<p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  Bonjour {{name}},
+</p>
+
+<p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  Nous avons bien recu votre message et nous vous remercions de nous avoir contactes. Notre equipe examinera votre demande dans les plus brefs delais.
+</p>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 25px 0; padding: 20px; background-color: #f8f9fa; border-radius: 8px;">
+  <tr>
+    <td>
+      <h3 style="margin: 0 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; color: #1a1a2e;">
+        Resume de votre demande
+      </h3>
+      <p style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #4a4a4a; line-height: 22px;">
+        <strong>Reference :</strong> {{ticketId}}
+      </p>
+      <p style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #4a4a4a; line-height: 22px;">
+        <strong>Sujet :</strong> {{subjectType}}
+      </p>
+      <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #4a4a4a; line-height: 22px;">
+        <strong>Message :</strong><br>
+        <span style="color: #666;">{{message}}</span>
+      </p>
+    </td>
+  </tr>
+</table>
+
+<p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  <strong>Delai de reponse estimee :</strong> 24 a 48 heures ouvrables.
+</p>
+
+<p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  Si votre demande est urgente, n'hesitez pas a nous contacter directement par telephone.
+</p>
+
+<p style="margin: 30px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  Cordialement,
+</p>
+
+<p style="margin: 5px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #1a1a2e; font-weight: 600;">
+  L'equipe Support
+</p>
+
+{{else}}
+<!-- English Version -->
+<h1 style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 28px; font-weight: 700; color: #1a1a2e; line-height: 36px;">
+  Message received!
+</h1>
+
+<p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  Hello {{name}},
+</p>
+
+<p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  We have received your message and thank you for contacting us. Our team will review your request as soon as possible.
+</p>
+
+<table border="0" cellpadding="0" cellspacing="0" width="100%" style="margin: 25px 0; padding: 20px; background-color: #f8f9fa; border-radius: 8px;">
+  <tr>
+    <td>
+      <h3 style="margin: 0 0 15px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; font-weight: 600; color: #1a1a2e;">
+        Summary of your request
+      </h3>
+      <p style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #4a4a4a; line-height: 22px;">
+        <strong>Reference:</strong> {{ticketId}}
+      </p>
+      <p style="margin: 0 0 10px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #4a4a4a; line-height: 22px;">
+        <strong>Subject:</strong> {{subjectType}}
+      </p>
+      <p style="margin: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 14px; color: #4a4a4a; line-height: 22px;">
+        <strong>Message:</strong><br>
+        <span style="color: #666;">{{message}}</span>
+      </p>
+    </td>
+  </tr>
+</table>
+
+<p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  <strong>Estimated response time:</strong> 24 to 48 business hours.
+</p>
+
+<p style="margin: 0 0 20px 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  If your request is urgent, please don't hesitate to contact us directly by phone.
+</p>
+
+<p style="margin: 30px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #4a4a4a; line-height: 26px;">
+  Best regards,
+</p>
+
+<p style="margin: 5px 0 0 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; font-size: 16px; color: #1a1a2e; font-weight: 600;">
+  The Support Team
+</p>
+{{/if}}

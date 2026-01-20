@@ -38,7 +38,7 @@ export class StripeConnectService {
 
   constructor(
     private readonly prisma: PrismaService,
-    private readonly configService: ConfigService,
+    private readonly configService: ConfigService
   ) {
     const stripeSecretKey = this.configService.get<string>('STRIPE_SECRET_KEY');
 
@@ -95,9 +95,8 @@ export class StripeConnectService {
       await this.prisma.vendor.update({
         where: { id: dto.vendorId },
         data: {
-          // Store Connect account ID in a JSON field or create a new field
-          // For now, using the qrMenuCode field as placeholder
-          // In production, add a stripeAccountId field to the Vendor model
+          stripeAccountId: account.id,
+          stripeOnboardingComplete: account.details_submitted,
         },
       });
 
@@ -164,7 +163,7 @@ export class StripeConnectService {
   }
 
   /**
-   * Get Connect account details
+   * Get Connect account details by Stripe account ID
    */
   async getAccount(accountId: string): Promise<ConnectAccountResponseDto> {
     this.ensureStripeConfigured();
@@ -186,6 +185,55 @@ export class StripeConnectService {
   }
 
   /**
+   * Get Connect account for a vendor by vendor ID
+   */
+  async getAccountForVendor(vendorId: string): Promise<ConnectAccountResponseDto | null> {
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { id: vendorId },
+      select: { stripeAccountId: true },
+    });
+
+    if (!vendor) {
+      throw new NotFoundException('Vendor not found');
+    }
+
+    if (!vendor.stripeAccountId) {
+      return null;
+    }
+
+    return this.getAccount(vendor.stripeAccountId);
+  }
+
+  /**
+   * Update vendor's Stripe onboarding status after account link completion
+   */
+  async updateVendorOnboardingStatus(vendorId: string): Promise<void> {
+    const vendor = await this.prisma.vendor.findUnique({
+      where: { id: vendorId },
+      select: { stripeAccountId: true },
+    });
+
+    if (!vendor?.stripeAccountId) {
+      throw new NotFoundException('Vendor has no Stripe account');
+    }
+
+    this.ensureStripeConfigured();
+
+    const account = await this.stripe!.accounts.retrieve(vendor.stripeAccountId);
+
+    await this.prisma.vendor.update({
+      where: { id: vendorId },
+      data: {
+        stripeOnboardingComplete: account.details_submitted && account.charges_enabled,
+      },
+    });
+
+    this.logger.log(
+      `Updated vendor ${vendorId} onboarding status: complete=${account.details_submitted && account.charges_enabled}`
+    );
+  }
+
+  /**
    * Get account balance
    */
   async getAccountBalance(accountId: string): Promise<AccountBalanceDto[]> {
@@ -198,8 +246,7 @@ export class StripeConnectService {
 
       return balance.available.map((b) => ({
         available: b.amount,
-        pending:
-          balance.pending.find((p) => p.currency === b.currency)?.amount || 0,
+        pending: balance.pending.find((p) => p.currency === b.currency)?.amount || 0,
         currency: b.currency,
       }));
     } catch (error) {
@@ -234,7 +281,7 @@ export class StripeConnectService {
       const transfer = await this.stripe!.transfers.create(transferParams);
 
       this.logger.log(
-        `Created transfer ${transfer.id} of ${dto.amount} cents to ${dto.destinationAccountId}`,
+        `Created transfer ${transfer.id} of ${dto.amount} cents to ${dto.destinationAccountId}`
       );
 
       return {
@@ -270,12 +317,10 @@ export class StripeConnectService {
         },
         {
           stripeAccount: dto.accountId,
-        },
+        }
       );
 
-      this.logger.log(
-        `Created payout ${payout.id} of ${dto.amount} cents from ${dto.accountId}`,
-      );
+      this.logger.log(`Created payout ${payout.id} of ${dto.amount} cents from ${dto.accountId}`);
 
       return {
         payoutId: payout.id,
@@ -299,7 +344,7 @@ export class StripeConnectService {
   async reverseTransfer(
     transferId: string,
     amount?: number,
-    refundApplicationFee?: boolean,
+    refundApplicationFee?: boolean
   ): Promise<{ reversalId: string; amount: number }> {
     this.ensureStripeConfigured();
 
@@ -334,7 +379,7 @@ export class StripeConnectService {
       businessProfileName: string;
       businessProfileUrl: string;
       metadata: Record<string, string>;
-    }>,
+    }>
   ): Promise<ConnectAccountResponseDto> {
     this.ensureStripeConfigured();
 
@@ -397,7 +442,7 @@ export class StripeConnectService {
   async listTransfers(
     destinationAccountId?: string,
     limit = 10,
-    startingAfter?: string,
+    startingAfter?: string
   ): Promise<{ transfers: TransferResponseDto[]; hasMore: boolean }> {
     this.ensureStripeConfigured();
 
@@ -441,7 +486,7 @@ export class StripeConnectService {
   async listPayouts(
     accountId: string,
     limit = 10,
-    startingAfter?: string,
+    startingAfter?: string
   ): Promise<{ payouts: PayoutResponseDto[]; hasMore: boolean }> {
     this.ensureStripeConfigured();
 
@@ -487,9 +532,7 @@ export class StripeConnectService {
     }
   }
 
-  private mapAccountType(
-    type: ConnectAccountType,
-  ): Stripe.AccountCreateParams.Type {
+  private mapAccountType(type: ConnectAccountType): Stripe.AccountCreateParams.Type {
     const typeMap: Record<ConnectAccountType, Stripe.AccountCreateParams.Type> = {
       [ConnectAccountType.STANDARD]: 'standard',
       [ConnectAccountType.EXPRESS]: 'express',

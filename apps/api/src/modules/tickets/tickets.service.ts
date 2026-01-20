@@ -102,7 +102,7 @@ export class TicketsService {
     private readonly prisma: PrismaService,
     private readonly configService: ConfigService,
     private readonly emailService: EmailService,
-    private readonly webhookEventHelper: WebhookEventHelper,
+    private readonly webhookEventHelper: WebhookEventHelper
   ) {
     // Validate QR code secret is configured and meets minimum security requirements
     const qrSecret = this.configService.getOrThrow<string>('QR_CODE_SECRET');
@@ -150,7 +150,7 @@ export class TicketsService {
         categoryId,
         categoryName: ticket.category?.name || category.name,
         price: ticket.purchasePrice,
-        currency: 'EUR', // TODO: Get from festival currency settings
+        currency: festival.currency || 'EUR',
         purchasedAt: ticket.createdAt,
       });
     }

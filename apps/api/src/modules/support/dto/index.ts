@@ -6,3 +6,6 @@ export * from './support-ticket.dto';
 
 // Lost Item DTOs
 export * from './lost-item.dto';
+
+// Contact DTOs
+export * from './contact.dto';

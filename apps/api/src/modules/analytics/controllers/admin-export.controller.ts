@@ -8,6 +8,7 @@ import {
   Logger,
   BadRequestException,
   NotFoundException,
+  InternalServerErrorException,
 } from '@nestjs/common';
 import { Response } from 'express';
 import {
@@ -18,6 +19,8 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
+import * as fs from 'fs';
+import * as path from 'path';
 import { JwtAuthGuard } from '../../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../../auth/guards/roles.guard';
 import { Roles } from '../../auth/decorators/roles.decorator';
@@ -46,7 +49,7 @@ export class AdminExportController {
   constructor(
     private readonly prisma: PrismaService,
     private readonly excelExportService: ExcelExportService,
-    private readonly queueService: QueueService,
+    private readonly queueService: QueueService
   ) {}
 
   // ============================================
@@ -92,7 +95,7 @@ export class AdminExportController {
     @Query('status') status?: string,
     @Query('categoryId') categoryId?: string,
     @CurrentUser() user?: { id: string },
-    @Res() res?: Response,
+    @Res() res?: Response
   ) {
     // Validate festival exists
     const festival = await this.prisma.festival.findUnique({
@@ -129,7 +132,7 @@ export class AdminExportController {
     const totalCount = await this.prisma.ticket.count({ where });
 
     this.logger.log(
-      `Export tickets request: festivalId=${festivalId}, count=${totalCount}, user=${user?.id}`,
+      `Export tickets request: festivalId=${festivalId}, count=${totalCount}, user=${user?.id}`
     );
 
     // For large exports, use async processing
@@ -142,7 +145,7 @@ export class AdminExportController {
           userId: user?.id,
           filters: { startDate, endDate, status, categoryId },
         },
-        { priority: JobPriority.NORMAL },
+        { priority: JobPriority.NORMAL }
       );
 
       res?.status(202).json({
@@ -185,7 +188,7 @@ export class AdminExportController {
       festival.name,
       startDate && endDate
         ? { startDate: new Date(startDate), endDate: new Date(endDate) }
-        : undefined,
+        : undefined
     );
 
     res?.setHeader('Content-Type', result.mimeType);
@@ -228,7 +231,7 @@ export class AdminExportController {
     @Query('endDate') endDate?: string,
     @Query('type') type?: string,
     @CurrentUser() user?: { id: string },
-    @Res() res?: Response,
+    @Res() res?: Response
   ) {
     // Validate festival exists
     const festival = await this.prisma.festival.findUnique({
@@ -258,7 +261,7 @@ export class AdminExportController {
     const totalCount = await this.prisma.cashlessTransaction.count({ where });
 
     this.logger.log(
-      `Export transactions request: festivalId=${festivalId}, count=${totalCount}, user=${user?.id}`,
+      `Export transactions request: festivalId=${festivalId}, count=${totalCount}, user=${user?.id}`
     );
 
     // For large exports, use async processing
@@ -271,7 +274,7 @@ export class AdminExportController {
           userId: user?.id,
           filters: { startDate, endDate, type },
         },
-        { priority: JobPriority.NORMAL },
+        { priority: JobPriority.NORMAL }
       );
 
       res?.status(202).json({
@@ -315,7 +318,7 @@ export class AdminExportController {
       festival.name,
       startDate && endDate
         ? { startDate: new Date(startDate), endDate: new Date(endDate) }
-        : undefined,
+        : undefined
     );
 
     res?.setHeader('Content-Type', result.mimeType);
@@ -364,7 +367,7 @@ export class AdminExportController {
     @Query('hasTicket') hasTicket?: string,
     @Query('hasCashless') hasCashless?: string,
     @CurrentUser() user?: { id: string },
-    @Res() res?: Response,
+    @Res() res?: Response
   ) {
     // Validate festival exists
     const festival = await this.prisma.festival.findUnique({
@@ -422,7 +425,9 @@ export class AdminExportController {
     >();
 
     for (const ticket of ticketHolders) {
-      if (!ticket.user) {continue;}
+      if (!ticket.user) {
+        continue;
+      }
 
       const userId = ticket.user.id;
       const existing = userMap.get(userId);
@@ -463,7 +468,7 @@ export class AdminExportController {
     }));
 
     this.logger.log(
-      `Export participants request: festivalId=${festivalId}, count=${participants.length}, user=${user?.id}`,
+      `Export participants request: festivalId=${festivalId}, count=${participants.length}, user=${user?.id}`
     );
 
     // For large exports, use async processing
@@ -476,7 +481,7 @@ export class AdminExportController {
           userId: user?.id,
           filters: { startDate, endDate, hasTicket, hasCashless },
         },
-        { priority: JobPriority.NORMAL },
+        { priority: JobPriority.NORMAL }
       );
 
       res?.status(202).json({
@@ -494,7 +499,7 @@ export class AdminExportController {
       festival.name,
       startDate && endDate
         ? { startDate: new Date(startDate), endDate: new Date(endDate) }
-        : undefined,
+        : undefined
     );
 
     res?.setHeader('Content-Type', result.mimeType);
@@ -595,13 +600,60 @@ export class AdminExportController {
       throw new NotFoundException('Export file not found');
     }
 
-    // In a real implementation, read from temporary storage
-    // For now, return a placeholder
-    res.setHeader('Content-Type', result.mimeType);
-    res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
-    // res.sendFile(result.filePath);
+    // Validate file path to prevent directory traversal attacks
+    const normalizedPath = path.normalize(result.filePath);
+    const tempDir = path.normalize(path.join(require('os').tmpdir(), 'festival-exports'));
 
-    // Placeholder - actual file would be read from temp storage
-    res.status(200).send('File would be downloaded here');
+    if (!normalizedPath.startsWith(tempDir)) {
+      this.logger.error(`Invalid file path detected: ${normalizedPath}`);
+      throw new BadRequestException('Invalid file path');
+    }
+
+    // Check if file exists
+    if (!fs.existsSync(normalizedPath)) {
+      this.logger.warn(`Export file not found on disk: ${normalizedPath}`);
+      throw new NotFoundException(
+        'Export file has expired or was already downloaded. Please generate a new export.'
+      );
+    }
+
+    try {
+      // Get file stats for Content-Length header
+      const stats = fs.statSync(normalizedPath);
+
+      // Set response headers
+      res.setHeader('Content-Type', result.mimeType);
+      res.setHeader('Content-Disposition', `attachment; filename="${result.filename}"`);
+      res.setHeader('Content-Length', stats.size);
+      res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+      res.setHeader('Pragma', 'no-cache');
+      res.setHeader('Expires', '0');
+
+      // Stream the file to the response
+      const fileStream = fs.createReadStream(normalizedPath);
+
+      fileStream.on('error', (error) => {
+        this.logger.error(`Error streaming export file: ${error.message}`);
+        if (!res.headersSent) {
+          res.status(500).json({ message: 'Error streaming file' });
+        }
+      });
+
+      fileStream.on('end', () => {
+        this.logger.log(`Export file ${result.filename} downloaded for job ${jobId}`);
+
+        // Optionally delete file after download to save space
+        // The file will also be cleaned up by the scheduled cleanup in the processor
+        // Uncomment the following to delete immediately after download:
+        // fs.unlink(normalizedPath, (err) => {
+        //   if (err) this.logger.warn(`Failed to cleanup file: ${err.message}`);
+        // });
+      });
+
+      fileStream.pipe(res);
+    } catch (error) {
+      this.logger.error(`Failed to stream export file: ${error}`);
+      throw new InternalServerErrorException('Failed to download export file');
+    }
   }
 }

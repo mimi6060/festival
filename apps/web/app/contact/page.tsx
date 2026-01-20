@@ -3,6 +3,8 @@
 import { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
+
 export default function ContactPage() {
   const [formData, setFormData] = useState({
     name: '',
@@ -13,6 +15,7 @@ export default function ContactPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [ticketId, setTicketId] = useState<string | null>(null);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -36,18 +39,41 @@ export default function ContactPage() {
       return;
     }
 
+    if (formData.message.length < 10) {
+      setError('Le message doit contenir au moins 10 caracteres.');
+      return;
+    }
+
     setIsSubmitting(true);
     setError(null);
 
     try {
-      // TODO: Implement actual contact form API
-      // For now, simulate an API call
-      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const response = await fetch(`${API_URL}/contact`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email,
+          subject: formData.subject,
+          message: formData.message,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || "Une erreur s'est produite.");
+      }
 
       setIsSubmitted(true);
+      setTicketId(data.ticketId || null);
       setFormData({ name: '', email: '', subject: '', message: '' });
-    } catch {
-      setError("Une erreur s'est produite. Veuillez réessayer.");
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Une erreur s'est produite. Veuillez reessayer."
+      );
     } finally {
       setIsSubmitting(false);
     }
@@ -186,12 +212,20 @@ export default function ContactPage() {
                       />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-white mb-2">Message envoyé !</h3>
+                  <h3 className="text-lg font-semibold text-white mb-2">Message envoye !</h3>
                   <p className="text-white/60 mb-4">
-                    Merci de nous avoir contacté. Nous vous répondrons dans les plus brefs délais.
+                    Merci de nous avoir contacte. Nous vous repondrons dans les plus brefs delais.
                   </p>
+                  {ticketId && (
+                    <p className="text-white/40 text-sm mb-4">
+                      Reference: <span className="font-mono text-primary-400">{ticketId}</span>
+                    </p>
+                  )}
                   <button
-                    onClick={() => setIsSubmitted(false)}
+                    onClick={() => {
+                      setIsSubmitted(false);
+                      setTicketId(null);
+                    }}
                     className="text-primary-400 hover:text-primary-300 text-sm"
                   >
                     Envoyer un autre message

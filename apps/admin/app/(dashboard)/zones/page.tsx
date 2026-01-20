@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import DataTable from '@/components/tables/DataTable';
 import ConfirmModal from '@/components/modals/ConfirmModal';
 import { cn } from '@/lib/utils';
+import { zonesApi } from '@/lib/api';
 import type { TableColumn } from '@/types';
 
 interface Zone {
@@ -168,9 +169,11 @@ export default function ZonesPage() {
   const [selectedZone, setSelectedZone] = useState<Zone | null>(null);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [zoneToDelete, setZoneToDelete] = useState<Zone | null>(null);
+  const [zones, setZones] = useState<Zone[]>(mockZones);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
-  const filteredZones =
-    typeFilter === 'all' ? mockZones : mockZones.filter((z) => z.type === typeFilter);
+  const filteredZones = typeFilter === 'all' ? zones : zones.filter((z) => z.type === typeFilter);
 
   const typeLabels: Record<string, string> = {
     entrance: 'Entree',
@@ -335,21 +338,40 @@ export default function ZonesPage() {
 
   const handleDeleteZone = (zone: Zone) => {
     setZoneToDelete(zone);
+    setDeleteError(null);
     setShowDeleteModal(true);
   };
 
-  const confirmDelete = () => {
-    // Handle delete logic here
-    // TODO: implement delete API call for zone: zoneToDelete?.id
-    setShowDeleteModal(false);
-    setZoneToDelete(null);
-  };
+  const confirmDelete = useCallback(async () => {
+    if (!zoneToDelete) {
+      return;
+    }
+
+    setDeleting(true);
+    setDeleteError(null);
+
+    try {
+      await zonesApi.delete(zoneToDelete.id);
+      // Remove the zone from the local state on success
+      setZones((currentZones) => currentZones.filter((z) => z.id !== zoneToDelete.id));
+      setShowDeleteModal(false);
+      setZoneToDelete(null);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Une erreur est survenue lors de la suppression de la zone';
+      setDeleteError(errorMessage);
+    } finally {
+      setDeleting(false);
+    }
+  }, [zoneToDelete]);
 
   // Stats
-  const totalCapacity = mockZones.reduce((sum, z) => sum + z.capacity, 0);
-  const totalOccupancy = mockZones.reduce((sum, z) => sum + z.currentOccupancy, 0);
-  const activeZones = mockZones.filter((z) => z.status === 'active').length;
-  const fullZones = mockZones.filter((z) => z.status === 'full').length;
+  const totalCapacity = zones.reduce((sum, z) => sum + z.capacity, 0);
+  const totalOccupancy = zones.reduce((sum, z) => sum + z.currentOccupancy, 0);
+  const activeZones = zones.filter((z) => z.status === 'active').length;
+  const fullZones = zones.filter((z) => z.status === 'full').length;
 
   return (
     <div className="space-y-6">
@@ -397,7 +419,7 @@ export default function ZonesPage() {
         <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Total checkpoints</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
-            {mockZones.reduce((sum, z) => sum + z.checkpoints, 0)}
+            {zones.reduce((sum, z) => sum + z.checkpoints, 0)}
           </p>
         </div>
       </div>
@@ -423,7 +445,7 @@ export default function ZonesPage() {
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             )}
           >
-            Zones ({mockZones.length})
+            Zones ({zones.length})
           </button>
           <button
             onClick={() => setActiveTab('logs')}
@@ -644,13 +666,23 @@ export default function ZonesPage() {
       {/* Delete Confirmation Modal */}
       <ConfirmModal
         isOpen={showDeleteModal}
-        onClose={() => setShowDeleteModal(false)}
+        onClose={() => {
+          if (!deleting) {
+            setShowDeleteModal(false);
+            setDeleteError(null);
+          }
+        }}
         onConfirm={confirmDelete}
         title="Supprimer la zone"
-        message={`Etes-vous sur de vouloir supprimer la zone "${zoneToDelete?.name}" ? Cette action est irreversible.`}
+        message={
+          deleteError
+            ? `Erreur: ${deleteError}`
+            : `Etes-vous sur de vouloir supprimer la zone "${zoneToDelete?.name}" ? Cette action est irreversible.`
+        }
         confirmText="Supprimer"
         cancelText="Annuler"
         variant="danger"
+        loading={deleting}
       />
     </div>
   );

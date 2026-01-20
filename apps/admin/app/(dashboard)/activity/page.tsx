@@ -1,8 +1,9 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { cn, formatDateTime } from '@/lib/utils';
 import { ExportButton } from '@/components/export';
+import { activityApi } from '@/lib/api';
 import type { ExportColumn } from '@/lib/export';
 
 // Types
@@ -297,7 +298,7 @@ const activityExportColumns: ExportColumn<Record<string, unknown>>[] = [
 ];
 
 export default function ActivityLogsPage() {
-  const [logs] = useState<ActivityLog[]>(mockActivityLogs);
+  const [logs, setLogs] = useState<ActivityLog[]>(mockActivityLogs);
   const [searchQuery, setSearchQuery] = useState('');
   const [actionTypeFilter, setActionTypeFilter] = useState<ActivityLog['actionType'] | 'all'>(
     'all'
@@ -311,6 +312,73 @@ export default function ActivityLogsPage() {
     end: '',
   });
   const [selectedLog, setSelectedLog] = useState<ActivityLog | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Fetch activity logs from API
+  const fetchLogs = useCallback(async () => {
+    try {
+      const params: {
+        actionType?: string;
+        resourceType?: string;
+        status?: string;
+        dateFrom?: string;
+        dateTo?: string;
+      } = {};
+
+      if (actionTypeFilter !== 'all') {
+        params.actionType = actionTypeFilter;
+      }
+      if (resourceTypeFilter !== 'all') {
+        params.resourceType = resourceTypeFilter;
+      }
+      if (statusFilter !== 'all') {
+        params.status = statusFilter;
+      }
+      if (dateRange.start) {
+        params.dateFrom = dateRange.start;
+      }
+      if (dateRange.end) {
+        params.dateTo = dateRange.end;
+      }
+
+      const response = await activityApi.getLogs(params);
+
+      // Transform API data to display format
+      const displayLogs: ActivityLog[] = response.data.map((log) => ({
+        id: log.id,
+        timestamp: log.timestamp,
+        userId: log.userId,
+        userName: log.user ? `${log.user.firstName} ${log.user.lastName}` : 'Unknown',
+        userEmail: log.user?.email || 'unknown@email.com',
+        userRole: log.userRole,
+        action: log.action,
+        actionType: log.actionType,
+        resource: log.resource,
+        resourceType: log.resourceType,
+        resourceId: log.resourceId,
+        details: log.details,
+        metadata: log.metadata,
+        ipAddress: log.ipAddress,
+        userAgent: log.userAgent,
+        status: log.status,
+        duration: log.duration,
+      }));
+
+      setLogs(displayLogs);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to fetch activity logs:', err);
+      setError('Failed to load activity logs. Using cached data.');
+    } finally {
+      setLoading(false);
+    }
+  }, [actionTypeFilter, resourceTypeFilter, statusFilter, dateRange]);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchLogs();
+  }, [fetchLogs]);
 
   // Filter logs
   const filteredLogs = useMemo(() => {
@@ -400,6 +468,34 @@ export default function ActivityLogsPage() {
           filename="activity-logs"
         />
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-center gap-3">
+          <svg
+            className="w-5 h-5 text-yellow-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+          <span className="text-yellow-800">{error}</span>
+        </div>
+      )}
+
+      {/* Loading State */}
+      {loading && (
+        <div className="flex items-center justify-center py-8">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          <span className="ml-3 text-gray-600">Loading activity logs...</span>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

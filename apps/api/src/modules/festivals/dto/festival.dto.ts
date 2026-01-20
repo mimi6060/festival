@@ -233,6 +233,16 @@ export class CreateFestivalDto {
   tags?: string[];
 
   @ApiPropertyOptional({
+    description: 'Music genres/categories for the festival',
+    example: ['Electronic', 'House', 'Techno'],
+    type: [String],
+  })
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  genres?: string[];
+
+  @ApiPropertyOptional({
     description: 'Contact email for the festival',
     example: 'contact@summervibes.com',
     format: 'email',
@@ -422,6 +432,18 @@ export class FestivalResponseDto {
     example: ['electronic', 'techno'],
   })
   tags?: string[];
+
+  @ApiPropertyOptional({
+    description: 'Music genres/categories',
+    example: ['Electronic', 'House', 'Techno'],
+  })
+  genres?: string[];
+
+  @ApiProperty({
+    description: 'Whether the festival is featured on homepage',
+    example: true,
+  })
+  isFeatured!: boolean;
 
   @ApiProperty({
     description: 'Currency',

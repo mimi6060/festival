@@ -1,9 +1,10 @@
 'use client';
 
-import { use } from 'react';
+import { use, useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { mockFestivals, mockTicketCategories } from '@/lib/mock-data';
+import { exportToCSV, exportToExcel, festivalExportColumns, type ExportColumn } from '@/lib/export';
 import {
   formatCurrency,
   formatDate,
@@ -20,10 +21,52 @@ interface FestivalDetailPageProps {
 
 export default function FestivalDetailPage({ params }: FestivalDetailPageProps) {
   const { id } = use(params);
+  const [isExporting, setIsExporting] = useState(false);
   // Support both ID and slug lookups
   const festival = mockFestivals.find((f) => f.id === id || f.slug === id);
   const festivalId = festival?.id || id;
   const categories = mockTicketCategories.filter((c) => c.festivalId === festivalId);
+
+  const handleExport = async (format: 'csv' | 'excel') => {
+    if (!festival || isExporting) {
+      return;
+    }
+
+    setIsExporting(true);
+    try {
+      // Prepare festival data with categories info
+      const exportData = [
+        {
+          ...festival,
+          categoriesCount: categories.length,
+          totalCategoryQuantity: categories.reduce((sum, c) => sum + c.quantity, 0),
+          totalCategorySold: categories.reduce((sum, c) => sum + c.sold, 0),
+        },
+      ];
+
+      // Enhanced columns for single festival export
+      const enhancedColumns: ExportColumn<Record<string, unknown>>[] = [
+        ...festivalExportColumns,
+        { key: 'categoriesCount', label: 'Nombre categories' },
+        { key: 'totalCategoryQuantity', label: 'Total billets disponibles' },
+        { key: 'totalCategorySold', label: 'Total billets vendus' },
+      ];
+
+      const options = {
+        filename: `festival_${festival.slug || festival.id}`,
+        sheetName: festival.name,
+        includeTimestamp: true,
+      };
+
+      if (format === 'csv') {
+        exportToCSV(exportData as Record<string, unknown>[], enhancedColumns, options);
+      } else {
+        exportToExcel(exportData as Record<string, unknown>[], enhancedColumns, options);
+      }
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   if (!festival) {
     return (
@@ -341,30 +384,64 @@ export default function FestivalDetailPage({ params }: FestivalDetailPageProps) 
                   <p className="text-sm text-gray-500">Ventes et performances</p>
                 </div>
               </Link>
-              <button
-                onClick={() => alert('Export functionality coming soon')}
-                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors w-full text-left"
-              >
+              <div className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors w-full">
                 <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
-                  <svg
-                    className="w-5 h-5 text-green-600"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-                    />
-                  </svg>
+                  {isExporting ? (
+                    <svg
+                      className="w-5 h-5 text-green-600 animate-spin"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
+                    </svg>
+                  ) : (
+                    <svg
+                      className="w-5 h-5 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                      />
+                    </svg>
+                  )}
                 </div>
-                <div>
+                <div className="flex-1">
                   <p className="font-medium text-gray-900">Exporter les donnees</p>
-                  <p className="text-sm text-gray-500">CSV ou Excel</p>
+                  <div className="flex gap-2 mt-1">
+                    <button
+                      onClick={() => handleExport('csv')}
+                      disabled={isExporting}
+                      className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-700 disabled:opacity-50"
+                    >
+                      CSV
+                    </button>
+                    <button
+                      onClick={() => handleExport('excel')}
+                      disabled={isExporting}
+                      className="text-xs px-2 py-1 bg-gray-100 hover:bg-gray-200 rounded text-gray-700 disabled:opacity-50"
+                    >
+                      Excel
+                    </button>
+                  </div>
                 </div>
-              </button>
+              </div>
             </div>
           </div>
         </div>

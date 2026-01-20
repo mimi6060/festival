@@ -1,6 +1,7 @@
 import { Module, Global } from '@nestjs/common';
 import { BulkOperationService } from './bulk-operation.service';
 import { GenericBulkController } from './bulk-operation.controller';
+import { PrismaModule } from '../../modules/prisma/prisma.module';
 
 /**
  * Bulk Operation Module
@@ -33,6 +34,7 @@ import { GenericBulkController } from './bulk-operation.controller';
  */
 @Global()
 @Module({
+  imports: [PrismaModule],
   controllers: [GenericBulkController],
   providers: [
     {

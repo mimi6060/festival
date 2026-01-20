@@ -84,6 +84,7 @@
     "nx": "22.3.3",
     "playwright": "^1.57.0",
     "prettier": "~3.6.2",
+    "prisma": "^7.2.0",
     "react-native-svg-web": "^1.0.9",
     "react-native-web": "^0.21.2",
     "react-test-renderer": "^18.3.1",

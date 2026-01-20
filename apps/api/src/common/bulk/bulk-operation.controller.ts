@@ -1,12 +1,61 @@
-import { Controller, Post, Body, HttpCode, HttpStatus } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiResponse, ApiBearerAuth, ApiBody } from '@nestjs/swagger';
+import {
+  Controller,
+  Post,
+  Body,
+  HttpCode,
+  HttpStatus,
+  Query,
+  BadRequestException,
+} from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiResponse,
+  ApiBearerAuth,
+  ApiBody,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { BulkOperationService } from './bulk-operation.service';
+import { PrismaService } from '../../modules/prisma/prisma.service';
 import {
   BulkDeleteDto,
   BulkOperationResponseDto,
   BulkImportDto,
   BulkExportDto,
 } from './bulk-operation.dto';
+
+/**
+ * Supported entity types for bulk operations
+ */
+const SUPPORTED_ENTITY_TYPES = [
+  'ticket',
+  'user',
+  'vendor',
+  'payment',
+  'artist',
+  'vendorOrder',
+  'ticketCategory',
+  'festival',
+] as const;
+
+type SupportedEntityType = (typeof SUPPORTED_ENTITY_TYPES)[number];
+
+/**
+ * Map of entity types to their Prisma model names and soft-delete support
+ */
+const ENTITY_CONFIG: Record<
+  SupportedEntityType,
+  { modelName: string; supportsSoftDelete: boolean }
+> = {
+  ticket: { modelName: 'ticket', supportsSoftDelete: true },
+  user: { modelName: 'user', supportsSoftDelete: true },
+  vendor: { modelName: 'vendor', supportsSoftDelete: true },
+  payment: { modelName: 'payment', supportsSoftDelete: true },
+  artist: { modelName: 'artist', supportsSoftDelete: true },
+  vendorOrder: { modelName: 'vendorOrder', supportsSoftDelete: true },
+  ticketCategory: { modelName: 'ticketCategory', supportsSoftDelete: true },
+  festival: { modelName: 'festival', supportsSoftDelete: true },
+};
 
 /**
  * Generic Bulk Operations Controller
@@ -44,20 +93,35 @@ export abstract class BulkOperationController {
 }
 
 /**
- * Example implementation for demonstration
- * Real implementations should be in their respective domain modules
+ * Generic Bulk Controller with Prisma-based delete operations
+ *
+ * Supports multiple entity types and both soft/hard delete operations.
+ * For production use, consider creating domain-specific bulk controllers
+ * that inherit from BulkOperationController base class.
  */
 @Controller('api/bulk')
 @ApiTags('Bulk Operations')
 @ApiBearerAuth('JWT-auth')
 export class GenericBulkController {
-  constructor(private readonly bulkService: BulkOperationService) {}
+  constructor(
+    private readonly bulkService: BulkOperationService,
+    private readonly prisma: PrismaService
+  ) {}
 
   @Post('delete')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({
     summary: 'Bulk delete items',
-    description: 'Delete multiple items by their IDs. Supports soft delete and continue-on-error.',
+    description:
+      'Delete multiple items by their IDs. Supports soft delete and continue-on-error. ' +
+      'Supported entity types: ticket, user, vendor, payment, artist, vendorOrder, ticketCategory, festival.',
+  })
+  @ApiQuery({
+    name: 'entityType',
+    required: true,
+    description: 'Type of entity to delete',
+    enum: SUPPORTED_ENTITY_TYPES,
+    example: 'ticket',
   })
   @ApiBody({ type: BulkDeleteDto })
   @ApiResponse({
@@ -67,7 +131,7 @@ export class GenericBulkController {
   })
   @ApiResponse({
     status: 400,
-    description: 'Invalid request - validation failed',
+    description: 'Invalid request - validation failed or unsupported entity type',
   })
   @ApiResponse({
     status: 401,
@@ -77,10 +141,60 @@ export class GenericBulkController {
     status: 403,
     description: 'Forbidden - insufficient permissions',
   })
-  async bulkDelete(@Body() dto: BulkDeleteDto): Promise<BulkOperationResponseDto> {
-    // This is a placeholder - real implementation would use actual repository
-    return this.bulkService.bulkDelete(dto, async (_id) => {
-      // Placeholder delete logic - real implementation would delete the item by _id
+  async bulkDelete(
+    @Body() dto: BulkDeleteDto,
+    @Query('entityType') entityType: string
+  ): Promise<BulkOperationResponseDto> {
+    // Validate entity type
+    if (!entityType || !SUPPORTED_ENTITY_TYPES.includes(entityType as SupportedEntityType)) {
+      throw new BadRequestException(
+        `Invalid entity type. Supported types: ${SUPPORTED_ENTITY_TYPES.join(', ')}`
+      );
+    }
+
+    const config = ENTITY_CONFIG[entityType as SupportedEntityType];
+    const softDelete = dto.softDelete !== false && config.supportsSoftDelete;
+
+    return this.bulkService.bulkDelete(dto, async (id: string) => {
+      // Get the Prisma model dynamically
+      const model = (this.prisma as Record<string, unknown>)[config.modelName] as {
+        findUnique: (args: { where: { id: string } }) => Promise<{ id: string } | null>;
+        update: (args: {
+          where: { id: string };
+          data: { isDeleted: boolean; deletedAt: Date };
+        }) => Promise<{ id: string }>;
+        delete: (args: { where: { id: string } }) => Promise<{ id: string }>;
+      };
+
+      if (!model) {
+        throw new Error(`Model ${config.modelName} not found in Prisma client`);
+      }
+
+      // Check if item exists
+      const existing = await model.findUnique({
+        where: { id },
+      });
+
+      if (!existing) {
+        throw new Error(`${entityType} with ID ${id} not found`);
+      }
+
+      if (softDelete) {
+        // Soft delete - set isDeleted flag and deletedAt timestamp
+        await model.update({
+          where: { id },
+          data: {
+            isDeleted: true,
+            deletedAt: new Date(),
+          },
+        });
+      } else {
+        // Hard delete - permanently remove from database
+        await model.delete({
+          where: { id },
+        });
+      }
+
       return true;
     });
   }

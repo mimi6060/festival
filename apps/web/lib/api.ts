@@ -127,6 +127,8 @@ export const festivalsApi = {
 
   getBySlug: (slug: string) => api.get<Festival>(`/festivals/by-slug/${slug}`),
 
+  getFeatured: (limit?: number) => api.get<Festival[]>('/festivals/featured', { limit }),
+
   search: (query: string) => api.get<PaginatedFestivals>('/festivals', { search: query }),
 };
 
@@ -196,6 +198,8 @@ export interface Festival {
   contactEmail: string | null;
   timezone: string;
   currency: string;
+  genres?: string[];
+  isFeatured?: boolean;
   organizer?: {
     id: string;
     firstName: string;
