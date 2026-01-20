@@ -23,7 +23,7 @@ import { VendorPOSScreen, VendorSelectScreen } from '../../screens/Vendor';
 
 import { useAuthStore } from '../../store';
 import { pushService } from '../../services';
-import { colors } from '../../theme';
+import { useTheme } from '../../theme';
 import type { RootStackParamList } from '../../types';
 
 // URL Linking configuration for web
@@ -70,10 +70,13 @@ const linking: LinkingOptions<RootStackParamList> = {
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
-// Memoized loading screen component
-const LoadingScreen = memo(() => (
-  <View style={styles.loadingContainer}>
-    <ActivityIndicator size="large" color={colors.primary} />
+// Loading screen component - receives colors as prop for theme support
+interface LoadingScreenProps {
+  colors: ReturnType<typeof useTheme>['colors'];
+}
+const LoadingScreen = memo<LoadingScreenProps>(({ colors: themeColors }) => (
+  <View style={[styles.loadingContainer, { backgroundColor: themeColors.background }]}>
+    <ActivityIndicator size="large" color={themeColors.primary} />
   </View>
 ));
 
@@ -101,6 +104,7 @@ const STAFF_ROLES = ['STAFF', 'CASHIER', 'SECURITY', 'ORGANIZER', 'ADMIN'];
 
 export const AppNavigator: React.FC = () => {
   const { isAuthenticated, isLoading, hasSeenOnboarding, user } = useAuthStore();
+  const { colors, isDark } = useTheme();
 
   useEffect(() => {
     // Configure push notifications
@@ -130,10 +134,10 @@ export const AppNavigator: React.FC = () => {
     return 'Main';
   }, [hasSeenOnboarding, isAuthenticated, isStaffMember]);
 
-  // Memoize theme to prevent unnecessary re-renders
+  // Memoize theme to prevent unnecessary re-renders - uses theme context
   const navigationTheme = useMemo(
     () => ({
-      dark: true,
+      dark: isDark,
       colors: {
         primary: colors.primary,
         background: colors.background,
@@ -149,16 +153,19 @@ export const AppNavigator: React.FC = () => {
         heavy: { fontFamily: 'System', fontWeight: '900' as const },
       },
     }),
-    []
+    [colors, isDark]
   );
 
   if (isLoading) {
-    return <LoadingScreen />;
+    return <LoadingScreen colors={colors} />;
   }
 
   return (
-    <View style={styles.container}>
-      <StatusBar barStyle="light-content" backgroundColor={colors.background} />
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <StatusBar
+        barStyle={isDark ? 'light-content' : 'dark-content'}
+        backgroundColor={colors.background}
+      />
       <NavigationContainer
         linking={Platform.OS === 'web' ? linking : undefined}
         theme={navigationTheme}
@@ -169,7 +176,7 @@ export const AppNavigator: React.FC = () => {
             headerShown: false,
             animation: 'slide_from_right',
             animationDuration: 250, // Optimized for < 300ms transitions
-            contentStyle: { backgroundColor: colors.background },
+            contentStyle: { backgroundColor: colors.background as string },
             // Enable native driver for smoother animations
             freezeOnBlur: true, // Freeze inactive screens to save memory
           }}
@@ -254,13 +261,11 @@ export const AppNavigator: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: colors.background,
   },
 });
 

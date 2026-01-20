@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,22 +10,25 @@ import {
   Linking,
   Modal,
   Platform,
+  Pressable,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { Card } from '../../components/common';
 import {
   useAuthStore,
   useNotificationStore,
   useSettingsStore,
   languageLabels,
+  languageFlags,
   themeLabels,
   Language,
   Theme,
 } from '../../store';
 import { offlineService } from '../../services';
-import { colors, spacing, typography, borderRadius } from '../../theme';
+import { useTheme, spacing, typography, borderRadius } from '../../theme';
 import type { RootStackParamList } from '../../types';
 
 type SettingsNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Main'>;
@@ -37,6 +40,7 @@ interface SettingItemProps {
   onPress?: () => void;
   showArrow?: boolean;
   rightElement?: React.ReactNode;
+  colors: ReturnType<typeof useTheme>['colors'];
 }
 
 const SettingItem: React.FC<SettingItemProps> = ({
@@ -46,23 +50,30 @@ const SettingItem: React.FC<SettingItemProps> = ({
   onPress,
   showArrow = true,
   rightElement,
+  colors,
 }) => {
   const content = (
     <View style={styles.settingItem}>
       <View style={styles.settingLeft}>
         <Text style={styles.settingIcon}>{icon}</Text>
-        <Text style={styles.settingLabel}>{label}</Text>
+        <Text style={[styles.settingLabel, { color: colors.text }]}>{label}</Text>
       </View>
       <View style={styles.settingRight}>
-        {value && <Text style={styles.settingValue}>{value}</Text>}
+        {value && <Text style={[styles.settingValue, { color: colors.textMuted }]}>{value}</Text>}
         {rightElement}
-        {showArrow && !rightElement && <Text style={styles.settingArrow}>&gt;</Text>}
+        {showArrow && !rightElement && (
+          <Text style={[styles.settingArrow, { color: colors.textMuted }]}>{'>'}</Text>
+        )}
       </View>
     </View>
   );
 
   if (onPress) {
-    return <TouchableOpacity onPress={onPress}>{content}</TouchableOpacity>;
+    return (
+      <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+        {content}
+      </TouchableOpacity>
+    );
   }
 
   return content;
@@ -70,6 +81,8 @@ const SettingItem: React.FC<SettingItemProps> = ({
 
 export const SettingsScreen: React.FC = () => {
   const navigation = useNavigation<SettingsNavigationProp>();
+  const { t } = useTranslation();
+  const { colors } = useTheme();
   const { setHasSeenOnboarding } = useAuthStore();
   const { pushEnabled, setPushEnabled } = useNotificationStore();
   const {
@@ -86,72 +99,111 @@ export const SettingsScreen: React.FC = () => {
   const [showLanguageModal, setShowLanguageModal] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
 
-  const handleLanguageChange = () => {
+  const handleLanguageChange = useCallback(() => {
     setShowLanguageModal(true);
-  };
+  }, []);
 
-  const handleThemeChange = () => {
+  const handleThemeChange = useCallback(() => {
     setShowThemeModal(true);
-  };
+  }, []);
 
-  const showAlert = (title: string, message: string) => {
+  const showAlert = useCallback((title: string, message: string) => {
     if (Platform.OS === 'web') {
       window.alert(`${title}\n\n${message}`);
     } else {
       Alert.alert(title, message);
     }
-  };
+  }, []);
 
-  const handleClearCache = () => {
-    Alert.alert(
-      'Vider le cache',
-      'Cela supprimera les donnees temporaires mais pas vos informations de compte.',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Confirmer',
-          onPress: async () => {
-            await offlineService.clearOfflineData();
-            Alert.alert('Cache vide', 'Les donnees temporaires ont ete supprimees.');
-          },
-        },
-      ]
-    );
-  };
+  const handleClearCache = useCallback(() => {
+    const confirmClear = () => {
+      offlineService.clearOfflineData().then(() => {
+        showAlert(t('settings.cacheCleared'), t('settings.cacheCleared'));
+      });
+    };
 
-  const handleResetOnboarding = () => {
-    Alert.alert("Revoir l'introduction", "Voulez-vous revoir les ecrans d'introduction?", [
-      { text: 'Annuler', style: 'cancel' },
-      {
-        text: 'Oui',
-        onPress: () => {
-          setHasSeenOnboarding(false);
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'Onboarding' }],
-          });
-        },
-      },
-    ]);
-  };
+    if (Platform.OS === 'web') {
+      if (window.confirm(t('settings.clearCache') + '?')) {
+        confirmClear();
+      }
+    } else {
+      Alert.alert(t('settings.clearCache'), t('settings.offlineData'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.confirm'), onPress: confirmClear },
+      ]);
+    }
+  }, [t, showAlert]);
 
-  const handlePrivacyPolicy = () => {
+  const handleResetOnboarding = useCallback(() => {
+    const resetOnboarding = () => {
+      setHasSeenOnboarding(false);
+      navigation.reset({
+        index: 0,
+        routes: [{ name: 'Onboarding' }],
+      });
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(t('onboarding.welcome.title') + '?')) {
+        resetOnboarding();
+      }
+    } else {
+      Alert.alert(t('onboarding.welcome.title'), t('onboarding.welcome.description'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.yes'), onPress: resetOnboarding },
+      ]);
+    }
+  }, [t, setHasSeenOnboarding, navigation]);
+
+  const handlePrivacyPolicy = useCallback(() => {
     Linking.openURL('https://festival.com/privacy');
-  };
+  }, []);
 
-  const handleTermsOfService = () => {
+  const handleTermsOfService = useCallback(() => {
     Linking.openURL('https://festival.com/terms');
-  };
+  }, []);
 
-  const handleRateApp = () => {
-    Alert.alert("Noter l'application", 'Vous aimez Festival App? Laissez-nous un avis!', [
-      { text: 'Plus tard', style: 'cancel' },
-      { text: 'Noter', onPress: () => Linking.openURL('https://apps.apple.com') },
-    ]);
+  const handleRateApp = useCallback(() => {
+    if (Platform.OS === 'web') {
+      window.open('https://apps.apple.com', '_blank');
+    } else {
+      Alert.alert(t('profile.about'), t('common.info'), [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('common.ok'), onPress: () => Linking.openURL('https://apps.apple.com') },
+      ]);
+    }
+  }, [t]);
+
+  const selectLanguage = useCallback(
+    (lang: Language) => {
+      setLanguage(lang);
+      setShowLanguageModal(false);
+    },
+    [setLanguage]
+  );
+
+  const selectTheme = useCallback(
+    (selectedTheme: Theme) => {
+      setTheme(selectedTheme);
+      setShowThemeModal(false);
+    },
+    [setTheme]
+  );
+
+  // Dynamic styles based on theme
+  const dynamicStyles = {
+    container: { backgroundColor: colors.background },
+    card: { backgroundColor: colors.surface },
+    text: { color: colors.text },
+    textMuted: { color: colors.textMuted },
+    divider: { backgroundColor: colors.border },
+    modalOverlay: { backgroundColor: 'rgba(0, 0, 0, 0.6)' },
+    modalContent: { backgroundColor: colors.surface },
+    modalOptionSelected: { backgroundColor: colors.primary + '20' },
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, dynamicStyles.container]} edges={['top']}>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
@@ -159,21 +211,27 @@ export const SettingsScreen: React.FC = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.backIcon}>←</Text>
+          <TouchableOpacity
+            style={[styles.backButton, { backgroundColor: colors.surface }]}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={[styles.backIcon, dynamicStyles.text]}>{'<-'}</Text>
           </TouchableOpacity>
-          <Text style={styles.title}>Parametres</Text>
+          <Text style={[styles.title, dynamicStyles.text]}>{t('settings.title')}</Text>
           <View style={styles.placeholder} />
         </View>
 
         {/* Notifications */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
-          <Card padding="none" style={styles.settingCard}>
+          <Text style={[styles.sectionTitle, dynamicStyles.textMuted]}>
+            {t('settings.notifications')}
+          </Text>
+          <Card padding="none" style={[styles.settingCard, dynamicStyles.card]}>
             <SettingItem
               icon="🔔"
-              label="Notifications push"
+              label={t('settings.pushNotifications')}
               showArrow={false}
+              colors={colors}
               rightElement={
                 <Switch
                   value={pushEnabled}
@@ -183,61 +241,67 @@ export const SettingsScreen: React.FC = () => {
                 />
               }
             />
-            <View style={styles.divider} />
+            <View style={[styles.divider, dynamicStyles.divider]} />
             <SettingItem
               icon="📅"
-              label="Rappels de concerts"
-              value="15 min avant"
-              onPress={() => Alert.alert('Info', 'Configuration des rappels a venir')}
+              label={t('settings.eventReminders')}
+              value="15 min"
+              onPress={() => showAlert(t('common.info'), t('common.soon'))}
+              colors={colors}
             />
-            <View style={styles.divider} />
+            <View style={[styles.divider, dynamicStyles.divider]} />
             <SettingItem
               icon="📢"
-              label="Alertes festival"
-              value="Activees"
-              onPress={() => Alert.alert('Info', 'Configuration des alertes a venir')}
+              label={t('settings.announcements')}
+              value={pushEnabled ? t('common.yes') : t('common.no')}
+              onPress={() => showAlert(t('common.info'), t('common.soon'))}
+              colors={colors}
             />
           </Card>
         </View>
 
-        {/* Apparence */}
+        {/* Appearance */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Apparence</Text>
-          <Card padding="none" style={styles.settingCard}>
+          <Text style={[styles.sectionTitle, dynamicStyles.textMuted]}>
+            {t('settings.appearance')}
+          </Text>
+          <Card padding="none" style={[styles.settingCard, dynamicStyles.card]}>
             <SettingItem
               icon="🌙"
-              label="Theme"
+              label={t('settings.theme')}
               value={themeLabels[theme]}
               onPress={handleThemeChange}
+              colors={colors}
             />
-            <View style={styles.divider} />
+            <View style={[styles.divider, dynamicStyles.divider]} />
             <SettingItem
               icon="🌍"
-              label="Langue"
-              value={languageLabels[language]}
+              label={t('settings.language')}
+              value={`${languageFlags[language]} ${languageLabels[language]}`}
               onPress={handleLanguageChange}
+              colors={colors}
             />
           </Card>
         </View>
 
-        {/* Securite */}
+        {/* Security */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Securite</Text>
-          <Card padding="none" style={styles.settingCard}>
+          <Text style={[styles.sectionTitle, dynamicStyles.textMuted]}>
+            {t('profile.security')}
+          </Text>
+          <Card padding="none" style={[styles.settingCard, dynamicStyles.card]}>
             <SettingItem
               icon="🔐"
-              label="Authentification biometrique"
+              label={t('profile.biometric')}
               showArrow={false}
+              colors={colors}
               rightElement={
                 <Switch
                   value={biometricEnabled}
                   onValueChange={(value) => {
                     setBiometricEnabled(value);
                     if (value) {
-                      showAlert(
-                        'Biometrie activee',
-                        'Vous pouvez maintenant vous connecter avec Face ID / Touch ID'
-                      );
+                      showAlert(t('profile.biometric'), t('auth.biometricLogin'));
                     }
                   }}
                   trackColor={{ false: colors.border, true: colors.primary }}
@@ -245,35 +309,33 @@ export const SettingsScreen: React.FC = () => {
                 />
               }
             />
-            <View style={styles.divider} />
+            <View style={[styles.divider, dynamicStyles.divider]} />
             <SettingItem
               icon="🔒"
-              label="Changer le mot de passe"
-              onPress={() =>
-                showAlert('Mot de passe', 'Fonctionnalite de changement de mot de passe a venir')
-              }
+              label={t('profile.changePassword')}
+              onPress={() => navigation.navigate('ChangePassword')}
+              colors={colors}
             />
           </Card>
         </View>
 
-        {/* Donnees */}
+        {/* Data */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Donnees</Text>
-          <Card padding="none" style={styles.settingCard}>
+          <Text style={[styles.sectionTitle, dynamicStyles.textMuted]}>{t('settings.cache')}</Text>
+          <Card padding="none" style={[styles.settingCard, dynamicStyles.card]}>
             <SettingItem
               icon="📴"
-              label="Mode hors-ligne"
+              label={t('settings.offlineData')}
               showArrow={false}
+              colors={colors}
               rightElement={
                 <Switch
                   value={offlineModeEnabled}
                   onValueChange={(value) => {
                     setOfflineModeEnabled(value);
                     showAlert(
-                      value ? 'Mode hors-ligne active' : 'Mode hors-ligne desactive',
-                      value
-                        ? 'Les donnees seront stockees localement pour une utilisation sans connexion.'
-                        : 'Les donnees seront synchronisees en temps reel.'
+                      value ? t('common.offline') : t('common.online'),
+                      value ? t('settings.downloadForOffline') : t('common.syncComplete')
                     );
                   }}
                   trackColor={{ false: colors.border, true: colors.primary }}
@@ -281,72 +343,100 @@ export const SettingsScreen: React.FC = () => {
                 />
               }
             />
-            <View style={styles.divider} />
-            <SettingItem icon="🗑️" label="Vider le cache" onPress={handleClearCache} />
-            <View style={styles.divider} />
+            <View style={[styles.divider, dynamicStyles.divider]} />
+            <SettingItem
+              icon="🗑️"
+              label={t('settings.clearCache')}
+              onPress={handleClearCache}
+              colors={colors}
+            />
+            <View style={[styles.divider, dynamicStyles.divider]} />
             <SettingItem
               icon="📥"
-              label="Telecharger mes donnees"
-              onPress={() =>
-                showAlert(
-                  'Telechargement',
-                  'Fonctionnalite de telechargement des donnees a venir (RGPD)'
-                )
-              }
+              label={t('profile.dataExport')}
+              onPress={() => showAlert(t('common.info'), t('common.soon'))}
+              colors={colors}
             />
           </Card>
         </View>
 
-        {/* A propos */}
+        {/* About */}
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>A propos</Text>
-          <Card padding="none" style={styles.settingCard}>
+          <Text style={[styles.sectionTitle, dynamicStyles.textMuted]}>{t('profile.about')}</Text>
+          <Card padding="none" style={[styles.settingCard, dynamicStyles.card]}>
             <SettingItem
               icon="📄"
-              label="Conditions d'utilisation"
+              label={t('profile.terms')}
               onPress={handleTermsOfService}
+              colors={colors}
             />
-            <View style={styles.divider} />
+            <View style={[styles.divider, dynamicStyles.divider]} />
             <SettingItem
               icon="🔐"
-              label="Politique de confidentialite"
+              label={t('profile.privacyPolicy')}
               onPress={handlePrivacyPolicy}
+              colors={colors}
             />
-            <View style={styles.divider} />
-            <SettingItem icon="⭐" label="Noter l'application" onPress={handleRateApp} />
-            <View style={styles.divider} />
-            <SettingItem icon="🎬" label="Revoir l'introduction" onPress={handleResetOnboarding} />
+            <View style={[styles.divider, dynamicStyles.divider]} />
+            <SettingItem
+              icon="⭐"
+              label={t('common.share')}
+              onPress={handleRateApp}
+              colors={colors}
+            />
+            <View style={[styles.divider, dynamicStyles.divider]} />
+            <SettingItem
+              icon="🎬"
+              label={t('onboarding.welcome.title')}
+              onPress={handleResetOnboarding}
+              colors={colors}
+            />
           </Card>
         </View>
 
         {/* Version */}
         <View style={styles.versionContainer}>
-          <Text style={styles.versionText}>Festival App</Text>
-          <Text style={styles.versionNumber}>Version 1.0.0 (Build 1)</Text>
-          <Text style={styles.copyright}>2024 Festival. Tous droits reserves.</Text>
+          <Text style={[styles.versionText, dynamicStyles.text]}>Festival App</Text>
+          <Text style={[styles.versionNumber, dynamicStyles.textMuted]}>
+            {t('profile.version')} 1.0.0 (Build 1)
+          </Text>
+          <Text style={[styles.copyright, dynamicStyles.textMuted]}>
+            2024 Festival. {t('common.all')} {t('profile.licenses')}.
+          </Text>
         </View>
 
         {/* Debug Section (Development only) */}
         {__DEV__ && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Developpeur</Text>
-            <Card padding="none" style={styles.settingCard}>
-              <SettingItem icon="🐛" label="Debug mode" value="Active" showArrow={false} />
-              <View style={styles.divider} />
+            <Text style={[styles.sectionTitle, dynamicStyles.textMuted]}>Developer</Text>
+            <Card padding="none" style={[styles.settingCard, dynamicStyles.card]}>
+              <SettingItem
+                icon="🐛"
+                label="Debug mode"
+                value="Active"
+                showArrow={false}
+                colors={colors}
+              />
+              <View style={[styles.divider, dynamicStyles.divider]} />
               <SettingItem
                 icon="🔄"
-                label="Forcer la synchronisation"
+                label={t('common.syncInProgress')}
                 onPress={async () => {
                   const result = await offlineService.syncAllData();
-                  Alert.alert('Sync', result.success ? 'Synchronisation reussie' : 'Echec');
+                  showAlert(
+                    'Sync',
+                    result.success ? t('common.syncComplete') : t('common.syncFailed')
+                  );
                 }}
+                colors={colors}
               />
-              <View style={styles.divider} />
+              <View style={[styles.divider, dynamicStyles.divider]} />
               <SettingItem
                 icon="📊"
-                label="Queue hors-ligne"
-                value={`${offlineService.getSyncQueueLength()} elements`}
+                label="Queue"
+                value={`${offlineService.getSyncQueueLength()} items`}
                 showArrow={false}
+                colors={colors}
               />
             </Card>
           </View>
@@ -360,45 +450,49 @@ export const SettingsScreen: React.FC = () => {
         animationType="fade"
         onRequestClose={() => setShowLanguageModal(false)}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
+        <Pressable
+          style={[styles.modalOverlay, dynamicStyles.modalOverlay]}
           onPress={() => setShowLanguageModal(false)}
         >
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Choisir la langue</Text>
+          <Pressable
+            style={[styles.modalContent, dynamicStyles.modalContent]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <Text style={[styles.modalTitle, dynamicStyles.text]}>
+              {t('settings.selectLanguage')}
+            </Text>
             {(Object.keys(languageLabels) as Language[]).map((lang) => (
               <TouchableOpacity
                 key={lang}
-                style={[styles.modalOption, language === lang && styles.modalOptionSelected]}
-                onPress={() => {
-                  setLanguage(lang);
-                  setShowLanguageModal(false);
-                  showAlert(
-                    'Langue modifiee',
-                    `La langue a ete changee en ${languageLabels[lang]}`
-                  );
-                }}
+                style={[styles.modalOption, language === lang && dynamicStyles.modalOptionSelected]}
+                onPress={() => selectLanguage(lang)}
+                activeOpacity={0.7}
               >
+                <Text style={styles.languageFlag}>{languageFlags[lang]}</Text>
                 <Text
                   style={[
                     styles.modalOptionText,
-                    language === lang && styles.modalOptionTextSelected,
+                    { color: colors.text },
+                    language === lang && { color: colors.primary, fontWeight: '600' },
                   ]}
                 >
                   {languageLabels[lang]}
                 </Text>
-                {language === lang && <Text style={styles.checkIcon}>{'✓'}</Text>}
+                {language === lang && (
+                  <Text style={[styles.checkIcon, { color: colors.primary }]}>{'check'}</Text>
+                )}
               </TouchableOpacity>
             ))}
             <TouchableOpacity
-              style={styles.modalCancel}
+              style={[styles.modalCancel, { borderTopColor: colors.border }]}
               onPress={() => setShowLanguageModal(false)}
             >
-              <Text style={styles.modalCancelText}>Annuler</Text>
+              <Text style={[styles.modalCancelText, dynamicStyles.textMuted]}>
+                {t('common.cancel')}
+              </Text>
             </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
+          </Pressable>
+        </Pressable>
       </Modal>
 
       {/* Theme Selection Modal */}
@@ -408,36 +502,52 @@ export const SettingsScreen: React.FC = () => {
         animationType="fade"
         onRequestClose={() => setShowThemeModal(false)}
       >
-        <TouchableOpacity
-          style={styles.modalOverlay}
-          activeOpacity={1}
+        <Pressable
+          style={[styles.modalOverlay, dynamicStyles.modalOverlay]}
           onPress={() => setShowThemeModal(false)}
         >
-          <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Choisir le theme</Text>
-            {(Object.keys(themeLabels) as Theme[]).map((t) => (
+          <Pressable
+            style={[styles.modalContent, dynamicStyles.modalContent]}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <Text style={[styles.modalTitle, dynamicStyles.text]}>{t('settings.theme')}</Text>
+            {(Object.keys(themeLabels) as Theme[]).map((themeOption) => (
               <TouchableOpacity
-                key={t}
-                style={[styles.modalOption, theme === t && styles.modalOptionSelected]}
-                onPress={() => {
-                  setTheme(t);
-                  setShowThemeModal(false);
-                  showAlert('Theme modifie', `Le theme a ete change en ${themeLabels[t]}`);
-                }}
+                key={themeOption}
+                style={[
+                  styles.modalOption,
+                  theme === themeOption && dynamicStyles.modalOptionSelected,
+                ]}
+                onPress={() => selectTheme(themeOption)}
+                activeOpacity={0.7}
               >
-                <Text
-                  style={[styles.modalOptionText, theme === t && styles.modalOptionTextSelected]}
-                >
-                  {themeLabels[t]}
+                <Text style={styles.themeIcon}>
+                  {themeOption === 'light' ? '☀️' : themeOption === 'dark' ? '🌙' : '⚙️'}
                 </Text>
-                {theme === t && <Text style={styles.checkIcon}>{'✓'}</Text>}
+                <Text
+                  style={[
+                    styles.modalOptionText,
+                    { color: colors.text },
+                    theme === themeOption && { color: colors.primary, fontWeight: '600' },
+                  ]}
+                >
+                  {themeLabels[themeOption]}
+                </Text>
+                {theme === themeOption && (
+                  <Text style={[styles.checkIcon, { color: colors.primary }]}>{'check'}</Text>
+                )}
               </TouchableOpacity>
             ))}
-            <TouchableOpacity style={styles.modalCancel} onPress={() => setShowThemeModal(false)}>
-              <Text style={styles.modalCancelText}>Annuler</Text>
+            <TouchableOpacity
+              style={[styles.modalCancel, { borderTopColor: colors.border }]}
+              onPress={() => setShowThemeModal(false)}
+            >
+              <Text style={[styles.modalCancelText, dynamicStyles.textMuted]}>
+                {t('common.cancel')}
+              </Text>
             </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
+          </Pressable>
+        </Pressable>
       </Modal>
     </SafeAreaView>
   );
@@ -446,7 +556,6 @@ export const SettingsScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   scrollView: {
     flex: 1,
@@ -466,17 +575,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   backIcon: {
-    fontSize: 24,
-    color: colors.text,
+    fontSize: 20,
   },
   title: {
     ...typography.h2,
-    color: colors.text,
   },
   placeholder: {
     width: 40,
@@ -486,7 +592,6 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...typography.small,
-    color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 1,
     marginBottom: spacing.sm,
@@ -494,6 +599,7 @@ const styles = StyleSheet.create({
   },
   settingCard: {
     overflow: 'hidden',
+    borderRadius: borderRadius.lg,
   },
   settingItem: {
     flexDirection: 'row',
@@ -513,7 +619,6 @@ const styles = StyleSheet.create({
   },
   settingLabel: {
     ...typography.body,
-    color: colors.text,
   },
   settingRight: {
     flexDirection: 'row',
@@ -521,16 +626,13 @@ const styles = StyleSheet.create({
   },
   settingValue: {
     ...typography.small,
-    color: colors.textMuted,
     marginRight: spacing.sm,
   },
   settingArrow: {
     fontSize: 16,
-    color: colors.textMuted,
   },
   divider: {
     height: 1,
-    backgroundColor: colors.border,
     marginLeft: 52,
   },
   versionContainer: {
@@ -539,63 +641,61 @@ const styles = StyleSheet.create({
   },
   versionText: {
     ...typography.body,
-    color: colors.text,
     fontWeight: '600',
     marginBottom: spacing.xs,
   },
   versionNumber: {
     ...typography.small,
-    color: colors.textMuted,
     marginBottom: spacing.xs,
   },
   copyright: {
     ...typography.caption,
-    color: colors.textMuted,
   },
   // Modal styles
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
     justifyContent: 'center',
     alignItems: 'center',
     padding: spacing.lg,
   },
   modalContent: {
-    backgroundColor: colors.card,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
     width: '100%',
-    maxWidth: 320,
+    maxWidth: 340,
+    ...Platform.select({
+      web: {
+        maxHeight: '80vh',
+      },
+    }),
   },
   modalTitle: {
     ...typography.h3,
-    color: colors.text,
     textAlign: 'center',
     marginBottom: spacing.lg,
   },
   modalOption: {
     flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'space-between',
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
     borderRadius: borderRadius.md,
     marginBottom: spacing.xs,
   },
-  modalOptionSelected: {
-    backgroundColor: colors.primaryLight,
+  languageFlag: {
+    fontSize: 24,
+    marginRight: spacing.md,
+  },
+  themeIcon: {
+    fontSize: 24,
+    marginRight: spacing.md,
   },
   modalOptionText: {
     ...typography.body,
-    color: colors.text,
-  },
-  modalOptionTextSelected: {
-    color: colors.primary,
-    fontWeight: '600',
+    flex: 1,
   },
   checkIcon: {
     fontSize: 18,
-    color: colors.primary,
     fontWeight: 'bold',
   },
   modalCancel: {
@@ -603,11 +703,9 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: colors.border,
   },
   modalCancelText: {
     ...typography.body,
-    color: colors.textMuted,
   },
 });
 

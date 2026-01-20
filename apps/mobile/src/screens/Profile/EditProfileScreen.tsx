@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -13,15 +13,18 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { useTranslation } from 'react-i18next';
 import { Card, Button, Avatar } from '../../components/common';
 import { useAuthStore } from '../../store';
-import { colors, spacing, typography, borderRadius } from '../../theme';
+import { useTheme, spacing, typography, borderRadius } from '../../theme';
 import type { RootStackParamList } from '../../types';
 
 type EditProfileNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 export const EditProfileScreen: React.FC = () => {
   const navigation = useNavigation<EditProfileNavigationProp>();
+  const { t } = useTranslation();
+  const { colors } = useTheme();
   const { user, updateUser } = useAuthStore();
 
   const [firstName, setFirstName] = useState(user?.firstName || '');
@@ -30,45 +33,65 @@ export const EditProfileScreen: React.FC = () => {
   const [phone, setPhone] = useState(user?.phone || '');
   const [loading, setLoading] = useState(false);
 
-  const showAlert = (title: string, message: string) => {
+  const showAlert = useCallback((title: string, message: string) => {
     if (Platform.OS === 'web') {
       window.alert(`${title}\n\n${message}`);
     } else {
       Alert.alert(title, message);
     }
-  };
+  }, []);
 
-  const handleChangeAvatar = () => {
-    showAlert(
-      'Bientot disponible',
-      'La modification de photo de profil sera disponible prochainement.'
+  const handleChangeAvatar = useCallback(() => {
+    if (Platform.OS === 'web') {
+      // For web, create a file input element
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = 'image/*';
+      input.onchange = (e) => {
+        const file = (e.target as HTMLInputElement).files?.[0];
+        if (file) {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64 = reader.result as string;
+            updateUser({ avatar: base64 });
+            showAlert(t('common.success'), t('profile.editProfile'));
+          };
+          reader.readAsDataURL(file);
+        }
+      };
+      input.click();
+    } else {
+      showAlert(t('common.soon'), t('common.info'));
+    }
+  }, [t, showAlert, updateUser]);
+
+  const validateEmail = useCallback((emailValue: string) => {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue);
+  }, []);
+
+  const validatePhone = useCallback((phoneValue: string) => {
+    return (
+      !phoneValue ||
+      /^(\+?\d{1,3})?[\s.-]?\(?\d{1,4}\)?[\s.-]?\d{1,4}[\s.-]?\d{1,9}$/.test(phoneValue)
     );
-  };
+  }, []);
 
-  const validateEmail = (email: string) => {
-    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-  };
-
-  const validatePhone = (phone: string) => {
-    return !phone || /^(\+?\d{1,3})?[\s.-]?\(?\d{1,4}\)?[\s.-]?\d{1,4}[\s.-]?\d{1,9}$/.test(phone);
-  };
-
-  const handleSave = async () => {
+  const handleSave = useCallback(async () => {
     // Validation
     if (!firstName.trim()) {
-      showAlert('Erreur', 'Le prenom est requis');
+      showAlert(t('errors.validation'), t('errors.required'));
       return;
     }
     if (!lastName.trim()) {
-      showAlert('Erreur', 'Le nom est requis');
+      showAlert(t('errors.validation'), t('errors.required'));
       return;
     }
     if (!validateEmail(email)) {
-      showAlert('Erreur', 'Email invalide');
+      showAlert(t('errors.validation'), t('errors.invalidEmail'));
       return;
     }
     if (!validatePhone(phone)) {
-      showAlert('Erreur', 'Numero de telephone invalide');
+      showAlert(t('errors.validation'), t('errors.invalidPhone'));
       return;
     }
 
@@ -84,27 +107,55 @@ export const EditProfileScreen: React.FC = () => {
         phone: phone.trim() || undefined,
       });
 
-      showAlert('Succes', 'Vos informations ont ete mises a jour');
+      showAlert(t('common.success'), t('profile.editProfile'));
       navigation.goBack();
     } catch {
-      showAlert('Erreur', 'Impossible de mettre a jour vos informations');
+      showAlert(t('common.error'), t('errors.generic'));
     } finally {
       setLoading(false);
     }
+  }, [
+    firstName,
+    lastName,
+    email,
+    phone,
+    t,
+    showAlert,
+    validateEmail,
+    validatePhone,
+    updateUser,
+    navigation,
+  ]);
+
+  // Dynamic styles based on theme
+  const dynamicStyles = {
+    container: { backgroundColor: colors.background },
+    card: { backgroundColor: colors.surface },
+    text: { color: colors.text },
+    textSecondary: { color: colors.textSecondary },
+    textMuted: { color: colors.textMuted },
+    input: {
+      backgroundColor: colors.surfaceLight,
+      color: colors.text,
+      borderColor: colors.border,
+    },
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={['top']}>
+    <SafeAreaView style={[styles.container, dynamicStyles.container]} edges={['top']}>
       <KeyboardAvoidingView
         style={styles.keyboardView}
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <Text style={styles.backIcon}>←</Text>
+          <TouchableOpacity
+            style={[styles.backButton, { backgroundColor: colors.surface }]}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={[styles.backIcon, dynamicStyles.text]}>{'<-'}</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Modifier le profil</Text>
+          <Text style={[styles.headerTitle, dynamicStyles.text]}>{t('profile.editProfile')}</Text>
           <View style={styles.placeholder} />
         </View>
 
@@ -116,45 +167,58 @@ export const EditProfileScreen: React.FC = () => {
         >
           {/* Avatar Section */}
           <View style={styles.avatarSection}>
-            <Avatar name={`${firstName} ${lastName}`} size="2xl" style={styles.avatarMargin} />
+            <Avatar
+              name={`${firstName} ${lastName}`}
+              src={user?.avatar}
+              size="2xl"
+              style={styles.avatarMargin}
+            />
             <TouchableOpacity style={styles.changeAvatarButton} onPress={handleChangeAvatar}>
-              <Text style={styles.changeAvatarText}>Changer la photo</Text>
+              <Text style={[styles.changeAvatarText, { color: colors.primary }]}>
+                {t('profile.editProfile')}
+              </Text>
             </TouchableOpacity>
           </View>
 
           {/* Form */}
-          <Card style={styles.formCard}>
+          <Card style={[styles.formCard, dynamicStyles.card]}>
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Prenom *</Text>
+              <Text style={[styles.inputLabel, dynamicStyles.textSecondary]}>
+                {t('auth.firstName')} *
+              </Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, dynamicStyles.input]}
                 value={firstName}
                 onChangeText={setFirstName}
-                placeholder="Votre prenom"
+                placeholder={t('auth.firstName')}
                 placeholderTextColor={colors.textMuted}
                 autoCapitalize="words"
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Nom *</Text>
+              <Text style={[styles.inputLabel, dynamicStyles.textSecondary]}>
+                {t('auth.lastName')} *
+              </Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, dynamicStyles.input]}
                 value={lastName}
                 onChangeText={setLastName}
-                placeholder="Votre nom"
+                placeholder={t('auth.lastName')}
                 placeholderTextColor={colors.textMuted}
                 autoCapitalize="words"
               />
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Email *</Text>
+              <Text style={[styles.inputLabel, dynamicStyles.textSecondary]}>
+                {t('auth.email')} *
+              </Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, dynamicStyles.input]}
                 value={email}
                 onChangeText={setEmail}
-                placeholder="votre@email.com"
+                placeholder={t('auth.email')}
                 placeholderTextColor={colors.textMuted}
                 keyboardType="email-address"
                 autoCapitalize="none"
@@ -163,29 +227,33 @@ export const EditProfileScreen: React.FC = () => {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Telephone</Text>
+              <Text style={[styles.inputLabel, dynamicStyles.textSecondary]}>
+                {t('auth.phone')}
+              </Text>
               <TextInput
-                style={styles.input}
+                style={[styles.input, dynamicStyles.input]}
                 value={phone}
                 onChangeText={setPhone}
                 placeholder="+33 6 12 34 56 78"
                 placeholderTextColor={colors.textMuted}
                 keyboardType="phone-pad"
               />
-              <Text style={styles.inputHint}>Optionnel - Utilise pour les notifications SMS</Text>
+              <Text style={[styles.inputHint, dynamicStyles.textMuted]}>
+                {t('common.info')} - {t('settings.notifications')}
+              </Text>
             </View>
           </Card>
 
           {/* Save Button */}
           <Button
-            title={loading ? 'Enregistrement...' : 'Enregistrer'}
+            title={loading ? t('common.loading') : t('common.save')}
             onPress={handleSave}
             disabled={loading}
             style={styles.saveButton}
           />
 
           {/* Info */}
-          <Text style={styles.infoText}>* Champs obligatoires</Text>
+          <Text style={[styles.infoText, dynamicStyles.textMuted]}>* {t('errors.required')}</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -195,7 +263,6 @@ export const EditProfileScreen: React.FC = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: colors.background,
   },
   keyboardView: {
     flex: 1,
@@ -211,17 +278,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
   backIcon: {
-    fontSize: 24,
-    color: colors.text,
+    fontSize: 20,
   },
   headerTitle: {
     ...typography.h3,
-    color: colors.text,
   },
   placeholder: {
     width: 40,
@@ -246,33 +310,28 @@ const styles = StyleSheet.create({
   },
   changeAvatarText: {
     ...typography.body,
-    color: colors.primary,
     fontWeight: '600',
   },
   formCard: {
     marginBottom: spacing.lg,
+    borderRadius: borderRadius.lg,
   },
   inputGroup: {
     marginBottom: spacing.md,
   },
   inputLabel: {
     ...typography.small,
-    color: colors.textSecondary,
     marginBottom: spacing.xs,
   },
   input: {
-    backgroundColor: colors.surfaceLight,
     borderRadius: borderRadius.md,
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.sm,
     ...typography.body,
-    color: colors.text,
     borderWidth: 1,
-    borderColor: colors.border,
   },
   inputHint: {
     ...typography.caption,
-    color: colors.textMuted,
     marginTop: spacing.xs,
   },
   saveButton: {
@@ -280,7 +339,6 @@ const styles = StyleSheet.create({
   },
   infoText: {
     ...typography.caption,
-    color: colors.textMuted,
     textAlign: 'center',
   },
 });

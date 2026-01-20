@@ -181,6 +181,10 @@ export const globalStyles = StyleSheet.create({
   },
 });
 
+// Export theme context
+export { ThemeProvider, useTheme, useThemeColors, lightColors, darkColors } from './ThemeContext';
+export type { ThemeColors, ThemeContextType, ThemeProviderProps } from './ThemeContext';
+
 export default {
   colors,
   spacing,
