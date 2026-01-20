@@ -33,9 +33,6 @@ const statusColors: Record<AvatarStatus, string> = {
   busy: 'bg-red-500',
 };
 
-// Standard placeholder background color - uses indigo-500 for consistency
-const AVATAR_PLACEHOLDER_BG = 'bg-indigo-500';
-
 // Get initials from name
 function getInitials(name: string): string {
   const parts = name.trim().split(/\s+/);
@@ -43,6 +40,13 @@ function getInitials(name: string): string {
     return parts[0].charAt(0).toUpperCase();
   }
   return (parts[0].charAt(0) + parts[parts.length - 1].charAt(0)).toUpperCase();
+}
+
+// Get initials from first and last name
+export function getInitialsFromNames(firstName?: string, lastName?: string): string {
+  const first = firstName?.charAt(0) || '';
+  const last = lastName?.charAt(0) || '';
+  return (first + last).toUpperCase() || '?';
 }
 
 export function Avatar({
@@ -59,9 +63,8 @@ export function Avatar({
 
   const showFallback = !src || imageError;
   const initials = name ? getInitials(name) : '?';
-  const bgColor = AVATAR_PLACEHOLDER_BG;
 
-  // Standardized styling: rounded-full, ring-2 ring-white/10
+  // Standardized styling: rounded-full, ring-2 ring-white/10, bg-indigo-500 for placeholder
   const ringStyles = showRing ? 'ring-2 ring-white/10' : '';
 
   return (
@@ -73,7 +76,7 @@ export function Avatar({
           overflow-hidden
           flex items-center justify-center
           ${ringStyles}
-          ${showFallback ? bgColor : 'bg-white/10'}
+          ${showFallback ? 'bg-indigo-500' : 'bg-white/10'}
         `}
       >
         {!showFallback ? (
@@ -95,7 +98,7 @@ export function Avatar({
             ${sizes.status}
             ${statusColors[status]}
             rounded-full
-            border-festival-dark
+            border-white dark:border-gray-900
           `}
         />
       )}
@@ -150,3 +153,5 @@ export function AvatarGroup({ children, max = 5, size = 'md', className = '' }: 
     </div>
   );
 }
+
+export default Avatar;

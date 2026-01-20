@@ -61,7 +61,8 @@ const mockNotifications: AdminNotification[] = [
     id: '3',
     type: 'warning',
     title: 'Stock faible detecte',
-    message: 'Le vendeur "Bar Central" signale un stock faible sur 3 produits: Biere blonde, Cocktail maison, Eau minerale.',
+    message:
+      'Le vendeur "Bar Central" signale un stock faible sur 3 produits: Biere blonde, Cocktail maison, Eau minerale.',
     timestamp: new Date(Date.now() - 60 * 60000).toISOString(),
     read: false,
     category: 'festival',
@@ -72,7 +73,8 @@ const mockNotifications: AdminNotification[] = [
     id: '4',
     type: 'info',
     title: 'Nouveau ticket support',
-    message: 'Un nouveau ticket de support a ete ouvert par un utilisateur VIP concernant un probleme de paiement.',
+    message:
+      'Un nouveau ticket de support a ete ouvert par un utilisateur VIP concernant un probleme de paiement.',
     timestamp: new Date(Date.now() - 2 * 60 * 60000).toISOString(),
     read: true,
     category: 'support',
@@ -83,7 +85,8 @@ const mockNotifications: AdminNotification[] = [
     id: '5',
     type: 'error',
     title: 'Echec de paiement',
-    message: 'Transaction echouee pour la commande #ORD-2025-1234. Raison: Carte refusee par la banque.',
+    message:
+      'Transaction echouee pour la commande #ORD-2025-1234. Raison: Carte refusee par la banque.',
     timestamp: new Date(Date.now() - 3 * 60 * 60000).toISOString(),
     read: true,
     category: 'sales',
@@ -94,7 +97,8 @@ const mockNotifications: AdminNotification[] = [
     id: '6',
     type: 'warning',
     title: 'Tentative de connexion suspecte',
-    message: '5 tentatives de connexion echouees pour admin@festival.com depuis une adresse IP inconnue (192.168.1.100).',
+    message:
+      '5 tentatives de connexion echouees pour admin@festival.com depuis une adresse IP inconnue (192.168.1.100).',
     timestamp: new Date(Date.now() - 4 * 60 * 60000).toISOString(),
     read: true,
     category: 'security',
@@ -103,7 +107,8 @@ const mockNotifications: AdminNotification[] = [
     id: '7',
     type: 'info',
     title: 'Mise a jour systeme prevue',
-    message: 'Une maintenance est prevue ce soir de 02h00 a 04h00. Le systeme pourrait etre indisponible.',
+    message:
+      'Une maintenance est prevue ce soir de 02h00 a 04h00. Le systeme pourrait etre indisponible.',
     timestamp: new Date(Date.now() - 5 * 60 * 60000).toISOString(),
     read: true,
     category: 'system',
@@ -112,7 +117,8 @@ const mockNotifications: AdminNotification[] = [
     id: '8',
     type: 'success',
     title: 'Nouveau partenaire active',
-    message: 'Le vendeur "Pizza Corner" a ete active avec succes et peut maintenant accepter les paiements.',
+    message:
+      'Le vendeur "Pizza Corner" a ete active avec succes et peut maintenant accepter les paiements.',
     timestamp: new Date(Date.now() - 6 * 60 * 60000).toISOString(),
     read: true,
     category: 'festival',
@@ -157,13 +163,13 @@ const defaultPreferences: NotificationPreferences = {
   },
 };
 
-// Config
+// Config - standardized toast/notification styling
 const typeConfig = {
-  info: { icon: 'ℹ️', color: 'bg-blue-50 border-blue-200 text-blue-800' },
-  success: { icon: '✅', color: 'bg-green-50 border-green-200 text-green-800' },
-  warning: { icon: '⚠️', color: 'bg-yellow-50 border-yellow-200 text-yellow-800' },
-  error: { icon: '🚨', color: 'bg-red-50 border-red-200 text-red-800' },
-  alert: { icon: '🔔', color: 'bg-purple-50 border-purple-200 text-purple-800' },
+  info: { icon: 'i', color: 'bg-blue-500/10 border-blue-500/20 text-blue-400' },
+  success: { icon: 'v', color: 'bg-green-500/10 border-green-500/20 text-green-400' },
+  warning: { icon: '!', color: 'bg-amber-500/10 border-amber-500/20 text-amber-400' },
+  error: { icon: 'x', color: 'bg-red-500/10 border-red-500/20 text-red-400' },
+  alert: { icon: '!', color: 'bg-purple-500/10 border-purple-500/20 text-purple-400' },
 };
 
 const categoryConfig = {
@@ -199,17 +205,19 @@ export default function NotificationsPage() {
   // Filter notifications
   const filteredNotifications = useMemo(() => {
     return notifications.filter((n) => {
-      if (filter === 'unread' && n.read) {return false;}
-      if (categoryFilter !== 'all' && n.category !== categoryFilter) {return false;}
+      if (filter === 'unread' && n.read) {
+        return false;
+      }
+      if (categoryFilter !== 'all' && n.category !== categoryFilter) {
+        return false;
+      }
       return true;
     });
   }, [notifications, filter, categoryFilter]);
 
   // Actions
   const markAsRead = (ids: string[]) => {
-    setNotifications((prev) =>
-      prev.map((n) => (ids.includes(n.id) ? { ...n, read: true } : n))
-    );
+    setNotifications((prev) => prev.map((n) => (ids.includes(n.id) ? { ...n, read: true } : n)));
     setSelectedNotifications(new Set());
   };
 
@@ -246,7 +254,10 @@ export default function NotificationsPage() {
     setPreferences((prev) => ({ ...prev, [key]: value }));
   };
 
-  const updateCategoryPreference = (category: keyof NotificationPreferences['categories'], value: boolean) => {
+  const updateCategoryPreference = (
+    category: keyof NotificationPreferences['categories'],
+    value: boolean
+  ) => {
     setPreferences((prev) => ({
       ...prev,
       categories: { ...prev.categories, [category]: value },
@@ -259,9 +270,7 @@ export default function NotificationsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Centre de Notifications</h1>
-          <p className="text-gray-500 mt-1">
-            Gerez vos notifications et preferences d'alertes
-          </p>
+          <p className="text-gray-500 mt-1">Gerez vos notifications et preferences d'alertes</p>
         </div>
         <div className="flex items-center gap-2">
           {unreadCount > 0 && (
@@ -274,19 +283,19 @@ export default function NotificationsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-2xl font-bold text-gray-900">{notifications.length}</p>
           <p className="text-sm text-gray-500">Total</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-2xl font-bold text-blue-600">{unreadCount}</p>
           <p className="text-sm text-gray-500">Non lues</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-2xl font-bold text-red-600">{stats.byType['error'] || 0}</p>
           <p className="text-sm text-gray-500">Erreurs</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-2xl font-bold text-yellow-600">{stats.byType['warning'] || 0}</p>
           <p className="text-sm text-gray-500">Alertes</p>
         </div>
@@ -335,7 +344,9 @@ export default function NotificationsPage() {
               </select>
               <select
                 value={categoryFilter}
-                onChange={(e) => setCategoryFilter(e.target.value as keyof typeof categoryConfig | 'all')}
+                onChange={(e) =>
+                  setCategoryFilter(e.target.value as keyof typeof categoryConfig | 'all')
+                }
                 className="input-field w-auto"
               >
                 <option value="all">Toutes categories</option>
@@ -368,13 +379,16 @@ export default function NotificationsPage() {
           </div>
 
           {/* Notifications List */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 overflow-hidden">
             {/* Select All Header */}
             {filteredNotifications.length > 0 && (
               <div className="px-4 py-3 bg-gray-50 border-b border-gray-100 flex items-center gap-3">
                 <input
                   type="checkbox"
-                  checked={selectedNotifications.size === filteredNotifications.length && filteredNotifications.length > 0}
+                  checked={
+                    selectedNotifications.size === filteredNotifications.length &&
+                    filteredNotifications.length > 0
+                  }
                   onChange={selectAll}
                   className="w-4 h-4 text-blue-600 border-gray-300 rounded"
                 />
@@ -452,8 +466,18 @@ export default function NotificationsPage() {
                             className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded transition-colors"
                             title="Marquer comme lu"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                            <svg
+                              className="w-4 h-4"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M5 13l4 4L19 7"
+                              />
                             </svg>
                           </button>
                         )}
@@ -462,8 +486,18 @@ export default function NotificationsPage() {
                           className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                           title="Supprimer"
                         >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                          <svg
+                            className="w-4 h-4"
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                            />
                           </svg>
                         </button>
                       </div>
@@ -473,8 +507,18 @@ export default function NotificationsPage() {
               ) : (
                 <div className="py-12 text-center">
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    <svg
+                      className="w-8 h-8 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"
+                      />
                     </svg>
                   </div>
                   <h3 className="text-lg font-medium text-gray-900">Aucune notification</h3>
@@ -490,7 +534,7 @@ export default function NotificationsPage() {
         /* Settings Tab */
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Notification Channels */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Canaux de notification</h3>
             <div className="space-y-4">
               <label className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
@@ -544,11 +588,14 @@ export default function NotificationsPage() {
           </div>
 
           {/* Category Preferences */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Categories</h3>
             <div className="space-y-3">
               {Object.entries(categoryConfig).map(([key, config]) => (
-                <label key={key} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <label
+                  key={key}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
                   <div className="flex items-center gap-3">
                     <span className="text-xl">{config.icon}</span>
                     <p className="font-medium text-gray-900">{config.label}</p>
@@ -556,7 +603,12 @@ export default function NotificationsPage() {
                   <input
                     type="checkbox"
                     checked={preferences.categories[key as keyof typeof preferences.categories]}
-                    onChange={(e) => updateCategoryPreference(key as keyof typeof preferences.categories, e.target.checked)}
+                    onChange={(e) =>
+                      updateCategoryPreference(
+                        key as keyof typeof preferences.categories,
+                        e.target.checked
+                      )
+                    }
                     className="w-5 h-5 text-blue-600 border-gray-300 rounded"
                   />
                 </label>
@@ -565,13 +617,18 @@ export default function NotificationsPage() {
           </div>
 
           {/* Quiet Hours */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 lg:col-span-2">
+          <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6 lg:col-span-2">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">Heures calmes</h3>
               <input
                 type="checkbox"
                 checked={preferences.quietHours.enabled}
-                onChange={(e) => updatePreference('quietHours', { ...preferences.quietHours, enabled: e.target.checked })}
+                onChange={(e) =>
+                  updatePreference('quietHours', {
+                    ...preferences.quietHours,
+                    enabled: e.target.checked,
+                  })
+                }
                 className="w-5 h-5 text-blue-600 border-gray-300 rounded"
               />
             </div>
@@ -584,7 +641,12 @@ export default function NotificationsPage() {
                 <input
                   type="time"
                   value={preferences.quietHours.start}
-                  onChange={(e) => updatePreference('quietHours', { ...preferences.quietHours, start: e.target.value })}
+                  onChange={(e) =>
+                    updatePreference('quietHours', {
+                      ...preferences.quietHours,
+                      start: e.target.value,
+                    })
+                  }
                   disabled={!preferences.quietHours.enabled}
                   className="input-field"
                 />
@@ -594,7 +656,12 @@ export default function NotificationsPage() {
                 <input
                   type="time"
                   value={preferences.quietHours.end}
-                  onChange={(e) => updatePreference('quietHours', { ...preferences.quietHours, end: e.target.value })}
+                  onChange={(e) =>
+                    updatePreference('quietHours', {
+                      ...preferences.quietHours,
+                      end: e.target.value,
+                    })
+                  }
                   disabled={!preferences.quietHours.enabled}
                   className="input-field"
                 />
@@ -604,9 +671,7 @@ export default function NotificationsPage() {
 
           {/* Save Button */}
           <div className="lg:col-span-2">
-            <button className="btn-primary">
-              Sauvegarder les preferences
-            </button>
+            <button className="btn-primary">Sauvegarder les preferences</button>
           </div>
         </div>
       )}

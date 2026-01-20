@@ -15,20 +15,20 @@
 export const borderRadius = {
   /** No radius */
   none: '0',
-  /** 2px - Very subtle */
-  sm: '0.125rem',
-  /** 4px - Default subtle */
-  DEFAULT: '0.25rem',
-  /** 6px - Medium */
-  md: '0.375rem',
-  /** 8px - Noticeable */
-  lg: '0.5rem',
-  /** 12px - Prominent */
-  xl: '0.75rem',
-  /** 16px - Large */
-  '2xl': '1rem',
-  /** 24px - Extra large */
-  '3xl': '1.5rem',
+  /** 4px - Small */
+  sm: '0.25rem',
+  /** 8px - Medium (Default) */
+  md: '0.5rem',
+  /** 8px - Default alias */
+  DEFAULT: '0.5rem',
+  /** 12px - Large */
+  lg: '0.75rem',
+  /** 16px - Extra large */
+  xl: '1rem',
+  /** 24px - 2x Extra large */
+  '2xl': '1.5rem',
+  /** 32px - 3x Extra large */
+  '3xl': '2rem',
   /** Full circle/pill */
   full: '9999px',
 } as const;
@@ -38,13 +38,13 @@ export const borderRadius = {
  */
 export const borderRadiusPx = {
   none: 0,
-  sm: 2,
-  DEFAULT: 4,
-  md: 6,
-  lg: 8,
-  xl: 12,
-  '2xl': 16,
-  '3xl': 24,
+  sm: 4,
+  md: 8,
+  DEFAULT: 8,
+  lg: 12,
+  xl: 16,
+  '2xl': 24,
+  '3xl': 32,
   full: 9999,
 } as const;
 
@@ -159,7 +159,7 @@ export const componentRadius = {
  */
 export const componentRadiusPx = {
   button: {
-    sm: 6,
+    sm: 4,
     md: 8,
     lg: 12,
     pill: 9999,
@@ -170,7 +170,7 @@ export const componentRadiusPx = {
     lg: 16,
   },
   input: {
-    sm: 6,
+    sm: 4,
     md: 8,
     lg: 12,
   },
@@ -182,10 +182,10 @@ export const componentRadiusPx = {
   badge: 9999,
   avatar: 9999,
   chip: 9999,
-  tooltip: 6,
+  tooltip: 4,
   dropdown: 8,
   image: {
-    sm: 6,
+    sm: 4,
     md: 8,
     lg: 12,
   },

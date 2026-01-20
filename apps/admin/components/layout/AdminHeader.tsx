@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { ThemeToggle } from '../ThemeToggle';
 import { NotificationCenter } from '../notifications';
+import { Avatar } from '../ui';
 
 interface AdminHeaderProps {
   onMenuClick: () => void;
@@ -25,7 +26,7 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 h-16 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+    <header className="sticky top-0 z-30 h-16 bg-white dark:bg-black/80 backdrop-blur-lg border-b border-gray-100 dark:border-white/10">
       <div className="flex items-center justify-between h-full px-4 lg:px-6">
         {/* Left side */}
         <div className="flex items-center gap-4">
@@ -77,7 +78,7 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
         </div>
 
         {/* Right side */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           {/* Theme toggle */}
           <ThemeToggle size="sm" />
 
@@ -106,9 +107,7 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
               onClick={() => setShowProfile(!showProfile)}
               className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-primary-400 to-accent-400 flex items-center justify-center text-white text-sm font-medium">
-                JD
-              </div>
+              <Avatar name="Jean Dupont" size="sm" />
               <svg
                 className="w-4 h-4 text-gray-500 hidden sm:block"
                 fill="none"

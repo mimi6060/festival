@@ -325,7 +325,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   filterTabText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textMuted,
     fontWeight: '600',
   },

@@ -367,25 +367,25 @@ export default function PoisPage({ params }: PoisPageProps) {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <p className="text-sm text-gray-500">Total points</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{totalPois}</p>
           <p className="text-sm text-gray-500 mt-1">{totalActive} actifs</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <p className="text-sm text-gray-500">Types utilises</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
             {typesUsed} / {POI_TYPES.length}
           </p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <p className="text-sm text-gray-500">Points inactifs</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{totalPois - totalActive}</p>
         </div>
       </div>
 
       {/* Filter by Type */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+      <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
         <div className="flex items-center gap-4 flex-wrap">
           <span className="text-sm font-medium text-gray-700">Filtrer par type:</span>
           <button
@@ -422,7 +422,7 @@ export default function PoisPage({ params }: PoisPageProps) {
 
       {/* POIs List Grouped by Type */}
       {Object.entries(groupedPois).length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-12 text-center">
           <svg
             className="w-12 h-12 text-gray-300 mx-auto mb-4"
             fill="none"
@@ -457,7 +457,7 @@ export default function PoisPage({ params }: PoisPageProps) {
             return (
               <div
                 key={type}
-                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+                className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 overflow-hidden"
               >
                 <div className="px-6 py-4 border-b border-gray-100 flex items-center gap-3">
                   <div
@@ -590,22 +590,17 @@ export default function PoisPage({ params }: PoisPageProps) {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="dark:bg-gray-900 bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b dark:border-white/10 border-gray-200">
+              <h2 className="text-lg font-semibold dark:text-white text-gray-900">
                 {editingPoi ? "Modifier le point d'interet" : "Nouveau point d'interet"}
               </h2>
               <button
                 onClick={closeModal}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 dark:text-white/50 text-gray-400 hover:dark:text-white hover:text-gray-600 hover:dark:bg-white/5 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <svg
-                  className="w-5 h-5 text-gray-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -686,16 +681,16 @@ export default function PoisPage({ params }: PoisPageProps) {
                 <input
                   type="checkbox"
                   id="isActive"
-                  className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  className="w-4 h-4 rounded dark:border-white/20 border-gray-300 text-primary-600 focus:ring-primary-500"
                   checked={formData.isActive}
                   onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                 />
-                <label htmlFor="isActive" className="text-sm text-gray-700">
+                <label htmlFor="isActive" className="text-sm dark:text-white/70 text-gray-700">
                   Point actif (visible sur la carte)
                 </label>
               </div>
             </form>
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 dark:bg-white/5 bg-gray-50 border-t dark:border-white/10 border-gray-200 rounded-b-xl">
               <button
                 type="button"
                 onClick={closeModal}

@@ -393,7 +393,10 @@ export default function ReportsPage() {
           const change = getPercentageChange(metric.value, metric.previousValue);
           const isPositive = change >= 0;
           return (
-            <div key={index} className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
+            <div
+              key={index}
+              className="bg-white dark:bg-white/5 rounded-xl p-6 shadow-sm border border-gray-100 dark:border-white/10"
+            >
               <p className="text-sm text-gray-500 mb-1">{metric.label}</p>
               <p className="text-2xl font-bold text-gray-900">{formatMetricValue(metric)}</p>
               <div
@@ -801,7 +804,7 @@ export default function ReportsPage() {
       {/* Data Tables Summary */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Top Categories */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
             <h3 className="text-lg font-semibold text-gray-900">Top categories de billets</h3>
           </div>
@@ -862,7 +865,7 @@ export default function ReportsPage() {
         </div>
 
         {/* Zone Occupancy */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
             <h3 className="text-lg font-semibold text-gray-900">Occupation des zones</h3>
           </div>

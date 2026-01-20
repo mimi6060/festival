@@ -4,13 +4,7 @@
  */
 
 import React, { useCallback, useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { useNFC, useNFCRead } from '../../hooks';
 import { NFCAnimation } from './NFCAnimation';
 import { NFCStatus } from './NFCStatus';
@@ -48,14 +42,7 @@ export const NFCScanner: React.FC<NFCScannerProps> = ({
 }) => {
   const [scanAttempts, setScanAttempts] = useState(0);
 
-  const {
-    isSupported,
-    isEnabled,
-    isReady,
-    status,
-    error: nfcError,
-    openSettings,
-  } = useNFC();
+  const { isSupported, isEnabled, isReady, status, error: nfcError, openSettings } = useNFC();
 
   const {
     isReading,
@@ -82,7 +69,7 @@ export const NFCScanner: React.FC<NFCScannerProps> = ({
    * Start NFC scan
    */
   const handleStartScan = useCallback(async () => {
-    setScanAttempts(prev => prev + 1);
+    setScanAttempts((prev) => prev + 1);
 
     if (mode === 'read' || mode === 'transfer') {
       await readCashlessBracelet();
@@ -133,10 +120,7 @@ export const NFCScanner: React.FC<NFCScannerProps> = ({
           <Text style={styles.errorMessage}>
             Veuillez activer le NFC dans les parametres de votre appareil.
           </Text>
-          <TouchableOpacity
-            style={styles.settingsButton}
-            onPress={openSettings}
-          >
+          <TouchableOpacity style={styles.settingsButton} onPress={openSettings}>
             <Text style={styles.settingsButtonText}>Ouvrir les parametres</Text>
           </TouchableOpacity>
         </View>
@@ -163,13 +147,7 @@ export const NFCScanner: React.FC<NFCScannerProps> = ({
       )}
 
       {/* Status */}
-      {showStatus && (
-        <NFCStatus
-          status={status}
-          isScanning={isReading}
-          error={currentError}
-        />
-      )}
+      {showStatus && <NFCStatus status={status} isScanning={isReading} error={currentError} />}
 
       {/* Error Display */}
       {currentError && (
@@ -186,19 +164,13 @@ export const NFCScanner: React.FC<NFCScannerProps> = ({
       {/* Actions */}
       <View style={styles.actions}>
         {!isReading ? (
-          <TouchableOpacity
-            style={styles.scanButton}
-            onPress={handleStartScan}
-          >
+          <TouchableOpacity style={styles.scanButton} onPress={handleStartScan}>
             <Text style={styles.scanButtonText}>
               {scanAttempts > 0 ? 'Scanner a nouveau' : 'Demarrer le scan'}
             </Text>
           </TouchableOpacity>
         ) : (
-          <TouchableOpacity
-            style={styles.cancelButton}
-            onPress={handleCancel}
-          >
+          <TouchableOpacity style={styles.cancelButton} onPress={handleCancel}>
             <Text style={styles.cancelButtonText}>Annuler</Text>
           </TouchableOpacity>
         )}
@@ -209,9 +181,7 @@ export const NFCScanner: React.FC<NFCScannerProps> = ({
         <Text style={styles.instructionTitle}>Instructions</Text>
         <View style={styles.instructionItem}>
           <Text style={styles.instructionNumber}>1</Text>
-          <Text style={styles.instructionText}>
-            Appuyez sur "Demarrer le scan"
-          </Text>
+          <Text style={styles.instructionText}>Appuyez sur "Demarrer le scan"</Text>
         </View>
         <View style={styles.instructionItem}>
           <Text style={styles.instructionNumber}>2</Text>
@@ -221,9 +191,7 @@ export const NFCScanner: React.FC<NFCScannerProps> = ({
         </View>
         <View style={styles.instructionItem}>
           <Text style={styles.instructionNumber}>3</Text>
-          <Text style={styles.instructionText}>
-            Maintenez jusqu'a la vibration
-          </Text>
+          <Text style={styles.instructionText}>Maintenez jusqu'a la vibration</Text>
         </View>
       </View>
     </View>
@@ -297,7 +265,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   errorBannerText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.error,
     flex: 1,
   },
@@ -359,7 +327,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   instructionText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     flex: 1,
   },

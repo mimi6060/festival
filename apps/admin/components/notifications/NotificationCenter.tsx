@@ -434,7 +434,7 @@ export default function NotificationCenter({
             </div>
 
             {/* Filter tabs */}
-            <div className="flex gap-1 mt-3 bg-white dark:bg-gray-700 p-1 rounded-lg border border-gray-200 dark:border-gray-600">
+            <div className="flex gap-1.5 mt-3 bg-white dark:bg-gray-700 p-1.5 rounded-lg border border-gray-200 dark:border-gray-600">
               <button
                 onClick={() => setFilter('all')}
                 className={cn(
@@ -465,9 +465,7 @@ export default function NotificationCenter({
             {isLoading ? (
               <div className="py-12 text-center">
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto" />
-                <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">
-                  Chargement...
-                </p>
+                <p className="text-gray-500 dark:text-gray-400 text-sm mt-2">Chargement...</p>
               </div>
             ) : displayedNotifications.length > 0 ? (
               displayedNotifications.map((notification) => (

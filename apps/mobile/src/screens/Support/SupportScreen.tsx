@@ -24,49 +24,57 @@ const faqData: FAQItem[] = [
   {
     id: '1',
     question: 'Comment recharger mon compte cashless?',
-    answer: 'Vous pouvez recharger votre compte cashless directement depuis l\'application dans la section Portefeuille, ou aux bornes de rechargement situees sur le site du festival.',
+    answer:
+      "Vous pouvez recharger votre compte cashless directement depuis l'application dans la section Portefeuille, ou aux bornes de rechargement situees sur le site du festival.",
     category: 'Cashless',
   },
   {
     id: '2',
     question: 'Comment acceder au festival avec mon billet?',
-    answer: 'Presentez votre QR code depuis l\'application a l\'entree du festival. Assurez-vous que votre telephone soit charge et la luminosite au maximum pour un scan optimal.',
+    answer:
+      "Presentez votre QR code depuis l'application a l'entree du festival. Assurez-vous que votre telephone soit charge et la luminosite au maximum pour un scan optimal.",
     category: 'Billets',
   },
   {
     id: '3',
-    question: 'Puis-je transferer mon billet a quelqu\'un d\'autre?',
-    answer: 'Les billets nominatifs ne peuvent pas etre transferes. Pour les billets non-nominatifs, contactez notre support avec les informations du nouveau participant.',
+    question: "Puis-je transferer mon billet a quelqu'un d'autre?",
+    answer:
+      'Les billets nominatifs ne peuvent pas etre transferes. Pour les billets non-nominatifs, contactez notre support avec les informations du nouveau participant.',
     category: 'Billets',
   },
   {
     id: '4',
-    question: 'Que faire si j\'ai perdu mon bracelet cashless?',
-    answer: 'Rendez-vous immediatement au stand Accueil ou Objets Trouves. Nous pouvons desactiver votre ancien bracelet et en creer un nouveau avec votre solde.',
+    question: "Que faire si j'ai perdu mon bracelet cashless?",
+    answer:
+      'Rendez-vous immediatement au stand Accueil ou Objets Trouves. Nous pouvons desactiver votre ancien bracelet et en creer un nouveau avec votre solde.',
     category: 'Cashless',
   },
   {
     id: '5',
     question: 'Comment recuperer mon solde cashless non utilise?',
-    answer: 'Apres le festival, connectez-vous a votre compte dans les 30 jours. Vous pourrez demander un remboursement depuis la section Portefeuille.',
+    answer:
+      'Apres le festival, connectez-vous a votre compte dans les 30 jours. Vous pourrez demander un remboursement depuis la section Portefeuille.',
     category: 'Cashless',
   },
   {
     id: '6',
     question: 'Ou puis-je trouver le programme des concerts?',
-    answer: 'Le programme complet est disponible dans la section Programme de l\'application. Vous pouvez filtrer par jour et ajouter vos artistes favoris.',
+    answer:
+      "Le programme complet est disponible dans la section Programme de l'application. Vous pouvez filtrer par jour et ajouter vos artistes favoris.",
     category: 'Programme',
   },
   {
     id: '7',
     question: 'Y a-t-il des consignes pour mes affaires?',
-    answer: 'Oui, des consignes securisees sont disponibles pres de l\'entree principale. Le tarif est de 5EUR par jour, payable en cashless.',
+    answer:
+      "Oui, des consignes securisees sont disponibles pres de l'entree principale. Le tarif est de 5EUR par jour, payable en cashless.",
     category: 'Services',
   },
   {
     id: '8',
     question: 'Ou se trouve le poste medical?',
-    answer: 'Un poste medical est situe pres de la scene principale. Des infirmiers circulent egalement sur le site. En cas d\'urgence, signalez-vous au personnel de securite.',
+    answer:
+      "Un poste medical est situe pres de la scene principale. Des infirmiers circulent egalement sur le site. En cas d'urgence, signalez-vous au personnel de securite.",
     category: 'Services',
   },
 ];
@@ -110,7 +118,10 @@ export const SupportScreen: React.FC = () => {
   };
 
   const handleChat = () => {
-    Alert.alert('Chat en direct', 'Le chat en direct sera bientot disponible. En attendant, contactez-nous par email ou telephone.');
+    Alert.alert(
+      'Chat en direct',
+      'Le chat en direct sera bientot disponible. En attendant, contactez-nous par email ou telephone.'
+    );
   };
 
   const handleSubmitLostItem = () => {
@@ -121,7 +132,12 @@ export const SupportScreen: React.FC = () => {
     Alert.alert(
       'Signalement envoye',
       'Votre signalement a ete enregistre. Nous vous contacterons si nous retrouvons votre objet.',
-      [{ text: 'OK', onPress: () => setLostItemForm({ description: '', location: '', date: '', contact: '' }) }]
+      [
+        {
+          text: 'OK',
+          onPress: () => setLostItemForm({ description: '', location: '', date: '', contact: '' }),
+        },
+      ]
     );
   };
 
@@ -178,22 +194,16 @@ export const SupportScreen: React.FC = () => {
             <View style={styles.faqHeader}>
               <Text style={styles.faqCategory}>{item.category}</Text>
               <Text style={styles.faqQuestion}>{item.question}</Text>
-              <Text style={styles.faqArrow}>
-                {expandedFAQ === item.id ? '▲' : '▼'}
-              </Text>
+              <Text style={styles.faqArrow}>{expandedFAQ === item.id ? '▲' : '▼'}</Text>
             </View>
-            {expandedFAQ === item.id && (
-              <Text style={styles.faqAnswer}>{item.answer}</Text>
-            )}
+            {expandedFAQ === item.id && <Text style={styles.faqAnswer}>{item.answer}</Text>}
           </TouchableOpacity>
         ))
       ) : (
         <View style={styles.emptyState}>
           <Text style={styles.emptyIcon}>🔍</Text>
           <Text style={styles.emptyTitle}>Aucun resultat</Text>
-          <Text style={styles.emptySubtitle}>
-            Essayez avec d'autres termes de recherche
-          </Text>
+          <Text style={styles.emptySubtitle}>Essayez avec d'autres termes de recherche</Text>
         </View>
       )}
     </View>
@@ -296,9 +306,7 @@ export const SupportScreen: React.FC = () => {
             placeholder="Ex: Sac a dos noir avec logo..."
             placeholderTextColor={colors.textMuted}
             value={lostItemForm.description}
-            onChangeText={(text) =>
-              setLostItemForm({ ...lostItemForm, description: text })
-            }
+            onChangeText={(text) => setLostItemForm({ ...lostItemForm, description: text })}
             multiline
             numberOfLines={3}
           />
@@ -311,9 +319,7 @@ export const SupportScreen: React.FC = () => {
             placeholder="Ex: Pres de la Main Stage"
             placeholderTextColor={colors.textMuted}
             value={lostItemForm.location}
-            onChangeText={(text) =>
-              setLostItemForm({ ...lostItemForm, location: text })
-            }
+            onChangeText={(text) => setLostItemForm({ ...lostItemForm, location: text })}
           />
         </View>
 
@@ -324,9 +330,7 @@ export const SupportScreen: React.FC = () => {
             placeholder="Ex: Samedi 13 juillet vers 22h"
             placeholderTextColor={colors.textMuted}
             value={lostItemForm.date}
-            onChangeText={(text) =>
-              setLostItemForm({ ...lostItemForm, date: text })
-            }
+            onChangeText={(text) => setLostItemForm({ ...lostItemForm, date: text })}
           />
         </View>
 
@@ -337,9 +341,7 @@ export const SupportScreen: React.FC = () => {
             placeholder="Votre email ou numero"
             placeholderTextColor={colors.textMuted}
             value={lostItemForm.contact}
-            onChangeText={(text) =>
-              setLostItemForm({ ...lostItemForm, contact: text })
-            }
+            onChangeText={(text) => setLostItemForm({ ...lostItemForm, contact: text })}
             keyboardType="email-address"
           />
         </View>
@@ -356,9 +358,7 @@ export const SupportScreen: React.FC = () => {
         <View style={styles.lostLocationContent}>
           <Text style={styles.lostLocationIcon}>🔍</Text>
           <View style={styles.lostLocationInfo}>
-            <Text style={styles.lostLocationTitle}>
-              Stand Objets Trouves
-            </Text>
+            <Text style={styles.lostLocationTitle}>Stand Objets Trouves</Text>
             <Text style={styles.lostLocationText}>
               Pres de l'entree principale{'\n'}
               Ouvert 10h - 02h pendant le festival
@@ -383,9 +383,7 @@ export const SupportScreen: React.FC = () => {
           style={[styles.tab, activeTab === 'faq' && styles.tabActive]}
           onPress={() => setActiveTab('faq')}
         >
-          <Text style={[styles.tabText, activeTab === 'faq' && styles.tabTextActive]}>
-            FAQ
-          </Text>
+          <Text style={[styles.tabText, activeTab === 'faq' && styles.tabTextActive]}>FAQ</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === 'contact' && styles.tabActive]}
@@ -399,9 +397,7 @@ export const SupportScreen: React.FC = () => {
           style={[styles.tab, activeTab === 'lost' && styles.tabActive]}
           onPress={() => setActiveTab('lost')}
         >
-          <Text style={[styles.tabText, activeTab === 'lost' && styles.tabTextActive]}>
-            Objets
-          </Text>
+          <Text style={[styles.tabText, activeTab === 'lost' && styles.tabTextActive]}>Objets</Text>
         </TouchableOpacity>
       </View>
 
@@ -508,7 +504,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   categoryText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     fontWeight: '600',
   },
@@ -552,7 +548,7 @@ const styles = StyleSheet.create({
     top: 0,
   },
   faqAnswer: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     marginTop: spacing.md,
     lineHeight: 22,
@@ -576,7 +572,7 @@ const styles = StyleSheet.create({
   },
   // Contact styles
   contactCard: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   contactItem: {
     flexDirection: 'row',
@@ -603,7 +599,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   contactSubtitle: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
   },
   contactArrow: {
@@ -629,7 +625,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   infoText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     lineHeight: 22,
   },
@@ -642,7 +638,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   locationCard: {
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
   },
   locationItem: {
     flexDirection: 'row',
@@ -697,7 +693,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   inputLabel: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     marginBottom: spacing.xs,
   },
@@ -733,7 +729,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   lostLocationText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     lineHeight: 20,
   },

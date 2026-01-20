@@ -1,10 +1,5 @@
 import React, { memo, useMemo, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Card, OptimizedImage, ImagePlaceholder } from '../common';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { ProgramEvent } from '../../types';
@@ -28,182 +23,144 @@ interface EventCardProps {
 }
 
 // Memoized EventCard component for optimal performance
-export const EventCard = memo<EventCardProps>(({
-  event,
-  onPress,
-  onFavoritePress,
-  isFavorite = false,
-  variant = 'default',
-}) => {
-  // Memoized time range calculation
-  const timeRange = useMemo(() =>
-    `${event.startTime} - ${event.endTime}`,
-    [event.startTime, event.endTime]
-  );
-
-  // Memoized genre color lookup
-  const genreColor = useMemo(() =>
-    GENRE_COLORS[event.artist.genre] || colors.primary,
-    [event.artist.genre]
-  );
-
-  // Memoized callbacks to prevent re-renders
-  const handlePress = useCallback(() => onPress?.(), [onPress]);
-  const handleFavoritePress = useCallback(() => onFavoritePress?.(), [onFavoritePress]);
-
-  if (variant === 'compact') {
-    return (
-      <TouchableOpacity onPress={handlePress} disabled={!onPress}>
-        <View style={styles.compactContainer}>
-          <View style={styles.compactTimeColumn}>
-            <Text style={styles.compactTime}>{event.startTime}</Text>
-          </View>
-          <View style={styles.compactDivider} />
-          <View style={styles.compactInfo}>
-            <Text style={styles.compactArtist} numberOfLines={1}>
-              {event.artist.name}
-            </Text>
-            <Text style={styles.compactStage} numberOfLines={1}>
-              {event.stage.name}
-            </Text>
-          </View>
-          {onFavoritePress && (
-            <TouchableOpacity
-              style={styles.compactFavorite}
-              onPress={handleFavoritePress}
-            >
-              <Text style={styles.favoriteIcon}>
-                {isFavorite ? '❤️' : '🤍'}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </TouchableOpacity>
+export const EventCard = memo<EventCardProps>(
+  ({ event, onPress, onFavoritePress, isFavorite = false, variant = 'default' }) => {
+    // Memoized time range calculation
+    const timeRange = useMemo(
+      () => `${event.startTime} - ${event.endTime}`,
+      [event.startTime, event.endTime]
     );
-  }
 
-  if (variant === 'featured') {
-    return (
-      <TouchableOpacity onPress={handlePress} disabled={!onPress}>
-        <Card style={styles.featuredCard}>
-          {/* Artist Image with OptimizedImage */}
-          <View style={styles.featuredImageContainer}>
-            {event.artist.image ? (
-              <OptimizedImage
-                uri={event.artist.image}
-                style={styles.featuredImage}
-                priority="high"
-                cachePolicy="memory-disk"
-                contentFit="cover"
-              />
-            ) : (
-              <ImagePlaceholder style={styles.featuredImagePlaceholder} icon="🎵" />
-            )}
-            {/* Favorite Button */}
+    // Memoized genre color lookup
+    const genreColor = useMemo(
+      () => GENRE_COLORS[event.artist.genre] || colors.primary,
+      [event.artist.genre]
+    );
+
+    // Memoized callbacks to prevent re-renders
+    const handlePress = useCallback(() => onPress?.(), [onPress]);
+    const handleFavoritePress = useCallback(() => onFavoritePress?.(), [onFavoritePress]);
+
+    if (variant === 'compact') {
+      return (
+        <TouchableOpacity onPress={handlePress} disabled={!onPress}>
+          <View style={styles.compactContainer}>
+            <View style={styles.compactTimeColumn}>
+              <Text style={styles.compactTime}>{event.startTime}</Text>
+            </View>
+            <View style={styles.compactDivider} />
+            <View style={styles.compactInfo}>
+              <Text style={styles.compactArtist} numberOfLines={1}>
+                {event.artist.name}
+              </Text>
+              <Text style={styles.compactStage} numberOfLines={1}>
+                {event.stage.name}
+              </Text>
+            </View>
             {onFavoritePress && (
-              <TouchableOpacity
-                style={styles.featuredFavoriteButton}
-                onPress={handleFavoritePress}
-              >
-                <Text style={styles.favoriteIcon}>
-                  {isFavorite ? '❤️' : '🤍'}
-                </Text>
+              <TouchableOpacity style={styles.compactFavorite} onPress={handleFavoritePress}>
+                <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
               </TouchableOpacity>
             )}
-            {/* Time Badge */}
-            <View style={styles.timeBadge}>
-              <Text style={styles.timeBadgeText}>{event.startTime}</Text>
-            </View>
           </View>
+        </TouchableOpacity>
+      );
+    }
 
-          {/* Event Info */}
-          <View style={styles.featuredInfo}>
-            <View style={styles.featuredHeader}>
-              <Text style={styles.featuredArtist}>{event.artist.name}</Text>
-              <View
-                style={[
-                  styles.genreBadge,
-                  { backgroundColor: genreColor + '20' },
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.genreText,
-                    { color: genreColor },
-                  ]}
+    if (variant === 'featured') {
+      return (
+        <TouchableOpacity onPress={handlePress} disabled={!onPress}>
+          <Card style={styles.featuredCard}>
+            {/* Artist Image with OptimizedImage */}
+            <View style={styles.featuredImageContainer}>
+              {event.artist.image ? (
+                <OptimizedImage
+                  uri={event.artist.image}
+                  style={styles.featuredImage}
+                  priority="high"
+                  cachePolicy="memory-disk"
+                  contentFit="cover"
+                />
+              ) : (
+                <ImagePlaceholder style={styles.featuredImagePlaceholder} icon="🎵" />
+              )}
+              {/* Favorite Button */}
+              {onFavoritePress && (
+                <TouchableOpacity
+                  style={styles.featuredFavoriteButton}
+                  onPress={handleFavoritePress}
                 >
-                  {event.artist.genre}
-                </Text>
+                  <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
+                </TouchableOpacity>
+              )}
+              {/* Time Badge */}
+              <View style={styles.timeBadge}>
+                <Text style={styles.timeBadgeText}>{event.startTime}</Text>
               </View>
             </View>
-            <View style={styles.featuredDetails}>
-              <View style={styles.detailItem}>
-                <Text style={styles.detailIcon}>📍</Text>
-                <Text style={styles.detailText}>{event.stage.name}</Text>
+
+            {/* Event Info */}
+            <View style={styles.featuredInfo}>
+              <View style={styles.featuredHeader}>
+                <Text style={styles.featuredArtist}>{event.artist.name}</Text>
+                <View style={[styles.genreBadge, { backgroundColor: genreColor + '20' }]}>
+                  <Text style={[styles.genreText, { color: genreColor }]}>
+                    {event.artist.genre}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.detailItem}>
-                <Text style={styles.detailIcon}>⏱️</Text>
-                <Text style={styles.detailText}>{timeRange}</Text>
+              <View style={styles.featuredDetails}>
+                <View style={styles.detailItem}>
+                  <Text style={styles.detailIcon}>📍</Text>
+                  <Text style={styles.detailText}>{event.stage.name}</Text>
+                </View>
+                <View style={styles.detailItem}>
+                  <Text style={styles.detailIcon}>⏱️</Text>
+                  <Text style={styles.detailText}>{timeRange}</Text>
+                </View>
               </View>
             </View>
+          </Card>
+        </TouchableOpacity>
+      );
+    }
+
+    // Default variant
+    return (
+      <TouchableOpacity onPress={handlePress} disabled={!onPress}>
+        <Card style={styles.defaultCard}>
+          <View style={styles.defaultContent}>
+            {/* Time Column */}
+            <View style={styles.timeColumn}>
+              <Text style={styles.startTime}>{event.startTime}</Text>
+              <View style={styles.timeLine} />
+              <Text style={styles.endTime}>{event.endTime}</Text>
+            </View>
+
+            {/* Event Info */}
+            <View style={styles.eventInfo}>
+              <Text style={styles.artistName}>{event.artist.name}</Text>
+              <View style={[styles.genreBadge, { backgroundColor: genreColor + '20' }]}>
+                <Text style={[styles.genreText, { color: genreColor }]}>{event.artist.genre}</Text>
+              </View>
+              <View style={styles.stageRow}>
+                <Text style={styles.stageIcon}>📍</Text>
+                <Text style={styles.stageName}>{event.stage.name}</Text>
+              </View>
+            </View>
+
+            {/* Favorite Button */}
+            {onFavoritePress && (
+              <TouchableOpacity style={styles.favoriteButton} onPress={handleFavoritePress}>
+                <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </Card>
       </TouchableOpacity>
     );
   }
-
-  // Default variant
-  return (
-    <TouchableOpacity onPress={handlePress} disabled={!onPress}>
-      <Card style={styles.defaultCard}>
-        <View style={styles.defaultContent}>
-          {/* Time Column */}
-          <View style={styles.timeColumn}>
-            <Text style={styles.startTime}>{event.startTime}</Text>
-            <View style={styles.timeLine} />
-            <Text style={styles.endTime}>{event.endTime}</Text>
-          </View>
-
-          {/* Event Info */}
-          <View style={styles.eventInfo}>
-            <Text style={styles.artistName}>{event.artist.name}</Text>
-            <View
-              style={[
-                styles.genreBadge,
-                { backgroundColor: genreColor + '20' },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.genreText,
-                  { color: genreColor },
-                ]}
-              >
-                {event.artist.genre}
-              </Text>
-            </View>
-            <View style={styles.stageRow}>
-              <Text style={styles.stageIcon}>📍</Text>
-              <Text style={styles.stageName}>{event.stage.name}</Text>
-            </View>
-          </View>
-
-          {/* Favorite Button */}
-          {onFavoritePress && (
-            <TouchableOpacity
-              style={styles.favoriteButton}
-              onPress={handleFavoritePress}
-            >
-              <Text style={styles.favoriteIcon}>
-                {isFavorite ? '❤️' : '🤍'}
-              </Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </Card>
-    </TouchableOpacity>
-  );
-});
+);
 
 const styles = StyleSheet.create({
   // Default variant
@@ -285,7 +242,7 @@ const styles = StyleSheet.create({
     width: 50,
   },
   compactTime: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.primary,
     fontWeight: '700',
   },
@@ -299,7 +256,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   compactArtist: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.text,
     fontWeight: '600',
   },
@@ -355,7 +312,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.sm,
   },
   timeBadgeText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.white,
     fontWeight: '700',
   },
@@ -388,7 +345,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   detailText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
   },
 });

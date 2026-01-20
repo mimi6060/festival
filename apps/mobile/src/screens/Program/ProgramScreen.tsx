@@ -1,12 +1,5 @@
 import React, { useState, useMemo, useCallback, memo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  RefreshControl,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Card } from '../../components/common';
 import { useProgramStore } from '../../store';
@@ -141,63 +134,71 @@ export const ProgramScreen: React.FC = () => {
     setRefreshing(false);
   };
 
-  const handleToggleFavorite = useCallback((eventId: string) => {
-    toggleFavorite(eventId);
-  }, [toggleFavorite]);
+  const handleToggleFavorite = useCallback(
+    (eventId: string) => {
+      toggleFavorite(eventId);
+    },
+    [toggleFavorite]
+  );
 
   // Memoized event item component for better performance
-  const EventItem = memo(({ item, isFavorite, onToggleFavorite }: {
-    item: ProgramEvent;
-    isFavorite: boolean;
-    onToggleFavorite: (id: string) => void;
-  }) => (
-    <Card style={styles.eventCard}>
-      <View style={styles.eventContent}>
-        {/* Time Column */}
-        <View style={styles.timeColumn}>
-          <Text style={styles.startTime}>{item.startTime}</Text>
-          <View style={styles.timeLine} />
-          <Text style={styles.endTime}>{item.endTime}</Text>
-        </View>
-
-        {/* Event Info */}
-        <View style={styles.eventInfo}>
-          <Text style={styles.artistName}>{item.artist.name}</Text>
-          <Text style={styles.genre}>{item.artist.genre}</Text>
-          <View style={styles.stageRow}>
-            <Text style={styles.stageIcon}>📍</Text>
-            <Text style={styles.stageName}>{item.stage.name}</Text>
+  const EventItem = memo(
+    ({
+      item,
+      isFavorite,
+      onToggleFavorite,
+    }: {
+      item: ProgramEvent;
+      isFavorite: boolean;
+      onToggleFavorite: (id: string) => void;
+    }) => (
+      <Card style={styles.eventCard}>
+        <View style={styles.eventContent}>
+          {/* Time Column */}
+          <View style={styles.timeColumn}>
+            <Text style={styles.startTime}>{item.startTime}</Text>
+            <View style={styles.timeLine} />
+            <Text style={styles.endTime}>{item.endTime}</Text>
           </View>
+
+          {/* Event Info */}
+          <View style={styles.eventInfo}>
+            <Text style={styles.artistName}>{item.artist.name}</Text>
+            <Text style={styles.genre}>{item.artist.genre}</Text>
+            <View style={styles.stageRow}>
+              <Text style={styles.stageIcon}>📍</Text>
+              <Text style={styles.stageName}>{item.stage.name}</Text>
+            </View>
+          </View>
+
+          {/* Favorite Button */}
+          <TouchableOpacity style={styles.favoriteButton} onPress={() => onToggleFavorite(item.id)}>
+            <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
+          </TouchableOpacity>
         </View>
+      </Card>
+    )
+  );
 
-        {/* Favorite Button */}
-        <TouchableOpacity
-          style={styles.favoriteButton}
-          onPress={() => onToggleFavorite(item.id)}
-        >
-          <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
-        </TouchableOpacity>
-      </View>
-    </Card>
-  ));
-
-  const renderEvent = useCallback(({ item }: { item: ProgramEvent }) => {
-    const isFavorite = favorites.includes(item.id);
-    return (
-      <EventItem
-        item={item}
-        isFavorite={isFavorite}
-        onToggleFavorite={handleToggleFavorite}
-      />
-    );
-  }, [favorites, handleToggleFavorite]);
+  const renderEvent = useCallback(
+    ({ item }: { item: ProgramEvent }) => {
+      const isFavorite = favorites.includes(item.id);
+      return (
+        <EventItem item={item} isFavorite={isFavorite} onToggleFavorite={handleToggleFavorite} />
+      );
+    },
+    [favorites, handleToggleFavorite]
+  );
 
   // getItemLayout for fixed-height optimization
-  const getItemLayout = useCallback((_: unknown, index: number) => ({
-    length: EVENT_CARD_HEIGHT + ITEM_SEPARATOR_HEIGHT,
-    offset: (EVENT_CARD_HEIGHT + ITEM_SEPARATOR_HEIGHT) * index,
-    index,
-  }), []);
+  const getItemLayout = useCallback(
+    (_: unknown, index: number) => ({
+      length: EVENT_CARD_HEIGHT + ITEM_SEPARATOR_HEIGHT,
+      offset: (EVENT_CARD_HEIGHT + ITEM_SEPARATOR_HEIGHT) * index,
+      index,
+    }),
+    []
+  );
 
   // Stable key extractor
   const keyExtractor = useCallback((item: ProgramEvent) => item.id, []);
@@ -205,9 +206,7 @@ export const ProgramScreen: React.FC = () => {
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <Text style={styles.emptyIcon}>📅</Text>
-      <Text style={styles.emptyTitle}>
-        {showFavoritesOnly ? 'Aucun favori' : 'Aucun concert'}
-      </Text>
+      <Text style={styles.emptyTitle}>{showFavoritesOnly ? 'Aucun favori' : 'Aucun concert'}</Text>
       <Text style={styles.emptySubtitle}>
         {showFavoritesOnly
           ? 'Ajoutez des concerts a vos favoris'
@@ -222,20 +221,13 @@ export const ProgramScreen: React.FC = () => {
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>Programme</Text>
-          <Text style={styles.subtitle}>
-            {days.find((d) => d.key === selectedDay)?.fullLabel}
-          </Text>
+          <Text style={styles.subtitle}>{days.find((d) => d.key === selectedDay)?.fullLabel}</Text>
         </View>
         <TouchableOpacity
-          style={[
-            styles.favoritesToggle,
-            showFavoritesOnly && styles.favoritesToggleActive,
-          ]}
+          style={[styles.favoritesToggle, showFavoritesOnly && styles.favoritesToggleActive]}
           onPress={() => setShowFavoritesOnly(!showFavoritesOnly)}
         >
-          <Text style={styles.favoritesToggleIcon}>
-            {showFavoritesOnly ? '❤️' : '🤍'}
-          </Text>
+          <Text style={styles.favoritesToggleIcon}>{showFavoritesOnly ? '❤️' : '🤍'}</Text>
         </TouchableOpacity>
       </View>
 
@@ -244,18 +236,10 @@ export const ProgramScreen: React.FC = () => {
         {days.map((day) => (
           <TouchableOpacity
             key={day.key}
-            style={[
-              styles.dayButton,
-              selectedDay === day.key && styles.dayButtonActive,
-            ]}
+            style={[styles.dayButton, selectedDay === day.key && styles.dayButtonActive]}
             onPress={() => setSelectedDay(day.key)}
           >
-            <Text
-              style={[
-                styles.dayText,
-                selectedDay === day.key && styles.dayTextActive,
-              ]}
-            >
+            <Text style={[styles.dayText, selectedDay === day.key && styles.dayTextActive]}>
               {day.label}
             </Text>
           </TouchableOpacity>
@@ -390,7 +374,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   genre: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     marginBottom: 4,
   },

@@ -67,7 +67,7 @@ export const TopupScreen: React.FC = () => {
         type: 'topup',
         amount: numAmount,
         currency: 'EUR',
-        description: `Rechargement par ${paymentMethods.find(m => m.id === selectedMethod)?.label}`,
+        description: `Rechargement par ${paymentMethods.find((m) => m.id === selectedMethod)?.label}`,
         status: 'completed',
         createdAt: new Date().toISOString(),
       });
@@ -89,10 +89,7 @@ export const TopupScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Recharger</Text>
@@ -169,9 +166,7 @@ export const TopupScreen: React.FC = () => {
                     selectedMethod === method.id && styles.radioButtonActive,
                   ]}
                 >
-                  {selectedMethod === method.id && (
-                    <View style={styles.radioButtonInner} />
-                  )}
+                  {selectedMethod === method.id && <View style={styles.radioButtonInner} />}
                 </View>
               </TouchableOpacity>
             ))}
@@ -182,9 +177,7 @@ export const TopupScreen: React.FC = () => {
             <Card style={styles.summaryCard}>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Montant</Text>
-                <Text style={styles.summaryValue}>
-                  {parseFloat(amount).toFixed(2)} EUR
-                </Text>
+                <Text style={styles.summaryValue}>{parseFloat(amount).toFixed(2)} EUR</Text>
               </View>
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Frais</Text>
@@ -193,9 +186,7 @@ export const TopupScreen: React.FC = () => {
               <View style={styles.summaryDivider} />
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryTotal}>Total</Text>
-                <Text style={styles.summaryTotalValue}>
-                  {parseFloat(amount).toFixed(2)} EUR
-                </Text>
+                <Text style={styles.summaryTotalValue}>{parseFloat(amount).toFixed(2)} EUR</Text>
               </View>
             </Card>
           )}
@@ -256,7 +247,7 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingHorizontal: spacing.md,
-    paddingBottom: spacing.lg,
+    paddingBottom: spacing.xxl,
   },
   amountSection: {
     marginBottom: spacing.lg,
@@ -309,7 +300,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   quickAmountText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     fontWeight: '600',
   },

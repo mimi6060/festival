@@ -11,18 +11,17 @@ const meta: Meta<typeof Avatar> = {
   argTypes: {
     size: {
       control: 'select',
-      options: ['xs', 'sm', 'md', 'lg', 'xl', '2xl'],
-      description: 'Size of the avatar',
+      options: ['sm', 'md', 'lg', 'xl', '2xl'],
+      description: 'Size of the avatar (sm: 32px, md: 40px, lg: 48px, xl: 64px, 2xl: 96px)',
     },
     status: {
       control: 'select',
       options: [undefined, 'online', 'offline', 'away', 'busy'],
       description: 'Status indicator',
     },
-    rounded: {
-      control: 'select',
-      options: ['full', 'lg', 'md'],
-      description: 'Border radius style',
+    showRing: {
+      control: 'boolean',
+      description: 'Show ring border (ring-2 ring-white/10)',
     },
   },
 };
@@ -51,11 +50,10 @@ export const DifferentNames: Story = {
   ),
 };
 
-// All Sizes
+// All Sizes - standardized: sm (32px), md (40px), lg (48px), xl (64px), 2xl (96px)
 export const AllSizes: Story = {
   render: () => (
     <div className="flex items-center gap-3">
-      <Avatar name="John Doe" size="xs" />
       <Avatar name="John Doe" size="sm" />
       <Avatar name="John Doe" size="md" />
       <Avatar name="John Doe" size="lg" />
@@ -89,21 +87,17 @@ export const WithStatus: Story = {
   ),
 };
 
-// Rounded Variants
-export const RoundedVariants: Story = {
+// Ring variants - all avatars now use rounded-full by default
+export const RingVariants: Story = {
   render: () => (
     <div className="flex items-center gap-4">
       <div className="text-center">
-        <Avatar name="Full Rounded" size="xl" rounded="full" />
-        <p className="text-white/60 text-xs mt-2">Full</p>
+        <Avatar name="With Ring" size="xl" showRing={true} />
+        <p className="text-white/60 text-xs mt-2">With Ring</p>
       </div>
       <div className="text-center">
-        <Avatar name="Large Rounded" size="xl" rounded="lg" />
-        <p className="text-white/60 text-xs mt-2">Large</p>
-      </div>
-      <div className="text-center">
-        <Avatar name="Medium Rounded" size="xl" rounded="md" />
-        <p className="text-white/60 text-xs mt-2">Medium</p>
+        <Avatar name="No Ring" size="xl" showRing={false} />
+        <p className="text-white/60 text-xs mt-2">No Ring</p>
       </div>
     </div>
   ),

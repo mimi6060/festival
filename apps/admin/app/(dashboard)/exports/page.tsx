@@ -179,7 +179,7 @@ export default function ExportsPage() {
         {filteredConfigs.map((config) => (
           <div
             key={config.id}
-            className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow"
+            className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6 hover:shadow-md transition-shadow"
           >
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center gap-3">
@@ -215,7 +215,7 @@ export default function ExportsPage() {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-blue-50 rounded-lg flex items-center justify-center">
               <svg
@@ -239,7 +239,7 @@ export default function ExportsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-green-50 rounded-lg flex items-center justify-center">
               <svg
@@ -263,7 +263,7 @@ export default function ExportsPage() {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center">
               <svg
@@ -292,7 +292,7 @@ export default function ExportsPage() {
 
       {/* Export History */}
       {exportHistory.length > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
             <h3 className="text-lg font-semibold text-gray-900">Historique des exports</h3>
           </div>

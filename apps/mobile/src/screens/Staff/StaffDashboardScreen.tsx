@@ -297,7 +297,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   shiftTime: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textMuted,
   },
   progressContainer: {

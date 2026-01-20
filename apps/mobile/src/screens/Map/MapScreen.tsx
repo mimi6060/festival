@@ -96,7 +96,8 @@ const pois: POI[] = [
     category: 'stages',
     subcategory: 'principal',
     icon: '🎤',
-    description: 'La scene principale du festival avec les tetes d\'affiche et les performances majeures.',
+    description:
+      "La scene principale du festival avec les tetes d'affiche et les performances majeures.",
     location: {
       zone: 'Zone A - Centre',
       gridRef: 'A1',
@@ -123,8 +124,8 @@ const pois: POI[] = [
     location: {
       zone: 'Zone B - Est',
       gridRef: 'B3',
-      latitude: 48.8570,
-      longitude: 2.3530,
+      latitude: 48.857,
+      longitude: 2.353,
       nearestLandmark: 'A cote du Bar Central',
     },
     hours: { open: '16:00', close: '06:00', isOpen: true },
@@ -148,7 +149,7 @@ const pois: POI[] = [
       gridRef: 'C2',
       latitude: 48.8575,
       longitude: 2.3515,
-      nearestLandmark: 'Pres de l\'espace detente',
+      nearestLandmark: "Pres de l'espace detente",
     },
     hours: { open: '12:00', close: '23:00', isOpen: true },
     capacity: 2000,
@@ -167,7 +168,8 @@ const pois: POI[] = [
     category: 'food',
     subcategory: 'burger',
     icon: '🍔',
-    description: 'Burgers gastronomiques avec viande Charolaise et options vegetariennes. Frites maison et sauces artisanales.',
+    description:
+      'Burgers gastronomiques avec viande Charolaise et options vegetariennes. Frites maison et sauces artisanales.',
     location: {
       zone: 'Zone Food Court - Allee A',
       gridRef: 'D1',
@@ -193,7 +195,8 @@ const pois: POI[] = [
     category: 'food',
     subcategory: 'pizza',
     icon: '🍕',
-    description: 'Pizzas au feu de bois cuites a 400°C. Pate fermentee 48h, ingredients italiens importes.',
+    description:
+      'Pizzas au feu de bois cuites a 400°C. Pate fermentee 48h, ingredients italiens importes.',
     location: {
       zone: 'Zone Food Court - Allee A',
       gridRef: 'D2',
@@ -219,7 +222,8 @@ const pois: POI[] = [
     category: 'food',
     subcategory: 'asiatique',
     icon: '🍜',
-    description: 'Wok, ramen, banh mi et specialites thaï. Options vegetariennes et vegan disponibles.',
+    description:
+      'Wok, ramen, banh mi et specialites thaï. Options vegetariennes et vegan disponibles.',
     location: {
       zone: 'Zone Food Court - Allee B',
       gridRef: 'D3',
@@ -245,13 +249,14 @@ const pois: POI[] = [
     category: 'food',
     subcategory: 'vegetarien',
     icon: '🥗',
-    description: 'Restaurant 100% vegetal. Bowls, salades, wraps et desserts vegan. Ingredients bio et locaux.',
+    description:
+      'Restaurant 100% vegetal. Bowls, salades, wraps et desserts vegan. Ingredients bio et locaux.',
     location: {
       zone: 'Zone Food Court - Allee B',
       gridRef: 'D4',
       latitude: 48.8564,
-      longitude: 2.3530,
-      nearestLandmark: 'Face a l\'espace chill',
+      longitude: 2.353,
+      nearestLandmark: "Face a l'espace chill",
     },
     hours: { open: '10:00', close: '23:00', isOpen: true },
     priceRange: { min: 7, max: 15, currency: 'EUR' },
@@ -271,7 +276,8 @@ const pois: POI[] = [
     category: 'food',
     subcategory: 'dessert',
     icon: '🍦',
-    description: 'Glaces et sorbets artisanaux fabriques sur place. 20 parfums disponibles dont options vegan.',
+    description:
+      'Glaces et sorbets artisanaux fabriques sur place. 20 parfums disponibles dont options vegan.',
     location: {
       zone: 'Zone Detente',
       gridRef: 'E2',
@@ -325,12 +331,13 @@ const pois: POI[] = [
     category: 'drinks',
     subcategory: 'bar',
     icon: '🍺',
-    description: 'Le bar principal du festival. Large selection de bieres artisanales, vins et soft drinks.',
+    description:
+      'Le bar principal du festival. Large selection de bieres artisanales, vins et soft drinks.',
     location: {
       zone: 'Zone A - Centre',
       gridRef: 'A2',
       latitude: 48.8567,
-      longitude: 2.3520,
+      longitude: 2.352,
       nearestLandmark: 'Entre Main Stage et Electric Tent',
     },
     hours: { open: '12:00', close: '04:00', isOpen: true },
@@ -351,11 +358,12 @@ const pois: POI[] = [
     category: 'drinks',
     subcategory: 'cocktails',
     icon: '🍹',
-    description: 'Bar a cocktails premium avec mixologues professionnels. Cocktails classiques et creations originales.',
+    description:
+      'Bar a cocktails premium avec mixologues professionnels. Cocktails classiques et creations originales.',
     location: {
       zone: 'Zone VIP',
       gridRef: 'F1',
-      latitude: 48.8570,
+      latitude: 48.857,
       longitude: 2.3515,
       nearestLandmark: 'Entree VIP',
     },
@@ -377,13 +385,14 @@ const pois: POI[] = [
     category: 'drinks',
     subcategory: 'eau',
     icon: '💧',
-    description: 'Point d\'eau potable gratuit. Ramenez votre gourde pour vous hydrater gratuitement.',
+    description:
+      "Point d'eau potable gratuit. Ramenez votre gourde pour vous hydrater gratuitement.",
     location: {
       zone: 'Zone A - Centre',
       gridRef: 'A3',
       latitude: 48.8566,
       longitude: 2.3523,
-      nearestLandmark: 'Pres de l\'Accueil',
+      nearestLandmark: "Pres de l'Accueil",
     },
     hours: { open: '00:00', close: '23:59', isOpen: true },
     capacity: 20,
@@ -400,13 +409,14 @@ const pois: POI[] = [
     category: 'drinks',
     subcategory: 'cafe',
     icon: '☕',
-    description: 'Cafe de specialite, the, chocolat chaud. Grains torrefies localement, options lait vegetal.',
+    description:
+      'Cafe de specialite, the, chocolat chaud. Grains torrefies localement, options lait vegetal.',
     location: {
       zone: 'Zone Detente',
       gridRef: 'E1',
       latitude: 48.8573,
       longitude: 2.3517,
-      nearestLandmark: 'Face a l\'Acoustic Garden',
+      nearestLandmark: "Face a l'Acoustic Garden",
     },
     hours: { open: '08:00', close: '22:00', isOpen: true },
     priceRange: { min: 2, max: 6, currency: 'EUR' },
@@ -428,13 +438,14 @@ const pois: POI[] = [
     category: 'services',
     subcategory: 'sanitaires',
     icon: '🚻',
-    description: '40 cabines dont 4 PMR. Nettoyage toutes les 30 minutes. Gel hydroalcoolique disponible.',
+    description:
+      '40 cabines dont 4 PMR. Nettoyage toutes les 30 minutes. Gel hydroalcoolique disponible.',
     location: {
       zone: 'Zone C - Nord',
       gridRef: 'C1',
       latitude: 48.8576,
-      longitude: 2.3520,
-      nearestLandmark: 'Derriere l\'Acoustic Garden',
+      longitude: 2.352,
+      nearestLandmark: "Derriere l'Acoustic Garden",
     },
     hours: { open: '00:00', close: '23:59', isOpen: true },
     capacity: 40,
@@ -474,13 +485,14 @@ const pois: POI[] = [
     category: 'services',
     subcategory: 'consigne',
     icon: '🎒',
-    description: 'Consigne securisee 24h/24. Casiers S/M/L disponibles. Recharge possible pour vos appareils.',
+    description:
+      'Consigne securisee 24h/24. Casiers S/M/L disponibles. Recharge possible pour vos appareils.',
     location: {
       zone: 'Zone Entree',
       gridRef: 'H1',
-      latitude: 48.8560,
-      longitude: 2.3510,
-      nearestLandmark: 'A droite de l\'entree principale',
+      latitude: 48.856,
+      longitude: 2.351,
+      nearestLandmark: "A droite de l'entree principale",
     },
     hours: { open: '10:00', close: '06:00', isOpen: true },
     priceRange: { min: 5, max: 15, currency: 'EUR' },
@@ -498,13 +510,14 @@ const pois: POI[] = [
     category: 'services',
     subcategory: 'recharge',
     icon: '🔋',
-    description: 'Bornes de recharge gratuites pour smartphones. USB-A, USB-C et Lightning disponibles.',
+    description:
+      'Bornes de recharge gratuites pour smartphones. USB-A, USB-C et Lightning disponibles.',
     location: {
       zone: 'Zone A - Centre',
       gridRef: 'A4',
       latitude: 48.8565,
       longitude: 2.3524,
-      nearestLandmark: 'A cote de l\'Accueil',
+      nearestLandmark: "A cote de l'Accueil",
     },
     hours: { open: '10:00', close: '04:00', isOpen: true },
     capacity: 30,
@@ -523,13 +536,14 @@ const pois: POI[] = [
     category: 'emergency',
     subcategory: 'medical',
     icon: '🏥',
-    description: 'Centre medical avec medecins et infirmiers 24h/24. Urgences, premiers secours, pharmacie de base.',
+    description:
+      'Centre medical avec medecins et infirmiers 24h/24. Urgences, premiers secours, pharmacie de base.',
     location: {
       zone: 'Zone Securite',
       gridRef: 'I1',
       latitude: 48.8562,
       longitude: 2.3512,
-      nearestLandmark: 'Pres de l\'entree principale',
+      nearestLandmark: "Pres de l'entree principale",
     },
     hours: { open: '00:00', close: '23:59', isOpen: true },
     phone: '+33 1 23 45 67 89',
@@ -545,13 +559,14 @@ const pois: POI[] = [
     category: 'emergency',
     subcategory: 'infirmerie',
     icon: '🩹',
-    description: 'Premiers soins legers: pansements, desinfection, repos. Orientation vers poste medical si besoin.',
+    description:
+      'Premiers soins legers: pansements, desinfection, repos. Orientation vers poste medical si besoin.',
     location: {
       zone: 'Zone C - Nord',
       gridRef: 'C3',
       latitude: 48.8578,
       longitude: 2.3518,
-      nearestLandmark: 'Derriere l\'espace detente',
+      nearestLandmark: "Derriere l'espace detente",
     },
     hours: { open: '10:00', close: '04:00', isOpen: true },
     tags: ['premiers-soins', 'pansement', 'repos'],
@@ -565,13 +580,14 @@ const pois: POI[] = [
     category: 'emergency',
     subcategory: 'securite',
     icon: '👮',
-    description: 'Equipe de securite 24h/24. Signalement, objets trouves, assistance. Liaison police si necessaire.',
+    description:
+      'Equipe de securite 24h/24. Signalement, objets trouves, assistance. Liaison police si necessaire.',
     location: {
       zone: 'Zone Entree',
       gridRef: 'H2',
       latitude: 48.8559,
       longitude: 2.3508,
-      nearestLandmark: 'A gauche de l\'entree principale',
+      nearestLandmark: "A gauche de l'entree principale",
     },
     hours: { open: '00:00', close: '23:59', isOpen: true },
     phone: '+33 1 23 45 67 90',
@@ -586,7 +602,8 @@ const pois: POI[] = [
     category: 'emergency',
     subcategory: 'urgence',
     icon: '📍',
-    description: 'Point de rencontre en cas d\'evacuation ou separation. Facilement identifiable par le drapeau rouge.',
+    description:
+      "Point de rencontre en cas d'evacuation ou separation. Facilement identifiable par le drapeau rouge.",
     location: {
       zone: 'Zone A - Centre',
       gridRef: 'A5',
@@ -608,7 +625,8 @@ const pois: POI[] = [
     category: 'info',
     subcategory: 'accueil',
     icon: 'ℹ️',
-    description: 'Information generale, plan du site, programme papier. Assistance multilingue FR/EN/ES.',
+    description:
+      'Information generale, plan du site, programme papier. Assistance multilingue FR/EN/ES.',
     location: {
       zone: 'Zone Entree',
       gridRef: 'H3',
@@ -631,7 +649,8 @@ const pois: POI[] = [
     category: 'info',
     subcategory: 'cashless',
     icon: '💳',
-    description: 'Rechargement de votre bracelet cashless. CB, especes. Remboursement du solde apres l\'event.',
+    description:
+      "Rechargement de votre bracelet cashless. CB, especes. Remboursement du solde apres l'event.",
     location: {
       zone: 'Zone A - Centre',
       gridRef: 'A6',
@@ -654,7 +673,8 @@ const pois: POI[] = [
     category: 'info',
     subcategory: 'merchandising',
     icon: '👕',
-    description: 'T-shirts, hoodies, posters, vinyles. Editions limitees et collaborations exclusives.',
+    description:
+      'T-shirts, hoodies, posters, vinyles. Editions limitees et collaborations exclusives.',
     location: {
       zone: 'Zone B - Est',
       gridRef: 'B1',
@@ -680,11 +700,12 @@ const pois: POI[] = [
     category: 'info',
     subcategory: 'service',
     icon: '🔍',
-    description: 'Depot et recuperation d\'objets perdus. Ouvert jusqu\'a 48h apres la fin du festival.',
+    description:
+      "Depot et recuperation d'objets perdus. Ouvert jusqu'a 48h apres la fin du festival.",
     location: {
       zone: 'Zone Entree',
       gridRef: 'H4',
-      latitude: 48.8560,
+      latitude: 48.856,
       longitude: 2.3507,
       nearestLandmark: 'A cote du Poste Securite',
     },
@@ -698,7 +719,9 @@ const pois: POI[] = [
 
 // Composant pour l'indicateur de niveau d'affluence
 const CrowdIndicator: React.FC<{ level?: 'low' | 'medium' | 'high' }> = ({ level }) => {
-  if (!level) {return null;}
+  if (!level) {
+    return null;
+  }
 
   const config = {
     low: { color: colors.success, label: 'Calme', bars: 1 },
@@ -714,10 +737,7 @@ const CrowdIndicator: React.FC<{ level?: 'low' | 'medium' | 'high' }> = ({ level
         {[1, 2, 3].map((i) => (
           <View
             key={i}
-            style={[
-              styles.crowdBar,
-              { backgroundColor: i <= bars ? color : colors.border },
-            ]}
+            style={[styles.crowdBar, { backgroundColor: i <= bars ? color : colors.border }]}
           />
         ))}
       </View>
@@ -746,7 +766,9 @@ const RatingStars: React.FC<{ rating: number; count?: number }> = ({ rating, cou
 
 // Composant pour le prix - kept for future map POI details
 const _PriceIndicator: React.FC<{ priceRange?: PriceRange }> = ({ priceRange }) => {
-  if (!priceRange) {return null;}
+  if (!priceRange) {
+    return null;
+  }
 
   return (
     <View style={styles.priceContainer}>
@@ -792,30 +814,39 @@ export const MapScreen: React.FC = () => {
     }
   }, [route.params?.filter]);
 
-  const filteredPOIs = selectedCategory === 'all'
-    ? pois
-    : pois.filter((p) => p.category === selectedCategory);
+  const filteredPOIs =
+    selectedCategory === 'all' ? pois : pois.filter((p) => p.category === selectedCategory);
 
-  const groupedPOIs = filteredPOIs.reduce((acc, poi) => {
-    const category = categories.find((c) => c.key === poi.category);
-    if (category) {
-      if (!acc[category.label]) {
-        acc[category.label] = [];
+  const groupedPOIs = filteredPOIs.reduce(
+    (acc, poi) => {
+      const category = categories.find((c) => c.key === poi.category);
+      if (category) {
+        if (!acc[category.label]) {
+          acc[category.label] = [];
+        }
+        acc[category.label].push(poi);
       }
-      acc[category.label].push(poi);
-    }
-    return acc;
-  }, {} as Record<string, POI[]>);
+      return acc;
+    },
+    {} as Record<string, POI[]>
+  );
 
   const getTitle = () => {
     switch (selectedCategory) {
-      case 'food': return 'Restauration';
-      case 'services': return 'Services';
-      case 'emergency': return 'Urgences & Secours';
-      case 'stages': return 'Scenes';
-      case 'drinks': return 'Bars & Boissons';
-      case 'info': return 'Informations';
-      default: return 'Plan du Festival';
+      case 'food':
+        return 'Restauration';
+      case 'services':
+        return 'Services';
+      case 'emergency':
+        return 'Urgences & Secours';
+      case 'stages':
+        return 'Scenes';
+      case 'drinks':
+        return 'Bars & Boissons';
+      case 'info':
+        return 'Informations';
+      default:
+        return 'Plan du Festival';
     }
   };
 
@@ -840,11 +871,7 @@ export const MapScreen: React.FC = () => {
   };
 
   const renderPOICard = (poi: POI) => (
-    <TouchableOpacity
-      key={poi.id}
-      onPress={() => handlePOIPress(poi)}
-      activeOpacity={0.7}
-    >
+    <TouchableOpacity key={poi.id} onPress={() => handlePOIPress(poi)} activeOpacity={0.7}>
       <Card style={styles.poiCard}>
         <View style={styles.poiHeader}>
           <View style={styles.poiIconContainer}>
@@ -852,7 +879,9 @@ export const MapScreen: React.FC = () => {
           </View>
           <View style={styles.poiMainInfo}>
             <View style={styles.poiTitleRow}>
-              <Text style={styles.poiName} numberOfLines={1}>{poi.name}</Text>
+              <Text style={styles.poiName} numberOfLines={1}>
+                {poi.name}
+              </Text>
               {poi.hours.isOpen ? (
                 <View style={styles.openBadge}>
                   <Text style={styles.openBadgeText}>Ouvert</Text>
@@ -919,13 +948,8 @@ export const MapScreen: React.FC = () => {
         <View style={styles.poiFooter}>
           <CrowdIndicator level={poi.crowdLevel} />
           <View style={styles.poiActions}>
-            {poi.wheelchairAccessible && (
-              <Text style={styles.accessibleIcon}>♿</Text>
-            )}
-            <TouchableOpacity
-              style={styles.directionButton}
-              onPress={() => handleDirections(poi)}
-            >
+            {poi.wheelchairAccessible && <Text style={styles.accessibleIcon}>♿</Text>}
+            <TouchableOpacity style={styles.directionButton} onPress={() => handleDirections(poi)}>
               <Text style={styles.directionIcon}>🧭</Text>
             </TouchableOpacity>
           </View>
@@ -940,17 +964,15 @@ export const MapScreen: React.FC = () => {
       <View style={styles.header}>
         <View style={styles.headerRow}>
           {navigation.canGoBack() && (
-            <TouchableOpacity
-              style={styles.backButton}
-              onPress={() => navigation.goBack()}
-            >
+            <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
               <Text style={styles.backIcon}>←</Text>
             </TouchableOpacity>
           )}
           <View style={styles.headerText}>
             <Text style={styles.title}>{getTitle()}</Text>
             <Text style={styles.subtitle}>
-              {filteredPOIs.length} lieu{filteredPOIs.length > 1 ? 'x' : ''} disponible{filteredPOIs.length > 1 ? 's' : ''}
+              {filteredPOIs.length} lieu{filteredPOIs.length > 1 ? 'x' : ''} disponible
+              {filteredPOIs.length > 1 ? 's' : ''}
             </Text>
           </View>
         </View>
@@ -973,9 +995,10 @@ export const MapScreen: React.FC = () => {
         style={styles.categoriesList}
       >
         {categories.map((category) => {
-          const count = category.key === 'all'
-            ? pois.length
-            : pois.filter(p => p.category === category.key).length;
+          const count =
+            category.key === 'all'
+              ? pois.length
+              : pois.filter((p) => p.category === category.key).length;
           return (
             <TouchableOpacity
               key={category.key}
@@ -994,14 +1017,20 @@ export const MapScreen: React.FC = () => {
               >
                 {category.label}
               </Text>
-              <View style={[
-                styles.categoryCount,
-                selectedCategory === category.key && styles.categoryCountActive,
-              ]}>
-                <Text style={[
-                  styles.categoryCountText,
-                  selectedCategory === category.key && styles.categoryCountTextActive,
-                ]}>{count}</Text>
+              <View
+                style={[
+                  styles.categoryCount,
+                  selectedCategory === category.key && styles.categoryCountActive,
+                ]}
+              >
+                <Text
+                  style={[
+                    styles.categoryCountText,
+                    selectedCategory === category.key && styles.categoryCountTextActive,
+                  ]}
+                >
+                  {count}
+                </Text>
               </View>
             </TouchableOpacity>
           );
@@ -1022,9 +1051,7 @@ export const MapScreen: React.FC = () => {
             </View>
           ))
         ) : (
-          <View style={styles.categoryGroup}>
-            {filteredPOIs.map(renderPOICard)}
-          </View>
+          <View style={styles.categoryGroup}>{filteredPOIs.map(renderPOICard)}</View>
         )}
       </ScrollView>
 
@@ -1044,10 +1071,7 @@ export const MapScreen: React.FC = () => {
                   <View style={styles.modalIconLarge}>
                     <Text style={styles.modalEmoji}>{selectedPOI.icon}</Text>
                   </View>
-                  <TouchableOpacity
-                    style={styles.closeButton}
-                    onPress={() => setShowDetail(false)}
-                  >
+                  <TouchableOpacity style={styles.closeButton} onPress={() => setShowDetail(false)}>
                     <Text style={styles.closeIcon}>✕</Text>
                   </TouchableOpacity>
                 </View>
@@ -1117,11 +1141,13 @@ export const MapScreen: React.FC = () => {
                   {selectedPOI.currentWaitTime !== undefined && (
                     <View style={styles.infoRow}>
                       <Text style={styles.infoLabel}>Attente estimee</Text>
-                      <Text style={[
-                        styles.infoValue,
-                        selectedPOI.currentWaitTime > 10 && { color: colors.warning },
-                        selectedPOI.currentWaitTime > 20 && { color: colors.error },
-                      ]}>
+                      <Text
+                        style={[
+                          styles.infoValue,
+                          selectedPOI.currentWaitTime > 10 && { color: colors.warning },
+                          selectedPOI.currentWaitTime > 20 && { color: colors.error },
+                        ]}
+                      >
                         {selectedPOI.currentWaitTime} minutes
                       </Text>
                     </View>
@@ -1160,9 +1186,11 @@ export const MapScreen: React.FC = () => {
                     <View style={styles.infoRow}>
                       <Text style={styles.infoLabel}>Paiements</Text>
                       <Text style={styles.infoValue}>
-                        {selectedPOI.paymentMethods.map(m =>
-                          m === 'cashless' ? 'Cashless' : m === 'card' ? 'Carte' : 'Especes'
-                        ).join(', ')}
+                        {selectedPOI.paymentMethods
+                          .map((m) =>
+                            m === 'cashless' ? 'Cashless' : m === 'card' ? 'Carte' : 'Especes'
+                          )
+                          .join(', ')}
                       </Text>
                     </View>
                   )}
@@ -1249,7 +1277,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   subtitle: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     marginTop: 2,
   },
@@ -1335,6 +1363,7 @@ const styles = StyleSheet.create({
   },
   poiContent: {
     paddingHorizontal: spacing.md,
+    paddingTop: spacing.md,
     paddingBottom: spacing.xxl,
   },
   categoryGroup: {
@@ -1413,7 +1442,7 @@ const styles = StyleSheet.create({
     fontSize: 10,
   },
   poiDescription: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     marginBottom: spacing.sm,
     lineHeight: 18,
@@ -1591,7 +1620,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   modalSubcategory: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.primary,
     textAlign: 'center',
     textTransform: 'capitalize',
@@ -1611,7 +1640,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.md,
   },
   openBadgeLargeText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.success,
     fontWeight: '600',
   },
@@ -1619,7 +1648,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.error + '20',
   },
   closedBadgeLargeText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.error,
     fontWeight: '600',
   },
@@ -1637,7 +1666,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   infoSectionTitle: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.text,
     fontWeight: '700',
     marginBottom: spacing.sm,
@@ -1649,11 +1678,11 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.xs,
   },
   infoLabel: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textMuted,
   },
   infoValue: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.text,
     fontWeight: '500',
     textAlign: 'right',

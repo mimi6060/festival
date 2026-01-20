@@ -176,7 +176,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <p className="text-sm text-gray-500">Total vendus</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
             {formatNumber(totalSold)} / {formatNumber(totalCapacity)}
@@ -185,11 +185,11 @@ export default function TicketsPage({ params }: TicketsPageProps) {
             {formatPercentage((totalSold / totalCapacity) * 100)} de remplissage
           </p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <p className="text-sm text-gray-500">Revenus generes</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(totalRevenue)}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <p className="text-sm text-gray-500">Categories actives</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
             {categories.filter((c) => c.isActive).length} / {categories.length}
@@ -198,7 +198,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
       </div>
 
       {/* Categories List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100">
           <h2 className="font-semibold text-gray-900">Categories de billets</h2>
         </div>
@@ -378,22 +378,17 @@ export default function TicketsPage({ params }: TicketsPageProps) {
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="dark:bg-gray-900 bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b dark:border-white/10 border-gray-200">
+              <h2 className="text-lg font-semibold dark:text-white text-gray-900">
                 {editingCategory ? 'Modifier la categorie' : 'Nouvelle categorie'}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 dark:text-white/50 text-gray-400 hover:dark:text-white hover:text-gray-600 hover:dark:bg-white/5 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <svg
-                  className="w-5 h-5 text-gray-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -403,7 +398,7 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                 </svg>
               </button>
             </div>
-            <form ref={formRef} onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form id="ticket-form" ref={formRef} onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
                 <label className="form-label">Nom de la categorie</label>
                 <input
@@ -491,19 +486,19 @@ export default function TicketsPage({ params }: TicketsPageProps) {
                   className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                   defaultChecked={editingCategory?.isActive ?? true}
                 />
-                <label htmlFor="isActive" className="text-sm text-gray-700">
+                <label htmlFor="isActive" className="text-sm dark:text-white/70 text-gray-700">
                   Categorie active (visible et achetable)
                 </label>
               </div>
-              <div className="flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
-                <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">
-                  Annuler
-                </button>
-                <button type="submit" className="btn-primary">
-                  {editingCategory ? 'Enregistrer' : 'Creer'}
-                </button>
-              </div>
             </form>
+            <div className="flex items-center justify-end gap-3 px-6 py-4 dark:bg-white/5 bg-gray-50 border-t dark:border-white/10 border-gray-200 rounded-b-xl">
+              <button type="button" onClick={() => setShowModal(false)} className="btn-secondary">
+                Annuler
+              </button>
+              <button type="submit" form="ticket-form" className="btn-primary">
+                {editingCategory ? 'Enregistrer' : 'Creer'}
+              </button>
+            </div>
           </div>
         </div>
       )}

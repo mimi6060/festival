@@ -321,7 +321,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.sm,
   },
   markAllText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.primary,
     fontWeight: '600',
   },
@@ -337,13 +337,14 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   unreadText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.primary,
     fontWeight: '600',
     textAlign: 'center',
   },
   listContent: {
     paddingHorizontal: spacing.md,
+    paddingTop: spacing.sm,
     paddingBottom: spacing.xxl,
   },
   notificationCard: {
@@ -375,7 +376,7 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: spacing.xs,
   },
   title: {
     ...typography.body,
@@ -391,7 +392,7 @@ const styles = StyleSheet.create({
     marginLeft: spacing.sm,
   },
   message: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     marginBottom: spacing.xs,
   },

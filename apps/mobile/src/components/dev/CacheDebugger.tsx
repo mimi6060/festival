@@ -26,7 +26,9 @@ import { colors, spacing, borderRadius, typography } from '../../theme';
 
 // Format bytes to human readable string
 const formatBytes = (bytes: number): string => {
-  if (bytes === 0) {return '0 B';}
+  if (bytes === 0) {
+    return '0 B';
+  }
   const k = 1024;
   const sizes = ['B', 'KB', 'MB', 'GB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
@@ -40,7 +42,9 @@ const formatPercent = (value: number): string => {
 
 // Format timestamp
 const formatTime = (timestamp: number | null): string => {
-  if (!timestamp) {return 'Never';}
+  if (!timestamp) {
+    return 'Never';
+  }
   return new Date(timestamp).toLocaleTimeString();
 };
 
@@ -68,19 +72,22 @@ const CacheEventLog: React.FC<CacheEventLogProps> = ({ events }) => (
       {events.length === 0 ? (
         <Text style={styles.emptyText}>No events yet</Text>
       ) : (
-        events.slice(-20).reverse().map((event, index) => (
-          <View key={index} style={styles.eventItem}>
-            <Text style={styles.eventType}>{event.type.toUpperCase()}</Text>
-            <Text style={styles.eventDetail}>
-              {event.type === 'set' && `Key: ${event.key} (${formatBytes(event.size)})`}
-              {event.type === 'get' && `Key: ${event.key} (${event.hit ? 'HIT' : 'MISS'})`}
-              {event.type === 'delete' && `Key: ${event.key}`}
-              {event.type === 'evict' && `${event.keys.length} entries (${event.reason})`}
-              {event.type === 'clear' && 'All entries cleared'}
-              {event.type === 'restore' && `${event.entryCount} entries restored`}
-            </Text>
-          </View>
-        ))
+        events
+          .slice(-20)
+          .reverse()
+          .map((event, index) => (
+            <View key={index} style={styles.eventItem}>
+              <Text style={styles.eventType}>{event.type.toUpperCase()}</Text>
+              <Text style={styles.eventDetail}>
+                {event.type === 'set' && `Key: ${event.key} (${formatBytes(event.size)})`}
+                {event.type === 'get' && `Key: ${event.key} (${event.hit ? 'HIT' : 'MISS'})`}
+                {event.type === 'delete' && `Key: ${event.key}`}
+                {event.type === 'evict' && `${event.keys.length} entries (${event.reason})`}
+                {event.type === 'clear' && 'All entries cleared'}
+                {event.type === 'restore' && `${event.entryCount} entries restored`}
+              </Text>
+            </View>
+          ))
       )}
     </ScrollView>
   </View>
@@ -112,7 +119,9 @@ export const CacheDebugger: React.FC<CacheDebuggerProps> = ({ visible, onClose }
 
   // Subscribe to events
   useEffect(() => {
-    if (!visible) {return;}
+    if (!visible) {
+      return;
+    }
 
     updateStats();
 
@@ -128,7 +137,9 @@ export const CacheDebugger: React.FC<CacheDebuggerProps> = ({ visible, onClose }
 
   // Auto refresh
   useEffect(() => {
-    if (!visible || !autoRefresh) {return;}
+    if (!visible || !autoRefresh) {
+      return;
+    }
 
     const interval = setInterval(updateStats, 1000);
     return () => clearInterval(interval);
@@ -136,60 +147,48 @@ export const CacheDebugger: React.FC<CacheDebuggerProps> = ({ visible, onClose }
 
   // Clear general cache
   const handleClearCache = useCallback(() => {
-    Alert.alert(
-      'Clear Cache',
-      'Are you sure you want to clear all cached data?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear',
-          style: 'destructive',
-          onPress: async () => {
-            await cacheManager.clear();
-            setEvents([]);
-            updateStats();
-          },
+    Alert.alert('Clear Cache', 'Are you sure you want to clear all cached data?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Clear',
+        style: 'destructive',
+        onPress: async () => {
+          await cacheManager.clear();
+          setEvents([]);
+          updateStats();
         },
-      ]
-    );
+      },
+    ]);
   }, [cacheManager, updateStats]);
 
   // Clear image cache
   const handleClearImageCache = useCallback(() => {
-    Alert.alert(
-      'Clear Image Cache',
-      'Are you sure you want to clear all cached images?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear',
-          style: 'destructive',
-          onPress: async () => {
-            await imageCache.clear();
-            updateStats();
-          },
+    Alert.alert('Clear Image Cache', 'Are you sure you want to clear all cached images?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Clear',
+        style: 'destructive',
+        onPress: async () => {
+          await imageCache.clear();
+          updateStats();
         },
-      ]
-    );
+      },
+    ]);
   }, [imageCache, updateStats]);
 
   // Clear festival cache
   const handleClearFestivalCache = useCallback(() => {
-    Alert.alert(
-      'Clear Festival Cache',
-      'Are you sure you want to clear festival data cache?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Clear',
-          style: 'destructive',
-          onPress: async () => {
-            await festivalCache.clearFestivalData();
-            updateStats();
-          },
+    Alert.alert('Clear Festival Cache', 'Are you sure you want to clear festival data cache?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Clear',
+        style: 'destructive',
+        onPress: async () => {
+          await festivalCache.clearFestivalData();
+          updateStats();
         },
-      ]
-    );
+      },
+    ]);
   }, [festivalCache, updateStats]);
 
   // Force eviction
@@ -215,19 +214,19 @@ export const CacheDebugger: React.FC<CacheDebuggerProps> = ({ visible, onClose }
             <StatCard
               label="Hit Rate"
               value={formatPercent(stats.hitRate)}
-              color={stats.hitRate > 0.7 ? colors.success : stats.hitRate > 0.4 ? colors.warning : colors.error}
+              color={
+                stats.hitRate > 0.7
+                  ? colors.success
+                  : stats.hitRate > 0.4
+                    ? colors.warning
+                    : colors.error
+              }
             />
             <StatCard label="Hits" value={stats.hits} color={colors.success} />
             <StatCard label="Misses" value={stats.misses} color={colors.error} />
             <StatCard label="Evictions" value={stats.evictions} />
-            <StatCard
-              label="Avg Access Time"
-              value={`${stats.averageAccessTime.toFixed(2)}ms`}
-            />
-            <StatCard
-              label="Last Eviction"
-              value={formatTime(stats.lastEvictionAt)}
-            />
+            <StatCard label="Avg Access Time" value={`${stats.averageAccessTime.toFixed(2)}ms`} />
+            <StatCard label="Last Eviction" value={formatTime(stats.lastEvictionAt)} />
           </View>
 
           <Text style={styles.sectionTitle}>By Priority</Text>
@@ -301,11 +300,14 @@ export const CacheDebugger: React.FC<CacheDebuggerProps> = ({ visible, onClose }
 
           <Text style={styles.sectionTitle}>Cached URLs</Text>
           <ScrollView style={styles.urlList} nestedScrollEnabled>
-            {imageCache.getCachedUrls().slice(0, 20).map((url, index) => (
-              <Text key={index} style={styles.urlItem} numberOfLines={1}>
-                {url}
-              </Text>
-            ))}
+            {imageCache
+              .getCachedUrls()
+              .slice(0, 20)
+              .map((url, index) => (
+                <Text key={index} style={styles.urlItem} numberOfLines={1}>
+                  {url}
+                </Text>
+              ))}
             {imageCache.getCachedUrls().length === 0 && (
               <Text style={styles.emptyText}>No cached images</Text>
             )}
@@ -414,9 +416,7 @@ export const CacheDebugButton: React.FC<CacheDebugButtonProps> = ({ onPress }) =
 
   return (
     <TouchableOpacity style={styles.debugButton} onPress={onPress}>
-      <Text style={styles.debugButtonText}>
-        Cache {formatPercent(hitRate)}
-      </Text>
+      <Text style={styles.debugButtonText}>Cache {formatPercent(hitRate)}</Text>
     </TouchableOpacity>
   );
 };
@@ -540,7 +540,7 @@ const styles = StyleSheet.create({
     color: colors.primary,
   },
   emptyText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textMuted,
     fontStyle: 'italic',
   },
@@ -583,7 +583,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   clearEventsText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.primary,
   },
   eventLog: {

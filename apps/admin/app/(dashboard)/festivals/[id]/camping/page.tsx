@@ -51,23 +51,48 @@ const typeIcons: Record<CampingZone['type'], JSX.Element> = {
   ),
   CARAVAN: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16v-4a4 4 0 014-4h4a4 4 0 014 4v4M4 16h16M8 16a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M8 16v-4a4 4 0 014-4h4a4 4 0 014 4v4M4 16h16M8 16a2 2 0 100 4 2 2 0 000-4zm10 0a2 2 0 100 4 2 2 0 000-4z"
+      />
     </svg>
   ),
   GLAMPING: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M5 3v4M3 5h4M6 17v4m-2-2h4m5-16l2.286 6.857L21 12l-5.714 2.143L13 21l-2.286-6.857L5 12l5.714-2.143L13 3z"
+      />
     </svg>
   ),
   CABIN: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
+      />
     </svg>
   ),
   CAMPERVAN: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z" />
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M9 17a2 2 0 11-4 0 2 2 0 014 0zM19 17a2 2 0 11-4 0 2 2 0 014 0z"
+      />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"
+      />
     </svg>
   ),
 };
@@ -255,14 +280,20 @@ export default function CampingPage({ params }: CampingPageProps) {
     );
   }
 
-  const filteredZones = typeFilter === 'all' ? zones : zones.filter((z: CampingZone) => z.type === typeFilter);
+  const filteredZones =
+    typeFilter === 'all' ? zones : zones.filter((z: CampingZone) => z.type === typeFilter);
 
   // Stats
   const totalCapacity = zones.reduce((sum: number, z: CampingZone) => sum + z.capacity, 0);
-  const totalAvailable = zones.reduce((sum: number, z: CampingZone) => sum + (z.spotsAvailable ?? z.capacity), 0);
+  const totalAvailable = zones.reduce(
+    (sum: number, z: CampingZone) => sum + (z.spotsAvailable ?? z.capacity),
+    0
+  );
   const activeZones = zones.filter((z: CampingZone) => z.isActive).length;
   const avgPricePerNight =
-    zones.length > 0 ? zones.reduce((sum: number, z: CampingZone) => sum + z.pricePerNight, 0) / zones.length : 0;
+    zones.length > 0
+      ? zones.reduce((sum: number, z: CampingZone) => sum + z.pricePerNight, 0) / zones.length
+      : 0;
 
   return (
     <div className="space-y-6">
@@ -271,13 +302,23 @@ export default function CampingPage({ params }: CampingPageProps) {
         <Link href="/festivals" className="text-gray-500 hover:text-gray-700">
           Festivals
         </Link>
-        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-4 h-4 text-gray-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
         <Link href={`/festivals/${id}`} className="text-gray-500 hover:text-gray-700">
           {festival.name}
         </Link>
-        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-4 h-4 text-gray-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
         <span className="text-gray-900 font-medium">Camping</span>
@@ -333,27 +374,29 @@ export default function CampingPage({ params }: CampingPageProps) {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <p className="text-sm text-gray-500">Capacite totale</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{formatNumber(totalCapacity)}</p>
           <p className="text-sm text-gray-500 mt-1">emplacements</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <p className="text-sm text-gray-500">Places disponibles</p>
           <p className="text-2xl font-bold text-green-600 mt-1">{formatNumber(totalAvailable)}</p>
           <p className="text-sm text-gray-500 mt-1">
             {totalCapacity > 0 ? Math.round((totalAvailable / totalCapacity) * 100) : 0}% libre
           </p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <p className="text-sm text-gray-500">Zones actives</p>
           <p className="text-2xl font-bold text-blue-600 mt-1">
             {activeZones} / {zones.length}
           </p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <p className="text-sm text-gray-500">Prix moyen / nuit</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(avgPricePerNight)}</p>
+          <p className="text-2xl font-bold text-gray-900 mt-1">
+            {formatCurrency(avgPricePerNight)}
+          </p>
         </div>
       </div>
 
@@ -378,7 +421,7 @@ export default function CampingPage({ params }: CampingPageProps) {
 
       {/* Zones Grid */}
       {filteredZones.length === 0 ? (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-12 text-center">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-12 text-center">
           <svg
             className="w-12 h-12 text-gray-300 mx-auto mb-4"
             fill="none"
@@ -409,7 +452,7 @@ export default function CampingPage({ params }: CampingPageProps) {
             return (
               <div
                 key={zone.id}
-                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden hover:shadow-md transition-shadow"
+                className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 overflow-hidden hover:shadow-md transition-shadow"
               >
                 {/* Header */}
                 <div
@@ -427,9 +470,7 @@ export default function CampingPage({ params }: CampingPageProps) {
                       {typeLabels[zone.type]}
                     </span>
                   </div>
-                  <span
-                    className={cn('badge', zone.isActive ? 'badge-success' : 'badge-neutral')}
-                  >
+                  <span className={cn('badge', zone.isActive ? 'badge-success' : 'badge-neutral')}>
                     {zone.isActive ? 'Actif' : 'Inactif'}
                   </span>
                 </div>
@@ -469,8 +510,8 @@ export default function CampingPage({ params }: CampingPageProps) {
                           occupancyPercent >= 90
                             ? 'bg-red-500'
                             : occupancyPercent >= 70
-                            ? 'bg-orange-500'
-                            : 'bg-green-500'
+                              ? 'bg-orange-500'
+                              : 'bg-green-500'
                         )}
                         style={{ width: `${Math.min(occupancyPercent, 100)}%` }}
                       />
@@ -544,22 +585,17 @@ export default function CampingPage({ params }: CampingPageProps) {
 
       {/* Create/Edit Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="dark:bg-gray-900 bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b dark:border-white/10 border-gray-200">
+              <h2 className="text-lg font-semibold dark:text-white text-gray-900">
                 {editingZone ? 'Modifier la zone' : 'Nouvelle zone de camping'}
               </h2>
               <button
                 onClick={closeModal}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 dark:text-white/50 text-gray-400 hover:dark:text-white hover:text-gray-600 hover:dark:bg-white/5 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <svg
-                  className="w-5 h-5 text-gray-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -645,11 +681,11 @@ export default function CampingPage({ params }: CampingPageProps) {
                   {allAmenities.map((amenity) => (
                     <label
                       key={amenity}
-                      className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"
+                      className="flex items-center gap-2 text-sm dark:text-white/70 text-gray-700 cursor-pointer"
                     >
                       <input
                         type="checkbox"
-                        className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        className="w-4 h-4 rounded dark:border-white/20 border-gray-300 text-primary-600 focus:ring-primary-500"
                         checked={formData.amenities.includes(amenity)}
                         onChange={() => handleAmenityToggle(amenity)}
                       />
@@ -662,16 +698,16 @@ export default function CampingPage({ params }: CampingPageProps) {
                 <input
                   type="checkbox"
                   id="isActive"
-                  className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  className="w-4 h-4 rounded dark:border-white/20 border-gray-300 text-primary-600 focus:ring-primary-500"
                   checked={formData.isActive}
                   onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
                 />
-                <label htmlFor="isActive" className="text-sm text-gray-700">
+                <label htmlFor="isActive" className="text-sm dark:text-white/70 text-gray-700">
                   Zone active (visible et reservable)
                 </label>
               </div>
             </form>
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 dark:bg-white/5 bg-gray-50 border-t dark:border-white/10 border-gray-200 rounded-b-xl">
               <button type="button" onClick={closeModal} className="btn-secondary">
                 Annuler
               </button>
@@ -684,8 +720,8 @@ export default function CampingPage({ params }: CampingPageProps) {
                 {createZoneMutation.isPending || updateZoneMutation.isPending
                   ? 'Enregistrement...'
                   : editingZone
-                  ? 'Enregistrer'
-                  : 'Creer'}
+                    ? 'Enregistrer'
+                    : 'Creer'}
               </button>
             </div>
           </div>

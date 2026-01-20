@@ -106,7 +106,7 @@ export function Modal({
 
   const modalContent = (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm animate-fadeIn"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fadeIn"
       onClick={handleOverlayClick}
       role="presentation"
     >
@@ -119,8 +119,8 @@ export function Modal({
         <div
           className={`
             relative w-full ${sizeStyles[size]}
-            bg-festival-dark border border-white/10
-            rounded-2xl shadow-2xl
+            bg-gray-900 border border-white/10
+            rounded-xl shadow-2xl
             animate-slideUp
             ${className}
           `}
@@ -333,11 +333,7 @@ export function ConfirmModal({
           >
             {isLoading ? (
               <span className="flex items-center justify-center gap-2">
-                <svg
-                  className="animate-spin h-4 w-4"
-                  viewBox="0 0 24 24"
-                  aria-hidden="true"
-                >
+                <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
                   <circle
                     className="opacity-25"
                     cx="12"
@@ -366,5 +362,76 @@ export function ConfirmModal({
   );
 }
 
+/**
+ * ModalHeader - Standardized modal header component
+ *
+ * Styling: p-6 border-b border-white/10
+ *
+ * @example
+ * ```tsx
+ * <Modal isOpen={isOpen} onClose={onClose} showCloseButton={false}>
+ *   <ModalHeader>
+ *     <h2 className="text-xl font-bold text-white">Custom Header</h2>
+ *   </ModalHeader>
+ *   <ModalBody>Content here</ModalBody>
+ *   <ModalFooter>Footer content</ModalFooter>
+ * </Modal>
+ * ```
+ */
+interface ModalHeaderProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function ModalHeader({ children, className = '' }: ModalHeaderProps) {
+  return <div className={`p-6 border-b border-white/10 ${className}`}>{children}</div>;
+}
+
+/**
+ * ModalBody - Standardized modal body component
+ *
+ * Styling: p-6
+ *
+ * @example
+ * ```tsx
+ * <ModalBody>
+ *   <p>Modal content goes here</p>
+ * </ModalBody>
+ * ```
+ */
+interface ModalBodyProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function ModalBody({ children, className = '' }: ModalBodyProps) {
+  return <div className={`p-6 ${className}`}>{children}</div>;
+}
+
+/**
+ * ModalFooter - Standardized modal footer component
+ *
+ * Styling: p-6 border-t border-white/10
+ *
+ * @example
+ * ```tsx
+ * <ModalFooter>
+ *   <Button variant="secondary" onClick={onClose}>Cancel</Button>
+ *   <Button variant="primary" onClick={onConfirm}>Confirm</Button>
+ * </ModalFooter>
+ * ```
+ */
+interface ModalFooterProps {
+  children: React.ReactNode;
+  className?: string;
+}
+
+export function ModalFooter({ children, className = '' }: ModalFooterProps) {
+  return <div className={`p-6 border-t border-white/10 ${className}`}>{children}</div>;
+}
+
 Modal.displayName = 'Modal';
 ConfirmModal.displayName = 'ConfirmModal';
+ModalHeader.displayName = 'ModalHeader';
+ModalBody.displayName = 'ModalBody';
+ModalFooter.displayName = 'ModalFooter';

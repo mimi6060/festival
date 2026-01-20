@@ -105,8 +105,8 @@ export const ContactUsScreen: React.FC = () => {
         'Nous avons bien recu votre message. Notre equipe vous repondra dans les plus brefs delais.',
         () => navigation.goBack()
       );
-    } catch (error) {
-      showAlert('Erreur', 'Impossible d\'envoyer le message. Veuillez reessayer.');
+    } catch {
+      showAlert('Erreur', "Impossible d'envoyer le message. Veuillez reessayer.");
     } finally {
       setLoading(false);
     }
@@ -120,10 +120,7 @@ export const ContactUsScreen: React.FC = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Nous contacter</Text>
@@ -141,11 +138,7 @@ export const ContactUsScreen: React.FC = () => {
             <Text style={styles.sectionTitle}>Contact direct</Text>
             <View style={styles.methodsRow}>
               {contactMethods.map((method) => (
-                <TouchableOpacity
-                  key={method.id}
-                  style={styles.methodCard}
-                  onPress={method.action}
-                >
+                <TouchableOpacity key={method.id} style={styles.methodCard} onPress={method.action}>
                   <Text style={styles.methodIcon}>{method.icon}</Text>
                   <Text style={styles.methodTitle}>{method.title}</Text>
                   <Text style={styles.methodSubtitle}>{method.subtitle}</Text>
@@ -252,8 +245,8 @@ export const ContactUsScreen: React.FC = () => {
               <View style={styles.infoContent}>
                 <Text style={styles.infoTitle}>Delai de reponse</Text>
                 <Text style={styles.infoText}>
-                  Notre equipe vous repondra generalement sous 24 heures ouvrables.
-                  Pour les urgences, preferez le telephone.
+                  Notre equipe vous repondra generalement sous 24 heures ouvrables. Pour les
+                  urgences, preferez le telephone.
                 </Text>
               </View>
             </View>
@@ -340,7 +333,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   sectionTitle: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -364,7 +357,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   methodTitle: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.text,
     fontWeight: '600',
   },
@@ -414,7 +407,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   inputLabel: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     marginBottom: spacing.xs,
   },
@@ -494,7 +487,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   infoText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     lineHeight: 20,
   },

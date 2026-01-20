@@ -403,26 +403,26 @@ export default function ActivityLogsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
           <p className="text-sm text-gray-500">Total logs</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-2xl font-bold text-blue-600">{stats.today}</p>
           <p className="text-sm text-gray-500">Aujourd'hui</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-2xl font-bold text-green-600">{stats.byActionType['update'] || 0}</p>
           <p className="text-sm text-gray-500">Modifications</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-2xl font-bold text-red-600">{stats.failures}</p>
           <p className="text-sm text-gray-500">Echecs</p>
         </div>
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+      <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
           {/* Search */}
           <div className="lg:col-span-2">
@@ -492,7 +492,7 @@ export default function ActivityLogsPage() {
       </div>
 
       {/* Activity Log Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50">
@@ -594,13 +594,15 @@ export default function ActivityLogsPage() {
 
       {/* Log Detail Modal */}
       {selectedLog && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
-              <h3 className="text-lg font-semibold text-gray-900">Details de l'activite</h3>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="dark:bg-gray-900 bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="px-6 py-4 border-b dark:border-white/10 border-gray-200 flex items-center justify-between">
+              <h3 className="text-lg font-semibold dark:text-white text-gray-900">
+                Details de l'activite
+              </h3>
               <button
                 onClick={() => setSelectedLog(null)}
-                className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+                className="p-2 dark:text-white/50 text-gray-400 hover:dark:text-white hover:text-gray-600 hover:dark:bg-white/5 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
@@ -616,13 +618,15 @@ export default function ActivityLogsPage() {
               {/* Main Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-gray-500 uppercase mb-1">Date/Heure</p>
-                  <p className="text-sm font-medium text-gray-900">
+                  <p className="text-xs dark:text-white/50 text-gray-500 uppercase mb-1">
+                    Date/Heure
+                  </p>
+                  <p className="text-sm font-medium dark:text-white text-gray-900">
                     {formatDateTime(selectedLog.timestamp)}
                   </p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 uppercase mb-1">Statut</p>
+                  <p className="text-xs dark:text-white/50 text-gray-500 uppercase mb-1">Statut</p>
                   <span
                     className={cn(
                       'px-2 py-0.5 text-xs font-medium rounded-full',
@@ -643,15 +647,21 @@ export default function ActivityLogsPage() {
               </div>
 
               {/* User Info */}
-              <div className="bg-gray-50 rounded-lg p-4">
-                <p className="text-xs text-gray-500 uppercase mb-2">Utilisateur</p>
+              <div className="dark:bg-white/5 bg-gray-50 rounded-lg p-4">
+                <p className="text-xs dark:text-white/50 text-gray-500 uppercase mb-2">
+                  Utilisateur
+                </p>
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 font-medium">
+                  <div className="w-10 h-10 dark:bg-white/10 bg-gray-200 rounded-full flex items-center justify-center dark:text-white text-gray-600 font-medium">
                     {selectedLog.userName.charAt(0)}
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-900">{selectedLog.userName}</p>
-                    <p className="text-xs text-gray-500">{selectedLog.userEmail}</p>
+                    <p className="text-sm font-medium dark:text-white text-gray-900">
+                      {selectedLog.userName}
+                    </p>
+                    <p className="text-xs dark:text-white/50 text-gray-500">
+                      {selectedLog.userEmail}
+                    </p>
                   </div>
                   <span
                     className={cn(
@@ -667,11 +677,13 @@ export default function ActivityLogsPage() {
               {/* Action Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-gray-500 uppercase mb-1">Action</p>
-                  <p className="text-sm font-medium text-gray-900">{selectedLog.action}</p>
+                  <p className="text-xs dark:text-white/50 text-gray-500 uppercase mb-1">Action</p>
+                  <p className="text-sm font-medium dark:text-white text-gray-900">
+                    {selectedLog.action}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 uppercase mb-1">Type</p>
+                  <p className="text-xs dark:text-white/50 text-gray-500 uppercase mb-1">Type</p>
                   <span
                     className={cn(
                       'px-2 py-0.5 text-xs font-medium rounded',
@@ -686,12 +698,18 @@ export default function ActivityLogsPage() {
               {/* Resource Info */}
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <p className="text-xs text-gray-500 uppercase mb-1">Ressource</p>
-                  <p className="text-sm font-medium text-gray-900">{selectedLog.resource}</p>
+                  <p className="text-xs dark:text-white/50 text-gray-500 uppercase mb-1">
+                    Ressource
+                  </p>
+                  <p className="text-sm font-medium dark:text-white text-gray-900">
+                    {selectedLog.resource}
+                  </p>
                 </div>
                 <div>
-                  <p className="text-xs text-gray-500 uppercase mb-1">Type ressource</p>
-                  <p className="text-sm text-gray-700">
+                  <p className="text-xs dark:text-white/50 text-gray-500 uppercase mb-1">
+                    Type ressource
+                  </p>
+                  <p className="text-sm dark:text-white/70 text-gray-700">
                     {resourceTypeConfig[selectedLog.resourceType].label}
                   </p>
                 </div>
@@ -700,30 +718,36 @@ export default function ActivityLogsPage() {
               {/* Details */}
               {selectedLog.details && (
                 <div>
-                  <p className="text-xs text-gray-500 uppercase mb-1">Details</p>
-                  <p className="text-sm text-gray-700 bg-gray-50 rounded-lg p-3">
+                  <p className="text-xs dark:text-white/50 text-gray-500 uppercase mb-1">Details</p>
+                  <p className="text-sm dark:text-white/70 text-gray-700 dark:bg-white/5 bg-gray-50 rounded-lg p-3">
                     {selectedLog.details}
                   </p>
                 </div>
               )}
 
               {/* Technical Info */}
-              <div className="border-t border-gray-100 pt-4">
-                <p className="text-xs text-gray-500 uppercase mb-2">Informations techniques</p>
+              <div className="border-t dark:border-white/10 border-gray-100 pt-4">
+                <p className="text-xs dark:text-white/50 text-gray-500 uppercase mb-2">
+                  Informations techniques
+                </p>
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-gray-500">Adresse IP</p>
-                    <p className="font-mono text-gray-900">{selectedLog.ipAddress}</p>
+                    <p className="dark:text-white/50 text-gray-500">Adresse IP</p>
+                    <p className="font-mono dark:text-white text-gray-900">
+                      {selectedLog.ipAddress}
+                    </p>
                   </div>
                   {selectedLog.duration && (
                     <div>
-                      <p className="text-gray-500">Duree</p>
-                      <p className="font-mono text-gray-900">{selectedLog.duration} ms</p>
+                      <p className="dark:text-white/50 text-gray-500">Duree</p>
+                      <p className="font-mono dark:text-white text-gray-900">
+                        {selectedLog.duration} ms
+                      </p>
                     </div>
                   )}
                   <div className="col-span-2">
-                    <p className="text-gray-500">User Agent</p>
-                    <p className="font-mono text-gray-900 text-xs break-all">
+                    <p className="dark:text-white/50 text-gray-500">User Agent</p>
+                    <p className="font-mono dark:text-white text-gray-900 text-xs break-all">
                       {selectedLog.userAgent}
                     </p>
                   </div>

@@ -27,11 +27,20 @@ function AlertItem({
   alert: RealtimeAlert;
   onAcknowledge: (id: string) => void;
 }) {
+  // Standardized toast/notification styling
   const typeConfig = {
-    warning: { color: 'bg-yellow-50 border-yellow-200', icon: '!', textColor: 'text-yellow-800' },
-    error: { color: 'bg-red-50 border-red-200', icon: '!', textColor: 'text-red-800' },
-    info: { color: 'bg-blue-50 border-blue-200', icon: 'i', textColor: 'text-blue-800' },
-    success: { color: 'bg-green-50 border-green-200', icon: 'v', textColor: 'text-green-800' },
+    warning: {
+      color: 'bg-amber-500/10 border-amber-500/20',
+      icon: '!',
+      textColor: 'text-amber-400',
+    },
+    error: { color: 'bg-red-500/10 border-red-500/20', icon: '!', textColor: 'text-red-400' },
+    info: { color: 'bg-blue-500/10 border-blue-500/20', icon: 'i', textColor: 'text-blue-400' },
+    success: {
+      color: 'bg-green-500/10 border-green-500/20',
+      icon: 'v',
+      textColor: 'text-green-400',
+    },
   };
 
   const config = typeConfig[alert.type];
@@ -44,7 +53,13 @@ function AlertItem({
     <div className={cn('p-4 rounded-lg border', config.color)}>
       <div className="flex items-start justify-between gap-3">
         <div className="flex items-start gap-2">
-          <span className={cn('w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold', config.textColor, config.color)}>
+          <span
+            className={cn(
+              'w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold',
+              config.textColor,
+              config.color
+            )}
+          >
             {config.icon}
           </span>
           <div>
@@ -96,8 +111,8 @@ export default function RealtimeDashboardPage() {
         hour: '2-digit',
         minute: '2-digit',
       }),
-      transactions: Math.floor(Math.random() * 50) + 20 + (stats.ticketsSoldToday * 0.1),
-      revenue: Math.floor(Math.random() * 5000) + 1000 + (stats.revenueToday * 0.01),
+      transactions: Math.floor(Math.random() * 50) + 20 + stats.ticketsSoldToday * 0.1,
+      revenue: Math.floor(Math.random() * 5000) + 1000 + stats.revenueToday * 0.01,
     }));
   }, [lastUpdate, stats.ticketsSoldToday, stats.revenueToday]);
 
@@ -245,7 +260,7 @@ export default function RealtimeDashboardPage() {
       {/* Charts and Live Data */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Transactions Chart */}
-        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="lg:col-span-2 bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">
               Activite en temps reel (derniere heure)
@@ -306,14 +321,10 @@ export default function RealtimeDashboardPage() {
 
       {/* Zone Occupancy and Revenue Chart */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ZoneOccupancyWidget
-          zones={stats.zoneOccupancy}
-          isLive={isConnected}
-          loading={isLoading}
-        />
+        <ZoneOccupancyWidget zones={stats.zoneOccupancy} isLive={isConnected} loading={isLoading} />
 
         {/* Revenue Distribution Chart */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900">Revenus par heure</h3>
             {isConnected && (

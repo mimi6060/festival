@@ -35,49 +35,57 @@ const FAQ_ITEMS: FAQItem[] = [
   {
     id: '1',
     question: 'Comment acheter un billet?',
-    answer: 'Pour acheter un billet, rendez-vous dans l\'onglet "Billets" de l\'application. Selectionnez le festival de votre choix, choisissez le type de billet souhaite, puis procedez au paiement securise.',
+    answer:
+      'Pour acheter un billet, rendez-vous dans l\'onglet "Billets" de l\'application. Selectionnez le festival de votre choix, choisissez le type de billet souhaite, puis procedez au paiement securise.',
     category: 'tickets',
   },
   {
     id: '2',
     question: 'Comment fonctionne le cashless?',
-    answer: 'Le systeme cashless vous permet de payer vos achats sur le festival sans especes. Rechargez votre portefeuille dans l\'onglet "Portefeuille", puis presentez votre QR code aux points de vente.',
+    answer:
+      'Le systeme cashless vous permet de payer vos achats sur le festival sans especes. Rechargez votre portefeuille dans l\'onglet "Portefeuille", puis presentez votre QR code aux points de vente.',
     category: 'wallet',
   },
   {
     id: '3',
     question: 'Mon billet QR code ne fonctionne pas',
-    answer: 'Assurez-vous que la luminosite de votre ecran est au maximum. Si le probleme persiste, verifiez votre connexion internet pour synchroniser le billet. Vous pouvez aussi contacter l\'accueil du festival.',
+    answer:
+      "Assurez-vous que la luminosite de votre ecran est au maximum. Si le probleme persiste, verifiez votre connexion internet pour synchroniser le billet. Vous pouvez aussi contacter l'accueil du festival.",
     category: 'tickets',
   },
   {
     id: '4',
     question: 'Comment obtenir un remboursement?',
-    answer: 'Les demandes de remboursement doivent etre effectuees au moins 7 jours avant l\'evenement. Contactez notre support avec votre numero de commande pour initier la procedure.',
+    answer:
+      "Les demandes de remboursement doivent etre effectuees au moins 7 jours avant l'evenement. Contactez notre support avec votre numero de commande pour initier la procedure.",
     category: 'payments',
   },
   {
     id: '5',
     question: 'Comment modifier mes informations personnelles?',
-    answer: 'Rendez-vous dans l\'onglet "Profil", puis "Informations personnelles". Vous pouvez modifier votre nom, email et numero de telephone.',
+    answer:
+      'Rendez-vous dans l\'onglet "Profil", puis "Informations personnelles". Vous pouvez modifier votre nom, email et numero de telephone.',
     category: 'account',
   },
   {
     id: '6',
     question: 'Comment activer les notifications?',
-    answer: 'Allez dans "Profil" > "Parametres" > "Notifications". Vous pouvez activer les alertes pour les artistes favoris, les offres speciales et les rappels d\'evenements.',
+    answer:
+      'Allez dans "Profil" > "Parametres" > "Notifications". Vous pouvez activer les alertes pour les artistes favoris, les offres speciales et les rappels d\'evenements.',
     category: 'account',
   },
   {
     id: '7',
-    question: 'Puis-je transferer mon billet a quelqu\'un d\'autre?',
-    answer: 'Oui, certains billets sont transferables. Dans l\'onglet "Billets", selectionnez le billet puis "Transferer". Le destinataire recevra un email avec le nouveau billet.',
+    question: "Puis-je transferer mon billet a quelqu'un d'autre?",
+    answer:
+      'Oui, certains billets sont transferables. Dans l\'onglet "Billets", selectionnez le billet puis "Transferer". Le destinataire recevra un email avec le nouveau billet.',
     category: 'tickets',
   },
   {
     id: '8',
     question: 'Comment recuperer mon solde cashless apres le festival?',
-    answer: 'Apres le festival, vous avez 30 jours pour demander le remboursement de votre solde restant. Allez dans "Portefeuille" > "Remboursement" et suivez les instructions.',
+    answer:
+      'Apres le festival, vous avez 30 jours pour demander le remboursement de votre solde restant. Allez dans "Portefeuille" > "Remboursement" et suivez les instructions.',
     category: 'wallet',
   },
 ];
@@ -120,9 +128,7 @@ export const HelpCenterScreen: React.FC = () => {
       ? item.question.toLowerCase().includes(searchQuery.toLowerCase()) ||
         item.answer.toLowerCase().includes(searchQuery.toLowerCase())
       : true;
-    const matchesCategory = selectedCategory
-      ? item.category === selectedCategory
-      : true;
+    const matchesCategory = selectedCategory ? item.category === selectedCategory : true;
     return matchesSearch && matchesCategory;
   });
 
@@ -138,10 +144,7 @@ export const HelpCenterScreen: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.backButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Centre d'aide</Text>
@@ -182,9 +185,7 @@ export const HelpCenterScreen: React.FC = () => {
                   selectedCategory === category.id && styles.categoryCardSelected,
                 ]}
                 onPress={() =>
-                  setSelectedCategory(
-                    selectedCategory === category.id ? null : category.id
-                  )
+                  setSelectedCategory(selectedCategory === category.id ? null : category.id)
                 }
               >
                 <Text style={styles.categoryIcon}>{category.icon}</Text>
@@ -203,7 +204,8 @@ export const HelpCenterScreen: React.FC = () => {
             Questions frequentes
             {selectedCategory && (
               <Text style={styles.filterBadge}>
-                {' '}({HELP_CATEGORIES.find(c => c.id === selectedCategory)?.title})
+                {' '}
+                ({HELP_CATEGORIES.find((c) => c.id === selectedCategory)?.title})
               </Text>
             )}
           </Text>
@@ -214,19 +216,13 @@ export const HelpCenterScreen: React.FC = () => {
                   {index > 0 && <View style={styles.divider} />}
                   <TouchableOpacity
                     style={styles.faqItem}
-                    onPress={() =>
-                      setExpandedFAQ(expandedFAQ === item.id ? null : item.id)
-                    }
+                    onPress={() => setExpandedFAQ(expandedFAQ === item.id ? null : item.id)}
                   >
                     <View style={styles.faqHeader}>
                       <Text style={styles.faqQuestion}>{item.question}</Text>
-                      <Text style={styles.expandIcon}>
-                        {expandedFAQ === item.id ? '−' : '+'}
-                      </Text>
+                      <Text style={styles.expandIcon}>{expandedFAQ === item.id ? '−' : '+'}</Text>
                     </View>
-                    {expandedFAQ === item.id && (
-                      <Text style={styles.faqAnswer}>{item.answer}</Text>
-                    )}
+                    {expandedFAQ === item.id && <Text style={styles.faqAnswer}>{item.answer}</Text>}
                   </TouchableOpacity>
                 </View>
               ))
@@ -234,9 +230,7 @@ export const HelpCenterScreen: React.FC = () => {
               <View style={styles.emptyState}>
                 <Text style={styles.emptyIcon}>🔍</Text>
                 <Text style={styles.emptyText}>Aucun resultat trouve</Text>
-                <Text style={styles.emptySubtext}>
-                  Essayez avec d'autres mots-cles
-                </Text>
+                <Text style={styles.emptySubtext}>Essayez avec d'autres mots-cles</Text>
               </View>
             )}
           </Card>
@@ -251,15 +245,10 @@ export const HelpCenterScreen: React.FC = () => {
                 <Text style={styles.contactIcon}>💬</Text>
                 <View>
                   <Text style={styles.contactTitle}>Contacter le support</Text>
-                  <Text style={styles.contactSubtitle}>
-                    Reponse sous 24h
-                  </Text>
+                  <Text style={styles.contactSubtitle}>Reponse sous 24h</Text>
                 </View>
               </View>
-              <TouchableOpacity
-                style={styles.contactButton}
-                onPress={handleContactSupport}
-              >
+              <TouchableOpacity style={styles.contactButton} onPress={handleContactSupport}>
                 <Text style={styles.contactButtonText}>Ecrire</Text>
               </TouchableOpacity>
             </View>
@@ -271,15 +260,10 @@ export const HelpCenterScreen: React.FC = () => {
                 <Text style={styles.contactIcon}>🌐</Text>
                 <View>
                   <Text style={styles.contactTitle}>Site web</Text>
-                  <Text style={styles.contactSubtitle}>
-                    Plus d'informations en ligne
-                  </Text>
+                  <Text style={styles.contactSubtitle}>Plus d'informations en ligne</Text>
                 </View>
               </View>
-              <TouchableOpacity
-                style={styles.contactButton}
-                onPress={handleOpenWebsite}
-              >
+              <TouchableOpacity style={styles.contactButton} onPress={handleOpenWebsite}>
                 <Text style={styles.contactButtonText}>Visiter</Text>
               </TouchableOpacity>
             </View>
@@ -360,7 +344,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   sectionTitle: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -452,7 +436,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   emptySubtext: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textMuted,
   },
   contactCard: {
@@ -488,7 +472,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
   },
   contactButtonText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.white,
     fontWeight: '600',
   },

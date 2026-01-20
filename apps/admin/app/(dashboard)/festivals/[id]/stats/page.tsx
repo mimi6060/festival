@@ -250,21 +250,21 @@ export default function StatsPage({ params }: StatsPageProps) {
 
       {/* Key Metrics */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <p className="text-sm text-gray-500">Total des ventes</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{formatNumber(totalSold)}</p>
           <p className="text-sm text-green-600 mt-1">+12% vs semaine derniere</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <p className="text-sm text-gray-500">Chiffre d&apos;affaires</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(totalRevenue)}</p>
           <p className="text-sm text-green-600 mt-1">+8% vs semaine derniere</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <p className="text-sm text-gray-500">Prix moyen du billet</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(avgTicketPrice)}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <p className="text-sm text-gray-500">Taux de conversion</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">4.2%</p>
           <p className="text-sm text-red-600 mt-1">-0.3% vs semaine derniere</p>
@@ -280,7 +280,7 @@ export default function StatsPage({ params }: StatsPageProps) {
       {/* Category Distribution */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Pie Chart */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <h3 className="text-lg font-semibold text-gray-900 mb-6">Repartition par categorie</h3>
           {categoryData.length > 0 ? (
             <div className="h-64">
@@ -335,7 +335,7 @@ export default function StatsPage({ params }: StatsPageProps) {
         </div>
 
         {/* Category Table */}
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
             <h3 className="font-semibold text-gray-900">Detail par categorie</h3>
           </div>

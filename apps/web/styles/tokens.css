@@ -16,18 +16,18 @@
    * COLOR TOKENS
    * ============================================ */
 
-  /* Brand Colors - Primary (Purple/Fuchsia) */
-  --color-primary-50: #fdf4ff;
-  --color-primary-100: #fae8ff;
-  --color-primary-200: #f5d0fe;
-  --color-primary-300: #f0abfc;
-  --color-primary-400: #e879f9;
-  --color-primary-500: #d946ef;
-  --color-primary-600: #c026d3;
-  --color-primary-700: #a21caf;
-  --color-primary-800: #86198f;
-  --color-primary-900: #701a75;
-  --color-primary-950: #4a044e;
+  /* Brand Colors - Primary (Indigo - Unified) */
+  --color-primary-50: #eef2ff;
+  --color-primary-100: #e0e7ff;
+  --color-primary-200: #c7d2fe;
+  --color-primary-300: #a5b4fc;
+  --color-primary-400: #818cf8;
+  --color-primary-500: #6366f1;
+  --color-primary-600: #4f46e5;
+  --color-primary-700: #4338ca;
+  --color-primary-800: #3730a3;
+  --color-primary-900: #312e81;
+  --color-primary-950: #1e1b4b;
 
   /* Brand Colors - Secondary (Pink) */
   --color-secondary-50: #fdf2f8;
@@ -41,12 +41,12 @@
   --color-secondary-800: #9d174d;
   --color-secondary-900: #831843;
 
-  /* Festival Theme Colors */
-  --color-festival-dark: #1a1a2e;
-  --color-festival-darker: #12121f;
-  --color-festival-medium: #16213e;
-  --color-festival-light: #0f3460;
-  --color-festival-accent: #e94560;
+  /* Festival Theme Colors - Unified dark palette */
+  --color-festival-dark: #0a0a0a;
+  --color-festival-darker: #000000;
+  --color-festival-medium: #1a1a1a;
+  --color-festival-light: #262626;
+  --color-festival-accent: #6366f1;
 
   /* Semantic Colors - Success */
   --color-success-50: #f0fdf4;
@@ -135,6 +135,9 @@
    * ============================================ */
 
   /* Font Families */
+  --font-family-inter:
+    'Inter', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
   --font-family-sans:
     ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
     'Helvetica Neue', Arial, sans-serif;
@@ -201,8 +204,8 @@
   --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
   --shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
 
-  /* Glow Shadows */
-  --shadow-glow-primary: 0 0 20px rgb(217 70 239 / 0.3);
+  /* Glow Shadows - Using unified primary (indigo) */
+  --shadow-glow-primary: 0 0 20px rgb(99 102 241 / 0.3);
   --shadow-glow-secondary: 0 0 20px rgb(236 72 153 / 0.3);
   --shadow-glow-success: 0 0 20px rgb(34 197 94 / 0.3);
   --shadow-glow-error: 0 0 20px rgb(239 68 68 / 0.3);

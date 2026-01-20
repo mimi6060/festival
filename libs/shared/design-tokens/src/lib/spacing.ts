@@ -357,6 +357,56 @@ export const gapPx = {
 } as const;
 
 // ============================================================================
+// Unified Spacing Scale (Primary API)
+// ============================================================================
+
+/**
+ * Unified spacing scale for consistent spacing across all apps
+ * Use this as the primary spacing API for component development
+ *
+ * Values (in pixels):
+ * - xs: 4px   - Tight spacing (icons, badges)
+ * - sm: 8px   - Compact spacing (inline elements)
+ * - md: 16px  - Default spacing (padding, margins)
+ * - lg: 24px  - Comfortable spacing (sections)
+ * - xl: 32px  - Generous spacing (large sections)
+ * - 2xl: 48px - Maximum spacing (page sections)
+ */
+export const unifiedSpacing = {
+  /** 4px - Extra small spacing */
+  xs: 4,
+  /** 8px - Small spacing */
+  sm: 8,
+  /** 16px - Medium spacing (default) */
+  md: 16,
+  /** 24px - Large spacing */
+  lg: 24,
+  /** 32px - Extra large spacing */
+  xl: 32,
+  /** 48px - 2X large spacing */
+  '2xl': 48,
+} as const;
+
+/**
+ * Unified spacing scale in rem units (for CSS)
+ * Based on 16px base font size
+ */
+export const unifiedSpacingRem = {
+  /** 0.25rem (4px) */
+  xs: '0.25rem',
+  /** 0.5rem (8px) */
+  sm: '0.5rem',
+  /** 1rem (16px) */
+  md: '1rem',
+  /** 1.5rem (24px) */
+  lg: '1.5rem',
+  /** 2rem (32px) */
+  xl: '2rem',
+  /** 3rem (48px) */
+  '2xl': '3rem',
+} as const;
+
+// ============================================================================
 // Exports
 // ============================================================================
 
@@ -365,3 +415,5 @@ export type SpacingPx = typeof spacingPx;
 export type SemanticSpacing = typeof semanticSpacing;
 export type ComponentSpacing = typeof componentSpacing;
 export type Gap = typeof gap;
+export type UnifiedSpacing = typeof unifiedSpacing;
+export type UnifiedSpacingRem = typeof unifiedSpacingRem;

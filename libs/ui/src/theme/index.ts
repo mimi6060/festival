@@ -178,6 +178,47 @@ export const zIndex = {
   100: '100', // Maximum priority
 } as const;
 
+/**
+ * Toast/Notification Styles
+ * Standardized styling for toast notifications and alerts across all apps.
+ *
+ * Usage with Tailwind CSS:
+ * - Border radius: rounded-lg
+ * - Padding: p-4
+ * - Apply the variant class from toastStyles[variant]
+ */
+export type ToastVariant = 'success' | 'error' | 'info' | 'warning';
+
+export const toastStyles: Record<ToastVariant, { container: string; icon: string; title: string }> =
+  {
+    success: {
+      container: 'bg-green-500/10 border-green-500/20 text-green-400',
+      icon: 'text-green-400',
+      title: 'text-green-300',
+    },
+    error: {
+      container: 'bg-red-500/10 border-red-500/20 text-red-400',
+      icon: 'text-red-400',
+      title: 'text-red-300',
+    },
+    info: {
+      container: 'bg-blue-500/10 border-blue-500/20 text-blue-400',
+      icon: 'text-blue-400',
+      title: 'text-blue-300',
+    },
+    warning: {
+      container: 'bg-amber-500/10 border-amber-500/20 text-amber-400',
+      icon: 'text-amber-400',
+      title: 'text-amber-300',
+    },
+  } as const;
+
+/**
+ * Toast container base classes
+ * Combine with variant-specific styles from toastStyles
+ */
+export const toastBaseClasses = 'rounded-lg border p-4' as const;
+
 // Theme type exports
 export type Colors = typeof colors;
 export type Spacing = typeof spacing;
@@ -187,6 +228,7 @@ export type Shadows = typeof shadows;
 export type Transitions = typeof transitions;
 export type Breakpoints = typeof breakpoints;
 export type ZIndex = typeof zIndex;
+export type ToastStyles = typeof toastStyles;
 
 // Complete theme object
 export const theme = {
@@ -198,6 +240,8 @@ export const theme = {
   transitions,
   breakpoints,
   zIndex,
+  toastStyles,
+  toastBaseClasses,
 } as const;
 
 export type Theme = typeof theme;

@@ -365,16 +365,18 @@ export function VendorInventoryDashboard({
 
       {/* Restock Modal */}
       {restockModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold mb-4">
-              Réapprovisionner {restockModal.product.name}
-            </h3>
-            <p className="text-sm text-gray-600 mb-4">
-              Stock actuel: {restockModal.product.currentStock} / {restockModal.product.maxStock}
-            </p>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="dark:bg-gray-900 bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-2xl w-full max-w-md">
+            <div className="p-6 border-b dark:border-white/10 border-gray-200">
+              <h3 className="text-lg font-semibold dark:text-white text-gray-900">
+                Réapprovisionner {restockModal.product.name}
+              </h3>
+              <p className="text-sm dark:text-white/60 text-gray-600 mt-1">
+                Stock actuel: {restockModal.product.currentStock} / {restockModal.product.maxStock}
+              </p>
+            </div>
+            <div className="p-6">
+              <label className="block text-sm font-medium dark:text-white/70 text-gray-700 mb-1">
                 Quantité à ajouter
               </label>
               <input
@@ -385,19 +387,19 @@ export function VendorInventoryDashboard({
                 }
                 min={1}
                 max={restockModal.product.maxStock - restockModal.product.currentStock}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className="w-full px-3 py-2 dark:bg-white/5 bg-white border dark:border-white/10 border-gray-300 rounded-lg dark:text-white text-gray-900"
               />
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 px-6 py-4 dark:bg-white/5 bg-gray-50 border-t dark:border-white/10 border-gray-200 rounded-b-xl">
               <button
                 onClick={() => setRestockModal(null)}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                className="flex-1 px-4 py-2 dark:bg-white/10 bg-white border dark:border-white/10 border-gray-300 dark:text-white text-gray-700 rounded-xl hover:dark:bg-white/20 hover:bg-gray-50 transition-colors"
               >
                 Annuler
               </button>
               <button
                 onClick={handleRestock}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
               >
                 Confirmer
               </button>
@@ -408,13 +410,15 @@ export function VendorInventoryDashboard({
 
       {/* Alert Modal */}
       {alertModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 w-full max-w-md mx-4">
-            <h3 className="text-lg font-semibold mb-4">
-              Configurer l'alerte - {alertModal.product.name}
-            </h3>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="dark:bg-gray-900 bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-2xl w-full max-w-md">
+            <div className="p-6 border-b dark:border-white/10 border-gray-200">
+              <h3 className="text-lg font-semibold dark:text-white text-gray-900">
+                Configurer l'alerte - {alertModal.product.name}
+              </h3>
+            </div>
+            <div className="p-6">
+              <label className="block text-sm font-medium dark:text-white/70 text-gray-700 mb-1">
                 Seuil d'alerte (stock minimum)
               </label>
               <input
@@ -425,22 +429,22 @@ export function VendorInventoryDashboard({
                 }
                 min={1}
                 max={alertModal.product.maxStock}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                className="w-full px-3 py-2 dark:bg-white/5 bg-white border dark:border-white/10 border-gray-300 rounded-lg dark:text-white text-gray-900"
               />
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-xs dark:text-white/50 text-gray-500 mt-1">
                 Une notification sera envoyée quand le stock descend sous ce seuil
               </p>
             </div>
-            <div className="flex gap-3">
+            <div className="flex gap-3 px-6 py-4 dark:bg-white/5 bg-gray-50 border-t dark:border-white/10 border-gray-200 rounded-b-xl">
               <button
                 onClick={() => setAlertModal(null)}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50"
+                className="flex-1 px-4 py-2 dark:bg-white/10 bg-white border dark:border-white/10 border-gray-300 dark:text-white text-gray-700 rounded-xl hover:dark:bg-white/20 hover:bg-gray-50 transition-colors"
               >
                 Annuler
               </button>
               <button
                 onClick={handleUpdateAlert}
-                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+                className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-colors"
               >
                 Sauvegarder
               </button>

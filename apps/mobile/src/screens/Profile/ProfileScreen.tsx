@@ -1,18 +1,21 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Alert,
-  Modal,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Card } from '../../components/common';
-import { useAuthStore, useTicketStore, useWalletStore, useProgramStore, useNotificationStore, useSettingsStore, languageLabels, themeLabels, Language, Theme } from '../../store';
+import { Card, Avatar } from '../../components/common';
+import {
+  useAuthStore,
+  useTicketStore,
+  useWalletStore,
+  useProgramStore,
+  useNotificationStore,
+  useSettingsStore,
+  languageLabels,
+  themeLabels,
+  Language,
+  Theme,
+} from '../../store';
 import { offlineService } from '../../services';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { RootStackParamList } from '../../types';
@@ -39,9 +42,7 @@ const MenuItem: React.FC<MenuItemProps> = ({
   <TouchableOpacity style={styles.menuItem} onPress={onPress}>
     <View style={styles.menuItemLeft}>
       <Text style={styles.menuIcon}>{icon}</Text>
-      <Text style={[styles.menuLabel, destructive && styles.menuLabelDestructive]}>
-        {label}
-      </Text>
+      <Text style={[styles.menuLabel, destructive && styles.menuLabelDestructive]}>{label}</Text>
     </View>
     <View style={styles.menuItemRight}>
       {value && <Text style={styles.menuValue}>{value}</Text>}
@@ -63,29 +64,25 @@ export const ProfileScreen: React.FC = () => {
   const [showThemeModal, setShowThemeModal] = useState(false);
 
   const handleLogout = () => {
-    Alert.alert(
-      'Deconnexion',
-      'Etes-vous sur de vouloir vous deconnecter?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Deconnecter',
-          style: 'destructive',
-          onPress: () => {
-            logout();
-            ticketStore.clearTickets();
-            walletStore.clearWallet();
-            programStore.clearProgram();
-            notificationStore.clearNotifications();
-            offlineService.clearOfflineData();
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'Auth' }],
-            });
-          },
+    Alert.alert('Deconnexion', 'Etes-vous sur de vouloir vous deconnecter?', [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Deconnecter',
+        style: 'destructive',
+        onPress: () => {
+          logout();
+          ticketStore.clearTickets();
+          walletStore.clearWallet();
+          programStore.clearProgram();
+          notificationStore.clearNotifications();
+          offlineService.clearOfflineData();
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Auth' }],
+          });
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handleDeleteAccount = () => {
@@ -106,11 +103,6 @@ export const ProfileScreen: React.FC = () => {
     );
   };
 
-  const getInitials = () => {
-    if (!user) {return '?';}
-    return `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`.toUpperCase();
-  };
-
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
       <ScrollView
@@ -121,9 +113,7 @@ export const ProfileScreen: React.FC = () => {
         {/* Profile Header */}
         <View style={styles.header}>
           <View style={styles.avatarContainer}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>{getInitials()}</Text>
-            </View>
+            <Avatar name={`${user?.firstName || ''} ${user?.lastName || ''}`} size="2xl" />
             <TouchableOpacity style={styles.editAvatarButton}>
               <Text style={styles.editAvatarIcon}>📷</Text>
             </TouchableOpacity>
@@ -268,10 +258,7 @@ export const ProfileScreen: React.FC = () => {
             {(Object.keys(languageLabels) as Language[]).map((lang) => (
               <TouchableOpacity
                 key={lang}
-                style={[
-                  styles.modalOption,
-                  language === lang && styles.modalOptionSelected,
-                ]}
+                style={[styles.modalOption, language === lang && styles.modalOptionSelected]}
                 onPress={() => {
                   setLanguage(lang);
                   setShowLanguageModal(false);
@@ -285,9 +272,7 @@ export const ProfileScreen: React.FC = () => {
                 >
                   {languageLabels[lang]}
                 </Text>
-                {language === lang && (
-                  <Text style={styles.checkIcon}>✓</Text>
-                )}
+                {language === lang && <Text style={styles.checkIcon}>✓</Text>}
               </TouchableOpacity>
             ))}
             <TouchableOpacity
@@ -317,32 +302,21 @@ export const ProfileScreen: React.FC = () => {
             {(Object.keys(themeLabels) as Theme[]).map((t) => (
               <TouchableOpacity
                 key={t}
-                style={[
-                  styles.modalOption,
-                  theme === t && styles.modalOptionSelected,
-                ]}
+                style={[styles.modalOption, theme === t && styles.modalOptionSelected]}
                 onPress={() => {
                   setTheme(t);
                   setShowThemeModal(false);
                 }}
               >
                 <Text
-                  style={[
-                    styles.modalOptionText,
-                    theme === t && styles.modalOptionTextSelected,
-                  ]}
+                  style={[styles.modalOptionText, theme === t && styles.modalOptionTextSelected]}
                 >
                   {themeLabels[t]}
                 </Text>
-                {theme === t && (
-                  <Text style={styles.checkIcon}>✓</Text>
-                )}
+                {theme === t && <Text style={styles.checkIcon}>✓</Text>}
               </TouchableOpacity>
             ))}
-            <TouchableOpacity
-              style={styles.modalCancel}
-              onPress={() => setShowThemeModal(false)}
-            >
+            <TouchableOpacity style={styles.modalCancel} onPress={() => setShowThemeModal(false)}>
               <Text style={styles.modalCancelText}>Annuler</Text>
             </TouchableOpacity>
           </View>
@@ -371,19 +345,6 @@ const styles = StyleSheet.create({
   avatarContainer: {
     position: 'relative',
     marginBottom: spacing.md,
-  },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarText: {
-    ...typography.h1,
-    color: colors.white,
-    fontSize: 36,
   },
   editAvatarButton: {
     position: 'absolute',
@@ -414,7 +375,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   sectionTitle: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -451,7 +412,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   menuValue: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textMuted,
     marginRight: spacing.sm,
   },
@@ -469,7 +430,7 @@ const styles = StyleSheet.create({
     paddingTop: spacing.lg,
   },
   version: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textMuted,
     marginBottom: spacing.xs,
   },

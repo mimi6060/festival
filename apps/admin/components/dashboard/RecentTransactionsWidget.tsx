@@ -43,7 +43,13 @@ const transactionConfig = {
   },
 };
 
-function TransactionItem({ transaction, isNew = false }: { transaction: RealtimeTransaction; isNew?: boolean }) {
+function TransactionItem({
+  transaction,
+  isNew = false,
+}: {
+  transaction: RealtimeTransaction;
+  isNew?: boolean;
+}) {
   const config = transactionConfig[transaction.type];
 
   const formattedTime = useMemo(() => {
@@ -53,21 +59,29 @@ function TransactionItem({ transaction, isNew = false }: { transaction: Realtime
     const diffSec = Math.floor(diffMs / 1000);
     const diffMin = Math.floor(diffSec / 60);
 
-    if (diffSec < 60) { return 'a l\'instant'; }
-    if (diffMin < 60) { return `il y a ${diffMin} min`; }
+    if (diffSec < 60) {
+      return "a l'instant";
+    }
+    if (diffMin < 60) {
+      return `il y a ${diffMin} min`;
+    }
     return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   }, [transaction.timestamp]);
 
   return (
-    <div className={cn(
-      'flex items-center justify-between py-3 border-b border-gray-50 last:border-0 transition-all duration-300',
-      isNew && 'bg-blue-50/50 -mx-2 px-2 rounded-lg animate-pulse'
-    )}>
+    <div
+      className={cn(
+        'flex items-center justify-between py-3 border-b border-gray-50 last:border-0 transition-all duration-300',
+        isNew && 'bg-blue-50/50 -mx-2 px-2 rounded-lg animate-pulse'
+      )}
+    >
       <div className="flex items-center gap-3">
-        <div className={cn(
-          'w-10 h-10 rounded-full flex items-center justify-center text-lg',
-          config.bgColor
-        )}>
+        <div
+          className={cn(
+            'w-10 h-10 rounded-full flex items-center justify-center text-lg',
+            config.bgColor
+          )}
+        >
           {config.icon}
         </div>
         <div>
@@ -77,11 +91,14 @@ function TransactionItem({ transaction, isNew = false }: { transaction: Realtime
       </div>
       <div className="text-right">
         <p className={cn('text-sm font-semibold', config.color)}>
-          {config.sign}{formatCurrency(transaction.amount)}
+          {config.sign}
+          {formatCurrency(transaction.amount)}
         </p>
         {transaction.details && (
           <p className="text-xs text-gray-400 truncate max-w-[120px]">
-            {typeof transaction.details === 'object' ? JSON.stringify(transaction.details).slice(0, 20) : String(transaction.details)}
+            {typeof transaction.details === 'object'
+              ? JSON.stringify(transaction.details).slice(0, 20)
+              : String(transaction.details)}
           </p>
         )}
       </div>
@@ -127,7 +144,12 @@ export function RecentTransactionsWidget({
 
   if (loading) {
     return (
-      <div className={cn('bg-white rounded-xl shadow-sm border border-gray-100 p-6', className)}>
+      <div
+        className={cn(
+          'bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6',
+          className
+        )}
+      >
         <div className="animate-pulse space-y-4">
           <div className="h-6 bg-gray-200 rounded w-1/2" />
           {[1, 2, 3, 4, 5].map((i) => (
@@ -148,7 +170,12 @@ export function RecentTransactionsWidget({
   }
 
   return (
-    <div className={cn('bg-white rounded-xl shadow-sm border border-gray-100 p-6', className)}>
+    <div
+      className={cn(
+        'bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6',
+        className
+      )}
+    >
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-3">
@@ -162,11 +189,14 @@ export function RecentTransactionsWidget({
         </div>
         <div className="text-right">
           <p className="text-xs text-gray-500">Revenus</p>
-          <p className={cn(
-            'text-lg font-bold',
-            stats.totalRevenue >= 0 ? 'text-green-600' : 'text-red-600'
-          )}>
-            {stats.totalRevenue >= 0 ? '+' : ''}{formatCurrency(stats.totalRevenue)}
+          <p
+            className={cn(
+              'text-lg font-bold',
+              stats.totalRevenue >= 0 ? 'text-green-600' : 'text-red-600'
+            )}
+          >
+            {stats.totalRevenue >= 0 ? '+' : ''}
+            {formatCurrency(stats.totalRevenue)}
           </p>
         </div>
       </div>
@@ -184,8 +214,18 @@ export function RecentTransactionsWidget({
         </div>
       ) : (
         <div className="text-center py-8 text-gray-500">
-          <svg className="w-12 h-12 mx-auto mb-3 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+          <svg
+            className="w-12 h-12 mx-auto mb-3 text-gray-300"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+            />
           </svg>
           <p>Aucune transaction recente</p>
         </div>

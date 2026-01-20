@@ -23,15 +23,15 @@ interface InputProps extends Omit<React.InputHTMLAttributes<HTMLInputElement>, '
 
 const variantStyles: Record<InputVariant, string> = {
   default: `
-    bg-theme-input border border-theme
+    bg-white/5 border border-white/10
     focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
   `,
   filled: `
-    bg-theme-surface-hover border border-transparent
+    bg-white/10 border border-transparent
     focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
   `,
   outline: `
-    bg-transparent border-2 border-theme-hover
+    bg-transparent border-2 border-white/10
     focus:border-primary-500 focus:ring-2 focus:ring-primary-500/20
   `,
 };
@@ -39,7 +39,7 @@ const variantStyles: Record<InputVariant, string> = {
 const sizeStyles = {
   sm: 'px-3 py-2 text-sm min-h-[36px]',
   md: 'px-4 py-3 text-base min-h-[44px]',
-  lg: 'px-5 py-4 text-lg min-h-[52px]',
+  lg: 'px-4 py-3 text-lg min-h-[52px]',
 };
 
 /**
@@ -93,13 +93,19 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 
     // Build aria-describedby from error, helper text, and custom describedby
     const describedByIds: string[] = [];
-    if (ariaDescribedBy) {describedByIds.push(ariaDescribedBy);}
-    if (error) {describedByIds.push(errorId);}
-    if (helperText && !error) {describedByIds.push(helperId);}
+    if (ariaDescribedBy) {
+      describedByIds.push(ariaDescribedBy);
+    }
+    if (error) {
+      describedByIds.push(errorId);
+    }
+    if (helperText && !error) {
+      describedByIds.push(helperId);
+    }
 
     const baseStyles = `
-      rounded-xl
-      text-theme-primary placeholder:text-theme-muted
+      rounded-lg
+      text-white placeholder:text-white/50
       transition-all duration-300
       focus:outline-none
       disabled:opacity-50 disabled:cursor-not-allowed
@@ -116,22 +122,21 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
       ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}
       ${fullWidth ? 'w-full' : ''}
       ${className}
-    `.trim().replace(/\s+/g, ' ');
+    `
+      .trim()
+      .replace(/\s+/g, ' ');
 
     return (
       <div className={fullWidth ? 'w-full' : ''}>
         {label && (
-          <label
-            htmlFor={inputId}
-            className="block text-sm font-medium text-theme-secondary mb-2"
-          >
+          <label htmlFor={inputId} className="block text-sm font-medium text-theme-secondary mb-2">
             {label}
             {required && (
-              <span className="text-red-400 ml-1" aria-hidden="true">*</span>
+              <span className="text-red-400 ml-1" aria-hidden="true">
+                *
+              </span>
             )}
-            {required && (
-              <span className="sr-only">(required)</span>
-            )}
+            {required && <span className="sr-only">(required)</span>}
           </label>
         )}
         <div className="relative">
@@ -163,20 +168,12 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           )}
         </div>
         {error && (
-          <p
-            id={errorId}
-            className="mt-2 text-sm text-red-400"
-            role="alert"
-            aria-live="polite"
-          >
+          <p id={errorId} className="mt-2 text-sm text-red-400" role="alert" aria-live="polite">
             {error}
           </p>
         )}
         {helperText && !error && (
-          <p
-            id={helperId}
-            className="mt-2 text-sm text-theme-tertiary"
-          >
+          <p id={helperId} className="mt-2 text-sm text-theme-tertiary">
             {helperText}
           </p>
         )}
@@ -240,13 +237,19 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
 
     // Build aria-describedby from error, helper text, and custom describedby
     const describedByIds: string[] = [];
-    if (ariaDescribedBy) {describedByIds.push(ariaDescribedBy);}
-    if (error) {describedByIds.push(errorId);}
-    if (helperText && !error) {describedByIds.push(helperId);}
+    if (ariaDescribedBy) {
+      describedByIds.push(ariaDescribedBy);
+    }
+    if (error) {
+      describedByIds.push(errorId);
+    }
+    if (helperText && !error) {
+      describedByIds.push(helperId);
+    }
 
     const baseStyles = `
-      px-4 py-3 rounded-xl
-      text-theme-primary placeholder:text-theme-muted
+      px-4 py-3 rounded-lg
+      text-white placeholder:text-white/50
       transition-all duration-300
       focus:outline-none
       disabled:opacity-50 disabled:cursor-not-allowed
@@ -261,7 +264,9 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
       ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}
       ${fullWidth ? 'w-full' : ''}
       ${className}
-    `.trim().replace(/\s+/g, ' ');
+    `
+      .trim()
+      .replace(/\s+/g, ' ');
 
     return (
       <div className={fullWidth ? 'w-full' : ''}>
@@ -272,11 +277,11 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           >
             {label}
             {required && (
-              <span className="text-red-400 ml-1" aria-hidden="true">*</span>
+              <span className="text-red-400 ml-1" aria-hidden="true">
+                *
+              </span>
             )}
-            {required && (
-              <span className="sr-only">(required)</span>
-            )}
+            {required && <span className="sr-only">(required)</span>}
           </label>
         )}
         <textarea
@@ -290,20 +295,12 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           {...props}
         />
         {error && (
-          <p
-            id={errorId}
-            className="mt-2 text-sm text-red-400"
-            role="alert"
-            aria-live="polite"
-          >
+          <p id={errorId} className="mt-2 text-sm text-red-400" role="alert" aria-live="polite">
             {error}
           </p>
         )}
         {helperText && !error && (
-          <p
-            id={helperId}
-            className="mt-2 text-sm text-theme-tertiary"
-          >
+          <p id={helperId} className="mt-2 text-sm text-theme-tertiary">
             {helperText}
           </p>
         )}
@@ -376,12 +373,16 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
 
     // Build aria-describedby
     const describedByIds: string[] = [];
-    if (ariaDescribedBy) {describedByIds.push(ariaDescribedBy);}
-    if (error) {describedByIds.push(errorId);}
+    if (ariaDescribedBy) {
+      describedByIds.push(ariaDescribedBy);
+    }
+    if (error) {
+      describedByIds.push(errorId);
+    }
 
     const baseStyles = `
-      rounded-xl
-      text-theme-primary
+      rounded-lg
+      text-white
       transition-all duration-300
       focus:outline-none
       disabled:opacity-50 disabled:cursor-not-allowed
@@ -397,22 +398,21 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
       ${error ? 'border-red-500 focus:border-red-500 focus:ring-red-500/20' : ''}
       ${fullWidth ? 'w-full' : ''}
       ${className}
-    `.trim().replace(/\s+/g, ' ');
+    `
+      .trim()
+      .replace(/\s+/g, ' ');
 
     return (
       <div className={fullWidth ? 'w-full' : ''}>
         {label && (
-          <label
-            htmlFor={selectId}
-            className="block text-sm font-medium text-theme-secondary mb-2"
-          >
+          <label htmlFor={selectId} className="block text-sm font-medium text-theme-secondary mb-2">
             {label}
             {required && (
-              <span className="text-red-400 ml-1" aria-hidden="true">*</span>
+              <span className="text-red-400 ml-1" aria-hidden="true">
+                *
+              </span>
             )}
-            {required && (
-              <span className="sr-only">(required)</span>
-            )}
+            {required && <span className="sr-only">(required)</span>}
           </label>
         )}
         <div className="relative">
@@ -445,12 +445,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
             className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-theme-muted"
             aria-hidden="true"
           >
-            <svg
-              className="w-5 h-5"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -461,12 +456,7 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           </div>
         </div>
         {error && (
-          <p
-            id={errorId}
-            className="mt-2 text-sm text-red-400"
-            role="alert"
-            aria-live="polite"
-          >
+          <p id={errorId} className="mt-2 text-sm text-red-400" role="alert" aria-live="polite">
             {error}
           </p>
         )}

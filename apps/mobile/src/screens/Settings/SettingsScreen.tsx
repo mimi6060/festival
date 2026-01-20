@@ -15,7 +15,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Card } from '../../components/common';
-import { useAuthStore, useNotificationStore, useSettingsStore, languageLabels, themeLabels, Language, Theme } from '../../store';
+import {
+  useAuthStore,
+  useNotificationStore,
+  useSettingsStore,
+  languageLabels,
+  themeLabels,
+  Language,
+  Theme,
+} from '../../store';
 import { offlineService } from '../../services';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { RootStackParamList } from '../../types';
@@ -54,11 +62,7 @@ const SettingItem: React.FC<SettingItemProps> = ({
   );
 
   if (onPress) {
-    return (
-      <TouchableOpacity onPress={onPress}>
-        {content}
-      </TouchableOpacity>
-    );
+    return <TouchableOpacity onPress={onPress}>{content}</TouchableOpacity>;
   }
 
   return content;
@@ -116,23 +120,19 @@ export const SettingsScreen: React.FC = () => {
   };
 
   const handleResetOnboarding = () => {
-    Alert.alert(
-      'Revoir l\'introduction',
-      'Voulez-vous revoir les ecrans d\'introduction?',
-      [
-        { text: 'Annuler', style: 'cancel' },
-        {
-          text: 'Oui',
-          onPress: () => {
-            setHasSeenOnboarding(false);
-            navigation.reset({
-              index: 0,
-              routes: [{ name: 'Onboarding' }],
-            });
-          },
+    Alert.alert("Revoir l'introduction", "Voulez-vous revoir les ecrans d'introduction?", [
+      { text: 'Annuler', style: 'cancel' },
+      {
+        text: 'Oui',
+        onPress: () => {
+          setHasSeenOnboarding(false);
+          navigation.reset({
+            index: 0,
+            routes: [{ name: 'Onboarding' }],
+          });
         },
-      ]
-    );
+      },
+    ]);
   };
 
   const handlePrivacyPolicy = () => {
@@ -144,14 +144,10 @@ export const SettingsScreen: React.FC = () => {
   };
 
   const handleRateApp = () => {
-    Alert.alert(
-      'Noter l\'application',
-      'Vous aimez Festival App? Laissez-nous un avis!',
-      [
-        { text: 'Plus tard', style: 'cancel' },
-        { text: 'Noter', onPress: () => Linking.openURL('https://apps.apple.com') },
-      ]
-    );
+    Alert.alert("Noter l'application", 'Vous aimez Festival App? Laissez-nous un avis!', [
+      { text: 'Plus tard', style: 'cancel' },
+      { text: 'Noter', onPress: () => Linking.openURL('https://apps.apple.com') },
+    ]);
   };
 
   return (
@@ -163,10 +159,7 @@ export const SettingsScreen: React.FC = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Parametres</Text>
@@ -241,7 +234,10 @@ export const SettingsScreen: React.FC = () => {
                   onValueChange={(value) => {
                     setBiometricEnabled(value);
                     if (value) {
-                      showAlert('Biometrie activee', 'Vous pouvez maintenant vous connecter avec Face ID / Touch ID');
+                      showAlert(
+                        'Biometrie activee',
+                        'Vous pouvez maintenant vous connecter avec Face ID / Touch ID'
+                      );
                     }
                   }}
                   trackColor={{ false: colors.border, true: colors.primary }}
@@ -253,7 +249,9 @@ export const SettingsScreen: React.FC = () => {
             <SettingItem
               icon="🔒"
               label="Changer le mot de passe"
-              onPress={() => showAlert('Mot de passe', 'Fonctionnalite de changement de mot de passe a venir')}
+              onPress={() =>
+                showAlert('Mot de passe', 'Fonctionnalite de changement de mot de passe a venir')
+              }
             />
           </Card>
         </View>
@@ -284,16 +282,17 @@ export const SettingsScreen: React.FC = () => {
               }
             />
             <View style={styles.divider} />
-            <SettingItem
-              icon="🗑️"
-              label="Vider le cache"
-              onPress={handleClearCache}
-            />
+            <SettingItem icon="🗑️" label="Vider le cache" onPress={handleClearCache} />
             <View style={styles.divider} />
             <SettingItem
               icon="📥"
               label="Telecharger mes donnees"
-              onPress={() => showAlert('Telechargement', 'Fonctionnalite de telechargement des donnees a venir (RGPD)')}
+              onPress={() =>
+                showAlert(
+                  'Telechargement',
+                  'Fonctionnalite de telechargement des donnees a venir (RGPD)'
+                )
+              }
             />
           </Card>
         </View>
@@ -314,17 +313,9 @@ export const SettingsScreen: React.FC = () => {
               onPress={handlePrivacyPolicy}
             />
             <View style={styles.divider} />
-            <SettingItem
-              icon="⭐"
-              label="Noter l'application"
-              onPress={handleRateApp}
-            />
+            <SettingItem icon="⭐" label="Noter l'application" onPress={handleRateApp} />
             <View style={styles.divider} />
-            <SettingItem
-              icon="🎬"
-              label="Revoir l'introduction"
-              onPress={handleResetOnboarding}
-            />
+            <SettingItem icon="🎬" label="Revoir l'introduction" onPress={handleResetOnboarding} />
           </Card>
         </View>
 
@@ -340,12 +331,7 @@ export const SettingsScreen: React.FC = () => {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Developpeur</Text>
             <Card padding="none" style={styles.settingCard}>
-              <SettingItem
-                icon="🐛"
-                label="Debug mode"
-                value="Active"
-                showArrow={false}
-              />
+              <SettingItem icon="🐛" label="Debug mode" value="Active" showArrow={false} />
               <View style={styles.divider} />
               <SettingItem
                 icon="🔄"
@@ -384,14 +370,14 @@ export const SettingsScreen: React.FC = () => {
             {(Object.keys(languageLabels) as Language[]).map((lang) => (
               <TouchableOpacity
                 key={lang}
-                style={[
-                  styles.modalOption,
-                  language === lang && styles.modalOptionSelected,
-                ]}
+                style={[styles.modalOption, language === lang && styles.modalOptionSelected]}
                 onPress={() => {
                   setLanguage(lang);
                   setShowLanguageModal(false);
-                  showAlert('Langue modifiee', `La langue a ete changee en ${languageLabels[lang]}`);
+                  showAlert(
+                    'Langue modifiee',
+                    `La langue a ete changee en ${languageLabels[lang]}`
+                  );
                 }}
               >
                 <Text
@@ -402,9 +388,7 @@ export const SettingsScreen: React.FC = () => {
                 >
                   {languageLabels[lang]}
                 </Text>
-                {language === lang && (
-                  <Text style={styles.checkIcon}>{'✓'}</Text>
-                )}
+                {language === lang && <Text style={styles.checkIcon}>{'✓'}</Text>}
               </TouchableOpacity>
             ))}
             <TouchableOpacity
@@ -434,10 +418,7 @@ export const SettingsScreen: React.FC = () => {
             {(Object.keys(themeLabels) as Theme[]).map((t) => (
               <TouchableOpacity
                 key={t}
-                style={[
-                  styles.modalOption,
-                  theme === t && styles.modalOptionSelected,
-                ]}
+                style={[styles.modalOption, theme === t && styles.modalOptionSelected]}
                 onPress={() => {
                   setTheme(t);
                   setShowThemeModal(false);
@@ -445,22 +426,14 @@ export const SettingsScreen: React.FC = () => {
                 }}
               >
                 <Text
-                  style={[
-                    styles.modalOptionText,
-                    theme === t && styles.modalOptionTextSelected,
-                  ]}
+                  style={[styles.modalOptionText, theme === t && styles.modalOptionTextSelected]}
                 >
                   {themeLabels[t]}
                 </Text>
-                {theme === t && (
-                  <Text style={styles.checkIcon}>{'✓'}</Text>
-                )}
+                {theme === t && <Text style={styles.checkIcon}>{'✓'}</Text>}
               </TouchableOpacity>
             ))}
-            <TouchableOpacity
-              style={styles.modalCancel}
-              onPress={() => setShowThemeModal(false)}
-            >
+            <TouchableOpacity style={styles.modalCancel} onPress={() => setShowThemeModal(false)}>
               <Text style={styles.modalCancelText}>Annuler</Text>
             </TouchableOpacity>
           </View>
@@ -512,7 +485,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   sectionTitle: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textMuted,
     textTransform: 'uppercase',
     letterSpacing: 1,
@@ -547,7 +520,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   settingValue: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textMuted,
     marginRight: spacing.sm,
   },
@@ -571,7 +544,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   versionNumber: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textMuted,
     marginBottom: spacing.xs,
   },

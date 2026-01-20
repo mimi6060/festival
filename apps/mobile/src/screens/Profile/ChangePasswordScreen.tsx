@@ -72,18 +72,18 @@ export const ChangePasswordScreen: React.FC = () => {
     }
 
     if (currentPassword === newPassword) {
-      showAlert('Erreur', 'Le nouveau mot de passe doit etre different de l\'ancien');
+      showAlert('Erreur', "Le nouveau mot de passe doit etre different de l'ancien");
       return;
     }
 
     setLoading(true);
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       showAlert('Succes', 'Votre mot de passe a ete modifie avec succes');
       navigation.goBack();
-    } catch (error) {
+    } catch {
       showAlert('Erreur', 'Impossible de modifier le mot de passe');
     } finally {
       setLoading(false);
@@ -94,9 +94,7 @@ export const ChangePasswordScreen: React.FC = () => {
 
   const PasswordCheck: React.FC<{ valid: boolean; label: string }> = ({ valid, label }) => (
     <View style={styles.checkRow}>
-      <Text style={[styles.checkIcon, valid && styles.checkIconValid]}>
-        {valid ? '✓' : '○'}
-      </Text>
+      <Text style={[styles.checkIcon, valid && styles.checkIconValid]}>{valid ? '✓' : '○'}</Text>
       <Text style={[styles.checkLabel, valid && styles.checkLabelValid]}>{label}</Text>
     </View>
   );
@@ -109,10 +107,7 @@ export const ChangePasswordScreen: React.FC = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Mot de passe</Text>
@@ -172,10 +167,7 @@ export const ChangePasswordScreen: React.FC = () => {
                   autoCapitalize="none"
                   autoCorrect={false}
                 />
-                <TouchableOpacity
-                  style={styles.eyeButton}
-                  onPress={() => setShowNew(!showNew)}
-                >
+                <TouchableOpacity style={styles.eyeButton} onPress={() => setShowNew(!showNew)}>
                   <Text style={styles.eyeIcon}>{showNew ? '👁️' : '🙈'}</Text>
                 </TouchableOpacity>
               </View>
@@ -214,14 +206,22 @@ export const ChangePasswordScreen: React.FC = () => {
             <PasswordCheck valid={passwordChecks.uppercase} label="Une lettre majuscule" />
             <PasswordCheck valid={passwordChecks.lowercase} label="Une lettre minuscule" />
             <PasswordCheck valid={passwordChecks.number} label="Un chiffre" />
-            <PasswordCheck valid={passwordChecks.special} label="Un caractere special (recommande)" />
+            <PasswordCheck
+              valid={passwordChecks.special}
+              label="Un caractere special (recommande)"
+            />
           </Card>
 
           {/* Save Button */}
           <Button
             title={loading ? 'Modification...' : 'Modifier le mot de passe'}
             onPress={handleChangePassword}
-            disabled={loading || !currentPassword || !isPasswordValid(newPassword) || newPassword !== confirmPassword}
+            disabled={
+              loading ||
+              !currentPassword ||
+              !isPasswordValid(newPassword) ||
+              newPassword !== confirmPassword
+            }
             style={styles.saveButton}
           />
 
@@ -305,7 +305,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   inputLabel: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     marginBottom: spacing.xs,
   },
@@ -339,7 +339,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   requirementsTitle: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     marginBottom: spacing.sm,
     textTransform: 'uppercase',
@@ -360,7 +360,7 @@ const styles = StyleSheet.create({
     color: colors.success,
   },
   checkLabel: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textMuted,
   },
   checkLabelValid: {

@@ -22,18 +22,14 @@ interface TabIconProps {
 const TabIcon: React.FC<TabIconProps> = ({ focused, icon, label, badge }) => (
   <View style={styles.tabIconContainer}>
     <View style={styles.iconWrapper}>
-      <Text style={[styles.tabIcon, focused && styles.tabIconFocused]}>
-        {icon}
-      </Text>
+      <Text style={[styles.tabIcon, focused && styles.tabIconFocused]}>{icon}</Text>
       {badge && badge > 0 && (
         <View style={styles.badge}>
           <Text style={styles.badgeText}>{badge > 9 ? '9+' : badge}</Text>
         </View>
       )}
     </View>
-    <Text style={[styles.tabLabel, focused && styles.tabLabelFocused]}>
-      {label}
-    </Text>
+    <Text style={[styles.tabLabel, focused && styles.tabLabelFocused]}>{label}</Text>
   </View>
 );
 
@@ -53,36 +49,28 @@ export const MainTabs: React.FC = () => {
         name="Home"
         component={HomeScreen}
         options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} icon="🏠" label="Accueil" />
-          ),
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="🏠" label="Accueil" />,
         }}
       />
       <Tab.Screen
         name="Tickets"
         component={MyTicketsScreen}
         options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} icon="🎟️" label="Billets" />
-          ),
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="🎟️" label="Billets" />,
         }}
       />
       <Tab.Screen
         name="Wallet"
         component={WalletScreen}
         options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} icon="💳" label="Wallet" />
-          ),
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="💳" label="Wallet" />,
         }}
       />
       <Tab.Screen
         name="Program"
         component={ProgramScreen}
         options={{
-          tabBarIcon: ({ focused }) => (
-            <TabIcon focused={focused} icon="📅" label="Programme" />
-          ),
+          tabBarIcon: ({ focused }) => <TabIcon focused={focused} icon="📅" label="Programme" />,
         }}
       />
       <Tab.Screen
@@ -90,12 +78,7 @@ export const MainTabs: React.FC = () => {
         component={ProfileScreen}
         options={{
           tabBarIcon: ({ focused }) => (
-            <TabIcon
-              focused={focused}
-              icon="👤"
-              label="Profil"
-              badge={unreadCount}
-            />
+            <TabIcon focused={focused} icon="👤" label="Profil" badge={unreadCount} />
           ),
         }}
       />
@@ -103,10 +86,18 @@ export const MainTabs: React.FC = () => {
   );
 };
 
+// Standardized tab bar colors
+const TAB_BAR_COLORS = {
+  background: '#0a0a0a',
+  borderTop: 'rgba(255,255,255,0.1)',
+  activeTint: '#6366f1',
+  inactiveTint: 'rgba(255,255,255,0.5)',
+};
+
 const styles = StyleSheet.create({
   tabBar: {
-    backgroundColor: colors.surface,
-    borderTopColor: colors.border,
+    backgroundColor: TAB_BAR_COLORS.background,
+    borderTopColor: TAB_BAR_COLORS.borderTop,
     borderTopWidth: 1,
     height: Platform.OS === 'ios' ? 88 : 70,
     paddingTop: spacing.sm,
@@ -128,11 +119,11 @@ const styles = StyleSheet.create({
   },
   tabLabel: {
     ...typography.caption,
-    color: colors.textMuted,
+    color: TAB_BAR_COLORS.inactiveTint,
     fontSize: 11,
   },
   tabLabelFocused: {
-    color: colors.primary,
+    color: TAB_BAR_COLORS.activeTint,
     fontWeight: '600',
   },
   badge: {

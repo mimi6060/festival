@@ -1,18 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Alert,
-  Dimensions,
-  Platform,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert, Dimensions } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Card, Button } from '../../components/common';
-import { colors, spacing, typography, borderRadius } from '../../theme';
+import { colors, spacing, typography } from '../../theme';
 import type { RootStackParamList } from '../../types';
 
 const { width } = Dimensions.get('window');
@@ -31,7 +23,7 @@ export const QRScannerScreen: React.FC = () => {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [isScanning, setIsScanning] = useState(true);
   const [flashEnabled, setFlashEnabled] = useState(false);
-  const [lastScan, setLastScan] = useState<ScanResult | null>(null);
+  const [, setLastScan] = useState<ScanResult | null>(null);
 
   useEffect(() => {
     // Request camera permission
@@ -45,7 +37,9 @@ export const QRScannerScreen: React.FC = () => {
   };
 
   const handleBarCodeScanned = (data: string) => {
-    if (!isScanning) {return;}
+    if (!isScanning) {
+      return;
+    }
 
     setIsScanning(false);
 
@@ -94,63 +88,51 @@ export const QRScannerScreen: React.FC = () => {
       const parts = result.data.split('-');
       const ticketId = parts[2];
 
-      Alert.alert(
-        'Billet valide',
-        `Billet #${ticketId} scanne avec succes!`,
-        [
-          {
-            text: 'Voir le billet',
-            onPress: () => {
-              navigation.navigate('TicketDetail', { ticketId });
-            },
-          },
-          {
-            text: 'Scanner un autre',
-            onPress: () => {
-              setIsScanning(true);
-              setLastScan(null);
-            },
-          },
-        ]
-      );
-    } else if (result.type === 'payment') {
-      const parts = result.data.split('-');
-      const amount = parseFloat(parts[2]);
-      const vendorId = parts[3];
-
-      Alert.alert(
-        'Paiement',
-        `Confirmer le paiement de ${amount.toFixed(2)} EUR?`,
-        [
-          { text: 'Annuler', style: 'cancel', onPress: () => setIsScanning(true) },
-          {
-            text: 'Confirmer',
-            onPress: () => {
-              // Process payment
-              Alert.alert('Succes', 'Paiement effectue!', [
-                { text: 'OK', onPress: () => setIsScanning(true) },
-              ]);
-            },
-          },
-        ]
-      );
-    }
-  };
-
-  const handleInvalidScan = (result: ScanResult) => {
-    Alert.alert(
-      'QR Code non reconnu',
-      'Ce QR code n\'est pas valide pour le festival.',
-      [
+      Alert.alert('Billet valide', `Billet #${ticketId} scanne avec succes!`, [
         {
-          text: 'Reessayer',
+          text: 'Voir le billet',
+          onPress: () => {
+            navigation.navigate('TicketDetail', { ticketId });
+          },
+        },
+        {
+          text: 'Scanner un autre',
           onPress: () => {
             setIsScanning(true);
             setLastScan(null);
           },
         },
-      ]
-    );
+      ]);
+    } else if (result.type === 'payment') {
+      const parts = result.data.split('-');
+      const amount = parseFloat(parts[2]);
+      // vendorId = parts[3] - reserved for future use with vendor payments
+
+      Alert.alert('Paiement', `Confirmer le paiement de ${amount.toFixed(2)} EUR?`, [
+        { text: 'Annuler', style: 'cancel', onPress: () => setIsScanning(true) },
+        {
+          text: 'Confirmer',
+          onPress: () => {
+            // Process payment
+            Alert.alert('Succes', 'Paiement effectue!', [
+              { text: 'OK', onPress: () => setIsScanning(true) },
+            ]);
+          },
+        },
+      ]);
+    }
+  };
+
+  const handleInvalidScan = (_result: ScanResult) => {
+    Alert.alert('QR Code non reconnu', "Ce QR code n'est pas valide pour le festival.", [
+      {
+        text: 'Reessayer',
+        onPress: () => {
+          setIsScanning(true);
+          setLastScan(null);
+        },
+      },
+    ]);
   };
 
   const handleManualEntry = () => {
@@ -182,9 +164,7 @@ export const QRScannerScreen: React.FC = () => {
         <View style={styles.permissionContainer}>
           <Text style={styles.permissionIcon}>📷</Text>
           <Text style={styles.permissionTitle}>Autorisation requise</Text>
-          <Text style={styles.permissionText}>
-            Chargement...
-          </Text>
+          <Text style={styles.permissionText}>Chargement...</Text>
         </View>
       </SafeAreaView>
     );
@@ -197,8 +177,8 @@ export const QRScannerScreen: React.FC = () => {
           <Text style={styles.permissionIcon}>🚫</Text>
           <Text style={styles.permissionTitle}>Acces camera refuse</Text>
           <Text style={styles.permissionText}>
-            L'acces a la camera est necessaire pour scanner les QR codes.
-            Veuillez l'autoriser dans les parametres.
+            L'acces a la camera est necessaire pour scanner les QR codes. Veuillez l'autoriser dans
+            les parametres.
           </Text>
           <Button
             title="Ouvrir les parametres"
@@ -216,20 +196,12 @@ export const QRScannerScreen: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity
-          style={styles.closeButton}
-          onPress={() => navigation.goBack()}
-        >
+        <TouchableOpacity style={styles.closeButton} onPress={() => navigation.goBack()}>
           <Text style={styles.closeIcon}>X</Text>
         </TouchableOpacity>
         <Text style={styles.title}>Scanner</Text>
-        <TouchableOpacity
-          style={styles.flashButton}
-          onPress={toggleFlash}
-        >
-          <Text style={styles.flashIcon}>
-            {flashEnabled ? '🔦' : '💡'}
-          </Text>
+        <TouchableOpacity style={styles.flashButton} onPress={toggleFlash}>
+          <Text style={styles.flashIcon}>{flashEnabled ? '🔦' : '💡'}</Text>
         </TouchableOpacity>
       </View>
 
@@ -237,9 +209,7 @@ export const QRScannerScreen: React.FC = () => {
       <View style={styles.cameraContainer}>
         <View style={styles.cameraPlaceholder}>
           <Text style={styles.cameraText}>Camera Preview</Text>
-          <Text style={styles.cameraSubtext}>
-            (Integration react-native-camera requise)
-          </Text>
+          <Text style={styles.cameraSubtext}>(Integration react-native-camera requise)</Text>
         </View>
 
         {/* Scan Frame */}
@@ -249,9 +219,7 @@ export const QRScannerScreen: React.FC = () => {
           <View style={[styles.scanCorner, styles.bottomLeft]} />
           <View style={[styles.scanCorner, styles.bottomRight]} />
 
-          {isScanning && (
-            <View style={styles.scanLine} />
-          )}
+          {isScanning && <View style={styles.scanLine} />}
         </View>
 
         {/* Overlay */}
@@ -300,12 +268,7 @@ export const QRScannerScreen: React.FC = () => {
 
       {/* Manual Entry */}
       <View style={styles.footer}>
-        <Button
-          title="Saisie manuelle"
-          onPress={handleManualEntry}
-          variant="outline"
-          fullWidth
-        />
+        <Button title="Saisie manuelle" onPress={handleManualEntry} variant="outline" fullWidth />
       </View>
 
       {/* Demo Button (for testing) */}
@@ -464,7 +427,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   instructionText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textMuted,
     textAlign: 'center',
   },
@@ -489,7 +452,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scanTypeTitle: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.text,
     fontWeight: '600',
   },

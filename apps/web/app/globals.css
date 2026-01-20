@@ -14,30 +14,30 @@
  */
 
 :root {
-  /* Base foreground/background */
+  /* Base foreground/background - Unified palette */
   --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 26, 26, 46;
-  --background-end-rgb: 15, 52, 96;
+  --background-start-rgb: 10, 10, 10;
+  --background-end-rgb: 26, 26, 26;
 
-  /* Theme colors - Default: Dark */
-  --theme-bg: var(--color-festival-dark);
-  --theme-bg-secondary: var(--color-festival-darker);
-  --theme-bg-tertiary: var(--color-festival-medium);
-  --theme-bg-elevated: rgba(255, 255, 255, 0.05);
-  --theme-bg-hover: rgba(255, 255, 255, 0.1);
+  /* Theme colors - Default: Dark (Unified) */
+  --theme-bg: #0a0a0a; /* Background dark */
+  --theme-bg-secondary: #1a1a1a; /* Surface */
+  --theme-bg-tertiary: #262626;
+  --theme-bg-elevated: #1a1a1a;
+  --theme-bg-hover: #262626;
 
-  --theme-text-primary: rgba(255, 255, 255, 1);
-  --theme-text-secondary: rgba(255, 255, 255, 0.7);
+  --theme-text-primary: #ffffff; /* Text primary */
+  --theme-text-secondary: rgba(255, 255, 255, 0.7); /* Text muted */
   --theme-text-tertiary: rgba(255, 255, 255, 0.5);
   --theme-text-muted: rgba(255, 255, 255, 0.4);
 
-  --theme-border: rgba(255, 255, 255, 0.1);
+  --theme-border: rgba(255, 255, 255, 0.1); /* Border */
   --theme-border-hover: rgba(255, 255, 255, 0.2);
-  --theme-border-focus: var(--color-primary-500);
+  --theme-border-focus: #6366f1; /* Primary indigo */
 
-  --theme-surface: rgba(255, 255, 255, 0.05);
-  --theme-surface-hover: rgba(255, 255, 255, 0.1);
-  --theme-surface-active: rgba(255, 255, 255, 0.15);
+  --theme-surface: #1a1a1a; /* Surface */
+  --theme-surface-hover: #262626;
+  --theme-surface-active: #333333;
 
   /* Overlay */
   --theme-overlay: rgba(0, 0, 0, 0.7);
@@ -47,15 +47,15 @@
   --theme-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --theme-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
   --theme-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
-  --theme-shadow-glow: 0 0 20px var(--color-primary-500);
+  --theme-shadow-glow: 0 0 20px #6366f1; /* Primary indigo glow */
 
   /* Input specific */
-  --theme-input-bg: rgba(255, 255, 255, 0.05);
+  --theme-input-bg: #1a1a1a;
   --theme-input-border: rgba(255, 255, 255, 0.1);
   --theme-input-placeholder: rgba(255, 255, 255, 0.4);
 
   /* Card specific */
-  --theme-card-bg: rgba(255, 255, 255, 0.05);
+  --theme-card-bg: #1a1a1a;
   --theme-card-border: rgba(255, 255, 255, 0.1);
 
   /* Scrollbar */
@@ -95,7 +95,7 @@
   --theme-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
   --theme-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
   --theme-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
-  --theme-shadow-glow: 0 0 20px rgba(217, 70, 239, 0.2);
+  --theme-shadow-glow: 0 0 20px rgba(99, 102, 241, 0.2); /* Primary indigo glow */
 
   --theme-input-bg: #ffffff;
   --theme-input-border: rgba(0, 0, 0, 0.15);
@@ -312,7 +312,7 @@ body {
   .input-theme:focus {
     border-color: var(--theme-border-focus);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.2);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.2); /* Primary indigo focus ring */
   }
 
   /* Button base with theme */
@@ -372,7 +372,7 @@ body {
   /* Focus states */
   .focus-theme:focus {
     outline: none;
-    box-shadow: 0 0 0 3px rgba(217, 70, 239, 0.3);
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.3); /* Primary indigo focus ring */
     border-color: var(--theme-border-focus);
   }
 
@@ -408,6 +408,184 @@ body {
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
+  }
+
+  /* =============================================
+   * LAYOUT CONTAINER UTILITIES
+   * ============================================= */
+
+  .container-app {
+    width: 100%;
+    max-width: 1280px;
+    margin-left: auto;
+    margin-right: auto;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  @media (min-width: 640px) {
+    .container-app {
+      padding-left: 1.5rem;
+      padding-right: 1.5rem;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .container-app {
+      padding-left: 2rem;
+      padding-right: 2rem;
+    }
+  }
+
+  /* =============================================
+   * TYPOGRAPHY UTILITIES
+   * ============================================= */
+
+  /**
+   * Typography System
+   *
+   * Font Family: Inter (loaded in layout.tsx)
+   * Headings: font-semibold (600) or font-bold (700)
+   * Body: font-normal (400)
+   *
+   * Scale:
+   * - h1: text-4xl (36px) -> md:text-5xl (48px)
+   * - h2: text-2xl (24px) -> md:text-3xl (30px)
+   * - h3: text-xl (20px)
+   * - body: text-base (16px)
+   * - small: text-sm (14px)
+   * - caption: text-xs (12px)
+   */
+
+  /* Heading 1 - Page titles, hero sections */
+  .heading-1 {
+    font-family: var(--font-family-inter, 'Inter', system-ui, sans-serif);
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    letter-spacing: var(--letter-spacing-tight);
+    color: var(--theme-text-primary);
+  }
+
+  @media (min-width: 768px) {
+    .heading-1 {
+      font-size: var(--font-size-5xl);
+    }
+  }
+
+  /* Heading 2 - Section titles */
+  .heading-2 {
+    font-family: var(--font-family-inter, 'Inter', system-ui, sans-serif);
+    font-size: var(--font-size-2xl);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-snug);
+    letter-spacing: var(--letter-spacing-tight);
+    color: var(--theme-text-primary);
+  }
+
+  @media (min-width: 768px) {
+    .heading-2 {
+      font-size: var(--font-size-3xl);
+    }
+  }
+
+  /* Heading 3 - Subsection titles, card headers */
+  .heading-3 {
+    font-family: var(--font-family-inter, 'Inter', system-ui, sans-serif);
+    font-size: var(--font-size-xl);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-snug);
+    color: var(--theme-text-primary);
+  }
+
+  /* Heading 4 - Smaller titles, list headers */
+  .heading-4 {
+    font-family: var(--font-family-inter, 'Inter', system-ui, sans-serif);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-normal);
+    color: var(--theme-text-primary);
+  }
+
+  /* Body text - Default paragraph text */
+  .body-text {
+    font-family: var(--font-family-inter, 'Inter', system-ui, sans-serif);
+    font-size: var(--font-size-base);
+    font-weight: var(--font-weight-normal);
+    line-height: var(--line-height-normal);
+    color: var(--theme-text-primary);
+  }
+
+  /* Body large - Intro paragraphs, featured text */
+  .body-large {
+    font-family: var(--font-family-inter, 'Inter', system-ui, sans-serif);
+    font-size: var(--font-size-lg);
+    font-weight: var(--font-weight-normal);
+    line-height: var(--line-height-relaxed);
+    color: var(--theme-text-primary);
+  }
+
+  /* Small text - Secondary information, metadata */
+  .text-small {
+    font-family: var(--font-family-inter, 'Inter', system-ui, sans-serif);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-normal);
+    line-height: var(--line-height-normal);
+    color: var(--theme-text-secondary);
+  }
+
+  /* Caption text - Labels, timestamps, helper text */
+  .text-caption {
+    font-family: var(--font-family-inter, 'Inter', system-ui, sans-serif);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-normal);
+    line-height: var(--line-height-normal);
+    color: var(--theme-text-tertiary);
+  }
+
+  /* Label text - Form labels, menu items */
+  .text-label {
+    font-family: var(--font-family-inter, 'Inter', system-ui, sans-serif);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-medium);
+    line-height: var(--line-height-normal);
+    color: var(--theme-text-primary);
+  }
+
+  /* Button text - CTA, action buttons */
+  .text-button {
+    font-family: var(--font-family-inter, 'Inter', system-ui, sans-serif);
+    font-size: var(--font-size-sm);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-none);
+    letter-spacing: var(--letter-spacing-wide);
+    text-transform: none;
+  }
+
+  /* Overline text - Category labels, badges */
+  .text-overline {
+    font-family: var(--font-family-inter, 'Inter', system-ui, sans-serif);
+    font-size: var(--font-size-xs);
+    font-weight: var(--font-weight-semibold);
+    line-height: var(--line-height-normal);
+    letter-spacing: var(--letter-spacing-wider);
+    text-transform: uppercase;
+    color: var(--theme-text-tertiary);
+  }
+
+  /* Legacy class - maintained for backward compatibility */
+  .section-title {
+    font-family: var(--font-family-inter, 'Inter', system-ui, sans-serif);
+    font-size: var(--font-size-4xl);
+    font-weight: var(--font-weight-bold);
+    line-height: var(--line-height-tight);
+    color: var(--theme-text-primary);
+  }
+
+  @media (min-width: 768px) {
+    .section-title {
+      font-size: var(--font-size-5xl);
+    }
   }
 }
 
@@ -505,7 +683,7 @@ body {
 .focus-ring:focus-visible {
   outline: 2px solid var(--color-primary-500);
   outline-offset: 2px;
-  box-shadow: 0 0 0 4px rgba(217, 70, 239, 0.2);
+  box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.2); /* Primary indigo focus ring */
 }
 
 /* High contrast focus for dark backgrounds */

@@ -4,12 +4,7 @@
  */
 
 import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
 import { colors, spacing, borderRadius, typography } from '../../theme';
 import type { NFCStatus as NFCStatusType, NFCError } from '../../services/nfc';
 
@@ -23,11 +18,14 @@ export interface NFCStatusProps {
 }
 
 // Status configurations
-const STATUS_CONFIG: Record<NFCStatusType, {
-  color: string;
-  label: string;
-  icon: string;
-}> = {
+const STATUS_CONFIG: Record<
+  NFCStatusType,
+  {
+    color: string;
+    label: string;
+    icon: string;
+  }
+> = {
   unavailable: {
     color: colors.textMuted,
     label: 'NFC indisponible',
@@ -95,19 +93,14 @@ export const NFCStatus: React.FC<NFCStatusProps> = ({
       {/* Status Indicator */}
       <View style={styles.indicatorContainer}>
         {isScanning ? (
-          <ActivityIndicator
-            size={size === 'small' ? 'small' : 'small'}
-            color={config.color}
-          />
+          <ActivityIndicator size={size === 'small' ? 'small' : 'small'} color={config.color} />
         ) : (
           <View style={[styles.dot, sizeConfig.dot, { backgroundColor: config.color }]} />
         )}
       </View>
 
       {/* Status Icon */}
-      <Text style={[styles.icon, { fontSize: sizeConfig.icon }]}>
-        {config.icon}
-      </Text>
+      <Text style={[styles.icon, { fontSize: sizeConfig.icon }]}>{config.icon}</Text>
 
       {/* Status Label */}
       {showLabel && (
@@ -129,11 +122,7 @@ export const NFCStatusIndicator: React.FC<NFCStatusIndicatorProps> = ({
   isEnabled,
   isScanning = false,
 }) => {
-  const color = isScanning
-    ? colors.primary
-    : isEnabled
-    ? colors.success
-    : colors.warning;
+  const color = isScanning ? colors.primary : isEnabled ? colors.success : colors.warning;
 
   return (
     <View style={styles.indicatorOnly}>
@@ -152,26 +141,17 @@ export interface NFCStatusBadgeProps {
   isScanning?: boolean;
 }
 
-export const NFCStatusBadge: React.FC<NFCStatusBadgeProps> = ({
-  status,
-  isScanning = false,
-}) => {
+export const NFCStatusBadge: React.FC<NFCStatusBadgeProps> = ({ status, isScanning = false }) => {
   const effectiveStatus = isScanning ? 'scanning' : status;
   const config = STATUS_CONFIG[effectiveStatus] || STATUS_CONFIG.error;
 
   return (
     <View style={[styles.badge, { backgroundColor: config.color + '20' }]}>
       {isScanning && (
-        <ActivityIndicator
-          size="small"
-          color={config.color}
-          style={styles.badgeSpinner}
-        />
+        <ActivityIndicator size="small" color={config.color} style={styles.badgeSpinner} />
       )}
       <Text style={[styles.badgeIcon]}>{config.icon}</Text>
-      <Text style={[styles.badgeText, { color: config.color }]}>
-        {config.label}
-      </Text>
+      <Text style={[styles.badgeText, { color: config.color }]}>{config.label}</Text>
     </View>
   );
 };
@@ -196,42 +176,45 @@ export const NFCConnectionStatus: React.FC<NFCConnectionStatusProps> = ({
 
       <View style={styles.connectionRow}>
         <Text style={styles.connectionLabel}>Support NFC</Text>
-        <View style={[
-          styles.connectionDot,
-          { backgroundColor: isSupported ? colors.success : colors.error }
-        ]} />
-        <Text style={[
-          styles.connectionValue,
-          { color: isSupported ? colors.success : colors.error }
-        ]}>
+        <View
+          style={[
+            styles.connectionDot,
+            { backgroundColor: isSupported ? colors.success : colors.error },
+          ]}
+        />
+        <Text
+          style={[styles.connectionValue, { color: isSupported ? colors.success : colors.error }]}
+        >
           {isSupported ? 'Oui' : 'Non'}
         </Text>
       </View>
 
       <View style={styles.connectionRow}>
         <Text style={styles.connectionLabel}>NFC active</Text>
-        <View style={[
-          styles.connectionDot,
-          { backgroundColor: isEnabled ? colors.success : colors.warning }
-        ]} />
-        <Text style={[
-          styles.connectionValue,
-          { color: isEnabled ? colors.success : colors.warning }
-        ]}>
+        <View
+          style={[
+            styles.connectionDot,
+            { backgroundColor: isEnabled ? colors.success : colors.warning },
+          ]}
+        />
+        <Text
+          style={[styles.connectionValue, { color: isEnabled ? colors.success : colors.warning }]}
+        >
           {isEnabled ? 'Oui' : 'Non'}
         </Text>
       </View>
 
       <View style={styles.connectionRow}>
         <Text style={styles.connectionLabel}>Pret</Text>
-        <View style={[
-          styles.connectionDot,
-          { backgroundColor: isReady ? colors.success : colors.textMuted }
-        ]} />
-        <Text style={[
-          styles.connectionValue,
-          { color: isReady ? colors.success : colors.textMuted }
-        ]}>
+        <View
+          style={[
+            styles.connectionDot,
+            { backgroundColor: isReady ? colors.success : colors.textMuted },
+          ]}
+        />
+        <Text
+          style={[styles.connectionValue, { color: isReady ? colors.success : colors.textMuted }]}
+        >
           {isReady ? 'Oui' : 'Non'}
         </Text>
       </View>
@@ -241,15 +224,14 @@ export const NFCConnectionStatus: React.FC<NFCConnectionStatusProps> = ({
         {isScanning ? (
           <ActivityIndicator size="small" color={colors.primary} />
         ) : (
-          <View style={[
-            styles.connectionDot,
-            { backgroundColor: colors.textMuted }
-          ]} />
+          <View style={[styles.connectionDot, { backgroundColor: colors.textMuted }]} />
         )}
-        <Text style={[
-          styles.connectionValue,
-          { color: isScanning ? colors.primary : colors.textMuted }
-        ]}>
+        <Text
+          style={[
+            styles.connectionValue,
+            { color: isScanning ? colors.primary : colors.textMuted },
+          ]}
+        >
           {isScanning ? 'Oui' : 'Non'}
         </Text>
       </View>
@@ -360,7 +342,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   connectionLabel: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     flex: 1,
   },
@@ -371,7 +353,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.sm,
   },
   connectionValue: {
-    ...typography.bodySmall,
+    ...typography.small,
     fontWeight: '600',
     width: 40,
   },

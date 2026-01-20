@@ -53,9 +53,9 @@ const mockAccounts: CashlessAccount[] = [
     userId: '1',
     userName: 'Sophie Petit',
     userEmail: 'sophie@email.com',
-    balance: 85.50,
+    balance: 85.5,
     totalTopUp: 200,
-    totalSpent: 114.50,
+    totalSpent: 114.5,
     nfcTagId: 'NFC-001234',
     festivalId: '1',
     festivalName: 'Summer Beats Festival',
@@ -68,9 +68,9 @@ const mockAccounts: CashlessAccount[] = [
     userId: '2',
     userName: 'Lucas Moreau',
     userEmail: 'lucas@email.com',
-    balance: 150.00,
+    balance: 150.0,
     totalTopUp: 300,
-    totalSpent: 150.00,
+    totalSpent: 150.0,
     nfcTagId: 'NFC-001235',
     festivalId: '1',
     festivalName: 'Summer Beats Festival',
@@ -98,9 +98,9 @@ const mockAccounts: CashlessAccount[] = [
     userId: '4',
     userName: 'Thomas Bernard',
     userEmail: 'thomas@email.com',
-    balance: 45.00,
+    balance: 45.0,
     totalTopUp: 50,
-    totalSpent: 5.00,
+    totalSpent: 5.0,
     festivalId: '1',
     festivalName: 'Summer Beats Festival',
     status: 'suspended',
@@ -115,7 +115,7 @@ const mockTransactions: CashlessTransaction[] = [
     accountId: '1',
     userName: 'Sophie Petit',
     type: 'payment',
-    amount: -12.50,
+    amount: -12.5,
     vendorName: 'Bar Central',
     vendorId: 'V001',
     description: '2x Bieres + 1x Cocktail',
@@ -127,7 +127,7 @@ const mockTransactions: CashlessTransaction[] = [
     accountId: '2',
     userName: 'Lucas Moreau',
     type: 'topup',
-    amount: 50.00,
+    amount: 50.0,
     description: 'Recharge par carte bancaire',
     timestamp: '2025-01-02T16:00:00Z',
     status: 'completed',
@@ -137,7 +137,7 @@ const mockTransactions: CashlessTransaction[] = [
     accountId: '1',
     userName: 'Sophie Petit',
     type: 'payment',
-    amount: -8.00,
+    amount: -8.0,
     vendorName: 'Food Truck Pizza',
     vendorId: 'V002',
     description: '1x Pizza Margherita',
@@ -149,7 +149,7 @@ const mockTransactions: CashlessTransaction[] = [
     accountId: '3',
     userName: 'Emma Durand',
     type: 'refund',
-    amount: 15.00,
+    amount: 15.0,
     description: 'Remboursement solde cloture',
     timestamp: '2025-01-02T18:00:00Z',
     status: 'pending',
@@ -159,7 +159,7 @@ const mockTransactions: CashlessTransaction[] = [
     accountId: '2',
     userName: 'Lucas Moreau',
     type: 'payment',
-    amount: -25.00,
+    amount: -25.0,
     vendorName: 'Merchandise Official',
     vendorId: 'V003',
     description: '1x T-shirt Festival',
@@ -197,13 +197,11 @@ export default function CashlessPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
 
-  const filteredAccounts = statusFilter === 'all'
-    ? mockAccounts
-    : mockAccounts.filter((a) => a.status === statusFilter);
+  const filteredAccounts =
+    statusFilter === 'all' ? mockAccounts : mockAccounts.filter((a) => a.status === statusFilter);
 
-  const filteredTransactions = typeFilter === 'all'
-    ? mockTransactions
-    : mockTransactions.filter((t) => t.type === typeFilter);
+  const filteredTransactions =
+    typeFilter === 'all' ? mockTransactions : mockTransactions.filter((t) => t.type === typeFilter);
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -278,10 +276,12 @@ export default function CashlessPage() {
       label: 'Solde',
       sortable: true,
       render: (value) => (
-        <span className={cn(
-          'font-semibold',
-          (value as number) > 0 ? 'text-green-600' : 'text-gray-600'
-        )}>
+        <span
+          className={cn(
+            'font-semibold',
+            (value as number) > 0 ? 'text-green-600' : 'text-gray-600'
+          )}
+        >
           {formatCurrency(value as number)}
         </span>
       ),
@@ -290,17 +290,13 @@ export default function CashlessPage() {
       key: 'totalTopUp',
       label: 'Total recharge',
       sortable: true,
-      render: (value) => (
-        <span className="text-gray-600">{formatCurrency(value as number)}</span>
-      ),
+      render: (value) => <span className="text-gray-600">{formatCurrency(value as number)}</span>,
     },
     {
       key: 'totalSpent',
       label: 'Total depense',
       sortable: true,
-      render: (value) => (
-        <span className="text-gray-600">{formatCurrency(value as number)}</span>
-      ),
+      render: (value) => <span className="text-gray-600">{formatCurrency(value as number)}</span>,
     },
     {
       key: 'status',
@@ -330,9 +326,7 @@ export default function CashlessPage() {
       label: 'Date/Heure',
       sortable: true,
       render: (value) => (
-        <span className="text-sm text-gray-600">
-          {formatDateTime(value as string)}
-        </span>
+        <span className="text-sm text-gray-600">{formatDateTime(value as string)}</span>
       ),
     },
     {
@@ -355,11 +349,14 @@ export default function CashlessPage() {
       label: 'Montant',
       sortable: true,
       render: (value) => (
-        <span className={cn(
-          'font-semibold',
-          (value as number) >= 0 ? 'text-green-600' : 'text-red-600'
-        )}>
-          {(value as number) >= 0 ? '+' : ''}{formatCurrency(value as number)}
+        <span
+          className={cn(
+            'font-semibold',
+            (value as number) >= 0 ? 'text-green-600' : 'text-red-600'
+          )}
+        >
+          {(value as number) >= 0 ? '+' : ''}
+          {formatCurrency(value as number)}
         </span>
       ),
     },
@@ -373,18 +370,22 @@ export default function CashlessPage() {
     {
       key: 'description',
       label: 'Description',
-      render: (value) => (
-        <span className="text-sm text-gray-500">{value as string}</span>
-      ),
+      render: (value) => <span className="text-sm text-gray-500">{value as string}</span>,
     },
     {
       key: 'status',
       label: 'Statut',
       render: (value) => (
-        <span className={cn(
-          'badge',
-          value === 'completed' ? 'badge-success' : value === 'pending' ? 'badge-warning' : 'badge-danger'
-        )}>
+        <span
+          className={cn(
+            'badge',
+            value === 'completed'
+              ? 'badge-success'
+              : value === 'pending'
+                ? 'badge-warning'
+                : 'badge-danger'
+          )}
+        >
           {value === 'completed' ? 'Complete' : value === 'pending' ? 'En attente' : 'Echec'}
         </span>
       ),
@@ -404,13 +405,23 @@ export default function CashlessPage() {
         <div className="flex gap-2">
           <button className="btn-secondary flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              />
             </svg>
             Exporter
           </button>
           <button className="btn-primary flex items-center gap-2">
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             Remboursement masse
           </button>
@@ -419,33 +430,33 @@ export default function CashlessPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-6 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Solde total</p>
           <p className="text-2xl font-bold text-green-600 mt-1">
             {formatCurrency(stats.totalBalance)}
           </p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Total recharges</p>
           <p className="text-2xl font-bold text-blue-600 mt-1">
             {formatCurrency(stats.totalTopUp)}
           </p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Total depenses</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
             {formatCurrency(stats.totalSpent)}
           </p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Comptes actifs</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{stats.activeAccounts}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Transactions (24h)</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{stats.todayTransactions}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Volume (24h)</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
             {formatCurrency(stats.todayVolume)}
@@ -523,7 +534,9 @@ export default function CashlessPage() {
                               {payload[0]?.value} transactions
                             </p>
                             <p className="text-sm text-gray-600">
-                              {formatCurrency((payload[0]?.payload as { amount?: number })?.amount || 0)}
+                              {formatCurrency(
+                                (payload[0]?.payload as { amount?: number })?.amount || 0
+                              )}
                             </p>
                           </div>
                         );
@@ -556,9 +569,7 @@ export default function CashlessPage() {
                         <Cell key={`cell-${index}`} fill={entry.color} />
                       ))}
                     </Pie>
-                    <Tooltip
-                      formatter={(value) => formatCurrency(value as number)}
-                    />
+                    <Tooltip formatter={(value) => formatCurrency(value as number)} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
@@ -586,23 +597,62 @@ export default function CashlessPage() {
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Transactions recentes</h3>
             <div className="space-y-3">
               {mockTransactions.slice(0, 5).map((tx) => (
-                <div key={tx.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div
+                  key={tx.id}
+                  className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+                >
                   <div className="flex items-center gap-3">
-                    <div className={cn(
-                      'w-10 h-10 rounded-full flex items-center justify-center',
-                      tx.type === 'topup' ? 'bg-green-100' : tx.type === 'refund' ? 'bg-yellow-100' : 'bg-blue-100'
-                    )}>
+                    <div
+                      className={cn(
+                        'w-10 h-10 rounded-full flex items-center justify-center',
+                        tx.type === 'topup'
+                          ? 'bg-green-100'
+                          : tx.type === 'refund'
+                            ? 'bg-yellow-100'
+                            : 'bg-blue-100'
+                      )}
+                    >
                       {tx.type === 'topup' ? (
-                        <svg className="w-5 h-5 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        <svg
+                          className="w-5 h-5 text-green-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+                          />
                         </svg>
                       ) : tx.type === 'refund' ? (
-                        <svg className="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                        <svg
+                          className="w-5 h-5 text-yellow-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
+                          />
                         </svg>
                       ) : (
-                        <svg className="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                        <svg
+                          className="w-5 h-5 text-blue-600"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"
+                          />
                         </svg>
                       )}
                     </div>
@@ -612,14 +662,20 @@ export default function CashlessPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className={cn(
-                      'font-semibold',
-                      tx.amount >= 0 ? 'text-green-600' : 'text-gray-900'
-                    )}>
-                      {tx.amount >= 0 ? '+' : ''}{formatCurrency(tx.amount)}
+                    <p
+                      className={cn(
+                        'font-semibold',
+                        tx.amount >= 0 ? 'text-green-600' : 'text-gray-900'
+                      )}
+                    >
+                      {tx.amount >= 0 ? '+' : ''}
+                      {formatCurrency(tx.amount)}
                     </p>
                     <p className="text-xs text-gray-500">
-                      {new Date(tx.timestamp).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                      {new Date(tx.timestamp).toLocaleTimeString('fr-FR', {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
                     </p>
                   </div>
                 </div>
@@ -642,7 +698,9 @@ export default function CashlessPage() {
               >
                 <option value="all">Tous les statuts</option>
                 {Object.entries(statusLabels).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
                 ))}
               </select>
             </div>
@@ -659,9 +717,24 @@ export default function CashlessPage() {
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                   title="Voir details"
                 >
-                  <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                  <svg
+                    className="w-4 h-4 text-gray-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                    />
                   </svg>
                 </button>
                 <button
@@ -672,12 +745,32 @@ export default function CashlessPage() {
                   title={account.status === 'active' ? 'Suspendre' : 'Reactiver'}
                 >
                   {account.status === 'active' ? (
-                    <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                    <svg
+                      className="w-4 h-4 text-orange-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636"
+                      />
                     </svg>
                   ) : (
-                    <svg className="w-4 h-4 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    <svg
+                      className="w-4 h-4 text-green-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
                     </svg>
                   )}
                 </button>
@@ -685,8 +778,18 @@ export default function CashlessPage() {
                   className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
                   title="Rembourser"
                 >
-                  <svg className="w-4 h-4 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                  <svg
+                    className="w-4 h-4 text-blue-600"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
+                    />
                   </svg>
                 </button>
               </div>
@@ -708,7 +811,9 @@ export default function CashlessPage() {
               >
                 <option value="all">Tous les types</option>
                 {Object.entries(typeLabels).map(([value, label]) => (
-                  <option key={value} value={value}>{label}</option>
+                  <option key={value} value={value}>
+                    {label}
+                  </option>
                 ))}
               </select>
             </div>

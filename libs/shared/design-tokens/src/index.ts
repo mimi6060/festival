@@ -59,6 +59,8 @@ import {
   componentSpacing,
   gap,
   gapPx,
+  unifiedSpacing,
+  unifiedSpacingRem,
 } from './lib/spacing';
 import {
   typography as typographyModule,
@@ -112,6 +114,8 @@ export const tokens = {
   componentSpacing,
   gap,
   gapPx,
+  unifiedSpacing,
+  unifiedSpacingRem,
   typography: typographyModule,
   fontFamily,
   fontSize,

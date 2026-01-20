@@ -526,7 +526,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
   },
   demoButtonText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.white,
     fontWeight: '600',
   },
@@ -562,7 +562,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   historyCode: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.white,
     fontWeight: '600',
     fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',

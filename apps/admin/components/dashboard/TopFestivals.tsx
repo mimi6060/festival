@@ -2,7 +2,13 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { formatCurrency, formatNumber, formatPercentage, getStatusColor, getStatusLabel } from '../../lib/utils';
+import {
+  formatCurrency,
+  formatNumber,
+  formatPercentage,
+  getStatusColor,
+  getStatusLabel,
+} from '../../lib/utils';
 import type { Festival } from '../../types';
 
 interface TopFestivalsProps {
@@ -13,7 +19,7 @@ interface TopFestivalsProps {
 export default function TopFestivals({ festivals = [], loading = false }: TopFestivalsProps) {
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100">
           <div className="h-6 bg-gray-200 rounded w-40 animate-pulse" />
         </div>
@@ -36,7 +42,7 @@ export default function TopFestivals({ festivals = [], loading = false }: TopFes
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 overflow-hidden">
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
         <h3 className="font-semibold text-gray-900">Festivals populaires</h3>
         <Link
@@ -48,14 +54,11 @@ export default function TopFestivals({ festivals = [], loading = false }: TopFes
       </div>
       <div className="divide-y divide-gray-100">
         {festivals.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">
-            Aucun festival actif
-          </div>
+          <div className="p-8 text-center text-gray-500">Aucun festival actif</div>
         ) : (
           festivals.map((festival) => {
-            const soldPercentage = festival.capacity > 0
-              ? (festival.ticketsSold / festival.capacity) * 100
-              : 0;
+            const soldPercentage =
+              festival.capacity > 0 ? (festival.ticketsSold / festival.capacity) * 100 : 0;
 
             return (
               <Link
@@ -73,8 +76,18 @@ export default function TopFestivals({ festivals = [], loading = false }: TopFes
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+                      <svg
+                        className="w-8 h-8"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+                        />
                       </svg>
                     </div>
                   )}
@@ -111,8 +124,8 @@ export default function TopFestivals({ festivals = [], loading = false }: TopFes
                           soldPercentage >= 90
                             ? 'bg-green-500'
                             : soldPercentage >= 50
-                            ? 'bg-primary-500'
-                            : 'bg-orange-500'
+                              ? 'bg-primary-500'
+                              : 'bg-orange-500'
                         }`}
                         style={{ width: `${Math.min(soldPercentage, 100)}%` }}
                       />

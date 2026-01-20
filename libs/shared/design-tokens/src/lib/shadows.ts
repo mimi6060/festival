@@ -18,25 +18,25 @@ export const shadows = {
   none: 'none',
 
   /** Subtle shadow - buttons, inputs */
-  sm: '0 1px 2px 0 rgb(0 0 0 / 0.05)',
+  sm: '0 1px 2px rgba(0,0,0,0.05)',
 
   /** Default shadow - cards, dropdowns */
-  DEFAULT: '0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1)',
+  DEFAULT: '0 2px 4px rgba(0,0,0,0.08)',
 
   /** Medium shadow - hovering cards, popovers */
-  md: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
+  md: '0 4px 6px rgba(0,0,0,0.1)',
 
   /** Large shadow - modals, dialogs */
-  lg: '0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1)',
+  lg: '0 10px 15px rgba(0,0,0,0.1)',
 
   /** Extra large shadow - floating elements */
-  xl: '0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1)',
+  xl: '0 20px 25px rgba(0,0,0,0.15)',
 
   /** 2XL shadow - prominent floating elements */
-  '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.25)',
+  '2xl': '0 25px 50px rgba(0,0,0,0.25)',
 
   /** Inner shadow - pressed buttons, inset elements */
-  inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.05)',
+  inner: 'inset 0 2px 4px rgba(0,0,0,0.05)',
 } as const;
 
 // ============================================================================
@@ -87,13 +87,13 @@ export const coloredShadows = {
  */
 export const darkShadows = {
   none: 'none',
-  sm: '0 1px 2px 0 rgb(0 0 0 / 0.2)',
-  DEFAULT: '0 1px 3px 0 rgb(0 0 0 / 0.3), 0 1px 2px -1px rgb(0 0 0 / 0.3)',
-  md: '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
-  lg: '0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3)',
-  xl: '0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.3)',
-  '2xl': '0 25px 50px -12px rgb(0 0 0 / 0.5)',
-  inner: 'inset 0 2px 4px 0 rgb(0 0 0 / 0.2)',
+  sm: '0 1px 2px rgba(0,0,0,0.2)',
+  DEFAULT: '0 2px 4px rgba(0,0,0,0.25)',
+  md: '0 4px 6px rgba(0,0,0,0.3)',
+  lg: '0 10px 15px rgba(0,0,0,0.35)',
+  xl: '0 20px 25px rgba(0,0,0,0.4)',
+  '2xl': '0 25px 50px rgba(0,0,0,0.5)',
+  inner: 'inset 0 2px 4px rgba(0,0,0,0.2)',
 } as const;
 
 // ============================================================================

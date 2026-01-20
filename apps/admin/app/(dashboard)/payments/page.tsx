@@ -16,9 +16,10 @@ export default function PaymentsPage() {
     order: mockOrders.find((o) => o.id === p.orderId),
   }));
 
-  const filteredPayments = statusFilter === 'all'
-    ? enrichedPayments
-    : enrichedPayments.filter((p) => p.status === statusFilter);
+  const filteredPayments =
+    statusFilter === 'all'
+      ? enrichedPayments
+      : enrichedPayments.filter((p) => p.status === statusFilter);
 
   const totalRevenue = enrichedPayments
     .filter((p) => p.status === 'succeeded')
@@ -37,9 +38,7 @@ export default function PaymentsPage() {
       key: 'providerTransactionId',
       label: 'Transaction',
       sortable: true,
-      render: (value) => (
-        <span className="font-mono text-sm text-gray-900">{value as string}</span>
-      ),
+      render: (value) => <span className="font-mono text-sm text-gray-900">{value as string}</span>,
     },
     {
       key: 'order',
@@ -47,9 +46,7 @@ export default function PaymentsPage() {
       render: (_, row) => (
         <div className="text-sm">
           <p className="text-gray-900">{row.order?.orderNumber || '-'}</p>
-          {row.order?.user && (
-            <p className="text-gray-500">Client #{row.order.userId}</p>
-          )}
+          {row.order?.user && <p className="text-gray-500">Client #{row.order.userId}</p>}
         </div>
       ),
     },
@@ -96,9 +93,7 @@ export default function PaymentsPage() {
       key: 'createdAt',
       label: 'Date',
       sortable: true,
-      render: (value) => (
-        <span className="text-gray-600">{formatDateTime(value as string)}</span>
-      ),
+      render: (value) => <span className="text-gray-600">{formatDateTime(value as string)}</span>,
     },
   ];
 
@@ -123,13 +118,16 @@ export default function PaymentsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Paiements</h1>
-          <p className="text-gray-500 mt-1">
-            Suivez et gerez toutes les transactions de paiement.
-          </p>
+          <p className="text-gray-500 mt-1">Suivez et gerez toutes les transactions de paiement.</p>
         </div>
         <button className="btn-secondary flex items-center gap-2 w-fit">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
           </svg>
           Exporter
         </button>
@@ -137,54 +135,100 @@ export default function PaymentsPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Revenus totaux</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(totalRevenue)}</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">
+                {formatCurrency(totalRevenue)}
+              </p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-green-50 flex items-center justify-center">
-              <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-6 h-6 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">En attente</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(pendingAmount)}</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">
+                {formatCurrency(pendingAmount)}
+              </p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-yellow-50 flex items-center justify-center">
-              <svg className="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-6 h-6 text-yellow-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Rembourses</p>
-              <p className="text-2xl font-bold text-gray-900 mt-1">{formatCurrency(refundedAmount)}</p>
+              <p className="text-2xl font-bold text-gray-900 mt-1">
+                {formatCurrency(refundedAmount)}
+              </p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-red-50 flex items-center justify-center">
-              <svg className="w-6 h-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+              <svg
+                className="w-6 h-6 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
+                />
               </svg>
             </div>
           </div>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-gray-500">Transactions</p>
               <p className="text-2xl font-bold text-gray-900 mt-1">{enrichedPayments.length}</p>
             </div>
             <div className="w-12 h-12 rounded-xl bg-blue-50 flex items-center justify-center">
-              <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              <svg
+                className="w-6 h-6 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                />
               </svg>
             </div>
           </div>
@@ -238,9 +282,24 @@ export default function PaymentsPage() {
               }}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              <svg
+                className="w-4 h-4 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
               </svg>
             </button>
             {payment.status === 'succeeded' && (
@@ -251,8 +310,18 @@ export default function PaymentsPage() {
                 }}
                 className="p-2 hover:bg-orange-50 rounded-lg transition-colors"
               >
-                <svg className="w-4 h-4 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                <svg
+                  className="w-4 h-4 text-orange-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
+                  />
                 </svg>
               </button>
             )}
@@ -262,66 +331,78 @@ export default function PaymentsPage() {
 
       {/* Payment Detail Modal */}
       {selectedPayment && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">Detail du paiement</h2>
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="dark:bg-gray-900 bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-2xl max-w-lg w-full">
+            <div className="flex items-center justify-between p-6 border-b dark:border-white/10 border-gray-200">
+              <h2 className="text-lg font-semibold dark:text-white text-gray-900">
+                Detail du paiement
+              </h2>
               <button
                 onClick={() => setSelectedPayment(null)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 dark:text-white/50 text-gray-400 hover:dark:text-white hover:text-gray-600 hover:dark:bg-white/5 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
             <div className="p-6 space-y-4">
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <span className="text-gray-500">ID Transaction</span>
-                <span className="font-mono text-gray-900">{selectedPayment.providerTransactionId}</span>
+              <div className="flex items-center justify-between py-3 border-b dark:border-white/10 border-gray-100">
+                <span className="dark:text-white/60 text-gray-500">ID Transaction</span>
+                <span className="font-mono dark:text-white text-gray-900">
+                  {selectedPayment.providerTransactionId}
+                </span>
               </div>
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <span className="text-gray-500">Montant</span>
-                <span className="text-xl font-bold text-gray-900">
+              <div className="flex items-center justify-between py-3 border-b dark:border-white/10 border-gray-100">
+                <span className="dark:text-white/60 text-gray-500">Montant</span>
+                <span className="text-xl font-bold dark:text-white text-gray-900">
                   {formatCurrency(selectedPayment.amount, selectedPayment.currency)}
                 </span>
               </div>
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <span className="text-gray-500">Statut</span>
+              <div className="flex items-center justify-between py-3 border-b dark:border-white/10 border-gray-100">
+                <span className="dark:text-white/60 text-gray-500">Statut</span>
                 <span className={cn('badge', getStatusColor(selectedPayment.status))}>
                   {getStatusLabel(selectedPayment.status)}
                 </span>
               </div>
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <span className="text-gray-500">Methode</span>
-                <span className="text-gray-900 capitalize">{selectedPayment.provider}</span>
+              <div className="flex items-center justify-between py-3 border-b dark:border-white/10 border-gray-100">
+                <span className="dark:text-white/60 text-gray-500">Methode</span>
+                <span className="dark:text-white text-gray-900 capitalize">
+                  {selectedPayment.provider}
+                </span>
               </div>
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <span className="text-gray-500">Commande</span>
-                <span className="text-gray-900">{selectedPayment.order?.orderNumber || '-'}</span>
+              <div className="flex items-center justify-between py-3 border-b dark:border-white/10 border-gray-100">
+                <span className="dark:text-white/60 text-gray-500">Commande</span>
+                <span className="dark:text-white text-gray-900">
+                  {selectedPayment.order?.orderNumber || '-'}
+                </span>
               </div>
-              <div className="flex items-center justify-between py-3 border-b border-gray-100">
-                <span className="text-gray-500">Date de creation</span>
-                <span className="text-gray-900">{formatDateTime(selectedPayment.createdAt)}</span>
+              <div className="flex items-center justify-between py-3 border-b dark:border-white/10 border-gray-100">
+                <span className="dark:text-white/60 text-gray-500">Date de creation</span>
+                <span className="dark:text-white text-gray-900">
+                  {formatDateTime(selectedPayment.createdAt)}
+                </span>
               </div>
               {selectedPayment.completedAt && (
                 <div className="flex items-center justify-between py-3">
-                  <span className="text-gray-500">Date de completion</span>
-                  <span className="text-gray-900">{formatDateTime(selectedPayment.completedAt)}</span>
+                  <span className="dark:text-white/60 text-gray-500">Date de completion</span>
+                  <span className="dark:text-white text-gray-900">
+                    {formatDateTime(selectedPayment.completedAt)}
+                  </span>
                 </div>
               )}
             </div>
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
-              <button
-                onClick={() => setSelectedPayment(null)}
-                className="btn-secondary"
-              >
+            <div className="flex items-center justify-end gap-3 px-6 py-4 dark:bg-white/5 bg-gray-50 border-t dark:border-white/10 border-gray-200 rounded-b-xl">
+              <button onClick={() => setSelectedPayment(null)} className="btn-secondary">
                 Fermer
               </button>
               {selectedPayment.status === 'succeeded' && (
-                <button className="btn-danger">
-                  Rembourser
-                </button>
+                <button className="btn-danger">Rembourser</button>
               )}
             </div>
           </div>

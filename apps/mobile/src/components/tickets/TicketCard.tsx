@@ -26,20 +26,22 @@ interface TicketCardProps {
 // Memoized TicketCard component for optimal performance
 export const TicketCard = memo<TicketCardProps>(({ ticket, onPress }) => {
   // Memoized status color
-  const statusColor = useMemo(() =>
-    STATUS_COLORS[ticket.status] || colors.textMuted,
+  const statusColor = useMemo(
+    () => STATUS_COLORS[ticket.status] || colors.textMuted,
     [ticket.status]
   );
 
   // Memoized ticket type config
-  const ticketTypeConfig = useMemo(() =>
-    TICKET_TYPE_CONFIG[ticket.ticketType] || TICKET_TYPE_CONFIG.standard,
+  const ticketTypeConfig = useMemo(
+    () => TICKET_TYPE_CONFIG[ticket.ticketType] || TICKET_TYPE_CONFIG.standard,
     [ticket.ticketType]
   );
 
   // Memoized date formatting
   const formattedDate = useMemo(() => {
-    if (!ticket.eventDate) {return 'Date inconnue';}
+    if (!ticket.eventDate) {
+      return 'Date inconnue';
+    }
 
     // Handle YYYY-MM-DD format explicitly
     let date: Date;
@@ -50,7 +52,9 @@ export const TicketCard = memo<TicketCardProps>(({ ticket, onPress }) => {
       date = new Date(ticket.eventDate);
     }
 
-    if (isNaN(date.getTime())) {return 'Date inconnue';}
+    if (isNaN(date.getTime())) {
+      return 'Date inconnue';
+    }
 
     return date.toLocaleDateString('fr-FR', {
       weekday: 'short',
@@ -63,11 +67,7 @@ export const TicketCard = memo<TicketCardProps>(({ ticket, onPress }) => {
   const handlePress = useCallback(() => onPress(), [onPress]);
 
   return (
-    <TouchableOpacity
-      style={styles.container}
-      onPress={handlePress}
-      activeOpacity={0.9}
-    >
+    <TouchableOpacity style={styles.container} onPress={handlePress} activeOpacity={0.9}>
       {/* Ticket Type Badge */}
       <View style={[styles.typeBadge, { backgroundColor: ticketTypeConfig.color }]}>
         <Text style={styles.typeBadgeText}>{ticketTypeConfig.label}</Text>
@@ -128,8 +128,10 @@ export const TicketCard = memo<TicketCardProps>(({ ticket, onPress }) => {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.xl,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
     overflow: 'hidden',
     marginBottom: spacing.md,
   },
@@ -181,7 +183,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.xs,
   },
   venue: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     flex: 1,
   },
@@ -194,7 +196,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.xs,
   },
   seat: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
   },
   divider: {
@@ -249,7 +251,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   viewQr: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.primary,
     fontWeight: '600',
   },

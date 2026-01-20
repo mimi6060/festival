@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { colors, spacing, borderRadius, typography, shadows } from '../../theme';
+import { colors, spacing, borderRadius, typography } from '../../theme';
 import type { WalletBalance } from '../../types';
 
 interface BalanceCardProps {
@@ -42,19 +42,13 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
         {balance.pending > 0 && (
           <View style={styles.pendingRow}>
             <Text style={styles.pendingLabel}>En attente:</Text>
-            <Text style={styles.pendingAmount}>
-              {formatCurrency(balance.pending)}
-            </Text>
+            <Text style={styles.pendingAmount}>{formatCurrency(balance.pending)}</Text>
           </View>
         )}
 
         {/* Actions */}
         <View style={styles.actions}>
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={onTopup}
-            activeOpacity={0.8}
-          >
+          <TouchableOpacity style={styles.actionButton} onPress={onTopup} activeOpacity={0.8}>
             <Text style={styles.actionIcon}>➕</Text>
             <Text style={styles.actionText}>Recharger</Text>
           </TouchableOpacity>
@@ -77,10 +71,11 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: borderRadius.xl,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
     overflow: 'hidden',
-    backgroundColor: colors.primary,
-    ...shadows.lg,
   },
   gradientOverlay: {
     position: 'absolute',
@@ -93,7 +88,7 @@ const styles = StyleSheet.create({
     transform: [{ skewX: '-20deg' }, { translateX: 50 }],
   },
   content: {
-    padding: spacing.lg,
+    padding: 16,
   },
   header: {
     flexDirection: 'row',
@@ -102,7 +97,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   label: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: 'rgba(255, 255, 255, 0.8)',
   },
   iconContainer: {
@@ -160,7 +155,7 @@ const styles = StyleSheet.create({
     marginRight: spacing.xs,
   },
   actionText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.white,
     fontWeight: '600',
   },

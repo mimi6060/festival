@@ -298,7 +298,7 @@ const styles = StyleSheet.create({
     color: colors.white,
   },
   countdownSubtitle: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: 'rgba(255,255,255,0.8)',
   },
   section: {
@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   seeAll: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.primary,
     fontWeight: '600',
   },
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   emptySubtitle: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     textAlign: 'center',
     marginBottom: spacing.md,
@@ -371,7 +371,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   eventStage: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
   },
   eventGenre: {
@@ -387,6 +387,7 @@ const styles = StyleSheet.create({
   quickActions: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: spacing.sm,
   },
   quickAction: {
     alignItems: 'center',
@@ -394,7 +395,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: spacing.md,
     flex: 1,
-    marginHorizontal: 4,
   },
   quickActionIcon: {
     fontSize: 28,

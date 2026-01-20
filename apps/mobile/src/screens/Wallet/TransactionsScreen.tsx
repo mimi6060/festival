@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   filterText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     fontWeight: '600',
   },
@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   groupDate: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textMuted,
     textTransform: 'capitalize',
     marginBottom: spacing.sm,

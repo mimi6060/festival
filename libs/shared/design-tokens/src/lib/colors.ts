@@ -15,21 +15,22 @@
 // ============================================================================
 
 /**
- * Primary brand color - Purple/Fuchsia
+ * Primary brand color - Indigo
  * Used for primary actions, buttons, links, and brand elements
+ * Unified across Web and Admin apps
  */
 export const primary = {
-  50: '#fdf4ff',
-  100: '#fae8ff',
-  200: '#f5d0fe',
-  300: '#f0abfc',
-  400: '#e879f9',
-  500: '#d946ef',
-  600: '#c026d3',
-  700: '#a21caf',
-  800: '#86198f',
-  900: '#701a75',
-  950: '#4a044e',
+  50: '#eef2ff',
+  100: '#e0e7ff',
+  200: '#c7d2fe',
+  300: '#a5b4fc',
+  400: '#818cf8',
+  500: '#6366f1', // Main primary color
+  600: '#4f46e5', // Hover state
+  700: '#4338ca',
+  800: '#3730a3',
+  900: '#312e81',
+  950: '#1e1b4b',
 } as const;
 
 /**
@@ -51,21 +52,21 @@ export const secondary = {
 } as const;
 
 /**
- * Accent color - Sky Blue
- * Used in admin dashboard as primary, and as accent elsewhere
+ * Accent color - Indigo (same as primary for unified design)
+ * Used for accent highlights across all apps
  */
 export const accent = {
-  50: '#f0f9ff',
-  100: '#e0f2fe',
-  200: '#bae6fd',
-  300: '#7dd3fc',
-  400: '#38bdf8',
-  500: '#0ea5e9',
-  600: '#0284c7',
-  700: '#0369a1',
-  800: '#075985',
-  900: '#0c4a6e',
-  950: '#082f49',
+  50: '#eef2ff',
+  100: '#e0e7ff',
+  200: '#c7d2fe',
+  300: '#a5b4fc',
+  400: '#818cf8',
+  500: '#6366f1',
+  600: '#4f46e5',
+  700: '#4338ca',
+  800: '#3730a3',
+  900: '#312e81',
+  950: '#1e1b4b',
 } as const;
 
 // ============================================================================
@@ -75,6 +76,7 @@ export const accent = {
 /**
  * Neutral/Gray color scale
  * Used for text, backgrounds, borders, and dividers
+ * Unified dark theme palette
  */
 export const neutral = {
   50: '#fafafa',
@@ -86,8 +88,8 @@ export const neutral = {
   600: '#525252',
   700: '#404040',
   800: '#262626',
-  900: '#171717',
-  950: '#0a0a0a',
+  900: '#1a1a1a', // Surface color
+  950: '#0a0a0a', // Background dark
 } as const;
 
 /**
@@ -208,19 +210,19 @@ export const info = {
 
 /**
  * Festival-specific theme colors
- * Dark, immersive palette for festival experience
+ * Unified dark palette for all apps
  */
 export const festival = {
   /** Main dark background */
-  dark: '#1a1a2e',
+  dark: '#0a0a0a',
   /** Darker shade for depth */
-  darker: '#12121f',
-  /** Medium tone for cards */
-  medium: '#16213e',
+  darker: '#000000',
+  /** Medium tone for cards/surfaces */
+  medium: '#1a1a1a',
   /** Lighter accent areas */
-  light: '#0f3460',
-  /** Vibrant accent (red/pink) */
-  accent: '#e94560',
+  light: '#262626',
+  /** Primary brand accent (indigo) */
+  accent: '#6366f1',
 } as const;
 
 /**
@@ -301,33 +303,34 @@ export const semanticLight = {
 
 /**
  * Semantic color tokens for dark theme
+ * Unified across Web and Admin apps
  */
 export const semanticDark = {
-  // Backgrounds
-  background: gray[950],
-  backgroundAlt: gray[900],
-  backgroundMuted: gray[800],
-  surface: gray[900],
-  surfaceAlt: gray[800],
-  surfaceHover: gray[700],
+  // Backgrounds - Unified dark palette
+  background: '#0a0a0a', // Background dark
+  backgroundAlt: '#1a1a1a', // Surface
+  backgroundMuted: '#262626',
+  surface: '#1a1a1a', // Surface
+  surfaceAlt: '#262626',
+  surfaceHover: '#333333',
 
-  // Text
-  text: gray[50],
-  textSecondary: gray[400],
-  textMuted: gray[500],
-  textInverse: gray[900],
+  // Text - Unified text colors
+  text: '#ffffff', // Text primary
+  textSecondary: 'rgba(255, 255, 255, 0.7)', // Text muted
+  textMuted: 'rgba(255, 255, 255, 0.5)',
+  textInverse: '#0a0a0a',
 
-  // Borders
-  border: gray[800],
-  borderHover: gray[700],
-  borderFocus: primary[400],
-  divider: gray[800],
+  // Borders - Unified border
+  border: 'rgba(255, 255, 255, 0.1)', // Border
+  borderHover: 'rgba(255, 255, 255, 0.2)',
+  borderFocus: primary[500],
+  divider: 'rgba(255, 255, 255, 0.1)',
 
   // Interactive
   link: primary[400],
   linkHover: primary[300],
-  focus: primary[400],
-  focusRing: `${primary[400]}40`,
+  focus: primary[500],
+  focusRing: `${primary[500]}40`,
 
   // Overlay
   overlay: 'rgba(0, 0, 0, 0.7)',

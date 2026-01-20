@@ -38,13 +38,13 @@ export const categoryConfig: Record<
   security: { label: 'Securite', color: 'bg-red-100 text-red-700', icon: 'shield' },
 };
 
-// Type colors for notification badges
+// Type colors for notification badges - standardized toast/notification styling
 export const typeColors: Record<NotificationType, string> = {
-  info: 'bg-blue-50 border-blue-200 text-blue-700',
-  success: 'bg-green-50 border-green-200 text-green-700',
-  warning: 'bg-yellow-50 border-yellow-200 text-yellow-700',
-  error: 'bg-red-50 border-red-200 text-red-700',
-  alert: 'bg-purple-50 border-purple-200 text-purple-700',
+  info: 'bg-blue-500/10 border-blue-500/20 text-blue-400',
+  success: 'bg-green-500/10 border-green-500/20 text-green-400',
+  warning: 'bg-amber-500/10 border-amber-500/20 text-amber-400',
+  error: 'bg-red-500/10 border-red-500/20 text-red-400',
+  alert: 'bg-purple-500/10 border-purple-500/20 text-purple-400',
 };
 
 // localStorage key for read notifications
@@ -118,7 +118,9 @@ const sampleNotifications: AdminNotification[] = [
 
 // Load read notification IDs from localStorage
 function loadReadIds(): Set<string> {
-  if (typeof window === 'undefined') { return new Set(); }
+  if (typeof window === 'undefined') {
+    return new Set();
+  }
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored) {
@@ -132,7 +134,9 @@ function loadReadIds(): Set<string> {
 
 // Save read notification IDs to localStorage
 function saveReadIds(ids: Set<string>): void {
-  if (typeof window === 'undefined') { return; }
+  if (typeof window === 'undefined') {
+    return;
+  }
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(Array.from(ids)));
   } catch {
@@ -142,7 +146,9 @@ function saveReadIds(ids: Set<string>): void {
 
 // Load notifications from localStorage
 function loadNotifications(): AdminNotification[] {
-  if (typeof window === 'undefined') { return sampleNotifications; }
+  if (typeof window === 'undefined') {
+    return sampleNotifications;
+  }
   try {
     const stored = localStorage.getItem(NOTIFICATIONS_KEY);
     if (stored) {
@@ -162,7 +168,9 @@ function loadNotifications(): AdminNotification[] {
 
 // Save notifications to localStorage
 function saveNotifications(notifications: AdminNotification[]): void {
-  if (typeof window === 'undefined') { return; }
+  if (typeof window === 'undefined') {
+    return;
+  }
   try {
     // Keep only the most recent notifications
     const toStore = notifications.slice(0, MAX_STORED_NOTIFICATIONS);
@@ -287,7 +295,9 @@ export function useNotifications(options: UseNotificationsOptions = {}): UseNoti
   // Filter by category
   const filterByCategory = useCallback(
     (category: NotificationCategory | 'all') => {
-      if (category === 'all') { return notifications; }
+      if (category === 'all') {
+        return notifications;
+      }
       return notifications.filter((n) => n.category === category);
     },
     [notifications]

@@ -2,8 +2,9 @@
 
 import { useState } from 'react';
 import DataTable from '@/components/tables/DataTable';
+import { Avatar } from '@/components/ui';
 import { mockStaff, mockUsers, mockFestivals, getUserById, getFestivalById } from '@/lib/mock-data';
-import { formatDateTime, getInitials, cn } from '@/lib/utils';
+import { formatDateTime, cn } from '@/lib/utils';
 import type { Staff, TableColumn } from '@/types';
 
 export default function StaffPage() {
@@ -17,9 +18,8 @@ export default function StaffPage() {
     festival: getFestivalById(s.festivalId),
   }));
 
-  const filteredStaff = roleFilter === 'all'
-    ? enrichedStaff
-    : enrichedStaff.filter((s) => s.role === roleFilter);
+  const filteredStaff =
+    roleFilter === 'all' ? enrichedStaff : enrichedStaff.filter((s) => s.role === roleFilter);
 
   const roleLabels: Record<string, string> = {
     manager: 'Manager',
@@ -44,22 +44,16 @@ export default function StaffPage() {
       sortable: true,
       render: (_, row) => {
         const user = row.user;
-        if (!user) {return '-';}
+        if (!user) {
+          return '-';
+        }
         return (
           <div className="flex items-center gap-3">
-            {user.avatar ? (
-              <img
-                src={user.avatar}
-                alt={`${user.firstName} ${user.lastName}`}
-                className="w-10 h-10 rounded-full object-cover"
-              />
-            ) : (
-              <div className="w-10 h-10 rounded-full bg-gradient-to-br from-primary-400 to-accent-400 flex items-center justify-center text-white font-medium">
-                {getInitials(user.firstName, user.lastName)}
-              </div>
-            )}
+            <Avatar src={user.avatar} name={`${user.firstName} ${user.lastName}`} size="md" />
             <div>
-              <p className="font-medium text-gray-900">{user.firstName} {user.lastName}</p>
+              <p className="font-medium text-gray-900">
+                {user.firstName} {user.lastName}
+              </p>
               <p className="text-sm text-gray-500">{user.email}</p>
             </div>
           </div>
@@ -70,9 +64,7 @@ export default function StaffPage() {
       key: 'festival',
       label: 'Festival',
       sortable: true,
-      render: (_, row) => (
-        <span className="text-gray-900">{row.festival?.name || '-'}</span>
-      ),
+      render: (_, row) => <span className="text-gray-900">{row.festival?.name || '-'}</span>,
     },
     {
       key: 'role',
@@ -99,9 +91,7 @@ export default function StaffPage() {
                 {p}
               </span>
             ))}
-            {perms.length > 2 && (
-              <span className="text-xs text-gray-500">+{perms.length - 2}</span>
-            )}
+            {perms.length > 2 && <span className="text-xs text-gray-500">+{perms.length - 2}</span>}
           </div>
         );
       },
@@ -120,9 +110,7 @@ export default function StaffPage() {
       key: 'assignedAt',
       label: 'Assigne le',
       sortable: true,
-      render: (value) => (
-        <span className="text-gray-600">{formatDateTime(value as string)}</span>
-      ),
+      render: (value) => <span className="text-gray-600">{formatDateTime(value as string)}</span>,
     },
   ];
 
@@ -171,23 +159,23 @@ export default function StaffPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Total staff</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">{enrichedStaff.length}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Managers</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
             {enrichedStaff.filter((s) => s.role === 'manager').length}
           </p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Scanners</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
             {enrichedStaff.filter((s) => s.role === 'ticket_scanner').length}
           </p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Actifs</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
             {enrichedStaff.filter((s) => s.isActive).length}
@@ -214,7 +202,12 @@ export default function StaffPage() {
         <div className="flex-1" />
         <button className="btn-secondary flex items-center gap-2">
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
           </svg>
           Exporter
         </button>
@@ -239,8 +232,18 @@ export default function StaffPage() {
               }}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
-              <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              <svg
+                className="w-4 h-4 text-gray-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                />
               </svg>
             </button>
             <button
@@ -250,8 +253,18 @@ export default function StaffPage() {
               }}
               className="p-2 hover:bg-red-50 rounded-lg transition-colors"
             >
-              <svg className="w-4 h-4 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+              <svg
+                className="w-4 h-4 text-red-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                />
               </svg>
             </button>
           </div>
@@ -260,28 +273,30 @@ export default function StaffPage() {
 
       {/* Staff Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">
-                {selectedStaff ? 'Modifier l\'assignation' : 'Assigner un membre'}
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="dark:bg-gray-900 bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b dark:border-white/10 border-gray-200">
+              <h2 className="text-lg font-semibold dark:text-white text-gray-900">
+                {selectedStaff ? "Modifier l'assignation" : 'Assigner un membre'}
               </h2>
               <button
                 onClick={() => setShowModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 dark:text-white/50 text-gray-400 hover:dark:text-white hover:text-gray-600 hover:dark:bg-white/5 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
             <form className="p-6 space-y-4">
               <div>
                 <label className="form-label">Utilisateur</label>
-                <select
-                  className="input-field"
-                  defaultValue={selectedStaff?.userId || ''}
-                >
+                <select className="input-field" defaultValue={selectedStaff?.userId || ''}>
                   <option value="">Selectionner un utilisateur</option>
                   {mockUsers.map((user) => (
                     <option key={user.id} value={user.id}>
@@ -292,29 +307,27 @@ export default function StaffPage() {
               </div>
               <div>
                 <label className="form-label">Festival</label>
-                <select
-                  className="input-field"
-                  defaultValue={selectedStaff?.festivalId || ''}
-                >
+                <select className="input-field" defaultValue={selectedStaff?.festivalId || ''}>
                   <option value="">Selectionner un festival</option>
-                  {mockFestivals.filter((f) => f.status !== 'completed').map((festival) => (
-                    <option key={festival.id} value={festival.id}>
-                      {festival.name}
-                    </option>
-                  ))}
+                  {mockFestivals
+                    .filter((f) => f.status !== 'completed')
+                    .map((festival) => (
+                      <option key={festival.id} value={festival.id}>
+                        {festival.name}
+                      </option>
+                    ))}
                 </select>
               </div>
               <div>
                 <label className="form-label">Role</label>
-                <select
-                  className="input-field"
-                  defaultValue={selectedStaff?.role || 'volunteer'}
-                >
-                  {roleOptions.filter((r) => r.value !== 'all').map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
+                <select className="input-field" defaultValue={selectedStaff?.role || 'volunteer'}>
+                  {roleOptions
+                    .filter((r) => r.value !== 'all')
+                    .map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
                 </select>
               </div>
               <div>
@@ -324,10 +337,10 @@ export default function StaffPage() {
                     <label key={perm.value} className="flex items-center gap-2">
                       <input
                         type="checkbox"
-                        className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        className="w-4 h-4 rounded dark:border-white/20 border-gray-300 text-primary-600 focus:ring-primary-500"
                         defaultChecked={selectedStaff?.permissions.includes(perm.value)}
                       />
-                      <span className="text-sm text-gray-700">{perm.label}</span>
+                      <span className="text-sm dark:text-white/70 text-gray-700">{perm.label}</span>
                     </label>
                   ))}
                 </div>
@@ -336,24 +349,19 @@ export default function StaffPage() {
                 <input
                   type="checkbox"
                   id="isActive"
-                  className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  className="w-4 h-4 rounded dark:border-white/20 border-gray-300 text-primary-600 focus:ring-primary-500"
                   defaultChecked={selectedStaff?.isActive ?? true}
                 />
-                <label htmlFor="isActive" className="text-sm text-gray-700">
+                <label htmlFor="isActive" className="text-sm dark:text-white/70 text-gray-700">
                   Assignation active
                 </label>
               </div>
             </form>
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
-              <button
-                onClick={() => setShowModal(false)}
-                className="btn-secondary"
-              >
+            <div className="flex items-center justify-end gap-3 px-6 py-4 dark:bg-white/5 bg-gray-50 border-t dark:border-white/10 border-gray-200 rounded-b-xl">
+              <button onClick={() => setShowModal(false)} className="btn-secondary">
                 Annuler
               </button>
-              <button className="btn-primary">
-                {selectedStaff ? 'Enregistrer' : 'Assigner'}
-              </button>
+              <button className="btn-primary">{selectedStaff ? 'Enregistrer' : 'Assigner'}</button>
             </div>
           </div>
         </div>

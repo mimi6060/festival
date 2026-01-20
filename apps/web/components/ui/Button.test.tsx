@@ -95,14 +95,14 @@ describe('Button Component', () => {
       render(<Button>Default Variant</Button>);
 
       const button = screen.getByRole('button');
-      expect(button.className).toContain('from-primary-500');
+      expect(button.className).toContain('bg-primary-500');
     });
 
     it('should apply secondary variant styles', () => {
       render(<Button variant="secondary">Secondary</Button>);
 
       const button = screen.getByRole('button');
-      expect(button.className).toContain('border-2');
+      expect(button.className).toContain('bg-white/10');
     });
 
     it('should apply danger variant styles', () => {
@@ -132,8 +132,8 @@ describe('Button Component', () => {
       render(<Button>Default Size</Button>);
 
       const button = screen.getByRole('button');
-      expect(button.className).toContain('px-6');
-      expect(button.className).toContain('py-3');
+      expect(button.className).toContain('px-5');
+      expect(button.className).toContain('py-2.5');
     });
 
     it('should apply sm size styles', () => {
@@ -148,8 +148,8 @@ describe('Button Component', () => {
       render(<Button size="lg">Large</Button>);
 
       const button = screen.getByRole('button');
-      expect(button.className).toContain('px-8');
-      expect(button.className).toContain('py-4');
+      expect(button.className).toContain('px-6');
+      expect(button.className).toContain('py-3');
     });
   });
 
@@ -312,8 +312,8 @@ describe('Button Component', () => {
       );
 
       const link = screen.getByRole('link');
-      expect(link.className).toContain('border-2');
-      expect(link.className).toContain('px-8');
+      expect(link.className).toContain('bg-white/10');
+      expect(link.className).toContain('px-6');
     });
 
     it('should render icons in link mode', () => {

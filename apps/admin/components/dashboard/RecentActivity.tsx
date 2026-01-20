@@ -71,22 +71,42 @@ const defaultActivities: ActivityItem[] = [
 const typeIcons = {
   order: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"
+      />
     </svg>
   ),
   ticket: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M15 5v2m0 4v2m0 4v2M5 5a2 2 0 00-2 2v3a2 2 0 110 4v3a2 2 0 002 2h14a2 2 0 002-2v-3a2 2 0 110-4V7a2 2 0 00-2-2H5z"
+      />
     </svg>
   ),
   festival: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+      />
     </svg>
   ),
   user: (
     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"
+      />
     </svg>
   ),
 };
@@ -98,10 +118,13 @@ const typeColors = {
   user: 'bg-orange-50 text-orange-600',
 };
 
-export default function RecentActivity({ activities = defaultActivities, loading = false }: RecentActivityProps) {
+export default function RecentActivity({
+  activities = defaultActivities,
+  loading = false,
+}: RecentActivityProps) {
   if (loading) {
     return (
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 overflow-hidden">
         <div className="px-6 py-4 border-b border-gray-100">
           <div className="h-6 bg-gray-200 rounded w-32 animate-pulse" />
         </div>
@@ -123,7 +146,7 @@ export default function RecentActivity({ activities = defaultActivities, loading
   }
 
   return (
-    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+    <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 overflow-hidden">
       <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
         <h3 className="font-semibold text-gray-900">Activite recente</h3>
         <Link
@@ -140,7 +163,9 @@ export default function RecentActivity({ activities = defaultActivities, loading
             href={activity.link}
             className="flex items-start gap-4 p-4 hover:bg-gray-50 transition-colors"
           >
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center ${typeColors[activity.type]}`}>
+            <div
+              className={`w-10 h-10 rounded-full flex items-center justify-center ${typeColors[activity.type]}`}
+            >
               {typeIcons[activity.type]}
             </div>
             <div className="flex-1 min-w-0">
@@ -156,8 +181,11 @@ export default function RecentActivity({ activities = defaultActivities, loading
               <p className="text-xs text-gray-400 mt-1">{formatDateTime(activity.timestamp)}</p>
             </div>
             {activity.amount !== undefined && (
-              <div className={`text-sm font-medium ${activity.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                {activity.amount >= 0 ? '+' : ''}{formatCurrency(activity.amount)}
+              <div
+                className={`text-sm font-medium ${activity.amount >= 0 ? 'text-green-600' : 'text-red-600'}`}
+              >
+                {activity.amount >= 0 ? '+' : ''}
+                {formatCurrency(activity.amount)}
               </div>
             )}
           </Link>

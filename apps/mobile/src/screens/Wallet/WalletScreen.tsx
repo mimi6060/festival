@@ -1,12 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  RefreshControl,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -14,7 +7,7 @@ import { Card } from '../../components/common';
 import { BalanceCard, TransactionItem } from '../../components/wallet';
 import { useWalletStore } from '../../store';
 import { offlineService } from '../../services';
-import { colors, spacing, typography, borderRadius } from '../../theme';
+import { colors, spacing, typography } from '../../theme';
 import type { RootStackParamList, Transaction } from '../../types';
 
 type WalletNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Main'>;
@@ -165,9 +158,7 @@ export const WalletScreen: React.FC = () => {
             <Card style={styles.emptyCard}>
               <Text style={styles.emptyIcon}>📋</Text>
               <Text style={styles.emptyTitle}>Aucune transaction</Text>
-              <Text style={styles.emptySubtitle}>
-                Vos transactions apparaitront ici
-              </Text>
+              <Text style={styles.emptySubtitle}>Vos transactions apparaitront ici</Text>
             </Card>
           )}
         </View>
@@ -179,8 +170,8 @@ export const WalletScreen: React.FC = () => {
             <View style={styles.infoText}>
               <Text style={styles.infoTitle}>Paiement cashless</Text>
               <Text style={styles.infoDescription}>
-                Utilisez votre bracelet ou l'app pour payer partout sur le site du festival.
-                Rapide, simple et securise!
+                Utilisez votre bracelet ou l'app pour payer partout sur le site du festival. Rapide,
+                simple et securise!
               </Text>
             </View>
           </View>
@@ -219,6 +210,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginTop: spacing.lg,
     marginBottom: spacing.lg,
+    gap: spacing.sm,
   },
   statCard: {
     flex: 1,
@@ -251,7 +243,7 @@ const styles = StyleSheet.create({
     color: colors.text,
   },
   seeAll: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.primary,
     fontWeight: '600',
   },
@@ -269,7 +261,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   emptySubtitle: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     textAlign: 'center',
   },
@@ -293,7 +285,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   infoDescription: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     lineHeight: 20,
   },

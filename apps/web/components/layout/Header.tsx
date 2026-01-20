@@ -28,7 +28,6 @@ interface HeaderProps {
 }
 
 export function Header({ isAuthenticated = false, user }: HeaderProps) {
-  const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
@@ -40,28 +39,13 @@ export function Header({ isAuthenticated = false, user }: HeaderProps) {
   };
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 10);
-    };
-
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  useEffect(() => {
     setIsMobileMenuOpen(false);
   }, [pathname]);
 
   return (
-    <header
-      className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
-        isScrolled || isMobileMenuOpen
-          ? 'bg-theme-bg/95 backdrop-blur-xl border-b border-theme'
-          : 'bg-transparent'
-      }`}
-    >
+    <header className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-lg border-b border-white/10">
       <nav className="container-app">
-        <div className="flex items-center justify-between h-16 md:h-20">
+        <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 group">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
@@ -79,7 +63,7 @@ export function Header({ isAuthenticated = false, user }: HeaderProps) {
                 />
               </svg>
             </div>
-            <span className="text-xl font-bold gradient-text hidden sm:block">FestivalHub</span>
+            <span className="text-xl font-bold text-white hidden sm:block">FestivalHub</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -169,7 +153,7 @@ export function Header({ isAuthenticated = false, user }: HeaderProps) {
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (
-          <div className="md:hidden py-4 border-t border-theme">
+          <div className="md:hidden py-4 border-t border-white/10">
             <div className="flex flex-col gap-2">
               {navItems.map((item) => (
                 <Link
@@ -184,7 +168,7 @@ export function Header({ isAuthenticated = false, user }: HeaderProps) {
                   {item.label}
                 </Link>
               ))}
-              <div className="mt-4 pt-4 border-t border-theme flex flex-col gap-2">
+              <div className="mt-4 pt-4 border-t border-white/10 flex flex-col gap-2">
                 {isAuthenticated ? (
                   <>
                     <Link

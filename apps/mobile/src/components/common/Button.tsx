@@ -7,7 +7,7 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { colors, spacing } from '../../theme';
 
 interface ButtonProps {
   title: string;
@@ -47,7 +47,7 @@ export const Button: React.FC<ButtonProps> = ({
       case 'secondary':
         return {
           ...baseStyle,
-          backgroundColor: colors.secondary,
+          backgroundColor: 'rgba(255, 255, 255, 0.1)',
         };
       case 'outline':
         return {
@@ -64,15 +64,16 @@ export const Button: React.FC<ButtonProps> = ({
       default:
         return {
           ...baseStyle,
-          backgroundColor: colors.primary,
+          backgroundColor: '#6366f1',
         };
     }
   };
 
   const getTextStyle = (): TextStyle => {
     const baseTextStyle: TextStyle = {
-      ...typography.button,
-      color: colors.white,
+      color: '#FFFFFF',
+      fontWeight: '600',
+      fontSize: 16,
     };
 
     if (variant === 'outline' || variant === 'ghost') {
@@ -88,11 +89,7 @@ export const Button: React.FC<ButtonProps> = ({
 
   return (
     <TouchableOpacity
-      style={[
-        getButtonStyle(),
-        isDisabled && styles.disabled,
-        style,
-      ]}
+      style={[getButtonStyle(), isDisabled && styles.disabled, style]}
       onPress={onPress}
       disabled={isDisabled}
       activeOpacity={0.8}
@@ -105,9 +102,7 @@ export const Button: React.FC<ButtonProps> = ({
       ) : (
         <>
           {icon}
-          <Text style={[getTextStyle(), icon && styles.textWithIcon, textStyle]}>
-            {title}
-          </Text>
+          <Text style={[getTextStyle(), icon && styles.textWithIcon, textStyle]}>{title}</Text>
         </>
       )}
     </TouchableOpacity>
@@ -119,21 +114,21 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: borderRadius.lg,
+    borderRadius: 8,
   },
   sm: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
     minHeight: 36,
   },
   md: {
-    paddingVertical: spacing.sm + 4,
-    paddingHorizontal: spacing.lg,
+    paddingVertical: 12,
+    paddingHorizontal: 20,
     minHeight: 48,
   },
   lg: {
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.xl,
+    paddingVertical: 16,
+    paddingHorizontal: 24,
     minHeight: 56,
   },
   fullWidth: {

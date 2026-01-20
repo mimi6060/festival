@@ -2,7 +2,15 @@
 
 import React from 'react';
 
-export type BadgeVariant = 'default' | 'primary' | 'secondary' | 'success' | 'warning' | 'error' | 'info' | 'outline';
+export type BadgeVariant =
+  | 'default'
+  | 'primary'
+  | 'secondary'
+  | 'success'
+  | 'warning'
+  | 'error'
+  | 'info'
+  | 'outline';
 export type BadgeSize = 'sm' | 'md' | 'lg';
 
 interface BadgeProps {
@@ -16,26 +24,31 @@ interface BadgeProps {
   onRemove?: () => void;
 }
 
+/**
+ * Standardized badge variant styles
+ * Base: px-2 py-1 rounded-full text-xs font-medium
+ * Colors use 500/20 background with 400 text for dark mode consistency
+ */
 const variantStyles: Record<BadgeVariant, string> = {
-  default: 'bg-white/10 text-white/80 border border-white/10',
-  primary: 'bg-primary-500/20 text-primary-300 border border-primary-500/30',
-  secondary: 'bg-pink-500/20 text-pink-300 border border-pink-500/30',
+  default: 'bg-gray-500/20 text-gray-400 border border-gray-500/30',
+  primary: 'bg-indigo-500/20 text-indigo-400 border border-indigo-500/30',
+  secondary: 'bg-pink-500/20 text-pink-400 border border-pink-500/30',
   success: 'bg-green-500/20 text-green-400 border border-green-500/30',
-  warning: 'bg-orange-500/20 text-orange-400 border border-orange-500/30',
+  warning: 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/30',
   error: 'bg-red-500/20 text-red-400 border border-red-500/30',
   info: 'bg-blue-500/20 text-blue-400 border border-blue-500/30',
-  outline: 'bg-transparent border border-white/20 text-white/70',
+  outline: 'bg-transparent border border-gray-400/50 text-gray-400',
 };
 
 const dotColors: Record<BadgeVariant, string> = {
-  default: 'bg-white/60',
-  primary: 'bg-primary-400',
+  default: 'bg-gray-400',
+  primary: 'bg-indigo-400',
   secondary: 'bg-pink-400',
   success: 'bg-green-400',
-  warning: 'bg-orange-400',
+  warning: 'bg-yellow-400',
   error: 'bg-red-400',
   info: 'bg-blue-400',
-  outline: 'bg-white/60',
+  outline: 'bg-gray-400',
 };
 
 const sizeStyles: Record<BadgeSize, string> = {
@@ -63,9 +76,7 @@ export function Badge({
         ${className}
       `}
     >
-      {dot && (
-        <span className={`w-1.5 h-1.5 rounded-full ${dotColors[variant]}`} />
-      )}
+      {dot && <span className={`w-1.5 h-1.5 rounded-full ${dotColors[variant]}`} />}
       {icon && <span className="flex-shrink-0">{icon}</span>}
       {children}
       {removable && (
@@ -88,11 +99,7 @@ export function Badge({
             stroke="currentColor"
             strokeWidth={2}
           >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              d="M6 18L18 6M6 6l12 12"
-            />
+            <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
           </svg>
         </button>
       )}
@@ -125,7 +132,19 @@ export function BadgeGroup({ children, className = '', max }: BadgeGroupProps) {
 }
 
 // Status Badge for orders/tickets
-export type StatusType = 'pending' | 'confirmed' | 'completed' | 'cancelled' | 'refunded' | 'valid' | 'used' | 'expired' | 'active' | 'inactive' | 'draft' | 'published';
+export type StatusType =
+  | 'pending'
+  | 'confirmed'
+  | 'completed'
+  | 'cancelled'
+  | 'refunded'
+  | 'valid'
+  | 'used'
+  | 'expired'
+  | 'active'
+  | 'inactive'
+  | 'draft'
+  | 'published';
 
 interface StatusBadgeProps {
   status: StatusType;

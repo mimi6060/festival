@@ -1,12 +1,5 @@
 import React, { useState, useMemo, useEffect, useCallback, memo } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  RefreshControl,
-} from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -19,7 +12,7 @@ import type { RootStackParamList, Ticket } from '../../types';
 // Constants for FlatList optimization
 const TICKET_CARD_HEIGHT = 200; // Approximate height of ticket card
 const ITEM_SEPARATOR_HEIGHT = 16; // spacing.md
-const FILTER_ITEM_WIDTH = 100; // Approximate width of filter button
+const _FILTER_ITEM_WIDTH = 100; // Approximate width of filter button (reserved for horizontal scroll optimization)
 
 type TicketsNavigationProp = NativeStackNavigationProp<RootStackParamList, 'Main'>;
 
@@ -97,7 +90,7 @@ export const MyTicketsScreen: React.FC = () => {
 
   // Clear invalid tickets and replace with mock data on mount
   useEffect(() => {
-    const hasInvalidTickets = storeTickets.some(t => !t.eventDate || !t.eventName);
+    const hasInvalidTickets = storeTickets.some((t) => !t.eventDate || !t.eventName);
     if (hasInvalidTickets || storeTickets.length === 0) {
       clearTickets();
       setTickets(mockTickets);
@@ -105,11 +98,14 @@ export const MyTicketsScreen: React.FC = () => {
   }, []);
 
   // Use mock data if store is empty or has invalid data
-  const hasValidTickets = storeTickets.length > 0 && storeTickets.every(t => t.eventDate && t.eventName);
+  const hasValidTickets =
+    storeTickets.length > 0 && storeTickets.every((t) => t.eventDate && t.eventName);
   const tickets = hasValidTickets ? storeTickets : mockTickets;
 
   const filteredTickets = useMemo(() => {
-    if (activeFilter === 'all') {return tickets;}
+    if (activeFilter === 'all') {
+      return tickets;
+    }
     return tickets.filter((t) => t.status === activeFilter);
   }, [tickets, activeFilter]);
 
@@ -119,60 +115,67 @@ export const MyTicketsScreen: React.FC = () => {
     setRefreshing(false);
   }, []);
 
-  const handleTicketPress = useCallback((ticket: Ticket) => {
-    navigation.navigate('TicketDetail', { ticketId: ticket.id });
-  }, [navigation]);
+  const handleTicketPress = useCallback(
+    (ticket: Ticket) => {
+      navigation.navigate('TicketDetail', { ticketId: ticket.id });
+    },
+    [navigation]
+  );
 
   const handleFilterPress = useCallback((filterKey: FilterType) => {
     setActiveFilter(filterKey);
   }, []);
 
   // Memoized filter item component
-  const FilterItem = memo(({ item, isActive, onPress }: {
-    item: { key: FilterType; label: string };
-    isActive: boolean;
-    onPress: (key: FilterType) => void;
-  }) => (
-    <TouchableOpacity
-      style={[
-        styles.filterButton,
-        isActive && styles.filterButtonActive,
-      ]}
-      onPress={() => onPress(item.key)}
-    >
-      <Text
-        style={[
-          styles.filterText,
-          isActive && styles.filterTextActive,
-        ]}
+  const FilterItem = memo(
+    ({
+      item,
+      isActive,
+      onPress,
+    }: {
+      item: { key: FilterType; label: string };
+      isActive: boolean;
+      onPress: (key: FilterType) => void;
+    }) => (
+      <TouchableOpacity
+        style={[styles.filterButton, isActive && styles.filterButtonActive]}
+        onPress={() => onPress(item.key)}
       >
-        {item.label}
-      </Text>
-    </TouchableOpacity>
-  ));
+        <Text style={[styles.filterText, isActive && styles.filterTextActive]}>{item.label}</Text>
+      </TouchableOpacity>
+    )
+  );
 
-  const renderFilter = useCallback(({ item }: { item: { key: FilterType; label: string } }) => (
-    <FilterItem
-      item={item}
-      isActive={activeFilter === item.key}
-      onPress={handleFilterPress}
-    />
-  ), [activeFilter, handleFilterPress]);
+  const renderFilter = useCallback(
+    ({ item }: { item: { key: FilterType; label: string } }) => (
+      <FilterItem item={item} isActive={activeFilter === item.key} onPress={handleFilterPress} />
+    ),
+    [activeFilter, handleFilterPress]
+  );
 
-  const renderTicket = useCallback(({ item }: { item: Ticket }) => (
-    <TicketCard ticket={item} onPress={() => handleTicketPress(item)} />
-  ), [handleTicketPress]);
+  const renderTicket = useCallback(
+    ({ item }: { item: Ticket }) => (
+      <TicketCard ticket={item} onPress={() => handleTicketPress(item)} />
+    ),
+    [handleTicketPress]
+  );
 
   // getItemLayout for fixed-height optimization
-  const getTicketItemLayout = useCallback((_: unknown, index: number) => ({
-    length: TICKET_CARD_HEIGHT + ITEM_SEPARATOR_HEIGHT,
-    offset: (TICKET_CARD_HEIGHT + ITEM_SEPARATOR_HEIGHT) * index,
-    index,
-  }), []);
+  const getTicketItemLayout = useCallback(
+    (_: unknown, index: number) => ({
+      length: TICKET_CARD_HEIGHT + ITEM_SEPARATOR_HEIGHT,
+      offset: (TICKET_CARD_HEIGHT + ITEM_SEPARATOR_HEIGHT) * index,
+      index,
+    }),
+    []
+  );
 
   // Stable key extractors
   const ticketKeyExtractor = useCallback((item: Ticket) => item.id, []);
-  const filterKeyExtractor = useCallback((item: { key: FilterType; label: string }) => item.key, []);
+  const filterKeyExtractor = useCallback(
+    (item: { key: FilterType; label: string }) => item.key,
+    []
+  );
 
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
@@ -275,7 +278,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.primary,
   },
   filterText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     fontWeight: '600',
   },

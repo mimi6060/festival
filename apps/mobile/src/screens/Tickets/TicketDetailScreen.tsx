@@ -381,7 +381,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   purchaseTitle: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textMuted,
     marginBottom: spacing.md,
     textTransform: 'uppercase',
@@ -393,11 +393,11 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   purchaseLabel: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
   },
   purchaseValue: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.text,
     fontWeight: '500',
   },

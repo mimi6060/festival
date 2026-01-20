@@ -28,26 +28,21 @@ interface TransactionItemProps {
 }
 
 // Memoized TransactionItem component for optimal performance
-export const TransactionItem = memo<TransactionItemProps>(({
-  transaction,
-}) => {
+export const TransactionItem = memo<TransactionItemProps>(({ transaction }) => {
   // Memoized type config
-  const typeConfig = useMemo(() =>
-    TRANSACTION_TYPE_CONFIG[transaction.type] || DEFAULT_TYPE_CONFIG,
+  const typeConfig = useMemo(
+    () => TRANSACTION_TYPE_CONFIG[transaction.type] || DEFAULT_TYPE_CONFIG,
     [transaction.type]
   );
 
   // Memoized status color
-  const statusColor = useMemo(() =>
-    STATUS_COLORS[transaction.status] || colors.textMuted,
+  const statusColor = useMemo(
+    () => STATUS_COLORS[transaction.status] || colors.textMuted,
     [transaction.status]
   );
 
   // Memoized positive check
-  const isPositive = useMemo(() =>
-    POSITIVE_TYPES.has(transaction.type),
-    [transaction.type]
-  );
+  const isPositive = useMemo(() => POSITIVE_TYPES.has(transaction.type), [transaction.type]);
 
   // Memoized currency formatting
   const formattedAmount = useMemo(() => {
@@ -86,21 +81,12 @@ export const TransactionItem = memo<TransactionItemProps>(({
             </Text>
           </View>
           <View style={styles.rightContent}>
-            <Text
-              style={[
-                styles.amount,
-                { color: isPositive ? colors.success : colors.text },
-              ]}
-            >
+            <Text style={[styles.amount, { color: isPositive ? colors.success : colors.text }]}>
               {formattedAmount}
             </Text>
             <View style={styles.statusRow}>
-              <View
-                style={[styles.statusDot, { backgroundColor: statusColor }]}
-              />
-              <Text style={[styles.status, { color: statusColor }]}>
-                {transaction.status}
-              </Text>
+              <View style={[styles.statusDot, { backgroundColor: statusColor }]} />
+              <Text style={[styles.status, { color: statusColor }]}>{transaction.status}</Text>
             </View>
           </View>
         </View>
@@ -152,7 +138,7 @@ const styles = StyleSheet.create({
     marginBottom: 2,
   },
   description: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
   },
   amount: {

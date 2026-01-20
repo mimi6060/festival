@@ -110,13 +110,23 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
         <Link href="/festivals" className="text-gray-500 hover:text-gray-700">
           Festivals
         </Link>
-        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-4 h-4 text-gray-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
         <Link href={`/festivals/${id}`} className="text-gray-500 hover:text-gray-700">
           {festival.name}
         </Link>
-        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg
+          className="w-4 h-4 text-gray-400"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
         </svg>
         <span className="text-gray-900 font-medium">Scenes</span>
@@ -126,7 +136,9 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Scenes - {festival.name}</h1>
-          <p className="text-gray-500 mt-1">{stages.length} scenes - Capacite totale: {totalCapacity.toLocaleString()} personnes</p>
+          <p className="text-gray-500 mt-1">
+            {stages.length} scenes - Capacite totale: {totalCapacity.toLocaleString()} personnes
+          </p>
         </div>
         <button onClick={openCreateModal} className="btn-primary">
           + Ajouter une scene
@@ -168,7 +180,7 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
       </div>
 
       {/* Stages List */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 overflow-hidden">
         <div className="bg-gradient-to-r from-primary-500 to-pink-500 px-6 py-4">
           <h2 className="text-xl font-bold text-white">Liste des scenes</h2>
           <p className="text-white/80 text-sm">Gerez les differentes scenes du festival</p>
@@ -181,16 +193,38 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
           </div>
         ) : error ? (
           <div className="p-8 text-center">
-            <svg className="w-12 h-12 mx-auto mb-4 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <svg
+              className="w-12 h-12 mx-auto mb-4 text-red-400"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
             </svg>
             <p className="text-red-600 font-medium">Erreur lors du chargement des scenes</p>
-            <p className="text-gray-500 text-sm mt-2">{error instanceof Error ? error.message : 'Une erreur est survenue'}</p>
+            <p className="text-gray-500 text-sm mt-2">
+              {error instanceof Error ? error.message : 'Une erreur est survenue'}
+            </p>
           </div>
         ) : stages.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
-            <svg className="w-12 h-12 mx-auto mb-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+            <svg
+              className="w-12 h-12 mx-auto mb-4 text-gray-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+              />
             </svg>
             <p>Aucune scene configuree pour ce festival</p>
             <button onClick={openCreateModal} className="btn-primary mt-4">
@@ -200,11 +234,19 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
         ) : (
           <div className="divide-y divide-gray-100">
             {stages.map((stage: Stage) => (
-              <div key={stage.id} className="p-4 flex items-center justify-between hover:bg-gray-50">
+              <div
+                key={stage.id}
+                className="p-4 flex items-center justify-between hover:bg-gray-50"
+              >
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary-400 to-pink-400 flex items-center justify-center text-white font-bold">
                     <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+                      />
                     </svg>
                   </div>
                   <div>
@@ -214,7 +256,9 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
                 </div>
                 <div className="flex items-center gap-6">
                   <div className="text-right">
-                    <p className="font-medium text-gray-900">{stage.capacity.toLocaleString()} pers.</p>
+                    <p className="font-medium text-gray-900">
+                      {stage.capacity.toLocaleString()} pers.
+                    </p>
                     <p className="text-sm text-gray-500">{stage.location}</p>
                   </div>
                   <div className="flex gap-2">
@@ -224,8 +268,18 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
                       title="Modifier"
                       disabled={deleteMutation.isPending}
                     >
-                      <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      <svg
+                        className="w-5 h-5 text-gray-500"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                        />
                       </svg>
                     </button>
                     <button
@@ -237,8 +291,18 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
                       {deleteMutation.isPending ? (
                         <div className="inline-block animate-spin rounded-full h-5 w-5 border-b-2 border-red-500"></div>
                       ) : (
-                        <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                        <svg
+                          className="w-5 h-5 text-red-500"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          />
                         </svg>
                       )}
                     </button>
@@ -251,7 +315,7 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
       </div>
 
       {/* Capacity Summary Card */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4">Repartition de la capacite</h3>
         <div className="space-y-3">
           {stages.map((stage: Stage) => {
@@ -260,7 +324,9 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
               <div key={stage.id}>
                 <div className="flex justify-between text-sm mb-1">
                   <span className="text-gray-600">{stage.name}</span>
-                  <span className="text-gray-900 font-medium">{stage.capacity.toLocaleString()} ({percentage.toFixed(1)}%)</span>
+                  <span className="text-gray-900 font-medium">
+                    {stage.capacity.toLocaleString()} ({percentage.toFixed(1)}%)
+                  </span>
                 </div>
                 <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                   <div
@@ -275,54 +341,61 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
         <div className="mt-4 pt-4 border-t border-gray-100">
           <div className="flex justify-between">
             <span className="text-gray-600 font-medium">Capacite totale</span>
-            <span className="text-gray-900 font-bold">{totalCapacity.toLocaleString()} personnes</span>
+            <span className="text-gray-900 font-bold">
+              {totalCapacity.toLocaleString()} personnes
+            </span>
           </div>
         </div>
       </div>
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl w-full max-w-lg mx-4 overflow-hidden">
-            <div className="p-6 border-b border-gray-100">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="dark:bg-gray-900 bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-2xl w-full max-w-lg">
+            <div className="p-6 border-b dark:border-white/10 border-gray-200">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">
+                <h2 className="text-xl font-bold dark:text-white text-gray-900">
                   {editingStage ? 'Modifier la scene' : 'Ajouter une scene'}
                 </h2>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg"
+                  className="p-2 dark:text-white/50 text-gray-400 hover:dark:text-white hover:text-gray-600 hover:dark:bg-white/5 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                 </button>
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form id="stage-form" onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium dark:text-white/70 text-gray-700 mb-1">
                   Nom de la scene *
                 </label>
                 <input
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 dark:bg-white/5 bg-white border dark:border-white/10 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white text-gray-900"
                   placeholder="Ex: Main Stage"
                   required
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium dark:text-white/70 text-gray-700 mb-1">
                   Description *
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                  className="w-full px-3 py-2 dark:bg-white/5 bg-white border dark:border-white/10 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none dark:text-white text-gray-900"
                   placeholder="Description de la scene..."
                   rows={3}
                   required
@@ -330,14 +403,16 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium dark:text-white/70 text-gray-700 mb-1">
                   Capacite (personnes) *
                 </label>
                 <input
                   type="number"
                   value={formData.capacity}
-                  onChange={(e) => setFormData({ ...formData, capacity: parseInt(e.target.value) || 0 })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  onChange={(e) =>
+                    setFormData({ ...formData, capacity: parseInt(e.target.value) || 0 })
+                  }
+                  className="w-full px-3 py-2 dark:bg-white/5 bg-white border dark:border-white/10 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white text-gray-900"
                   placeholder="Ex: 5000"
                   min={1}
                   required
@@ -345,44 +420,47 @@ export default function FestivalStagesPage({ params }: FestivalStagesPageProps) 
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium dark:text-white/70 text-gray-700 mb-1">
                   Emplacement *
                 </label>
                 <input
                   type="text"
                   value={formData.location}
                   onChange={(e) => setFormData({ ...formData, location: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 dark:bg-white/5 bg-white border dark:border-white/10 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white text-gray-900"
                   placeholder="Ex: Zone A - Entree principale"
                   required
                 />
               </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 btn-secondary"
-                  disabled={createMutation.isPending || updateMutation.isPending}
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 btn-primary"
-                  disabled={createMutation.isPending || updateMutation.isPending}
-                >
-                  {createMutation.isPending || updateMutation.isPending ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-                      Enregistrement...
-                    </span>
-                  ) : (
-                    editingStage ? 'Enregistrer' : 'Ajouter'
-                  )}
-                </button>
-              </div>
             </form>
+
+            <div className="flex gap-3 px-6 py-4 dark:bg-white/5 bg-gray-50 border-t dark:border-white/10 border-gray-200 rounded-b-xl">
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="flex-1 btn-secondary"
+                disabled={createMutation.isPending || updateMutation.isPending}
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                form="stage-form"
+                className="flex-1 btn-primary"
+                disabled={createMutation.isPending || updateMutation.isPending}
+              >
+                {createMutation.isPending || updateMutation.isPending ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="inline-block animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                    Enregistrement...
+                  </span>
+                ) : editingStage ? (
+                  'Enregistrer'
+                ) : (
+                  'Ajouter'
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

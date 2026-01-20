@@ -13,7 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
-import { Card, Button } from '../../components/common';
+import { Card, Button, Avatar } from '../../components/common';
 import { useAuthStore } from '../../store';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { RootStackParamList } from '../../types';
@@ -68,7 +68,7 @@ export const EditProfileScreen: React.FC = () => {
     setLoading(true);
     try {
       // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise((resolve) => setTimeout(resolve, 1000));
 
       updateUser({
         firstName: firstName.trim(),
@@ -79,7 +79,7 @@ export const EditProfileScreen: React.FC = () => {
 
       showAlert('Succes', 'Vos informations ont ete mises a jour');
       navigation.goBack();
-    } catch (error) {
+    } catch {
       showAlert('Erreur', 'Impossible de mettre a jour vos informations');
     } finally {
       setLoading(false);
@@ -94,10 +94,7 @@ export const EditProfileScreen: React.FC = () => {
       >
         {/* Header */}
         <View style={styles.header}>
-          <TouchableOpacity
-            style={styles.backButton}
-            onPress={() => navigation.goBack()}
-          >
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Modifier le profil</Text>
@@ -112,11 +109,7 @@ export const EditProfileScreen: React.FC = () => {
         >
           {/* Avatar Section */}
           <View style={styles.avatarSection}>
-            <View style={styles.avatar}>
-              <Text style={styles.avatarText}>
-                {firstName.charAt(0).toUpperCase()}{lastName.charAt(0).toUpperCase()}
-              </Text>
-            </View>
+            <Avatar name={`${firstName} ${lastName}`} size="2xl" style={styles.avatarMargin} />
             <TouchableOpacity style={styles.changeAvatarButton}>
               <Text style={styles.changeAvatarText}>Changer la photo</Text>
             </TouchableOpacity>
@@ -172,9 +165,7 @@ export const EditProfileScreen: React.FC = () => {
                 placeholderTextColor={colors.textMuted}
                 keyboardType="phone-pad"
               />
-              <Text style={styles.inputHint}>
-                Optionnel - Utilise pour les notifications SMS
-              </Text>
+              <Text style={styles.inputHint}>Optionnel - Utilise pour les notifications SMS</Text>
             </View>
           </Card>
 
@@ -187,9 +178,7 @@ export const EditProfileScreen: React.FC = () => {
           />
 
           {/* Info */}
-          <Text style={styles.infoText}>
-            * Champs obligatoires
-          </Text>
+          <Text style={styles.infoText}>* Champs obligatoires</Text>
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>
@@ -241,19 +230,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: spacing.xl,
   },
-  avatar: {
-    width: 100,
-    height: 100,
-    borderRadius: 50,
-    backgroundColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
+  avatarMargin: {
     marginBottom: spacing.md,
-  },
-  avatarText: {
-    ...typography.h1,
-    color: colors.white,
-    fontSize: 36,
   },
   changeAvatarButton: {
     paddingVertical: spacing.sm,
@@ -271,7 +249,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
   },
   inputLabel: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     marginBottom: spacing.xs,
   },

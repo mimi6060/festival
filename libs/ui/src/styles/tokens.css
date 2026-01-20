@@ -17,18 +17,18 @@
    * BRAND COLORS
    * ============================================ */
 
-  /* Primary - Purple/Fuchsia (main brand color) */
-  --festival-color-primary-50: #fdf4ff;
-  --festival-color-primary-100: #fae8ff;
-  --festival-color-primary-200: #f5d0fe;
-  --festival-color-primary-300: #f0abfc;
-  --festival-color-primary-400: #e879f9;
-  --festival-color-primary-500: #d946ef;
-  --festival-color-primary-600: #c026d3;
-  --festival-color-primary-700: #a21caf;
-  --festival-color-primary-800: #86198f;
-  --festival-color-primary-900: #701a75;
-  --festival-color-primary-950: #4a044e;
+  /* Primary - Indigo (unified brand color) */
+  --festival-color-primary-50: #eef2ff;
+  --festival-color-primary-100: #e0e7ff;
+  --festival-color-primary-200: #c7d2fe;
+  --festival-color-primary-300: #a5b4fc;
+  --festival-color-primary-400: #818cf8;
+  --festival-color-primary-500: #6366f1;
+  --festival-color-primary-600: #4f46e5;
+  --festival-color-primary-700: #4338ca;
+  --festival-color-primary-800: #3730a3;
+  --festival-color-primary-900: #312e81;
+  --festival-color-primary-950: #1e1b4b;
 
   /* Secondary - Pink */
   --festival-color-secondary-50: #fdf2f8;
@@ -43,18 +43,18 @@
   --festival-color-secondary-900: #831843;
   --festival-color-secondary-950: #500724;
 
-  /* Accent - Sky Blue (admin primary) */
-  --festival-color-accent-50: #f0f9ff;
-  --festival-color-accent-100: #e0f2fe;
-  --festival-color-accent-200: #bae6fd;
-  --festival-color-accent-300: #7dd3fc;
-  --festival-color-accent-400: #38bdf8;
-  --festival-color-accent-500: #0ea5e9;
-  --festival-color-accent-600: #0284c7;
-  --festival-color-accent-700: #0369a1;
-  --festival-color-accent-800: #075985;
-  --festival-color-accent-900: #0c4a6e;
-  --festival-color-accent-950: #082f49;
+  /* Accent - Indigo (unified with primary) */
+  --festival-color-accent-50: #eef2ff;
+  --festival-color-accent-100: #e0e7ff;
+  --festival-color-accent-200: #c7d2fe;
+  --festival-color-accent-300: #a5b4fc;
+  --festival-color-accent-400: #818cf8;
+  --festival-color-accent-500: #6366f1;
+  --festival-color-accent-600: #4f46e5;
+  --festival-color-accent-700: #4338ca;
+  --festival-color-accent-800: #3730a3;
+  --festival-color-accent-900: #312e81;
+  --festival-color-accent-950: #1e1b4b;
 
   /* ============================================
    * NEUTRAL COLORS
@@ -69,8 +69,8 @@
   --festival-color-neutral-600: #525252;
   --festival-color-neutral-700: #404040;
   --festival-color-neutral-800: #262626;
-  --festival-color-neutral-900: #171717;
-  --festival-color-neutral-950: #0a0a0a;
+  --festival-color-neutral-900: #1a1a1a; /* Surface */
+  --festival-color-neutral-950: #0a0a0a; /* Background dark */
 
   /* Gray (slightly cooler) */
   --festival-color-gray-50: #f9fafb;
@@ -138,14 +138,14 @@
   --festival-color-info-900: #1e3a8a;
 
   /* ============================================
-   * FESTIVAL THEME COLORS (Immersive Dark)
+   * FESTIVAL THEME COLORS (Unified Dark)
    * ============================================ */
 
-  --festival-color-festival-dark: #1a1a2e;
-  --festival-color-festival-darker: #12121f;
-  --festival-color-festival-medium: #16213e;
-  --festival-color-festival-light: #0f3460;
-  --festival-color-festival-accent: #e94560;
+  --festival-color-festival-dark: #0a0a0a; /* Background dark */
+  --festival-color-festival-darker: #000000;
+  --festival-color-festival-medium: #1a1a1a; /* Surface */
+  --festival-color-festival-light: #262626;
+  --festival-color-festival-accent: #6366f1; /* Primary indigo */
 
   /* ============================================
    * SPACING SCALE
@@ -241,10 +241,10 @@
   --festival-shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
   --festival-shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
 
-  /* Glow Shadows (brand) */
-  --festival-shadow-glow-primary: 0 0 20px rgb(217 70 239 / 0.3);
+  /* Glow Shadows (brand) - Unified indigo primary */
+  --festival-shadow-glow-primary: 0 0 20px rgb(99 102 241 / 0.3);
   --festival-shadow-glow-secondary: 0 0 20px rgb(236 72 153 / 0.3);
-  --festival-shadow-glow-accent: 0 0 20px rgb(14 165 233 / 0.3);
+  --festival-shadow-glow-accent: 0 0 20px rgb(99 102 241 / 0.3);
   --festival-shadow-glow-success: 0 0 20px rgb(34 197 94 / 0.3);
   --festival-shadow-glow-error: 0 0 20px rgb(239 68 68 / 0.3);
 
@@ -348,41 +348,41 @@
 
 .dark,
 [data-theme='dark'] {
-  /* Backgrounds */
-  --festival-bg: var(--festival-color-gray-900);
-  --festival-bg-secondary: var(--festival-color-gray-800);
-  --festival-bg-tertiary: var(--festival-color-gray-700);
-  --festival-bg-elevated: var(--festival-color-gray-800);
-  --festival-bg-hover: var(--festival-color-gray-800);
+  /* Backgrounds - Unified dark palette */
+  --festival-bg: #0a0a0a; /* Background dark */
+  --festival-bg-secondary: #1a1a1a; /* Surface */
+  --festival-bg-tertiary: #262626;
+  --festival-bg-elevated: #1a1a1a;
+  --festival-bg-hover: #262626;
 
-  /* Surfaces */
-  --festival-surface: var(--festival-color-gray-800);
-  --festival-surface-hover: var(--festival-color-gray-700);
-  --festival-surface-active: var(--festival-color-gray-600);
+  /* Surfaces - Unified */
+  --festival-surface: #1a1a1a; /* Surface */
+  --festival-surface-hover: #262626;
+  --festival-surface-active: #333333;
 
-  /* Text */
-  --festival-text-primary: var(--festival-color-gray-50);
-  --festival-text-secondary: var(--festival-color-gray-300);
-  --festival-text-tertiary: var(--festival-color-gray-400);
-  --festival-text-muted: var(--festival-color-gray-500);
+  /* Text - Unified */
+  --festival-text-primary: #ffffff; /* Text primary */
+  --festival-text-secondary: rgba(255, 255, 255, 0.7); /* Text muted */
+  --festival-text-tertiary: rgba(255, 255, 255, 0.5);
+  --festival-text-muted: rgba(255, 255, 255, 0.4);
 
-  /* Borders */
-  --festival-border: var(--festival-color-gray-700);
-  --festival-border-hover: var(--festival-color-gray-600);
-  --festival-border-focus: var(--festival-color-primary-400);
+  /* Borders - Unified */
+  --festival-border: rgba(255, 255, 255, 0.1); /* Border */
+  --festival-border-hover: rgba(255, 255, 255, 0.2);
+  --festival-border-focus: var(--festival-color-primary-500);
 
   /* Cards & Inputs */
-  --festival-card-bg: var(--festival-color-gray-800);
-  --festival-card-border: var(--festival-color-gray-700);
-  --festival-input-bg: var(--festival-color-gray-800);
-  --festival-input-border: var(--festival-color-gray-600);
-  --festival-input-placeholder: var(--festival-color-gray-500);
+  --festival-card-bg: #1a1a1a;
+  --festival-card-border: rgba(255, 255, 255, 0.1);
+  --festival-input-bg: #1a1a1a;
+  --festival-input-border: rgba(255, 255, 255, 0.1);
+  --festival-input-placeholder: rgba(255, 255, 255, 0.4);
 
   /* Shadows (darker for dark mode) */
-  --festival-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.2);
-  --festival-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.2);
-  --festival-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.2);
-  --festival-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.3), 0 8px 10px -6px rgb(0 0 0 / 0.2);
+  --festival-shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+  --festival-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.4), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+  --festival-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.4), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  --festival-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.4), 0 8px 10px -6px rgb(0 0 0 / 0.3);
 }
 
 /* ============================================

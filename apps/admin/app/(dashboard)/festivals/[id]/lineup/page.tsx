@@ -313,7 +313,7 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
       {!isLoading && (
         <div className="space-y-8">
           {groupedByDay.length === 0 ? (
-            <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-8 text-center">
+            <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-8 text-center">
               <svg
                 className="w-12 h-12 mx-auto mb-4 text-gray-300"
                 fill="none"
@@ -338,7 +338,7 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
             groupedByDay.map(({ day, performances: dayPerformances }) => (
               <div
                 key={day}
-                className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+                className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 overflow-hidden"
               >
                 <div className="bg-gradient-to-r from-primary-500 to-pink-500 px-6 py-4">
                   <h2 className="text-xl font-bold text-white capitalize">{day}</h2>
@@ -431,23 +431,18 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
 
       {/* Modal */}
       {showModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl w-full max-w-lg mx-4 overflow-hidden">
-            <div className="p-6 border-b border-gray-100">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="dark:bg-gray-900 bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-2xl w-full max-w-lg">
+            <div className="p-6 border-b dark:border-white/10 border-gray-200">
               <div className="flex items-center justify-between">
-                <h2 className="text-xl font-bold text-gray-900">
+                <h2 className="text-xl font-bold dark:text-white text-gray-900">
                   {editingPerformance ? 'Modifier la performance' : 'Ajouter une performance'}
                 </h2>
                 <button
                   onClick={() => setShowModal(false)}
-                  className="p-2 hover:bg-gray-100 rounded-lg"
+                  className="p-2 dark:text-white/50 text-gray-400 hover:dark:text-white hover:text-gray-600 hover:dark:bg-white/5 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  <svg
-                    className="w-5 h-5 text-gray-500"
-                    fill="none"
-                    stroke="currentColor"
-                    viewBox="0 0 24 24"
-                  >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -459,13 +454,15 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
               </div>
             </div>
 
-            <form onSubmit={handleSubmit} className="p-6 space-y-4">
+            <form id="lineup-form" onSubmit={handleSubmit} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Artiste *</label>
+                <label className="block text-sm font-medium dark:text-white/70 text-gray-700 mb-1">
+                  Artiste *
+                </label>
                 <select
                   value={formData.artistId}
                   onChange={(e) => setFormData({ ...formData, artistId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 dark:bg-white/5 bg-white border dark:border-white/10 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white text-gray-900"
                   required
                 >
                   <option value="">Selectionner un artiste</option>
@@ -478,11 +475,13 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Scene *</label>
+                <label className="block text-sm font-medium dark:text-white/70 text-gray-700 mb-1">
+                  Scene *
+                </label>
                 <select
                   value={formData.stageId}
                   onChange={(e) => setFormData({ ...formData, stageId: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 dark:bg-white/5 bg-white border dark:border-white/10 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white text-gray-900"
                   required
                 >
                   <option value="">Selectionner une scene</option>
@@ -495,80 +494,83 @@ export default function FestivalLineupPage({ params }: FestivalLineupPageProps) 
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Date *</label>
+                <label className="block text-sm font-medium dark:text-white/70 text-gray-700 mb-1">
+                  Date *
+                </label>
                 <input
                   type="date"
                   value={formData.date}
                   onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  className="w-full px-3 py-2 dark:bg-white/5 bg-white border dark:border-white/10 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white text-gray-900"
                   required
                 />
               </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium dark:text-white/70 text-gray-700 mb-1">
                     Heure de debut *
                   </label>
                   <input
                     type="time"
                     value={formData.startTime}
                     onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 dark:bg-white/5 bg-white border dark:border-white/10 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white text-gray-900"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="block text-sm font-medium dark:text-white/70 text-gray-700 mb-1">
                     Heure de fin *
                   </label>
                   <input
                     type="time"
                     value={formData.endTime}
                     onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    className="w-full px-3 py-2 dark:bg-white/5 bg-white border dark:border-white/10 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 dark:text-white text-gray-900"
                     required
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium dark:text-white/70 text-gray-700 mb-1">
                   Description (optionnel)
                 </label>
                 <textarea
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none"
+                  className="w-full px-3 py-2 dark:bg-white/5 bg-white border dark:border-white/10 border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 resize-none dark:text-white text-gray-900"
                   placeholder="Notes sur la performance..."
                   rows={3}
                 />
               </div>
-
-              <div className="flex gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="flex-1 btn-secondary"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 btn-primary"
-                  disabled={
-                    createPerformanceMutation.isPending || updatePerformanceMutation.isPending
-                  }
-                >
-                  {createPerformanceMutation.isPending || updatePerformanceMutation.isPending
-                    ? 'Enregistrement...'
-                    : editingPerformance
-                      ? 'Enregistrer'
-                      : 'Ajouter'}
-                </button>
-              </div>
             </form>
+
+            <div className="flex gap-3 px-6 py-4 dark:bg-white/5 bg-gray-50 border-t dark:border-white/10 border-gray-200 rounded-b-xl">
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="flex-1 btn-secondary"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                form="lineup-form"
+                className="flex-1 btn-primary"
+                disabled={
+                  createPerformanceMutation.isPending || updatePerformanceMutation.isPending
+                }
+              >
+                {createPerformanceMutation.isPending || updatePerformanceMutation.isPending
+                  ? 'Enregistrement...'
+                  : editingPerformance
+                    ? 'Enregistrer'
+                    : 'Ajouter'}
+              </button>
+            </div>
           </div>
         </div>
       )}

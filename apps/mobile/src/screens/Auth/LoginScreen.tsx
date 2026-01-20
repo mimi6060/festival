@@ -50,7 +50,9 @@ export const LoginScreen: React.FC = () => {
   };
 
   const handleLogin = async () => {
-    if (!validate()) {return;}
+    if (!validate()) {
+      return;
+    }
 
     setLoading(true);
     try {
@@ -121,18 +123,12 @@ export const LoginScreen: React.FC = () => {
               onChangeText={setPassword}
               secureTextEntry={!showPassword}
               error={errors.password}
-              rightIcon={
-                <Text style={styles.eyeIcon}>
-                  {showPassword ? '👁️' : '👁️‍🗨️'}
-                </Text>
-              }
+              rightIcon={<Text style={styles.eyeIcon}>{showPassword ? '👁️' : '👁️‍🗨️'}</Text>}
               onRightIconPress={() => setShowPassword(!showPassword)}
             />
 
             <TouchableOpacity style={styles.forgotPassword}>
-              <Text style={styles.forgotPasswordText}>
-                Mot de passe oublie?
-              </Text>
+              <Text style={styles.forgotPasswordText}>Mot de passe oublie?</Text>
             </TouchableOpacity>
 
             <Button
@@ -207,7 +203,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.lg,
   },
   forgotPasswordText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.primary,
   },
   loginButton: {

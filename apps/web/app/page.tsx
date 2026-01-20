@@ -14,25 +14,25 @@ export default function Home() {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
           <Link
             href="/festivals"
-            className="bg-white/10 backdrop-blur-lg rounded-xl p-6 hover:bg-white/20 transition cursor-pointer block"
+            className="bg-white/10 backdrop-blur-lg rounded-xl p-6 hover:bg-white/20 transition cursor-pointer block space-y-3"
           >
-            <h2 className="text-2xl font-semibold mb-3 text-festival-accent">Billetterie</h2>
+            <h2 className="text-2xl font-semibold text-festival-accent">Billetterie</h2>
             <p className="text-gray-300">Vente de billets en ligne avec QR codes sécurisés</p>
           </Link>
 
           <Link
             href="/cashless"
-            className="bg-white/10 backdrop-blur-lg rounded-xl p-6 hover:bg-white/20 transition cursor-pointer block"
+            className="bg-white/10 backdrop-blur-lg rounded-xl p-6 hover:bg-white/20 transition cursor-pointer block space-y-3"
           >
-            <h2 className="text-2xl font-semibold mb-3 text-festival-accent">Cashless</h2>
+            <h2 className="text-2xl font-semibold text-festival-accent">Cashless</h2>
             <p className="text-gray-300">Paiements NFC rapides et sans contact</p>
           </Link>
 
           <Link
             href="/programme"
-            className="bg-white/10 backdrop-blur-lg rounded-xl p-6 hover:bg-white/20 transition cursor-pointer block"
+            className="bg-white/10 backdrop-blur-lg rounded-xl p-6 hover:bg-white/20 transition cursor-pointer block space-y-3"
           >
-            <h2 className="text-2xl font-semibold mb-3 text-festival-accent">Programme</h2>
+            <h2 className="text-2xl font-semibold text-festival-accent">Programme</h2>
             <p className="text-gray-300">Gestion des artistes et des scènes</p>
           </Link>
         </div>

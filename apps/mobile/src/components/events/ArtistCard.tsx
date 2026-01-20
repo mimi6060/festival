@@ -1,10 +1,5 @@
 import React, { memo, useMemo, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Card, OptimizedImage } from '../common';
 import { colors, spacing, typography, borderRadius } from '../../theme';
 import type { Artist, ProgramEvent } from '../../types';
@@ -33,226 +28,187 @@ interface ArtistCardProps {
 }
 
 // Memoized ArtistCard component for optimal performance
-export const ArtistCard = memo<ArtistCardProps>(({
-  artist,
-  events = [],
-  onPress,
-  onFavoritePress,
-  isFavorite = false,
-  variant = 'default',
-}) => {
-  // Memoized genre color lookup
-  const genreColor = useMemo(() =>
-    GENRE_COLORS[artist.genre] || colors.primary,
-    [artist.genre]
-  );
+export const ArtistCard = memo<ArtistCardProps>(
+  ({ artist, events = [], onPress, onFavoritePress, isFavorite = false, variant = 'default' }) => {
+    // Memoized genre color lookup
+    const genreColor = useMemo(() => GENRE_COLORS[artist.genre] || colors.primary, [artist.genre]);
 
-  // Memoized initials calculation
-  const initials = useMemo(() =>
-    artist.name
-      .split(' ')
-      .map((word) => word.charAt(0))
-      .join('')
-      .slice(0, 2)
-      .toUpperCase(),
-    [artist.name]
-  );
-
-  // Memoized next event lookup
-  const nextEvent = useMemo(() =>
-    events.find((e) => e.artist.id === artist.id),
-    [events, artist.id]
-  );
-
-  // Memoized callbacks to prevent re-renders
-  const handlePress = useCallback(() => onPress?.(), [onPress]);
-  const handleFavoritePress = useCallback(() => onFavoritePress?.(), [onFavoritePress]);
-
-  if (variant === 'compact') {
-    return (
-      <TouchableOpacity onPress={handlePress} disabled={!onPress}>
-        <View style={styles.compactContainer}>
-          {/* Avatar with OptimizedImage */}
-          {artist.image ? (
-            <OptimizedImage
-              uri={artist.image}
-              style={styles.compactAvatar}
-              priority="normal"
-              cachePolicy="memory-disk"
-            />
-          ) : (
-            <View
-              style={[
-                styles.compactAvatar,
-                { backgroundColor: genreColor },
-              ]}
-            >
-              <Text style={styles.compactAvatarText}>{initials}</Text>
-            </View>
-          )}
-
-          {/* Info */}
-          <View style={styles.compactInfo}>
-            <Text style={styles.compactName} numberOfLines={1}>
-              {artist.name}
-            </Text>
-            <Text style={styles.compactGenre}>{artist.genre}</Text>
-          </View>
-
-          {/* Favorite */}
-          {onFavoritePress && (
-            <TouchableOpacity style={styles.compactFavorite} onPress={handleFavoritePress}>
-              <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </TouchableOpacity>
+    // Memoized initials calculation
+    const initials = useMemo(
+      () =>
+        artist.name
+          .split(' ')
+          .map((word) => word.charAt(0))
+          .join('')
+          .slice(0, 2)
+          .toUpperCase(),
+      [artist.name]
     );
-  }
 
-  if (variant === 'large') {
-    return (
-      <TouchableOpacity onPress={handlePress} disabled={!onPress}>
-        <Card style={styles.largeCard}>
-          {/* Cover Image with OptimizedImage */}
-          <View style={styles.largeCover}>
+    // Memoized next event lookup
+    const nextEvent = useMemo(
+      () => events.find((e) => e.artist.id === artist.id),
+      [events, artist.id]
+    );
+
+    // Memoized callbacks to prevent re-renders
+    const handlePress = useCallback(() => onPress?.(), [onPress]);
+    const handleFavoritePress = useCallback(() => onFavoritePress?.(), [onFavoritePress]);
+
+    if (variant === 'compact') {
+      return (
+        <TouchableOpacity onPress={handlePress} disabled={!onPress}>
+          <View style={styles.compactContainer}>
+            {/* Avatar with OptimizedImage */}
             {artist.image ? (
               <OptimizedImage
                 uri={artist.image}
-                style={styles.largeCoverImage}
-                priority="high"
+                style={styles.compactAvatar}
+                priority="normal"
                 cachePolicy="memory-disk"
-                contentFit="cover"
               />
             ) : (
-              <View
-                style={[
-                  styles.largeCoverPlaceholder,
-                  { backgroundColor: genreColor },
-                ]}
-              >
-                <Text style={styles.largeCoverIcon}>🎵</Text>
+              <View style={[styles.compactAvatar, { backgroundColor: genreColor }]}>
+                <Text style={styles.compactAvatarText}>{initials}</Text>
               </View>
             )}
 
-            {/* Favorite Button */}
+            {/* Info */}
+            <View style={styles.compactInfo}>
+              <Text style={styles.compactName} numberOfLines={1}>
+                {artist.name}
+              </Text>
+              <Text style={styles.compactGenre}>{artist.genre}</Text>
+            </View>
+
+            {/* Favorite */}
             {onFavoritePress && (
-              <TouchableOpacity
-                style={styles.largeFavoriteButton}
-                onPress={handleFavoritePress}
-              >
+              <TouchableOpacity style={styles.compactFavorite} onPress={handleFavoritePress}>
                 <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
               </TouchableOpacity>
             )}
-
-            {/* Genre Badge */}
-            <View
-              style={[
-                styles.largeGenreBadge,
-                { backgroundColor: genreColor },
-              ]}
-            >
-              <Text style={styles.largeGenreText}>{artist.genre}</Text>
-            </View>
           </View>
+        </TouchableOpacity>
+      );
+    }
 
-          {/* Artist Info */}
-          <View style={styles.largeInfo}>
-            <Text style={styles.largeName}>{artist.name}</Text>
-
-            {artist.bio && (
-              <Text style={styles.largeBio} numberOfLines={2}>
-                {artist.bio}
-              </Text>
-            )}
-
-            {/* Next Performance */}
-            {nextEvent && (
-              <View style={styles.largeNextEvent}>
-                <Text style={styles.largeNextLabel}>Prochain concert:</Text>
-                <View style={styles.largeNextDetails}>
-                  <Text style={styles.largeNextIcon}>📅</Text>
-                  <Text style={styles.largeNextText}>
-                    {nextEvent.day} a {nextEvent.startTime}
-                  </Text>
-                  <Text style={styles.largeNextDot}>|</Text>
-                  <Text style={styles.largeNextIcon}>📍</Text>
-                  <Text style={styles.largeNextText}>{nextEvent.stage.name}</Text>
+    if (variant === 'large') {
+      return (
+        <TouchableOpacity onPress={handlePress} disabled={!onPress}>
+          <Card style={styles.largeCard}>
+            {/* Cover Image with OptimizedImage */}
+            <View style={styles.largeCover}>
+              {artist.image ? (
+                <OptimizedImage
+                  uri={artist.image}
+                  style={styles.largeCoverImage}
+                  priority="high"
+                  cachePolicy="memory-disk"
+                  contentFit="cover"
+                />
+              ) : (
+                <View style={[styles.largeCoverPlaceholder, { backgroundColor: genreColor }]}>
+                  <Text style={styles.largeCoverIcon}>🎵</Text>
                 </View>
+              )}
+
+              {/* Favorite Button */}
+              {onFavoritePress && (
+                <TouchableOpacity style={styles.largeFavoriteButton} onPress={handleFavoritePress}>
+                  <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
+                </TouchableOpacity>
+              )}
+
+              {/* Genre Badge */}
+              <View style={[styles.largeGenreBadge, { backgroundColor: genreColor }]}>
+                <Text style={styles.largeGenreText}>{artist.genre}</Text>
               </View>
+            </View>
+
+            {/* Artist Info */}
+            <View style={styles.largeInfo}>
+              <Text style={styles.largeName}>{artist.name}</Text>
+
+              {artist.bio && (
+                <Text style={styles.largeBio} numberOfLines={2}>
+                  {artist.bio}
+                </Text>
+              )}
+
+              {/* Next Performance */}
+              {nextEvent && (
+                <View style={styles.largeNextEvent}>
+                  <Text style={styles.largeNextLabel}>Prochain concert:</Text>
+                  <View style={styles.largeNextDetails}>
+                    <Text style={styles.largeNextIcon}>📅</Text>
+                    <Text style={styles.largeNextText}>
+                      {nextEvent.day} a {nextEvent.startTime}
+                    </Text>
+                    <Text style={styles.largeNextDot}>|</Text>
+                    <Text style={styles.largeNextIcon}>📍</Text>
+                    <Text style={styles.largeNextText}>{nextEvent.stage.name}</Text>
+                  </View>
+                </View>
+              )}
+            </View>
+          </Card>
+        </TouchableOpacity>
+      );
+    }
+
+    // Default variant
+    return (
+      <TouchableOpacity onPress={handlePress} disabled={!onPress}>
+        <Card style={styles.defaultCard}>
+          <View style={styles.defaultContent}>
+            {/* Avatar with OptimizedImage */}
+            <View style={styles.avatarContainer}>
+              {artist.image ? (
+                <OptimizedImage
+                  uri={artist.image}
+                  style={styles.avatar}
+                  priority="normal"
+                  cachePolicy="memory-disk"
+                />
+              ) : (
+                <View style={[styles.avatarPlaceholder, { backgroundColor: genreColor }]}>
+                  <Text style={styles.avatarText}>{initials}</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Artist Info */}
+            <View style={styles.info}>
+              <Text style={styles.name} numberOfLines={1}>
+                {artist.name}
+              </Text>
+              <View style={[styles.genreBadge, { backgroundColor: genreColor + '20' }]}>
+                <Text style={[styles.genreText, { color: genreColor }]}>{artist.genre}</Text>
+              </View>
+
+              {/* Next Event Info */}
+              {nextEvent && (
+                <View style={styles.nextEventRow}>
+                  <Text style={styles.nextEventIcon}>📅</Text>
+                  <Text style={styles.nextEventText}>
+                    {nextEvent.day} | {nextEvent.startTime}
+                  </Text>
+                </View>
+              )}
+            </View>
+
+            {/* Favorite Button */}
+            {onFavoritePress && (
+              <TouchableOpacity style={styles.favoriteButton} onPress={handleFavoritePress}>
+                <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
+              </TouchableOpacity>
             )}
           </View>
         </Card>
       </TouchableOpacity>
     );
   }
-
-  // Default variant
-  return (
-    <TouchableOpacity onPress={handlePress} disabled={!onPress}>
-      <Card style={styles.defaultCard}>
-        <View style={styles.defaultContent}>
-          {/* Avatar with OptimizedImage */}
-          <View style={styles.avatarContainer}>
-            {artist.image ? (
-              <OptimizedImage
-                uri={artist.image}
-                style={styles.avatar}
-                priority="normal"
-                cachePolicy="memory-disk"
-              />
-            ) : (
-              <View
-                style={[
-                  styles.avatarPlaceholder,
-                  { backgroundColor: genreColor },
-                ]}
-              >
-                <Text style={styles.avatarText}>{initials}</Text>
-              </View>
-            )}
-          </View>
-
-          {/* Artist Info */}
-          <View style={styles.info}>
-            <Text style={styles.name} numberOfLines={1}>
-              {artist.name}
-            </Text>
-            <View
-              style={[
-                styles.genreBadge,
-                { backgroundColor: genreColor + '20' },
-              ]}
-            >
-              <Text
-                style={[styles.genreText, { color: genreColor }]}
-              >
-                {artist.genre}
-              </Text>
-            </View>
-
-            {/* Next Event Info */}
-            {nextEvent && (
-              <View style={styles.nextEventRow}>
-                <Text style={styles.nextEventIcon}>📅</Text>
-                <Text style={styles.nextEventText}>
-                  {nextEvent.day} | {nextEvent.startTime}
-                </Text>
-              </View>
-            )}
-          </View>
-
-          {/* Favorite Button */}
-          {onFavoritePress && (
-            <TouchableOpacity style={styles.favoriteButton} onPress={handleFavoritePress}>
-              <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-      </Card>
-    </TouchableOpacity>
-  );
-});
+);
 
 const styles = StyleSheet.create({
   // Default variant
@@ -266,17 +222,22 @@ const styles = StyleSheet.create({
   avatarContainer: {
     marginRight: spacing.md,
   },
+  // Default variant - uses lg size (48px) for consistency
   avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 48, // lg size: 48px
+    height: 48,
+    borderRadius: 24, // rounded-full
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.1)', // ring-2 ring-white/10
   },
   avatarPlaceholder: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 48, // lg size: 48px
+    height: 48,
+    borderRadius: 24, // rounded-full
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.1)', // ring-2 ring-white/10
   },
   avatarText: {
     ...typography.body,
@@ -322,22 +283,24 @@ const styles = StyleSheet.create({
     fontSize: 22,
   },
 
-  // Compact variant
+  // Compact variant - uses md size (40px) for consistency
   compactContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingVertical: spacing.sm,
   },
   compactAvatar: {
-    width: 40,
+    width: 40, // md size: 40px
     height: 40,
-    borderRadius: 20,
+    borderRadius: 20, // rounded-full
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: spacing.sm,
+    borderWidth: 2,
+    borderColor: 'rgba(255, 255, 255, 0.1)', // ring-2 ring-white/10
   },
   compactAvatarText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.white,
     fontWeight: '700',
   },
@@ -345,7 +308,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   compactName: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.text,
     fontWeight: '600',
   },
@@ -413,7 +376,7 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
   },
   largeBio: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.textSecondary,
     lineHeight: 20,
     marginBottom: spacing.sm,
@@ -438,7 +401,7 @@ const styles = StyleSheet.create({
     marginRight: 4,
   },
   largeNextText: {
-    ...typography.bodySmall,
+    ...typography.small,
     color: colors.text,
     marginRight: spacing.xs,
   },

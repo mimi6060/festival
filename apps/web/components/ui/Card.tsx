@@ -16,25 +16,25 @@ interface CardProps {
 
 const variantStyles: Record<CardVariant, string> = {
   default: `
-    bg-theme-surface backdrop-blur-lg
-    border border-theme
-    hover:border-primary-500/30
+    bg-white/5
+    border border-white/10
+    hover:bg-white/10
   `,
   glow: `
-    bg-theme-surface backdrop-blur-lg
-    border border-theme
-    hover:border-primary-500/50
+    bg-white/5
+    border border-white/10
+    hover:bg-white/10
     hover:shadow-lg hover:shadow-primary-500/20
   `,
   solid: `
-    bg-theme-card
-    border border-theme
-    hover:border-theme-hover
+    bg-white/10
+    border border-white/10
+    hover:bg-white/15
   `,
   gradient: `
-    bg-gradient-to-br from-primary-900/30 via-theme-bg to-pink-900/30
-    border border-primary-500/20
-    hover:border-primary-500/40
+    bg-gradient-to-br from-white/10 via-white/5 to-white/10
+    border border-white/10
+    hover:bg-white/10
   `,
 };
 
@@ -54,8 +54,8 @@ export function Card({
   onClick,
 }: CardProps) {
   const baseStyles = `
-    rounded-2xl
-    transition-all duration-300
+    rounded-xl
+    transition
   `;
 
   const combinedClassName = `
@@ -64,7 +64,9 @@ export function Card({
     ${paddingStyles[padding]}
     ${href || onClick ? 'cursor-pointer' : ''}
     ${className}
-  `.trim().replace(/\s+/g, ' ');
+  `
+    .trim()
+    .replace(/\s+/g, ' ');
 
   if (href) {
     return (
@@ -88,11 +90,7 @@ interface CardHeaderProps {
 }
 
 export function CardHeader({ children, className = '' }: CardHeaderProps) {
-  return (
-    <div className={`mb-4 ${className}`}>
-      {children}
-    </div>
-  );
+  return <div className={`mb-4 ${className}`}>{children}</div>;
 }
 
 // Card Title Component
@@ -102,11 +100,7 @@ interface CardTitleProps {
 }
 
 export function CardTitle({ children, className = '' }: CardTitleProps) {
-  return (
-    <h3 className={`text-xl font-bold text-theme-primary ${className}`}>
-      {children}
-    </h3>
-  );
+  return <h3 className={`text-xl font-bold text-theme-primary ${className}`}>{children}</h3>;
 }
 
 // Card Description Component
@@ -116,11 +110,7 @@ interface CardDescriptionProps {
 }
 
 export function CardDescription({ children, className = '' }: CardDescriptionProps) {
-  return (
-    <p className={`text-theme-muted text-sm mt-1 ${className}`}>
-      {children}
-    </p>
-  );
+  return <p className={`text-theme-muted text-sm mt-1 ${className}`}>{children}</p>;
 }
 
 // Card Content Component
@@ -130,11 +120,7 @@ interface CardContentProps {
 }
 
 export function CardContent({ children, className = '' }: CardContentProps) {
-  return (
-    <div className={className}>
-      {children}
-    </div>
-  );
+  return <div className={className}>{children}</div>;
 }
 
 // Card Footer Component
@@ -144,9 +130,5 @@ interface CardFooterProps {
 }
 
 export function CardFooter({ children, className = '' }: CardFooterProps) {
-  return (
-    <div className={`mt-4 pt-4 border-t border-theme ${className}`}>
-      {children}
-    </div>
-  );
+  return <div className={`mt-4 pt-4 border-t border-white/10 ${className}`}>{children}</div>;
 }

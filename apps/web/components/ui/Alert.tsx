@@ -38,40 +38,40 @@ export interface AlertProps {
 
 const variantStyles: Record<AlertVariant, { container: string; icon: string; title: string }> = {
   info: {
-    container: 'bg-blue-500/10 border-blue-500/30 text-blue-200',
+    container: 'bg-blue-500/10 border-blue-500/20 text-blue-400',
     icon: 'text-blue-400',
-    title: 'text-blue-100',
+    title: 'text-blue-300',
   },
   success: {
-    container: 'bg-green-500/10 border-green-500/30 text-green-200',
+    container: 'bg-green-500/10 border-green-500/20 text-green-400',
     icon: 'text-green-400',
-    title: 'text-green-100',
+    title: 'text-green-300',
   },
   warning: {
-    container: 'bg-orange-500/10 border-orange-500/30 text-orange-200',
-    icon: 'text-orange-400',
-    title: 'text-orange-100',
+    container: 'bg-amber-500/10 border-amber-500/20 text-amber-400',
+    icon: 'text-amber-400',
+    title: 'text-amber-300',
   },
   error: {
-    container: 'bg-red-500/10 border-red-500/30 text-red-200',
+    container: 'bg-red-500/10 border-red-500/20 text-red-400',
     icon: 'text-red-400',
-    title: 'text-red-100',
+    title: 'text-red-300',
   },
 };
 
 const sizeStyles: Record<AlertSize, { container: string; icon: string; text: string }> = {
   sm: {
-    container: 'px-3 py-2 text-sm',
+    container: 'p-3 text-sm',
     icon: 'w-4 h-4',
     text: 'text-sm',
   },
   md: {
-    container: 'px-4 py-3',
+    container: 'p-4',
     icon: 'w-5 h-5',
     text: 'text-base',
   },
   lg: {
-    container: 'px-5 py-4',
+    container: 'p-5',
     icon: 'w-6 h-6',
     text: 'text-lg',
   },
@@ -145,7 +145,7 @@ export function Alert({
       role="alert"
       className={`
         flex items-start gap-3
-        rounded-xl border
+        rounded-lg border
         ${variantStyle.container}
         ${sizeStyle.container}
         ${className}
@@ -157,9 +157,7 @@ export function Alert({
         </span>
       )}
       <div className="flex-1 min-w-0">
-        {title && (
-          <h4 className={`font-semibold ${variantStyle.title} mb-1`}>{title}</h4>
-        )}
+        {title && <h4 className={`font-semibold ${variantStyle.title} mb-1`}>{title}</h4>}
         <div className={sizeStyle.text}>{children}</div>
       </div>
       {dismissible && (

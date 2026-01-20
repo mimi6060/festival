@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useAuth } from '../../../lib/auth-context';
+import { Avatar } from '@/components/ui';
 
 export default function ProfilePage() {
   const { user } = useAuth();
@@ -40,15 +41,6 @@ export default function ProfilePage() {
     return colors[role?.toLowerCase()] || 'bg-gray-100 text-gray-800';
   };
 
-  const getInitials = () => {
-    if (!user) {
-      return '?';
-    }
-    const first = user.firstName?.charAt(0) || '';
-    const last = user.lastName?.charAt(0) || '';
-    return (first + last).toUpperCase() || user.email?.charAt(0).toUpperCase() || '?';
-  };
-
   const formatDate = (dateString?: string) => {
     if (!dateString) {
       return 'N/A';
@@ -81,20 +73,10 @@ export default function ProfilePage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Profile Card */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+          <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-6">
             <div className="flex flex-col items-center text-center">
               {/* Avatar */}
-              {user.avatar ? (
-                <img
-                  src={user.avatar}
-                  alt={`${user.firstName} ${user.lastName}`}
-                  className="w-24 h-24 rounded-full object-cover border-4 border-primary-100"
-                />
-              ) : (
-                <div className="w-24 h-24 rounded-full bg-gradient-to-br from-primary-500 to-accent-500 flex items-center justify-center text-white text-2xl font-bold border-4 border-primary-100">
-                  {getInitials()}
-                </div>
-              )}
+              <Avatar src={user.avatar} name={`${user.firstName} ${user.lastName}`} size="2xl" />
 
               {/* Name and Role */}
               <h2 className="mt-4 text-xl font-semibold text-gray-900">
@@ -142,7 +124,7 @@ export default function ProfilePage() {
 
         {/* Edit Profile Form */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100">
+          <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10">
             <div className="p-6 border-b border-gray-100 flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-gray-900">Informations personnelles</h2>
@@ -249,7 +231,7 @@ export default function ProfilePage() {
           </div>
 
           {/* Security Section */}
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 mt-6">
+          <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 mt-6">
             <div className="p-6 border-b border-gray-100">
               <h2 className="text-lg font-semibold text-gray-900">Securite</h2>
               <p className="text-sm text-gray-500">Gerez la securite de votre compte.</p>

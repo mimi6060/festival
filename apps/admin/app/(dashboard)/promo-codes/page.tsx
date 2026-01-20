@@ -201,14 +201,15 @@ export default function PromoCodesPage() {
 
       {/* Create/Edit Form Modal */}
       {(isCreating || editingCode) && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-            <div className="p-6">
-              <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="dark:bg-gray-900 bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b dark:border-white/10 border-gray-200">
+              <h2 className="text-xl font-bold dark:text-white text-gray-900">
                 {editingCode ? 'Modifier le code promo' : 'Créer un code promo'}
               </h2>
-
-              <form onSubmit={handleSubmit} className="space-y-4">
+            </div>
+            <div className="p-6">
+              <form id="promo-form" onSubmit={handleSubmit} className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
@@ -333,27 +334,27 @@ export default function PromoCodesPage() {
                     </label>
                   </div>
                 </div>
-
-                <div className="flex justify-end space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsCreating(false);
-                      setEditingCode(null);
-                    }}
-                    className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
-                  >
-                    Annuler
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={createMutation.isPending || updateMutation.isPending}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors disabled:opacity-50"
-                  >
-                    {editingCode ? 'Mettre à jour' : 'Créer'}
-                  </button>
-                </div>
               </form>
+            </div>
+            <div className="flex justify-end gap-3 px-6 py-4 dark:bg-white/5 bg-gray-50 border-t dark:border-white/10 border-gray-200 rounded-b-xl">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCreating(false);
+                  setEditingCode(null);
+                }}
+                className="px-4 py-2 dark:bg-white/10 bg-white border dark:border-white/10 border-gray-300 dark:text-white text-gray-700 rounded-xl hover:dark:bg-white/20 hover:bg-gray-50 transition-colors"
+              >
+                Annuler
+              </button>
+              <button
+                type="submit"
+                form="promo-form"
+                disabled={createMutation.isPending || updateMutation.isPending}
+                className="px-4 py-2 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition-colors disabled:opacity-50"
+              >
+                {editingCode ? 'Mettre à jour' : 'Créer'}
+              </button>
             </div>
           </div>
         </div>
@@ -361,21 +362,29 @@ export default function PromoCodesPage() {
 
       {/* Stats Modal */}
       {statsCodeId && stats && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-lg w-full">
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="dark:bg-gray-900 bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-2xl max-w-lg w-full">
+            <div className="p-6 border-b dark:border-white/10 border-gray-200">
+              <div className="flex items-center justify-between">
+                <h2 className="text-xl font-bold dark:text-white text-gray-900">
                   Statistiques - {stats.code}
                 </h2>
                 <button
                   onClick={() => setStatsCodeId(null)}
-                  className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                  className="p-2 dark:text-white/50 text-gray-400 hover:dark:text-white hover:text-gray-600 hover:dark:bg-white/5 hover:bg-gray-100 rounded-lg transition-colors"
                 >
-                  ✕
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M6 18L18 6M6 6l12 12"
+                    />
+                  </svg>
                 </button>
               </div>
-
+            </div>
+            <div className="p-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                   <div className="text-sm text-gray-600 dark:text-gray-400">Utilisations</div>
@@ -425,6 +434,14 @@ export default function PromoCodesPage() {
                   </div>
                 </div>
               </div>
+            </div>
+            <div className="flex justify-end px-6 py-4 dark:bg-white/5 bg-gray-50 border-t dark:border-white/10 border-gray-200 rounded-b-xl">
+              <button
+                onClick={() => setStatsCodeId(null)}
+                className="px-4 py-2 dark:bg-white/10 bg-white border dark:border-white/10 border-gray-300 dark:text-white text-gray-700 rounded-xl hover:dark:bg-white/20 hover:bg-gray-50 transition-colors"
+              >
+                Fermer
+              </button>
             </div>
           </div>
         </div>

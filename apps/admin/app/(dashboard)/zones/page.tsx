@@ -377,7 +377,7 @@ export default function ZonesPage() {
 
       {/* Stats Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Occupation totale</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
             {Math.round((totalOccupancy / totalCapacity) * 100)}%
@@ -386,15 +386,15 @@ export default function ZonesPage() {
             {totalOccupancy.toLocaleString()} / {totalCapacity.toLocaleString()}
           </p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Zones actives</p>
           <p className="text-2xl font-bold text-green-600 mt-1">{activeZones}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Zones pleines</p>
           <p className="text-2xl font-bold text-orange-600 mt-1">{fullZones}</p>
         </div>
-        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Total checkpoints</p>
           <p className="text-2xl font-bold text-gray-900 mt-1">
             {mockZones.reduce((sum, z) => sum + z.checkpoints, 0)}
@@ -529,22 +529,17 @@ export default function ZonesPage() {
 
       {/* Zone Modal */}
       {showZoneModal && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between p-6 border-b border-gray-100">
-              <h2 className="text-lg font-semibold text-gray-900">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="dark:bg-gray-900 bg-white border dark:border-white/10 border-gray-200 rounded-xl shadow-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between p-6 border-b dark:border-white/10 border-gray-200">
+              <h2 className="text-lg font-semibold dark:text-white text-gray-900">
                 {selectedZone ? 'Modifier la zone' : 'Nouvelle zone'}
               </h2>
               <button
                 onClick={() => setShowZoneModal(false)}
-                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+                className="p-2 dark:text-white/50 text-gray-400 hover:dark:text-white hover:text-gray-600 hover:dark:bg-white/5 hover:bg-gray-100 rounded-lg transition-colors"
               >
-                <svg
-                  className="w-5 h-5 text-gray-500"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
@@ -626,7 +621,7 @@ export default function ZonesPage() {
                 </select>
               </div>
             </form>
-            <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100">
+            <div className="flex items-center justify-end gap-3 px-6 py-4 dark:bg-white/5 bg-gray-50 border-t dark:border-white/10 border-gray-200 rounded-b-xl">
               <button onClick={() => setShowZoneModal(false)} className="btn-secondary">
                 Annuler
               </button>

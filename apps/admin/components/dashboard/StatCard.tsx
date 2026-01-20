@@ -43,7 +43,9 @@ export default function StatCard({
   };
 
   const calculateChange = () => {
-    if (previousValue === undefined || previousValue === 0) {return null;}
+    if (previousValue === undefined || previousValue === 0) {
+      return null;
+    }
     const change = ((value - previousValue) / previousValue) * 100;
     return change;
   };
@@ -68,18 +70,38 @@ export default function StatCard({
   return (
     <div className="stat-card group">
       <div className="flex items-start justify-between">
-        <div className="space-y-1">
+        <div className="space-y-2">
           <p className="text-sm font-medium text-gray-500">{title}</p>
           <p className="text-2xl font-bold text-gray-900">{formatValue()}</p>
           {change !== null && (
             <div className="flex items-center gap-1">
               {change >= 0 ? (
-                <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                <svg
+                  className="w-4 h-4 text-green-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 10l7-7m0 0l7 7m-7-7v18"
+                  />
                 </svg>
               ) : (
-                <svg className="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                <svg
+                  className="w-4 h-4 text-red-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                  />
                 </svg>
               )}
               <span

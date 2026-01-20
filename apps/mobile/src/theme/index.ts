@@ -1,9 +1,9 @@
 import { StyleSheet, Platform } from 'react-native';
 
 export const colors = {
-  // Primary colors
-  primary: '#6366F1',
-  primaryDark: '#4F46E5',
+  // Primary colors (matches Web/Admin design system)
+  primary: '#6366f1',
+  primaryDark: '#4f46e5',
   primaryLight: '#818CF8',
 
   // Secondary colors
@@ -16,26 +16,26 @@ export const colors = {
   accentDark: '#059669',
   accentLight: '#34D399',
 
-  // Neutral colors
-  background: '#0F0F23',
-  backgroundSecondary: '#1A1A2E',
-  surface: '#252541',
-  surfaceLight: '#3D3D5C',
-  card: '#252541',
+  // Neutral colors (matches Web/Admin design system)
+  background: '#0a0a0a',
+  backgroundSecondary: '#1a1a1a',
+  surface: '#1a1a1a',
+  surfaceLight: '#2a2a2a',
+  card: '#1a1a1a',
 
-  // Text colors
-  text: '#FFFFFF',
-  textSecondary: '#A1A1AA',
-  textMuted: '#71717A',
+  // Text colors (matches Web/Admin design system)
+  text: '#ffffff',
+  textSecondary: 'rgba(255,255,255,0.7)',
+  textMuted: 'rgba(255,255,255,0.5)',
 
-  // Status colors
-  success: '#22C55E',
+  // Status colors (matches Web/Admin design system)
+  success: '#22c55e',
   warning: '#F59E0B',
-  error: '#EF4444',
+  error: '#ef4444',
   info: '#3B82F6',
 
-  // Misc
-  border: '#3D3D5C',
+  // Misc (matches Web/Admin design system)
+  border: 'rgba(255,255,255,0.1)',
   overlay: 'rgba(0, 0, 0, 0.5)',
   transparent: 'transparent',
   white: '#FFFFFF',
@@ -81,7 +81,7 @@ export const typography = {
     fontWeight: '400' as const,
     lineHeight: 24,
   },
-  bodySmall: {
+  small: {
     fontSize: 14,
     fontWeight: '400' as const,
     lineHeight: 20,
@@ -146,10 +146,11 @@ export const globalStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   card: {
-    backgroundColor: colors.surface,
-    borderRadius: borderRadius.lg,
-    padding: spacing.md,
-    ...shadows.md,
+    backgroundColor: 'rgba(255,255,255,0.05)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+    padding: 16,
   },
 });
 

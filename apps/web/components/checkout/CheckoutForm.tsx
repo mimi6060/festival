@@ -92,8 +92,12 @@ export function CheckoutForm({ onSubmit, isProcessing = false }: CheckoutFormPro
       newErrors.email = 'Invalid email address';
     }
 
-    if (!formData.firstName) {newErrors.firstName = 'First name is required';}
-    if (!formData.lastName) {newErrors.lastName = 'Last name is required';}
+    if (!formData.firstName) {
+      newErrors.firstName = 'First name is required';
+    }
+    if (!formData.lastName) {
+      newErrors.lastName = 'Last name is required';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -114,8 +118,12 @@ export function CheckoutForm({ onSubmit, isProcessing = false }: CheckoutFormPro
       newErrors.cvv = 'Valid CVV is required';
     }
 
-    if (!formData.cardName) {newErrors.cardName = 'Cardholder name is required';}
-    if (!formData.acceptTerms) {newErrors.acceptTerms = 'You must accept the terms';}
+    if (!formData.cardName) {
+      newErrors.cardName = 'Cardholder name is required';
+    }
+    if (!formData.acceptTerms) {
+      newErrors.acceptTerms = 'You must accept the terms';
+    }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -191,19 +199,16 @@ export function CheckoutForm({ onSubmit, isProcessing = false }: CheckoutFormPro
               onChange={handleChange}
             />
 
-            <Button
-              type="button"
-              onClick={handleContinue}
-              variant="primary"
-              fullWidth
-            >
+            <Button type="button" onClick={handleContinue} variant="primary" fullWidth>
               Continue to Payment
             </Button>
           </div>
         ) : (
           <div className="text-white/60">
             <p>{formData.email}</p>
-            <p>{formData.firstName} {formData.lastName}</p>
+            <p>
+              {formData.firstName} {formData.lastName}
+            </p>
             {formData.phone && <p>{formData.phone}</p>}
           </div>
         )}
@@ -216,14 +221,23 @@ export function CheckoutForm({ onSubmit, isProcessing = false }: CheckoutFormPro
 
           <div className="space-y-4">
             {/* Card Type Icons */}
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center gap-3 mb-6">
               <div className="px-3 py-2 rounded bg-white/10">
                 <svg className="w-8 h-5" viewBox="0 0 48 32" fill="none">
                   <rect width="48" height="32" rx="4" fill="#1A1F71" />
                   <path d="M18.5 21.5L21 10.5H24L21.5 21.5H18.5Z" fill="white" />
-                  <path d="M32.5 10.7C31.9 10.5 31 10.3 29.9 10.3C26.9 10.3 24.8 11.8 24.8 14C24.8 15.6 26.2 16.5 27.3 17.1C28.4 17.7 28.8 18.1 28.8 18.6C28.8 19.4 27.8 19.8 26.9 19.8C25.7 19.8 25 19.6 23.9 19.1L23.5 18.9L23.1 21.5C23.9 21.9 25.3 22.2 26.8 22.2C30 22.2 32 20.7 32 18.4C32 17.1 31.2 16.1 29.5 15.3C28.5 14.8 27.9 14.4 27.9 13.9C27.9 13.4 28.5 12.9 29.7 12.9C30.7 12.9 31.4 13.1 32 13.3L32.3 13.5L32.5 10.7Z" fill="white" />
-                  <path d="M37 10.5H34.6C33.9 10.5 33.3 10.7 33 11.4L28.5 21.5H31.7L32.3 19.8H36.2L36.6 21.5H39.5L37 10.5ZM33.2 17.5C33.5 16.7 34.6 13.8 34.6 13.8C34.6 13.8 34.9 13 35.1 12.5L35.3 13.7C35.3 13.7 36 16.9 36.1 17.5H33.2Z" fill="white" />
-                  <path d="M16.5 10.5L13.5 17.8L13.2 16.3C12.6 14.5 11 12.5 9.2 11.5L12 21.5H15.2L19.7 10.5H16.5Z" fill="white" />
+                  <path
+                    d="M32.5 10.7C31.9 10.5 31 10.3 29.9 10.3C26.9 10.3 24.8 11.8 24.8 14C24.8 15.6 26.2 16.5 27.3 17.1C28.4 17.7 28.8 18.1 28.8 18.6C28.8 19.4 27.8 19.8 26.9 19.8C25.7 19.8 25 19.6 23.9 19.1L23.5 18.9L23.1 21.5C23.9 21.9 25.3 22.2 26.8 22.2C30 22.2 32 20.7 32 18.4C32 17.1 31.2 16.1 29.5 15.3C28.5 14.8 27.9 14.4 27.9 13.9C27.9 13.4 28.5 12.9 29.7 12.9C30.7 12.9 31.4 13.1 32 13.3L32.3 13.5L32.5 10.7Z"
+                    fill="white"
+                  />
+                  <path
+                    d="M37 10.5H34.6C33.9 10.5 33.3 10.7 33 11.4L28.5 21.5H31.7L32.3 19.8H36.2L36.6 21.5H39.5L37 10.5ZM33.2 17.5C33.5 16.7 34.6 13.8 34.6 13.8C34.6 13.8 34.9 13 35.1 12.5L35.3 13.7C35.3 13.7 36 16.9 36.1 17.5H33.2Z"
+                    fill="white"
+                  />
+                  <path
+                    d="M16.5 10.5L13.5 17.8L13.2 16.3C12.6 14.5 11 12.5 9.2 11.5L12 21.5H15.2L19.7 10.5H16.5Z"
+                    fill="white"
+                  />
                 </svg>
               </div>
               <div className="px-3 py-2 rounded bg-white/10">
@@ -231,7 +245,10 @@ export function CheckoutForm({ onSubmit, isProcessing = false }: CheckoutFormPro
                   <rect width="48" height="32" rx="4" fill="#EB001B" fillOpacity="0.9" />
                   <circle cx="18" cy="16" r="10" fill="#EB001B" />
                   <circle cx="30" cy="16" r="10" fill="#F79E1B" />
-                  <path d="M24 8.5C26.4 10.3 28 13 28 16C28 19 26.4 21.7 24 23.5C21.6 21.7 20 19 20 16C20 13 21.6 10.3 24 8.5Z" fill="#FF5F00" />
+                  <path
+                    d="M24 8.5C26.4 10.3 28 13 28 16C28 19 26.4 21.7 24 23.5C21.6 21.7 20 19 20 16C20 13 21.6 10.3 24 8.5Z"
+                    fill="#FF5F00"
+                  />
                 </svg>
               </div>
             </div>
@@ -245,7 +262,12 @@ export function CheckoutForm({ onSubmit, isProcessing = false }: CheckoutFormPro
               error={errors.cardNumber}
               leftIcon={
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                  />
                 </svg>
               }
             />
@@ -306,20 +328,19 @@ export function CheckoutForm({ onSubmit, isProcessing = false }: CheckoutFormPro
               )}
             </div>
 
-            <Button
-              type="submit"
-              variant="accent"
-              fullWidth
-              size="lg"
-              isLoading={isProcessing}
-            >
+            <Button type="submit" variant="accent" fullWidth size="lg" isLoading={isProcessing}>
               {isProcessing ? 'Processing...' : 'Complete Purchase'}
             </Button>
 
             {/* Security Note */}
             <div className="flex items-center justify-center gap-2 text-white/40 text-sm pt-4">
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
               </svg>
               <span>Your payment is secured with SSL encryption</span>
             </div>
@@ -341,7 +362,12 @@ export function OrderConfirmation({ orderNumber, email, festivalName }: OrderCon
   return (
     <div className="text-center py-12">
       <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-green-500/20 flex items-center justify-center">
-        <svg className="w-10 h-10 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg
+          className="w-10 h-10 text-green-400"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
         </svg>
       </div>
