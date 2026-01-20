@@ -64,7 +64,8 @@
   }
   body {
     @apply antialiased;
-    background-color: #f9fafb; /* Light mode: gray-50 */
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
     font-family:
       'Inter',
       ui-sans-serif,
@@ -78,12 +79,9 @@
       sans-serif;
     font-size: 1rem; /* text-base: 16px */
     line-height: 1.5;
-    color: hsl(var(--foreground));
-  }
-
-  .dark body,
-  body.dark {
-    background-color: #0a0a0a; /* Unified background dark */
+    transition:
+      background-color 0.2s ease,
+      color 0.2s ease;
   }
 
   /* Typography - Standardized with Web app */
