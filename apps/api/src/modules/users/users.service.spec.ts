@@ -790,7 +790,7 @@ describe('UsersService', () => {
       ).rejects.toThrow(ConflictException);
     });
 
-    it('should require current password when non-admin changes password', async () => {
+    it('should block password updates through this endpoint', async () => {
       // Arrange
       mockPrismaService.user.findUnique.mockResolvedValue({
         id: regularUser.id,
@@ -798,53 +798,349 @@ describe('UsersService', () => {
         passwordHash: 'current-hash',
       });
 
-      // Act & Assert
+      // Act & Assert - Even admin cannot update password through this endpoint
       await expect(
-        usersService.update(regularUser.id, { password: 'NewPassword123!' }, mockRegularUser)
+        usersService.update(regularUser.id, { password: 'NewPassword123!' }, mockAdminUser)
       ).rejects.toThrow(BadRequestException);
       await expect(
         usersService.update(regularUser.id, { password: 'NewPassword123!' }, mockRegularUser)
-      ).rejects.toThrow('Current password is required to change password');
+      ).rejects.toThrow('Password updates are not allowed through this endpoint');
     });
 
-    it('should throw BadRequestException when current password is incorrect', async () => {
+    // ==========================================================================
+    // Role Update Tests
+    // ==========================================================================
+
+    it('should allow admin to update user role', async () => {
       // Arrange
       mockPrismaService.user.findUnique.mockResolvedValue({
         id: regularUser.id,
         email: regularUser.email,
-        passwordHash: 'current-hash',
-      });
-      (bcrypt.compare as jest.Mock).mockResolvedValueOnce(false);
-
-      // Act & Assert
-      await expect(
-        usersService.update(
-          regularUser.id,
-          { password: 'NewPassword123!', currentPassword: 'WrongPassword' },
-          mockRegularUser
-        )
-      ).rejects.toThrow(BadRequestException);
-      await expect(
-        usersService.update(
-          regularUser.id,
-          { password: 'NewPassword123!', currentPassword: 'WrongPassword' },
-          mockRegularUser
-        )
-      ).rejects.toThrow('Current password is incorrect');
-    });
-
-    it('should allow admin to change password without current password', async () => {
-      // Arrange
-      mockPrismaService.user.findUnique.mockResolvedValue({
-        id: regularUser.id,
-        email: regularUser.email,
-        passwordHash: 'current-hash',
+        firstName: regularUser.firstName,
+        lastName: regularUser.lastName,
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
       });
       mockPrismaService.user.update.mockResolvedValue({
         id: regularUser.id,
         email: regularUser.email,
         firstName: regularUser.firstName,
         lastName: regularUser.lastName,
+        role: UserRole.ORGANIZER,
+        status: UserStatus.ACTIVE,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Act
+      const result = await usersService.update(
+        regularUser.id,
+        { role: UserRole.ORGANIZER },
+        mockAdminUser
+      );
+
+      // Assert
+      expect(result.role).toBe(UserRole.ORGANIZER);
+      expect(mockPrismaService.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            role: UserRole.ORGANIZER,
+          }),
+        })
+      );
+    });
+
+    it('should throw ForbiddenException when non-admin tries to change role', async () => {
+      // Arrange
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: regularUser.id,
+        email: regularUser.email,
+        role: UserRole.USER,
+      });
+
+      // Act & Assert
+      await expect(
+        usersService.update(regularUser.id, { role: UserRole.ORGANIZER }, mockRegularUser)
+      ).rejects.toThrow(ForbiddenException);
+      await expect(
+        usersService.update(regularUser.id, { role: UserRole.ORGANIZER }, mockRegularUser)
+      ).rejects.toThrow('Only administrators can change user roles');
+    });
+
+    it('should throw ForbiddenException when admin tries to change own role', async () => {
+      // Arrange
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: mockAdminUser.id,
+        email: mockAdminUser.email,
+        role: UserRole.ADMIN,
+      });
+
+      // Act & Assert
+      await expect(
+        usersService.update(mockAdminUser.id, { role: UserRole.USER }, mockAdminUser)
+      ).rejects.toThrow(ForbiddenException);
+      await expect(
+        usersService.update(mockAdminUser.id, { role: UserRole.USER }, mockAdminUser)
+      ).rejects.toThrow('Cannot change your own role');
+    });
+
+    it('should throw ForbiddenException when admin tries to demote another admin', async () => {
+      // Arrange
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: 'other-admin-id',
+        email: 'otheradmin@test.com',
+        role: UserRole.ADMIN,
+      });
+
+      // Act & Assert
+      await expect(
+        usersService.update('other-admin-id', { role: UserRole.USER }, mockAdminUser)
+      ).rejects.toThrow(ForbiddenException);
+      await expect(
+        usersService.update('other-admin-id', { role: UserRole.USER }, mockAdminUser)
+      ).rejects.toThrow('Cannot demote another admin');
+    });
+
+    // ==========================================================================
+    // Status Update Tests
+    // ==========================================================================
+
+    it('should allow admin to update user status', async () => {
+      // Arrange
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: regularUser.id,
+        email: regularUser.email,
+        firstName: regularUser.firstName,
+        lastName: regularUser.lastName,
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
+      });
+      mockPrismaService.user.update.mockResolvedValue({
+        id: regularUser.id,
+        email: regularUser.email,
+        firstName: regularUser.firstName,
+        lastName: regularUser.lastName,
+        role: UserRole.USER,
+        status: UserStatus.INACTIVE,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Act
+      const result = await usersService.update(
+        regularUser.id,
+        { status: UserStatus.INACTIVE },
+        mockAdminUser
+      );
+
+      // Assert
+      expect(result.status).toBe(UserStatus.INACTIVE);
+    });
+
+    it('should throw ForbiddenException when non-admin tries to change status', async () => {
+      // Arrange
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: regularUser.id,
+        email: regularUser.email,
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
+      });
+
+      // Act & Assert
+      await expect(
+        usersService.update(regularUser.id, { status: UserStatus.BANNED }, mockRegularUser)
+      ).rejects.toThrow(ForbiddenException);
+      await expect(
+        usersService.update(regularUser.id, { status: UserStatus.BANNED }, mockRegularUser)
+      ).rejects.toThrow('Only administrators can change user status');
+    });
+
+    it('should throw ForbiddenException when admin tries to change own status', async () => {
+      // Arrange
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: mockAdminUser.id,
+        email: mockAdminUser.email,
+        role: UserRole.ADMIN,
+        status: UserStatus.ACTIVE,
+      });
+
+      // Act & Assert
+      await expect(
+        usersService.update(mockAdminUser.id, { status: UserStatus.INACTIVE }, mockAdminUser)
+      ).rejects.toThrow(ForbiddenException);
+      await expect(
+        usersService.update(mockAdminUser.id, { status: UserStatus.INACTIVE }, mockAdminUser)
+      ).rejects.toThrow('Cannot change your own status');
+    });
+
+    it('should invalidate refresh token when status is set to BANNED', async () => {
+      // Arrange
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: regularUser.id,
+        email: regularUser.email,
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
+      });
+      mockPrismaService.user.update.mockResolvedValue({
+        id: regularUser.id,
+        email: regularUser.email,
+        firstName: regularUser.firstName,
+        lastName: regularUser.lastName,
+        role: UserRole.USER,
+        status: UserStatus.BANNED,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await usersService.update(regularUser.id, { status: UserStatus.BANNED }, mockAdminUser);
+
+      // Assert
+      expect(mockPrismaService.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: UserStatus.BANNED,
+            refreshToken: null,
+          }),
+        })
+      );
+    });
+
+    it('should invalidate refresh token when status is set to INACTIVE', async () => {
+      // Arrange
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: regularUser.id,
+        email: regularUser.email,
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
+      });
+      mockPrismaService.user.update.mockResolvedValue({
+        id: regularUser.id,
+        email: regularUser.email,
+        firstName: regularUser.firstName,
+        lastName: regularUser.lastName,
+        role: UserRole.USER,
+        status: UserStatus.INACTIVE,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await usersService.update(regularUser.id, { status: UserStatus.INACTIVE }, mockAdminUser);
+
+      // Assert
+      expect(mockPrismaService.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: UserStatus.INACTIVE,
+            refreshToken: null,
+          }),
+        })
+      );
+    });
+
+    // ==========================================================================
+    // Name Validation Tests
+    // ==========================================================================
+
+    it('should throw BadRequestException when firstName is empty string', async () => {
+      // Arrange
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: regularUser.id,
+        email: regularUser.email,
+        firstName: regularUser.firstName,
+        lastName: regularUser.lastName,
+      });
+
+      // Act & Assert
+      await expect(
+        usersService.update(regularUser.id, { firstName: '   ' }, mockAdminUser)
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        usersService.update(regularUser.id, { firstName: '' }, mockAdminUser)
+      ).rejects.toThrow('First name cannot be empty');
+    });
+
+    it('should throw BadRequestException when lastName is empty string', async () => {
+      // Arrange
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: regularUser.id,
+        email: regularUser.email,
+        firstName: regularUser.firstName,
+        lastName: regularUser.lastName,
+      });
+
+      // Act & Assert
+      await expect(
+        usersService.update(regularUser.id, { lastName: '   ' }, mockAdminUser)
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        usersService.update(regularUser.id, { lastName: '' }, mockAdminUser)
+      ).rejects.toThrow('Last name cannot be empty');
+    });
+
+    // ==========================================================================
+    // Combined Updates Tests
+    // ==========================================================================
+
+    it('should allow admin to update multiple fields including role', async () => {
+      // Arrange
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: regularUser.id,
+        email: regularUser.email,
+        firstName: regularUser.firstName,
+        lastName: regularUser.lastName,
+        phone: null,
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
+      });
+      mockPrismaService.user.update.mockResolvedValue({
+        id: regularUser.id,
+        email: regularUser.email,
+        firstName: 'Updated',
+        lastName: 'Name',
+        phone: '+33612345678',
+        role: UserRole.STAFF,
+        status: UserStatus.ACTIVE,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Act
+      const result = await usersService.update(
+        regularUser.id,
+        {
+          firstName: 'Updated',
+          lastName: 'Name',
+          phone: '+33612345678',
+          role: UserRole.STAFF,
+        },
+        mockAdminUser
+      );
+
+      // Assert
+      expect(result.firstName).toBe('Updated');
+      expect(result.lastName).toBe('Name');
+      expect(result.role).toBe(UserRole.STAFF);
+    });
+
+    it('should allow regular user to update own firstName, lastName, and phone only', async () => {
+      // Arrange
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: regularUser.id,
+        email: regularUser.email,
+        firstName: regularUser.firstName,
+        lastName: regularUser.lastName,
+        phone: null,
+        role: UserRole.USER,
+        status: UserStatus.ACTIVE,
+      });
+      mockPrismaService.user.update.mockResolvedValue({
+        id: regularUser.id,
+        email: regularUser.email,
+        firstName: 'NewFirst',
+        lastName: 'NewLast',
+        phone: '+33612345678',
         role: UserRole.USER,
         status: UserStatus.ACTIVE,
         createdAt: new Date(),
@@ -854,13 +1150,17 @@ describe('UsersService', () => {
       // Act
       const result = await usersService.update(
         regularUser.id,
-        { password: 'NewPassword123!' },
-        mockAdminUser
+        {
+          firstName: 'NewFirst',
+          lastName: 'NewLast',
+          phone: '+33612345678',
+        },
+        mockRegularUser
       );
 
       // Assert
-      expect(result).toBeDefined();
-      expect(bcrypt.hash).toHaveBeenCalledWith('NewPassword123!', 12);
+      expect(result.firstName).toBe('NewFirst');
+      expect(result.lastName).toBe('NewLast');
     });
 
     it('should not update if no changes provided', async () => {

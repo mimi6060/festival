@@ -19,18 +19,10 @@ import {
   UserQueryDto,
   UserSearchDto,
 } from './dto';
+import { AuthenticatedUser } from '../../common/decorators/current-user.decorator';
 
-/**
- * Authenticated user interface for request context.
- */
-export interface AuthenticatedUser {
-  id: string;
-  email: string;
-  role: UserRole;
-  status: UserStatus;
-  firstName: string;
-  lastName: string;
-}
+// Re-export for backward compatibility
+export { AuthenticatedUser };
 
 /**
  * Paginated response interface.
@@ -354,6 +346,13 @@ export class UsersService {
   /**
    * Update user profile.
    * Admin can update any user, users can only update themselves.
+   *
+   * Field restrictions:
+   * - email: Can be updated by user (requires verification) or admin
+   * - firstName, lastName, phone: Can be updated by user or admin
+   * - role: Admin only - cannot demote other admins
+   * - status: Admin only
+   * - password: Not allowed through this endpoint (use /auth/change-password)
    */
   async update(
     id: string,
@@ -372,8 +371,50 @@ export class UsersService {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
+    const isAdmin = currentUser.role === UserRole.ADMIN;
+    const isSelf = currentUser.id === id;
+
+    // Validate role change restrictions
+    if (dto.role !== undefined) {
+      // Only admin can change roles
+      if (!isAdmin) {
+        throw new ForbiddenException('Only administrators can change user roles');
+      }
+
+      // Cannot change own role
+      if (isSelf) {
+        throw new ForbiddenException('Cannot change your own role');
+      }
+
+      // Cannot demote another admin
+      if (user.role === UserRole.ADMIN && dto.role !== UserRole.ADMIN) {
+        throw new ForbiddenException('Cannot demote another admin');
+      }
+    }
+
+    // Validate status change restrictions
+    if (dto.status !== undefined) {
+      // Only admin can change status
+      if (!isAdmin) {
+        throw new ForbiddenException('Only administrators can change user status');
+      }
+
+      // Cannot change own status
+      if (isSelf) {
+        throw new ForbiddenException('Cannot change your own status');
+      }
+    }
+
+    // Block password updates through this endpoint
+    if (dto.password) {
+      throw new BadRequestException(
+        'Password updates are not allowed through this endpoint. Use /auth/change-password instead.'
+      );
+    }
+
     const updateData: Prisma.UserUpdateInput = {};
     const changedFields: string[] = [];
+    const previousValues: Record<string, unknown> = {};
 
     // Handle email change
     if (dto.email && dto.email.toLowerCase() !== user.email) {
@@ -387,44 +428,65 @@ export class UsersService {
         throw new ConflictException('Email is already in use');
       }
 
+      previousValues.email = user.email;
       updateData.email = normalizedEmail;
       updateData.emailVerified = false; // Require re-verification
       changedFields.push('email');
     }
 
-    // Handle password change
-    if (dto.password) {
-      // Non-admin users must provide current password
-      if (currentUser.id === id && currentUser.role !== UserRole.ADMIN) {
-        if (!dto.currentPassword) {
-          throw new BadRequestException('Current password is required to change password');
-        }
-
-        const isCurrentPasswordValid = await bcrypt.compare(dto.currentPassword, user.passwordHash);
-
-        if (!isCurrentPasswordValid) {
-          throw new BadRequestException('Current password is incorrect');
-        }
+    // Handle firstName - validation: cannot be empty if provided
+    if (dto.firstName !== undefined) {
+      const trimmedFirstName = dto.firstName.trim();
+      if (trimmedFirstName.length === 0) {
+        throw new BadRequestException('First name cannot be empty');
       }
-
-      updateData.passwordHash = await bcrypt.hash(dto.password, this.bcryptSaltRounds);
-      changedFields.push('password');
+      if (trimmedFirstName !== user.firstName) {
+        previousValues.firstName = user.firstName;
+        updateData.firstName = trimmedFirstName;
+        changedFields.push('firstName');
+      }
     }
 
-    // Handle other fields
-    if (dto.firstName) {
-      updateData.firstName = dto.firstName.trim();
-      changedFields.push('firstName');
+    // Handle lastName - validation: cannot be empty if provided
+    if (dto.lastName !== undefined) {
+      const trimmedLastName = dto.lastName.trim();
+      if (trimmedLastName.length === 0) {
+        throw new BadRequestException('Last name cannot be empty');
+      }
+      if (trimmedLastName !== user.lastName) {
+        previousValues.lastName = user.lastName;
+        updateData.lastName = trimmedLastName;
+        changedFields.push('lastName');
+      }
     }
 
-    if (dto.lastName) {
-      updateData.lastName = dto.lastName.trim();
-      changedFields.push('lastName');
-    }
-
+    // Handle phone - can be null/empty to remove
     if (dto.phone !== undefined) {
-      updateData.phone = dto.phone?.trim() || null;
-      changedFields.push('phone');
+      const newPhone = dto.phone?.trim() || null;
+      if (newPhone !== user.phone) {
+        previousValues.phone = user.phone;
+        updateData.phone = newPhone;
+        changedFields.push('phone');
+      }
+    }
+
+    // Handle role change (admin only, already validated above)
+    if (dto.role !== undefined && dto.role !== user.role) {
+      previousValues.role = user.role;
+      updateData.role = dto.role;
+      changedFields.push('role');
+    }
+
+    // Handle status change (admin only, already validated above)
+    if (dto.status !== undefined && dto.status !== user.status) {
+      previousValues.status = user.status;
+      updateData.status = dto.status;
+      changedFields.push('status');
+
+      // If status is being set to BANNED or INACTIVE, invalidate refresh token
+      if (dto.status === UserStatus.BANNED || dto.status === UserStatus.INACTIVE) {
+        updateData.refreshToken = null;
+      }
     }
 
     // Only update if there are changes
@@ -438,14 +500,23 @@ export class UsersService {
       select: this.userSelect,
     });
 
-    await this.logAudit(
-      changedFields.includes('password') ? AuditAction.PASSWORD_CHANGED : AuditAction.USER_UPDATED,
-      id,
-      currentUser,
-      {
-        changedFields,
-        targetUserEmail: user.email,
-      }
+    // Determine audit action based on what changed
+    let auditAction = AuditAction.USER_UPDATED;
+    if (changedFields.includes('role')) {
+      auditAction = AuditAction.USER_ROLE_CHANGED;
+    }
+
+    await this.logAudit(auditAction, id, currentUser, {
+      changedFields,
+      targetUserEmail: user.email,
+      previousValue: previousValues,
+      newValue: Object.fromEntries(
+        changedFields.map((f) => [f, updateData[f as keyof typeof updateData]])
+      ),
+    });
+
+    this.logger.log(
+      `User ${user.email} updated by ${currentUser.email}: changed ${changedFields.join(', ')}`
     );
 
     return new UserEntity(updatedUser);

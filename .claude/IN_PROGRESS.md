@@ -2,6 +2,115 @@
 
 ---
 
+## Session 2026-01-20 - User Save/Update API Implementation
+
+### Completed
+
+- [x] **User Save/Update Functionality** - Enhanced API for user profile updates
+  - Updated UpdateUserDto with:
+    - role field (admin-only) with UserRole enum validation
+    - status field (admin-only) with UserStatus enum validation
+    - IsNotEmpty validation on firstName and lastName
+    - Deprecated password fields (use /auth/change-password instead)
+  - Updated users service update method with:
+    - Role change validation (admin only, cannot change own role, cannot demote other admins)
+    - Status change validation (admin only, cannot change own status)
+    - Password updates blocked (use separate endpoint)
+    - Refresh token invalidation on BANNED/INACTIVE status
+    - Enhanced audit logging with previous/new values
+    - Empty name validation
+  - Updated users controller with:
+    - Proper import of decorators from common module (Roles, CurrentUser)
+    - JwtAuthGuard and RolesGuard at controller level
+    - Removed inline decorator definitions
+  - Added 14 new comprehensive tests:
+    - Role update by admin
+    - Role change restrictions (non-admin, self, demoting admin)
+    - Status update by admin
+    - Status change restrictions (non-admin, self)
+    - Refresh token invalidation on BANNED/INACTIVE
+    - Empty firstName/lastName validation
+    - Combined updates with role
+    - Regular user profile updates
+  - Build verified successfully
+
+### Modified Files
+
+- `apps/api/src/modules/users/dto/update-user.dto.ts` - Added role/status fields
+- `apps/api/src/modules/users/users.service.ts` - Enhanced update logic
+- `apps/api/src/modules/users/users.controller.ts` - Proper decorator imports
+- `apps/api/src/modules/users/users.service.spec.ts` - 14 new test cases
+
+---
+
+## Session 2026-01-20 - Festival Publication API Implementation
+
+### Completed
+
+- [x] **Festival Publication Functionality** - Full API implementation for publish/unpublish
+  - Added new error codes for publication validation:
+    - FESTIVAL_PUBLISH_MISSING_NAME (ERR_5006)
+    - FESTIVAL_PUBLISH_MISSING_DATES (ERR_5007)
+    - FESTIVAL_PUBLISH_MISSING_VENUE (ERR_5008)
+    - FESTIVAL_PUBLISH_NO_TICKET_CATEGORY (ERR_5009)
+    - FESTIVAL_PUBLISH_INVALID_STATUS (ERR_5010)
+    - FESTIVAL_ALREADY_PUBLISHED (ERR_5011)
+    - FESTIVAL_NOT_DRAFT (ERR_5012)
+  - Added new DTOs:
+    - PublishValidationErrorDto - Error details for publication validation
+    - PublishValidationResultDto - Validation result with canPublish flag
+    - FestivalPublishResponseDto - Extended response with publishedAt field
+  - Updated festivals service with:
+    - validateForPublication() - Validates festival has required data
+    - publish() - Validates and publishes festival (DRAFT -> PUBLISHED)
+    - unpublish() - Unpublishes festival (PUBLISHED -> DRAFT)
+  - Updated festivals controller with:
+    - GET /:id/validate-publish - Check if festival can be published
+    - POST /:id/publish - Publish with validation (ADMIN/ORGANIZER roles)
+    - POST /:id/unpublish - Unpublish festival (ADMIN/ORGANIZER roles)
+    - Added RolesGuard with proper role authorization
+  - Added comprehensive tests for all new functionality
+  - Fixed controller tests to use ICalExportService mock
+  - All 5308 tests passing, build successful
+
+### Modified Files
+
+- `apps/api/src/common/exceptions/error-codes.ts` - New publication error codes
+- `apps/api/src/modules/festivals/dto/festival.dto.ts` - New DTOs
+- `apps/api/src/modules/festivals/festivals.service.ts` - Publish/unpublish logic
+- `apps/api/src/modules/festivals/festivals.controller.ts` - New endpoints
+- `apps/api/src/modules/festivals/festivals.service.spec.ts` - New test cases
+- `apps/api/src/modules/festivals/festivals.controller.spec.ts` - Fixed mocks
+
+---
+
+## Session 2026-01-20 - Zone Save API Implementation
+
+### Completed
+
+- [x] **Zone Save Functionality** - Full API implementation for zones module
+  - Added ZONE_NAME_EXISTS, ZONE_INVALID_CAPACITY, ZONE_INVALID_ACCESS_LEVEL error codes
+  - Updated zones service with:
+    - Unique zone name validation within festival (create & update)
+    - Positive capacity validation
+    - SECURITY role authorization for updates
+    - Whitespace trimming on names
+  - Updated zones controller with:
+    - Proper auth decorators (JwtAuthGuard, RolesGuard)
+    - ADMIN, ORGANIZER, SECURITY role authorization
+    - 409 Conflict API response documentation
+  - Added comprehensive tests for new validation scenarios
+  - Build verified successfully
+
+### Modified Files
+
+- `apps/api/src/common/exceptions/error-codes.ts` - New zone error codes
+- `apps/api/src/modules/zones/zones.service.ts` - Validation logic
+- `apps/api/src/modules/zones/zones.controller.ts` - Auth decorators
+- `apps/api/src/modules/zones/zones.service.spec.ts` - New test cases
+
+---
+
 ## CTO Mission - TERMINÉE
 
 **Date**: 2026-01-08
@@ -2070,6 +2179,217 @@ Launched 30+ parallel agents to systematically unify all UI components across th
 - ESLint: PASSED (all apps)
 - Build: PASSED (API, Web, Admin, UI library)
 - Push: SUCCESS to git@gitmimi-github:mimi6060/festival.git
+
+---
+
+## Session 2026-01-20 - Fix Clickable Elements & Lighten App Colors
+
+### Issues Fixed
+
+1. **Admin Sidebar Logout Button**
+   - Added `useAuth` hook import
+   - Connected `logout()` function to button onClick
+   - Added dynamic user initials and role display
+
+2. **Mobile SyncIndicator Pressable**
+   - Fixed Pressable with optional `onOfflinePress` handler
+   - Now renders as View when no handler is provided to avoid misleading clickability
+
+### Color Lightening (~20% increase in lightness)
+
+**Web App (`apps/web/app/globals.css`):**
+
+- Background: `#0a0a12` → `#12121c`
+- Secondary: `#12121a` → `#1a1a26`
+- Tertiary: `#1a1a24` → `#222230`
+- Surface: `#1a1a24` → `#222230`
+- Card background: `rgba(26,26,36,0.8)` → `rgba(34,34,48,0.85)`
+
+**Admin App (`apps/admin/app/globals.css`):**
+
+- Dark background lightness: `4%` → `8%`
+- Dark card lightness: `8%` → `12%`
+- Secondary lightness: `12%` → `16%`
+- Border opacity: `0.15` → `0.20`
+
+**Mobile App (`apps/mobile/src/theme/index.ts`):**
+
+- Background: `#0a0a12` → `#12121c`
+- Secondary: `#12121a` → `#1a1a26`
+- Surface: `#1a1a24` → `#222230`
+- Card background opacity: `0.05` → `0.08`
+- Border opacity: `0.1` → `0.12`
+
+### Commit
+
+- `8a6c27e` fix(ui): fix clickable elements and lighten app colors
+
+---
+
+## Session 2026-01-20 - Staff Save Functionality Implementation
+
+### Task
+
+Implement Staff save functionality in the API (apps/api) for the admin staff management pages.
+
+### Changes Made
+
+**1. Error Codes (`apps/api/src/common/exceptions/error-codes.ts`):**
+
+- Added new Staff-specific error codes (16xxx series):
+  - `STAFF_NOT_FOUND` (ERR_16000)
+  - `STAFF_ALREADY_ASSIGNED` (ERR_16001)
+  - `STAFF_BADGE_EXISTS` (ERR_16002)
+  - `STAFF_ROLE_NOT_FOUND` (ERR_16003)
+  - `STAFF_SHIFT_CONFLICT` (ERR_16004)
+  - `STAFF_INVALID_EMAIL` (ERR_16005)
+  - `STAFF_INVALID_PHONE` (ERR_16006)
+- Added bilingual error messages (FR/EN)
+
+**2. Exception Filter (`apps/api/src/common/filters/all-exceptions.filter.ts`):**
+
+- Added handling for staff unique constraints:
+  - `userId + festivalId` composite key -> `STAFF_ALREADY_ASSIGNED`
+  - `badgeNumber` unique constraint -> `STAFF_BADGE_EXISTS`
+
+**3. CreateStaffMemberDto (`apps/api/src/modules/staff/dto/create-staff-member.dto.ts`):**
+
+- Added phone number validation with regex pattern (`/^\+?[1-9]\d{6,14}$/`)
+- Added `@MinLength` and `@MaxLength` validators for badge number and employee code
+- Improved API documentation with examples
+
+**4. StaffService (`apps/api/src/modules/staff/staff.service.ts`):**
+
+- **createStaffMember** enhancements:
+  - Parallel fetch of user, festival, role, and existing assignment
+  - Pre-validation for duplicate user-festival assignment
+  - Pre-validation for badge number uniqueness
+  - Validation for staff role existence
+  - Graceful handling of P2002 race conditions
+- **updateStaffMember** enhancements:
+  - Validation for role existence when updating
+  - Pre-validation for badge number uniqueness
+  - Graceful handling of P2002 race conditions
+
+**5. Tests (`apps/api/src/modules/staff/staff.service.spec.ts`):**
+
+- Added `staffRole` mock to mock Prisma service
+- Added 7 new tests for createStaffMember:
+  - Role validation (NotFoundException when role not found)
+  - Duplicate assignment detection (ConflictException)
+  - Badge number uniqueness (ConflictException)
+  - P2002 race condition handling for user-festival
+  - P2002 race condition handling for badge number
+- Added 5 new tests for updateStaffMember:
+  - Role validation on update
+  - Badge number uniqueness on update
+  - Allow updating to same badge number
+  - Role validation with successful update
+  - P2002 race condition for badge on update
+- Updated existing tests with proper staffRole mock setup
+
+### Verification
+
+- **Tests**: 56 tests passing for staff.service.spec.ts
+- **Lint**: PASSED (no new errors)
+- **Build**: PASSED
+
+### Files Modified
+
+```
+apps/api/src/common/exceptions/error-codes.ts      (MODIFIED - +28 lines)
+apps/api/src/common/filters/all-exceptions.filter.ts (MODIFIED - +4 lines)
+apps/api/src/modules/staff/dto/create-staff-member.dto.ts (MODIFIED - +15 lines)
+apps/api/src/modules/staff/staff.service.ts        (MODIFIED - +85 lines)
+apps/api/src/modules/staff/staff.service.spec.ts   (MODIFIED - +140 lines)
+```
+
+---
+
+## Session 2026-01-20 - API: Password Change Functionality
+
+### Task
+
+Implement password change functionality in the API for the admin app settings page.
+
+### Implementation
+
+**1. DTO Enhancement (`apps/api/src/modules/auth/dto/auth.dto.ts`)**
+
+- Added `MatchPasswordConstraint` custom validator
+- Updated `ChangePasswordDto` with:
+  - `currentPassword`: string (required)
+  - `newPassword`: string with password strength validation (min 8 chars, uppercase, lowercase, number)
+  - `confirmPassword`: string with custom validator to match newPassword
+  - Added `@MaxLength(100)` to newPassword
+
+**2. Service Enhancement (`apps/api/src/modules/auth/auth.service.ts`)**
+
+- Enhanced `changePassword` method:
+  - Check if user exists
+  - Check if user has password (OAuth users cannot change password)
+  - Verify current password with bcrypt.compare
+  - Check new password is different from current
+  - Hash new password with bcrypt (12 rounds)
+  - **Invalidate all refresh tokens** (`refreshToken: null`) to force re-login on other devices
+
+**3. Controller Enhancement (`apps/api/src/modules/auth/auth.controller.ts`)**
+
+- Updated Swagger documentation:
+  - Added password requirements in description
+  - Added note about session invalidation
+  - Added note about OAuth users
+  - Updated API body example with confirmPassword field
+
+**4. Tests Created/Updated**
+
+- **`auth.dto.spec.ts`** (NEW - 17 tests)
+  - ChangePasswordDto validation tests (passwords match, validation failures)
+  - RegisterDto password strength tests
+  - ResetPasswordDto validation tests
+
+- **`auth.service.spec.ts`** (UPDATED - 6 tests for changePassword)
+  - Password change success with refresh token invalidation
+  - User not found
+  - Current password incorrect
+  - New password same as current
+  - OAuth users without password
+  - Session invalidation verification
+
+- **`auth.controller.spec.ts`** (UPDATED - 1 new test)
+  - OAuth users error propagation
+
+### Security Features
+
+- Password strength validation (min 8 chars, uppercase, lowercase, number)
+- Current password verification before change
+- New password must differ from current
+- All sessions invalidated after password change (force re-login)
+- OAuth users cannot change password (must use provider)
+- Custom validator for confirm password matching
+
+### Files Created/Modified
+
+```
+apps/api/src/modules/auth/dto/auth.dto.ts          (MODIFIED - +30 lines)
+apps/api/src/modules/auth/dto/auth.dto.spec.ts     (NEW - ~250 lines)
+apps/api/src/modules/auth/auth.service.ts          (MODIFIED - +15 lines)
+apps/api/src/modules/auth/auth.service.spec.ts     (MODIFIED - +40 lines)
+apps/api/src/modules/auth/auth.controller.ts       (MODIFIED - documentation)
+apps/api/src/modules/auth/auth.controller.spec.ts  (MODIFIED - +10 lines)
+```
+
+### Test Results
+
+- Auth Service: 61 tests passed
+- Auth Controller: 50 tests passed
+- Auth DTO: 17 tests passed
+- **Total: 128 auth tests passed**
+
+### Verification
+
+- ESLint: PASSED (auth files)
+- API Build: PASSED
 
 ---
 

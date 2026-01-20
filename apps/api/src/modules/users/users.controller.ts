@@ -10,6 +10,7 @@ import {
   Patch,
   Post,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiBearerAuth,
@@ -24,7 +25,7 @@ import {
 import { UserRole, UserStatus } from '@prisma/client';
 import { Throttle } from '@nestjs/throttler';
 import { UserEntity } from './entities';
-import { UsersService, type AuthenticatedUser, type PaginatedResponse } from './users.service';
+import { UsersService, type PaginatedResponse } from './users.service';
 import {
   BanUserDto,
   ChangeRoleDto,
@@ -38,21 +39,10 @@ import {
 } from './dto';
 import { Cacheable, CacheEvict, CacheTag } from '../cache';
 import { AllVersions, API_VERSION_HEADER } from '../../common/versioning';
-
-// Import decorators - adjust paths as needed for your project structure
-// These should come from a common/shared module
-const Roles = (...roles: UserRole[]) => {
-  return (_target: object, _key?: string | symbol, descriptor?: PropertyDescriptor) => {
-    Reflect.defineMetadata('roles', roles, descriptor?.value || _target);
-    return descriptor || _target;
-  };
-};
-
-const CurrentUser = () => {
-  return (_target: object, _key: string | symbol, _parameterIndex: number) => {
-    // Parameter decorator - handled by the framework
-  };
-};
+import { Roles } from '../../common/decorators/roles.decorator';
+import { CurrentUser, AuthenticatedUser } from '../../common/decorators/current-user.decorator';
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
 
 /**
  * Users controller handling all user management endpoints.
@@ -66,6 +56,7 @@ const CurrentUser = () => {
 @ApiTags('Users')
 @ApiBearerAuth()
 @Controller('users')
+@UseGuards(JwtAuthGuard, RolesGuard)
 @AllVersions()
 @ApiHeader({
   name: API_VERSION_HEADER,
