@@ -16,7 +16,7 @@ import { RateLimit } from '../../common/guards/rate-limit.guard';
 import { ProgramSearchDto, PaginatedProgramSearchResponse } from './dto/program-search.dto';
 
 @ApiTags('Program')
-@Controller('api/program')
+@Controller('program')
 export class ProgramController {
   constructor(private readonly programService: ProgramService) {}
 

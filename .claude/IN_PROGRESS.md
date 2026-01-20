@@ -2,6 +2,91 @@
 
 ---
 
+## Session 2026-01-21 - Mobile App Settings and Profile Screen Fixes
+
+### Completed
+
+- [x] **Theme Selection Fix** - Theme selection now works properly
+  - Created `ThemeContext.tsx` providing dynamic theme switching (light/dark/system)
+  - Added `ThemeProvider` wrapper in App.tsx
+  - Updated `AppNavigator.tsx` to use theme from context
+  - Created light and dark color palettes
+  - Navigation, status bar, and screens now respond to theme changes
+
+- [x] **Language Selection Fix** - Language selection now works properly
+  - Integrated i18n properly with Zustand settings store
+  - `setLanguage` now calls `i18n.changeLanguage()` automatically
+  - Added language rehydration on app start via `onRehydrateStorage`
+  - Updated `SettingsScreen` and `ProfileScreen` to use `useTranslation()` hook
+  - Added support for all 6 languages: FR, EN, ES, DE, IT, AR
+
+- [x] **Photo/Avatar Change Button Fix** - Photo change button now works
+  - Added `handleChangePhoto` function with platform-specific implementations
+  - Web: Creates file input element for image selection, converts to base64, saves to user avatar
+  - iOS: Uses `ActionSheetIOS` with options to choose photo or remove
+  - Android: Shows Alert with similar options
+  - Avatar component already supports `src` prop for displaying images
+
+- [x] **CSS/Styling Fixes for Profile Menu**
+  - Fixed modal overlay touch handling using `Pressable` instead of `TouchableOpacity`
+  - Added proper `stopPropagation()` to prevent modal close when clicking content
+  - All colors now come from theme context for proper theming
+  - Added platform-specific max height for web modals
+  - Improved touch feedback with `activeOpacity`
+
+### Modified Files
+
+- `apps/mobile/src/theme/ThemeContext.tsx` - New theme context with light/dark colors
+- `apps/mobile/src/theme/index.ts` - Export ThemeProvider and hooks
+- `apps/mobile/src/app/App.tsx` - Added ThemeProvider and I18nextProvider wrappers
+- `apps/mobile/src/components/navigation/AppNavigator.tsx` - Uses theme context for navigation
+- `apps/mobile/src/store/settingsStore.ts` - Integrated i18n, added language flags, expanded languages
+- `apps/mobile/src/store/index.ts` - Export languageFlags
+- `apps/mobile/src/screens/Settings/SettingsScreen.tsx` - Full rewrite with theme/i18n support
+- `apps/mobile/src/screens/Profile/ProfileScreen.tsx` - Full rewrite with theme/i18n/photo support
+- `apps/mobile/src/screens/Profile/EditProfileScreen.tsx` - Added theme/i18n support, web photo picker
+
+---
+
+## Session 2026-01-21 - Fix Festival Detail Page Interactive Elements
+
+### Completed
+
+- [x] **Fixed Festival Detail Page Interactive Elements**
+  - **Issue**: The festival detail page at `/festivals/electric-dreams-2025` had multiple non-functional features:
+    - Stages didn't work
+    - Artists didn't load
+    - Day selection tabs didn't work
+    - Capacity stats were static
+    - Genre filter ("tous les genres") didn't work
+
+  - **Solution**: Created comprehensive `FestivalProgram` client component
+    - Fetches real data from `/api/program`, `/api/program/stages`, `/api/program/artists` endpoints
+    - Implements functional day selection tabs using existing `Tabs` component
+    - Implements genre filter dropdown using `SelectComponent`
+    - Implements stage filter dropdown
+    - Groups performances by stage with capacity display
+    - Shows loading and error states
+    - Links artists to their detail pages
+
+  - **API Bug Fix**: Fixed program controller path
+    - Controller was using `@Controller('api/program')` with global `/api` prefix
+    - This resulted in `/api/api/program` paths
+    - Changed to `@Controller('program')` for correct `/api/program` paths
+
+  - **Page API Fix**: Fixed festival fetch URL
+    - Changed from `/festivals/by-slug/` to `/api/festivals/by-slug/`
+    - Now correctly fetches from API with proper prefix
+
+### Modified Files
+
+- `apps/web/components/festivals/FestivalProgram.tsx` - New client component for interactive program
+- `apps/web/components/festivals/index.ts` - Added FestivalProgram export
+- `apps/web/app/festivals/[slug]/page.tsx` - Integrated FestivalProgram component, fixed API URL
+- `apps/api/src/modules/program/program.controller.ts` - Fixed controller path (removed redundant 'api/')
+
+---
+
 ## Session 2026-01-21 - Security: Ticket Ownership Validation
 
 ### Completed

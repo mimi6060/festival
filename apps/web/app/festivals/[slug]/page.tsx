@@ -3,7 +3,13 @@ import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { OpenStreetMap } from '@/components/ui/OpenStreetMap';
-import { FestivalHero, FestivalLineup, FestivalShare, type Festival } from '@/components/festivals';
+import {
+  FestivalHero,
+  FestivalLineup,
+  FestivalShare,
+  FestivalProgram,
+  type Festival,
+} from '@/components/festivals';
 
 export const dynamic = 'force-dynamic';
 
@@ -77,7 +83,7 @@ interface ApiFestival {
 // Fetch festival from API
 async function fetchFestival(slug: string): Promise<ApiFestival | null> {
   try {
-    const res = await fetch(`${API_BASE_URL}/festivals/by-slug/${slug}`, {
+    const res = await fetch(`${API_BASE_URL}/api/festivals/by-slug/${slug}`, {
       next: { revalidate: 60 }, // Cache for 60 seconds
     });
 
@@ -241,8 +247,18 @@ export default async function FestivalDetailPage({ params }: PageProps) {
               </Card>
             </section>
 
-            {/* Lineup - only show if we have lineup data */}
-            {festival.lineup && festival.lineup.length > 0 && (
+            {/* Program - Interactive schedule with filters */}
+            {apiFestival && (
+              <FestivalProgram
+                festivalId={apiFestival.id}
+                festivalSlug={apiFestival.slug}
+                startDate={apiFestival.startDate}
+                endDate={apiFestival.endDate}
+              />
+            )}
+
+            {/* Lineup - fallback for when we have static lineup data but no API */}
+            {!apiFestival && festival.lineup && festival.lineup.length > 0 && (
               <FestivalLineup artists={festival.lineup} initialCount={4} />
             )}
 
