@@ -11,7 +11,7 @@ import type { Payment, TableColumn, RefundResponse } from '@/types';
 
 export default function PaymentsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [_dateRange, _setDateRange] = useState<string>('30d');
+  const [dateRange, setDateRange] = useState<string>('30d');
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
   const [refundPayment, setRefundPayment] = useState<Payment | null>(null);
   const [payments, setPayments] = useState(mockPayments);

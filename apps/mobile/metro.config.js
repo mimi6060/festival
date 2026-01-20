@@ -23,6 +23,13 @@ const webAliases = {
   '@react-native-community/netinfo': path.resolve(projectRoot, 'src/mocks/netinfo.web.ts'),
 };
 
+// intl-pluralrules factory resolution - need to override browser field redirect
+// The package's browser field redirects ./factory.js to ./factory.mjs but we removed .mjs
+const intlPluralRulesFactory = path.resolve(
+  workspaceRoot,
+  'node_modules/intl-pluralrules/factory.js'
+);
+
 // Remove .mjs from source extensions to avoid ESM modules with import.meta
 // This forces Metro to use CommonJS versions of packages like zustand
 config.resolver.sourceExts = config.resolver.sourceExts.filter((ext) => ext !== 'mjs');
@@ -34,6 +41,20 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (platform === 'web' && webAliases[moduleName]) {
     return {
       filePath: webAliases[moduleName],
+      type: 'sourceFile',
+    };
+  }
+
+  // Fix intl-pluralrules factory resolution for web
+  // The package's browser field redirects ./factory.js to ./factory.mjs
+  // but we removed .mjs from sourceExts, so we need to resolve manually
+  if (
+    platform === 'web' &&
+    moduleName === './factory.js' &&
+    context.originModulePath?.includes('intl-pluralrules')
+  ) {
+    return {
+      filePath: intlPluralRulesFactory,
       type: 'sourceFile',
     };
   }
