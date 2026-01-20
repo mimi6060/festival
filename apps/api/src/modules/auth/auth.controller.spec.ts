@@ -642,6 +642,7 @@ describe('AuthController', () => {
       const result = await controller.changePassword(regularUser.id, {
         currentPassword: VALID_PASSWORD,
         newPassword: 'NewSecurePass456!',
+        confirmPassword: 'NewSecurePass456!',
       });
 
       // Assert
@@ -652,6 +653,7 @@ describe('AuthController', () => {
       expect(mockAuthService.changePassword).toHaveBeenCalledWith(regularUser.id, {
         currentPassword: VALID_PASSWORD,
         newPassword: 'NewSecurePass456!',
+        confirmPassword: 'NewSecurePass456!',
       });
     });
 
@@ -666,6 +668,7 @@ describe('AuthController', () => {
         controller.changePassword(regularUser.id, {
           currentPassword: 'wrong-password',
           newPassword: 'NewSecurePass456!',
+          confirmPassword: 'NewSecurePass456!',
         })
       ).rejects.toThrow('Current password is incorrect');
     });
@@ -681,6 +684,7 @@ describe('AuthController', () => {
         controller.changePassword(regularUser.id, {
           currentPassword: VALID_PASSWORD,
           newPassword: VALID_PASSWORD,
+          confirmPassword: VALID_PASSWORD,
         })
       ).rejects.toThrow('New password must be different from current password');
     });
@@ -696,8 +700,25 @@ describe('AuthController', () => {
         controller.changePassword('non-existent-id', {
           currentPassword: VALID_PASSWORD,
           newPassword: 'NewSecurePass456!',
+          confirmPassword: 'NewSecurePass456!',
         })
       ).rejects.toThrow('User not found');
+    });
+
+    it('should propagate BadRequestException for OAuth users without password', async () => {
+      // Arrange
+      const error = new Error('Cannot change password for accounts using social login');
+      error.name = 'BadRequestException';
+      mockAuthService.changePassword.mockRejectedValue(error);
+
+      // Act & Assert
+      await expect(
+        controller.changePassword(regularUser.id, {
+          currentPassword: 'anyPassword123!',
+          newPassword: 'NewSecurePass456!',
+          confirmPassword: 'NewSecurePass456!',
+        })
+      ).rejects.toThrow('Cannot change password for accounts using social login');
     });
   });
 
@@ -847,7 +868,9 @@ describe('AuthController', () => {
             path: '/',
           })
         );
-        expect(res.redirect).toHaveBeenCalledWith('http://localhost:3000/auth/callback?success=true');
+        expect(res.redirect).toHaveBeenCalledWith(
+          'http://localhost:3000/auth/callback?success=true'
+        );
       });
 
       it('should set secure cookies in production for Google callback', async () => {
@@ -901,7 +924,9 @@ describe('AuthController', () => {
         await controller.googleAuthCallback(req, res);
 
         // Assert
-        expect(res.redirect).toHaveBeenCalledWith('http://localhost:3000/auth/callback?success=true');
+        expect(res.redirect).toHaveBeenCalledWith(
+          'http://localhost:3000/auth/callback?success=true'
+        );
       });
     });
 
@@ -935,7 +960,9 @@ describe('AuthController', () => {
             path: '/',
           })
         );
-        expect(res.redirect).toHaveBeenCalledWith('http://localhost:3000/auth/callback?success=true');
+        expect(res.redirect).toHaveBeenCalledWith(
+          'http://localhost:3000/auth/callback?success=true'
+        );
       });
 
       it('should set secure cookies in production for GitHub callback', async () => {

@@ -17,10 +17,11 @@ const loginSchema = z.object({
 type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
-  const { login, isLoading } = useAuth();
+  const { login, isLoading, rememberMe, setRememberMe } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState('');
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [localRememberMe, setLocalRememberMe] = useState(rememberMe);
 
   const {
     register,
@@ -38,10 +39,15 @@ export default function LoginPage() {
     setServerError('');
 
     try {
-      await login(data.email.trim(), data.password.trim());
+      await login(data.email.trim(), data.password.trim(), localRememberMe);
     } catch (err) {
       setServerError(err instanceof Error ? err.message : 'Une erreur est survenue');
     }
+  };
+
+  const handleRememberMeChange = (checked: boolean) => {
+    setLocalRememberMe(checked);
+    setRememberMe(checked);
   };
 
   const handleForgotPassword = () => {
@@ -269,10 +275,12 @@ export default function LoginPage() {
             </div>
 
             <div className="flex items-center justify-between">
-              <label className="flex items-center">
+              <label className="flex items-center cursor-pointer">
                 <input
                   type="checkbox"
-                  className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                  checked={localRememberMe}
+                  onChange={(e) => handleRememberMeChange(e.target.checked)}
+                  className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 cursor-pointer"
                 />
                 <span className="ml-2 text-sm text-gray-600">Se souvenir de moi</span>
               </label>

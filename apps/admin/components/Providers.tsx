@@ -24,13 +24,13 @@ function getSystemTheme(): 'light' | 'dark' {
 
 function getStoredTheme(): Theme {
   if (typeof window === 'undefined') {
-    return 'system';
+    return 'dark';
   }
   const stored = localStorage.getItem(THEME_STORAGE_KEY);
   if (stored === 'light' || stored === 'dark' || stored === 'system') {
     return stored;
   }
-  return 'system';
+  return 'dark';
 }
 
 interface ProvidersProps {
@@ -38,13 +38,16 @@ interface ProvidersProps {
 }
 
 export function Providers({ children }: ProvidersProps) {
-  const [theme, setThemeState] = React.useState<Theme>('system');
-  const [resolvedTheme, setResolvedTheme] = React.useState<'light' | 'dark'>('light');
+  const [theme, setThemeState] = React.useState<Theme>('dark');
+  const [resolvedTheme, setResolvedTheme] = React.useState<'light' | 'dark'>('dark');
   const [mounted, setMounted] = React.useState(false);
 
   React.useEffect(() => {
     const stored = getStoredTheme();
     setThemeState(stored);
+    // Set initial resolved theme based on stored preference
+    const initialResolved = stored === 'system' ? getSystemTheme() : stored;
+    setResolvedTheme(initialResolved);
     setMounted(true);
   }, []);
 
@@ -84,10 +87,9 @@ export function Providers({ children }: ProvidersProps) {
     setTheme(newTheme);
   }, [resolvedTheme, setTheme]);
 
-  if (!mounted) {
-    return null;
-  }
-
+  // Always render children - the themeScript in layout.tsx handles initial theme
+  // to prevent flash of wrong theme. We provide context immediately so children
+  // can access theme values (they just won't be accurate until after hydration).
   return (
     <ThemeContext.Provider value={{ theme, resolvedTheme, setTheme, toggleTheme }}>
       {children}
@@ -108,7 +110,7 @@ export const themeScript = `
   try {
     var theme = localStorage.getItem('festival-theme');
     var systemDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    var resolved = theme === 'dark' || (theme === 'system' && systemDark) || (!theme && systemDark) ? 'dark' : 'light';
+    var resolved = theme === 'light' || (theme === 'system' && !systemDark) ? 'light' : 'dark';
     document.documentElement.classList.add(resolved);
     document.documentElement.style.colorScheme = resolved;
   } catch (e) {}

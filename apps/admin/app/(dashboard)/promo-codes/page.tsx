@@ -576,10 +576,13 @@ export default function PromoCodesPage() {
           {Array.from({ length: promoCodes.meta.totalPages }, (_, i) => i + 1).map((page) => (
             <button
               key={page}
+              onClick={() =>
+                alert(`Navigate to page ${page} (pagination functionality coming soon)`)
+              }
               className={`px-3 py-1 rounded ${
                 page === promoCodes.meta?.page
                   ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'
+                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
               }`}
             >
               {page}

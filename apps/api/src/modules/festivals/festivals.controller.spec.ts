@@ -17,6 +17,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { FestivalsController } from './festivals.controller';
 import { FestivalsService } from './festivals.service';
 import { LocalizedContentService } from '../languages/localized-content.service';
+import { ICalExportService } from './ical-export.service';
 import { FestivalStatus } from '@prisma/client';
 import { NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
 import {
@@ -46,6 +47,9 @@ describe('FestivalsController', () => {
     updateStatus: jest.fn(),
     remove: jest.fn(),
     getStats: jest.fn(),
+    publish: jest.fn(),
+    unpublish: jest.fn(),
+    validateForPublication: jest.fn(),
   };
 
   const mockLocalizedContentService = {
@@ -54,6 +58,11 @@ describe('FestivalsController', () => {
     updateContent: jest.fn(),
     deleteContent: jest.fn(),
     getAvailableLocales: jest.fn(),
+  };
+
+  const mockICalExportService = {
+    generateCalendarString: jest.fn(),
+    generateCalendarFile: jest.fn(),
   };
 
   const mockOrganizerRequest = {
@@ -80,6 +89,7 @@ describe('FestivalsController', () => {
       providers: [
         { provide: FestivalsService, useValue: mockFestivalsService },
         { provide: LocalizedContentService, useValue: mockLocalizedContentService },
+        { provide: ICalExportService, useValue: mockICalExportService },
       ],
     }).compile();
 
@@ -636,7 +646,7 @@ describe('FestivalsController', () => {
   describe('POST /festivals/:id/publish (publish)', () => {
     it('should publish a draft festival', async () => {
       // Arrange
-      mockFestivalsService.updateStatus.mockResolvedValue({
+      mockFestivalsService.publish.mockResolvedValue({
         ...draftFestival,
         status: FestivalStatus.PUBLISHED,
       });
@@ -646,17 +656,13 @@ describe('FestivalsController', () => {
 
       // Assert
       expect(result.status).toBe(FestivalStatus.PUBLISHED);
-      expect(mockFestivalsService.updateStatus).toHaveBeenCalledWith(
-        draftFestival.id,
-        DtoFestivalStatus.PUBLISHED,
-        organizerUser.id
-      );
+      expect(mockFestivalsService.publish).toHaveBeenCalledWith(draftFestival.id, organizerUser.id);
     });
 
     it('should throw ForbiddenException when non-organizer tries to publish', async () => {
       // Arrange
-      mockFestivalsService.updateStatus.mockRejectedValue(
-        new ForbiddenException('You do not have permission to update this festival')
+      mockFestivalsService.publish.mockRejectedValue(
+        new ForbiddenException('You do not have permission to publish this festival')
       );
 
       // Act & Assert
@@ -667,7 +673,7 @@ describe('FestivalsController', () => {
 
     it('should throw NotFoundException when festival not found', async () => {
       // Arrange
-      mockFestivalsService.updateStatus.mockRejectedValue(
+      mockFestivalsService.publish.mockRejectedValue(
         new NotFoundException('Festival with ID "non-existent" not found')
       );
 
@@ -677,9 +683,9 @@ describe('FestivalsController', () => {
       );
     });
 
-    it('should pass correct status to service', async () => {
+    it('should call publish service method with festival ID and user ID', async () => {
       // Arrange
-      mockFestivalsService.updateStatus.mockResolvedValue({
+      mockFestivalsService.publish.mockResolvedValue({
         ...draftFestival,
         status: FestivalStatus.PUBLISHED,
       });
@@ -688,11 +694,7 @@ describe('FestivalsController', () => {
       await controller.publish(draftFestival.id, mockOrganizerRequest);
 
       // Assert
-      expect(mockFestivalsService.updateStatus).toHaveBeenCalledWith(
-        draftFestival.id,
-        DtoFestivalStatus.PUBLISHED,
-        organizerUser.id
-      );
+      expect(mockFestivalsService.publish).toHaveBeenCalledWith(draftFestival.id, organizerUser.id);
     });
   });
 
@@ -852,7 +854,7 @@ describe('FestivalsController', () => {
 
     it('should extract user ID from request for publish', async () => {
       // Arrange
-      mockFestivalsService.updateStatus.mockResolvedValue({
+      mockFestivalsService.publish.mockResolvedValue({
         status: FestivalStatus.PUBLISHED,
       });
 
@@ -860,11 +862,7 @@ describe('FestivalsController', () => {
       await controller.publish(draftFestival.id, mockOrganizerRequest);
 
       // Assert
-      expect(mockFestivalsService.updateStatus).toHaveBeenCalledWith(
-        draftFestival.id,
-        expect.any(String),
-        organizerUser.id
-      );
+      expect(mockFestivalsService.publish).toHaveBeenCalledWith(draftFestival.id, organizerUser.id);
     });
 
     it('should extract user ID from request for cancel', async () => {
@@ -898,7 +896,7 @@ describe('FestivalsController', () => {
       });
       mockFestivalsService.update.mockResolvedValue(publishedFestival);
       mockFestivalsService.remove.mockResolvedValue({ isDeleted: true });
-      mockFestivalsService.updateStatus.mockResolvedValue({
+      mockFestivalsService.publish.mockResolvedValue({
         status: FestivalStatus.PUBLISHED,
       });
 
@@ -922,8 +920,7 @@ describe('FestivalsController', () => {
         expect.any(String),
         organizerUser.id
       );
-      expect(mockFestivalsService.updateStatus).toHaveBeenCalledWith(
-        expect.any(String),
+      expect(mockFestivalsService.publish).toHaveBeenCalledWith(
         expect.any(String),
         organizerUser.id
       );

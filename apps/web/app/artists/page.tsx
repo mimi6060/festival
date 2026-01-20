@@ -1,11 +1,8 @@
-import { Metadata } from 'next';
+'use client';
+
+import { useState } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
-
-export const metadata: Metadata = {
-  title: 'Artistes - FestivalHub',
-  description: 'Decouvrez les artistes qui se produisent dans nos festivals.',
-};
 
 const featuredArtists = [
   {
@@ -53,6 +50,15 @@ const featuredArtists = [
 const genres = ['Tous', 'Electro', 'Pop', 'Rap', 'Rock', 'Jazz', 'Classique'];
 
 export default function ArtistsPage() {
+  const [selectedGenre, setSelectedGenre] = useState('Tous');
+
+  const filteredArtists =
+    selectedGenre === 'Tous'
+      ? featuredArtists
+      : featuredArtists.filter((artist) =>
+          artist.genre.toLowerCase().includes(selectedGenre.toLowerCase())
+        );
+
   return (
     <div className="min-h-screen pt-24 pb-16">
       <div className="container-app">
@@ -72,8 +78,9 @@ export default function ArtistsPage() {
           {genres.map((genre) => (
             <button
               key={genre}
+              onClick={() => setSelectedGenre(genre)}
               className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-                genre === 'Tous'
+                genre === selectedGenre
                   ? 'bg-primary-500 text-white'
                   : 'bg-white/5 text-white/70 hover:bg-white/10 hover:text-white'
               }`}
@@ -85,33 +92,43 @@ export default function ArtistsPage() {
 
         {/* Artists Grid */}
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mb-12">
-          {featuredArtists.map((artist) => (
+          {filteredArtists.map((artist) => (
             <Card
               key={artist.name}
               variant="solid"
               padding="none"
-              className="overflow-hidden group cursor-pointer"
+              className="overflow-hidden group"
             >
               <div className="aspect-square relative">
                 <img
                   src={artist.image}
                   alt={artist.name}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                 />
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-4">
                   <h3 className="font-bold text-white text-lg">{artist.name}</h3>
                   <p className="text-white/60 text-sm">{artist.genre}</p>
                 </div>
-                <div className="absolute inset-0 bg-primary-500/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                  <span className="px-4 py-2 bg-white/90 rounded-full text-primary-600 font-medium text-sm">
-                    Voir le profil
-                  </span>
-                </div>
               </div>
             </Card>
           ))}
         </div>
+
+        {/* Empty State */}
+        {filteredArtists.length === 0 && (
+          <div className="text-center py-12 mb-12">
+            <p className="text-white/60 text-lg">
+              Aucun artiste trouve pour le genre &quot;{selectedGenre}&quot;
+            </p>
+            <button
+              onClick={() => setSelectedGenre('Tous')}
+              className="mt-4 text-primary-400 hover:text-primary-300 transition-colors"
+            >
+              Voir tous les artistes
+            </button>
+          </div>
+        )}
 
         {/* CTA */}
         <Card variant="gradient" padding="lg" className="text-center">

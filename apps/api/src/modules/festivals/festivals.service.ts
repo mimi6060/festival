@@ -3,12 +3,21 @@ import {
   NotFoundException,
   ConflictException,
   ForbiddenException,
+  BadRequestException,
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService, CacheTag } from '../cache/cache.service';
-import { CreateFestivalDto, UpdateFestivalDto, FestivalQueryDto, FestivalStatus } from './dto';
+import {
+  CreateFestivalDto,
+  UpdateFestivalDto,
+  FestivalQueryDto,
+  FestivalStatus,
+  PublishValidationResultDto,
+  PublishValidationErrorDto,
+} from './dto';
 import { FestivalStatus as PrismaFestivalStatus } from '@prisma/client';
+import { ErrorCodes } from '../../common/exceptions/error-codes';
 
 // Cache TTL constants (in seconds)
 const CACHE_TTL = {
@@ -615,5 +624,182 @@ export class FestivalsService {
     this.logger.warn(`Festival ${id} permanently deleted by user ${userId}`);
 
     return { message: `Festival ${id} has been permanently deleted` };
+  }
+
+  // ============================================================================
+  // Festival Publication Operations
+  // ============================================================================
+
+  /**
+   * Validate if a festival can be published
+   * Checks for required data: name, dates, venue/location, at least one ticket category
+   */
+  async validateForPublication(id: string): Promise<PublishValidationResultDto> {
+    const festival = await this.prisma.festival.findUnique({
+      where: { id },
+      include: {
+        ticketCategories: {
+          where: { isActive: true },
+        },
+      },
+    });
+
+    if (!festival || festival.isDeleted) {
+      throw new NotFoundException(`Festival with ID "${id}" not found`);
+    }
+
+    const errors: PublishValidationErrorDto[] = [];
+
+    // Check required fields
+    if (!festival.name || festival.name.trim() === '') {
+      errors.push({
+        code: ErrorCodes.FESTIVAL_PUBLISH_MISSING_NAME,
+        message: 'Festival name is required for publishing',
+        field: 'name',
+      });
+    }
+
+    if (!festival.startDate || !festival.endDate) {
+      errors.push({
+        code: ErrorCodes.FESTIVAL_PUBLISH_MISSING_DATES,
+        message: 'Festival dates are required for publishing',
+        field: 'dates',
+      });
+    }
+
+    if (!festival.location || festival.location.trim() === '') {
+      errors.push({
+        code: ErrorCodes.FESTIVAL_PUBLISH_MISSING_VENUE,
+        message: 'Festival venue/location is required for publishing',
+        field: 'location',
+      });
+    }
+
+    // Check for at least one active ticket category
+    if (!festival.ticketCategories || festival.ticketCategories.length === 0) {
+      errors.push({
+        code: ErrorCodes.FESTIVAL_PUBLISH_NO_TICKET_CATEGORY,
+        message: 'At least one active ticket category is required for publishing',
+        field: 'ticketCategories',
+      });
+    }
+
+    // Check current status
+    if (festival.status !== PrismaFestivalStatus.DRAFT) {
+      errors.push({
+        code: ErrorCodes.FESTIVAL_NOT_DRAFT,
+        message: 'Festival must be in DRAFT status to be published',
+        field: 'status',
+      });
+    }
+
+    return {
+      canPublish: errors.length === 0,
+      errors,
+    };
+  }
+
+  /**
+   * Publish a festival
+   * Validates required data and changes status from DRAFT to PUBLISHED
+   */
+  async publish(id: string, userId: string) {
+    const festival = await this.findOne(id);
+
+    // Check ownership
+    if (festival.organizerId !== userId) {
+      throw new ForbiddenException('You do not have permission to publish this festival');
+    }
+
+    // Check if already published
+    if (festival.status === PrismaFestivalStatus.PUBLISHED) {
+      throw new BadRequestException({
+        code: ErrorCodes.FESTIVAL_ALREADY_PUBLISHED,
+        message: 'Festival is already published',
+      });
+    }
+
+    // Validate for publication
+    const validation = await this.validateForPublication(id);
+    if (!validation.canPublish) {
+      throw new BadRequestException({
+        code: ErrorCodes.FESTIVAL_PUBLISH_INVALID_STATUS,
+        message: 'Festival cannot be published due to validation errors',
+        errors: validation.errors,
+      });
+    }
+
+    // Update festival status to PUBLISHED
+    const updatedFestival = await this.prisma.festival.update({
+      where: { id },
+      data: {
+        status: PrismaFestivalStatus.PUBLISHED,
+      },
+      include: {
+        organizer: {
+          select: { id: true, firstName: true, lastName: true, email: true },
+        },
+        ticketCategories: true,
+        stages: true,
+        zones: true,
+        _count: {
+          select: { tickets: true, vendors: true, staffAssignments: true },
+        },
+      },
+    });
+
+    // Invalidate festival cache
+    await this.invalidateFestivalCache(id, festival.slug);
+
+    this.logger.log(`Festival ${id} published by user ${userId}`);
+
+    return updatedFestival;
+  }
+
+  /**
+   * Unpublish a festival
+   * Changes status from PUBLISHED back to DRAFT
+   */
+  async unpublish(id: string, userId: string) {
+    const festival = await this.findOne(id);
+
+    // Check ownership
+    if (festival.organizerId !== userId) {
+      throw new ForbiddenException('You do not have permission to unpublish this festival');
+    }
+
+    // Check if festival is actually published
+    if (festival.status !== PrismaFestivalStatus.PUBLISHED) {
+      throw new BadRequestException({
+        code: ErrorCodes.FESTIVAL_NOT_PUBLISHED,
+        message: 'Festival is not published',
+      });
+    }
+
+    // Update festival status back to DRAFT
+    const updatedFestival = await this.prisma.festival.update({
+      where: { id },
+      data: {
+        status: PrismaFestivalStatus.DRAFT,
+      },
+      include: {
+        organizer: {
+          select: { id: true, firstName: true, lastName: true, email: true },
+        },
+        ticketCategories: true,
+        stages: true,
+        zones: true,
+        _count: {
+          select: { tickets: true, vendors: true, staffAssignments: true },
+        },
+      },
+    });
+
+    // Invalidate festival cache
+    await this.invalidateFestivalCache(id, festival.slug);
+
+    this.logger.log(`Festival ${id} unpublished by user ${userId}`);
+
+    return updatedFestival;
   }
 }

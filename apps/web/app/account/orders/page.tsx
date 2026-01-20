@@ -1,8 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { Modal } from '@/components/ui/Modal';
 
 // Note: For client components, metadata should be in a separate layout.tsx
 
@@ -92,6 +94,68 @@ www.festivalharmony.com
 };
 
 export default function OrdersPage() {
+  const [refundModalOpen, setRefundModalOpen] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [refundReason, setRefundReason] = useState('');
+  const [refundSubmitted, setRefundSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleRefundRequest = (order: Order) => {
+    setSelectedOrder(order);
+    setRefundReason('');
+    setRefundSubmitted(false);
+    setRefundModalOpen(true);
+  };
+
+  const submitRefundRequest = async () => {
+    if (!selectedOrder || !refundReason.trim()) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    // Simulate API call
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+    setIsSubmitting(false);
+    setRefundSubmitted(true);
+  };
+
+  const isRefundable = (order: Order) => {
+    // Check if order is confirmed and festival hasn't started yet
+    if (order.status !== 'confirmed') {
+      return false;
+    }
+
+    // Parse festival date (assuming format like "July 15-18, 2025")
+    const dateMatch = order.festival.date.match(/(\w+)\s+(\d+)/);
+    if (!dateMatch) {
+      return false;
+    }
+
+    const monthNames = [
+      'January',
+      'February',
+      'March',
+      'April',
+      'May',
+      'June',
+      'July',
+      'August',
+      'September',
+      'October',
+      'November',
+      'December',
+    ];
+    const month = monthNames.indexOf(dateMatch[1]);
+    const day = parseInt(dateMatch[2]);
+    const year = new Date().getFullYear() + (month < new Date().getMonth() ? 1 : 0);
+
+    const festivalDate = new Date(year, month, day);
+    const thirtyDaysBefore = new Date(festivalDate);
+    thirtyDaysBefore.setDate(thirtyDaysBefore.getDate() - 30);
+
+    return new Date() < thirtyDaysBefore;
+  };
+
   return (
     <div className="min-h-screen pt-24 pb-16">
       <div className="container-app">
@@ -155,9 +219,21 @@ export default function OrdersPage() {
                         Invoice
                       </Button>
                       {order.status === 'confirmed' && (
-                        <Button as="link" href="/account/tickets" variant="primary" size="sm">
-                          View Tickets
-                        </Button>
+                        <>
+                          {isRefundable(order) && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleRefundRequest(order)}
+                              className="text-white/60 hover:text-white"
+                            >
+                              Request Refund
+                            </Button>
+                          )}
+                          <Button as="link" href="/account/tickets" variant="primary" size="sm">
+                            View Tickets
+                          </Button>
+                        </>
                       )}
                     </div>
                   </div>
@@ -281,6 +357,126 @@ export default function OrdersPage() {
             </Button>
           </Card>
         )}
+
+        {/* Refund Request Modal */}
+        <Modal
+          isOpen={refundModalOpen}
+          onClose={() => setRefundModalOpen(false)}
+          title={refundSubmitted ? 'Refund Request Submitted' : 'Request Refund'}
+          size="md"
+        >
+          {refundSubmitted ? (
+            <div className="text-center py-6">
+              <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
+                <svg
+                  className="w-8 h-8 text-green-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+              </div>
+              <h3 className="text-lg font-semibold text-white mb-2">Request Submitted</h3>
+              <p className="text-white/60 mb-6">
+                Your refund request for order {selectedOrder?.id} has been submitted. We&apos;ll
+                process it within 5-7 business days and notify you by email.
+              </p>
+              <Button variant="primary" onClick={() => setRefundModalOpen(false)}>
+                Close
+              </Button>
+            </div>
+          ) : (
+            <div>
+              <p className="text-white/60 mb-4">
+                You are requesting a refund for order{' '}
+                <span className="text-white font-mono">{selectedOrder?.id}</span>.
+              </p>
+
+              <div className="bg-white/5 rounded-xl p-4 mb-6">
+                <div className="flex justify-between text-sm mb-2">
+                  <span className="text-white/60">Festival</span>
+                  <span className="text-white">{selectedOrder?.festival.name}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/60">Amount to refund</span>
+                  <span className="text-secondary-400 font-semibold">
+                    {selectedOrder &&
+                      new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: selectedOrder.currency,
+                      }).format(selectedOrder.total)}
+                  </span>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <label htmlFor="refundReason" className="block text-sm font-medium text-white mb-2">
+                  Reason for refund <span className="text-red-400">*</span>
+                </label>
+                <textarea
+                  id="refundReason"
+                  value={refundReason}
+                  onChange={(e) => setRefundReason(e.target.value)}
+                  placeholder="Please tell us why you're requesting a refund..."
+                  className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-primary-500 transition-colors resize-none"
+                  rows={4}
+                />
+              </div>
+
+              <div className="flex gap-3">
+                <Button
+                  variant="secondary"
+                  onClick={() => setRefundModalOpen(false)}
+                  disabled={isSubmitting}
+                  fullWidth
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="primary"
+                  onClick={submitRefundRequest}
+                  disabled={!refundReason.trim() || isSubmitting}
+                  fullWidth
+                >
+                  {isSubmitting ? (
+                    <>
+                      <svg className="animate-spin h-4 w-4 mr-2" viewBox="0 0 24 24">
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                      Processing...
+                    </>
+                  ) : (
+                    'Submit Request'
+                  )}
+                </Button>
+              </div>
+
+              <p className="mt-4 text-xs text-white/40 text-center">
+                Refunds are processed within 5-7 business days. The amount will be credited to your
+                original payment method.
+              </p>
+            </div>
+          )}
+        </Modal>
       </div>
     </div>
   );

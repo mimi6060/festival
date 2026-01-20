@@ -560,7 +560,7 @@ describe('AuthService', () => {
   // ==========================================================================
 
   describe('changePassword', () => {
-    it('should change password successfully', async () => {
+    it('should change password successfully and invalidate refresh tokens', async () => {
       // Arrange
       const user = toPrismaUser(regularUser);
       mockPrismaService.user.findUnique.mockResolvedValue(user);
@@ -574,6 +574,7 @@ describe('AuthService', () => {
       await authService.changePassword(user.id, {
         currentPassword: VALID_PASSWORD,
         newPassword: 'NewPassword456!',
+        confirmPassword: 'NewPassword456!',
       });
 
       // Assert
@@ -581,7 +582,10 @@ describe('AuthService', () => {
       expect(bcrypt.hash).toHaveBeenCalledWith('NewPassword456!', 12);
       expect(mockPrismaService.user.update).toHaveBeenCalledWith({
         where: { id: user.id },
-        data: { passwordHash: 'new.password.hash' },
+        data: {
+          passwordHash: 'new.password.hash',
+          refreshToken: null, // Sessions invalidated
+        },
       });
     });
 
@@ -594,6 +598,7 @@ describe('AuthService', () => {
         authService.changePassword('non-existent-id', {
           currentPassword: VALID_PASSWORD,
           newPassword: 'NewPassword456!',
+          confirmPassword: 'NewPassword456!',
         })
       ).rejects.toThrow(NotFoundException);
     });
@@ -608,12 +613,14 @@ describe('AuthService', () => {
         authService.changePassword(regularUser.id, {
           currentPassword: 'wrong-password',
           newPassword: 'NewPassword456!',
+          confirmPassword: 'NewPassword456!',
         })
       ).rejects.toThrow(BadRequestException);
       await expect(
         authService.changePassword(regularUser.id, {
           currentPassword: 'wrong-password',
           newPassword: 'NewPassword456!',
+          confirmPassword: 'NewPassword456!',
         })
       ).rejects.toThrow('Current password is incorrect');
     });
@@ -630,14 +637,70 @@ describe('AuthService', () => {
         authService.changePassword(regularUser.id, {
           currentPassword: VALID_PASSWORD,
           newPassword: VALID_PASSWORD,
+          confirmPassword: VALID_PASSWORD,
         })
       ).rejects.toThrow(BadRequestException);
       await expect(
         authService.changePassword(regularUser.id, {
           currentPassword: VALID_PASSWORD,
           newPassword: VALID_PASSWORD,
+          confirmPassword: VALID_PASSWORD,
         })
       ).rejects.toThrow('New password must be different');
+    });
+
+    it('should throw BadRequestException for OAuth users without password', async () => {
+      // Arrange - OAuth user without passwordHash
+      const oauthUser = {
+        ...toPrismaUser(regularUser),
+        passwordHash: null,
+        authProvider: 'GOOGLE',
+      };
+      mockPrismaService.user.findUnique.mockResolvedValue(oauthUser);
+
+      // Act & Assert
+      await expect(
+        authService.changePassword(oauthUser.id, {
+          currentPassword: 'anyPassword123!',
+          newPassword: 'NewPassword456!',
+          confirmPassword: 'NewPassword456!',
+        })
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        authService.changePassword(oauthUser.id, {
+          currentPassword: 'anyPassword123!',
+          newPassword: 'NewPassword456!',
+          confirmPassword: 'NewPassword456!',
+        })
+      ).rejects.toThrow('Cannot change password for accounts using social login');
+    });
+
+    it('should invalidate all sessions by setting refreshToken to null', async () => {
+      // Arrange
+      const userWithRefreshToken = {
+        ...toPrismaUser(regularUser),
+        refreshToken: 'existing.refresh.token',
+      };
+      mockPrismaService.user.findUnique.mockResolvedValue(userWithRefreshToken);
+      (bcrypt.compare as jest.Mock).mockResolvedValueOnce(true).mockResolvedValueOnce(false);
+      (bcrypt.hash as jest.Mock).mockResolvedValue('new.password.hash');
+      mockPrismaService.user.update.mockResolvedValue(userWithRefreshToken);
+
+      // Act
+      await authService.changePassword(userWithRefreshToken.id, {
+        currentPassword: VALID_PASSWORD,
+        newPassword: 'NewPassword456!',
+        confirmPassword: 'NewPassword456!',
+      });
+
+      // Assert - verify refreshToken is set to null
+      expect(mockPrismaService.user.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            refreshToken: null,
+          }),
+        })
+      );
     });
   });
 

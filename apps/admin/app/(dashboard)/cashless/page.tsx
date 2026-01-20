@@ -403,7 +403,10 @@ export default function CashlessPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <button className="btn-secondary flex items-center gap-2">
+          <button
+            onClick={() => alert('Export functionality coming soon')}
+            className="btn-secondary flex items-center gap-2"
+          >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
@@ -414,7 +417,10 @@ export default function CashlessPage() {
             </svg>
             Exporter
           </button>
-          <button className="btn-primary flex items-center gap-2">
+          <button
+            onClick={() => alert('Mass refund functionality coming soon')}
+            className="btn-primary flex items-center gap-2"
+          >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 strokeLinecap="round"
@@ -714,6 +720,7 @@ export default function CashlessPage() {
             actions={(account) => (
               <div className="flex items-center gap-1">
                 <button
+                  onClick={() => alert(`View details for ${account.userName}`)}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                   title="Voir details"
                 >
@@ -738,6 +745,13 @@ export default function CashlessPage() {
                   </svg>
                 </button>
                 <button
+                  onClick={() =>
+                    alert(
+                      account.status === 'active'
+                        ? `Suspend account for ${account.userName}`
+                        : `Reactivate account for ${account.userName}`
+                    )
+                  }
                   className={cn(
                     'p-2 rounded-lg transition-colors',
                     account.status === 'active' ? 'hover:bg-orange-50' : 'hover:bg-green-50'
@@ -775,6 +789,7 @@ export default function CashlessPage() {
                   )}
                 </button>
                 <button
+                  onClick={() => alert(`Refund balance for ${account.userName}`)}
                   className="p-2 hover:bg-blue-50 rounded-lg transition-colors"
                   title="Rembourser"
                 >

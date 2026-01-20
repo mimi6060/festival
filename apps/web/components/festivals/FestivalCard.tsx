@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { Button } from '../ui/Button';
 
 export interface Festival {
@@ -259,6 +260,8 @@ interface FestivalHeroProps {
 }
 
 export function FestivalHero({ festival }: FestivalHeroProps) {
+  const router = useRouter();
+
   const formatDate = (date: string) => {
     return new Date(date).toLocaleDateString('en-US', {
       weekday: 'long',
@@ -266,6 +269,13 @@ export function FestivalHero({ festival }: FestivalHeroProps) {
       day: 'numeric',
       year: 'numeric',
     });
+  };
+
+  const handleScrollToContent = () => {
+    const aboutSection = document.getElementById('about-section');
+    if (aboutSection) {
+      aboutSection.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -277,17 +287,29 @@ export function FestivalHero({ festival }: FestivalHeroProps) {
         <div className="absolute inset-0 bg-gradient-to-r from-festival-dark/80 via-transparent to-transparent" />
       </div>
 
+      {/* Back Button */}
+      <button
+        onClick={() => router.back()}
+        className="absolute top-24 left-4 md:left-8 z-10 flex items-center gap-2 px-4 py-2 rounded-full bg-white/10 backdrop-blur-sm text-white/90 hover:bg-white/20 transition-colors"
+      >
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+        </svg>
+        <span className="text-sm font-medium">Back</span>
+      </button>
+
       {/* Content */}
       <div className="relative container-app pb-12 md:pb-16">
-        {/* Genres */}
+        {/* Genres - Now Clickable */}
         <div className="flex flex-wrap gap-2 mb-4">
           {festival.genres.map((genre) => (
-            <span
+            <Link
               key={genre}
-              className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-white/90 text-sm font-medium"
+              href={`/festivals?genre=${encodeURIComponent(genre)}`}
+              className="px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm text-white/90 text-sm font-medium hover:bg-primary-500/50 transition-colors cursor-pointer"
             >
               {genre}
-            </span>
+            </Link>
           ))}
         </div>
 
@@ -350,7 +372,7 @@ export function FestivalHero({ festival }: FestivalHeroProps) {
               }).format(festival.price.from)}
             </Button>
           )}
-          <Button as="link" href={`/festivals/${festival.slug}`} variant="secondary" size="lg">
+          <Button variant="secondary" size="lg" onClick={handleScrollToContent}>
             Learn More
           </Button>
         </div>

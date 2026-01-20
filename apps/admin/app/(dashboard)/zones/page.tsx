@@ -625,7 +625,17 @@ export default function ZonesPage() {
               <button onClick={() => setShowZoneModal(false)} className="btn-secondary">
                 Annuler
               </button>
-              <button className="btn-primary">{selectedZone ? 'Enregistrer' : 'Creer'}</button>
+              <button
+                type="submit"
+                onClick={(e) => {
+                  e.preventDefault();
+                  alert('Zone save functionality coming soon');
+                  setShowZoneModal(false);
+                }}
+                className="btn-primary"
+              >
+                {selectedZone ? 'Enregistrer' : 'Creer'}
+              </button>
             </div>
           </div>
         </div>

@@ -2,6 +2,7 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { OpenStreetMap } from '@/components/ui/OpenStreetMap';
 import { FestivalHero, FestivalLineup, FestivalShare, type Festival } from '@/components/festivals';
 
 export const dynamic = 'force-dynamic';
@@ -221,6 +222,54 @@ const festivals: Record<
       },
     ],
   },
+  'summer-vibes-2025': {
+    id: '7',
+    slug: 'summer-vibes-2025',
+    name: 'Summer Vibes Festival',
+    description:
+      'The ultimate summer music celebration featuring chart-topping artists across multiple genres. Experience three days of sun, music, and unforgettable moments in the beautiful city of Nice.',
+    location: 'Nice, France',
+    startDate: '2025-07-25',
+    endDate: '2025-07-27',
+    imageUrl: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=1920&h=1080&fit=crop',
+    price: { from: 159, currency: 'EUR' },
+    genres: ['Pop', 'Electronic', 'Hip-Hop', 'R&B'],
+    isFeatured: true,
+    lineup: [
+      { name: 'Dua Lipa', genre: 'Pop', time: 'Saturday 22:00', stage: 'Main Stage' },
+      { name: 'The Weeknd', genre: 'R&B', time: 'Sunday 22:30', stage: 'Main Stage' },
+      { name: 'Calvin Harris', genre: 'Electronic', time: 'Saturday 00:00', stage: 'Beach Stage' },
+      { name: 'Post Malone', genre: 'Hip-Hop', time: 'Friday 21:00', stage: 'Main Stage' },
+      { name: 'Kygo', genre: 'Tropical House', time: 'Sunday 19:00', stage: 'Sunset Stage' },
+      { name: 'Billie Eilish', genre: 'Pop', time: 'Saturday 20:00', stage: 'Main Stage' },
+    ],
+    schedule: [
+      {
+        date: '2025-07-25',
+        events: [
+          { time: '15:00', title: 'Gates Open', stage: 'All Stages' },
+          { time: '17:00', title: 'Opening Acts', stage: 'Discovery Stage' },
+          { time: '21:00', title: 'Post Malone', stage: 'Main Stage' },
+        ],
+      },
+      {
+        date: '2025-07-26',
+        events: [
+          { time: '14:00', title: 'Beach Party', stage: 'Beach Stage' },
+          { time: '20:00', title: 'Billie Eilish', stage: 'Main Stage' },
+          { time: '22:00', title: 'Dua Lipa', stage: 'Main Stage' },
+        ],
+      },
+      {
+        date: '2025-07-27',
+        events: [
+          { time: '16:00', title: 'Afternoon Sessions', stage: 'Chill Zone' },
+          { time: '19:00', title: 'Kygo', stage: 'Sunset Stage' },
+          { time: '22:30', title: 'The Weeknd', stage: 'Main Stage' },
+        ],
+      },
+    ],
+  },
 };
 
 interface PageProps {
@@ -267,7 +316,7 @@ export default async function FestivalDetailPage({ params }: PageProps) {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-12">
             {/* About */}
-            <section>
+            <section id="about-section">
               <h2 className="text-2xl font-bold text-white mb-6">About the Festival</h2>
               <Card variant="solid" padding="lg">
                 <p className="text-white/70 leading-relaxed">{festival.description}</p>
@@ -296,13 +345,14 @@ export default async function FestivalDetailPage({ params }: PageProps) {
             <FestivalLineup artists={festival.lineup} initialCount={4} />
 
             {/* Location */}
-            <section>
+            <section id="location-section">
               <h2 className="text-2xl font-bold text-white mb-6">Location</h2>
               <Card variant="solid" padding="none" className="overflow-hidden">
-                <div className="h-64 bg-white/5 flex items-center justify-center">
-                  <div className="text-center text-white/50">
+                <OpenStreetMap location={festival.location} className="h-64" />
+                <div className="p-6 border-t border-white/10">
+                  <div className="flex items-start gap-3">
                     <svg
-                      className="w-16 h-16 mx-auto mb-4"
+                      className="w-5 h-5 text-primary-400 mt-0.5 flex-shrink-0"
                       fill="none"
                       viewBox="0 0 24 24"
                       stroke="currentColor"
@@ -320,15 +370,13 @@ export default async function FestivalDetailPage({ params }: PageProps) {
                         d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
                       />
                     </svg>
-                    <p>Interactive map coming soon</p>
+                    <div>
+                      <h3 className="font-semibold text-white">{festival.location}</h3>
+                      <p className="text-white/60 text-sm mt-1">
+                        Shuttle buses and transportation options available from the city center.
+                      </p>
+                    </div>
                   </div>
-                </div>
-                <div className="p-6">
-                  <h3 className="font-semibold text-white mb-2">{festival.location}</h3>
-                  <p className="text-white/60 text-sm">
-                    The festival grounds are located 30 minutes from Barcelona city center. Shuttle
-                    buses will run regularly from Placa Catalunya.
-                  </p>
                 </div>
               </Card>
             </section>
@@ -336,62 +384,7 @@ export default async function FestivalDetailPage({ params }: PageProps) {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            {/* Ticket CTA */}
-            <Card variant="gradient" padding="lg" className="sticky top-24">
-              <h3 className="text-xl font-bold text-white mb-2">Get Your Tickets</h3>
-              <p className="text-white/60 text-sm mb-6">
-                Secure your spot at {festival.name}. Limited tickets available!
-              </p>
-
-              <div className="space-y-3 mb-6">
-                <div className="flex justify-between text-sm">
-                  <span className="text-white/60">General Admission</span>
-                  <span className="text-white font-semibold">
-                    {new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: festival.price.currency,
-                      minimumFractionDigits: 0,
-                    }).format(festival.price.from)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-white/60">VIP Pass</span>
-                  <span className="text-white font-semibold">
-                    {new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: festival.price.currency,
-                      minimumFractionDigits: 0,
-                    }).format(festival.price.from * 2)}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-white/60">Premium Experience</span>
-                  <span className="text-white font-semibold">
-                    {new Intl.NumberFormat('en-US', {
-                      style: 'currency',
-                      currency: festival.price.currency,
-                      minimumFractionDigits: 0,
-                    }).format(festival.price.from * 3)}
-                  </span>
-                </div>
-              </div>
-
-              <Button
-                as="link"
-                href={`/festivals/${festival.slug}/tickets`}
-                variant="accent"
-                fullWidth
-                size="lg"
-              >
-                Buy Tickets
-              </Button>
-
-              <p className="text-center text-white/40 text-xs mt-4">
-                Free cancellation up to 30 days before the event
-              </p>
-            </Card>
-
-            {/* Quick Info */}
+            {/* Quick Info - First in sidebar */}
             <Card variant="solid" padding="lg">
               <h3 className="font-semibold text-white mb-4">Quick Info</h3>
               <div className="space-y-4">
@@ -466,7 +459,14 @@ export default async function FestivalDetailPage({ params }: PageProps) {
                   </svg>
                   <div>
                     <div className="text-white text-sm font-medium">Duration</div>
-                    <div className="text-white/60 text-sm">4 days</div>
+                    <div className="text-white/60 text-sm">
+                      {Math.ceil(
+                        (new Date(festival.endDate).getTime() -
+                          new Date(festival.startDate).getTime()) /
+                          (1000 * 60 * 60 * 24)
+                      ) + 1}{' '}
+                      days
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-start gap-3">
@@ -489,6 +489,61 @@ export default async function FestivalDetailPage({ params }: PageProps) {
                   </div>
                 </div>
               </div>
+            </Card>
+
+            {/* Ticket CTA */}
+            <Card variant="gradient" padding="lg">
+              <h3 className="text-xl font-bold text-white mb-2">Get Your Tickets</h3>
+              <p className="text-white/60 text-sm mb-6">
+                Secure your spot at {festival.name}. Limited tickets available!
+              </p>
+
+              <div className="space-y-3 mb-6">
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/60">General Admission</span>
+                  <span className="text-white font-semibold">
+                    {new Intl.NumberFormat('en-US', {
+                      style: 'currency',
+                      currency: festival.price.currency,
+                      minimumFractionDigits: 0,
+                    }).format(festival.price.from)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/60">VIP Pass</span>
+                  <span className="text-white font-semibold">
+                    {new Intl.NumberFormat('en-US', {
+                      style: 'currency',
+                      currency: festival.price.currency,
+                      minimumFractionDigits: 0,
+                    }).format(festival.price.from * 2)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-white/60">Premium Experience</span>
+                  <span className="text-white font-semibold">
+                    {new Intl.NumberFormat('en-US', {
+                      style: 'currency',
+                      currency: festival.price.currency,
+                      minimumFractionDigits: 0,
+                    }).format(festival.price.from * 3)}
+                  </span>
+                </div>
+              </div>
+
+              <Button
+                as="link"
+                href={`/festivals/${festival.slug}/tickets`}
+                variant="accent"
+                fullWidth
+                size="lg"
+              >
+                Buy Tickets
+              </Button>
+
+              <p className="text-center text-white/40 text-xs mt-4">
+                Free cancellation up to 30 days before the event
+              </p>
             </Card>
 
             {/* Share */}

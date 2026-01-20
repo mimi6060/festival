@@ -604,22 +604,31 @@ Changes the password for the currently authenticated user.
 **Requirements:**
 - Must be logged in
 - Must provide current password
-- New password must meet security requirements
+- New password must meet security requirements:
+  - Minimum 8 characters
+  - At least one uppercase letter
+  - At least one lowercase letter
+  - At least one number
+- Confirm password must match new password
 
 **After Change:**
-- Other sessions remain active
-- Current session continues to work
+- All other sessions are invalidated (forced re-login on other devices)
+- Current session's access token remains valid until expiration
+- User should re-authenticate to get a new refresh token
+
+**Note:** OAuth users (Google, GitHub, etc.) cannot change their password through this endpoint.
     `,
   })
   @ApiBody({
     type: ChangePasswordDto,
-    description: 'Current and new password',
+    description: 'Current password, new password, and password confirmation',
     examples: {
       standard: {
         summary: 'Change password',
         value: {
           currentPassword: 'OldPass123!',
           newPassword: 'NewSecurePass456!',
+          confirmPassword: 'NewSecurePass456!',
         },
       },
     },

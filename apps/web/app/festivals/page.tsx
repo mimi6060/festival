@@ -139,6 +139,26 @@ function transformFestival(festival: Festival): FestivalCardType {
 
 type SortOption = 'date' | 'price_asc' | 'price_desc' | 'name';
 
+// All available genres from mock data
+const ALL_GENRES = [
+  'Electronic',
+  'House',
+  'Techno',
+  'Rock',
+  'Indie',
+  'Alternative',
+  'Jazz',
+  'Blues',
+  'Soul',
+  'Metal',
+  'Hard Rock',
+  'Punk',
+  'Pop',
+  'Electro',
+  'World',
+  'Hip-Hop',
+];
+
 export default function FestivalsPage() {
   const [allFestivals, setAllFestivals] = useState<FestivalCardType[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -148,6 +168,7 @@ export default function FestivalsPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [monthFilter, setMonthFilter] = useState('');
+  const [genreFilter, setGenreFilter] = useState('');
   const [sortBy, setSortBy] = useState<SortOption>('date');
   const [visibleCount, setVisibleCount] = useState(ITEMS_PER_PAGE);
 
@@ -222,6 +243,13 @@ export default function FestivalsPage() {
       });
     }
 
+    // Genre filter
+    if (genreFilter) {
+      result = result.filter((f) =>
+        f.genres.some((g) => g.toLowerCase() === genreFilter.toLowerCase())
+      );
+    }
+
     // Sort
     result.sort((a, b) => {
       switch (sortBy) {
@@ -239,7 +267,7 @@ export default function FestivalsPage() {
     });
 
     return result;
-  }, [allFestivals, searchQuery, statusFilter, monthFilter, sortBy]);
+  }, [allFestivals, searchQuery, statusFilter, monthFilter, genreFilter, sortBy]);
 
   const visibleFestivals = filteredFestivals.slice(0, visibleCount);
   const hasMore = visibleCount < filteredFestivals.length;
@@ -252,11 +280,12 @@ export default function FestivalsPage() {
     setSearchQuery('');
     setStatusFilter('');
     setMonthFilter('');
+    setGenreFilter('');
     setSortBy('date');
     setVisibleCount(ITEMS_PER_PAGE);
   };
 
-  const hasActiveFilters = searchQuery || statusFilter || monthFilter;
+  const hasActiveFilters = searchQuery || statusFilter || monthFilter || genreFilter;
 
   return (
     <div className="min-h-screen pt-24 pb-16">
@@ -321,6 +350,24 @@ export default function FestivalsPage() {
                 onChange={(e) => setMonthFilter(e.target.value)}
                 className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary-500 transition-colors"
               />
+            </div>
+
+            {/* Genre Filter */}
+            <div className="w-full lg:w-48">
+              <select
+                value={genreFilter}
+                onChange={(e) => setGenreFilter(e.target.value)}
+                className="w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white focus:outline-none focus:border-primary-500 transition-colors appearance-none cursor-pointer"
+              >
+                <option value="" className="bg-festival-dark">
+                  Tous les genres
+                </option>
+                {ALL_GENRES.map((genre) => (
+                  <option key={genre} value={genre} className="bg-festival-dark">
+                    {genre}
+                  </option>
+                ))}
+              </select>
             </div>
 
             {hasActiveFilters && (

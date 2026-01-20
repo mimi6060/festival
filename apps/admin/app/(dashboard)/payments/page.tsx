@@ -120,7 +120,10 @@ export default function PaymentsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Paiements</h1>
           <p className="text-gray-500 mt-1">Suivez et gerez toutes les transactions de paiement.</p>
         </div>
-        <button className="btn-secondary flex items-center gap-2 w-fit">
+        <button
+          onClick={() => alert('Export functionality coming soon')}
+          className="btn-secondary flex items-center gap-2 w-fit"
+        >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
@@ -402,7 +405,15 @@ export default function PaymentsPage() {
                 Fermer
               </button>
               {selectedPayment.status === 'succeeded' && (
-                <button className="btn-danger">Rembourser</button>
+                <button
+                  onClick={() => {
+                    alert('Refund functionality coming soon');
+                    setSelectedPayment(null);
+                  }}
+                  className="btn-danger"
+                >
+                  Rembourser
+                </button>
               )}
             </div>
           </div>

@@ -30,11 +30,11 @@ export default function StaffPage() {
   };
 
   const roleColors: Record<string, string> = {
-    manager: 'bg-purple-100 text-purple-700',
-    security: 'bg-red-100 text-red-700',
-    ticket_scanner: 'bg-blue-100 text-blue-700',
-    info_desk: 'bg-green-100 text-green-700',
-    volunteer: 'bg-orange-100 text-orange-700',
+    manager: 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-400',
+    security: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
+    ticket_scanner: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',
+    info_desk: 'bg-green-100 text-green-700 dark:bg-green-500/20 dark:text-green-400',
+    volunteer: 'bg-orange-100 text-orange-700 dark:bg-orange-500/20 dark:text-orange-400',
   };
 
   const columns: TableColumn<Staff>[] = [
@@ -51,7 +51,7 @@ export default function StaffPage() {
           <div className="flex items-center gap-3">
             <Avatar src={user.avatar} name={`${user.firstName} ${user.lastName}`} size="md" />
             <div>
-              <p className="font-medium text-gray-900">
+              <p className="font-medium text-gray-900 dark:text-white">
                 {user.firstName} {user.lastName}
               </p>
               <p className="text-sm text-gray-500">{user.email}</p>
@@ -64,7 +64,9 @@ export default function StaffPage() {
       key: 'festival',
       label: 'Festival',
       sortable: true,
-      render: (_, row) => <span className="text-gray-900">{row.festival?.name || '-'}</span>,
+      render: (_, row) => (
+        <span className="text-gray-900 dark:text-white">{row.festival?.name || '-'}</span>
+      ),
     },
     {
       key: 'role',
@@ -82,12 +84,15 @@ export default function StaffPage() {
       render: (value) => {
         const perms = value as string[];
         if (perms.includes('all')) {
-          return <span className="text-sm text-gray-600">Toutes</span>;
+          return <span className="text-sm text-gray-600 dark:text-gray-300">Toutes</span>;
         }
         return (
           <div className="flex flex-wrap gap-1">
             {perms.slice(0, 2).map((p) => (
-              <span key={p} className="text-xs bg-gray-100 text-gray-600 px-2 py-0.5 rounded">
+              <span
+                key={p}
+                className="text-xs bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-300 px-2 py-0.5 rounded"
+              >
                 {p}
               </span>
             ))}
@@ -110,7 +115,9 @@ export default function StaffPage() {
       key: 'assignedAt',
       label: 'Assigne le',
       sortable: true,
-      render: (value) => <span className="text-gray-600">{formatDateTime(value as string)}</span>,
+      render: (value) => (
+        <span className="text-gray-600 dark:text-gray-300">{formatDateTime(value as string)}</span>
+      ),
     },
   ];
 
@@ -138,7 +145,7 @@ export default function StaffPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Gestion du Staff</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Gestion du Staff</h1>
           <p className="text-gray-500 mt-1">
             Assignez et gerez les membres du staff pour vos festivals.
           </p>
@@ -161,23 +168,25 @@ export default function StaffPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Total staff</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{enrichedStaff.length}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+            {enrichedStaff.length}
+          </p>
         </div>
         <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Managers</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
+          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
             {enrichedStaff.filter((s) => s.role === 'manager').length}
           </p>
         </div>
         <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Scanners</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
+          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
             {enrichedStaff.filter((s) => s.role === 'ticket_scanner').length}
           </p>
         </div>
         <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Actifs</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
+          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
             {enrichedStaff.filter((s) => s.isActive).length}
           </p>
         </div>
@@ -186,7 +195,7 @@ export default function StaffPage() {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
-          <label className="text-sm text-gray-600">Role:</label>
+          <label className="text-sm text-gray-600 dark:text-gray-300">Role:</label>
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
@@ -200,7 +209,10 @@ export default function StaffPage() {
           </select>
         </div>
         <div className="flex-1" />
-        <button className="btn-secondary flex items-center gap-2">
+        <button
+          onClick={() => alert('Export functionality coming soon')}
+          className="btn-secondary flex items-center gap-2"
+        >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
@@ -361,7 +373,17 @@ export default function StaffPage() {
               <button onClick={() => setShowModal(false)} className="btn-secondary">
                 Annuler
               </button>
-              <button className="btn-primary">{selectedStaff ? 'Enregistrer' : 'Assigner'}</button>
+              <button
+                type="submit"
+                onClick={(e) => {
+                  e.preventDefault();
+                  alert('Staff save functionality coming soon');
+                  setShowModal(false);
+                }}
+                className="btn-primary"
+              >
+                {selectedStaff ? 'Enregistrer' : 'Assigner'}
+              </button>
             </div>
           </div>
         </div>

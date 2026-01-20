@@ -23,10 +23,10 @@ export default function UsersPage() {
   };
 
   const roleColors: Record<string, string> = {
-    admin: 'bg-red-100 text-red-700',
-    organizer: 'bg-purple-100 text-purple-700',
-    staff: 'bg-blue-100 text-blue-700',
-    user: 'bg-gray-100 text-gray-700',
+    admin: 'bg-red-100 text-red-700 dark:bg-red-500/20 dark:text-red-400',
+    organizer: 'bg-purple-100 text-purple-700 dark:bg-purple-500/20 dark:text-purple-400',
+    staff: 'bg-blue-100 text-blue-700 dark:bg-blue-500/20 dark:text-blue-400',
+    user: 'bg-gray-100 text-gray-700 dark:bg-gray-500/20 dark:text-gray-400',
   };
 
   const columns: TableColumn<User>[] = [
@@ -38,7 +38,7 @@ export default function UsersPage() {
         <div className="flex items-center gap-3">
           <Avatar src={row.avatar} name={`${row.firstName} ${row.lastName}`} size="md" />
           <div>
-            <p className="font-medium text-gray-900">
+            <p className="font-medium text-gray-900 dark:text-white">
               {row.firstName} {row.lastName}
             </p>
             <p className="text-sm text-gray-500">{row.email}</p>
@@ -70,14 +70,18 @@ export default function UsersPage() {
       key: 'createdAt',
       label: 'Inscription',
       sortable: true,
-      render: (value) => <span className="text-gray-600">{formatDateTime(value as string)}</span>,
+      render: (value) => (
+        <span className="text-gray-600 dark:text-gray-300">{formatDateTime(value as string)}</span>
+      ),
     },
     {
       key: 'lastLogin',
       label: 'Derniere connexion',
       sortable: true,
       render: (value) => (
-        <span className="text-gray-600">{value ? formatDateTime(value as string) : '-'}</span>
+        <span className="text-gray-600 dark:text-gray-300">
+          {value ? formatDateTime(value as string) : '-'}
+        </span>
       ),
     },
   ];
@@ -95,7 +99,7 @@ export default function UsersPage() {
       {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">Utilisateurs</h1>
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Utilisateurs</h1>
           <p className="text-gray-500 mt-1">Gerez les utilisateurs et leurs permissions.</p>
         </div>
         <button
@@ -116,23 +120,25 @@ export default function UsersPage() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
         <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Total utilisateurs</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">{mockUsers.length}</p>
+          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+            {mockUsers.length}
+          </p>
         </div>
         <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Administrateurs</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
+          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
             {mockUsers.filter((u) => u.role === 'admin').length}
           </p>
         </div>
         <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Organisateurs</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
+          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
             {mockUsers.filter((u) => u.role === 'organizer').length}
           </p>
         </div>
         <div className="bg-white dark:bg-white/5 rounded-xl shadow-sm border border-gray-100 dark:border-white/10 p-4">
           <p className="text-sm text-gray-500">Actifs</p>
-          <p className="text-2xl font-bold text-gray-900 mt-1">
+          <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
             {mockUsers.filter((u) => u.isActive).length}
           </p>
         </div>
@@ -141,7 +147,7 @@ export default function UsersPage() {
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2">
-          <label className="text-sm text-gray-600">Role:</label>
+          <label className="text-sm text-gray-600 dark:text-gray-300">Role:</label>
           <select
             value={roleFilter}
             onChange={(e) => setRoleFilter(e.target.value)}
@@ -155,7 +161,10 @@ export default function UsersPage() {
           </select>
         </div>
         <div className="flex-1" />
-        <button className="btn-secondary flex items-center gap-2">
+        <button
+          onClick={() => alert('Export functionality coming soon')}
+          className="btn-secondary flex items-center gap-2"
+        >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path
               strokeLinecap="round"
@@ -329,7 +338,17 @@ export default function UsersPage() {
               <button onClick={() => setShowModal(false)} className="btn-secondary">
                 Annuler
               </button>
-              <button className="btn-primary">{selectedUser ? 'Enregistrer' : 'Creer'}</button>
+              <button
+                type="submit"
+                onClick={(e) => {
+                  e.preventDefault();
+                  alert('User save functionality coming soon');
+                  setShowModal(false);
+                }}
+                className="btn-primary"
+              >
+                {selectedUser ? 'Enregistrer' : 'Creer'}
+              </button>
             </div>
           </div>
         </div>

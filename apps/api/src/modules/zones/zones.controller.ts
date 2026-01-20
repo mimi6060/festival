@@ -12,6 +12,7 @@ import {
   ParseUUIDPipe,
   ParseIntPipe,
   DefaultValuePipe,
+  UseGuards,
 } from '@nestjs/common';
 import {
   ApiTags,
@@ -21,7 +22,7 @@ import {
   ApiParam,
   ApiQuery,
 } from '@nestjs/swagger';
-import { ZoneAccessAction } from '@prisma/client';
+import { ZoneAccessAction, UserRole } from '@prisma/client';
 import { ZonesService, type AuthenticatedUser } from './zones.service';
 import {
   CreateZoneDto,
@@ -31,50 +32,11 @@ import {
   ConfigureAccessDto,
 } from './dto';
 import { ZoneEntity, ZoneWithStatsEntity, ZoneAccessLogEntity, ZoneStatsEntity } from './entities';
-
-// Note: In a real implementation, these decorators would come from the auth module
-// For now, we'll create placeholder types that can be replaced later
-
-/**
- * Placeholder for user roles - should be imported from auth module
- */
-enum UserRole {
-  ADMIN = 'ADMIN',
-  ORGANIZER = 'ORGANIZER',
-  STAFF = 'STAFF',
-  SECURITY = 'SECURITY',
-  CASHIER = 'CASHIER',
-  USER = 'USER',
-}
-
-/**
- * Placeholder decorator for roles - should be imported from auth module
- */
-function Roles(...roles: UserRole[]): MethodDecorator {
-  return (_target, _propertyKey, descriptor) => {
-    Reflect.defineMetadata('roles', roles, descriptor.value!);
-    return descriptor;
-  };
-}
-
-/**
- * Placeholder decorator for public routes - should be imported from auth module
- */
-function Public(): MethodDecorator {
-  return (_target, _propertyKey, descriptor) => {
-    Reflect.defineMetadata('isPublic', true, descriptor.value!);
-    return descriptor;
-  };
-}
-
-/**
- * Placeholder decorator for current user - should be imported from auth module
- */
-function CurrentUser(): ParameterDecorator {
-  return (_target, _propertyKey, _parameterIndex) => {
-    // This is a placeholder - actual implementation would extract user from request
-  };
-}
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
+import { Public } from '../auth/decorators/public.decorator';
+import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
 /**
  * Controller for festival-scoped zone endpoints
@@ -82,6 +44,7 @@ function CurrentUser(): ParameterDecorator {
  */
 @ApiTags('zones')
 @Controller('festivals/:festivalId/zones')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class FestivalZonesController {
   constructor(private readonly zonesService: ZonesService) {}
 
@@ -118,6 +81,10 @@ export class FestivalZonesController {
   @ApiResponse({
     status: HttpStatus.NOT_FOUND,
     description: 'Festival not found',
+  })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'Zone name already exists for this festival',
   })
   async create(
     @Param('festivalId', ParseUUIDPipe) festivalId: string,
@@ -202,6 +169,7 @@ export class FestivalZonesController {
  */
 @ApiTags('zones')
 @Controller('zones')
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class ZonesController {
   constructor(private readonly zonesService: ZonesService) {}
 
@@ -239,11 +207,11 @@ export class ZonesController {
    * PATCH /zones/:id
    */
   @Patch(':id')
-  @Roles(UserRole.ADMIN, UserRole.ORGANIZER)
+  @Roles(UserRole.ADMIN, UserRole.ORGANIZER, UserRole.SECURITY)
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Update a zone',
-    description: 'Updates a zone. Only accessible by the festival owner or ADMIN.',
+    description: 'Updates a zone. Only accessible by ADMIN, ORGANIZER, or SECURITY roles.',
   })
   @ApiParam({
     name: 'id',
@@ -257,14 +225,18 @@ export class ZonesController {
   })
   @ApiResponse({
     status: HttpStatus.BAD_REQUEST,
-    description: 'Invalid input data',
+    description: 'Invalid input data or capacity must be positive',
   })
   @ApiResponse({ status: HttpStatus.UNAUTHORIZED, description: 'Unauthorized' })
   @ApiResponse({
     status: HttpStatus.FORBIDDEN,
-    description: 'Forbidden - not the owner',
+    description: 'Forbidden - not authorized',
   })
   @ApiResponse({ status: HttpStatus.NOT_FOUND, description: 'Zone not found' })
+  @ApiResponse({
+    status: HttpStatus.CONFLICT,
+    description: 'Zone name already exists for this festival',
+  })
   async update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateZoneDto: UpdateZoneDto,

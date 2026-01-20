@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  ConflictException,
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -44,16 +45,28 @@ export class StaffService {
   /**
    * Create a new staff member assignment
    *
-   * Optimized: Fetches user and festival in parallel to prevent N+1.
+   * Optimized: Fetches user, festival, role, and existing assignment in parallel.
+   * Handles duplicate assignments and badge numbers gracefully.
    */
   async createStaffMember(dto: CreateStaffMemberDto, currentUser: AuthenticatedUser) {
-    // Optimized: Fetch user and festival in parallel to avoid sequential queries
-    const [user, festival] = await Promise.all([
+    // Optimized: Fetch user, festival, role, and check for existing assignment in parallel
+    const [user, festival, role, existingAssignment] = await Promise.all([
       this.prisma.user.findUnique({
         where: { id: dto.userId },
       }),
       this.prisma.festival.findUnique({
         where: { id: dto.festivalId },
+      }),
+      this.prisma.staffRole.findUnique({
+        where: { id: dto.roleId },
+      }),
+      this.prisma.staffMember.findUnique({
+        where: {
+          userId_festivalId: {
+            userId: dto.userId,
+            festivalId: dto.festivalId,
+          },
+        },
       }),
     ]);
 
@@ -65,44 +78,77 @@ export class StaffService {
       throw new NotFoundException(`Festival with ID ${dto.festivalId} not found`);
     }
 
+    if (!role) {
+      throw new NotFoundException(`Staff role with ID ${dto.roleId} not found`);
+    }
+
+    // Check if user is already assigned to this festival
+    if (existingAssignment) {
+      throw new ConflictException('This user is already assigned to this festival');
+    }
+
     // Check permissions
     if (currentUser.role !== UserRole.ADMIN && festival.organizerId !== currentUser.id) {
       throw new ForbiddenException('You do not have permission to add staff to this festival');
     }
 
+    // Check badge number uniqueness if provided
+    if (dto.badgeNumber) {
+      const existingBadge = await this.prisma.staffMember.findUnique({
+        where: { badgeNumber: dto.badgeNumber },
+      });
+      if (existingBadge) {
+        throw new ConflictException('This badge number is already in use');
+      }
+    }
+
     this.logger.log(`Creating staff member for user ${dto.userId} at festival ${dto.festivalId}`);
 
-    return this.prisma.staffMember.create({
-      data: {
-        userId: dto.userId,
-        festivalId: dto.festivalId,
-        roleId: dto.roleId,
-        department: dto.department,
-        employeeCode: dto.employeeCode,
-        phone: dto.phone,
-        emergencyContact: dto.emergencyContact as unknown as Prisma.InputJsonValue,
-        badgeNumber: dto.badgeNumber,
-        notes: dto.notes,
-        isActive: dto.isActive ?? true,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
+    try {
+      return await this.prisma.staffMember.create({
+        data: {
+          userId: dto.userId,
+          festivalId: dto.festivalId,
+          roleId: dto.roleId,
+          department: dto.department,
+          employeeCode: dto.employeeCode,
+          phone: dto.phone,
+          emergencyContact: dto.emergencyContact as unknown as Prisma.InputJsonValue,
+          badgeNumber: dto.badgeNumber,
+          notes: dto.notes,
+          isActive: dto.isActive ?? true,
         },
-        festival: {
-          select: {
-            id: true,
-            name: true,
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
           },
+          festival: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          role: true,
         },
-        role: true,
-      },
-    });
+      });
+    } catch (error) {
+      // Handle race condition for unique constraint violations
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        const target = (error.meta?.target as string[]) || [];
+        if (target.includes('userId') && target.includes('festivalId')) {
+          throw new ConflictException('This user is already assigned to this festival');
+        }
+        if (target.includes('badgeNumber')) {
+          throw new ConflictException('This badge number is already in use');
+        }
+      }
+      throw error;
+    }
   }
 
   /**
@@ -216,31 +262,62 @@ export class StaffService {
       throw new ForbiddenException('You do not have permission to update this staff member');
     }
 
-    return this.prisma.staffMember.update({
-      where: { id },
-      data: {
-        ...(dto.roleId && { roleId: dto.roleId }),
-        ...(dto.department !== undefined && { department: dto.department }),
-        ...(dto.phone !== undefined && { phone: dto.phone }),
-        ...(dto.emergencyContact !== undefined && {
-          emergencyContact: dto.emergencyContact as unknown as Prisma.InputJsonValue,
-        }),
-        ...(dto.badgeNumber !== undefined && { badgeNumber: dto.badgeNumber }),
-        ...(dto.notes !== undefined && { notes: dto.notes }),
-        ...(dto.isActive !== undefined && { isActive: dto.isActive }),
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            firstName: true,
-            lastName: true,
-            email: true,
-          },
+    // Validate role if being updated
+    if (dto.roleId) {
+      const role = await this.prisma.staffRole.findUnique({
+        where: { id: dto.roleId },
+      });
+      if (!role) {
+        throw new NotFoundException(`Staff role with ID ${dto.roleId} not found`);
+      }
+    }
+
+    // Check badge number uniqueness if being updated
+    if (dto.badgeNumber && dto.badgeNumber !== staffMember.badgeNumber) {
+      const existingBadge = await this.prisma.staffMember.findUnique({
+        where: { badgeNumber: dto.badgeNumber },
+      });
+      if (existingBadge && existingBadge.id !== id) {
+        throw new ConflictException('This badge number is already in use');
+      }
+    }
+
+    try {
+      return await this.prisma.staffMember.update({
+        where: { id },
+        data: {
+          ...(dto.roleId && { roleId: dto.roleId }),
+          ...(dto.department !== undefined && { department: dto.department }),
+          ...(dto.phone !== undefined && { phone: dto.phone }),
+          ...(dto.emergencyContact !== undefined && {
+            emergencyContact: dto.emergencyContact as unknown as Prisma.InputJsonValue,
+          }),
+          ...(dto.badgeNumber !== undefined && { badgeNumber: dto.badgeNumber }),
+          ...(dto.notes !== undefined && { notes: dto.notes }),
+          ...(dto.isActive !== undefined && { isActive: dto.isActive }),
         },
-        role: true,
-      },
-    });
+        include: {
+          user: {
+            select: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+            },
+          },
+          role: true,
+        },
+      });
+    } catch (error) {
+      // Handle race condition for unique constraint violations
+      if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+        const target = (error.meta?.target as string[]) || [];
+        if (target.includes('badgeNumber')) {
+          throw new ConflictException('This badge number is already in use');
+        }
+      }
+      throw error;
+    }
   }
 
   /**

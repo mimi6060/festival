@@ -5,6 +5,9 @@ import {
   IsEnum,
   IsBoolean,
   ValidateNested,
+  Matches,
+  MaxLength,
+  MinLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -61,14 +64,25 @@ export class CreateStaffMemberDto {
   @IsEnum(StaffDepartment)
   department?: StaffDepartment;
 
-  @ApiPropertyOptional({ description: 'Internal employee code' })
+  @ApiPropertyOptional({
+    description: 'Internal employee code',
+    example: 'SEC001',
+  })
   @IsOptional()
   @IsString()
+  @MinLength(1)
+  @MaxLength(50)
   employeeCode?: string;
 
-  @ApiPropertyOptional({ description: 'Contact phone number' })
+  @ApiPropertyOptional({
+    description: 'Contact phone number in international format',
+    example: '+33612345678',
+  })
   @IsOptional()
   @IsString()
+  @Matches(/^\+?[1-9]\d{6,14}$/, {
+    message: 'Phone number must be valid international format (e.g., +33612345678)',
+  })
   phone?: string;
 
   @ApiPropertyOptional({ description: 'Emergency contact information' })
@@ -77,9 +91,14 @@ export class CreateStaffMemberDto {
   @Type(() => EmergencyContactDto)
   emergencyContact?: EmergencyContactDto;
 
-  @ApiPropertyOptional({ description: 'Badge number for access control' })
+  @ApiPropertyOptional({
+    description: 'Badge number for access control (unique within festival)',
+    example: 'BADGE001',
+  })
   @IsOptional()
   @IsString()
+  @MinLength(1)
+  @MaxLength(50)
   badgeNumber?: string;
 
   @ApiPropertyOptional({ description: 'Additional notes about the staff member' })

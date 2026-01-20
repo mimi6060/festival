@@ -43,6 +43,8 @@ import {
   FestivalQueryDto,
   FestivalStatsDto,
   FestivalStatus,
+  PublishValidationResultDto,
+  FestivalPublishResponseDto,
 } from './dto';
 import {
   ErrorResponseDto,
@@ -52,7 +54,10 @@ import {
   NotFoundResponseDto,
 } from '../../common/dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
 import { Public } from '../auth/decorators/public.decorator';
+import { Roles } from '../../common/decorators/roles.decorator';
+import { UserRole } from '@prisma/client';
 import { Cacheable, CacheEvict, CacheTag } from '../cache';
 import { AllVersions, API_VERSION_HEADER } from '../../common/versioning';
 import { LocalizedContentService } from '../languages/localized-content.service';
@@ -357,15 +362,17 @@ export class FestivalsController {
   }
 
   /**
-   * Publish festival
+   * Validate if festival can be published
    */
-  @Post(':id/publish')
-  @UseGuards(JwtAuthGuard)
-  @CacheEvict({ tags: [CacheTag.FESTIVAL] })
+  @Get(':id/validate-publish')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.ORGANIZER)
   @ApiBearerAuth('JWT-auth')
   @ApiOperation({
-    summary: 'Publish festival',
-    description: 'Changes the festival status from DRAFT to PUBLISHED.',
+    summary: 'Validate festival for publication',
+    description:
+      'Checks if a festival has all required data to be published. ' +
+      'Returns validation errors if any requirements are not met.',
   })
   @ApiParam({
     name: 'id',
@@ -373,11 +380,53 @@ export class FestivalsController {
     example: '550e8400-e29b-41d4-a716-446655440000',
   })
   @ApiOkResponse({
-    description: 'Festival published',
-    type: FestivalResponseDto,
+    description: 'Validation result',
+    type: PublishValidationResultDto,
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Not authenticated',
+    type: UnauthorizedResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description: 'Not authorized (requires ADMIN or ORGANIZER role)',
+    type: ForbiddenResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Festival not found',
+    type: NotFoundResponseDto,
+  })
+  async validateForPublication(
+    @Param('id', ParseUUIDPipe) id: string
+  ): Promise<PublishValidationResultDto> {
+    return this.festivalsService.validateForPublication(id);
+  }
+
+  /**
+   * Publish festival
+   */
+  @Post(':id/publish')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.ORGANIZER)
+  @CacheEvict({ tags: [CacheTag.FESTIVAL] })
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Publish festival',
+    description:
+      'Publishes a festival after validating all required data. ' +
+      'Requires: name, dates, venue/location, and at least one active ticket category. ' +
+      'Festival must be in DRAFT status.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Festival UUID',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiOkResponse({
+    description: 'Festival published successfully',
+    type: FestivalPublishResponseDto,
   })
   @ApiBadRequestResponse({
-    description: 'Festival is not in DRAFT status',
+    description: 'Validation failed or festival is not in DRAFT status',
     type: ErrorResponseDto,
   })
   @ApiUnauthorizedResponse({
@@ -385,7 +434,7 @@ export class FestivalsController {
     type: UnauthorizedResponseDto,
   })
   @ApiForbiddenResponse({
-    description: 'Not the festival organizer',
+    description: 'Not authorized (requires ADMIN or ORGANIZER role)',
     type: ForbiddenResponseDto,
   })
   @ApiNotFoundResponse({
@@ -393,7 +442,53 @@ export class FestivalsController {
     type: NotFoundResponseDto,
   })
   async publish(@Param('id', ParseUUIDPipe) id: string, @Request() req: { user: { sub: string } }) {
-    return this.festivalsService.updateStatus(id, FestivalStatus.PUBLISHED, req.user.sub);
+    return this.festivalsService.publish(id, req.user.sub);
+  }
+
+  /**
+   * Unpublish festival
+   */
+  @Post(':id/unpublish')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ADMIN, UserRole.ORGANIZER)
+  @CacheEvict({ tags: [CacheTag.FESTIVAL] })
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({
+    summary: 'Unpublish festival',
+    description:
+      'Changes the festival status from PUBLISHED back to DRAFT. ' +
+      'This will hide the festival from public listings.',
+  })
+  @ApiParam({
+    name: 'id',
+    description: 'Festival UUID',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @ApiOkResponse({
+    description: 'Festival unpublished successfully',
+    type: FestivalResponseDto,
+  })
+  @ApiBadRequestResponse({
+    description: 'Festival is not published',
+    type: ErrorResponseDto,
+  })
+  @ApiUnauthorizedResponse({
+    description: 'Not authenticated',
+    type: UnauthorizedResponseDto,
+  })
+  @ApiForbiddenResponse({
+    description: 'Not authorized (requires ADMIN or ORGANIZER role)',
+    type: ForbiddenResponseDto,
+  })
+  @ApiNotFoundResponse({
+    description: 'Festival not found',
+    type: NotFoundResponseDto,
+  })
+  async unpublish(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Request() req: { user: { sub: string } }
+  ) {
+    return this.festivalsService.unpublish(id, req.user.sub);
   }
 
   /**

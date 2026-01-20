@@ -1,10 +1,4 @@
-import {
-  ExceptionFilter,
-  Catch,
-  ArgumentsHost,
-  HttpStatus,
-  Logger,
-} from '@nestjs/common';
+import { ExceptionFilter, Catch, ArgumentsHost, HttpStatus, Logger } from '@nestjs/common';
 import { Request, Response } from 'express';
 import { Prisma } from '@prisma/client';
 import { ErrorCodes, getErrorMessage, ErrorCode } from '../exceptions/error-codes';
@@ -82,7 +76,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json(errorResponse);
   }
 
-  private isPrismaError(exception: unknown): exception is Prisma.PrismaClientKnownRequestError | Prisma.PrismaClientUnknownRequestError | Prisma.PrismaClientInitializationError {
+  private isPrismaError(
+    exception: unknown
+  ): exception is
+    | Prisma.PrismaClientKnownRequestError
+    | Prisma.PrismaClientUnknownRequestError
+    | Prisma.PrismaClientInitializationError {
     return (
       exception instanceof Prisma.PrismaClientKnownRequestError ||
       exception instanceof Prisma.PrismaClientUnknownRequestError ||
@@ -91,9 +90,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
   }
 
   private handlePrismaError(
-    exception: Prisma.PrismaClientKnownRequestError | Prisma.PrismaClientUnknownRequestError | Prisma.PrismaClientInitializationError,
+    exception:
+      | Prisma.PrismaClientKnownRequestError
+      | Prisma.PrismaClientUnknownRequestError
+      | Prisma.PrismaClientInitializationError,
     request: Request,
-    requestId: string,
+    requestId: string
   ): { status: HttpStatus; errorResponse: FlatErrorResponse } {
     const lang = this.getLanguageFromRequest(request);
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -112,25 +114,22 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
         case PrismaErrorCodes.FOREIGN_KEY_CONSTRAINT:
           status = HttpStatus.BAD_REQUEST;
-          message = lang === 'fr'
-            ? 'Reference a une ressource inexistante.'
-            : 'Reference to non-existent resource.';
+          message =
+            lang === 'fr'
+              ? 'Reference a une ressource inexistante.'
+              : 'Reference to non-existent resource.';
           details = { field: exception.meta?.field_name };
           break;
 
         case PrismaErrorCodes.RECORD_NOT_FOUND:
           status = HttpStatus.NOT_FOUND;
-          message = lang === 'fr'
-            ? 'Ressource non trouvee.'
-            : 'Resource not found.';
+          message = lang === 'fr' ? 'Ressource non trouvee.' : 'Resource not found.';
           break;
 
         case PrismaErrorCodes.REQUIRED_FIELD_MISSING:
           status = HttpStatus.BAD_REQUEST;
           errorCode = ErrorCodes.VALIDATION_FAILED;
-          message = lang === 'fr'
-            ? 'Champ obligatoire manquant.'
-            : 'Required field missing.';
+          message = lang === 'fr' ? 'Champ obligatoire manquant.' : 'Required field missing.';
           break;
 
         case PrismaErrorCodes.CONNECTION_ERROR:
@@ -148,9 +147,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     } else if (exception instanceof Prisma.PrismaClientInitializationError) {
       status = HttpStatus.SERVICE_UNAVAILABLE;
       errorCode = ErrorCodes.SERVICE_UNAVAILABLE;
-      message = lang === 'fr'
-        ? 'Base de donnees indisponible.'
-        : 'Database unavailable.';
+      message = lang === 'fr' ? 'Base de donnees indisponible.' : 'Database unavailable.';
     }
 
     const flatResponse: FlatErrorResponse = {
@@ -174,13 +171,30 @@ export class AllExceptionsFilter implements ExceptionFilter {
 
   private getConflictErrorCode(meta?: Record<string, unknown>): ErrorCode {
     const target = meta?.target as string[] | undefined;
-    if (!target) {return ErrorCodes.INTERNAL_ERROR;}
+    if (!target) {
+      return ErrorCodes.INTERNAL_ERROR;
+    }
 
     // Map unique constraint fields to specific error codes
-    if (target.includes('email')) {return ErrorCodes.USER_EMAIL_EXISTS;}
-    if (target.includes('phone')) {return ErrorCodes.USER_PHONE_EXISTS;}
-    if (target.includes('slug')) {return ErrorCodes.FESTIVAL_SLUG_EXISTS;}
-    if (target.includes('nfcTagId')) {return ErrorCodes.CASHLESS_NFC_TAG_EXISTS;}
+    if (target.includes('email')) {
+      return ErrorCodes.USER_EMAIL_EXISTS;
+    }
+    if (target.includes('phone')) {
+      return ErrorCodes.USER_PHONE_EXISTS;
+    }
+    if (target.includes('slug')) {
+      return ErrorCodes.FESTIVAL_SLUG_EXISTS;
+    }
+    if (target.includes('nfcTagId')) {
+      return ErrorCodes.CASHLESS_NFC_TAG_EXISTS;
+    }
+    // Staff-specific unique constraints
+    if (target.includes('userId') && target.includes('festivalId')) {
+      return ErrorCodes.STAFF_ALREADY_ASSIGNED;
+    }
+    if (target.includes('badgeNumber')) {
+      return ErrorCodes.STAFF_BADGE_EXISTS;
+    }
 
     return ErrorCodes.INTERNAL_ERROR;
   }
@@ -188,7 +202,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
   private handleStandardError(
     exception: Error,
     request: Request,
-    requestId: string,
+    requestId: string
   ): { status: HttpStatus; errorResponse: FlatErrorResponse } {
     const lang = this.getLanguageFromRequest(request);
     let status = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -203,16 +217,12 @@ export class AllExceptionsFilter implements ExceptionFilter {
     } else if (exception instanceof RangeError) {
       status = HttpStatus.BAD_REQUEST;
       errorCode = ErrorCodes.VALIDATION_FAILED;
-      message = lang === 'fr'
-        ? 'Valeur hors limites.'
-        : 'Value out of range.';
+      message = lang === 'fr' ? 'Valeur hors limites.' : 'Value out of range.';
       details.errorType = 'RangeError';
     } else if (exception instanceof SyntaxError) {
       status = HttpStatus.BAD_REQUEST;
       errorCode = ErrorCodes.VALIDATION_FAILED;
-      message = lang === 'fr'
-        ? 'Syntaxe invalide dans la requete.'
-        : 'Invalid syntax in request.';
+      message = lang === 'fr' ? 'Syntaxe invalide dans la requete.' : 'Invalid syntax in request.';
       details.errorType = 'SyntaxError';
     }
 
@@ -244,7 +254,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
   private handleUnknownError(
     exception: unknown,
     request: Request,
-    requestId: string,
+    requestId: string
   ): FlatErrorResponse {
     const lang = this.getLanguageFromRequest(request);
 
@@ -273,12 +283,7 @@ export class AllExceptionsFilter implements ExceptionFilter {
     return `req_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
   }
 
-  private logError(
-    exception: Error,
-    request: Request,
-    requestId: string,
-    errorType: string,
-  ): void {
+  private logError(exception: Error, request: Request, requestId: string, errorType: string): void {
     const logContext = {
       requestId,
       type: errorType,
@@ -294,14 +299,16 @@ export class AllExceptionsFilter implements ExceptionFilter {
     this.logger.error(
       `[${requestId}] ${request.method} ${request.url} - Unhandled ${errorType}: ${exception.message}`,
       exception.stack,
-      JSON.stringify(logContext),
+      JSON.stringify(logContext)
     );
   }
 
   private sanitizeBody(body: unknown): unknown {
-    if (!body || typeof body !== 'object') {return body;}
+    if (!body || typeof body !== 'object') {
+      return body;
+    }
 
-    const sanitized = { ...body as Record<string, unknown> };
+    const sanitized = { ...(body as Record<string, unknown>) };
     const sensitiveFields = ['password', 'token', 'secret', 'apiKey', 'cardNumber', 'cvv', 'pin'];
 
     for (const field of sensitiveFields) {

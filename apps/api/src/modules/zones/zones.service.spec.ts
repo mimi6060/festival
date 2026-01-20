@@ -12,7 +12,12 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { ZonesService, AuthenticatedUser } from './zones.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { TicketType, TicketStatus, UserRole, ZoneAccessAction } from '@prisma/client';
-import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  ConflictException,
+} from '@nestjs/common';
 import {
   regularUser,
   adminUser,
@@ -40,6 +45,7 @@ describe('ZonesService', () => {
   const mockPrismaService = {
     zone: {
       findUnique: jest.fn(),
+      findFirst: jest.fn(),
       findMany: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
@@ -86,6 +92,12 @@ describe('ZonesService', () => {
     role: UserRole.STAFF,
   };
 
+  const mockSecurityUser: AuthenticatedUser = {
+    id: 'security-user-id',
+    email: 'security@test.com',
+    role: UserRole.SECURITY,
+  };
+
   beforeEach(async () => {
     jest.clearAllMocks();
 
@@ -121,6 +133,7 @@ describe('ZonesService', () => {
         ...publishedFestival,
         organizerId: mockOrganizerUser.id,
       });
+      mockPrismaService.zone.findFirst.mockResolvedValue(null);
       mockPrismaService.zone.create.mockResolvedValue({
         id: 'new-zone-id',
         festivalId,
@@ -152,6 +165,7 @@ describe('ZonesService', () => {
         ...publishedFestival,
         organizerId: 'different-organizer-id',
       });
+      mockPrismaService.zone.findFirst.mockResolvedValue(null);
       mockPrismaService.zone.create.mockResolvedValue({
         id: 'new-zone-id',
         festivalId,
@@ -200,6 +214,7 @@ describe('ZonesService', () => {
         ...publishedFestival,
         organizerId: mockOrganizerUser.id,
       });
+      mockPrismaService.zone.findFirst.mockResolvedValue(null);
       mockPrismaService.zone.create.mockResolvedValue({
         id: 'new-zone-id',
         festivalId,
@@ -218,6 +233,86 @@ describe('ZonesService', () => {
 
       // Assert
       expect(result.requiresTicketType).toEqual([]);
+    });
+
+    it('should throw ConflictException if zone name already exists for festival', async () => {
+      // Arrange
+      const festivalId = publishedFestival.id;
+      mockPrismaService.festival.findUnique.mockResolvedValue({
+        ...publishedFestival,
+        organizerId: mockOrganizerUser.id,
+      });
+      mockPrismaService.zone.findFirst.mockResolvedValue({ id: 'existing-zone-id' });
+
+      // Act & Assert
+      await expect(
+        zonesService.create(festivalId, createZoneDto, mockOrganizerUser)
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('should throw BadRequestException if capacity is zero or negative', async () => {
+      // Arrange
+      const festivalId = publishedFestival.id;
+      const invalidDto = { ...createZoneDto, capacity: 0 };
+      mockPrismaService.festival.findUnique.mockResolvedValue({
+        ...publishedFestival,
+        organizerId: mockOrganizerUser.id,
+      });
+
+      // Act & Assert
+      await expect(zonesService.create(festivalId, invalidDto, mockOrganizerUser)).rejects.toThrow(
+        BadRequestException
+      );
+    });
+
+    it('should throw BadRequestException if capacity is negative', async () => {
+      // Arrange
+      const festivalId = publishedFestival.id;
+      const invalidDto = { ...createZoneDto, capacity: -100 };
+      mockPrismaService.festival.findUnique.mockResolvedValue({
+        ...publishedFestival,
+        organizerId: mockOrganizerUser.id,
+      });
+
+      // Act & Assert
+      await expect(zonesService.create(festivalId, invalidDto, mockOrganizerUser)).rejects.toThrow(
+        BadRequestException
+      );
+    });
+
+    it('should trim whitespace from zone name', async () => {
+      // Arrange
+      const festivalId = publishedFestival.id;
+      const dtoWithWhitespace = { ...createZoneDto, name: '  Test Zone  ' };
+      mockPrismaService.festival.findUnique.mockResolvedValue({
+        ...publishedFestival,
+        organizerId: mockOrganizerUser.id,
+      });
+      mockPrismaService.zone.findFirst.mockResolvedValue(null);
+      mockPrismaService.zone.create.mockResolvedValue({
+        id: 'new-zone-id',
+        festivalId,
+        name: 'Test Zone',
+        description: 'A test zone',
+        capacity: 500,
+        requiresTicketType: [TicketType.VIP],
+        isActive: true,
+        currentOccupancy: 0,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      // Act
+      await zonesService.create(festivalId, dtoWithWhitespace, mockOrganizerUser);
+
+      // Assert
+      expect(mockPrismaService.zone.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            name: 'Test Zone',
+          }),
+        })
+      );
     });
   });
 
@@ -344,6 +439,7 @@ describe('ZonesService', () => {
         _count: { accessLogs: 50 },
       };
       mockPrismaService.zone.findUnique.mockResolvedValue(zoneWithRelations);
+      mockPrismaService.zone.findFirst.mockResolvedValue(null);
       mockPrismaService.zone.update.mockResolvedValue({
         ...vipLounge,
         ...updateZoneDto,
@@ -369,6 +465,7 @@ describe('ZonesService', () => {
         _count: { accessLogs: 50 },
       };
       mockPrismaService.zone.findUnique.mockResolvedValue(zoneWithRelations);
+      mockPrismaService.zone.findFirst.mockResolvedValue(null);
       mockPrismaService.zone.update.mockResolvedValue({
         ...vipLounge,
         ...updateZoneDto,
@@ -438,6 +535,119 @@ describe('ZonesService', () => {
           isActive: false,
         }),
       });
+    });
+
+    it('should allow security user to update a zone', async () => {
+      // Arrange
+      const zoneWithRelations = {
+        ...vipLounge,
+        festival: {
+          id: publishedFestival.id,
+          name: publishedFestival.name,
+          organizerId: 'different-organizer',
+        },
+        _count: { accessLogs: 50 },
+      };
+      mockPrismaService.zone.findUnique.mockResolvedValue(zoneWithRelations);
+      mockPrismaService.zone.findFirst.mockResolvedValue(null);
+      mockPrismaService.zone.update.mockResolvedValue({
+        ...vipLounge,
+        ...updateZoneDto,
+      });
+
+      // Act
+      const result = await zonesService.update(vipLounge.id, updateZoneDto, mockSecurityUser);
+
+      // Assert
+      expect(result.name).toBe(updateZoneDto.name);
+    });
+
+    it('should throw ConflictException if updated name already exists for another zone', async () => {
+      // Arrange
+      const zoneWithRelations = {
+        ...vipLounge,
+        festival: {
+          id: publishedFestival.id,
+          name: publishedFestival.name,
+          organizerId: mockOrganizerUser.id,
+        },
+        _count: { accessLogs: 50 },
+      };
+      mockPrismaService.zone.findUnique.mockResolvedValue(zoneWithRelations);
+      mockPrismaService.zone.findFirst.mockResolvedValue({ id: 'another-zone-id' });
+
+      // Act & Assert
+      await expect(
+        zonesService.update(vipLounge.id, { name: 'Existing Zone Name' }, mockOrganizerUser)
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('should allow updating to same name (no conflict with self)', async () => {
+      // Arrange
+      const zoneWithRelations = {
+        ...vipLounge,
+        name: 'Same Name',
+        festival: {
+          id: publishedFestival.id,
+          name: publishedFestival.name,
+          organizerId: mockOrganizerUser.id,
+        },
+        _count: { accessLogs: 50 },
+      };
+      mockPrismaService.zone.findUnique.mockResolvedValue(zoneWithRelations);
+      mockPrismaService.zone.update.mockResolvedValue({
+        ...vipLounge,
+        name: 'Same Name',
+      });
+
+      // Act - updating with the same name should not check for conflicts
+      const result = await zonesService.update(
+        vipLounge.id,
+        { name: 'Same Name' },
+        mockOrganizerUser
+      );
+
+      // Assert
+      expect(result).toBeDefined();
+      expect(mockPrismaService.zone.findFirst).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException if capacity is zero', async () => {
+      // Arrange
+      const zoneWithRelations = {
+        ...vipLounge,
+        festival: {
+          id: publishedFestival.id,
+          name: publishedFestival.name,
+          organizerId: mockOrganizerUser.id,
+        },
+        _count: { accessLogs: 50 },
+      };
+      mockPrismaService.zone.findUnique.mockResolvedValue(zoneWithRelations);
+
+      // Act & Assert
+      await expect(
+        zonesService.update(vipLounge.id, { capacity: 0 }, mockOrganizerUser)
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException if capacity is negative', async () => {
+      // Arrange
+      const zoneWithRelations = {
+        ...vipLounge,
+        festival: {
+          id: publishedFestival.id,
+          name: publishedFestival.name,
+          organizerId: mockOrganizerUser.id,
+        },
+        _count: { accessLogs: 50 },
+      };
+      mockPrismaService.zone.findUnique.mockResolvedValue(zoneWithRelations);
+
+      // Act & Assert
+      await expect(
+        zonesService.update(vipLounge.id, { capacity: -50 }, mockOrganizerUser)
+      ).rejects.toThrow(BadRequestException);
     });
   });
 

@@ -9,7 +9,11 @@ interface ThemeToggleProps {
   variant?: 'button' | 'dropdown';
 }
 
-export function ThemeToggle({ className = '', showLabel = false, variant = 'button' }: ThemeToggleProps) {
+export function ThemeToggle({
+  className = '',
+  showLabel = false,
+  variant = 'button',
+}: ThemeToggleProps) {
   const { theme, resolvedTheme, setTheme, toggleTheme } = useTheme();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -78,9 +82,10 @@ export function ThemeToggle({ className = '', showLabel = false, variant = 'butt
             className={`
               absolute inset-0 w-5 h-5 text-yellow-400
               transition-all duration-300 ease-out
-              ${resolvedTheme === 'dark'
-                ? 'opacity-100 rotate-0 scale-100'
-                : 'opacity-0 -rotate-90 scale-0'
+              ${
+                resolvedTheme === 'dark'
+                  ? 'opacity-100 rotate-0 scale-100'
+                  : 'opacity-0 -rotate-90 scale-0'
               }
             `}
           />
@@ -89,9 +94,10 @@ export function ThemeToggle({ className = '', showLabel = false, variant = 'butt
             className={`
               absolute inset-0 w-5 h-5 text-primary-500
               transition-all duration-300 ease-out
-              ${resolvedTheme === 'light'
-                ? 'opacity-100 rotate-0 scale-100'
-                : 'opacity-0 rotate-90 scale-0'
+              ${
+                resolvedTheme === 'light'
+                  ? 'opacity-100 rotate-0 scale-100'
+                  : 'opacity-0 rotate-90 scale-0'
               }
             `}
           />
@@ -123,41 +129,32 @@ export function ThemeToggle({ className = '', showLabel = false, variant = 'butt
         aria-haspopup="true"
       >
         <span className="relative w-5 h-5">
-          {/* Sun icon */}
+          {/* Sun icon - shown when light theme is selected */}
           <SunIcon
             className={`
               absolute inset-0 w-5 h-5 text-yellow-400
               transition-all duration-300 ease-out
-              ${resolvedTheme === 'dark' && theme !== 'system'
-                ? 'opacity-0 -rotate-90 scale-0'
-                : resolvedTheme === 'light' && theme !== 'system'
-                ? 'opacity-100 rotate-0 scale-100'
-                : 'opacity-0 -rotate-90 scale-0'
+              ${
+                theme === 'light'
+                  ? 'opacity-100 rotate-0 scale-100'
+                  : 'opacity-0 -rotate-90 scale-0'
               }
             `}
           />
-          {/* Moon icon */}
+          {/* Moon icon - shown when dark theme is selected */}
           <MoonIcon
             className={`
               absolute inset-0 w-5 h-5 text-primary-500
               transition-all duration-300 ease-out
-              ${resolvedTheme === 'dark' && theme !== 'system'
-                ? 'opacity-100 rotate-0 scale-100'
-                : resolvedTheme === 'light' && theme !== 'system'
-                ? 'opacity-0 rotate-90 scale-0'
-                : 'opacity-0 rotate-90 scale-0'
-              }
+              ${theme === 'dark' ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 rotate-90 scale-0'}
             `}
           />
-          {/* Computer icon for system */}
+          {/* Computer icon - shown when system theme is selected */}
           <ComputerIcon
             className={`
               absolute inset-0 w-5 h-5 text-theme-secondary
               transition-all duration-300 ease-out
-              ${theme === 'system'
-                ? 'opacity-100 rotate-0 scale-100'
-                : 'opacity-0 scale-0'
-              }
+              ${theme === 'system' ? 'opacity-100 rotate-0 scale-100' : 'opacity-0 scale-0'}
             `}
           />
         </span>
@@ -178,9 +175,10 @@ export function ThemeToggle({ className = '', showLabel = false, variant = 'butt
           border border-theme rounded-xl
           shadow-theme-lg
           transition-all duration-200 ease-out origin-top-right
-          ${isOpen
-            ? 'opacity-100 scale-100 translate-y-0'
-            : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
+          ${
+            isOpen
+              ? 'opacity-100 scale-100 translate-y-0'
+              : 'opacity-0 scale-95 -translate-y-2 pointer-events-none'
           }
           z-50
         `}
@@ -197,23 +195,24 @@ export function ThemeToggle({ className = '', showLabel = false, variant = 'butt
             className={`
               w-full flex items-center gap-3 px-4 py-2.5
               transition-all duration-200
-              ${theme === option.value
-                ? 'bg-primary-500/10 text-primary-400'
-                : 'text-theme-secondary hover:bg-theme-surface-hover hover:text-theme-primary'
+              ${
+                theme === option.value
+                  ? 'bg-primary-500/10 text-primary-400'
+                  : 'text-theme-secondary hover:bg-theme-surface-hover hover:text-theme-primary'
               }
             `}
             role="menuitem"
           >
-            <span className={`
+            <span
+              className={`
               transition-colors duration-200
               ${theme === option.value ? 'text-primary-400' : ''}
-            `}>
+            `}
+            >
               {option.icon}
             </span>
             <span className="text-sm font-medium">{option.label}</span>
-            {theme === option.value && (
-              <CheckIcon className="w-4 h-4 ml-auto text-primary-400" />
-            )}
+            {theme === option.value && <CheckIcon className="w-4 h-4 ml-auto text-primary-400" />}
           </button>
         ))}
       </div>
@@ -267,24 +266,27 @@ export function ThemeSelector({ className = '' }: ThemeSelectorProps) {
             }
           `}
         >
-          <span className={`
+          <span
+            className={`
             p-3 rounded-xl transition-colors duration-300
-            ${theme === option.value
-              ? 'bg-primary-500/20 text-primary-400'
-              : 'bg-theme-surface text-theme-secondary'
+            ${
+              theme === option.value
+                ? 'bg-primary-500/20 text-primary-400'
+                : 'bg-theme-surface text-theme-secondary'
             }
-          `}>
+          `}
+          >
             {option.icon}
           </span>
-          <span className={`
+          <span
+            className={`
             text-sm font-semibold transition-colors duration-300
             ${theme === option.value ? 'text-primary-400' : 'text-theme-primary'}
-          `}>
+          `}
+          >
             {option.label}
           </span>
-          <span className="text-xs text-theme-muted text-center">
-            {option.description}
-          </span>
+          <span className="text-xs text-theme-muted text-center">{option.description}</span>
           {theme === option.value && (
             <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-primary-500 animate-pulse" />
           )}
@@ -358,11 +360,7 @@ function ChevronDownIcon({ className = '' }: { className?: string }) {
       stroke="currentColor"
       strokeWidth={2}
     >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M19 9l-7 7-7-7"
-      />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M19 9l-7 7-7-7" />
     </svg>
   );
 }
@@ -376,11 +374,7 @@ function CheckIcon({ className = '' }: { className?: string }) {
       stroke="currentColor"
       strokeWidth={2}
     >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M5 13l4 4L19 7"
-      />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
     </svg>
   );
 }

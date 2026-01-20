@@ -87,7 +87,14 @@ export default function FestivalDetailPage({ params }: FestivalDetailPageProps) 
                 >
                   Modifier
                 </Link>
-                {festival.status === 'draft' && <button className="btn-primary">Publier</button>}
+                {festival.status === 'draft' && (
+                  <button
+                    onClick={() => alert('Publish functionality coming soon')}
+                    className="btn-primary"
+                  >
+                    Publier
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -334,7 +341,10 @@ export default function FestivalDetailPage({ params }: FestivalDetailPageProps) 
                   <p className="text-sm text-gray-500">Ventes et performances</p>
                 </div>
               </Link>
-              <button className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors w-full text-left">
+              <button
+                onClick={() => alert('Export functionality coming soon')}
+                className="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors w-full text-left"
+              >
                 <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
                   <svg
                     className="w-5 h-5 text-green-600"

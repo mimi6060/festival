@@ -3,6 +3,7 @@ import {
   NotFoundException,
   BadRequestException,
   ForbiddenException,
+  ConflictException,
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -15,6 +16,7 @@ import {
   UserRole,
   Prisma,
 } from '@prisma/client';
+import { ErrorCodes, getErrorMessage } from '../../common/exceptions/error-codes';
 
 /**
  * Interface for authenticated user context
@@ -74,6 +76,11 @@ export class ZonesService {
    * Create a new zone for a festival
    *
    * Optimized: Uses select to fetch only required fields.
+   * Validates:
+   * - Festival exists
+   * - User has permission (admin or organizer)
+   * - Zone name is unique within festival
+   * - Capacity is positive if provided
    */
   async create(
     festivalId: string,
@@ -90,9 +97,37 @@ export class ZonesService {
       throw new NotFoundException(`Festival with ID ${festivalId} not found`);
     }
 
-    // Only organizer or admin can create zones
-    if (festival.organizerId !== user.id && user.role !== UserRole.ADMIN) {
+    // Only organizer, admin, or security can create zones
+    if (
+      festival.organizerId !== user.id &&
+      user.role !== UserRole.ADMIN &&
+      user.role !== UserRole.ORGANIZER
+    ) {
       throw new ForbiddenException('You do not have permission to create zones for this festival');
+    }
+
+    // Validate capacity is positive if provided
+    if (createZoneDto.capacity !== undefined && createZoneDto.capacity <= 0) {
+      throw new BadRequestException({
+        message: getErrorMessage(ErrorCodes.ZONE_INVALID_CAPACITY, 'en'),
+        errorCode: ErrorCodes.ZONE_INVALID_CAPACITY,
+      });
+    }
+
+    // Check for unique zone name within festival
+    const existingZone = await this.prisma.zone.findFirst({
+      where: {
+        festivalId,
+        name: createZoneDto.name.trim(),
+      },
+      select: { id: true },
+    });
+
+    if (existingZone) {
+      throw new ConflictException({
+        message: getErrorMessage(ErrorCodes.ZONE_NAME_EXISTS, 'en'),
+        errorCode: ErrorCodes.ZONE_NAME_EXISTS,
+      });
     }
 
     this.logger.log(`Creating zone "${createZoneDto.name}" for festival ${festivalId}`);
@@ -100,8 +135,8 @@ export class ZonesService {
     return this.prisma.zone.create({
       data: {
         festivalId,
-        name: createZoneDto.name,
-        description: createZoneDto.description,
+        name: createZoneDto.name.trim(),
+        description: createZoneDto.description?.trim(),
         capacity: createZoneDto.capacity,
         requiresTicketType: createZoneDto.requiresTicketType || [],
         isActive: createZoneDto.isActive ?? true,
@@ -178,13 +213,50 @@ export class ZonesService {
 
   /**
    * Update a zone
+   *
+   * Validates:
+   * - User has permission (admin, organizer, or security)
+   * - Zone name is unique within festival (if changed)
+   * - Capacity is positive if provided
    */
   async update(id: string, updateZoneDto: UpdateZoneDto, user: AuthenticatedUser): Promise<Zone> {
     const zone = await this.findOne(id);
 
-    // Only organizer or admin can update zones
-    if (zone.festival.organizerId !== user.id && user.role !== UserRole.ADMIN) {
+    // Only organizer, admin, or security can update zones
+    if (
+      zone.festival.organizerId !== user.id &&
+      user.role !== UserRole.ADMIN &&
+      user.role !== UserRole.ORGANIZER &&
+      user.role !== UserRole.SECURITY
+    ) {
       throw new ForbiddenException('You do not have permission to update this zone');
+    }
+
+    // Validate capacity is positive if provided
+    if (updateZoneDto.capacity !== undefined && updateZoneDto.capacity <= 0) {
+      throw new BadRequestException({
+        message: getErrorMessage(ErrorCodes.ZONE_INVALID_CAPACITY, 'en'),
+        errorCode: ErrorCodes.ZONE_INVALID_CAPACITY,
+      });
+    }
+
+    // Check for unique zone name within festival if name is being updated
+    if (updateZoneDto.name && updateZoneDto.name.trim() !== zone.name) {
+      const existingZone = await this.prisma.zone.findFirst({
+        where: {
+          festivalId: zone.festivalId,
+          name: updateZoneDto.name.trim(),
+          NOT: { id },
+        },
+        select: { id: true },
+      });
+
+      if (existingZone) {
+        throw new ConflictException({
+          message: getErrorMessage(ErrorCodes.ZONE_NAME_EXISTS, 'en'),
+          errorCode: ErrorCodes.ZONE_NAME_EXISTS,
+        });
+      }
     }
 
     this.logger.log(`Updating zone ${id}`);
@@ -192,9 +264,9 @@ export class ZonesService {
     return this.prisma.zone.update({
       where: { id },
       data: {
-        ...(updateZoneDto.name && { name: updateZoneDto.name }),
+        ...(updateZoneDto.name && { name: updateZoneDto.name.trim() }),
         ...(updateZoneDto.description !== undefined && {
-          description: updateZoneDto.description,
+          description: updateZoneDto.description?.trim(),
         }),
         ...(updateZoneDto.capacity !== undefined && {
           capacity: updateZoneDto.capacity,

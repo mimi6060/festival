@@ -11,8 +11,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { StaffService, AuthenticatedUser } from './staff.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { UserRole } from '@prisma/client';
-import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import { UserRole, Prisma } from '@prisma/client';
+import {
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+  ConflictException,
+} from '@nestjs/common';
 import {
   adminUser,
   organizerUser,
@@ -139,10 +144,14 @@ describe('StaffService', () => {
     festival: {
       findUnique: jest.fn(),
     },
+    staffRole: {
+      findUnique: jest.fn(),
+    },
     staffMember: {
       create: jest.fn(),
       findUnique: jest.fn(),
       findMany: jest.fn(),
+      findFirst: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
       count: jest.fn(),
@@ -152,6 +161,7 @@ describe('StaffService', () => {
       create: jest.fn(),
       findUnique: jest.fn(),
       findMany: jest.fn(),
+      findFirst: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
       count: jest.fn(),
@@ -161,6 +171,12 @@ describe('StaffService', () => {
       findUnique: jest.fn(),
       update: jest.fn(),
       count: jest.fn(),
+    },
+    ticket: {
+      count: jest.fn(),
+    },
+    zone: {
+      findMany: jest.fn(),
     },
   };
 
@@ -215,6 +231,8 @@ describe('StaffService', () => {
       // Arrange
       mockPrismaService.user.findUnique.mockResolvedValue(staffUser);
       mockPrismaService.festival.findUnique.mockResolvedValue(ongoingFestival);
+      mockPrismaService.staffRole.findUnique.mockResolvedValue(mockStaffRole);
+      mockPrismaService.staffMember.findUnique.mockResolvedValue(null); // No existing assignment
       mockPrismaService.staffMember.create.mockResolvedValue(mockStaffMemberWithRelations);
 
       // Act
@@ -236,6 +254,8 @@ describe('StaffService', () => {
       const festivalWithOrganizer = { ...ongoingFestival, organizerId: organizerUser.id };
       mockPrismaService.user.findUnique.mockResolvedValue(staffUser);
       mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithOrganizer);
+      mockPrismaService.staffRole.findUnique.mockResolvedValue(mockStaffRole);
+      mockPrismaService.staffMember.findUnique.mockResolvedValue(null);
       mockPrismaService.staffMember.create.mockResolvedValue(mockStaffMemberWithRelations);
 
       // Act
@@ -274,6 +294,8 @@ describe('StaffService', () => {
       };
       mockPrismaService.user.findUnique.mockResolvedValue(staffUser);
       mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithDifferentOrganizer);
+      mockPrismaService.staffRole.findUnique.mockResolvedValue(mockStaffRole);
+      mockPrismaService.staffMember.findUnique.mockResolvedValue(null);
 
       // Act & Assert
       await expect(staffService.createStaffMember(createDto, regularAuthUser)).rejects.toThrow(
@@ -290,6 +312,8 @@ describe('StaffService', () => {
       };
       mockPrismaService.user.findUnique.mockResolvedValue(staffUser);
       mockPrismaService.festival.findUnique.mockResolvedValue(ongoingFestival);
+      mockPrismaService.staffRole.findUnique.mockResolvedValue(mockStaffRole);
+      mockPrismaService.staffMember.findUnique.mockResolvedValue(null); // No existing assignment
       mockPrismaService.staffMember.create.mockResolvedValue(mockStaffMemberWithRelations);
 
       // Act
@@ -305,6 +329,92 @@ describe('StaffService', () => {
             isActive: true,
           }),
         })
+      );
+    });
+
+    it('should throw NotFoundException if staff role does not exist', async () => {
+      // Arrange
+      mockPrismaService.user.findUnique.mockResolvedValue(staffUser);
+      mockPrismaService.festival.findUnique.mockResolvedValue(ongoingFestival);
+      mockPrismaService.staffRole.findUnique.mockResolvedValue(null);
+      mockPrismaService.staffMember.findUnique.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(staffService.createStaffMember(createDto, adminAuthUser)).rejects.toThrow(
+        NotFoundException
+      );
+    });
+
+    it('should throw ConflictException if user is already assigned to the festival', async () => {
+      // Arrange
+      mockPrismaService.user.findUnique.mockResolvedValue(staffUser);
+      mockPrismaService.festival.findUnique.mockResolvedValue(ongoingFestival);
+      mockPrismaService.staffRole.findUnique.mockResolvedValue(mockStaffRole);
+      mockPrismaService.staffMember.findUnique.mockResolvedValue(mockStaffMember); // Already exists
+
+      // Act & Assert
+      await expect(staffService.createStaffMember(createDto, adminAuthUser)).rejects.toThrow(
+        ConflictException
+      );
+    });
+
+    it('should throw ConflictException if badge number is already in use', async () => {
+      // Arrange
+      const dtoWithBadge = { ...createDto, badgeNumber: 'EXISTING_BADGE' };
+      mockPrismaService.user.findUnique.mockResolvedValue(staffUser);
+      mockPrismaService.festival.findUnique.mockResolvedValue(ongoingFestival);
+      mockPrismaService.staffRole.findUnique.mockResolvedValue(mockStaffRole);
+      // First findUnique for existing assignment returns null
+      mockPrismaService.staffMember.findUnique
+        .mockResolvedValueOnce(null) // No existing assignment
+        .mockResolvedValueOnce({ id: 'other-staff-id', badgeNumber: 'EXISTING_BADGE' }); // Badge exists
+
+      // Act & Assert
+      await expect(staffService.createStaffMember(dtoWithBadge, adminAuthUser)).rejects.toThrow(
+        ConflictException
+      );
+    });
+
+    it('should handle P2002 unique constraint race condition for user-festival', async () => {
+      // Arrange
+      mockPrismaService.user.findUnique.mockResolvedValue(staffUser);
+      mockPrismaService.festival.findUnique.mockResolvedValue(ongoingFestival);
+      mockPrismaService.staffRole.findUnique.mockResolvedValue(mockStaffRole);
+      mockPrismaService.staffMember.findUnique.mockResolvedValue(null);
+
+      const prismaError = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: '5.0.0',
+        meta: { target: ['userId', 'festivalId'] },
+      });
+      mockPrismaService.staffMember.create.mockRejectedValue(prismaError);
+
+      // Act & Assert
+      await expect(staffService.createStaffMember(createDto, adminAuthUser)).rejects.toThrow(
+        ConflictException
+      );
+    });
+
+    it('should handle P2002 unique constraint race condition for badge number', async () => {
+      // Arrange
+      const dtoWithBadge = { ...createDto, badgeNumber: 'BADGE001' };
+      mockPrismaService.user.findUnique.mockResolvedValue(staffUser);
+      mockPrismaService.festival.findUnique.mockResolvedValue(ongoingFestival);
+      mockPrismaService.staffRole.findUnique.mockResolvedValue(mockStaffRole);
+      mockPrismaService.staffMember.findUnique
+        .mockResolvedValueOnce(null) // No existing assignment
+        .mockResolvedValueOnce(null); // Badge not found on first check
+
+      const prismaError = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: '5.0.0',
+        meta: { target: ['badgeNumber'] },
+      });
+      mockPrismaService.staffMember.create.mockRejectedValue(prismaError);
+
+      // Act & Assert
+      await expect(staffService.createStaffMember(dtoWithBadge, adminAuthUser)).rejects.toThrow(
+        ConflictException
       );
     });
   });
@@ -511,6 +621,105 @@ describe('StaffService', () => {
       // Assert
       expect(result).toBeDefined();
       expect(mockPrismaService.staffMember.update).toHaveBeenCalled();
+    });
+
+    it('should throw NotFoundException if new roleId does not exist', async () => {
+      // Arrange
+      const festivalWithOrganizer = { ...ongoingFestival, organizerId: organizerUser.id };
+      const updateDtoWithRole = { ...updateDto, roleId: 'non-existent-role-id' };
+      mockPrismaService.staffMember.findUnique.mockResolvedValue(mockStaffMemberWithRelations);
+      mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithOrganizer);
+      mockPrismaService.staffRole.findUnique.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(
+        staffService.updateStaffMember(mockStaffMember.id, updateDtoWithRole, adminAuthUser)
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw ConflictException if updating to existing badge number', async () => {
+      // Arrange
+      const festivalWithOrganizer = { ...ongoingFestival, organizerId: organizerUser.id };
+      const updateDtoWithBadge = { badgeNumber: 'EXISTING_BADGE' };
+      mockPrismaService.staffMember.findUnique
+        .mockResolvedValueOnce(mockStaffMemberWithRelations) // Staff member to update
+        .mockResolvedValueOnce({ id: 'other-staff-id', badgeNumber: 'EXISTING_BADGE' }); // Existing badge
+      mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithOrganizer);
+
+      // Act & Assert
+      await expect(
+        staffService.updateStaffMember(mockStaffMember.id, updateDtoWithBadge, adminAuthUser)
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it('should allow updating to the same badge number', async () => {
+      // Arrange
+      const festivalWithOrganizer = { ...ongoingFestival, organizerId: organizerUser.id };
+      const updateDtoWithSameBadge = { badgeNumber: mockStaffMember.badgeNumber };
+      mockPrismaService.staffMember.findUnique.mockResolvedValue(mockStaffMemberWithRelations);
+      mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithOrganizer);
+      mockPrismaService.staffMember.update.mockResolvedValue(mockStaffMemberWithRelations);
+
+      // Act
+      const result = await staffService.updateStaffMember(
+        mockStaffMember.id,
+        updateDtoWithSameBadge,
+        adminAuthUser
+      );
+
+      // Assert
+      expect(result).toBeDefined();
+      expect(mockPrismaService.staffMember.update).toHaveBeenCalled();
+    });
+
+    it('should validate roleId before updating', async () => {
+      // Arrange
+      const festivalWithOrganizer = { ...ongoingFestival, organizerId: organizerUser.id };
+      const newRole = { ...mockStaffRole, id: 'new-role-id', name: 'New Role' };
+      const updateDtoWithRole = { roleId: 'new-role-id' };
+      mockPrismaService.staffMember.findUnique.mockResolvedValue(mockStaffMemberWithRelations);
+      mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithOrganizer);
+      mockPrismaService.staffRole.findUnique.mockResolvedValue(newRole);
+      mockPrismaService.staffMember.update.mockResolvedValue({
+        ...mockStaffMemberWithRelations,
+        roleId: 'new-role-id',
+        role: newRole,
+      });
+
+      // Act
+      const result = await staffService.updateStaffMember(
+        mockStaffMember.id,
+        updateDtoWithRole,
+        adminAuthUser
+      );
+
+      // Assert
+      expect(result).toBeDefined();
+      expect(mockPrismaService.staffRole.findUnique).toHaveBeenCalledWith({
+        where: { id: 'new-role-id' },
+      });
+    });
+
+    it('should handle P2002 race condition for badge number on update', async () => {
+      // Arrange
+      const festivalWithOrganizer = { ...ongoingFestival, organizerId: organizerUser.id };
+      const updateDtoWithBadge = { badgeNumber: 'NEW_BADGE' };
+      mockPrismaService.staffMember.findUnique
+        .mockResolvedValueOnce(mockStaffMemberWithRelations) // Staff member to update
+        .mockResolvedValueOnce(null); // No existing badge on first check
+      mockPrismaService.festival.findUnique.mockResolvedValue(festivalWithOrganizer);
+
+      const prismaError = new Prisma.PrismaClientKnownRequestError('Unique constraint failed', {
+        code: 'P2002',
+        clientVersion: '5.0.0',
+        meta: { target: ['badgeNumber'] },
+      });
+      mockPrismaService.staffMember.update.mockRejectedValue(prismaError);
+
+      // Act & Assert
+      await expect(
+        staffService.updateStaffMember(mockStaffMember.id, updateDtoWithBadge, adminAuthUser)
+      ).rejects.toThrow(ConflictException);
     });
   });
 

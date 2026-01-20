@@ -396,6 +396,13 @@ export class AuthService {
 
   /**
    * Change password for authenticated user
+   *
+   * @param userId - The authenticated user's ID
+   * @param dto - Contains currentPassword, newPassword, and confirmPassword
+   * @throws NotFoundException if user doesn't exist
+   * @throws BadRequestException if current password is incorrect or new password is same as current
+   *
+   * Security: Invalidates all refresh tokens to force re-login on other devices
    */
   async changePassword(userId: string, dto: ChangePasswordDto): Promise<void> {
     const user = await this.prisma.user.findUnique({
@@ -404,6 +411,13 @@ export class AuthService {
 
     if (!user) {
       throw new NotFoundException('User not found');
+    }
+
+    // Check if user has a password (OAuth users may not have one)
+    if (!user.passwordHash) {
+      throw new BadRequestException(
+        'Cannot change password for accounts using social login. Please use your social provider to manage your password.'
+      );
     }
 
     // Verify current password
@@ -420,12 +434,16 @@ export class AuthService {
       throw new BadRequestException('New password must be different from current password');
     }
 
-    // Update password
+    // Hash new password
     const passwordHash = await bcrypt.hash(dto.newPassword, this.bcryptSaltRounds);
 
+    // Update password and invalidate all refresh tokens (force re-login on other devices)
     await this.prisma.user.update({
       where: { id: userId },
-      data: { passwordHash },
+      data: {
+        passwordHash,
+        refreshToken: null, // Invalidate all sessions
+      },
     });
 
     this.logger.log(`Password changed for user: ${user.email}`);

@@ -38,6 +38,13 @@ export const EditProfileScreen: React.FC = () => {
     }
   };
 
+  const handleChangeAvatar = () => {
+    showAlert(
+      'Bientot disponible',
+      'La modification de photo de profil sera disponible prochainement.'
+    );
+  };
+
   const validateEmail = (email: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   };
@@ -110,7 +117,7 @@ export const EditProfileScreen: React.FC = () => {
           {/* Avatar Section */}
           <View style={styles.avatarSection}>
             <Avatar name={`${firstName} ${lastName}`} size="2xl" style={styles.avatarMargin} />
-            <TouchableOpacity style={styles.changeAvatarButton}>
+            <TouchableOpacity style={styles.changeAvatarButton} onPress={handleChangeAvatar}>
               <Text style={styles.changeAvatarText}>Changer la photo</Text>
             </TouchableOpacity>
           </View>

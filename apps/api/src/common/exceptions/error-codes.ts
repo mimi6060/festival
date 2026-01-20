@@ -59,6 +59,13 @@ export const ErrorCodes = {
   FESTIVAL_ENDED: 'ERR_5003',
   FESTIVAL_CANCELLED: 'ERR_5004',
   FESTIVAL_CAPACITY_REACHED: 'ERR_5005',
+  FESTIVAL_PUBLISH_MISSING_NAME: 'ERR_5006',
+  FESTIVAL_PUBLISH_MISSING_DATES: 'ERR_5007',
+  FESTIVAL_PUBLISH_MISSING_VENUE: 'ERR_5008',
+  FESTIVAL_PUBLISH_NO_TICKET_CATEGORY: 'ERR_5009',
+  FESTIVAL_PUBLISH_INVALID_STATUS: 'ERR_5010',
+  FESTIVAL_ALREADY_PUBLISHED: 'ERR_5011',
+  FESTIVAL_NOT_DRAFT: 'ERR_5012',
 
   // ============================================
   // TICKET ERRORS (6xxx)
@@ -125,6 +132,9 @@ export const ErrorCodes = {
   ZONE_CAPACITY_REACHED: 'ERR_10002',
   ZONE_ENTRY_NOT_ALLOWED: 'ERR_10003',
   ZONE_EXIT_NOT_ALLOWED: 'ERR_10004',
+  ZONE_NAME_EXISTS: 'ERR_10005',
+  ZONE_INVALID_CAPACITY: 'ERR_10006',
+  ZONE_INVALID_ACCESS_LEVEL: 'ERR_10007',
 
   // ============================================
   // FILE/UPLOAD ERRORS (11xxx)
@@ -182,6 +192,17 @@ export const ErrorCodes = {
   INVOICE_CANNOT_DELETE: 'ERR_15004',
   INVOICE_SEND_FAILED: 'ERR_15005',
   INVOICE_PDF_GENERATION_FAILED: 'ERR_15006',
+
+  // ============================================
+  // STAFF ERRORS (16xxx)
+  // ============================================
+  STAFF_NOT_FOUND: 'ERR_16000',
+  STAFF_ALREADY_ASSIGNED: 'ERR_16001',
+  STAFF_BADGE_EXISTS: 'ERR_16002',
+  STAFF_ROLE_NOT_FOUND: 'ERR_16003',
+  STAFF_SHIFT_CONFLICT: 'ERR_16004',
+  STAFF_INVALID_EMAIL: 'ERR_16005',
+  STAFF_INVALID_PHONE: 'ERR_16006',
 } as const;
 
 export type ErrorCode = (typeof ErrorCodes)[keyof typeof ErrorCodes];
@@ -326,6 +347,34 @@ export const ErrorMessages: Record<ErrorCode, { fr: string; en: string }> = {
   [ErrorCodes.FESTIVAL_CAPACITY_REACHED]: {
     fr: 'Le festival a atteint sa capacite maximale.',
     en: 'The festival has reached its maximum capacity.',
+  },
+  [ErrorCodes.FESTIVAL_PUBLISH_MISSING_NAME]: {
+    fr: 'Le nom du festival est requis pour la publication.',
+    en: 'Festival name is required for publishing.',
+  },
+  [ErrorCodes.FESTIVAL_PUBLISH_MISSING_DATES]: {
+    fr: 'Les dates du festival sont requises pour la publication.',
+    en: 'Festival dates are required for publishing.',
+  },
+  [ErrorCodes.FESTIVAL_PUBLISH_MISSING_VENUE]: {
+    fr: 'Le lieu du festival est requis pour la publication.',
+    en: 'Festival venue is required for publishing.',
+  },
+  [ErrorCodes.FESTIVAL_PUBLISH_NO_TICKET_CATEGORY]: {
+    fr: 'Au moins une categorie de billet est requise pour la publication.',
+    en: 'At least one ticket category is required for publishing.',
+  },
+  [ErrorCodes.FESTIVAL_PUBLISH_INVALID_STATUS]: {
+    fr: 'Le festival ne peut pas etre publie dans son etat actuel.',
+    en: 'Festival cannot be published in its current state.',
+  },
+  [ErrorCodes.FESTIVAL_ALREADY_PUBLISHED]: {
+    fr: 'Le festival est deja publie.',
+    en: 'Festival is already published.',
+  },
+  [ErrorCodes.FESTIVAL_NOT_DRAFT]: {
+    fr: 'Le festival doit etre en brouillon pour etre publie.',
+    en: 'Festival must be in draft status to be published.',
   },
 
   // Ticket
@@ -521,6 +570,18 @@ export const ErrorMessages: Record<ErrorCode, { fr: string; en: string }> = {
     fr: 'Sortie non autorisee.',
     en: 'Exit not allowed.',
   },
+  [ErrorCodes.ZONE_NAME_EXISTS]: {
+    fr: 'Une zone avec ce nom existe deja pour ce festival.',
+    en: 'A zone with this name already exists for this festival.',
+  },
+  [ErrorCodes.ZONE_INVALID_CAPACITY]: {
+    fr: 'La capacite doit etre un nombre positif.',
+    en: 'Capacity must be a positive number.',
+  },
+  [ErrorCodes.ZONE_INVALID_ACCESS_LEVEL]: {
+    fr: "Niveau d'acces invalide.",
+    en: 'Invalid access level.',
+  },
 
   // File
   [ErrorCodes.FILE_NOT_FOUND]: {
@@ -672,12 +733,42 @@ export const ErrorMessages: Record<ErrorCode, { fr: string; en: string }> = {
     en: 'Cannot delete this invoice.',
   },
   [ErrorCodes.INVOICE_SEND_FAILED]: {
-    fr: 'Echec de l\'envoi de la facture.',
+    fr: "Echec de l'envoi de la facture.",
     en: 'Failed to send invoice.',
   },
   [ErrorCodes.INVOICE_PDF_GENERATION_FAILED]: {
     fr: 'Echec de la generation du PDF.',
     en: 'Failed to generate PDF.',
+  },
+
+  // Staff
+  [ErrorCodes.STAFF_NOT_FOUND]: {
+    fr: 'Membre du staff non trouve.',
+    en: 'Staff member not found.',
+  },
+  [ErrorCodes.STAFF_ALREADY_ASSIGNED]: {
+    fr: 'Cet utilisateur est deja assigne a ce festival.',
+    en: 'This user is already assigned to this festival.',
+  },
+  [ErrorCodes.STAFF_BADGE_EXISTS]: {
+    fr: 'Ce numero de badge est deja utilise.',
+    en: 'This badge number is already in use.',
+  },
+  [ErrorCodes.STAFF_ROLE_NOT_FOUND]: {
+    fr: 'Role du staff non trouve.',
+    en: 'Staff role not found.',
+  },
+  [ErrorCodes.STAFF_SHIFT_CONFLICT]: {
+    fr: 'Conflit de planning pour ce membre du staff.',
+    en: 'Schedule conflict for this staff member.',
+  },
+  [ErrorCodes.STAFF_INVALID_EMAIL]: {
+    fr: 'Adresse email invalide.',
+    en: 'Invalid email address.',
+  },
+  [ErrorCodes.STAFF_INVALID_PHONE]: {
+    fr: 'Numero de telephone invalide.',
+    en: 'Invalid phone number.',
   },
 };
 

@@ -38,6 +38,13 @@ export const ChangePasswordScreen: React.FC = () => {
     }
   };
 
+  const handleForgotPassword = () => {
+    showAlert(
+      'Reinitialisation',
+      'Un email de reinitialisation sera envoye a votre adresse email enregistree.'
+    );
+  };
+
   const validatePassword = (password: string) => {
     const checks = {
       length: password.length >= 8,
@@ -226,7 +233,7 @@ export const ChangePasswordScreen: React.FC = () => {
           />
 
           {/* Forgot Password */}
-          <TouchableOpacity style={styles.forgotButton}>
+          <TouchableOpacity style={styles.forgotButton} onPress={handleForgotPassword}>
             <Text style={styles.forgotText}>Mot de passe oublie ?</Text>
           </TouchableOpacity>
         </ScrollView>

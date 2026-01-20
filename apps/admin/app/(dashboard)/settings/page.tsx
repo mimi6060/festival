@@ -185,7 +185,12 @@ export default function SettingsPage() {
                             />
                           </svg>
                         </div>
-                        <button className="btn-secondary">Changer le logo</button>
+                        <button
+                          onClick={() => alert('Logo upload functionality coming soon')}
+                          className="btn-secondary"
+                        >
+                          Changer le logo
+                        </button>
                       </div>
                     </div>
                     <div>
@@ -391,14 +396,24 @@ export default function SettingsPage() {
                           Ajouter une couche de securite supplementaire
                         </p>
                       </div>
-                      <button className="btn-secondary">Configurer</button>
+                      <button
+                        onClick={() => alert('2FA configuration coming soon')}
+                        className="btn-secondary"
+                      >
+                        Configurer
+                      </button>
                     </div>
                     <div className="flex items-center justify-between p-4 border border-gray-100 rounded-lg">
                       <div>
                         <p className="font-medium text-gray-900">Sessions actives</p>
                         <p className="text-sm text-gray-500">Gerer vos sessions connectees</p>
                       </div>
-                      <button className="btn-secondary">Voir</button>
+                      <button
+                        onClick={() => alert('Active sessions view coming soon')}
+                        className="btn-secondary"
+                      >
+                        Voir
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -418,7 +433,12 @@ export default function SettingsPage() {
                       <label className="form-label">Confirmer le mot de passe</label>
                       <input type="password" className="input-field" />
                     </div>
-                    <button className="btn-primary">Changer le mot de passe</button>
+                    <button
+                      onClick={() => alert('Password change functionality coming soon')}
+                      className="btn-primary"
+                    >
+                      Changer le mot de passe
+                    </button>
                   </div>
                 </div>
               </div>
@@ -442,7 +462,15 @@ export default function SettingsPage() {
                           value="fst_live_xxxxxxxxxxxxxxxxxxxxxxxx"
                           readOnly
                         />
-                        <button className="btn-secondary">Copier</button>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText('fst_live_xxxxxxxxxxxxxxxxxxxxxxxx');
+                            alert('Production API key copied to clipboard');
+                          }}
+                          className="btn-secondary"
+                        >
+                          Copier
+                        </button>
                       </div>
                     </div>
                     <div>
@@ -454,10 +482,31 @@ export default function SettingsPage() {
                           value="fst_test_xxxxxxxxxxxxxxxxxxxxxxxx"
                           readOnly
                         />
-                        <button className="btn-secondary">Copier</button>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText('fst_test_xxxxxxxxxxxxxxxxxxxxxxxx');
+                            alert('Test API key copied to clipboard');
+                          }}
+                          className="btn-secondary"
+                        >
+                          Copier
+                        </button>
                       </div>
                     </div>
-                    <button className="btn-danger">Regenerer les cles</button>
+                    <button
+                      onClick={() => {
+                        if (
+                          confirm(
+                            'Are you sure you want to regenerate all API keys? This action cannot be undone.'
+                          )
+                        ) {
+                          alert('API keys regeneration coming soon');
+                        }
+                      }}
+                      className="btn-danger"
+                    >
+                      Regenerer les cles
+                    </button>
                   </div>
                 </div>
 
@@ -492,7 +541,12 @@ export default function SettingsPage() {
                         ))}
                       </div>
                     </div>
-                    <button className="btn-primary">Enregistrer le webhook</button>
+                    <button
+                      onClick={() => alert('Webhook save functionality coming soon')}
+                      className="btn-primary"
+                    >
+                      Enregistrer le webhook
+                    </button>
                   </div>
                 </div>
               </div>

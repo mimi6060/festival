@@ -16,7 +16,12 @@ import { FestivalsService } from './festivals.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CacheService } from '../cache/cache.service';
 import { FestivalStatus } from '@prisma/client';
-import { NotFoundException, ConflictException, ForbiddenException } from '@nestjs/common';
+import {
+  NotFoundException,
+  ConflictException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import {
   organizerUser,
   regularUser,
@@ -33,7 +38,9 @@ import {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   validFestivalInput,
   createFestivalFixture,
+  standardCategory,
 } from '../../test/fixtures';
+import { ErrorCodes } from '../../common/exceptions/error-codes';
 
 // ============================================================================
 // Mock Setup
@@ -1559,6 +1566,456 @@ describe('FestivalsService', () => {
         expect(metrics.total).toBe(0);
         expect(metrics.hitRate).toBe(0);
       });
+    });
+  });
+
+  // ==========================================================================
+  // Festival Publication Tests
+  // ==========================================================================
+
+  describe('validateForPublication', () => {
+    it('should return canPublish: true for a valid draft festival with ticket categories', async () => {
+      // Arrange
+      const validFestival = {
+        ...draftFestival,
+        status: FestivalStatus.DRAFT,
+        ticketCategories: [standardCategory],
+      };
+      mockPrismaService.festival.findUnique.mockResolvedValue(validFestival);
+
+      // Act
+      const result = await festivalsService.validateForPublication(draftFestival.id);
+
+      // Assert
+      expect(result.canPublish).toBe(true);
+      expect(result.errors).toHaveLength(0);
+    });
+
+    it('should return error when festival name is missing', async () => {
+      // Arrange
+      const invalidFestival = {
+        ...draftFestival,
+        name: '',
+        ticketCategories: [standardCategory],
+      };
+      mockPrismaService.festival.findUnique.mockResolvedValue(invalidFestival);
+
+      // Act
+      const result = await festivalsService.validateForPublication(draftFestival.id);
+
+      // Assert
+      expect(result.canPublish).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          code: ErrorCodes.FESTIVAL_PUBLISH_MISSING_NAME,
+          field: 'name',
+        })
+      );
+    });
+
+    it('should return error when festival location is missing', async () => {
+      // Arrange
+      const invalidFestival = {
+        ...draftFestival,
+        location: '',
+        ticketCategories: [standardCategory],
+      };
+      mockPrismaService.festival.findUnique.mockResolvedValue(invalidFestival);
+
+      // Act
+      const result = await festivalsService.validateForPublication(draftFestival.id);
+
+      // Assert
+      expect(result.canPublish).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          code: ErrorCodes.FESTIVAL_PUBLISH_MISSING_VENUE,
+          field: 'location',
+        })
+      );
+    });
+
+    it('should return error when no ticket categories exist', async () => {
+      // Arrange
+      const invalidFestival = {
+        ...draftFestival,
+        ticketCategories: [],
+      };
+      mockPrismaService.festival.findUnique.mockResolvedValue(invalidFestival);
+
+      // Act
+      const result = await festivalsService.validateForPublication(draftFestival.id);
+
+      // Assert
+      expect(result.canPublish).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          code: ErrorCodes.FESTIVAL_PUBLISH_NO_TICKET_CATEGORY,
+          field: 'ticketCategories',
+        })
+      );
+    });
+
+    it('should return error when festival is not in DRAFT status', async () => {
+      // Arrange
+      const invalidFestival = {
+        ...publishedFestival,
+        status: FestivalStatus.PUBLISHED,
+        ticketCategories: [standardCategory],
+      };
+      mockPrismaService.festival.findUnique.mockResolvedValue(invalidFestival);
+
+      // Act
+      const result = await festivalsService.validateForPublication(publishedFestival.id);
+
+      // Assert
+      expect(result.canPublish).toBe(false);
+      expect(result.errors).toContainEqual(
+        expect.objectContaining({
+          code: ErrorCodes.FESTIVAL_NOT_DRAFT,
+          field: 'status',
+        })
+      );
+    });
+
+    it('should return multiple errors when multiple validations fail', async () => {
+      // Arrange
+      const invalidFestival = {
+        ...draftFestival,
+        name: '',
+        location: '',
+        ticketCategories: [],
+      };
+      mockPrismaService.festival.findUnique.mockResolvedValue(invalidFestival);
+
+      // Act
+      const result = await festivalsService.validateForPublication(draftFestival.id);
+
+      // Assert
+      expect(result.canPublish).toBe(false);
+      expect(result.errors.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('should throw NotFoundException for non-existent festival', async () => {
+      // Arrange
+      mockPrismaService.festival.findUnique.mockResolvedValue(null);
+
+      // Act & Assert
+      await expect(festivalsService.validateForPublication('non-existent-id')).rejects.toThrow(
+        NotFoundException
+      );
+    });
+
+    it('should throw NotFoundException for deleted festival', async () => {
+      // Arrange
+      mockPrismaService.festival.findUnique.mockResolvedValue({
+        ...deletedFestival,
+        isDeleted: true,
+      });
+
+      // Act & Assert
+      await expect(festivalsService.validateForPublication(deletedFestival.id)).rejects.toThrow(
+        NotFoundException
+      );
+    });
+  });
+
+  describe('publish', () => {
+    it('should successfully publish a valid draft festival', async () => {
+      // Arrange
+      const validDraftFestival = {
+        ...draftFestival,
+        status: FestivalStatus.DRAFT,
+        ticketCategories: [standardCategory],
+        organizer: {
+          id: organizerUser.id,
+          firstName: 'Test',
+          lastName: 'User',
+          email: 'test@test.com',
+        },
+        stages: [],
+        zones: [],
+        _count: { tickets: 0, vendors: 0, staffAssignments: 0 },
+      };
+      const publishedResult = {
+        ...validDraftFestival,
+        status: FestivalStatus.PUBLISHED,
+      };
+
+      // First call for findOne, second for validation
+      mockCacheService.get.mockResolvedValue(null);
+      mockPrismaService.festival.findUnique
+        .mockResolvedValueOnce(validDraftFestival) // findOne
+        .mockResolvedValueOnce(validDraftFestival); // validateForPublication
+      mockPrismaService.festival.update.mockResolvedValue(publishedResult);
+
+      // Act
+      const result = await festivalsService.publish(draftFestival.id, organizerUser.id);
+
+      // Assert
+      expect(result.status).toBe(FestivalStatus.PUBLISHED);
+      expect(mockPrismaService.festival.update).toHaveBeenCalledWith({
+        where: { id: draftFestival.id },
+        data: { status: FestivalStatus.PUBLISHED },
+        include: expect.any(Object),
+      });
+    });
+
+    it('should throw ForbiddenException when user is not the organizer', async () => {
+      // Arrange
+      const validDraftFestival = {
+        ...draftFestival,
+        organizerId: organizerUser.id,
+        ticketCategories: [standardCategory],
+        organizer: {
+          id: organizerUser.id,
+          firstName: 'Test',
+          lastName: 'User',
+          email: 'test@test.com',
+        },
+        stages: [],
+        zones: [],
+        _count: { tickets: 0, vendors: 0, staffAssignments: 0 },
+      };
+      mockCacheService.get.mockResolvedValue(null);
+      mockPrismaService.festival.findUnique.mockResolvedValue(validDraftFestival);
+
+      // Act & Assert
+      await expect(festivalsService.publish(draftFestival.id, regularUser.id)).rejects.toThrow(
+        ForbiddenException
+      );
+    });
+
+    it('should throw BadRequestException when festival is already published', async () => {
+      // Arrange
+      const alreadyPublished = {
+        ...publishedFestival,
+        status: FestivalStatus.PUBLISHED,
+        ticketCategories: [standardCategory],
+        organizer: {
+          id: organizerUser.id,
+          firstName: 'Test',
+          lastName: 'User',
+          email: 'test@test.com',
+        },
+        stages: [],
+        zones: [],
+        _count: { tickets: 0, vendors: 0, staffAssignments: 0 },
+      };
+      mockCacheService.get.mockResolvedValue(null);
+      mockPrismaService.festival.findUnique.mockResolvedValue(alreadyPublished);
+
+      // Act & Assert
+      await expect(
+        festivalsService.publish(publishedFestival.id, organizerUser.id)
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when validation fails', async () => {
+      // Arrange
+      const invalidFestival = {
+        ...draftFestival,
+        status: FestivalStatus.DRAFT,
+        ticketCategories: [], // No ticket categories
+        organizer: {
+          id: organizerUser.id,
+          firstName: 'Test',
+          lastName: 'User',
+          email: 'test@test.com',
+        },
+        stages: [],
+        zones: [],
+        _count: { tickets: 0, vendors: 0, staffAssignments: 0 },
+      };
+      mockCacheService.get.mockResolvedValue(null);
+      mockPrismaService.festival.findUnique
+        .mockResolvedValueOnce(invalidFestival) // findOne
+        .mockResolvedValueOnce(invalidFestival); // validateForPublication
+
+      // Act & Assert
+      await expect(festivalsService.publish(draftFestival.id, organizerUser.id)).rejects.toThrow(
+        BadRequestException
+      );
+    });
+
+    it('should invalidate cache after publishing', async () => {
+      // Arrange
+      const validDraftFestival = {
+        ...draftFestival,
+        status: FestivalStatus.DRAFT,
+        ticketCategories: [standardCategory],
+        organizer: {
+          id: organizerUser.id,
+          firstName: 'Test',
+          lastName: 'User',
+          email: 'test@test.com',
+        },
+        stages: [],
+        zones: [],
+        _count: { tickets: 0, vendors: 0, staffAssignments: 0 },
+      };
+      const publishedResult = {
+        ...validDraftFestival,
+        status: FestivalStatus.PUBLISHED,
+      };
+      mockCacheService.get.mockResolvedValue(null);
+      mockPrismaService.festival.findUnique
+        .mockResolvedValueOnce(validDraftFestival)
+        .mockResolvedValueOnce(validDraftFestival);
+      mockPrismaService.festival.update.mockResolvedValue(publishedResult);
+
+      // Act
+      await festivalsService.publish(draftFestival.id, organizerUser.id);
+
+      // Assert
+      expect(mockCacheService.delete).toHaveBeenCalled();
+      expect(mockCacheService.deletePattern).toHaveBeenCalled();
+    });
+  });
+
+  describe('unpublish', () => {
+    it('should successfully unpublish a published festival', async () => {
+      // Arrange
+      const publishedFestivalData = {
+        ...publishedFestival,
+        status: FestivalStatus.PUBLISHED,
+        organizer: {
+          id: organizerUser.id,
+          firstName: 'Test',
+          lastName: 'User',
+          email: 'test@test.com',
+        },
+        ticketCategories: [standardCategory],
+        stages: [],
+        zones: [],
+        _count: { tickets: 0, vendors: 0, staffAssignments: 0 },
+      };
+      const unpublishedResult = {
+        ...publishedFestivalData,
+        status: FestivalStatus.DRAFT,
+      };
+
+      mockCacheService.get.mockResolvedValue(null);
+      mockPrismaService.festival.findUnique.mockResolvedValue(publishedFestivalData);
+      mockPrismaService.festival.update.mockResolvedValue(unpublishedResult);
+
+      // Act
+      const result = await festivalsService.unpublish(publishedFestival.id, organizerUser.id);
+
+      // Assert
+      expect(result.status).toBe(FestivalStatus.DRAFT);
+      expect(mockPrismaService.festival.update).toHaveBeenCalledWith({
+        where: { id: publishedFestival.id },
+        data: { status: FestivalStatus.DRAFT },
+        include: expect.any(Object),
+      });
+    });
+
+    it('should throw ForbiddenException when user is not the organizer', async () => {
+      // Arrange
+      const publishedFestivalData = {
+        ...publishedFestival,
+        status: FestivalStatus.PUBLISHED,
+        organizer: {
+          id: organizerUser.id,
+          firstName: 'Test',
+          lastName: 'User',
+          email: 'test@test.com',
+        },
+        ticketCategories: [standardCategory],
+        stages: [],
+        zones: [],
+        _count: { tickets: 0, vendors: 0, staffAssignments: 0 },
+      };
+      mockCacheService.get.mockResolvedValue(null);
+      mockPrismaService.festival.findUnique.mockResolvedValue(publishedFestivalData);
+
+      // Act & Assert
+      await expect(
+        festivalsService.unpublish(publishedFestival.id, regularUser.id)
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw BadRequestException when festival is not published', async () => {
+      // Arrange
+      const draftFestivalData = {
+        ...draftFestival,
+        status: FestivalStatus.DRAFT,
+        organizer: {
+          id: organizerUser.id,
+          firstName: 'Test',
+          lastName: 'User',
+          email: 'test@test.com',
+        },
+        ticketCategories: [standardCategory],
+        stages: [],
+        zones: [],
+        _count: { tickets: 0, vendors: 0, staffAssignments: 0 },
+      };
+      mockCacheService.get.mockResolvedValue(null);
+      mockPrismaService.festival.findUnique.mockResolvedValue(draftFestivalData);
+
+      // Act & Assert
+      await expect(festivalsService.unpublish(draftFestival.id, organizerUser.id)).rejects.toThrow(
+        BadRequestException
+      );
+    });
+
+    it('should throw BadRequestException when festival is ongoing (not PUBLISHED)', async () => {
+      // Arrange
+      const ongoingFestivalData = {
+        ...ongoingFestival,
+        status: FestivalStatus.ONGOING,
+        organizer: {
+          id: organizerUser.id,
+          firstName: 'Test',
+          lastName: 'User',
+          email: 'test@test.com',
+        },
+        ticketCategories: [standardCategory],
+        stages: [],
+        zones: [],
+        _count: { tickets: 0, vendors: 0, staffAssignments: 0 },
+      };
+      mockCacheService.get.mockResolvedValue(null);
+      mockPrismaService.festival.findUnique.mockResolvedValue(ongoingFestivalData);
+
+      // Act & Assert
+      await expect(
+        festivalsService.unpublish(ongoingFestival.id, organizerUser.id)
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should invalidate cache after unpublishing', async () => {
+      // Arrange
+      const publishedFestivalData = {
+        ...publishedFestival,
+        status: FestivalStatus.PUBLISHED,
+        organizer: {
+          id: organizerUser.id,
+          firstName: 'Test',
+          lastName: 'User',
+          email: 'test@test.com',
+        },
+        ticketCategories: [standardCategory],
+        stages: [],
+        zones: [],
+        _count: { tickets: 0, vendors: 0, staffAssignments: 0 },
+      };
+      const unpublishedResult = {
+        ...publishedFestivalData,
+        status: FestivalStatus.DRAFT,
+      };
+      mockCacheService.get.mockResolvedValue(null);
+      mockPrismaService.festival.findUnique.mockResolvedValue(publishedFestivalData);
+      mockPrismaService.festival.update.mockResolvedValue(unpublishedResult);
+
+      // Act
+      await festivalsService.unpublish(publishedFestival.id, organizerUser.id);
+
+      // Assert
+      expect(mockCacheService.delete).toHaveBeenCalled();
+      expect(mockCacheService.deletePattern).toHaveBeenCalled();
     });
   });
 });

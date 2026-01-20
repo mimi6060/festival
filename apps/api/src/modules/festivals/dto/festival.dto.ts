@@ -275,9 +275,7 @@ export class CreateFestivalDto {
 /**
  * Update festival DTO
  */
-export class UpdateFestivalDto extends PartialType(
-  OmitType(CreateFestivalDto, ['slug'] as const),
-) {
+export class UpdateFestivalDto extends PartialType(OmitType(CreateFestivalDto, ['slug'] as const)) {
   @ApiPropertyOptional({
     description: 'Festival status',
     enum: FestivalStatus,
@@ -554,4 +552,66 @@ export class FestivalQueryDto {
   @Max(100)
   @Type(() => Number)
   limit?: number;
+
+  /**
+   * Filter by organizer ID (used internally for admin queries)
+   */
+  @ApiPropertyOptional({
+    description: 'Filter by organizer ID',
+    example: '550e8400-e29b-41d4-a716-446655440000',
+  })
+  @IsOptional()
+  @IsString()
+  organizerId?: string;
+}
+
+/**
+ * Publication validation error DTO
+ */
+export class PublishValidationErrorDto {
+  @ApiProperty({
+    description: 'Error code',
+    example: 'ERR_5009',
+  })
+  code!: string;
+
+  @ApiProperty({
+    description: 'Error message',
+    example: 'At least one ticket category is required for publishing.',
+  })
+  message!: string;
+
+  @ApiProperty({
+    description: 'Field that failed validation',
+    example: 'ticketCategories',
+  })
+  field!: string;
+}
+
+/**
+ * Festival publish response DTO
+ */
+export class FestivalPublishResponseDto extends FestivalResponseDto {
+  @ApiPropertyOptional({
+    description: 'Date when the festival was published',
+    example: '2025-01-15T10:30:00.000Z',
+  })
+  publishedAt?: Date;
+}
+
+/**
+ * Festival publication validation result DTO
+ */
+export class PublishValidationResultDto {
+  @ApiProperty({
+    description: 'Whether the festival can be published',
+    example: true,
+  })
+  canPublish!: boolean;
+
+  @ApiProperty({
+    description: 'List of validation errors if canPublish is false',
+    type: [PublishValidationErrorDto],
+  })
+  errors!: PublishValidationErrorDto[];
 }
