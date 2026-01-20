@@ -1785,4 +1785,221 @@ apps/web/app/profile/page.tsx   (NEW - redirect to /account)
 
 ---
 
+---
+
+## Session 2026-01-20 - Typography Standardization for Web App
+
+### Task
+
+Standardize typography in Web app with consistent font usage.
+
+### Changes Made
+
+**File Modified:** `apps/web/app/globals.css`
+
+Added comprehensive typography utility classes in the `@layer components` section:
+
+| Class            | Purpose                         | Font Size               | Font Weight    |
+| ---------------- | ------------------------------- | ----------------------- | -------------- |
+| `.heading-1`     | Page titles, hero sections      | text-4xl -> md:text-5xl | bold (700)     |
+| `.heading-2`     | Section titles                  | text-2xl -> md:text-3xl | semibold (600) |
+| `.heading-3`     | Subsection titles, card headers | text-xl                 | semibold (600) |
+| `.heading-4`     | Smaller titles, list headers    | text-lg                 | semibold (600) |
+| `.body-text`     | Default paragraph text          | text-base               | normal (400)   |
+| `.body-large`    | Intro paragraphs, featured text | text-lg                 | normal (400)   |
+| `.text-small`    | Secondary info, metadata        | text-sm                 | normal (400)   |
+| `.text-caption`  | Labels, timestamps, helper text | text-xs                 | normal (400)   |
+| `.text-label`    | Form labels, menu items         | text-sm                 | medium (500)   |
+| `.text-button`   | CTA, action buttons             | text-sm                 | semibold (600) |
+| `.text-overline` | Category labels, badges         | text-xs                 | semibold (600) |
+
+**File Modified:** `apps/web/styles/tokens.css`
+
+Added Inter font family variable:
+
+- `--font-family-inter: 'Inter', ui-sans-serif, system-ui, ...`
+
+### Typography System
+
+- **Font Family**: Inter (loaded from Google Fonts in layout.tsx)
+- **Headings**: font-semibold (600) or font-bold (700)
+- **Body**: font-normal (400)
+- **Scale**:
+  - h1: text-4xl (36px) -> md:text-5xl (48px)
+  - h2: text-2xl (24px) -> md:text-3xl (30px)
+  - h3: text-xl (20px)
+  - body: text-base (16px)
+  - small: text-sm (14px)
+  - caption: text-xs (12px)
+
+### Notes
+
+- All typography classes use CSS custom properties from tokens.css
+- Theme-aware color variables for text (--theme-text-primary, --theme-text-secondary, etc.)
+- Responsive sizing for h1 and h2 using @media queries
+- Legacy `.section-title` class maintained for backward compatibility
+
+---
+
+## Session 2026-01-20 - Toast/Notification Styling Standardization
+
+### Task
+
+Standardize toast/notification styling across Web and Admin apps for consistency.
+
+### Standard Toast/Notification Styles
+
+| Variant | Background        | Border                | Text Color       |
+| ------- | ----------------- | --------------------- | ---------------- |
+| Success | `bg-green-500/10` | `border-green-500/20` | `text-green-400` |
+| Error   | `bg-red-500/10`   | `border-red-500/20`   | `text-red-400`   |
+| Info    | `bg-blue-500/10`  | `border-blue-500/20`  | `text-blue-400`  |
+| Warning | `bg-amber-500/10` | `border-amber-500/20` | `text-amber-400` |
+
+**Additional Standards:**
+
+- Border radius: `rounded-lg`
+- Padding: `p-4`
+
+### Files Modified
+
+1. **`apps/web/components/ui/Alert.tsx`**
+   - Updated `variantStyles` with standardized colors
+   - Updated `sizeStyles` to use `p-3`, `p-4`, `p-5` for padding
+   - Changed border radius from `rounded-xl` to `rounded-lg`
+
+2. **`apps/admin/hooks/useNotifications.ts`**
+   - Updated `typeColors` with standardized toast styling
+   - info, success, warning, error, alert variants standardized
+
+3. **`apps/admin/app/(dashboard)/notifications/page.tsx`**
+   - Updated `typeConfig` with standardized colors
+
+4. **`apps/admin/app/(dashboard)/realtime/page.tsx`**
+   - Updated alert `typeConfig` with standardized colors
+
+5. **`libs/ui/src/theme/index.ts`**
+   - Added `toastStyles` export with standardized styling
+   - Added `toastBaseClasses` for base container classes
+   - Added `ToastVariant` type for type safety
+   - Updated `theme` object to include toast styles
+
+### New Theme Exports
+
+```typescript
+// libs/ui/src/theme/index.ts
+export type ToastVariant = 'success' | 'error' | 'info' | 'warning';
+
+export const toastStyles: Record<ToastVariant, { container: string; icon: string; title: string }>;
+export const toastBaseClasses: string; // 'rounded-lg border p-4'
+```
+
+### Verification
+
+- ESLint: PASSED
+- TypeScript: PASSED
+
+---
+
+## Session 2026-01-20 - Mobile Card Styles Standardization
+
+### Task
+
+Standardize Mobile card styles to match Web/Admin design system.
+
+### Changes Made
+
+**Files Modified:**
+
+1. `apps/mobile/src/components/common/Card.tsx`
+   - Updated base styles:
+     - `backgroundColor: 'rgba(255,255,255,0.05)'`
+     - `borderRadius: 12`
+     - `borderWidth: 1`
+     - `borderColor: 'rgba(255,255,255,0.1)'`
+   - Updated `padding_md` to use `16` (explicit value)
+   - Removed unused `borderRadius` import
+
+2. `apps/mobile/src/components/tickets/TicketCard.tsx`
+   - Updated container styles to match standardized card design
+
+3. `apps/mobile/src/components/wallet/BalanceCard.tsx`
+   - Updated container styles to match standardized card design
+   - Updated content padding to `16`
+   - Removed unused `shadows` import
+
+4. `apps/mobile/src/theme/index.ts`
+   - Updated `globalStyles.card` to use standardized values
+
+### Standardized Card Properties
+
+| Property        | Value                  |
+| --------------- | ---------------------- |
+| backgroundColor | rgba(255,255,255,0.05) |
+| borderRadius    | 12                     |
+| borderWidth     | 1                      |
+| borderColor     | rgba(255,255,255,0.1)  |
+| padding         | 16                     |
+
+### Verification
+
+- ESLint: PASSED (no new errors in modified card files)
+- All card components now use consistent styling matching Web/Admin
+
+---
+
+## Session 2026-01-20 - EmptyState Component Standardization
+
+### Task
+
+Create consistent empty state styling across Web and Admin apps.
+
+### Standard EmptyState Styling
+
+| Element     | CSS Classes                           |
+| ----------- | ------------------------------------- |
+| Container   | `flex flex-col items-center py-12`    |
+| Icon        | `text-white/20 w-16 h-16`             |
+| Title       | `text-xl font-semibold text-white/70` |
+| Description | `text-white/50 text-center`           |
+
+### Files Created
+
+1. **`apps/web/components/ui/EmptyState.tsx`**
+   - EmptyState component with icon, title, description, action props
+   - EmptyStateIcons collection (search, noData, inbox, folder, calendar, ticket, users, bell, error)
+   - Exported via `apps/web/components/ui/index.ts`
+
+2. **`apps/admin/components/ui/EmptyState.tsx`**
+   - Same component adapted for admin with cn() utility
+   - Additional icons (table, chart)
+   - Exported via `apps/admin/components/ui/index.ts`
+
+### Files Modified
+
+1. **`apps/web/components/ui/Table.tsx`**
+   - Updated TableEmpty component to use standardized styling
+   - Icon now uses `text-white/20 w-16 h-16`
+   - Title uses `text-xl font-semibold text-white/70`
+   - Description uses `text-white/50 text-center`
+
+2. **`apps/web/app/festivals/page.tsx`**
+   - Updated empty state to use new EmptyState component
+   - Uses EmptyStateIcons.noData for icon
+
+3. **`apps/web/components/search/FestivalSearch.tsx`**
+   - Updated no results state to use standardized styling
+
+4. **`apps/admin/components/tables/DataTable.tsx`**
+   - Updated empty message to use standardized styling
+   - Added table icon SVG for empty state
+
+### Verification
+
+- ESLint: PASSED (all new/modified files)
+- TypeScript: PASSED
+- API Build: PASSED
+
+---
+
 _Derniere mise a jour: 2026-01-20_

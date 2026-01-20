@@ -5,6 +5,7 @@ import { FestivalCard, Festival as FestivalCardType } from '@/components/festiva
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { EmptyState, EmptyStateIcons } from '@/components/ui/EmptyState';
 import { Festival } from '@/lib/api';
 
 const API_URL = '/api';
@@ -412,37 +413,27 @@ export default function FestivalsPage() {
 
         {/* Empty State */}
         {!isLoading && !error && filteredFestivals.length === 0 && (
-          <Card variant="solid" padding="lg" className="text-center">
-            <div className="py-12">
-              <svg
-                className="w-16 h-16 mx-auto text-white/20 mb-4"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={1.5}
-                  d="M9.172 16.172a4 4 0 015.656 0M9 10h.01M15 10h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <h3 className="text-xl font-semibold text-white mb-2">Aucun festival trouvé</h3>
-              <p className="text-white/60 mb-6">
-                {hasActiveFilters
+          <Card variant="solid" padding="lg">
+            <EmptyState
+              icon={EmptyStateIcons.noData}
+              title="Aucun festival trouvé"
+              description={
+                hasActiveFilters
                   ? 'Essayez de modifier vos filtres pour trouver des festivals.'
-                  : 'Les festivals seront bientôt disponibles. Revenez nous voir !'}
-              </p>
-              {hasActiveFilters ? (
-                <Button variant="secondary" onClick={handleClearFilters}>
-                  Effacer les filtres
-                </Button>
-              ) : (
-                <Button as="link" href="/" variant="secondary">
-                  Retour à l&apos;accueil
-                </Button>
-              )}
-            </div>
+                  : 'Les festivals seront bientôt disponibles. Revenez nous voir !'
+              }
+              action={
+                hasActiveFilters ? (
+                  <Button variant="secondary" onClick={handleClearFilters}>
+                    Effacer les filtres
+                  </Button>
+                ) : (
+                  <Button as="link" href="/" variant="secondary">
+                    Retour à l&apos;accueil
+                  </Button>
+                )
+              }
+            />
           </Card>
         )}
 

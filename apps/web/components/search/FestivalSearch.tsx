@@ -80,12 +80,7 @@ function CloseIcon({ className = '' }: { className?: string }) {
       stroke="currentColor"
       aria-hidden="true"
     >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        strokeWidth={2}
-        d="M6 18L18 6M6 6l12 12"
-      />
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
     </svg>
   );
 }
@@ -158,10 +153,7 @@ export function FestivalSearch({
   // Handle click outside to close suggestions
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (
-        containerRef.current &&
-        !containerRef.current.contains(event.target as Node)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
         setIsFocused(false);
         setIsFiltersOpen(false);
       }
@@ -179,15 +171,11 @@ export function FestivalSearch({
       switch (event.key) {
         case 'ArrowDown':
           event.preventDefault();
-          setSelectedIndex((prev) =>
-            prev < totalItems - 1 ? prev + 1 : 0
-          );
+          setSelectedIndex((prev) => (prev < totalItems - 1 ? prev + 1 : 0));
           break;
         case 'ArrowUp':
           event.preventDefault();
-          setSelectedIndex((prev) =>
-            prev > 0 ? prev - 1 : totalItems - 1
-          );
+          setSelectedIndex((prev) => (prev > 0 ? prev - 1 : totalItems - 1));
           break;
         case 'Enter':
           event.preventDefault();
@@ -242,15 +230,25 @@ export function FestivalSearch({
   // Get active filter count
   const getActiveFilterCount = () => {
     let count = 0;
-    if (filters.dateRange?.start || filters.dateRange?.end) {count++;}
-    if (filters.priceRange?.min || filters.priceRange?.max) {count++;}
-    if (filters.genres && filters.genres.length > 0) {count++;}
-    if (filters.location) {count++;}
+    if (filters.dateRange?.start || filters.dateRange?.end) {
+      count++;
+    }
+    if (filters.priceRange?.min || filters.priceRange?.max) {
+      count++;
+    }
+    if (filters.genres && filters.genres.length > 0) {
+      count++;
+    }
+    if (filters.location) {
+      count++;
+    }
     return count;
   };
 
   const activeFilterCount = getActiveFilterCount();
-  const showDropdown = isFocused && (suggestions.length > 0 || recentSearches.length > 0 || popularSearches.length > 0 || !query);
+  const showDropdown =
+    isFocused &&
+    (suggestions.length > 0 || recentSearches.length > 0 || popularSearches.length > 0 || !query);
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
@@ -261,9 +259,10 @@ export function FestivalSearch({
           bg-white/5 backdrop-blur-lg
           border rounded-2xl
           transition-all duration-300
-          ${isFocused
-            ? 'border-primary-500/50 ring-2 ring-primary-500/20'
-            : 'border-white/10 hover:border-white/20'
+          ${
+            isFocused
+              ? 'border-primary-500/50 ring-2 ring-primary-500/20'
+              : 'border-white/10 hover:border-white/20'
           }
         `}
       >
@@ -290,19 +289,13 @@ export function FestivalSearch({
           aria-expanded={showDropdown}
           aria-controls="search-suggestions"
           aria-autocomplete="list"
-          aria-activedescendant={
-            selectedIndex >= 0 ? `suggestion-${selectedIndex}` : undefined
-          }
+          aria-activedescendant={selectedIndex >= 0 ? `suggestion-${selectedIndex}` : undefined}
         />
 
         {/* Loading Spinner */}
         {isLoading && (
           <div className="pr-2">
-            <svg
-              className="animate-spin w-5 h-5 text-primary-400"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
+            <svg className="animate-spin w-5 h-5 text-primary-400" fill="none" viewBox="0 0 24 24">
               <circle
                 className="opacity-25"
                 cx="12"
@@ -338,9 +331,10 @@ export function FestivalSearch({
             className={`
               relative p-2 mr-2 rounded-xl
               transition-all duration-300
-              ${isFiltersOpen
-                ? 'bg-primary-500/20 text-primary-400'
-                : 'text-white/50 hover:text-white hover:bg-white/5'
+              ${
+                isFiltersOpen
+                  ? 'bg-primary-500/20 text-primary-400'
+                  : 'text-white/50 hover:text-white hover:bg-white/5'
               }
             `}
             aria-label="Toggle filters"
@@ -396,9 +390,10 @@ export function FestivalSearch({
                     className={`
                       flex items-center gap-3 px-4 py-3 cursor-pointer
                       transition-colors duration-150
-                      ${selectedIndex === index
-                        ? 'bg-primary-500/20 text-white'
-                        : 'text-white/80 hover:bg-white/5'
+                      ${
+                        selectedIndex === index
+                          ? 'bg-primary-500/20 text-white'
+                          : 'text-white/80 hover:bg-white/5'
                       }
                     `}
                     onClick={() => handleSuggestionClick(suggestion)}
@@ -413,13 +408,14 @@ export function FestivalSearch({
                       <div
                         className={`
                           w-10 h-10 rounded-lg flex items-center justify-center
-                          ${suggestion.type === 'festival'
-                            ? 'bg-primary-500/20 text-primary-400'
-                            : suggestion.type === 'artist'
-                            ? 'bg-pink-500/20 text-pink-400'
-                            : suggestion.type === 'venue'
-                            ? 'bg-blue-500/20 text-blue-400'
-                            : 'bg-secondary-400/20 text-secondary-400'
+                          ${
+                            suggestion.type === 'festival'
+                              ? 'bg-primary-500/20 text-primary-400'
+                              : suggestion.type === 'artist'
+                                ? 'bg-pink-500/20 text-pink-400'
+                                : suggestion.type === 'venue'
+                                  ? 'bg-blue-500/20 text-blue-400'
+                                  : 'bg-secondary-400/20 text-secondary-400'
                           }
                         `}
                       >
@@ -432,21 +428,20 @@ export function FestivalSearch({
                     <div className="flex-1 min-w-0">
                       <div className="font-medium truncate">{suggestion.name}</div>
                       {suggestion.subtitle && (
-                        <div className="text-sm text-white/50 truncate">
-                          {suggestion.subtitle}
-                        </div>
+                        <div className="text-sm text-white/50 truncate">{suggestion.subtitle}</div>
                       )}
                     </div>
                     <span
                       className={`
                         px-2 py-0.5 rounded text-xs font-medium
-                        ${suggestion.type === 'festival'
-                          ? 'bg-primary-500/10 text-primary-400'
-                          : suggestion.type === 'artist'
-                          ? 'bg-pink-500/10 text-pink-400'
-                          : suggestion.type === 'venue'
-                          ? 'bg-blue-500/10 text-blue-400'
-                          : 'bg-secondary-400/10 text-secondary-400'
+                        ${
+                          suggestion.type === 'festival'
+                            ? 'bg-primary-500/10 text-primary-400'
+                            : suggestion.type === 'artist'
+                              ? 'bg-pink-500/10 text-pink-400'
+                              : suggestion.type === 'venue'
+                                ? 'bg-blue-500/10 text-blue-400'
+                                : 'bg-secondary-400/10 text-secondary-400'
                         }
                       `}
                     >
@@ -474,9 +469,10 @@ export function FestivalSearch({
                       className={`
                         flex items-center gap-3 px-4 py-3 cursor-pointer
                         transition-colors duration-150
-                        ${selectedIndex === itemIndex
-                          ? 'bg-primary-500/20 text-white'
-                          : 'text-white/80 hover:bg-white/5'
+                        ${
+                          selectedIndex === itemIndex
+                            ? 'bg-primary-500/20 text-white'
+                            : 'text-white/80 hover:bg-white/5'
                         }
                       `}
                       onClick={() => {
@@ -522,9 +518,10 @@ export function FestivalSearch({
                       className={`
                         flex items-center gap-3 px-4 py-3 cursor-pointer
                         transition-colors duration-150
-                        ${selectedIndex === itemIndex
-                          ? 'bg-primary-500/20 text-white'
-                          : 'text-white/80 hover:bg-white/5'
+                        ${
+                          selectedIndex === itemIndex
+                            ? 'bg-primary-500/20 text-white'
+                            : 'text-white/80 hover:bg-white/5'
                         }
                       `}
                       onClick={() => {
@@ -555,10 +552,14 @@ export function FestivalSearch({
 
             {/* No Results */}
             {query && suggestions.length === 0 && !isLoading && (
-              <li className="px-4 py-8 text-center text-white/50">
-                <SearchIcon className="w-12 h-12 mx-auto mb-3 opacity-50" />
-                <p>No results found for "{query}"</p>
-                <p className="text-sm mt-1">Try different keywords or filters</p>
+              <li className="flex flex-col items-center py-12">
+                <div className="text-white/20 w-16 h-16 mb-4 flex items-center justify-center">
+                  <SearchIcon className="w-16 h-16" />
+                </div>
+                <h3 className="text-xl font-semibold text-white/70 mb-2">
+                  No results found for &quot;{query}&quot;
+                </h3>
+                <p className="text-white/50 text-center">Try different keywords or filters</p>
               </li>
             )}
           </ul>
@@ -579,9 +580,7 @@ export function FestivalSearch({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {/* Date Range */}
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">
-                Date Range
-              </label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Date Range</label>
               <div className="flex gap-2">
                 <input
                   type="date"
@@ -620,9 +619,7 @@ export function FestivalSearch({
 
             {/* Price Range */}
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">
-                Price Range
-              </label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Price Range</label>
               <div className="flex gap-2 items-center">
                 <input
                   type="number"
@@ -666,9 +663,7 @@ export function FestivalSearch({
 
             {/* Location */}
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">
-                Location
-              </label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Location</label>
               <input
                 type="text"
                 placeholder="City or region"
@@ -685,9 +680,7 @@ export function FestivalSearch({
 
             {/* Sort By */}
             <div>
-              <label className="block text-sm font-medium text-white/60 mb-2">
-                Sort By
-              </label>
+              <label className="block text-sm font-medium text-white/60 mb-2">Sort By</label>
               <select
                 className="
                   w-full px-3 py-2 rounded-lg
@@ -712,9 +705,7 @@ export function FestivalSearch({
           {/* Genres */}
           {availableGenres.length > 0 && (
             <div className="mt-6">
-              <label className="block text-sm font-medium text-white/60 mb-3">
-                Genres
-              </label>
+              <label className="block text-sm font-medium text-white/60 mb-3">Genres</label>
               <div className="flex flex-wrap gap-2">
                 {availableGenres.map((genre) => (
                   <button
@@ -729,9 +720,10 @@ export function FestivalSearch({
                     className={`
                       px-3 py-1.5 rounded-full text-sm font-medium
                       transition-all duration-200
-                      ${filters.genres?.includes(genre)
-                        ? 'bg-primary-500 text-white'
-                        : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
+                      ${
+                        filters.genres?.includes(genre)
+                          ? 'bg-primary-500 text-white'
+                          : 'bg-white/5 text-white/60 hover:bg-white/10 hover:text-white'
                       }
                     `}
                     aria-pressed={filters.genres?.includes(genre)}
@@ -808,9 +800,10 @@ export function SearchBarMinimal({
           flex items-center gap-2 px-4 py-2
           bg-white/5 rounded-full
           border transition-all duration-300
-          ${isFocused
-            ? 'border-primary-500/50 ring-2 ring-primary-500/20'
-            : 'border-white/10 hover:border-white/20'
+          ${
+            isFocused
+              ? 'border-primary-500/50 ring-2 ring-primary-500/20'
+              : 'border-white/10 hover:border-white/20'
           }
         `}
       >

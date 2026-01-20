@@ -100,11 +100,7 @@ export interface TableHeaderProps {
  * Table header section
  */
 export function TableHeader({ children, className = '' }: TableHeaderProps) {
-  return (
-    <thead className={`bg-white/5 ${className}`}>
-      {children}
-    </thead>
-  );
+  return <thead className={`bg-white/5 ${className}`}>{children}</thead>;
 }
 
 /**
@@ -119,11 +115,7 @@ export interface TableBodyProps {
  * Table body section
  */
 export function TableBody({ children, className = '' }: TableBodyProps) {
-  return (
-    <tbody className={`divide-y divide-white/5 ${className}`}>
-      {children}
-    </tbody>
-  );
+  return <tbody className={`divide-y divide-white/5 ${className}`}>{children}</tbody>;
 }
 
 /**
@@ -235,12 +227,7 @@ export interface TableCellProps {
 /**
  * Table data cell component
  */
-export function TableCell({
-  children,
-  className = '',
-  align = 'left',
-  colSpan,
-}: TableCellProps) {
+export function TableCell({ children, className = '', align = 'left', colSpan }: TableCellProps) {
   return (
     <td
       className={`
@@ -268,15 +255,17 @@ export interface TableFooterProps {
  * Table footer section
  */
 export function TableFooter({ children, className = '' }: TableFooterProps) {
-  return (
-    <tfoot className={`bg-white/5 border-t border-white/10 ${className}`}>
-      {children}
-    </tfoot>
-  );
+  return <tfoot className={`bg-white/5 border-t border-white/10 ${className}`}>{children}</tfoot>;
 }
 
 /**
  * Empty state component for tables
+ *
+ * Uses standardized empty state styling:
+ * - Icon: text-white/20 w-16 h-16
+ * - Title: text-xl font-semibold text-white/70
+ * - Description: text-white/50 text-center
+ * - Container: flex flex-col items-center py-12
  */
 export interface TableEmptyProps {
   message?: string;
@@ -295,17 +284,17 @@ export function TableEmpty({
 }: TableEmptyProps) {
   return (
     <tr>
-      <td colSpan={100} className={`px-6 py-12 text-center ${className}`}>
-        {icon && (
-          <div className="flex justify-center mb-4 text-white/30">
-            {icon}
-          </div>
-        )}
-        <p className="text-white/60 font-medium">{message}</p>
-        {description && (
-          <p className="text-white/40 text-sm mt-1">{description}</p>
-        )}
-        {action && <div className="mt-4">{action}</div>}
+      <td colSpan={100} className={className}>
+        <div className="flex flex-col items-center py-12">
+          {icon && (
+            <div className="text-white/20 w-16 h-16 mb-4 flex items-center justify-center">
+              {icon}
+            </div>
+          )}
+          <h3 className="text-xl font-semibold text-white/70 mb-2">{message}</h3>
+          {description && <p className="text-white/50 text-center max-w-md">{description}</p>}
+          {action && <div className="mt-6">{action}</div>}
+        </div>
       </td>
     </tr>
   );

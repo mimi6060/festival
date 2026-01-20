@@ -1,11 +1,17 @@
 export { Button } from './Button';
 export type { ButtonProps, ButtonVariant, ButtonSize } from './Button';
 
+export { Modal, ConfirmModal, ModalHeader, ModalBody, ModalFooter } from './Modal';
+
 export { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from './Card';
 export type { CardVariant } from './Card';
 
 export { Input, Textarea, Select } from './Input';
 export type { InputVariant } from './Input';
+
+// Empty State Component
+export { EmptyState, EmptyStateIcons } from './EmptyState';
+export type { EmptyStateProps } from './EmptyState';
 
 // Animation Components
 export {
@@ -22,11 +28,7 @@ export {
   Collapse,
   CountUp,
 } from './AnimatedComponents';
-export type {
-  AnimationType,
-  AnimationDuration,
-  AnimationEasing,
-} from './AnimatedComponents';
+export type { AnimationType, AnimationDuration, AnimationEasing } from './AnimatedComponents';
 
 // Accessible Components
 export {
