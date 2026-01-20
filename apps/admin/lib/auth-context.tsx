@@ -39,15 +39,48 @@ const DEV_USER: User = {
   updatedAt: new Date().toISOString(),
 };
 
+// Helper to get initial values from localStorage (runs synchronously on client)
+function getInitialRememberMe(): boolean {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+  return localStorage.getItem(REMEMBER_ME_KEY) === 'true';
+}
+
+function getInitialUser(): User | null {
+  if (typeof window === 'undefined') {
+    return null;
+  }
+  const savedRememberMe = localStorage.getItem(REMEMBER_ME_KEY) === 'true';
+  if (!savedRememberMe) {
+    return null;
+  }
+
+  const savedUser = localStorage.getItem(USER_KEY);
+  if (!savedUser) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(savedUser);
+  } catch {
+    localStorage.removeItem(USER_KEY);
+    return null;
+  }
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  // Initialize state directly from localStorage to avoid race conditions
+  const [user, setUser] = useState<User | null>(() => getInitialUser());
   const [isLoading, setIsLoading] = useState(true);
-  const [rememberMe, setRememberMeState] = useState(false);
+  const [rememberMe, setRememberMeState] = useState(() => getInitialRememberMe());
+  const [isInitialized, setIsInitialized] = useState(false);
   const router = useRouter();
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Load remember me preference on mount
+  // Mark as initialized after first render (localStorage is now available)
   useEffect(() => {
+    // Re-read from localStorage on mount to ensure SSR hydration matches
     if (typeof window !== 'undefined') {
       const savedRememberMe = localStorage.getItem(REMEMBER_ME_KEY) === 'true';
       setRememberMeState(savedRememberMe);
@@ -64,6 +97,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }
       }
+      setIsInitialized(true);
     }
   }, []);
 
@@ -211,9 +245,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [refreshToken, rememberMe, setupAutoRefresh]);
 
+  // Only run checkAuth after localStorage has been read
   useEffect(() => {
-    checkAuth();
-  }, [checkAuth]);
+    if (isInitialized) {
+      checkAuth();
+    }
+  }, [isInitialized, checkAuth]);
 
   const login = async (email: string, password: string, remember = false) => {
     setIsLoading(true);
