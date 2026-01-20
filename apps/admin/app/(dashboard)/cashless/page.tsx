@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import {
   BarChart,
   Bar,
@@ -14,8 +14,12 @@ import {
   Cell,
 } from 'recharts';
 import DataTable from '@/components/tables/DataTable';
+import ExportButton from '@/components/export/ExportButton';
+import MassRefundModal from '@/components/modals/MassRefundModal';
+import { cashlessAccountExportColumns, cashlessTransactionExportColumns } from '@/lib/export';
 import { formatCurrency, formatDateTime, cn } from '@/lib/utils';
-import type { TableColumn } from '@/types';
+import { cashlessApi } from '@/lib/api';
+import type { TableColumn, CashlessMassRefundResponse } from '@/types';
 
 interface CashlessAccount {
   id: string;
@@ -196,21 +200,109 @@ export default function CashlessPage() {
   const [activeTab, setActiveTab] = useState<'overview' | 'accounts' | 'transactions'>('overview');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [typeFilter, setTypeFilter] = useState<string>('all');
+  const [showMassRefundModal, setShowMassRefundModal] = useState(false);
+  const [accounts, setAccounts] = useState(mockAccounts);
+  const [transactions, setTransactions] = useState(mockTransactions);
+  const [_loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+
+  // Fetch data from API
+  const fetchData = useCallback(async () => {
+    try {
+      const [accountsResponse, transactionsResponse] = await Promise.allSettled([
+        cashlessApi.getAccounts({ festivalId: '1', limit: 100 }), // Using festival ID 1 for now
+        cashlessApi.getTransactions({ festivalId: '1', limit: 50 }),
+      ]);
+
+      if (accountsResponse.status === 'fulfilled') {
+        const apiAccounts: CashlessAccount[] = accountsResponse.value.data.map((acc) => ({
+          id: acc.id,
+          userId: acc.userId,
+          userName: acc.user ? `${acc.user.firstName} ${acc.user.lastName}` : 'Unknown',
+          userEmail: acc.user?.email || 'unknown@email.com',
+          balance: acc.balance,
+          totalTopUp: acc.totalTopUp,
+          totalSpent: acc.totalSpent,
+          nfcTagId: acc.nfcTagId,
+          festivalId: acc.festivalId,
+          festivalName: acc.festival?.name || 'Unknown Festival',
+          status: acc.status,
+          createdAt: acc.createdAt,
+          lastTransaction: acc.lastTransaction,
+        }));
+        setAccounts(apiAccounts);
+      }
+
+      if (transactionsResponse.status === 'fulfilled') {
+        const apiTransactions: CashlessTransaction[] = transactionsResponse.value.data.map(
+          (tx) => ({
+            id: tx.id,
+            accountId: tx.accountId,
+            userName: tx.account?.user
+              ? `${tx.account.user.firstName} ${tx.account.user.lastName}`
+              : 'Unknown',
+            type: tx.type,
+            amount: tx.type === 'payment' ? -Math.abs(tx.amount) : tx.amount,
+            vendorName: tx.vendor?.name,
+            vendorId: tx.vendorId,
+            description: tx.description || '',
+            timestamp: tx.timestamp,
+            status: tx.status,
+          })
+        );
+        setTransactions(apiTransactions);
+      }
+
+      setError(null);
+    } catch (err) {
+      console.error('Failed to fetch cashless data:', err);
+      setError('Failed to load cashless data. Using cached data.');
+    } finally {
+      setLoading(false);
+      setLastUpdate(new Date());
+    }
+  }, []);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchData();
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [fetchData]);
+
+  // Handle mass refund completion
+  const handleMassRefundComplete = useCallback((result: CashlessMassRefundResponse) => {
+    // Update account balances to 0 for refunded accounts
+    const refundedAccountIds = new Set(
+      result.results.filter((r) => r.success).map((r) => r.accountId)
+    );
+    setAccounts((prev) =>
+      prev.map((a) => (refundedAccountIds.has(a.id) ? { ...a, balance: 0 } : a))
+    );
+  }, []);
 
   const filteredAccounts =
-    statusFilter === 'all' ? mockAccounts : mockAccounts.filter((a) => a.status === statusFilter);
+    statusFilter === 'all' ? accounts : accounts.filter((a) => a.status === statusFilter);
 
   const filteredTransactions =
-    typeFilter === 'all' ? mockTransactions : mockTransactions.filter((t) => t.type === typeFilter);
+    typeFilter === 'all' ? transactions : transactions.filter((t) => t.type === typeFilter);
 
   // Calculate stats
   const stats = useMemo(() => {
-    const totalBalance = mockAccounts.reduce((sum, a) => sum + a.balance, 0);
-    const totalTopUp = mockAccounts.reduce((sum, a) => sum + a.totalTopUp, 0);
-    const totalSpent = mockAccounts.reduce((sum, a) => sum + a.totalSpent, 0);
-    const activeAccounts = mockAccounts.filter((a) => a.status === 'active').length;
-    const todayTransactions = mockTransactions.length;
-    const todayVolume = mockTransactions
+    const totalBalance = accounts.reduce((sum, a) => sum + a.balance, 0);
+    const totalTopUp = accounts.reduce((sum, a) => sum + a.totalTopUp, 0);
+    const totalSpent = accounts.reduce((sum, a) => sum + a.totalSpent, 0);
+    const activeAccounts = accounts.filter((a) => a.status === 'active').length;
+    const todayTransactions = transactions.length;
+    const todayVolume = transactions
       .filter((t) => t.type === 'payment')
       .reduce((sum, t) => sum + Math.abs(t.amount), 0);
 
@@ -222,7 +314,7 @@ export default function CashlessPage() {
       todayTransactions,
       todayVolume,
     };
-  }, []);
+  }, [accounts, transactions]);
 
   const statusColors: Record<string, string> = {
     active: 'badge-success',
@@ -403,22 +495,22 @@ export default function CashlessPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <ExportButton
+            data={
+              activeTab === 'transactions'
+                ? (filteredTransactions as unknown as Record<string, unknown>[])
+                : (filteredAccounts as unknown as Record<string, unknown>[])
+            }
+            columns={
+              activeTab === 'transactions'
+                ? cashlessTransactionExportColumns
+                : cashlessAccountExportColumns
+            }
+            filename={activeTab === 'transactions' ? 'transactions_cashless' : 'comptes_cashless'}
+            formats={['csv', 'excel']}
+          />
           <button
-            onClick={() => alert('Export functionality coming soon')}
-            className="btn-secondary flex items-center gap-2"
-          >
-            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-              />
-            </svg>
-            Exporter
-          </button>
-          <button
-            onClick={() => alert('Mass refund functionality coming soon')}
+            onClick={() => setShowMassRefundModal(true)}
             className="btn-primary flex items-center gap-2"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -470,13 +562,41 @@ export default function CashlessPage() {
         </div>
       </div>
 
+      {/* Error Banner */}
+      {error && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-center gap-3">
+          <svg
+            className="w-5 h-5 text-yellow-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+          <span className="text-yellow-800">{error}</span>
+        </div>
+      )}
+
+      {/* Loading indicator */}
+      {loading && (
+        <div className="flex items-center justify-center py-4">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary-500"></div>
+          <span className="ml-2 text-gray-600">Chargement des donnees...</span>
+        </div>
+      )}
+
       {/* Live indicator */}
       <div className="flex items-center gap-2 text-sm text-gray-600">
         <span className="relative flex h-3 w-3">
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
           <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
         </span>
-        Donnees en temps reel - Derniere mise a jour: {new Date().toLocaleTimeString('fr-FR')}
+        Donnees en temps reel - Derniere mise a jour: {lastUpdate.toLocaleTimeString('fr-FR')}
       </div>
 
       {/* Tabs */}
@@ -502,7 +622,7 @@ export default function CashlessPage() {
                 : 'border-transparent text-gray-500 hover:text-gray-700'
             )}
           >
-            Comptes ({mockAccounts.length})
+            Comptes ({accounts.length})
           </button>
           <button
             onClick={() => setActiveTab('transactions')}
@@ -602,7 +722,7 @@ export default function CashlessPage() {
           <div className="lg:col-span-2 chart-container">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Transactions recentes</h3>
             <div className="space-y-3">
-              {mockTransactions.slice(0, 5).map((tx) => (
+              {transactions.slice(0, 5).map((tx) => (
                 <div
                   key={tx.id}
                   className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
@@ -849,6 +969,16 @@ export default function CashlessPage() {
           />
         </>
       )}
+
+      {/* Mass Refund Modal */}
+      <MassRefundModal
+        isOpen={showMassRefundModal}
+        onClose={() => setShowMassRefundModal(false)}
+        festivalId="1"
+        festivalName="Summer Beats Festival"
+        accounts={accounts}
+        onRefundComplete={handleMassRefundComplete}
+      />
     </div>
   );
 }

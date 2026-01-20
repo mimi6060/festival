@@ -1,20 +1,35 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import DataTable from '@/components/tables/DataTable';
+import ExportButton from '@/components/export/ExportButton';
+import RefundModal from '@/components/modals/RefundModal';
 import { mockPayments, mockOrders } from '@/lib/mock-data';
+import { paymentExportColumns } from '@/lib/export';
 import { formatCurrency, formatDateTime, cn, getStatusColor, getStatusLabel } from '@/lib/utils';
-import type { Payment, TableColumn } from '@/types';
+import type { Payment, TableColumn, RefundResponse } from '@/types';
 
 export default function PaymentsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
-  const [dateRange, setDateRange] = useState<string>('30d');
+  const [_dateRange, _setDateRange] = useState<string>('30d');
   const [selectedPayment, setSelectedPayment] = useState<Payment | null>(null);
+  const [refundPayment, setRefundPayment] = useState<Payment | null>(null);
+  const [payments, setPayments] = useState(mockPayments);
 
-  const enrichedPayments = mockPayments.map((p) => ({
+  const enrichedPayments = payments.map((p) => ({
     ...p,
     order: mockOrders.find((o) => o.id === p.orderId),
   }));
+
+  // Handle refund completion - update payment status in UI
+  const handleRefundComplete = useCallback((refund: RefundResponse) => {
+    // Update the payment status in our local state
+    setPayments((prev) =>
+      prev.map((p) => (p.id === refund.paymentId ? { ...p, status: 'refunded' as const } : p))
+    );
+    // Close the detail modal if it was open
+    setSelectedPayment(null);
+  }, []);
 
   const filteredPayments =
     statusFilter === 'all'
@@ -120,20 +135,12 @@ export default function PaymentsPage() {
           <h1 className="text-2xl font-bold text-gray-900">Paiements</h1>
           <p className="text-gray-500 mt-1">Suivez et gerez toutes les transactions de paiement.</p>
         </div>
-        <button
-          onClick={() => alert('Export functionality coming soon')}
-          className="btn-secondary flex items-center gap-2 w-fit"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
-            />
-          </svg>
-          Exporter
-        </button>
+        <ExportButton
+          data={filteredPayments as unknown as Record<string, unknown>[]}
+          columns={paymentExportColumns}
+          filename="paiements"
+          formats={['csv', 'excel']}
+        />
       </div>
 
       {/* Stats Cards */}
@@ -309,9 +316,10 @@ export default function PaymentsPage() {
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  // Handle refund
+                  setRefundPayment(payment);
                 }}
                 className="p-2 hover:bg-orange-50 rounded-lg transition-colors"
+                title="Rembourser"
               >
                 <svg
                   className="w-4 h-4 text-orange-600"
@@ -407,8 +415,7 @@ export default function PaymentsPage() {
               {selectedPayment.status === 'succeeded' && (
                 <button
                   onClick={() => {
-                    alert('Refund functionality coming soon');
-                    setSelectedPayment(null);
+                    setRefundPayment(selectedPayment);
                   }}
                   className="btn-danger"
                 >
@@ -419,6 +426,14 @@ export default function PaymentsPage() {
           </div>
         </div>
       )}
+
+      {/* Refund Modal */}
+      <RefundModal
+        isOpen={!!refundPayment}
+        onClose={() => setRefundPayment(null)}
+        payment={refundPayment}
+        onRefundComplete={handleRefundComplete}
+      />
     </div>
   );
 }

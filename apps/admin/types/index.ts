@@ -453,3 +453,250 @@ export interface PromoCodeStats {
   isExhausted: boolean;
   remainingUses: number | null;
 }
+
+// Session Types
+export interface Session {
+  id: string;
+  userId: string;
+  ipAddress: string | null;
+  userAgent: string | null;
+  deviceInfo: {
+    browser?: string;
+    os?: string;
+    device?: string;
+  } | null;
+  isActive: boolean;
+  lastActiveAt: string;
+  expiresAt: string;
+  createdAt: string;
+  isCurrent?: boolean;
+}
+
+// API Key Types
+export interface ApiKey {
+  id: string;
+  userId: string;
+  name: string;
+  key: string;
+  keyPrefix: string;
+  tier: 'FREE' | 'STARTER' | 'PRO' | 'ENTERPRISE';
+  status: 'ACTIVE' | 'REVOKED' | 'EXPIRED';
+  scopes: string[];
+  description?: string;
+  ipWhitelist: string[];
+  lastUsedAt?: string;
+  lastUsedIp?: string;
+  usageCount: number;
+  expiresAt?: string;
+  festivalId?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateApiKeyResponse {
+  apiKey: ApiKey;
+  plaintextKey: string;
+}
+
+// Webhook Types
+export interface Webhook {
+  id: string;
+  festivalId: string;
+  name: string;
+  url: string;
+  secret?: string;
+  events: string[];
+  isActive: boolean;
+  description?: string;
+  headers?: Record<string, string>;
+  lastTriggeredAt?: string;
+  failureCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface WebhookDelivery {
+  id: string;
+  webhookId: string;
+  event: string;
+  status: 'PENDING' | 'SUCCESS' | 'FAILED';
+  attempts: number;
+  maxAttempts: number;
+  responseCode?: number;
+  errorMessage?: string;
+  duration?: number;
+  lastAttemptAt?: string;
+  nextRetryAt?: string;
+  completedAt?: string;
+  createdAt: string;
+}
+
+export interface CreateWebhookDto {
+  name: string;
+  url: string;
+  events: string[];
+  isActive?: boolean;
+  description?: string;
+  headers?: Record<string, string>;
+}
+
+export interface UpdateWebhookDto {
+  name?: string;
+  url?: string;
+  events?: string[];
+  isActive?: boolean;
+  description?: string;
+  headers?: Record<string, string>;
+}
+
+// Two-Factor Authentication Types
+export interface TwoFactorSetupResponse {
+  secret: string;
+  qrCodeUrl: string;
+  backupCodes?: string[];
+}
+
+export interface TwoFactorStatus {
+  enabled: boolean;
+  enabledAt?: string;
+}
+
+// Organization Settings Types
+export interface OrganizationSettings {
+  id: string;
+  name: string;
+  email: string;
+  logoUrl?: string;
+  timezone: string;
+  currency: string;
+  theme: 'light' | 'dark' | 'system';
+}
+
+// Refund Types
+export type RefundReason =
+  | 'duplicate'
+  | 'fraudulent'
+  | 'requested_by_customer'
+  | 'event_cancelled'
+  | 'event_postponed'
+  | 'partial_attendance'
+  | 'quality_issue'
+  | 'other';
+
+export type RefundStatus = 'pending' | 'succeeded' | 'failed' | 'canceled' | 'requires_action';
+
+export interface CreateRefundRequest {
+  paymentId: string;
+  amount?: number; // Amount in cents, full refund if not specified
+  reason: RefundReason;
+  explanation?: string;
+  refundApplicationFee?: boolean;
+  reverseTransfer?: boolean;
+  metadata?: Record<string, string>;
+  idempotencyKey?: string;
+}
+
+export interface PartialRefundRequest {
+  paymentId: string;
+  amount: number; // Amount in cents
+  reason: RefundReason;
+  explanation?: string;
+  lineItemIds?: string[];
+  metadata?: Record<string, string>;
+}
+
+export interface BulkRefundRequest {
+  paymentIds: string[];
+  reason: RefundReason;
+  explanation?: string;
+  percentageToRefund?: number; // 1-100, defaults to 100
+}
+
+export interface RefundResponse {
+  refundId: string;
+  stripeRefundId: string;
+  paymentId: string;
+  amount: number;
+  currency: string;
+  status: RefundStatus;
+  reason: string;
+  failureReason?: string;
+  createdAt: string;
+}
+
+export interface BulkRefundResponse {
+  totalRequested: number;
+  successCount: number;
+  failedCount: number;
+  totalAmountRefunded: number;
+  results: RefundResultItem[];
+}
+
+export interface RefundResultItem {
+  paymentId: string;
+  success: boolean;
+  refundId?: string;
+  amount?: number;
+  error?: string;
+}
+
+export interface RefundPolicy {
+  refundsAllowed: boolean;
+  daysBeforeEventLimit: number;
+  fullRefundPercentage: number;
+  partialRefundPercentage: number;
+  minimumRefundAmount: number;
+  processingFeeRetained: number;
+  processingTimeDays: number;
+}
+
+export interface RefundEligibility {
+  eligible: boolean;
+  maxRefundAmount: number;
+  refundPercentage: number;
+  ineligibilityReason?: string;
+  originalAmount: number;
+  refundedAmount: number;
+  daysUntilEvent?: number;
+  policy: RefundPolicy;
+}
+
+// Cashless Refund Types
+export interface CashlessAccount {
+  id: string;
+  userId: string;
+  userName: string;
+  userEmail: string;
+  balance: number;
+  totalTopUp: number;
+  totalSpent: number;
+  nfcTagId?: string;
+  festivalId: string;
+  festivalName: string;
+  status: 'active' | 'suspended' | 'closed';
+  createdAt: string;
+  lastTransaction?: string;
+}
+
+export interface CashlessMassRefundRequest {
+  festivalId: string;
+  accountIds?: string[]; // If not provided, refund all accounts with balance > 0
+  reason: string;
+}
+
+export interface CashlessMassRefundResponse {
+  totalAccounts: number;
+  successCount: number;
+  failedCount: number;
+  totalAmountRefunded: number;
+  results: CashlessRefundResultItem[];
+}
+
+export interface CashlessRefundResultItem {
+  accountId: string;
+  userId: string;
+  userName: string;
+  balance: number;
+  success: boolean;
+  error?: string;
+}

@@ -2,6 +2,257 @@
 
 ---
 
+## Session 2026-01-21 - Settings/Security Features Implementation
+
+### Completed
+
+- [x] **Logo Upload Component**
+  - Added file upload with image preview
+  - Size and type validation (JPEG, PNG, GIF, max 5MB)
+  - Uses uploadApi.uploadLogo() for backend integration
+  - Displays current logo with delete option
+
+- [x] **Two-Factor Authentication (2FA) Configuration**
+  - Setup flow: generates QR code via twoFactorApi.setup()
+  - Enable/disable functionality with verification code
+  - Displays backup codes on successful enable
+  - Shows current 2FA status
+
+- [x] **Active Sessions Management**
+  - Lists all active sessions via sessionsApi.getAll()
+  - Shows device info, IP address, last active time
+  - Highlights current session
+  - Revoke individual sessions or all except current
+
+- [x] **API Keys Regeneration**
+  - Create new API keys via apiKeysApi.create()
+  - Shows key only once after creation (security)
+  - Copy to clipboard functionality
+  - Revoke existing keys
+
+- [x] **Webhook Management**
+  - Create/update webhooks via webhooksApi
+  - Select from available event types
+  - Test webhook functionality
+  - Enable/disable webhooks
+
+### Modified Files
+
+- `apps/admin/types/index.ts` - Added Session, ApiKey, Webhook, TwoFactorSetupResponse, TwoFactorStatus, OrganizationSettings, CreateApiKeyResponse types
+- `apps/admin/lib/api.ts` - Added sessionsApi, apiKeysApi, webhooksApi, twoFactorApi, passwordApi, uploadApi methods
+- `apps/admin/app/(dashboard)/settings/page.tsx` - Complete rewrite with functional Settings/Security features
+
+### Additional Fixes
+
+- Fixed ESLint errors in promo-codes page (renamed \_handleFilterActiveChange back to handleFilterActiveChange)
+- Fixed empty arrow function warnings in MassRefundModal and RefundModal (added noop function)
+- Fixed unused imports in cashless page
+- Added loading indicator to cashless page
+
+---
+
+## Session 2026-01-21 - Stripe Refund Functionality for Admin Dashboard
+
+### Completed
+
+- [x] **Stripe Refund Implementation** - Full refund functionality for payments page
+  - Updated paymentsApi with proper refund methods (createRefund, createPartialRefund, createBulkRefund, checkRefundEligibility, getRefundHistory)
+  - Added comprehensive refund-related types (RefundReason, RefundStatus, CreateRefundRequest, PartialRefundRequest, BulkRefundRequest, RefundResponse, RefundEligibility, RefundPolicy)
+  - Added cashless refund types (CashlessAccount, CashlessMassRefundRequest, CashlessMassRefundResponse)
+  - Created RefundModal component for payments page with:
+    - Eligibility checking before refund
+    - Full or partial refund options
+    - Reason selection dropdown
+    - Optional explanation field
+    - Policy information display
+    - Loading states and error handling
+    - Success feedback with auto-close
+  - Updated payments page with RefundModal integration
+  - Created MassRefundModal component for cashless page with:
+    - Warning banner for irreversible action
+    - Summary stats (accounts with balance, total to refund)
+    - All accounts or custom selection options
+    - Account selection with search
+    - Confirmation required (type "REMBOURSER")
+    - Results display with success/failure counts
+  - Updated cashless page with MassRefundModal integration
+  - Added cashlessAdminApi for mass refund operations
+
+### Modified Files
+
+- `apps/admin/lib/api.ts` - Added paymentsApi refund methods and cashlessAdminApi
+- `apps/admin/types/index.ts` - Added refund-related types
+- `apps/admin/components/modals/RefundModal.tsx` - New refund modal component
+- `apps/admin/components/modals/MassRefundModal.tsx` - New mass refund modal component
+- `apps/admin/app/(dashboard)/payments/page.tsx` - Integrated RefundModal
+- `apps/admin/app/(dashboard)/cashless/page.tsx` - Integrated MassRefundModal
+- `apps/admin/app/(dashboard)/notifications/page.tsx` - Fixed lint warnings
+
+---
+
+## Session 2026-01-21 - API Backend Placeholder Implementations Fix
+
+### Completed
+
+- [x] **Export File Download Implementation**
+  - Updated `apps/api/src/modules/analytics/controllers/admin-export.controller.ts`
+  - Replaced placeholder text with actual file streaming implementation
+  - Added path validation to prevent directory traversal attacks
+  - Streams file from temp storage with proper headers (Content-Type, Content-Disposition, Content-Length)
+  - Added error handling for missing files and streaming failures
+
+- [x] **Bulk Delete Implementation**
+  - Updated `apps/api/src/common/bulk/bulk-operation.controller.ts`
+  - Added entity type parameter with validation for supported types
+  - Implemented Prisma-based deletion with soft/hard delete support
+  - Supports entities: ticket, user, vendor, payment, artist, vendorOrder, ticketCategory, festival
+  - Updated `apps/api/src/common/bulk/bulk-operation.module.ts` to import PrismaModule
+
+- [x] **Stripe Connect Integration**
+  - Added `stripeAccountId` field (unique, String?) to Vendor model in Prisma schema
+  - Added `stripeOnboardingComplete` field (Boolean, default false) to Vendor model
+  - Added index on `stripeAccountId` for efficient lookups
+  - Updated `apps/api/src/modules/payments/services/stripe-connect.service.ts`:
+    - Updated account creation to store stripeAccountId in Vendor
+    - Added `getAccountForVendor()` method to get Stripe account by vendor ID
+    - Added `updateVendorOnboardingStatus()` method to sync onboarding status
+
+- [x] **Currency Configuration**
+  - Updated `apps/api/src/modules/tickets/tickets.service.ts`
+  - Changed hardcoded 'EUR' currency to use `festival.currency` from festival settings
+  - Falls back to 'EUR' if festival currency not set
+
+### Modified Files
+
+- `apps/api/src/modules/analytics/controllers/admin-export.controller.ts` - File download implementation
+- `apps/api/src/common/bulk/bulk-operation.controller.ts` - Prisma-based bulk delete
+- `apps/api/src/common/bulk/bulk-operation.module.ts` - Added PrismaModule import
+- `apps/api/src/modules/payments/services/stripe-connect.service.ts` - Stripe Connect integration
+- `apps/api/src/modules/tickets/tickets.service.ts` - Dynamic currency from festival
+- `prisma/schema.prisma` - Added Vendor stripeAccountId and stripeOnboardingComplete fields
+
+### Database Migration Required
+
+Run `npx prisma migrate dev --name add-vendor-stripe-fields` to create migration for:
+
+- `stripeAccountId` field on Vendor model
+- `stripeOnboardingComplete` field on Vendor model
+
+---
+
+## Session 2026-01-21 - Admin CRUD Operations Implementation
+
+### Completed
+
+- [x] **Festival Creation API Connection**
+  - Updated `apps/admin/app/(dashboard)/festivals/new/page.tsx`
+  - Connected form to `festivalsApi.create()` from `@/lib/api`
+  - Added error state management and display
+  - Redirects to festival detail page on success
+  - Proper loading spinner during submission
+
+- [x] **Profile Update API Connection**
+  - Updated `apps/admin/app/(dashboard)/profile/page.tsx`
+  - Added `usersApi.updateProfile()` method to `apps/admin/lib/api.ts`
+  - Added `updateUser()` function to auth context (`apps/admin/lib/auth-context.tsx`)
+  - Connected form to PATCH `/users/:id` endpoint
+  - Updates auth context with new user data
+  - Added loading spinner and error feedback
+
+- [x] **Zone Delete Functionality**
+  - Updated `apps/admin/app/(dashboard)/zones/page.tsx`
+  - Connected delete button to `zonesApi.delete()` API call
+  - Added confirmation modal with loading state
+  - Removes zone from local state on successful deletion
+  - Shows error message in modal if deletion fails
+
+- [x] **Promo Codes Pagination**
+  - Updated `apps/admin/app/(dashboard)/promo-codes/page.tsx`
+  - Added `currentPage` state and `ITEMS_PER_PAGE` constant
+  - Connected to API with `page` and `limit` query params
+  - Added pagination navigation controls with prev/next buttons
+  - Smart page number display with ellipsis for many pages
+  - Resets to page 1 when filters change
+  - Shows total results count
+
+### Modified Files
+
+- `apps/admin/app/(dashboard)/festivals/new/page.tsx` - Festival creation API connection
+- `apps/admin/app/(dashboard)/profile/page.tsx` - Profile update API connection
+- `apps/admin/app/(dashboard)/zones/page.tsx` - Zone delete functionality
+- `apps/admin/app/(dashboard)/promo-codes/page.tsx` - Pagination implementation
+- `apps/admin/lib/api.ts` - Added usersApi.updateProfile method
+- `apps/admin/lib/auth-context.tsx` - Added updateUser function
+
+---
+
+## Session 2026-01-21 - CSV/Excel Export Functionality for Admin Dashboard
+
+### Completed
+
+- [x] **CSV/Excel Export Implementation** - Full export functionality for 6 admin pages
+  - Enhanced `apps/admin/lib/export.ts` with new column definitions:
+    - `paymentExportColumns` - Payment data export columns
+    - `cashlessAccountExportColumns` - Cashless account export columns
+    - `cashlessTransactionExportColumns` - Cashless transaction export columns
+  - Updated Festivals page (`apps/admin/app/(dashboard)/festivals/page.tsx`)
+    - Replaced "coming soon" alert with ExportButton component
+    - Uses festivalExportColumns for CSV/Excel export
+  - Updated Staff page (`apps/admin/app/(dashboard)/staff/page.tsx`)
+    - Replaced "coming soon" alert with ExportButton component
+    - Uses staffExportColumns for CSV/Excel export
+  - Updated Users page (`apps/admin/app/(dashboard)/users/page.tsx`)
+    - Replaced "coming soon" alert with ExportButton component
+    - Uses userExportColumns for CSV/Excel export
+  - Updated Payments page (`apps/admin/app/(dashboard)/payments/page.tsx`)
+    - Replaced "coming soon" alert with ExportButton component
+    - Uses paymentExportColumns for CSV/Excel export
+  - Updated Cashless page (`apps/admin/app/(dashboard)/cashless/page.tsx`)
+    - Replaced "coming soon" alert with ExportButton component
+    - Dynamic columns based on active tab (accounts vs transactions)
+    - Uses cashlessAccountExportColumns or cashlessTransactionExportColumns
+  - Updated Festival Detail page (`apps/admin/app/(dashboard)/festivals/[id]/page.tsx`)
+    - Added export functionality with CSV/Excel format buttons
+    - Enhanced festival export with category counts
+    - Includes loading state indicator
+  - All exports support both CSV and Excel formats
+  - Proper date/currency formatting for French locale
+  - ESLint verification passed
+
+### Modified Files
+
+- `apps/admin/lib/export.ts` - Added payment and cashless export columns
+- `apps/admin/lib/api.ts` - Renamed duplicate cashlessApi to cashlessAdminApi
+- `apps/admin/app/(dashboard)/festivals/page.tsx` - ExportButton integration
+- `apps/admin/app/(dashboard)/staff/page.tsx` - ExportButton integration
+- `apps/admin/app/(dashboard)/users/page.tsx` - ExportButton integration
+- `apps/admin/app/(dashboard)/payments/page.tsx` - ExportButton integration
+- `apps/admin/app/(dashboard)/cashless/page.tsx` - ExportButton integration
+- `apps/admin/app/(dashboard)/festivals/[id]/page.tsx` - Export functionality
+- `apps/admin/app/(dashboard)/promo-codes/page.tsx` - Fixed unused variable lint error
+- `apps/admin/components/modals/MassRefundModal.tsx` - Updated cashlessApi import
+
+### Build Verification
+
+- ESLint: All files pass linting
+- Build: Successfully builds for production
+
+---
+
+## Session 2026-01-21 - Stripe Refund Functionality for Admin Dashboard
+
+### Pending
+
+- [ ] **Stripe Refund Implementation** - Full refund functionality for payments page
+  - Update paymentsApi with proper refund methods
+  - Add refund-related types to admin types
+  - Create RefundModal component for payments page
+  - Update payments page with refund modal integration
+  - Create MassRefundModal component for cashless page
+  - Update cashless page with mass refund modal integration
+
+---
+
 ## Session 2026-01-20 - User Save/Update API Implementation
 
 ### Completed

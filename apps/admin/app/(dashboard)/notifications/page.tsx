@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { cn, formatDateTime } from '@/lib/utils';
+import { notificationsApi } from '@/lib/api';
 
 // Types
 interface AdminNotification {
@@ -188,6 +189,46 @@ export default function NotificationsPage() {
   const [categoryFilter, setCategoryFilter] = useState<keyof typeof categoryConfig | 'all'>('all');
   const [selectedNotifications, setSelectedNotifications] = useState<Set<string>>(new Set());
   const [preferencesSaved, setPreferencesSaved] = useState(false);
+  const [_loading, setLoading] = useState(true);
+  const [_error, setError] = useState<string | null>(null);
+
+  // Fetch notifications from API
+  const fetchNotifications = useCallback(async () => {
+    try {
+      const params: { read?: boolean; category?: string } = {};
+      if (filter === 'unread') {
+        params.read = false;
+      }
+      if (categoryFilter !== 'all') {
+        params.category = categoryFilter;
+      }
+
+      const response = await notificationsApi.getAll(params);
+      setNotifications(response.data);
+      setError(null);
+    } catch (err) {
+      console.error('Failed to fetch notifications:', err);
+      setError('Failed to load notifications. Using cached data.');
+    } finally {
+      setLoading(false);
+    }
+  }, [filter, categoryFilter]);
+
+  // Fetch preferences from API
+  const fetchPreferences = useCallback(async () => {
+    try {
+      const prefs = await notificationsApi.getPreferences();
+      setPreferences(prefs);
+    } catch (err) {
+      console.error('Failed to fetch preferences:', err);
+    }
+  }, []);
+
+  // Initial fetch
+  useEffect(() => {
+    fetchNotifications();
+    fetchPreferences();
+  }, [fetchNotifications, fetchPreferences]);
 
   // Stats
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -217,18 +258,33 @@ export default function NotificationsPage() {
   }, [notifications, filter, categoryFilter]);
 
   // Actions
-  const markAsRead = (ids: string[]) => {
-    setNotifications((prev) => prev.map((n) => (ids.includes(n.id) ? { ...n, read: true } : n)));
-    setSelectedNotifications(new Set());
+  const markAsRead = async (ids: string[]) => {
+    try {
+      await notificationsApi.markAsRead(ids);
+      setNotifications((prev) => prev.map((n) => (ids.includes(n.id) ? { ...n, read: true } : n)));
+      setSelectedNotifications(new Set());
+    } catch (err) {
+      console.error('Failed to mark as read:', err);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  const markAllAsRead = async () => {
+    try {
+      await notificationsApi.markAllAsRead();
+      setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    } catch (err) {
+      console.error('Failed to mark all as read:', err);
+    }
   };
 
-  const deleteNotifications = (ids: string[]) => {
-    setNotifications((prev) => prev.filter((n) => !ids.includes(n.id)));
-    setSelectedNotifications(new Set());
+  const deleteNotifications = async (ids: string[]) => {
+    try {
+      await notificationsApi.delete(ids);
+      setNotifications((prev) => prev.filter((n) => !ids.includes(n.id)));
+      setSelectedNotifications(new Set());
+    } catch (err) {
+      console.error('Failed to delete notifications:', err);
+    }
   };
 
   const toggleSelect = (id: string) => {
@@ -255,10 +311,14 @@ export default function NotificationsPage() {
     setPreferences((prev) => ({ ...prev, [key]: value }));
   };
 
-  const savePreferences = () => {
-    // In production, this would call an API to persist the preferences
-    setPreferencesSaved(true);
-    setTimeout(() => setPreferencesSaved(false), 3000);
+  const savePreferences = async () => {
+    try {
+      await notificationsApi.updatePreferences(preferences);
+      setPreferencesSaved(true);
+      setTimeout(() => setPreferencesSaved(false), 3000);
+    } catch (err) {
+      console.error('Failed to save preferences:', err);
+    }
   };
 
   const updateCategoryPreference = (
@@ -287,6 +347,26 @@ export default function NotificationsPage() {
           )}
         </div>
       </div>
+
+      {/* Error Banner */}
+      {error && (
+        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 flex items-center gap-3">
+          <svg
+            className="w-5 h-5 text-yellow-600"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+            />
+          </svg>
+          <span className="text-yellow-800">{error}</span>
+        </div>
+      )}
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">

@@ -5,16 +5,19 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '@/lib/api';
 import type { PromoCode, CreatePromoCodeDto, PromoCodeStats } from '@/types';
 
+const ITEMS_PER_PAGE = 10;
+
 export default function PromoCodesPage() {
   const [isCreating, setIsCreating] = useState(false);
   const [editingCode, setEditingCode] = useState<PromoCode | null>(null);
   const [selectedFestival, setSelectedFestival] = useState<string>('');
   const [filterActive, setFilterActive] = useState<boolean | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
   const queryClient = useQueryClient();
 
-  // Fetch promo codes
+  // Fetch promo codes with pagination
   const { data: promoCodes, isLoading } = useQuery({
-    queryKey: ['promo-codes', selectedFestival, filterActive],
+    queryKey: ['promo-codes', selectedFestival, filterActive, currentPage],
     queryFn: async () => {
       const params = new URLSearchParams();
       if (selectedFestival) {
@@ -23,14 +26,27 @@ export default function PromoCodesPage() {
       if (filterActive !== null) {
         params.append('isActive', String(filterActive));
       }
+      params.append('page', String(currentPage));
+      params.append('limit', String(ITEMS_PER_PAGE));
 
       const response = await api.get<{
         data: PromoCode[];
-        meta?: { page: number; totalPages: number };
+        meta?: { page: number; totalPages: number; total: number };
       }>(`/promo-codes?${params.toString()}`);
       return response.data;
     },
   });
+
+  // Reset to page 1 when filters change
+  const handleFestivalChange = (value: string) => {
+    setSelectedFestival(value);
+    setCurrentPage(1);
+  };
+
+  const handleFilterActiveChange = (value: boolean | null) => {
+    setFilterActive(value);
+    setCurrentPage(1);
+  };
 
   // Fetch festivals for dropdown
   const { data: festivals } = useQuery({
@@ -167,7 +183,7 @@ export default function PromoCodesPage() {
             </label>
             <select
               value={selectedFestival}
-              onChange={(e) => setSelectedFestival(e.target.value)}
+              onChange={(e) => handleFestivalChange(e.target.value)}
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
               <option value="">Tous les festivals</option>
@@ -187,7 +203,7 @@ export default function PromoCodesPage() {
             <select
               value={filterActive === null ? '' : String(filterActive)}
               onChange={(e) =>
-                setFilterActive(e.target.value === '' ? null : e.target.value === 'true')
+                handleFilterActiveChange(e.target.value === '' ? null : e.target.value === 'true')
               }
               className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
             >
@@ -572,22 +588,91 @@ export default function PromoCodesPage() {
 
       {/* Pagination */}
       {promoCodes?.meta && promoCodes.meta.totalPages > 1 && (
-        <div className="mt-4 flex items-center justify-center space-x-2">
-          {Array.from({ length: promoCodes.meta.totalPages }, (_, i) => i + 1).map((page) => (
+        <div className="mt-4 flex items-center justify-between px-4">
+          <div className="text-sm text-gray-600 dark:text-gray-400">
+            Page {currentPage} sur {promoCodes.meta.totalPages}
+            {promoCodes.meta.total !== undefined && (
+              <span className="ml-2">({promoCodes.meta.total} resultats)</span>
+            )}
+          </div>
+          <div className="flex items-center space-x-2">
+            {/* Previous button */}
             <button
-              key={page}
-              onClick={() =>
-                alert(`Navigate to page ${page} (pagination functionality coming soon)`)
-              }
-              className={`px-3 py-1 rounded ${
-                page === promoCodes.meta?.page
-                  ? 'bg-indigo-600 text-white'
-                  : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
-              }`}
+              onClick={() => setCurrentPage(currentPage - 1)}
+              disabled={currentPage === 1}
+              className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {page}
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
             </button>
-          ))}
+
+            {/* Page numbers */}
+            {(() => {
+              const totalPages = promoCodes.meta?.totalPages || 1;
+              const pages: (number | string)[] = [];
+
+              if (totalPages <= 7) {
+                // Show all pages if 7 or fewer
+                for (let i = 1; i <= totalPages; i++) {
+                  pages.push(i);
+                }
+              } else {
+                // Always show first page
+                pages.push(1);
+
+                if (currentPage > 3) {
+                  pages.push('...');
+                }
+
+                // Show pages around current
+                const start = Math.max(2, currentPage - 1);
+                const end = Math.min(totalPages - 1, currentPage + 1);
+
+                for (let i = start; i <= end; i++) {
+                  pages.push(i);
+                }
+
+                if (currentPage < totalPages - 2) {
+                  pages.push('...');
+                }
+
+                // Always show last page
+                pages.push(totalPages);
+              }
+
+              return pages.map((page, index) =>
+                typeof page === 'string' ? (
+                  <span key={`ellipsis-${index}`} className="px-2 text-gray-500">
+                    {page}
+                  </span>
+                ) : (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-1 rounded ${
+                      page === currentPage
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600'
+                    }`}
+                  >
+                    {page}
+                  </button>
+                )
+              );
+            })()}
+
+            {/* Next button */}
+            <button
+              onClick={() => setCurrentPage(currentPage + 1)}
+              disabled={currentPage === promoCodes.meta?.totalPages}
+              className="px-3 py-1 rounded bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+              </svg>
+            </button>
+          </div>
         </div>
       )}
     </div>
