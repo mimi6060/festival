@@ -20,6 +20,7 @@ export default function LoginPage() {
   const { login, isLoading } = useAuth();
   const [showPassword, setShowPassword] = useState(false);
   const [serverError, setServerError] = useState('');
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
   const {
     register,
@@ -41,6 +42,26 @@ export default function LoginPage() {
     } catch (err) {
       setServerError(err instanceof Error ? err.message : 'Une erreur est survenue');
     }
+  };
+
+  const handleForgotPassword = () => {
+    const emailInput = document.querySelector('input[type="email"]') as HTMLInputElement;
+    const email = emailInput?.value || '';
+
+    if (!email) {
+      setServerError('Veuillez entrer votre email pour réinitialiser votre mot de passe');
+      return;
+    }
+
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      setServerError('Veuillez entrer une adresse email valide');
+      return;
+    }
+
+    // Simulate sending reset email
+    setResetEmailSent(true);
+    setServerError('');
+    setTimeout(() => setResetEmailSent(false), 5000);
   };
 
   return (
@@ -104,6 +125,29 @@ export default function LoginPage() {
                   />
                 </svg>
                 <p className="text-sm text-red-700">{serverError}</p>
+              </div>
+            </div>
+          )}
+
+          {resetEmailSent && (
+            <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
+              <div className="flex items-center gap-2">
+                <svg
+                  className="w-5 h-5 text-green-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <p className="text-sm text-green-700">
+                  Un email de réinitialisation a été envoyé. Vérifiez votre boîte de réception.
+                </p>
               </div>
             </div>
           )}
@@ -232,9 +276,13 @@ export default function LoginPage() {
                 />
                 <span className="ml-2 text-sm text-gray-600">Se souvenir de moi</span>
               </label>
-              <a href="#" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
-                Mot de passe oublie ?
-              </a>
+              <button
+                type="button"
+                onClick={handleForgotPassword}
+                className="text-sm text-primary-600 hover:text-primary-700 font-medium"
+              >
+                Mot de passe oublié ?
+              </button>
             </div>
 
             <button

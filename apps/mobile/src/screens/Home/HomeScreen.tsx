@@ -147,7 +147,7 @@ export const HomeScreen: React.FC = () => {
               <Text style={styles.emptySubtitle}>Achetez vos billets pour acceder au festival</Text>
               <Button
                 title="Acheter des billets"
-                onPress={() => console.warn('Navigate to tickets purchase')}
+                onPress={() => navigation.navigate('Tickets')}
                 variant="outline"
                 size="sm"
                 style={styles.emptyButton}

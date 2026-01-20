@@ -27,6 +27,7 @@ export const LoginScreen: React.FC = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
 
@@ -84,6 +85,27 @@ export const LoginScreen: React.FC = () => {
     navigation.replace('Main');
   };
 
+  const handleForgotPassword = () => {
+    if (!email) {
+      Alert.alert(
+        'Email requis',
+        'Veuillez entrer votre adresse email pour recevoir le lien de réinitialisation.',
+        [{ text: 'OK' }]
+      );
+      return;
+    }
+    if (!/\S+@\S+\.\S+/.test(email)) {
+      Alert.alert('Email invalide', 'Veuillez entrer une adresse email valide.', [{ text: 'OK' }]);
+      return;
+    }
+    // Simulate sending reset email
+    Alert.alert(
+      'Email envoyé',
+      `Un lien de réinitialisation a été envoyé à ${email}. Vérifiez votre boîte de réception.`,
+      [{ text: 'OK' }]
+    );
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <KeyboardAvoidingView
@@ -127,9 +149,21 @@ export const LoginScreen: React.FC = () => {
               onRightIconPress={() => setShowPassword(!showPassword)}
             />
 
-            <TouchableOpacity style={styles.forgotPassword}>
-              <Text style={styles.forgotPasswordText}>Mot de passe oublie?</Text>
-            </TouchableOpacity>
+            <View style={styles.optionsRow}>
+              <TouchableOpacity
+                style={styles.rememberMe}
+                onPress={() => setRememberMe(!rememberMe)}
+              >
+                <View style={[styles.checkbox, rememberMe && styles.checkboxChecked]}>
+                  {rememberMe && <Text style={styles.checkmark}>✓</Text>}
+                </View>
+                <Text style={styles.rememberMeText}>Se souvenir de moi</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity style={styles.forgotPassword} onPress={handleForgotPassword}>
+                <Text style={styles.forgotPasswordText}>Mot de passe oublié?</Text>
+              </TouchableOpacity>
+            </View>
 
             <Button
               title="Se connecter"
@@ -198,10 +232,40 @@ const styles = StyleSheet.create({
   form: {
     marginBottom: spacing.xl,
   },
-  forgotPassword: {
-    alignSelf: 'flex-end',
+  optionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: spacing.lg,
   },
+  rememberMe: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  checkbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 4,
+    borderWidth: 2,
+    borderColor: colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: spacing.xs,
+  },
+  checkboxChecked: {
+    backgroundColor: colors.primary,
+    borderColor: colors.primary,
+  },
+  checkmark: {
+    color: colors.white,
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  rememberMeText: {
+    ...typography.small,
+    color: colors.textSecondary,
+  },
+  forgotPassword: {},
   forgotPasswordText: {
     ...typography.small,
     color: colors.primary,

@@ -1,14 +1,10 @@
-import { Metadata } from 'next';
+'use client';
+
 import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 
-export const dynamic = 'force-dynamic';
-
-export const metadata: Metadata = {
-  title: 'Order History',
-  description: 'View your order history and invoices.',
-};
+// Note: For client components, metadata should be in a separate layout.tsx
 
 // Mock order data
 const orders = [
@@ -20,12 +16,10 @@ const orders = [
       slug: 'electric-dreams-2025',
       date: 'July 15-18, 2025',
     },
-    items: [
-      { type: 'VIP Pass', quantity: 2, price: 399 },
-    ],
+    items: [{ type: 'VIP Pass', quantity: 2, price: 399 }],
     subtotal: 798,
-    serviceFee: 79.80,
-    total: 877.80,
+    serviceFee: 79.8,
+    total: 877.8,
     currency: 'EUR',
     status: 'confirmed',
     paymentMethod: 'Visa ending in 4242',
@@ -38,12 +32,10 @@ const orders = [
       slug: 'summer-vibes-2024',
       date: 'August 25-27, 2024',
     },
-    items: [
-      { type: 'General Admission', quantity: 3, price: 149 },
-    ],
+    items: [{ type: 'General Admission', quantity: 3, price: 149 }],
     subtotal: 447,
-    serviceFee: 44.70,
-    total: 491.70,
+    serviceFee: 44.7,
+    total: 491.7,
     currency: 'EUR',
     status: 'completed',
     paymentMethod: 'Mastercard ending in 5555',
@@ -56,6 +48,47 @@ const statusColors: Record<string, string> = {
   completed: 'bg-blue-500/20 text-blue-400',
   cancelled: 'bg-red-500/20 text-red-400',
   refunded: 'bg-gray-500/20 text-gray-400',
+};
+
+type Order = (typeof orders)[0];
+
+const downloadInvoice = (order: Order) => {
+  // Generate invoice content
+  const invoiceContent = `
+FESTIVAL HARMONY - INVOICE
+==========================
+
+Invoice Number: ${order.id}
+Date: ${new Date(order.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+
+Festival: ${order.festival.name}
+Event Date: ${order.festival.date}
+
+Items:
+${order.items.map((item) => `- ${item.type} x${item.quantity}: ${order.currency} ${(item.price * item.quantity).toFixed(2)}`).join('\n')}
+
+Subtotal: ${order.currency} ${order.subtotal.toFixed(2)}
+Service Fee: ${order.currency} ${order.serviceFee.toFixed(2)}
+----------------------------
+Total: ${order.currency} ${order.total.toFixed(2)}
+
+Payment Method: ${order.paymentMethod}
+Status: ${order.status.toUpperCase()}
+
+Thank you for your purchase!
+www.festivalharmony.com
+`;
+
+  // Create and download the file
+  const blob = new Blob([invoiceContent], { type: 'text/plain' });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = `invoice-${order.id}.txt`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
 };
 
 export default function OrdersPage() {
@@ -88,19 +121,36 @@ export default function OrdersPage() {
                       <div>
                         <div className="flex items-center gap-3 mb-1">
                           <h2 className="text-lg font-semibold text-white font-mono">{order.id}</h2>
-                          <span className={`px-2 py-0.5 rounded-lg text-xs font-medium capitalize ${statusColors[order.status]}`}>
+                          <span
+                            className={`px-2 py-0.5 rounded-lg text-xs font-medium capitalize ${statusColors[order.status]}`}
+                          >
                             {order.status}
                           </span>
                         </div>
                         <p className="text-white/60 text-sm">
-                          Placed on {new Date(order.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+                          Placed on{' '}
+                          {new Date(order.date).toLocaleDateString('en-US', {
+                            month: 'long',
+                            day: 'numeric',
+                            year: 'numeric',
+                          })}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      <Button variant="secondary" size="sm">
-                        <svg className="w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      <Button variant="secondary" size="sm" onClick={() => downloadInvoice(order)}>
+                        <svg
+                          className="w-4 h-4 mr-1"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                          />
                         </svg>
                         Invoice
                       </Button>
@@ -124,7 +174,10 @@ export default function OrdersPage() {
                       {/* Items */}
                       <div className="space-y-2">
                         {order.items.map((item, idx) => (
-                          <div key={idx} className="flex items-center justify-between py-2 border-b border-white/5 last:border-0">
+                          <div
+                            key={idx}
+                            className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
+                          >
                             <div className="flex items-center gap-3">
                               <div className="w-8 h-8 rounded-lg bg-primary-500/20 flex items-center justify-center text-primary-400 text-sm font-semibold">
                                 {item.quantity}x
@@ -132,7 +185,10 @@ export default function OrdersPage() {
                               <span className="text-white">{item.type}</span>
                             </div>
                             <span className="text-white font-medium">
-                              {new Intl.NumberFormat('en-US', { style: 'currency', currency: order.currency }).format(item.price * item.quantity)}
+                              {new Intl.NumberFormat('en-US', {
+                                style: 'currency',
+                                currency: order.currency,
+                              }).format(item.price * item.quantity)}
                             </span>
                           </div>
                         ))}
@@ -146,28 +202,49 @@ export default function OrdersPage() {
                         <div className="flex justify-between">
                           <span className="text-white/60">Subtotal</span>
                           <span className="text-white">
-                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: order.currency }).format(order.subtotal)}
+                            {new Intl.NumberFormat('en-US', {
+                              style: 'currency',
+                              currency: order.currency,
+                            }).format(order.subtotal)}
                           </span>
                         </div>
                         <div className="flex justify-between">
                           <span className="text-white/60">Service Fee</span>
                           <span className="text-white">
-                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: order.currency }).format(order.serviceFee)}
+                            {new Intl.NumberFormat('en-US', {
+                              style: 'currency',
+                              currency: order.currency,
+                            }).format(order.serviceFee)}
                           </span>
                         </div>
                         <div className="flex justify-between pt-2 border-t border-white/10 font-semibold">
                           <span className="text-white">Total</span>
                           <span className="text-secondary-400">
-                            {new Intl.NumberFormat('en-US', { style: 'currency', currency: order.currency }).format(order.total)}
+                            {new Intl.NumberFormat('en-US', {
+                              style: 'currency',
+                              currency: order.currency,
+                            }).format(order.total)}
                           </span>
                         </div>
                       </div>
 
                       <div className="mt-4 pt-4 border-t border-white/10">
-                        <div className="text-white/50 text-xs uppercase tracking-wider mb-1">Payment Method</div>
+                        <div className="text-white/50 text-xs uppercase tracking-wider mb-1">
+                          Payment Method
+                        </div>
                         <div className="flex items-center gap-2 text-white text-sm">
-                          <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                          <svg
+                            className="w-5 h-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+                            />
                           </svg>
                           {order.paymentMethod}
                         </div>
@@ -181,8 +258,18 @@ export default function OrdersPage() {
         ) : (
           <Card variant="solid" padding="lg" className="text-center max-w-md mx-auto">
             <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-white/5 flex items-center justify-center">
-              <svg className="w-10 h-10 text-white/30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+              <svg
+                className="w-10 h-10 text-white/30"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                />
               </svg>
             </div>
             <h2 className="text-xl font-bold text-white mb-2">No Orders Yet</h2>

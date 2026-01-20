@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import Link from 'next/link';
 import { cn, formatCurrency, formatNumber } from '@/lib/utils';
 
 interface RealTimeStatCardProps {
@@ -15,6 +16,8 @@ interface RealTimeStatCardProps {
   trend?: 'up' | 'down' | 'stable';
   isLive?: boolean;
   lastUpdate?: Date | null;
+  href?: string;
+  onClick?: () => void;
 }
 
 const colorClasses = {
@@ -57,6 +60,8 @@ export function RealTimeStatCard({
   trend,
   isLive = false,
   lastUpdate,
+  href,
+  onClick,
 }: RealTimeStatCardProps) {
   const [displayValue, setDisplayValue] = useState(value);
   const [isAnimating, setIsAnimating] = useState(false);
@@ -109,12 +114,15 @@ export function RealTimeStatCard({
   };
 
   const calculateChange = () => {
-    if (previousValue === undefined || previousValue === 0) { return null; }
+    if (previousValue === undefined || previousValue === 0) {
+      return null;
+    }
     return ((value - previousValue) / previousValue) * 100;
   };
 
   const change = calculateChange();
-  const trendDirection = trend || (change !== null ? (change > 0 ? 'up' : change < 0 ? 'down' : 'stable') : undefined);
+  const trendDirection =
+    trend || (change !== null ? (change > 0 ? 'up' : change < 0 ? 'down' : 'stable') : undefined);
 
   if (loading) {
     return (
@@ -131,20 +139,21 @@ export function RealTimeStatCard({
     );
   }
 
-  return (
-    <div className={cn(
-      'stat-card group relative overflow-hidden',
-      isAnimating && 'ring-2 ring-offset-2',
-      isAnimating && colors.text.replace('text-', 'ring-')
-    )}>
+  const cardContent = (
+    <div
+      className={cn(
+        'stat-card group relative overflow-hidden',
+        isAnimating && 'ring-2 ring-offset-2',
+        isAnimating && colors.text.replace('text-', 'ring-'),
+        (href || onClick) &&
+          'cursor-pointer hover:shadow-lg hover:scale-[1.02] transition-all duration-200'
+      )}
+    >
       {/* Live indicator */}
       {isLive && (
         <div className="absolute top-3 right-3">
           <span className="flex items-center gap-1">
-            <span className={cn(
-              'w-2 h-2 rounded-full animate-pulse',
-              colors.pulse
-            )} />
+            <span className={cn('w-2 h-2 rounded-full animate-pulse', colors.pulse)} />
             <span className="text-xs font-medium text-gray-500">LIVE</span>
           </span>
         </div>
@@ -153,47 +162,65 @@ export function RealTimeStatCard({
       <div className="flex items-start justify-between">
         <div className="space-y-1">
           <p className="text-sm font-medium text-gray-500">{title}</p>
-          <p className={cn(
-            'text-2xl font-bold text-gray-900 transition-all duration-300',
-            isAnimating && 'scale-105'
-          )}>
+          <p
+            className={cn(
+              'text-2xl font-bold text-gray-900 transition-all duration-300',
+              isAnimating && 'scale-105'
+            )}
+          >
             {formatValue(displayValue)}
           </p>
 
           {/* Trend indicator */}
           <div className="flex items-center gap-2">
             {trendDirection && (
-              <div className={cn(
-                'flex items-center gap-1',
-                trendDirection === 'up' && 'text-green-600',
-                trendDirection === 'down' && 'text-red-600',
-                trendDirection === 'stable' && 'text-gray-500'
-              )}>
+              <div
+                className={cn(
+                  'flex items-center gap-1',
+                  trendDirection === 'up' && 'text-green-600',
+                  trendDirection === 'down' && 'text-red-600',
+                  trendDirection === 'stable' && 'text-gray-500'
+                )}
+              >
                 {trendDirection === 'up' && (
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 10l7-7m0 0l7 7m-7-7v18"
+                    />
                   </svg>
                 )}
                 {trendDirection === 'down' && (
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 14l-7 7m0 0l-7-7m7 7V3" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                    />
                   </svg>
                 )}
                 {trendDirection === 'stable' && (
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 12h14"
+                    />
                   </svg>
                 )}
                 {change !== null && (
-                  <span className="text-sm font-medium">
-                    {Math.abs(change).toFixed(1)}%
-                  </span>
+                  <span className="text-sm font-medium">{Math.abs(change).toFixed(1)}%</span>
                 )}
               </div>
             )}
             {lastUpdate && (
               <span className="text-xs text-gray-400">
-                MAJ: {lastUpdate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
+                MAJ:{' '}
+                {lastUpdate.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })}
               </span>
             )}
           </div>
@@ -212,13 +239,26 @@ export function RealTimeStatCard({
 
       {/* Update flash effect */}
       {isAnimating && (
-        <div className={cn(
-          'absolute inset-0 opacity-10 animate-pulse',
-          colors.bg
-        )} />
+        <div className={cn('absolute inset-0 opacity-10 animate-pulse', colors.bg)} />
       )}
     </div>
   );
+
+  // Wrap in link if href provided
+  if (href) {
+    return <Link href={href}>{cardContent}</Link>;
+  }
+
+  // Make clickable if onClick provided
+  if (onClick) {
+    return (
+      <button onClick={onClick} className="w-full text-left">
+        {cardContent}
+      </button>
+    );
+  }
+
+  return cardContent;
 }
 
 export default RealTimeStatCard;

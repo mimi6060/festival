@@ -175,6 +175,7 @@ export default function DashboardPage() {
           title="Festivals actifs"
           value={stats.activeFestivals}
           previousValue={2}
+          href="/festivals"
           icon={
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -191,6 +192,7 @@ export default function DashboardPage() {
           title="Billets vendus"
           value={stats.ticketsSoldThisMonth}
           previousValue={10500}
+          href="/tickets"
           icon={
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -210,6 +212,7 @@ export default function DashboardPage() {
           value={stats.revenueThisMonth}
           previousValue={480000}
           type="currency"
+          href="/analytics"
           icon={
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -228,6 +231,7 @@ export default function DashboardPage() {
           title="Nouveaux utilisateurs"
           value={stats.newUsersThisMonth}
           previousValue={1980}
+          href="/users"
           icon={
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -243,6 +247,7 @@ export default function DashboardPage() {
         <RealTimeStatCard
           title="Participants actuels"
           value={stats.currentAttendees}
+          href="/zones"
           icon={
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -262,6 +267,7 @@ export default function DashboardPage() {
           title="Solde cashless"
           value={stats.cashlessBalance}
           type="currency"
+          href="/cashless"
           icon={
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path

@@ -187,6 +187,7 @@ export default function NotificationsPage() {
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
   const [categoryFilter, setCategoryFilter] = useState<keyof typeof categoryConfig | 'all'>('all');
   const [selectedNotifications, setSelectedNotifications] = useState<Set<string>>(new Set());
+  const [preferencesSaved, setPreferencesSaved] = useState(false);
 
   // Stats
   const unreadCount = notifications.filter((n) => !n.read).length;
@@ -252,6 +253,12 @@ export default function NotificationsPage() {
 
   const updatePreference = (key: keyof NotificationPreferences, value: unknown) => {
     setPreferences((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const savePreferences = () => {
+    // In production, this would call an API to persist the preferences
+    setPreferencesSaved(true);
+    setTimeout(() => setPreferencesSaved(false), 3000);
   };
 
   const updateCategoryPreference = (
@@ -670,8 +677,23 @@ export default function NotificationsPage() {
           </div>
 
           {/* Save Button */}
-          <div className="lg:col-span-2">
-            <button className="btn-primary">Sauvegarder les preferences</button>
+          <div className="lg:col-span-2 flex items-center gap-3">
+            <button onClick={savePreferences} className="btn-primary">
+              Sauvegarder les préférences
+            </button>
+            {preferencesSaved && (
+              <span className="text-green-600 flex items-center gap-1">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                Préférences sauvegardées
+              </span>
+            )}
           </div>
         </div>
       )}

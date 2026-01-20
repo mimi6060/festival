@@ -1,8 +1,46 @@
-import React, { memo, useMemo } from 'react';
-import { View, Text, StyleSheet, Platform } from 'react-native';
+import React, { memo, useMemo, useState, useEffect } from 'react';
+import { View, Text, StyleSheet, Platform, Image } from 'react-native';
 import { colors, spacing, borderRadius, typography } from '../../theme';
 
-// Memoized QR placeholder component for web
+// Web QR Code component using qrcode library
+const WebQRCode = memo(({ value, size }: { value: string; size: number }) => {
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    const generateQR = async () => {
+      try {
+        const QRCode = await import('qrcode');
+        const url = await QRCode.toDataURL(value, {
+          width: size,
+          margin: 1,
+          color: {
+            dark: '#000000',
+            light: '#FFFFFF',
+          },
+        });
+        setQrDataUrl(url);
+      } catch (error) {
+        console.error('Failed to generate QR code:', error);
+      }
+    };
+    generateQR();
+  }, [value, size]);
+
+  if (!qrDataUrl) {
+    return (
+      <View style={[placeholderStyles.qrPlaceholder, { width: size, height: size }]}>
+        <Text style={placeholderStyles.qrIcon}>⏳</Text>
+        <Text style={placeholderStyles.qrText}>Chargement...</Text>
+      </View>
+    );
+  }
+
+  return (
+    <Image source={{ uri: qrDataUrl }} style={{ width: size, height: size }} resizeMode="contain" />
+  );
+});
+
+// Memoized QR placeholder component for fallback
 const QRPlaceholder = memo(({ value, size }: { value: string; size: number }) => (
   <View style={[placeholderStyles.qrPlaceholder, { width: size, height: size }]}>
     <Text style={placeholderStyles.qrIcon}>📱</Text>
@@ -13,11 +51,14 @@ const QRPlaceholder = memo(({ value, size }: { value: string; size: number }) =>
   </View>
 ));
 
-// Web-safe QR placeholder (native uses react-native-qrcode-svg)
-let QRCodeComponent: React.FC<{ value: string; size: number }> = QRPlaceholder;
+// Select QR component based on platform
+let QRCodeComponent: React.FC<{ value: string; size: number }>;
 
-// Try to load native QR code component with optimizations
-if (Platform.OS !== 'web') {
+if (Platform.OS === 'web') {
+  // Use web-compatible qrcode library
+  QRCodeComponent = WebQRCode;
+} else {
+  // Try to load native QR code component with optimizations
   try {
     const QRCode = require('react-native-qrcode-svg').default;
     // Memoized native QR component for fast rendering (< 100ms target)
@@ -34,7 +75,8 @@ if (Platform.OS !== 'web') {
       />
     ));
   } catch {
-    // Keep fallback
+    // Fallback to placeholder
+    QRCodeComponent = QRPlaceholder;
   }
 }
 

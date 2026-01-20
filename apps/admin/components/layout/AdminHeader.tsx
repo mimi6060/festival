@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ThemeToggle } from '../ThemeToggle';
 import { NotificationCenter } from '../notifications';
 import { Avatar } from '../ui';
+import { useAuth } from '../../hooks';
 
 interface AdminHeaderProps {
   onMenuClick: () => void;
@@ -13,6 +14,7 @@ interface AdminHeaderProps {
 export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
   const [showProfile, setShowProfile] = useState(false);
   const profileRef = useRef<HTMLDivElement>(null);
+  const { logout, user } = useAuth();
 
   // Close profile dropdown when clicking outside
   useEffect(() => {
@@ -107,7 +109,10 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
               onClick={() => setShowProfile(!showProfile)}
               className="flex items-center gap-2 p-1.5 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
             >
-              <Avatar name="Jean Dupont" size="sm" />
+              <Avatar
+                name={user ? `${user.firstName} ${user.lastName}` : 'Utilisateur'}
+                size="sm"
+              />
               <svg
                 className="w-4 h-4 text-gray-500 hidden sm:block"
                 fill="none"
@@ -127,8 +132,12 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
             {showProfile && (
               <div className="absolute right-0 mt-2 w-56 bg-white dark:bg-gray-800 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 overflow-hidden">
                 <div className="px-4 py-3 border-b border-gray-100 dark:border-gray-700">
-                  <p className="font-medium text-gray-900 dark:text-gray-100">Jean Dupont</p>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">admin@festival.com</p>
+                  <p className="font-medium text-gray-900 dark:text-gray-100">
+                    {user ? `${user.firstName} ${user.lastName}` : 'Utilisateur'}
+                  </p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {user?.email || 'utilisateur@festival.com'}
+                  </p>
                 </div>
                 <div className="py-1">
                   <Link
@@ -167,7 +176,13 @@ export default function AdminHeader({ onMenuClick }: AdminHeaderProps) {
                   </Link>
                 </div>
                 <div className="border-t border-gray-100 dark:border-gray-700 py-1">
-                  <button className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20">
+                  <button
+                    onClick={() => {
+                      setShowProfile(false);
+                      logout();
+                    }}
+                    className="flex items-center gap-3 w-full px-4 py-2 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20"
+                  >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path
                         strokeLinecap="round"

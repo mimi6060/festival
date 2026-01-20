@@ -94,8 +94,18 @@ export function FestivalCard({ festival, variant = 'default' }: FestivalCardProp
                 </h3>
                 <div className="flex items-center gap-2 text-white/60">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+                    />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+                    />
                   </svg>
                   <span className="text-sm">{festival.location}</span>
                 </div>
@@ -108,14 +118,17 @@ export function FestivalCard({ festival, variant = 'default' }: FestivalCardProp
               </div>
             </div>
 
-            <p className="text-white/60 text-sm mb-6 line-clamp-2">
-              {festival.description}
-            </p>
+            <p className="text-white/60 text-sm mb-6 line-clamp-2">{festival.description}</p>
 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-white/60">
                 <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  />
                 </svg>
                 <span className="text-sm">{formatDate(festival.startDate, festival.endDate)}</span>
               </div>
@@ -210,8 +223,18 @@ export function FestivalCard({ festival, variant = 'default' }: FestivalCardProp
           </h3>
           <div className="flex items-center gap-1.5 text-white/60 text-sm mb-3">
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+              />
             </svg>
             <span className="truncate">{festival.location}</span>
           </div>
@@ -249,13 +272,7 @@ export function FestivalHero({ festival }: FestivalHeroProps) {
     <div className="relative min-h-[60vh] md:min-h-[70vh] flex items-end">
       {/* Background Image */}
       <div className="absolute inset-0">
-        <Image
-          src={festival.imageUrl}
-          alt={festival.name}
-          fill
-          className="object-cover"
-          priority
-        />
+        <Image src={festival.imageUrl} alt={festival.name} fill className="object-cover" priority />
         <div className="absolute inset-0 bg-gradient-to-t from-festival-dark via-festival-dark/70 to-festival-dark/30" />
         <div className="absolute inset-0 bg-gradient-to-r from-festival-dark/80 via-transparent to-transparent" />
       </div>
@@ -281,22 +298,37 @@ export function FestivalHero({ festival }: FestivalHeroProps) {
         <div className="flex flex-col md:flex-row md:items-center gap-4 md:gap-8 text-white/80 mb-6">
           <div className="flex items-center gap-2">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
+              />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
+              />
             </svg>
             <span>{festival.location}</span>
           </div>
           <div className="flex items-center gap-2">
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+              />
             </svg>
-            <span>{formatDate(festival.startDate)} - {formatDate(festival.endDate)}</span>
+            <span>
+              {formatDate(festival.startDate)} - {formatDate(festival.endDate)}
+            </span>
           </div>
         </div>
 
-        <p className="text-lg text-white/70 max-w-2xl mb-8">
-          {festival.description}
-        </p>
+        <p className="text-lg text-white/70 max-w-2xl mb-8">{festival.description}</p>
 
         <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
           {festival.isSoldOut ? (
@@ -304,11 +336,21 @@ export function FestivalHero({ festival }: FestivalHeroProps) {
               Sold Out
             </div>
           ) : (
-            <Button as="link" href={`/festivals/${festival.slug}/tickets`} variant="accent" size="lg">
-              Get Tickets from {new Intl.NumberFormat('en-US', { style: 'currency', currency: festival.price.currency, minimumFractionDigits: 0 }).format(festival.price.from)}
+            <Button
+              as="link"
+              href={`/festivals/${festival.slug}/tickets`}
+              variant="accent"
+              size="lg"
+            >
+              Get Tickets from{' '}
+              {new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: festival.price.currency,
+                minimumFractionDigits: 0,
+              }).format(festival.price.from)}
             </Button>
           )}
-          <Button variant="secondary" size="lg">
+          <Button as="link" href={`/festivals/${festival.slug}`} variant="secondary" size="lg">
             Learn More
           </Button>
         </div>
