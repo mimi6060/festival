@@ -62,17 +62,25 @@ function getPhaseText(phase: SyncPhase): string {
  * Format time ago
  */
 function formatTimeAgo(date: Date | null): string {
-  if (!date) {return 'Never';}
+  if (!date) {
+    return 'Never';
+  }
 
   const now = new Date();
   const diffMs = now.getTime() - date.getTime();
   const diffMins = Math.floor(diffMs / 60000);
 
-  if (diffMins < 1) {return 'Just now';}
-  if (diffMins < 60) {return `${diffMins}m ago`;}
+  if (diffMins < 1) {
+    return 'Just now';
+  }
+  if (diffMins < 60) {
+    return `${diffMins}m ago`;
+  }
 
   const diffHours = Math.floor(diffMins / 60);
-  if (diffHours < 24) {return `${diffHours}h ago`;}
+  if (diffHours < 24) {
+    return `${diffHours}h ago`;
+  }
 
   const diffDays = Math.floor(diffHours / 24);
   return `${diffDays}d ago`;
@@ -82,10 +90,14 @@ function formatTimeAgo(date: Date | null): string {
  * Format duration
  */
 function formatDuration(ms: number | null): string {
-  if (!ms) {return '';}
+  if (!ms) {
+    return '';
+  }
 
   const seconds = Math.floor(ms / 1000);
-  if (seconds < 60) {return `${seconds}s`;}
+  if (seconds < 60) {
+    return `${seconds}s`;
+  }
 
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = seconds % 60;
@@ -183,10 +195,18 @@ export function SyncIndicator({
    * Get status color
    */
   const getStatusColor = () => {
-    if (!isOnline) {return colors.offline;}
-    if (hasErrors) {return colors.error;}
-    if (isSyncing) {return colors.syncing;}
-    if (pendingCount > 0) {return colors.pending;}
+    if (!isOnline) {
+      return colors.offline;
+    }
+    if (hasErrors) {
+      return colors.error;
+    }
+    if (isSyncing) {
+      return colors.syncing;
+    }
+    if (pendingCount > 0) {
+      return colors.pending;
+    }
     return colors.synced;
   };
 
@@ -194,10 +214,18 @@ export function SyncIndicator({
    * Get status text
    */
   const getStatusText = () => {
-    if (!isOnline) {return 'Offline';}
-    if (isSyncing) {return getPhaseText(syncProgress.phase);}
-    if (hasErrors) {return 'Sync Error';}
-    if (pendingCount > 0) {return `${pendingCount} pending`;}
+    if (!isOnline) {
+      return 'Offline';
+    }
+    if (isSyncing) {
+      return getPhaseText(syncProgress.phase);
+    }
+    if (hasErrors) {
+      return 'Sync Error';
+    }
+    if (pendingCount > 0) {
+      return `${pendingCount} pending`;
+    }
     return 'Synced';
   };
 
@@ -234,16 +262,9 @@ export function SyncIndicator({
           {isSyncing ? (
             <ActivityIndicator size="small" color={colors.syncing} />
           ) : (
-            <View
-              style={[
-                styles.statusDot,
-                { backgroundColor: getStatusColor() },
-              ]}
-            />
+            <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
           )}
-          <Text style={[styles.compactText, { color: colors.text }]}>
-            {getStatusText()}
-          </Text>
+          <Text style={[styles.compactText, { color: colors.text }]}>{getStatusText()}</Text>
         </View>
 
         {/* Pending count badge */}
@@ -264,9 +285,7 @@ export function SyncIndicator({
             onPress={handleSyncPress}
             style={[styles.syncButton, { backgroundColor: colors.buttonBackground }]}
           >
-            <Text style={[styles.syncButtonText, { color: colors.buttonText }]}>
-              Sync
-            </Text>
+            <Text style={[styles.syncButtonText, { color: colors.buttonText }]}>Sync</Text>
           </TouchableOpacity>
         )}
       </View>
@@ -290,16 +309,9 @@ export function SyncIndicator({
           {isSyncing ? (
             <ActivityIndicator size="small" color={colors.syncing} />
           ) : (
-            <View
-              style={[
-                styles.statusDot,
-                { backgroundColor: getStatusColor() },
-              ]}
-            />
+            <View style={[styles.statusDot, { backgroundColor: getStatusColor() }]} />
           )}
-          <Text style={[styles.statusText, { color: colors.text }]}>
-            {getStatusText()}
-          </Text>
+          <Text style={[styles.statusText, { color: colors.text }]}>{getStatusText()}</Text>
         </View>
 
         {showSyncButton && isOnline && (
@@ -335,9 +347,8 @@ export function SyncIndicator({
           <Text style={[styles.progressText, { color: colors.textSecondary }]}>
             {syncProgress.currentEntity && `${syncProgress.currentEntity} - `}
             {Math.round(syncProgress.progress)}%
-            {syncProgress.estimatedTimeRemaining && (
-              ` (${formatDuration(syncProgress.estimatedTimeRemaining)} remaining)`
-            )}
+            {syncProgress.estimatedTimeRemaining &&
+              ` (${formatDuration(syncProgress.estimatedTimeRemaining)} remaining)`}
           </Text>
         </View>
       )}
@@ -345,14 +356,19 @@ export function SyncIndicator({
       {/* Details row */}
       <View style={styles.detailsRow}>
         {/* Offline indicator */}
-        {showOfflineIndicator && !isOnline && (
-          <Pressable onPress={onOfflinePress} style={styles.detailItem}>
-            <View style={[styles.detailDot, { backgroundColor: colors.offline }]} />
-            <Text style={[styles.detailText, { color: colors.textSecondary }]}>
-              Offline Mode
-            </Text>
-          </Pressable>
-        )}
+        {showOfflineIndicator &&
+          !isOnline &&
+          (onOfflinePress ? (
+            <Pressable onPress={onOfflinePress} style={styles.detailItem}>
+              <View style={[styles.detailDot, { backgroundColor: colors.offline }]} />
+              <Text style={[styles.detailText, { color: colors.textSecondary }]}>Offline Mode</Text>
+            </Pressable>
+          ) : (
+            <View style={styles.detailItem}>
+              <View style={[styles.detailDot, { backgroundColor: colors.offline }]} />
+              <Text style={[styles.detailText, { color: colors.textSecondary }]}>Offline Mode</Text>
+            </View>
+          ))}
 
         {/* Pending changes */}
         {showPendingCount && pendingCount > 0 && (
@@ -366,10 +382,7 @@ export function SyncIndicator({
 
         {/* Failed mutations */}
         {pendingMutations.failedCount > 0 && (
-          <TouchableOpacity
-            onPress={() => pendingMutations.replayAll()}
-            style={styles.detailItem}
-          >
+          <TouchableOpacity onPress={() => pendingMutations.replayAll()} style={styles.detailItem}>
             <View style={[styles.detailDot, { backgroundColor: colors.error }]} />
             <Text style={[styles.detailText, { color: colors.error }]}>
               {pendingMutations.failedCount} failed - Tap to retry
@@ -391,7 +404,8 @@ export function SyncIndicator({
       {pendingMutations.conflictCount > 0 && (
         <View style={[styles.conflictBanner, { backgroundColor: colors.warningBackground }]}>
           <Text style={[styles.conflictText, { color: colors.warning }]}>
-            {pendingMutations.conflictCount} conflict{pendingMutations.conflictCount !== 1 ? 's' : ''} need resolution
+            {pendingMutations.conflictCount} conflict
+            {pendingMutations.conflictCount !== 1 ? 's' : ''} need resolution
           </Text>
         </View>
       )}

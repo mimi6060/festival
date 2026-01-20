@@ -15,9 +15,10 @@
 
 :root {
   /* Base foreground/background - Festive palette with subtle purple tint */
+  /* Lightened by ~20% for better readability while keeping festive feel */
   --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 10, 10, 18;
-  --background-end-rgb: 18, 18, 26;
+  --background-start-rgb: 18, 18, 28;
+  --background-end-rgb: 26, 26, 38;
 
   /* Festive gradient colors */
   --festival-pink: #ec4899;
@@ -27,12 +28,12 @@
   --festival-magenta: #d946ef;
   --festival-yellow: #fbbf24;
 
-  /* Theme colors - Default: Dark Festive */
-  --theme-bg: #0a0a12; /* Background with purple tint */
-  --theme-bg-secondary: #12121a; /* Surface with purple tint */
-  --theme-bg-tertiary: #1a1a24;
-  --theme-bg-elevated: #1a1a24;
-  --theme-bg-hover: #252530;
+  /* Theme colors - Default: Dark Festive (Lightened ~20%) */
+  --theme-bg: #12121c; /* Background with purple tint - lightened */
+  --theme-bg-secondary: #1a1a26; /* Surface with purple tint - lightened */
+  --theme-bg-tertiary: #222230;
+  --theme-bg-elevated: #222230;
+  --theme-bg-hover: #2d2d3c;
 
   --theme-text-primary: #ffffff; /* Text primary */
   --theme-text-secondary: rgba(255, 255, 255, 0.7); /* Text muted */
@@ -44,12 +45,12 @@
   --theme-border-focus: #6366f1; /* Primary indigo */
   --theme-border-festive: rgba(236, 72, 153, 0.3); /* Pink festive border */
 
-  --theme-surface: #1a1a24; /* Surface with purple tint */
-  --theme-surface-hover: #252530;
-  --theme-surface-active: #2d2d3a;
+  --theme-surface: #222230; /* Surface with purple tint - lightened */
+  --theme-surface-hover: #2d2d3c;
+  --theme-surface-active: #353546;
 
   /* Overlay */
-  --theme-overlay: rgba(10, 10, 18, 0.85);
+  --theme-overlay: rgba(18, 18, 28, 0.85);
   --theme-backdrop: blur(8px);
 
   /* Festive Shadows with glow */
@@ -60,14 +61,14 @@
   --theme-shadow-glow-pink: 0 0 20px rgba(236, 72, 153, 0.4);
   --theme-shadow-glow-purple: 0 0 20px rgba(139, 92, 246, 0.4);
 
-  /* Input specific */
-  --theme-input-bg: #1a1a24;
-  --theme-input-border: rgba(139, 92, 246, 0.2);
-  --theme-input-placeholder: rgba(255, 255, 255, 0.4);
+  /* Input specific - lightened */
+  --theme-input-bg: #222230;
+  --theme-input-border: rgba(139, 92, 246, 0.25);
+  --theme-input-placeholder: rgba(255, 255, 255, 0.45);
 
-  /* Card specific - with subtle glow */
-  --theme-card-bg: rgba(26, 26, 36, 0.8);
-  --theme-card-border: rgba(139, 92, 246, 0.15);
+  /* Card specific - with subtle glow - lightened */
+  --theme-card-bg: rgba(34, 34, 48, 0.85);
+  --theme-card-border: rgba(139, 92, 246, 0.2);
 
   /* Scrollbar */
   --theme-scrollbar-track: rgba(139, 92, 246, 0.05);

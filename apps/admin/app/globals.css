@@ -40,24 +40,25 @@
   }
 
   .dark {
-    --background: 240 20% 4%; /* #0a0a12 - subtle purple tint */
+    /* Lightened by ~20% for better readability */
+    --background: 240 18% 8%; /* #12121c - lightened purple tint */
     --foreground: 0 0% 100%;
-    --card: 240 15% 8%; /* #12121a - subtle purple tint */
+    --card: 240 14% 12%; /* #1a1a26 - lightened purple tint */
     --card-foreground: 0 0% 100%;
-    --popover: 240 15% 8%;
+    --popover: 240 14% 12%;
     --popover-foreground: 0 0% 100%;
     --primary: 239 84% 67%; /* Indigo 500 */
     --primary-foreground: 0 0% 100%;
-    --secondary: 240 10% 12%;
+    --secondary: 240 10% 16%; /* Lightened */
     --secondary-foreground: 0 0% 100%;
-    --muted: 240 10% 12%;
-    --muted-foreground: 0 0% 70%; /* rgba(255,255,255,0.7) */
-    --accent: 258 90% 66% / 0.2; /* Purple accent */
+    --muted: 240 10% 16%;
+    --muted-foreground: 0 0% 75%; /* Increased from 70% */
+    --accent: 258 90% 66% / 0.25; /* Purple accent - slightly more visible */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 258 50% 50% / 0.15; /* Purple tinted border */
-    --input: 258 50% 50% / 0.15;
+    --border: 258 50% 50% / 0.2; /* Purple tinted border - more visible */
+    --input: 258 50% 50% / 0.2;
     --ring: 239 84% 67%;
     --success: 142 76% 36%;
   }
@@ -89,11 +90,11 @@
       color 0.2s ease;
   }
 
-  /* Festive gradient overlay for dark mode */
+  /* Festive gradient overlay for dark mode - lightened */
   .dark body {
     background:
-      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(139, 92, 246, 0.12), transparent),
-      radial-gradient(ellipse 60% 40% at 100% 0%, rgba(236, 72, 153, 0.08), transparent),
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(139, 92, 246, 0.15), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 0%, rgba(236, 72, 153, 0.1), transparent),
       hsl(var(--background));
   }
 

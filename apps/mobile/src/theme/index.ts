@@ -34,11 +34,12 @@ export const colors = {
   },
 
   // Neutral colors with subtle purple tint for festive feel
-  background: '#0a0a12',
-  backgroundSecondary: '#12121a',
-  surface: '#1a1a24',
-  surfaceLight: '#252530',
-  card: '#1a1a24',
+  // Lightened by ~20% for better readability
+  background: '#12121c',
+  backgroundSecondary: '#1a1a26',
+  surface: '#222230',
+  surfaceLight: '#2d2d3c',
+  card: '#222230',
 
   // Text colors
   text: '#ffffff',
@@ -51,10 +52,10 @@ export const colors = {
   error: '#ef4444',
   info: '#3B82F6',
 
-  // Misc
-  border: 'rgba(139, 92, 246, 0.2)',
-  borderFestive: 'rgba(236, 72, 153, 0.3)',
-  overlay: 'rgba(10, 10, 18, 0.8)',
+  // Misc - Lightened borders for better visibility
+  border: 'rgba(139, 92, 246, 0.25)',
+  borderFestive: 'rgba(236, 72, 153, 0.35)',
+  overlay: 'rgba(18, 18, 28, 0.85)',
   transparent: 'transparent',
   white: '#FFFFFF',
   black: '#000000',
@@ -169,10 +170,10 @@ export const globalStyles = StyleSheet.create({
     justifyContent: 'center',
   },
   card: {
-    backgroundColor: 'rgba(255,255,255,0.05)',
+    backgroundColor: 'rgba(255,255,255,0.08)',
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)',
+    borderColor: 'rgba(255,255,255,0.12)',
     padding: 16,
   },
 });
