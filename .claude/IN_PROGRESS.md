@@ -2,6 +2,46 @@
 
 ---
 
+## Session 2026-01-21 - Festival Data Migration to Database
+
+### Completed
+
+- [x] **Festival Data Migration** - Migrate hardcoded festival data to database with API endpoints
+  - Added `genres` (String[]) and `isFeatured` (Boolean) fields to Festival model in Prisma schema
+  - Added index on `isFeatured` field for efficient querying
+  - Updated CreateFestivalDto with `genres` field support
+  - Updated FestivalResponseDto to include `genres` and `isFeatured` fields
+  - Added `findFeatured()` method to festivals service with caching (60s TTL)
+  - Added GET /api/festivals/featured endpoint (public, rate-limited) to festivals controller
+  - Updated seed data with 15+ festivals including:
+    - Summer Vibes 2026, Rock en Seine 2026, Jazz a Vienne 2026, Hellfest 2026
+    - Les Vieilles Charrues 2026, Solidays 2026, Electric Dreams Festival
+    - Rock Revolution, Summer Beats Festival, Jazz Nights, Indie Vibes
+    - Tropical Bass Festival, and more with genres and featured flags
+  - Updated Web app homepage to fetch featured festivals from API with:
+    - Server-side data fetching with 60s revalidation
+    - Festival card grid display for featured festivals
+    - Graceful fallback when API is unavailable
+  - Updated festivals listing page to use `genres` and `isFeatured` from API
+  - Updated festival detail page to fetch from API with fallback to mock data
+  - Added `getFeatured()` method to festivalsApi client
+  - Updated Festival interface in api.ts with new fields
+  - Verified API and Web builds succeed
+
+### Modified Files
+
+- `prisma/schema.prisma` - Added genres and isFeatured fields to Festival model
+- `prisma/seed.ts` - Added comprehensive festival seed data with genres
+- `apps/api/src/modules/festivals/dto/festival.dto.ts` - Added genres to DTOs
+- `apps/api/src/modules/festivals/festivals.service.ts` - Added findFeatured method
+- `apps/api/src/modules/festivals/festivals.controller.ts` - Added featured endpoint
+- `apps/web/lib/api.ts` - Added getFeatured to festivalsApi, updated Festival type
+- `apps/web/app/page.tsx` - Fetch and display featured festivals from API
+- `apps/web/app/festivals/page.tsx` - Use API genres/isFeatured in transform
+- `apps/web/app/festivals/[slug]/page.tsx` - Fetch festival details from API
+
+---
+
 ## Session 2026-01-21 - Settings/Security Features Implementation
 
 ### Completed
