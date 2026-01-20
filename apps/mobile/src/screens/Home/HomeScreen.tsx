@@ -14,7 +14,7 @@ import {
   useProgramStore,
 } from '../../store';
 import { offlineService, initializeDemoData } from '../../services';
-import { colors, spacing, typography } from '../../theme';
+import { colors, spacing, typography, webPressable } from '../../theme';
 import type { RootStackParamList, MainTabParamList, Ticket } from '../../types';
 
 type HomeNavigationProp = NativeStackNavigationProp<RootStackParamList & MainTabParamList, 'Home'>;
@@ -88,7 +88,7 @@ export const HomeScreen: React.FC = () => {
             <Text style={styles.userName}>{user?.firstName || 'Festivalier'} 👋</Text>
           </View>
           <TouchableOpacity
-            style={styles.notificationButton}
+            style={[styles.notificationButton, webPressable]}
             onPress={() => navigation.navigate('Notifications')}
           >
             <Text style={styles.notificationIcon}>🔔</Text>
@@ -127,7 +127,7 @@ export const HomeScreen: React.FC = () => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Mes billets actifs</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Tickets')}>
+            <TouchableOpacity style={webPressable} onPress={() => navigation.navigate('Tickets')}>
               <Text style={styles.seeAll}>Voir tout →</Text>
             </TouchableOpacity>
           </View>
@@ -160,7 +160,7 @@ export const HomeScreen: React.FC = () => {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Prochains concerts</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('Program')}>
+            <TouchableOpacity style={webPressable} onPress={() => navigation.navigate('Program')}>
               <Text style={styles.seeAll}>Programme →</Text>
             </TouchableOpacity>
           </View>
@@ -180,7 +180,7 @@ export const HomeScreen: React.FC = () => {
                     <Text style={styles.eventGenre}>{event.artist.genre}</Text>
                   </View>
                   <TouchableOpacity
-                    style={styles.favoriteButton}
+                    style={[styles.favoriteButton, webPressable]}
                     onPress={() => toggleFavorite(event.id)}
                   >
                     <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
@@ -195,23 +195,29 @@ export const HomeScreen: React.FC = () => {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Acces rapide</Text>
           <View style={styles.quickActions}>
-            <TouchableOpacity style={styles.quickAction} onPress={() => handleQuickAction('plan')}>
+            <TouchableOpacity
+              style={[styles.quickAction, webPressable]}
+              onPress={() => handleQuickAction('plan')}
+            >
               <Text style={styles.quickActionIcon}>🗺️</Text>
               <Text style={styles.quickActionLabel}>Plan</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.quickAction} onPress={() => handleQuickAction('food')}>
+            <TouchableOpacity
+              style={[styles.quickAction, webPressable]}
+              onPress={() => handleQuickAction('food')}
+            >
               <Text style={styles.quickActionIcon}>🍔</Text>
               <Text style={styles.quickActionLabel}>Food</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.quickAction}
+              style={[styles.quickAction, webPressable]}
               onPress={() => handleQuickAction('toilettes')}
             >
               <Text style={styles.quickActionIcon}>🚻</Text>
               <Text style={styles.quickActionLabel}>Toilettes</Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={styles.quickAction}
+              style={[styles.quickAction, webPressable]}
               onPress={() => handleQuickAction('secours')}
             >
               <Text style={styles.quickActionIcon}>🏥</Text>

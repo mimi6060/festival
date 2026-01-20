@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, RefreshControl } fr
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { useNotificationStore } from '../../store';
-import { colors, spacing, typography, borderRadius } from '../../theme';
+import { colors, spacing, typography, borderRadius, webPressable } from '../../theme';
 import type { Notification } from '../../types';
 
 // Constants for FlatList optimization
@@ -161,7 +161,7 @@ export const NotificationsScreen: React.FC = () => {
       formatTimeFunc: (dateString: string) => string;
     }) => (
       <TouchableOpacity
-        style={[styles.notificationCard, !item.read && styles.notificationUnread]}
+        style={[styles.notificationCard, !item.read && styles.notificationUnread, webPressable]}
         onPress={() => onPress(item)}
         activeOpacity={0.9}
       >
@@ -182,7 +182,10 @@ export const NotificationsScreen: React.FC = () => {
           <Text style={styles.time}>{formatTimeFunc(item.createdAt)}</Text>
         </View>
 
-        <TouchableOpacity style={styles.deleteButton} onPress={() => onDelete(item.id)}>
+        <TouchableOpacity
+          style={[styles.deleteButton, webPressable]}
+          onPress={() => onDelete(item.id)}
+        >
           <Text style={styles.deleteIcon}>x</Text>
         </TouchableOpacity>
       </TouchableOpacity>
@@ -239,12 +242,15 @@ export const NotificationsScreen: React.FC = () => {
     <SafeAreaView style={styles.container} edges={['top']}>
       {/* Header */}
       <View style={styles.screenHeader}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={[styles.backButton, webPressable]}
+          onPress={() => navigation.goBack()}
+        >
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.screenTitle}>Notifications</Text>
         {unreadCount > 0 && (
-          <TouchableOpacity style={styles.markAllButton} onPress={markAllAsRead}>
+          <TouchableOpacity style={[styles.markAllButton, webPressable]} onPress={markAllAsRead}>
             <Text style={styles.markAllText}>Tout lire</Text>
           </TouchableOpacity>
         )}

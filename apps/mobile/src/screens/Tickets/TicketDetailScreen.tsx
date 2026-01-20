@@ -7,14 +7,15 @@ import {
   TouchableOpacity,
   Share,
   Dimensions,
+  Alert,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute, RouteProp } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Card, Button } from '../../components/common';
 import { QRCodeDisplay } from '../../components/tickets';
-import { useTicketStore } from '../../store';
-import { colors, spacing, typography, borderRadius } from '../../theme';
+import { useTicketStore, useAuthStore } from '../../store';
+import { colors, spacing, typography, borderRadius, webPressable } from '../../theme';
 import type { RootStackParamList, Ticket } from '../../types';
 
 const { width } = Dimensions.get('window');
@@ -22,9 +23,10 @@ const { width } = Dimensions.get('window');
 type TicketDetailNavigationProp = NativeStackNavigationProp<RootStackParamList, 'TicketDetail'>;
 type TicketDetailRouteProp = RouteProp<RootStackParamList, 'TicketDetail'>;
 
-// Mock ticket for demo
+// Mock ticket for demo - userId matches the demo user
 const mockTicket: Ticket = {
   id: '1',
+  userId: 'demo-user-id', // Demo user ID for testing
   eventId: 'e1',
   eventName: 'Festival Pass - Weekend Complet',
   eventDate: '2024-07-15',
@@ -42,15 +44,90 @@ export const TicketDetailScreen: React.FC = () => {
   const navigation = useNavigation<TicketDetailNavigationProp>();
   const route = useRoute<TicketDetailRouteProp>();
   const { tickets, selectTicket } = useTicketStore();
+  const { user } = useAuthStore();
   const [_brightness, setBrightness] = useState(100);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   const ticketId = route.params?.ticketId;
-  const ticket = tickets.find((t) => t.id === ticketId) || mockTicket;
+  const foundTicket = tickets.find((t) => t.id === ticketId);
+
+  // Security: Validate ticket ownership
+  // Only allow access if the ticket belongs to the current user
+  const isOwner = foundTicket?.userId === user?.id;
+
+  // Use the found ticket only if user owns it, otherwise use mock for demo
+  // In production, mock should be removed and unauthorized access should redirect
+  const ticket = isOwner ? foundTicket : user?.id === 'demo-user-id' ? mockTicket : null;
 
   useEffect(() => {
-    selectTicket(ticket);
+    // Security check: If ticket exists but user doesn't own it, deny access
+    if (foundTicket && user && foundTicket.userId !== user.id) {
+      setAccessDenied(true);
+      Alert.alert(
+        'Access Denied',
+        'You do not have permission to view this ticket.',
+        [
+          {
+            text: 'Go Back',
+            onPress: () => navigation.goBack(),
+          },
+        ],
+        { cancelable: false }
+      );
+      return;
+    }
+
+    // If no ticket found at all (not in user's tickets), also deny
+    if (ticketId && !foundTicket && user?.id !== 'demo-user-id') {
+      setAccessDenied(true);
+      Alert.alert(
+        'Ticket Not Found',
+        'This ticket does not exist or you do not have access to it.',
+        [
+          {
+            text: 'Go Back',
+            onPress: () => navigation.goBack(),
+          },
+        ],
+        { cancelable: false }
+      );
+      return;
+    }
+
+    if (ticket) {
+      selectTicket(ticket);
+    }
     return () => selectTicket(null);
-  }, [ticket]);
+  }, [foundTicket, user, ticketId, ticket, navigation, selectTicket]);
+
+  // Show loading or access denied screen when ticket is not available
+  if (accessDenied || !ticket) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={[styles.backButton, webPressable]}
+            onPress={() => navigation.goBack()}
+          >
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Detail du billet</Text>
+          <View style={styles.shareButton} />
+        </View>
+        <View style={styles.accessDeniedContainer}>
+          <Text style={styles.accessDeniedIcon}>🔒</Text>
+          <Text style={styles.accessDeniedTitle}>
+            {accessDenied ? 'Acces refuse' : 'Chargement...'}
+          </Text>
+          <Text style={styles.accessDeniedMessage}>
+            {accessDenied
+              ? "Vous n'avez pas l'autorisation de voir ce billet."
+              : 'Veuillez patienter...'}
+          </Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   const getStatusColor = () => {
     switch (ticket.status) {
@@ -117,11 +194,14 @@ export const TicketDetailScreen: React.FC = () => {
     <SafeAreaView style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+        <TouchableOpacity
+          style={[styles.backButton, webPressable]}
+          onPress={() => navigation.goBack()}
+        >
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Detail du billet</Text>
-        <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
+        <TouchableOpacity style={[styles.shareButton, webPressable]} onPress={handleShare}>
           <Text style={styles.shareIcon}>📤</Text>
         </TouchableOpacity>
       </View>
@@ -236,7 +316,7 @@ export const TicketDetailScreen: React.FC = () => {
         </Card>
 
         {/* Help Section */}
-        <TouchableOpacity style={styles.helpButton}>
+        <TouchableOpacity style={[styles.helpButton, webPressable]}>
           <Text style={styles.helpIcon}>❓</Text>
           <Text style={styles.helpText}>Besoin d'aide avec ce billet?</Text>
           <Text style={styles.helpArrow}>→</Text>
@@ -420,6 +500,28 @@ const styles = StyleSheet.create({
   helpArrow: {
     fontSize: 18,
     color: colors.textMuted,
+  },
+  // Access denied styles
+  accessDeniedContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: spacing.xl,
+  },
+  accessDeniedIcon: {
+    fontSize: 64,
+    marginBottom: spacing.lg,
+  },
+  accessDeniedTitle: {
+    ...typography.h2,
+    color: colors.text,
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
+  accessDeniedMessage: {
+    ...typography.body,
+    color: colors.textMuted,
+    textAlign: 'center',
   },
 });
 

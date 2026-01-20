@@ -2,6 +2,30 @@
 
 ---
 
+## Session 2026-01-21 - Security: Ticket Ownership Validation
+
+### Completed
+
+- [x] **Security Fix: Ticket Ownership Validation** - Fixed IDOR vulnerability in ticket access
+  - **Issue**: Users could access any ticket by changing the ID in the URL (e.g., /ticket/1 to /ticket/4)
+  - **API Security** (Already implemented):
+    - `getTicketById()` in `tickets.service.ts` validates ownership with `ForbiddenException`
+    - Controller passes `req.user.id` for all ticket endpoints
+  - **Mobile App Security** (Fixed):
+    - Added `userId` field to `Ticket` interface in `apps/mobile/src/types/index.ts`
+    - Added ownership validation in `TicketDetailScreen.tsx`:
+      - Checks if `foundTicket.userId === user.id` before displaying
+      - Shows "Access Denied" alert and redirects if unauthorized
+      - Displays fallback UI for loading/denied states
+    - Defense in depth: Client validates even though API also validates
+
+### Modified Files
+
+- `apps/mobile/src/types/index.ts` - Added `userId` field to `Ticket` interface
+- `apps/mobile/src/screens/Tickets/TicketDetailScreen.tsx` - Added ownership validation logic
+
+---
+
 ## Session 2026-01-21 - Web App Forms and Notifications Implementation
 
 ### Completed

@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { colors, spacing, borderRadius, typography, webPressable } from '../../theme';
 import type { WalletBalance } from '../../types';
 
 interface BalanceCardProps {
@@ -48,7 +48,11 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
 
         {/* Actions */}
         <View style={styles.actions}>
-          <TouchableOpacity style={styles.actionButton} onPress={onTopup} activeOpacity={0.8}>
+          <TouchableOpacity
+            style={[styles.actionButton, webPressable]}
+            onPress={onTopup}
+            activeOpacity={0.8}
+          >
             <Text style={styles.actionIcon}>➕</Text>
             <Text style={styles.actionText}>Recharger</Text>
           </TouchableOpacity>
@@ -56,7 +60,7 @@ export const BalanceCard: React.FC<BalanceCardProps> = ({
           <View style={styles.actionDivider} />
 
           <TouchableOpacity
-            style={styles.actionButton}
+            style={[styles.actionButton, webPressable]}
             onPress={onViewTransactions}
             activeOpacity={0.8}
           >

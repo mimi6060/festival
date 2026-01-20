@@ -144,6 +144,9 @@ export const shadows = {
   lg: createShadow(4, 8, 0.3),
 };
 
+// Web-specific pressable style (cursor: pointer)
+export const webPressable = Platform.OS === 'web' ? { cursor: 'pointer' as const } : {};
+
 export const globalStyles = StyleSheet.create({
   container: {
     flex: 1,
@@ -185,4 +188,5 @@ export default {
   typography,
   shadows,
   globalStyles,
+  webPressable,
 };

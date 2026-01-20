@@ -7,7 +7,7 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { colors, spacing } from '../../theme';
+import { colors, spacing, webPressable } from '../../theme';
 
 interface ButtonProps {
   title: string;
@@ -89,7 +89,7 @@ export const Button: React.FC<ButtonProps> = ({
 
   return (
     <TouchableOpacity
-      style={[getButtonStyle(), isDisabled && styles.disabled, style]}
+      style={[getButtonStyle(), isDisabled && styles.disabled, !isDisabled && webPressable, style]}
       onPress={onPress}
       disabled={isDisabled}
       activeOpacity={0.8}

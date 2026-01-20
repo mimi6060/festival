@@ -15,6 +15,7 @@ export interface User {
 // Ticket types
 export interface Ticket {
   id: string;
+  userId: string; // Owner of the ticket - used for ownership validation
   eventId: string;
   eventName: string;
   eventDate: string;

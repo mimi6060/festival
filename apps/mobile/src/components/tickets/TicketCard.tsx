@@ -1,6 +1,6 @@
 import React, { memo, useMemo, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { colors, spacing, borderRadius, typography } from '../../theme';
+import { colors, spacing, borderRadius, typography, webPressable } from '../../theme';
 import type { Ticket } from '../../types';
 
 // Status color map - memoized outside component
@@ -67,7 +67,11 @@ export const TicketCard = memo<TicketCardProps>(({ ticket, onPress }) => {
   const handlePress = useCallback(() => onPress(), [onPress]);
 
   return (
-    <TouchableOpacity style={styles.container} onPress={handlePress} activeOpacity={0.9}>
+    <TouchableOpacity
+      style={[styles.container, webPressable]}
+      onPress={handlePress}
+      activeOpacity={0.9}
+    >
       {/* Ticket Type Badge */}
       <View style={[styles.typeBadge, { backgroundColor: ticketTypeConfig.color }]}>
         <Text style={styles.typeBadgeText}>{ticketTypeConfig.label}</Text>
