@@ -2394,3 +2394,36 @@ apps/api/src/modules/auth/auth.controller.spec.ts  (MODIFIED - +10 lines)
 ---
 
 _Derniere mise a jour: 2026-01-20_
+
+## Session: 2025-01-20 - UX Fixes & API Features
+
+### Completed Tasks
+
+#### Web App UX Fixes
+
+- [x] Fix festival page sidebar overlap (Quick Info moved before Tickets)
+- [x] Add genre filter (Pop, Electronic, Hip-Hop, R&B, etc.) to festivals page
+- [x] Improve OpenStreetMap: better centering, custom gradient marker, removed external link
+- [x] Create artist detail pages at `/artists/[slug]` with 12 mock artists
+- [x] Add refund request functionality to orders page with confirmation modal
+
+#### Admin App Fixes
+
+- [x] Implement functional Remember Me with localStorage persistence
+- [x] Add auto token renewal every 14 minutes when remembered
+- [x] Connect Remember Me checkbox to auth context
+
+#### API Implementations
+
+- [x] Festival publish/unpublish endpoints with validation
+- [x] Zone save with unique name validation per festival
+- [x] Staff save with email/phone validation and duplicate handling
+- [x] User save with role control (admin only) and validation
+- [x] Password change with strength validation and token invalidation
+
+### Remaining Tasks (HIGH Priority)
+
+- [ ] Implement Payment refund with Stripe
+- [ ] Implement Export CSV/Excel (5 modules)
+- [ ] Migrate hardcoded festival data to database
+- [ ] Create API endpoints for festivals from database
