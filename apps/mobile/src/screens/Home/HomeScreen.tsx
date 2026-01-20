@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     top: 8,
     right: 8,
-    backgroundColor: colors.error,
+    backgroundColor: colors.festivalPink,
     borderRadius: 10,
     minWidth: 18,
     height: 18,
@@ -279,8 +279,15 @@ const styles = StyleSheet.create({
     fontWeight: '700',
   },
   countdownCard: {
-    backgroundColor: colors.primary,
+    backgroundColor: colors.festivalPurple,
     marginBottom: spacing.lg,
+    borderWidth: 1,
+    borderColor: colors.festivalPink + '40',
+    shadowColor: colors.festivalPurple,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 8,
   },
   countdownContent: {
     flexDirection: 'row',
@@ -356,7 +363,7 @@ const styles = StyleSheet.create({
   },
   eventTimeText: {
     ...typography.h3,
-    color: colors.primary,
+    color: colors.festivalPink,
   },
   eventDay: {
     ...typography.caption,
@@ -395,6 +402,8 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: spacing.md,
     flex: 1,
+    borderWidth: 1,
+    borderColor: colors.border,
   },
   quickActionIcon: {
     fontSize: 28,

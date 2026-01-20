@@ -14,54 +14,65 @@
  */
 
 :root {
-  /* Base foreground/background - Unified palette */
+  /* Base foreground/background - Festive palette with subtle purple tint */
   --foreground-rgb: 255, 255, 255;
-  --background-start-rgb: 10, 10, 10;
-  --background-end-rgb: 26, 26, 26;
+  --background-start-rgb: 10, 10, 18;
+  --background-end-rgb: 18, 18, 26;
 
-  /* Theme colors - Default: Dark (Unified) */
-  --theme-bg: #0a0a0a; /* Background dark */
-  --theme-bg-secondary: #1a1a1a; /* Surface */
-  --theme-bg-tertiary: #262626;
-  --theme-bg-elevated: #1a1a1a;
-  --theme-bg-hover: #262626;
+  /* Festive gradient colors */
+  --festival-pink: #ec4899;
+  --festival-purple: #8b5cf6;
+  --festival-orange: #f97316;
+  --festival-cyan: #06b6d4;
+  --festival-magenta: #d946ef;
+  --festival-yellow: #fbbf24;
+
+  /* Theme colors - Default: Dark Festive */
+  --theme-bg: #0a0a12; /* Background with purple tint */
+  --theme-bg-secondary: #12121a; /* Surface with purple tint */
+  --theme-bg-tertiary: #1a1a24;
+  --theme-bg-elevated: #1a1a24;
+  --theme-bg-hover: #252530;
 
   --theme-text-primary: #ffffff; /* Text primary */
   --theme-text-secondary: rgba(255, 255, 255, 0.7); /* Text muted */
   --theme-text-tertiary: rgba(255, 255, 255, 0.5);
   --theme-text-muted: rgba(255, 255, 255, 0.4);
 
-  --theme-border: rgba(255, 255, 255, 0.1); /* Border */
-  --theme-border-hover: rgba(255, 255, 255, 0.2);
+  --theme-border: rgba(139, 92, 246, 0.2); /* Purple tinted border */
+  --theme-border-hover: rgba(139, 92, 246, 0.3);
   --theme-border-focus: #6366f1; /* Primary indigo */
+  --theme-border-festive: rgba(236, 72, 153, 0.3); /* Pink festive border */
 
-  --theme-surface: #1a1a1a; /* Surface */
-  --theme-surface-hover: #262626;
-  --theme-surface-active: #333333;
+  --theme-surface: #1a1a24; /* Surface with purple tint */
+  --theme-surface-hover: #252530;
+  --theme-surface-active: #2d2d3a;
 
   /* Overlay */
-  --theme-overlay: rgba(0, 0, 0, 0.7);
+  --theme-overlay: rgba(10, 10, 18, 0.85);
   --theme-backdrop: blur(8px);
 
-  /* Shadows */
+  /* Festive Shadows with glow */
   --theme-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
   --theme-shadow-md: 0 4px 6px rgba(0, 0, 0, 0.4);
   --theme-shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.5);
-  --theme-shadow-glow: 0 0 20px #6366f1; /* Primary indigo glow */
+  --theme-shadow-glow: 0 0 20px rgba(99, 102, 241, 0.4);
+  --theme-shadow-glow-pink: 0 0 20px rgba(236, 72, 153, 0.4);
+  --theme-shadow-glow-purple: 0 0 20px rgba(139, 92, 246, 0.4);
 
   /* Input specific */
-  --theme-input-bg: #1a1a1a;
-  --theme-input-border: rgba(255, 255, 255, 0.1);
+  --theme-input-bg: #1a1a24;
+  --theme-input-border: rgba(139, 92, 246, 0.2);
   --theme-input-placeholder: rgba(255, 255, 255, 0.4);
 
-  /* Card specific */
-  --theme-card-bg: #1a1a1a;
-  --theme-card-border: rgba(255, 255, 255, 0.1);
+  /* Card specific - with subtle glow */
+  --theme-card-bg: rgba(26, 26, 36, 0.8);
+  --theme-card-border: rgba(139, 92, 246, 0.15);
 
   /* Scrollbar */
-  --theme-scrollbar-track: rgba(255, 255, 255, 0.05);
-  --theme-scrollbar-thumb: rgba(255, 255, 255, 0.2);
-  --theme-scrollbar-thumb-hover: rgba(255, 255, 255, 0.3);
+  --theme-scrollbar-track: rgba(139, 92, 246, 0.05);
+  --theme-scrollbar-thumb: rgba(139, 92, 246, 0.2);
+  --theme-scrollbar-thumb-hover: rgba(139, 92, 246, 0.3);
 }
 
 /* Light Mode */
@@ -109,11 +120,14 @@
   --theme-scrollbar-thumb-hover: rgba(0, 0, 0, 0.3);
 }
 
-/* Base body styles */
+/* Base body styles - Festive gradient background */
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(to bottom, transparent, rgb(var(--background-end-rgb)))
-    rgb(var(--background-start-rgb));
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(139, 92, 246, 0.15), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(236, 72, 153, 0.1), transparent),
+    radial-gradient(ellipse 60% 40% at 0% 100%, rgba(6, 182, 212, 0.08), transparent),
+    linear-gradient(to bottom, rgb(var(--background-start-rgb)), rgb(var(--background-end-rgb)));
   min-height: 100vh;
   transition:
     background-color 0.3s ease,
@@ -1427,4 +1441,202 @@ textarea {
 .force-rtl {
   direction: rtl !important;
   unicode-bidi: embed;
+}
+
+/* =============================================
+ * FESTIVE STYLES
+ * Vibrant gradients and celebratory effects
+ * ============================================= */
+
+/* Festive gradient backgrounds */
+.bg-festive {
+  background:
+    radial-gradient(ellipse 80% 50% at 50% -20%, rgba(139, 92, 246, 0.2), transparent),
+    radial-gradient(ellipse 60% 40% at 100% 0%, rgba(236, 72, 153, 0.15), transparent),
+    var(--theme-bg);
+}
+
+.bg-festive-card {
+  background:
+    linear-gradient(135deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.05)), var(--theme-card-bg);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+}
+
+.bg-festive-gradient {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+}
+
+.bg-sunset-gradient {
+  background: linear-gradient(135deg, #f97316, #ec4899, #8b5cf6);
+}
+
+.bg-neon-gradient {
+  background: linear-gradient(135deg, #06b6d4, #8b5cf6, #ec4899);
+}
+
+.bg-party-gradient {
+  background: linear-gradient(135deg, #fbbf24, #f97316, #ec4899);
+}
+
+.bg-aurora-gradient {
+  background: linear-gradient(135deg, #22c55e, #06b6d4, #8b5cf6);
+}
+
+/* Animated gradient background */
+.bg-animated-gradient {
+  background: linear-gradient(-45deg, #6366f1, #8b5cf6, #ec4899, #f97316);
+  background-size: 400% 400%;
+  animation: gradientShift 8s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+/* Festive text gradients */
+.text-festive-gradient {
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.text-sunset-gradient {
+  background: linear-gradient(135deg, #f97316, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Festive glow effects */
+.glow-purple {
+  box-shadow:
+    0 0 20px rgba(139, 92, 246, 0.4),
+    0 0 40px rgba(139, 92, 246, 0.2);
+}
+
+.glow-pink {
+  box-shadow:
+    0 0 20px rgba(236, 72, 153, 0.4),
+    0 0 40px rgba(236, 72, 153, 0.2);
+}
+
+.glow-orange {
+  box-shadow:
+    0 0 20px rgba(249, 115, 22, 0.4),
+    0 0 40px rgba(249, 115, 22, 0.2);
+}
+
+.glow-festive {
+  box-shadow:
+    0 0 20px rgba(139, 92, 246, 0.3),
+    0 0 40px rgba(236, 72, 153, 0.2),
+    0 0 60px rgba(249, 115, 22, 0.1);
+}
+
+/* Festive border */
+.border-festive {
+  border: 1px solid;
+  border-image: linear-gradient(135deg, rgba(139, 92, 246, 0.5), rgba(236, 72, 153, 0.5)) 1;
+}
+
+.border-festive-glow {
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  box-shadow:
+    0 0 10px rgba(139, 92, 246, 0.2),
+    inset 0 0 10px rgba(139, 92, 246, 0.05);
+}
+
+/* Pulse animation for festive elements */
+@keyframes festivePulse {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.02);
+  }
+}
+
+.animate-festive-pulse {
+  animation: festivePulse 2s ease-in-out infinite;
+}
+
+/* Sparkle effect */
+@keyframes sparkle {
+  0%,
+  100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.sparkle::before {
+  content: '✨';
+  position: absolute;
+  animation: sparkle 1.5s ease-in-out infinite;
+}
+
+/* Festive button styles */
+.btn-festive {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-festive:hover {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-party {
+  background: linear-gradient(135deg, #f97316, #ec4899);
+  color: white;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-party:hover {
+  background: linear-gradient(135deg, #ea580c, #db2777);
+  box-shadow: 0 0 20px rgba(236, 72, 153, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Festive card with gradient border */
+.card-festive {
+  background: var(--theme-card-bg);
+  border-radius: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-festive::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.5), rgba(236, 72, 153, 0.3));
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
 }

@@ -1,45 +1,68 @@
 import { StyleSheet, Platform } from 'react-native';
 
 export const colors = {
-  // Primary colors (matches Web/Admin design system)
+  // Primary colors - Festive indigo/purple
   primary: '#6366f1',
   primaryDark: '#4f46e5',
   primaryLight: '#818CF8',
 
-  // Secondary colors
+  // Secondary colors - Festive amber/gold
   secondary: '#F59E0B',
   secondaryDark: '#D97706',
   secondaryLight: '#FBBF24',
 
-  // Accent colors
+  // Accent colors - Festive teal/emerald
   accent: '#10B981',
   accentDark: '#059669',
   accentLight: '#34D399',
 
-  // Neutral colors (matches Web/Admin design system)
-  background: '#0a0a0a',
-  backgroundSecondary: '#1a1a1a',
-  surface: '#1a1a1a',
-  surfaceLight: '#2a2a2a',
-  card: '#1a1a1a',
+  // Festival gradient colors - for vibrant gradients
+  festivalPink: '#ec4899',
+  festivalPurple: '#8b5cf6',
+  festivalOrange: '#f97316',
+  festivalCyan: '#06b6d4',
+  festivalMagenta: '#d946ef',
+  festivalYellow: '#fbbf24',
 
-  // Text colors (matches Web/Admin design system)
+  // Gradient definitions (for LinearGradient)
+  gradients: {
+    festive: ['#6366f1', '#8b5cf6', '#ec4899'],
+    sunset: ['#f97316', '#ec4899', '#8b5cf6'],
+    neon: ['#06b6d4', '#8b5cf6', '#ec4899'],
+    party: ['#fbbf24', '#f97316', '#ec4899'],
+    aurora: ['#22c55e', '#06b6d4', '#8b5cf6'],
+  },
+
+  // Neutral colors with subtle purple tint for festive feel
+  background: '#0a0a12',
+  backgroundSecondary: '#12121a',
+  surface: '#1a1a24',
+  surfaceLight: '#252530',
+  card: '#1a1a24',
+
+  // Text colors
   text: '#ffffff',
   textSecondary: 'rgba(255,255,255,0.7)',
   textMuted: 'rgba(255,255,255,0.5)',
 
-  // Status colors (matches Web/Admin design system)
+  // Status colors - Vibrant
   success: '#22c55e',
   warning: '#F59E0B',
   error: '#ef4444',
   info: '#3B82F6',
 
-  // Misc (matches Web/Admin design system)
-  border: 'rgba(255,255,255,0.1)',
-  overlay: 'rgba(0, 0, 0, 0.5)',
+  // Misc
+  border: 'rgba(139, 92, 246, 0.2)',
+  borderFestive: 'rgba(236, 72, 153, 0.3)',
+  overlay: 'rgba(10, 10, 18, 0.8)',
   transparent: 'transparent',
   white: '#FFFFFF',
   black: '#000000',
+
+  // Glow effects
+  glowPurple: 'rgba(139, 92, 246, 0.5)',
+  glowPink: 'rgba(236, 72, 153, 0.5)',
+  glowOrange: 'rgba(249, 115, 22, 0.5)',
 };
 
 export const spacing = {

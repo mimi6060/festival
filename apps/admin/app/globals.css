@@ -8,7 +8,7 @@
 @tailwind utilities;
 
 @layer base {
-  /* Admin app uses unified indigo palette */
+  /* Admin app uses festive indigo/purple palette */
   :root {
     /* Map shared tokens to shadcn-style variables for compatibility */
     --background: 0 0% 100%;
@@ -32,27 +32,32 @@
     --ring: 239 84% 67%; /* Indigo 500 */
     --radius: 0.5rem;
     --success: 142 76% 36%; /* Success: #22c55e */
+
+    /* Festive colors */
+    --festival-pink: 330 81% 60%;
+    --festival-purple: 258 90% 66%;
+    --festival-orange: 25 95% 53%;
   }
 
   .dark {
-    --background: 0 0% 4%; /* #0a0a0a */
+    --background: 240 20% 4%; /* #0a0a12 - subtle purple tint */
     --foreground: 0 0% 100%;
-    --card: 0 0% 10%; /* #1a1a1a */
+    --card: 240 15% 8%; /* #12121a - subtle purple tint */
     --card-foreground: 0 0% 100%;
-    --popover: 0 0% 10%;
+    --popover: 240 15% 8%;
     --popover-foreground: 0 0% 100%;
     --primary: 239 84% 67%; /* Indigo 500 */
     --primary-foreground: 0 0% 100%;
-    --secondary: 0 0% 15%;
+    --secondary: 240 10% 12%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 0 0% 15%;
+    --muted: 240 10% 12%;
     --muted-foreground: 0 0% 70%; /* rgba(255,255,255,0.7) */
-    --accent: 0 0% 15%;
+    --accent: 258 90% 66% / 0.2; /* Purple accent */
     --accent-foreground: 0 0% 100%;
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
-    --border: 0 0% 100% / 0.1; /* rgba(255,255,255,0.1) */
-    --input: 0 0% 100% / 0.1;
+    --border: 258 50% 50% / 0.15; /* Purple tinted border */
+    --input: 258 50% 50% / 0.15;
     --ring: 239 84% 67%;
     --success: 142 76% 36%;
   }
@@ -82,6 +87,14 @@
     transition:
       background-color 0.2s ease,
       color 0.2s ease;
+  }
+
+  /* Festive gradient overlay for dark mode */
+  .dark body {
+    background:
+      radial-gradient(ellipse 80% 50% at 50% -20%, rgba(139, 92, 246, 0.12), transparent),
+      radial-gradient(ellipse 60% 40% at 100% 0%, rgba(236, 72, 153, 0.08), transparent),
+      hsl(var(--background));
   }
 
   /* Typography - Standardized with Web app */
@@ -316,4 +329,99 @@
 
 ::-webkit-scrollbar-thumb:hover {
   @apply bg-gray-400 dark:bg-gray-500;
+}
+
+/* =============================================
+ * FESTIVE UTILITIES - Vibrant admin styling
+ * ============================================= */
+
+/* Festive gradient backgrounds */
+.bg-festive-gradient {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899);
+}
+
+.bg-sunset-gradient {
+  background: linear-gradient(135deg, #f97316, #ec4899, #8b5cf6);
+}
+
+/* Festive glow effects */
+.glow-purple {
+  box-shadow:
+    0 0 20px rgba(139, 92, 246, 0.4),
+    0 0 40px rgba(139, 92, 246, 0.2);
+}
+
+.glow-pink {
+  box-shadow:
+    0 0 20px rgba(236, 72, 153, 0.4),
+    0 0 40px rgba(236, 72, 153, 0.2);
+}
+
+.glow-festive {
+  box-shadow:
+    0 0 20px rgba(139, 92, 246, 0.3),
+    0 0 40px rgba(236, 72, 153, 0.2);
+}
+
+/* Festive text gradients */
+.text-festive-gradient {
+  background: linear-gradient(135deg, #6366f1, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Festive buttons */
+.btn-festive {
+  background: linear-gradient(135deg, #6366f1, #8b5cf6);
+  color: white;
+  border: none;
+  transition: all 0.3s ease;
+}
+
+.btn-festive:hover {
+  background: linear-gradient(135deg, #4f46e5, #7c3aed);
+  box-shadow: 0 0 20px rgba(139, 92, 246, 0.4);
+  transform: translateY(-1px);
+}
+
+/* Festive card with gradient border */
+.card-festive {
+  @apply bg-white dark:bg-white/5 rounded-xl shadow-sm;
+  position: relative;
+  overflow: hidden;
+}
+
+.card-festive::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(139, 92, 246, 0.5), rgba(236, 72, 153, 0.3));
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* Animated gradient for hero sections */
+.bg-animated-gradient {
+  background: linear-gradient(-45deg, #6366f1, #8b5cf6, #ec4899, #f97316);
+  background-size: 400% 400%;
+  animation: gradientShift 8s ease infinite;
+}
+
+@keyframes gradientShift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
 }
