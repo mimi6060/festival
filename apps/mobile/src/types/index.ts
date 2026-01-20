@@ -1,4 +1,6 @@
 // User types
+export type UserRole = 'ADMIN' | 'ORGANIZER' | 'STAFF' | 'CASHIER' | 'SECURITY' | 'USER';
+
 export interface User {
   id: string;
   email: string;
@@ -6,6 +8,7 @@ export interface User {
   lastName: string;
   phone?: string;
   avatar?: string;
+  role?: UserRole;
   createdAt: string;
 }
 
@@ -102,7 +105,13 @@ export interface RootStackParamList {
   StaffZones: undefined;
   Notifications: undefined;
   Profile: undefined;
+  // Vendor/POS routes
+  VendorPOS: { vendorId?: string; qrCode?: string };
+  VendorSelect: undefined;
 }
+
+// Re-export vendor types
+export * from './vendor';
 
 export interface AuthStackParamList {
   Login: undefined;

@@ -29,9 +29,9 @@ interface QuickAction {
 
 const QUICK_ACTIONS: QuickAction[] = [
   { id: 'scan', label: 'Scanner', icon: '📷', route: 'StaffValidation', color: '#3b82f6' },
+  { id: 'pos', label: 'POS/Bar', icon: '🍹', route: 'VendorSelect', color: '#ec4899' },
   { id: 'zones', label: 'Zones', icon: '📍', route: 'StaffZones', color: '#10b981' },
   { id: 'alerts', label: 'Alertes', icon: '🔔', route: 'Notifications', color: '#f59e0b' },
-  { id: 'profile', label: 'Profil', icon: '👤', route: 'Profile', color: '#8b5cf6' },
 ];
 
 // Mock data - in real app, fetch from API

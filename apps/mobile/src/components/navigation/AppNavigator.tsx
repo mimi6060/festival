@@ -19,6 +19,7 @@ import { HelpCenterScreen, ContactUsScreen } from '../../screens/Support';
 import { NotificationsScreen } from '../../screens/Notifications/NotificationsScreen';
 import { ProfileScreen } from '../../screens/Profile/ProfileScreen';
 import { StaffDashboardScreen, StaffValidationScreen, StaffZonesScreen } from '../../screens/Staff';
+import { VendorPOSScreen, VendorSelectScreen } from '../../screens/Vendor';
 
 import { useAuthStore } from '../../store';
 import { pushService } from '../../services';
@@ -227,6 +228,14 @@ export const AppNavigator: React.FC = () => {
           />
 
           <Stack.Screen name="StaffZones" component={StaffZonesScreen} options={fastSlideOptions} />
+
+          {/* Vendor/POS Screens */}
+          <Stack.Screen name="VendorPOS" component={VendorPOSScreen} options={fastSlideOptions} />
+          <Stack.Screen
+            name="VendorSelect"
+            component={VendorSelectScreen}
+            options={fastSlideOptions}
+          />
 
           <Stack.Screen
             name="Notifications"

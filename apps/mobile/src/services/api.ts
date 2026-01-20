@@ -41,6 +41,37 @@ class ApiService {
     }
   }
 
+  // Generic HTTP methods for vendor/POS operations
+  async get<T>(endpoint: string): Promise<T> {
+    const response = await this.request<T>(endpoint);
+    if (!response.success) {
+      throw new Error(response.message || 'Request failed');
+    }
+    return response.data;
+  }
+
+  async post<T>(endpoint: string, body?: unknown): Promise<T> {
+    const response = await this.request<T>(endpoint, {
+      method: 'POST',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!response.success) {
+      throw new Error(response.message || 'Request failed');
+    }
+    return response.data;
+  }
+
+  async patch<T>(endpoint: string, body?: unknown): Promise<T> {
+    const response = await this.request<T>(endpoint, {
+      method: 'PATCH',
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!response.success) {
+      throw new Error(response.message || 'Request failed');
+    }
+    return response.data;
+  }
+
   // Auth endpoints
   async login(
     email: string,
