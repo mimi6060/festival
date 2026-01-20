@@ -63,6 +63,7 @@ const linking: LinkingOptions<RootStackParamList> = {
       ChangePassword: 'profile/password',
       HelpCenter: 'help',
       ContactUs: 'contact',
+      Notifications: 'notifications',
     },
   },
 };
