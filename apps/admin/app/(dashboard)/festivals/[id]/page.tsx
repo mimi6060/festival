@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState } from 'react';
+import { use, useState, useCallback } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { mockFestivals, mockTicketCategories } from '@/lib/mock-data';
@@ -14,6 +14,8 @@ import {
   getStatusLabel,
 } from '@/lib/utils';
 import StatCard from '@/components/dashboard/StatCard';
+import { festivalsApi } from '@/lib/api';
+import type { Festival } from '@/types';
 
 interface FestivalDetailPageProps {
   params: Promise<{ id: string }>;
@@ -22,10 +24,68 @@ interface FestivalDetailPageProps {
 export default function FestivalDetailPage({ params }: FestivalDetailPageProps) {
   const { id } = use(params);
   const [isExporting, setIsExporting] = useState(false);
+  const [isPublishing, setIsPublishing] = useState(false);
+  const [publishError, setPublishError] = useState<string | null>(null);
+  const [publishSuccess, setPublishSuccess] = useState<string | null>(null);
   // Support both ID and slug lookups
-  const festival = mockFestivals.find((f) => f.id === id || f.slug === id);
+  const initialFestival = mockFestivals.find((f) => f.id === id || f.slug === id);
+  const [festival, setFestival] = useState(initialFestival);
   const festivalId = festival?.id || id;
   const categories = mockTicketCategories.filter((c) => c.festivalId === festivalId);
+
+  const handlePublish = useCallback(async () => {
+    if (!festival || isPublishing) {
+      return;
+    }
+
+    setIsPublishing(true);
+    setPublishError(null);
+    setPublishSuccess(null);
+
+    try {
+      const updatedFestival = await festivalsApi.publish(festival.id);
+      setFestival((prev) =>
+        prev ? { ...prev, status: updatedFestival.status as Festival['status'] } : prev
+      );
+      setPublishSuccess('Festival publie avec succes!');
+      // Clear success message after 5 seconds
+      setTimeout(() => setPublishSuccess(null), 5000);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Une erreur est survenue lors de la publication';
+      setPublishError(message);
+      // Clear error message after 8 seconds
+      setTimeout(() => setPublishError(null), 8000);
+    } finally {
+      setIsPublishing(false);
+    }
+  }, [festival, isPublishing]);
+
+  const handleUnpublish = useCallback(async () => {
+    if (!festival || isPublishing) {
+      return;
+    }
+
+    setIsPublishing(true);
+    setPublishError(null);
+    setPublishSuccess(null);
+
+    try {
+      const updatedFestival = await festivalsApi.unpublish(festival.id);
+      setFestival((prev) =>
+        prev ? { ...prev, status: updatedFestival.status as Festival['status'] } : prev
+      );
+      setPublishSuccess('Festival depublie avec succes!');
+      setTimeout(() => setPublishSuccess(null), 5000);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : 'Une erreur est survenue lors de la depublication';
+      setPublishError(message);
+      setTimeout(() => setPublishError(null), 8000);
+    } finally {
+      setIsPublishing(false);
+    }
+  }, [festival, isPublishing]);
 
   const handleExport = async (format: 'csv' | 'excel') => {
     if (!festival || isExporting) {
@@ -132,10 +192,54 @@ export default function FestivalDetailPage({ params }: FestivalDetailPageProps) 
                 </Link>
                 {festival.status === 'draft' && (
                   <button
-                    onClick={() => alert('Publish functionality coming soon')}
-                    className="btn-primary"
+                    onClick={handlePublish}
+                    disabled={isPublishing}
+                    className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
                   >
-                    Publier
+                    {isPublishing && (
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                    )}
+                    {isPublishing ? 'Publication...' : 'Publier'}
+                  </button>
+                )}
+                {festival.status === 'published' && (
+                  <button
+                    onClick={handleUnpublish}
+                    disabled={isPublishing}
+                    className="btn-secondary bg-white/90 hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                  >
+                    {isPublishing && (
+                      <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
+                      </svg>
+                    )}
+                    {isPublishing ? 'Depublication...' : 'Depublier'}
                   </button>
                 )}
               </div>
@@ -143,6 +247,77 @@ export default function FestivalDetailPage({ params }: FestivalDetailPageProps) 
           </div>
         </div>
       </div>
+
+      {/* Publish/Unpublish Feedback Messages */}
+      {publishError && (
+        <div className="bg-red-50 border border-red-200 rounded-lg p-4 flex items-start gap-3">
+          <svg
+            className="w-5 h-5 text-red-500 flex-shrink-0 mt-0.5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <div>
+            <h4 className="font-medium text-red-800">Erreur de publication</h4>
+            <p className="text-sm text-red-600 mt-1">{publishError}</p>
+          </div>
+          <button
+            onClick={() => setPublishError(null)}
+            className="ml-auto text-red-500 hover:text-red-700"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+      )}
+
+      {publishSuccess && (
+        <div className="bg-green-50 border border-green-200 rounded-lg p-4 flex items-start gap-3">
+          <svg
+            className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <div>
+            <h4 className="font-medium text-green-800">Succes</h4>
+            <p className="text-sm text-green-600 mt-1">{publishSuccess}</p>
+          </div>
+          <button
+            onClick={() => setPublishSuccess(null)}
+            className="ml-auto text-green-500 hover:text-green-700"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+      )}
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

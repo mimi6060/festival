@@ -74,6 +74,10 @@ export const festivalsApi = {
       capacity: number;
       checkIns: number;
     }>(`/admin/festivals/${id}/stats`),
+  publish: (id: string) =>
+    request<import('../types').Festival>(`/festivals/${id}/publish`, { method: 'POST' }),
+  unpublish: (id: string) =>
+    request<import('../types').Festival>(`/festivals/${id}/unpublish`, { method: 'POST' }),
 };
 
 // Ticket Categories
@@ -130,6 +134,23 @@ export const ticketsApi = {
 };
 
 // Users
+export interface CreateUserDto {
+  email: string;
+  password: string;
+  firstName: string;
+  lastName: string;
+  role: 'admin' | 'organizer' | 'staff' | 'user';
+  isActive?: boolean;
+}
+
+export interface UpdateUserDto {
+  email?: string;
+  firstName?: string;
+  lastName?: string;
+  role?: 'admin' | 'organizer' | 'staff' | 'user';
+  isActive?: boolean;
+}
+
 export const usersApi = {
   getAll: (params?: { page?: number; limit?: number; role?: string; search?: string }) => {
     const searchParams = new URLSearchParams();
@@ -150,8 +171,10 @@ export const usersApi = {
     );
   },
   getById: (id: string) => request<import('../types').User>(`/admin/users/${id}`),
-  update: (id: string, data: Partial<import('../types').User>) =>
-    request<import('../types').User>(`/admin/users/${id}`, { method: 'PUT', body: data }),
+  create: (data: CreateUserDto) =>
+    request<import('../types').User>('/admin/users', { method: 'POST', body: data }),
+  update: (id: string, data: UpdateUserDto) =>
+    request<import('../types').User>(`/admin/users/${id}`, { method: 'PATCH', body: data }),
   updateProfile: (id: string, data: { firstName?: string; lastName?: string; email?: string }) =>
     request<import('../types').User>(`/users/${id}`, { method: 'PATCH', body: data }),
   delete: (id: string) => request<void>(`/admin/users/${id}`, { method: 'DELETE' }),

@@ -1,20 +1,171 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import DataTable from '@/components/tables/DataTable';
 import ExportButton from '@/components/export/ExportButton';
 import { Avatar } from '@/components/ui';
 import { mockStaff, mockUsers, mockFestivals, getUserById, getFestivalById } from '@/lib/mock-data';
 import { staffExportColumns } from '@/lib/export';
 import { formatDateTime, cn } from '@/lib/utils';
+import { staffApi } from '@/lib/api';
 import type { Staff, TableColumn } from '@/types';
+
+type StaffRole = Staff['role'];
+
+interface StaffFormData {
+  userId: string;
+  festivalId: string;
+  role: StaffRole;
+  permissions: string[];
+  isActive: boolean;
+}
 
 export default function StaffPage() {
   const [roleFilter, setRoleFilter] = useState<string>('all');
   const [showModal, setShowModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
+  const [staffList, setStaffList] = useState<Staff[]>(mockStaff);
+  const [isLoading, setIsLoading] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
 
-  const enrichedStaff = mockStaff.map((s) => ({
+  // Form state
+  const [formData, setFormData] = useState<StaffFormData>({
+    userId: '',
+    festivalId: '',
+    role: 'volunteer',
+    permissions: [],
+    isActive: true,
+  });
+
+  // Reset form when modal opens/closes or when selectedStaff changes
+  const resetForm = useCallback((staff: Staff | null) => {
+    if (staff) {
+      setFormData({
+        userId: staff.userId,
+        festivalId: staff.festivalId,
+        role: staff.role,
+        permissions: staff.permissions,
+        isActive: staff.isActive,
+      });
+    } else {
+      setFormData({
+        userId: '',
+        festivalId: '',
+        role: 'volunteer',
+        permissions: [],
+        isActive: true,
+      });
+    }
+    setSaveError(null);
+    setSaveSuccess(false);
+  }, []);
+
+  const handleOpenModal = useCallback(
+    (staff: Staff | null) => {
+      setSelectedStaff(staff);
+      resetForm(staff);
+      setShowModal(true);
+    },
+    [resetForm]
+  );
+
+  const handleCloseModal = useCallback(() => {
+    setShowModal(false);
+    setSelectedStaff(null);
+    setSaveError(null);
+    setSaveSuccess(false);
+  }, []);
+
+  const handlePermissionChange = useCallback((permission: string, checked: boolean) => {
+    setFormData((prev) => {
+      if (permission === 'all') {
+        // If "all" is selected, clear other permissions and just use "all"
+        return {
+          ...prev,
+          permissions: checked ? ['all'] : [],
+        };
+      }
+
+      // Remove "all" if it was selected and we're adding specific permissions
+      let newPermissions = prev.permissions.filter((p) => p !== 'all');
+
+      if (checked) {
+        newPermissions = [...newPermissions, permission];
+      } else {
+        newPermissions = newPermissions.filter((p) => p !== permission);
+      }
+
+      return {
+        ...prev,
+        permissions: newPermissions,
+      };
+    });
+  }, []);
+
+  const handleSave = useCallback(async () => {
+    // Validate form
+    if (!formData.userId) {
+      setSaveError('Veuillez selectionner un utilisateur');
+      return;
+    }
+    if (!formData.festivalId) {
+      setSaveError('Veuillez selectionner un festival');
+      return;
+    }
+    if (formData.permissions.length === 0) {
+      setSaveError('Veuillez selectionner au moins une permission');
+      return;
+    }
+
+    setIsLoading(true);
+    setSaveError(null);
+    setSaveSuccess(false);
+
+    try {
+      const staffData = {
+        userId: formData.userId,
+        role: formData.role,
+        permissions: formData.permissions,
+        isActive: formData.isActive,
+      };
+
+      if (selectedStaff) {
+        // Update existing staff
+        const updatedStaff = await staffApi.update(
+          formData.festivalId,
+          selectedStaff.id,
+          staffData
+        );
+        // Update in local state
+        setStaffList((prev) =>
+          prev.map((s) => (s.id === selectedStaff.id ? { ...s, ...updatedStaff } : s))
+        );
+      } else {
+        // Create new staff
+        const newStaff = await staffApi.assign(formData.festivalId, {
+          userId: formData.userId,
+          role: formData.role,
+          permissions: formData.permissions,
+        });
+        // Add to local state
+        setStaffList((prev) => [...prev, newStaff]);
+      }
+
+      setSaveSuccess(true);
+      // Close modal after short delay to show success
+      setTimeout(() => {
+        handleCloseModal();
+      }, 1000);
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Une erreur est survenue';
+      setSaveError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [formData, selectedStaff, handleCloseModal]);
+
+  const enrichedStaff = staffList.map((s) => ({
     ...s,
     user: getUserById(s.userId),
     festival: getFestivalById(s.festivalId),
@@ -153,10 +304,7 @@ export default function StaffPage() {
           </p>
         </div>
         <button
-          onClick={() => {
-            setSelectedStaff(null);
-            setShowModal(true);
-          }}
+          onClick={() => handleOpenModal(null)}
           className="btn-primary flex items-center gap-2 w-fit"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -224,17 +372,13 @@ export default function StaffPage() {
         data={filteredStaff}
         columns={columns}
         searchPlaceholder="Rechercher un membre..."
-        onRowClick={(staff) => {
-          setSelectedStaff(staff);
-          setShowModal(true);
-        }}
+        onRowClick={(staff) => handleOpenModal(staff)}
         actions={(staff) => (
           <div className="flex items-center gap-1">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                setSelectedStaff(staff);
-                setShowModal(true);
+                handleOpenModal(staff);
               }}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
             >
@@ -286,7 +430,7 @@ export default function StaffPage() {
                 {selectedStaff ? "Modifier l'assignation" : 'Assigner un membre'}
               </h2>
               <button
-                onClick={() => setShowModal(false)}
+                onClick={handleCloseModal}
                 className="p-2 dark:text-white/50 text-gray-400 hover:dark:text-white hover:text-gray-600 hover:dark:bg-white/5 hover:bg-gray-100 rounded-lg transition-colors"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -299,10 +443,33 @@ export default function StaffPage() {
                 </svg>
               </button>
             </div>
-            <form className="p-6 space-y-4">
+            <form className="p-6 space-y-4" onSubmit={(e) => e.preventDefault()}>
+              {/* Error message */}
+              {saveError && (
+                <div className="p-3 bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 rounded-lg">
+                  <p className="text-sm text-red-600 dark:text-red-400">{saveError}</p>
+                </div>
+              )}
+
+              {/* Success message */}
+              {saveSuccess && (
+                <div className="p-3 bg-green-50 dark:bg-green-500/10 border border-green-200 dark:border-green-500/20 rounded-lg">
+                  <p className="text-sm text-green-600 dark:text-green-400">
+                    {selectedStaff
+                      ? 'Membre mis a jour avec succes!'
+                      : 'Membre assigne avec succes!'}
+                  </p>
+                </div>
+              )}
+
               <div>
                 <label className="form-label">Utilisateur</label>
-                <select className="input-field" defaultValue={selectedStaff?.userId || ''}>
+                <select
+                  className="input-field"
+                  value={formData.userId}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, userId: e.target.value }))}
+                  disabled={isLoading || !!selectedStaff}
+                >
                   <option value="">Selectionner un utilisateur</option>
                   {mockUsers.map((user) => (
                     <option key={user.id} value={user.id}>
@@ -313,7 +480,12 @@ export default function StaffPage() {
               </div>
               <div>
                 <label className="form-label">Festival</label>
-                <select className="input-field" defaultValue={selectedStaff?.festivalId || ''}>
+                <select
+                  className="input-field"
+                  value={formData.festivalId}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, festivalId: e.target.value }))}
+                  disabled={isLoading || !!selectedStaff}
+                >
                   <option value="">Selectionner un festival</option>
                   {mockFestivals
                     .filter((f) => f.status !== 'completed')
@@ -326,7 +498,14 @@ export default function StaffPage() {
               </div>
               <div>
                 <label className="form-label">Role</label>
-                <select className="input-field" defaultValue={selectedStaff?.role || 'volunteer'}>
+                <select
+                  className="input-field"
+                  value={formData.role}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, role: e.target.value as StaffRole }))
+                  }
+                  disabled={isLoading}
+                >
                   {roleOptions
                     .filter((r) => r.value !== 'all')
                     .map((option) => (
@@ -344,7 +523,9 @@ export default function StaffPage() {
                       <input
                         type="checkbox"
                         className="w-4 h-4 rounded dark:border-white/20 border-gray-300 text-primary-600 focus:ring-primary-500"
-                        defaultChecked={selectedStaff?.permissions.includes(perm.value)}
+                        checked={formData.permissions.includes(perm.value)}
+                        onChange={(e) => handlePermissionChange(perm.value, e.target.checked)}
+                        disabled={isLoading}
                       />
                       <span className="text-sm dark:text-white/70 text-gray-700">{perm.label}</span>
                     </label>
@@ -356,7 +537,9 @@ export default function StaffPage() {
                   type="checkbox"
                   id="isActive"
                   className="w-4 h-4 rounded dark:border-white/20 border-gray-300 text-primary-600 focus:ring-primary-500"
-                  defaultChecked={selectedStaff?.isActive ?? true}
+                  checked={formData.isActive}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, isActive: e.target.checked }))}
+                  disabled={isLoading}
                 />
                 <label htmlFor="isActive" className="text-sm dark:text-white/70 text-gray-700">
                   Assignation active
@@ -364,19 +547,44 @@ export default function StaffPage() {
               </div>
             </form>
             <div className="flex items-center justify-end gap-3 px-6 py-4 dark:bg-white/5 bg-gray-50 border-t dark:border-white/10 border-gray-200 rounded-b-xl">
-              <button onClick={() => setShowModal(false)} className="btn-secondary">
+              <button onClick={handleCloseModal} className="btn-secondary" disabled={isLoading}>
                 Annuler
               </button>
               <button
                 type="submit"
-                onClick={(e) => {
-                  e.preventDefault();
-                  alert('Staff save functionality coming soon');
-                  setShowModal(false);
-                }}
-                className="btn-primary"
+                onClick={handleSave}
+                className="btn-primary flex items-center gap-2"
+                disabled={isLoading || saveSuccess}
               >
-                {selectedStaff ? 'Enregistrer' : 'Assigner'}
+                {isLoading && (
+                  <svg
+                    className="animate-spin h-4 w-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    />
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    />
+                  </svg>
+                )}
+                {isLoading
+                  ? 'Enregistrement...'
+                  : saveSuccess
+                    ? 'Enregistre!'
+                    : selectedStaff
+                      ? 'Enregistrer'
+                      : 'Assigner'}
               </button>
             </div>
           </div>

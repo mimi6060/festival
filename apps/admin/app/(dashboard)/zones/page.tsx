@@ -22,6 +22,16 @@ interface Zone {
   createdAt: string;
 }
 
+interface ZoneFormData {
+  name: string;
+  description: string;
+  type: Zone['type'];
+  accessLevel: Zone['accessLevel'];
+  capacity: number;
+  checkpoints: number;
+  status: 'active' | 'inactive';
+}
+
 interface AccessLog {
   id: string;
   zoneId: string;
@@ -172,6 +182,18 @@ export default function ZonesPage() {
   const [zones, setZones] = useState<Zone[]>(mockZones);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saveSuccess, setSaveSuccess] = useState(false);
+  const [formData, setFormData] = useState<ZoneFormData>({
+    name: '',
+    description: '',
+    type: 'entrance',
+    accessLevel: 'ticket',
+    capacity: 0,
+    checkpoints: 0,
+    status: 'active',
+  });
 
   const filteredZones = typeFilter === 'all' ? zones : zones.filter((z) => z.type === typeFilter);
 
@@ -367,6 +389,107 @@ export default function ZonesPage() {
     }
   }, [zoneToDelete]);
 
+  const openZoneModal = useCallback((zone: Zone | null) => {
+    setSelectedZone(zone);
+    setSaveError(null);
+    setSaveSuccess(false);
+    if (zone) {
+      setFormData({
+        name: zone.name,
+        description: zone.description || '',
+        type: zone.type,
+        accessLevel: zone.accessLevel,
+        capacity: zone.capacity,
+        checkpoints: zone.checkpoints,
+        status: zone.status === 'full' ? 'active' : zone.status,
+      });
+    } else {
+      setFormData({
+        name: '',
+        description: '',
+        type: 'entrance',
+        accessLevel: 'ticket',
+        capacity: 0,
+        checkpoints: 0,
+        status: 'active',
+      });
+    }
+    setShowZoneModal(true);
+  }, []);
+
+  const handleSaveZone = useCallback(async () => {
+    if (!formData.name.trim()) {
+      setSaveError('Le nom de la zone est requis');
+      return;
+    }
+
+    if (formData.capacity <= 0) {
+      setSaveError('La capacite doit etre superieure a 0');
+      return;
+    }
+
+    setSaving(true);
+    setSaveError(null);
+    setSaveSuccess(false);
+
+    try {
+      const zoneData = {
+        name: formData.name.trim(),
+        description: formData.description.trim() || undefined,
+        type: formData.type,
+        accessLevel: formData.accessLevel,
+        capacity: formData.capacity,
+        status: formData.status,
+      };
+
+      if (selectedZone) {
+        // Update existing zone
+        const updatedZone = await zonesApi.update(selectedZone.id, zoneData);
+        setZones((currentZones) =>
+          currentZones.map((z) =>
+            z.id === selectedZone.id
+              ? {
+                  ...z,
+                  ...updatedZone,
+                  checkpoints: formData.checkpoints,
+                  festivalName: z.festivalName,
+                }
+              : z
+          )
+        );
+      } else {
+        // Create new zone - using a default festivalId for now
+        // In a real app, this would come from context or a selector
+        const defaultFestivalId = '1';
+        const newZone = await zonesApi.create(defaultFestivalId, zoneData);
+        setZones((currentZones) => [
+          ...currentZones,
+          {
+            ...newZone,
+            checkpoints: formData.checkpoints,
+            currentOccupancy: 0,
+            festivalName: 'Summer Beats Festival',
+          } as Zone,
+        ]);
+      }
+
+      setSaveSuccess(true);
+      // Close modal after a brief delay to show success
+      setTimeout(() => {
+        setShowZoneModal(false);
+        setSaveSuccess(false);
+      }, 500);
+    } catch (err) {
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : 'Une erreur est survenue lors de la sauvegarde de la zone';
+      setSaveError(errorMessage);
+    } finally {
+      setSaving(false);
+    }
+  }, [formData, selectedZone]);
+
   // Stats
   const totalCapacity = zones.reduce((sum, z) => sum + z.capacity, 0);
   const totalOccupancy = zones.reduce((sum, z) => sum + z.currentOccupancy, 0);
@@ -384,10 +507,7 @@ export default function ZonesPage() {
           </p>
         </div>
         <button
-          onClick={() => {
-            setSelectedZone(null);
-            setShowZoneModal(true);
-          }}
+          onClick={() => openZoneModal(null)}
           className="btn-primary flex items-center gap-2 w-fit"
         >
           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -487,17 +607,13 @@ export default function ZonesPage() {
             data={filteredZones}
             columns={zoneColumns}
             searchPlaceholder="Rechercher une zone..."
-            onRowClick={(zone) => {
-              setSelectedZone(zone);
-              setShowZoneModal(true);
-            }}
+            onRowClick={(zone) => openZoneModal(zone)}
             actions={(zone) => (
               <div className="flex items-center gap-1">
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
-                    setSelectedZone(zone);
-                    setShowZoneModal(true);
+                    openZoneModal(zone);
                   }}
                   className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
                 >
@@ -571,14 +687,30 @@ export default function ZonesPage() {
                 </svg>
               </button>
             </div>
-            <form className="p-6 space-y-4">
+            <form className="p-6 space-y-4" onSubmit={(e) => e.preventDefault()}>
+              {/* Error message */}
+              {saveError && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+                  <p className="text-sm text-red-600 dark:text-red-400">{saveError}</p>
+                </div>
+              )}
+              {/* Success message */}
+              {saveSuccess && (
+                <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
+                  <p className="text-sm text-green-600 dark:text-green-400">
+                    Zone {selectedZone ? 'mise a jour' : 'creee'} avec succes!
+                  </p>
+                </div>
+              )}
               <div>
                 <label className="form-label">Nom de la zone</label>
                 <input
                   type="text"
                   className="input-field"
                   placeholder="Ex: Entree Principale"
-                  defaultValue={selectedZone?.name}
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  disabled={saving}
                 />
               </div>
               <div>
@@ -587,13 +719,22 @@ export default function ZonesPage() {
                   className="input-field"
                   rows={3}
                   placeholder="Description de la zone..."
-                  defaultValue={selectedZone?.description}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                  disabled={saving}
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="form-label">Type</label>
-                  <select className="input-field" defaultValue={selectedZone?.type || 'entrance'}>
+                  <select
+                    className="input-field"
+                    value={formData.type}
+                    onChange={(e) =>
+                      setFormData({ ...formData, type: e.target.value as Zone['type'] })
+                    }
+                    disabled={saving}
+                  >
                     {Object.entries(typeLabels).map(([value, label]) => (
                       <option key={value} value={value}>
                         {label}
@@ -605,7 +746,14 @@ export default function ZonesPage() {
                   <label className="form-label">Niveau d'acces</label>
                   <select
                     className="input-field"
-                    defaultValue={selectedZone?.accessLevel || 'ticket'}
+                    value={formData.accessLevel}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        accessLevel: e.target.value as Zone['accessLevel'],
+                      })
+                    }
+                    disabled={saving}
                   >
                     {Object.entries(accessLevelLabels).map(([value, label]) => (
                       <option key={value} value={value}>
@@ -622,7 +770,11 @@ export default function ZonesPage() {
                     type="number"
                     className="input-field"
                     placeholder="5000"
-                    defaultValue={selectedZone?.capacity}
+                    value={formData.capacity || ''}
+                    onChange={(e) =>
+                      setFormData({ ...formData, capacity: parseInt(e.target.value) || 0 })
+                    }
+                    disabled={saving}
                   />
                 </div>
                 <div>
@@ -631,32 +783,66 @@ export default function ZonesPage() {
                     type="number"
                     className="input-field"
                     placeholder="4"
-                    defaultValue={selectedZone?.checkpoints}
+                    value={formData.checkpoints || ''}
+                    onChange={(e) =>
+                      setFormData({ ...formData, checkpoints: parseInt(e.target.value) || 0 })
+                    }
+                    disabled={saving}
                   />
                 </div>
               </div>
               <div>
                 <label className="form-label">Statut</label>
-                <select className="input-field" defaultValue={selectedZone?.status || 'active'}>
+                <select
+                  className="input-field"
+                  value={formData.status}
+                  onChange={(e) =>
+                    setFormData({ ...formData, status: e.target.value as 'active' | 'inactive' })
+                  }
+                  disabled={saving}
+                >
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
                 </select>
               </div>
             </form>
             <div className="flex items-center justify-end gap-3 px-6 py-4 dark:bg-white/5 bg-gray-50 border-t dark:border-white/10 border-gray-200 rounded-b-xl">
-              <button onClick={() => setShowZoneModal(false)} className="btn-secondary">
+              <button
+                onClick={() => setShowZoneModal(false)}
+                className="btn-secondary"
+                disabled={saving}
+              >
                 Annuler
               </button>
               <button
-                type="submit"
-                onClick={(e) => {
-                  e.preventDefault();
-                  alert('Zone save functionality coming soon');
-                  setShowZoneModal(false);
-                }}
-                className="btn-primary"
+                type="button"
+                onClick={handleSaveZone}
+                className="btn-primary flex items-center gap-2"
+                disabled={saving}
               >
-                {selectedZone ? 'Enregistrer' : 'Creer'}
+                {saving && (
+                  <svg
+                    className="animate-spin h-4 w-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                  >
+                    <circle
+                      className="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      strokeWidth="4"
+                    ></circle>
+                    <path
+                      className="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                    ></path>
+                  </svg>
+                )}
+                {saving ? 'Sauvegarde...' : selectedZone ? 'Enregistrer' : 'Creer'}
               </button>
             </div>
           </div>
