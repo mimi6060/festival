@@ -27,6 +27,24 @@ _Aucune tâche en cours_
 
 ## Recemment Complete (2026-01-21)
 
+### Sprint 6 - Remove Hardcoded Frontend Data
+
+- [x] **Homepage Stats** (`apps/web/app/page.tsx`)
+  - Removed hardcoded fallback stats ("50+", "100K+", "500+")
+  - Stats now show real API values or 0 if no data
+  - Uses `formatNumber()` for proper formatting
+
+- [x] **Festival Detail Page** (`apps/web/app/festivals/[slug]/page.tsx`)
+  - Removed `FALLBACK_FESTIVALS` mock data object
+  - Removed FestivalLineup import (no longer needed)
+  - Added `fetchArtistCount()` function to get real artist count from API
+  - Replaced hardcoded "100+" artists with real count from `/program/artists`
+  - Replaced hardcoded "5" stages fallback with real count
+  - Replaced hardcoded "50K" capacity fallback with real maxCapacity
+  - Simplified code by removing unreachable fallback branches
+
+---
+
 ### Seed Data - Famous Artists & World Festivals
 
 - [x] **Famous International Artists** (`prisma/seed.ts`)

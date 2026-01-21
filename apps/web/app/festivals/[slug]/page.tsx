@@ -4,7 +4,6 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import {
   FestivalHero,
-  FestivalLineup,
   FestivalShare,
   FestivalProgram,
   FestivalMap,
@@ -15,37 +14,6 @@ export const dynamic = 'force-dynamic';
 
 // API URL for server-side fetching
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
-
-// Fallback mock data for when API is unavailable (for initial development)
-const FALLBACK_FESTIVALS: Record<
-  string,
-  Festival & {
-    lineup: { name: string; genre: string; time: string; stage: string }[];
-    schedule: { date: string; events: { time: string; title: string; stage: string }[] }[];
-  }
-> = {
-  'electric-dreams-2025': {
-    id: '1',
-    slug: 'electric-dreams-2025',
-    name: 'Electric Dreams Festival',
-    description:
-      'Experience the ultimate electronic music festival featuring world-renowned DJs and immersive art installations across 5 stages. Join us for 4 days of non-stop music, art, and unforgettable memories.',
-    location: 'Barcelona, Spain',
-    startDate: '2025-07-15',
-    endDate: '2025-07-18',
-    imageUrl: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=1920&h=1080&fit=crop',
-    price: { from: 199, currency: 'EUR' },
-    genres: ['Electronic', 'House', 'Techno', 'Trance'],
-    isFeatured: true,
-    lineup: [
-      { name: 'David Guetta', genre: 'House', time: 'Saturday 23:00', stage: 'Main Stage' },
-      { name: 'Charlotte de Witte', genre: 'Techno', time: 'Friday 22:00', stage: 'Techno Arena' },
-      { name: 'Fisher', genre: 'House', time: 'Saturday 21:00', stage: 'Main Stage' },
-      { name: 'Amelie Lens', genre: 'Techno', time: 'Sunday 00:00', stage: 'Techno Arena' },
-    ],
-    schedule: [],
-  },
-};
 
 interface ApiFestival {
   id: string;
@@ -98,11 +66,27 @@ async function fetchFestival(slug: string): Promise<ApiFestival | null> {
   }
 }
 
+// Fetch artist count for a festival from API
+async function fetchArtistCount(festivalId: string): Promise<number> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/program/artists?festivalId=${festivalId}`, {
+      next: { revalidate: 60 }, // Cache for 60 seconds
+    });
+
+    if (!res.ok) {
+      return 0;
+    }
+
+    const artists = await res.json();
+    return Array.isArray(artists) ? artists.length : 0;
+  } catch {
+    console.error('Failed to fetch artist count from API');
+    return 0;
+  }
+}
+
 // Transform API festival to component format
-function transformApiFestival(apiFestival: ApiFestival): Festival & {
-  lineup: { name: string; genre: string; time: string; stage: string }[];
-  schedule: { date: string; events: { time: string; title: string; stage: string }[] }[];
-} {
+function transformApiFestival(apiFestival: ApiFestival): Festival {
   // Get minimum price from ticket categories
   let minPrice = 0;
   if (apiFestival.ticketCategories && apiFestival.ticketCategories.length > 0) {
@@ -131,9 +115,6 @@ function transformApiFestival(apiFestival: ApiFestival): Festival & {
     genres: apiFestival.genres || [],
     isFeatured: apiFestival.isFeatured || false,
     isSoldOut: apiFestival.currentAttendees >= apiFestival.maxCapacity,
-    // TODO: Fetch lineup from performances API when available
-    lineup: [],
-    schedule: [],
   };
 }
 
@@ -144,7 +125,7 @@ interface PageProps {
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { slug } = await params;
 
-  // Try to fetch from API first
+  // Fetch from API
   const apiFestival = await fetchFestival(slug);
   if (apiFestival) {
     return {
@@ -158,47 +139,24 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
     };
   }
 
-  // Fall back to mock data
-  const festival = FALLBACK_FESTIVALS[slug];
-  if (!festival) {
-    return {
-      title: 'Festival Not Found',
-    };
-  }
-
   return {
-    title: festival.name,
-    description: festival.description,
-    openGraph: {
-      title: festival.name,
-      description: festival.description,
-      images: [festival.imageUrl],
-    },
+    title: 'Festival Not Found',
   };
 }
 
 export default async function FestivalDetailPage({ params }: PageProps) {
   const { slug } = await params;
 
-  // Try to fetch from API first
+  // Fetch from API
   const apiFestival = await fetchFestival(slug);
-  let festival:
-    | (Festival & {
-        lineup: { name: string; genre: string; time: string; stage: string }[];
-        schedule: { date: string; events: { time: string; title: string; stage: string }[] }[];
-      })
-    | null = null;
 
-  if (apiFestival) {
-    festival = transformApiFestival(apiFestival);
-  } else {
-    // Fall back to mock data
-    festival = FALLBACK_FESTIVALS[slug] || null;
-  }
-
-  if (!festival) {
+  if (!apiFestival) {
     notFound();
   }
+
+  // Fetch artist count in parallel
+  const artistCount = await fetchArtistCount(apiFestival.id);
+  const festival = transformApiFestival(apiFestival);
 
   // Calculate stats from festival data
   const festivalDays =
@@ -206,6 +164,7 @@ export default async function FestivalDetailPage({ params }: PageProps) {
       (new Date(festival.endDate).getTime() - new Date(festival.startDate).getTime()) /
         (1000 * 60 * 60 * 24)
     ) + 1;
+  const stageCount = apiFestival.stages?.length || 0;
 
   return (
     <div className="min-h-screen">
@@ -224,13 +183,11 @@ export default async function FestivalDetailPage({ params }: PageProps) {
                 <p className="text-white/70 leading-relaxed">{festival.description}</p>
                 <div className="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
                   <div className="text-center p-4 rounded-xl bg-white/5">
-                    <div className="text-2xl font-bold text-primary-400">
-                      {apiFestival?.stages?.length || 5}
-                    </div>
+                    <div className="text-2xl font-bold text-primary-400">{stageCount}</div>
                     <div className="text-white/50 text-sm">Stages</div>
                   </div>
                   <div className="text-center p-4 rounded-xl bg-white/5">
-                    <div className="text-2xl font-bold text-primary-400">100+</div>
+                    <div className="text-2xl font-bold text-primary-400">{artistCount}</div>
                     <div className="text-white/50 text-sm">Artists</div>
                   </div>
                   <div className="text-center p-4 rounded-xl bg-white/5">
@@ -239,7 +196,7 @@ export default async function FestivalDetailPage({ params }: PageProps) {
                   </div>
                   <div className="text-center p-4 rounded-xl bg-white/5">
                     <div className="text-2xl font-bold text-primary-400">
-                      {apiFestival ? Math.round(apiFestival.maxCapacity / 1000) + 'K' : '50K'}
+                      {Math.round(apiFestival.maxCapacity / 1000)}K
                     </div>
                     <div className="text-white/50 text-sm">Capacity</div>
                   </div>
@@ -248,30 +205,17 @@ export default async function FestivalDetailPage({ params }: PageProps) {
             </section>
 
             {/* Program - Interactive schedule with filters */}
-            {apiFestival && (
-              <FestivalProgram
-                festivalId={apiFestival.id}
-                festivalSlug={apiFestival.slug}
-                startDate={apiFestival.startDate}
-                endDate={apiFestival.endDate}
-              />
-            )}
-
-            {/* Lineup - fallback for when we have static lineup data but no API */}
-            {!apiFestival && festival.lineup && festival.lineup.length > 0 && (
-              <FestivalLineup artists={festival.lineup} initialCount={4} />
-            )}
+            <FestivalProgram
+              festivalId={apiFestival.id}
+              festivalSlug={apiFestival.slug}
+              startDate={apiFestival.startDate}
+              endDate={apiFestival.endDate}
+            />
 
             {/* Location & Map with POIs */}
             <section id="location-section">
               <h2 className="text-2xl font-bold text-white mb-6">Carte & Points d&apos;interet</h2>
-              {apiFestival ? (
-                <FestivalMap festivalId={apiFestival.id} location={festival.location} />
-              ) : (
-                <Card variant="solid" padding="lg">
-                  <p className="text-white/60">Carte non disponible</p>
-                </Card>
-              )}
+              <FestivalMap festivalId={apiFestival.id} location={festival.location} />
             </section>
           </div>
 

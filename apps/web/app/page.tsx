@@ -9,6 +9,15 @@ export const dynamic = 'force-dynamic';
 // API URL for server-side fetching
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
 
+interface PlatformStats {
+  totalFestivals: number;
+  totalArtists: number;
+  totalUsers: number;
+  totalTicketsSold: number;
+  totalRevenue: number;
+  activeFestivals: number;
+}
+
 interface ApiFestival {
   id: string;
   slug: string;
@@ -35,6 +44,25 @@ interface ApiFestival {
     price: string;
     isActive: boolean;
   }[];
+}
+
+// Fetch platform statistics from API
+async function fetchPlatformStats(): Promise<PlatformStats | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/platform-stats`, {
+      next: { revalidate: 300 }, // Cache for 5 minutes
+    });
+
+    if (!res.ok) {
+      console.error('Failed to fetch platform stats:', res.status);
+      return null;
+    }
+
+    return res.json();
+  } catch (error) {
+    console.error('Failed to fetch platform stats from API:', error);
+    return null;
+  }
 }
 
 // Fetch featured festivals from API
@@ -88,9 +116,34 @@ function transformFestival(festival: ApiFestival): FestivalCardType {
   };
 }
 
+// Format large numbers with thousands separator
+function formatNumber(num: number): string {
+  if (num >= 1000000) {
+    return `${(num / 1000000).toFixed(1)}M`;
+  }
+  if (num >= 1000) {
+    return `${(num / 1000).toFixed(0)}K`;
+  }
+  return num.toLocaleString('fr-FR');
+}
+
 export default async function Home() {
-  const apiFestivals = await fetchFeaturedFestivals();
+  // Fetch data in parallel for performance
+  const [apiFestivals, platformStats] = await Promise.all([
+    fetchFeaturedFestivals(),
+    fetchPlatformStats(),
+  ]);
   const featuredFestivals = apiFestivals.map(transformFestival);
+
+  // Default stats if API fails
+  const stats = platformStats || {
+    totalFestivals: 0,
+    totalArtists: 0,
+    totalUsers: 0,
+    totalTicketsSold: 0,
+    totalRevenue: 0,
+    activeFestivals: 0,
+  };
 
   return (
     <main className="min-h-screen bg-[#0a0a0a]">
@@ -160,18 +213,24 @@ export default async function Home() {
             </Link>
           </div>
 
-          {/* Stats */}
+          {/* Stats - Display real platform data */}
           <div className="mt-16 grid grid-cols-3 gap-8 max-w-2xl mx-auto">
             <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-gradient-festive">50+</div>
+              <div className="text-3xl sm:text-4xl font-bold text-gradient-festive">
+                {formatNumber(stats.totalFestivals)}
+              </div>
               <div className="text-sm text-gray-400 mt-1">Festivals</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-gradient-festive">100K+</div>
+              <div className="text-3xl sm:text-4xl font-bold text-gradient-festive">
+                {formatNumber(stats.totalUsers)}
+              </div>
               <div className="text-sm text-gray-400 mt-1">Festivaliers</div>
             </div>
             <div className="text-center">
-              <div className="text-3xl sm:text-4xl font-bold text-gradient-festive">500+</div>
+              <div className="text-3xl sm:text-4xl font-bold text-gradient-festive">
+                {formatNumber(stats.totalArtists)}
+              </div>
               <div className="text-sm text-gray-400 mt-1">Artistes</div>
             </div>
           </div>
@@ -294,7 +353,7 @@ export default async function Home() {
             </Link>
 
             {/* Cashless Card */}
-            <Link href="/cashless" className="glass-card-festive p-8 group hover-lift">
+            <Link href="/about#cashless" className="glass-card-festive p-8 group hover-lift">
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-pink-500/20 to-orange-500/20 flex items-center justify-center mb-6 group-hover:glow-pink transition-all">
                 <svg
                   className="w-7 h-7 text-pink-400"
@@ -320,7 +379,7 @@ export default async function Home() {
             </Link>
 
             {/* Programme Card */}
-            <Link href="/programme" className="glass-card-festive p-8 group hover-lift">
+            <Link href="/festivals" className="glass-card-festive p-8 group hover-lift">
               <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-purple-500/20 flex items-center justify-center mb-6 group-hover:glow-cyan transition-all">
                 <svg
                   className="w-7 h-7 text-cyan-400"
