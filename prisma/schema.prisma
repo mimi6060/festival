@@ -287,6 +287,8 @@ model Festival {
   staffMembers     StaffMember[]
   promoCodes       PromoCode[]
   languageSettings FestivalLanguageSettings?
+  sponsors         Sponsor[]
+  partners         Partner[]
 
   @@index([organizerId])
   @@index([slug])
@@ -1872,4 +1874,81 @@ model FestivalLocalizedContent {
   @@index([languageSettingsId])
   @@index([language])
   @@index([isPublished])
+}
+
+// Sponsor model for festival sponsors
+enum SponsorTier {
+  PLATINUM   // Top tier sponsor
+  GOLD       // Second tier
+  SILVER     // Third tier
+  BRONZE     // Fourth tier
+  PARTNER    // Basic partner level
+}
+
+model Sponsor {
+  id              String        @id @default(uuid())
+  festivalId      String
+  name            String
+  description     String?
+  logoUrl         String?
+  websiteUrl      String?
+  tier            SponsorTier   @default(PARTNER)
+  displayOrder    Int           @default(0)    // Order in which to display
+  isActive        Boolean       @default(true)
+  contactName     String?
+  contactEmail    String?
+  contactPhone    String?
+  startDate       DateTime?     // When sponsorship starts
+  endDate         DateTime?     // When sponsorship ends
+  notes           String?       // Internal notes
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  festival        Festival      @relation(fields: [festivalId], references: [id], onDelete: Cascade)
+
+  @@index([festivalId])
+  @@index([tier])
+  @@index([isActive])
+  @@index([displayOrder])
+}
+
+// Partner model for festival partners (different from sponsors - partners provide services)
+enum PartnerType {
+  MEDIA          // Media partners (TV, Radio, Press)
+  TECHNOLOGY     // Tech partners
+  TRANSPORT      // Transport partners (buses, trains)
+  ACCOMMODATION  // Hotel partners
+  FOOD_BEVERAGE  // Food & drink partners
+  SECURITY       // Security partners
+  MEDICAL        // Medical partners
+  ARTIST_AGENCY  // Booking agencies
+  OTHER          // Other partners
+}
+
+model Partner {
+  id              String        @id @default(uuid())
+  festivalId      String
+  name            String
+  description     String?
+  logoUrl         String?
+  websiteUrl      String?
+  type            PartnerType   @default(OTHER)
+  displayOrder    Int           @default(0)
+  isActive        Boolean       @default(true)
+  contactName     String?
+  contactEmail    String?
+  contactPhone    String?
+  servicesProvided String?      // Description of services provided
+  notes           String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  // Relations
+  festival        Festival      @relation(fields: [festivalId], references: [id], onDelete: Cascade)
+
+  @@index([festivalId])
+  @@index([type])
+  @@index([isActive])
+  @@index([displayOrder])
 }

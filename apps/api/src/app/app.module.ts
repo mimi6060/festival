@@ -44,6 +44,9 @@ import { InvoicesModule } from '../modules/invoices';
 import { CampaignsModule } from '../modules/campaigns';
 import { ApiKeysModule } from '../modules/api-keys';
 import { PublicApiModule } from '../modules/public-api';
+import { StatsModule } from '../modules/stats';
+import { SponsorsModule } from '../modules/sponsors/sponsors.module';
+import { PartnersModule } from '../modules/partners/partners.module';
 
 // Guards
 import { RateLimitGuard } from '../common/guards';
@@ -100,6 +103,9 @@ import { LanguageMiddleware } from '../common/middleware';
     CampaignsModule,
     ApiKeysModule,
     PublicApiModule,
+    StatsModule,
+    SponsorsModule,
+    PartnersModule,
   ],
   controllers: [AppController],
   providers: [
