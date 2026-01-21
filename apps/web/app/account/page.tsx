@@ -1,45 +1,31 @@
-import { Metadata } from 'next';
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { useAuthStore, selectUser, selectIsAuthenticated, selectIsLoading } from '@/stores/auth.store';
 
-export const dynamic = 'force-dynamic';
+const API_URL = '/api';
 
-export const metadata: Metadata = {
-  title: 'My Account',
-  description: 'Manage your FestivalHub account, tickets, and orders.',
-};
+interface UpcomingFestival {
+  id: string;
+  name: string;
+  date: string;
+  location: string;
+  ticketType: string;
+  ticketCount: number;
+}
 
-// Mock user data
-const user = {
-  firstName: 'John',
-  lastName: 'Doe',
-  email: 'john.doe@example.com',
-  phone: '+1 555 123 4567',
-  memberSince: '2024-01-15',
-};
-
-const upcomingFestivals = [
-  {
-    id: '1',
-    name: 'Electric Dreams Festival',
-    date: 'July 15-18, 2025',
-    location: 'Barcelona, Spain',
-    ticketType: 'VIP Pass',
-    ticketCount: 2,
-  },
-];
-
-const recentOrders = [
-  {
-    id: 'FH-ABC123',
-    date: '2024-12-15',
-    festival: 'Electric Dreams Festival',
-    total: 798,
-    currency: 'EUR',
-    status: 'confirmed',
-  },
-];
+interface RecentOrder {
+  id: string;
+  date: string;
+  festival: string;
+  total: number;
+  currency: string;
+  status: string;
+}
 
 const quickLinks = [
   {
@@ -86,6 +72,127 @@ const quickLinks = [
 ];
 
 export default function AccountPage() {
+  const router = useRouter();
+  const user = useAuthStore(selectUser);
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
+  const isAuthLoading = useAuthStore(selectIsLoading);
+  const initialize = useAuthStore((state) => state.initialize);
+
+  const [upcomingFestivals, setUpcomingFestivals] = useState<UpcomingFestival[]>([]);
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [isLoadingData, setIsLoadingData] = useState(true);
+
+  // Initialize auth on mount
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthLoading && !isAuthenticated) {
+      router.push('/auth/login?redirect=/account');
+    }
+  }, [isAuthLoading, isAuthenticated, router]);
+
+  // Fetch user data (tickets and orders)
+  useEffect(() => {
+    async function fetchUserData() {
+      if (!isAuthenticated || !user) return;
+
+      setIsLoadingData(true);
+      try {
+        // Fetch upcoming festivals from tickets
+        const ticketsRes = await fetch(`${API_URL}/tickets/my-tickets`, {
+          credentials: 'include',
+        });
+        if (ticketsRes.ok) {
+          const ticketsData = await ticketsRes.json();
+          const tickets = Array.isArray(ticketsData) ? ticketsData : ticketsData.data || [];
+
+          // Group tickets by festival
+          const festivalMap = new Map<string, UpcomingFestival>();
+          for (const ticket of tickets) {
+            if (ticket.status === 'valid' && ticket.festival) {
+              const existing = festivalMap.get(ticket.festival.id);
+              if (existing) {
+                existing.ticketCount += 1;
+              } else {
+                festivalMap.set(ticket.festival.id, {
+                  id: ticket.festival.id,
+                  name: ticket.festival.name,
+                  date: formatFestivalDate(ticket.festival.startDate, ticket.festival.endDate),
+                  location: ticket.festival.location,
+                  ticketType: ticket.ticketCategory?.name || 'Standard',
+                  ticketCount: 1,
+                });
+              }
+            }
+          }
+          setUpcomingFestivals(Array.from(festivalMap.values()));
+        }
+
+        // Fetch recent orders
+        const ordersRes = await fetch(`${API_URL}/payments/my-orders?limit=5`, {
+          credentials: 'include',
+        });
+        if (ordersRes.ok) {
+          const ordersData = await ordersRes.json();
+          const orders = Array.isArray(ordersData) ? ordersData : ordersData.data || [];
+          setRecentOrders(
+            orders.slice(0, 5).map((order: {
+              id: string;
+              createdAt: string;
+              festival?: { name: string };
+              festivalName?: string;
+              amount: number;
+              currency: string;
+              status: string;
+            }) => ({
+              id: order.id,
+              date: order.createdAt,
+              festival: order.festival?.name || order.festivalName || 'Unknown Festival',
+              total: order.amount / 100, // Convert from cents
+              currency: order.currency || 'EUR',
+              status: order.status,
+            }))
+          );
+        }
+      } catch (error) {
+        console.error('Failed to fetch user data:', error);
+      } finally {
+        setIsLoadingData(false);
+      }
+    }
+
+    fetchUserData();
+  }, [isAuthenticated, user]);
+
+  // Helper function to format festival dates
+  function formatFestivalDate(startDate: string, endDate: string): string {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const options: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric', year: 'numeric' };
+
+    if (start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()) {
+      return `${start.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}-${end.getDate()}, ${end.getFullYear()}`;
+    }
+    return `${start.toLocaleDateString('en-US', options)} - ${end.toLocaleDateString('en-US', options)}`;
+  }
+
+  // Show loading while checking auth
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen pt-24 pb-16 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
+
+  // Show nothing while redirecting (user not authenticated)
+  if (!isAuthenticated || !user) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen pt-24 pb-16">
       <div className="container-app">
@@ -94,11 +201,11 @@ export default function AccountPage() {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div className="flex items-center gap-4">
               <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center text-white text-2xl font-bold">
-                {user.firstName.charAt(0)}{user.lastName.charAt(0)}
+                {user.firstName?.charAt(0) || ''}{user.lastName?.charAt(0) || ''}
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-white">
-                  Welcome back, {user.firstName}!
+                  Welcome back, {user.firstName || 'User'}!
                 </h1>
                 <p className="text-white/60">{user.email}</p>
               </div>
@@ -140,7 +247,12 @@ export default function AccountPage() {
                 </Link>
               </div>
 
-              {upcomingFestivals.length > 0 ? (
+              {isLoadingData ? (
+                <Card variant="solid" padding="lg" className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500 mx-auto"></div>
+                  <p className="text-white/60 mt-4">Loading your festivals...</p>
+                </Card>
+              ) : upcomingFestivals.length > 0 ? (
                 <div className="space-y-4">
                   {upcomingFestivals.map((festival) => (
                     <Card key={festival.id} variant="gradient" padding="md">
@@ -200,7 +312,12 @@ export default function AccountPage() {
                 </Link>
               </div>
 
-              {recentOrders.length > 0 ? (
+              {isLoadingData ? (
+                <Card variant="solid" padding="lg" className="text-center">
+                  <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-primary-500 mx-auto"></div>
+                  <p className="text-white/60 mt-4">Loading your orders...</p>
+                </Card>
+              ) : recentOrders.length > 0 ? (
                 <Card variant="solid" padding="none">
                   <div className="overflow-x-auto">
                     <table className="w-full">
@@ -218,7 +335,7 @@ export default function AccountPage() {
                           <tr key={order.id} className="border-b border-white/5 last:border-0">
                             <td className="px-6 py-4">
                               <Link href={`/account/orders/${order.id}`} className="text-primary-400 font-mono text-sm hover:underline">
-                                {order.id}
+                                {order.id.slice(0, 12)}...
                               </Link>
                             </td>
                             <td className="px-6 py-4 text-white text-sm">{order.festival}</td>
@@ -229,7 +346,15 @@ export default function AccountPage() {
                               {new Intl.NumberFormat('en-US', { style: 'currency', currency: order.currency }).format(order.total)}
                             </td>
                             <td className="px-6 py-4">
-                              <span className="inline-flex items-center px-2 py-1 rounded-lg bg-green-500/20 text-green-400 text-xs font-medium capitalize">
+                              <span className={`inline-flex items-center px-2 py-1 rounded-lg text-xs font-medium capitalize ${
+                                order.status === 'confirmed' || order.status === 'completed'
+                                  ? 'bg-green-500/20 text-green-400'
+                                  : order.status === 'pending'
+                                    ? 'bg-yellow-500/20 text-yellow-400'
+                                    : order.status === 'cancelled' || order.status === 'refunded'
+                                      ? 'bg-red-500/20 text-red-400'
+                                      : 'bg-gray-500/20 text-gray-400'
+                              }`}>
                                 {order.status}
                               </span>
                             </td>
@@ -261,14 +386,16 @@ export default function AccountPage() {
                   <div className="text-white/50 text-xs uppercase tracking-wider mb-1">Email</div>
                   <div className="text-white">{user.email}</div>
                 </div>
-                <div>
-                  <div className="text-white/50 text-xs uppercase tracking-wider mb-1">Phone</div>
-                  <div className="text-white">{user.phone}</div>
-                </div>
+                {user.phone && (
+                  <div>
+                    <div className="text-white/50 text-xs uppercase tracking-wider mb-1">Phone</div>
+                    <div className="text-white">{user.phone}</div>
+                  </div>
+                )}
                 <div>
                   <div className="text-white/50 text-xs uppercase tracking-wider mb-1">Member Since</div>
                   <div className="text-white">
-                    {new Date(user.memberSince).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                    {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
                   </div>
                 </div>
               </div>

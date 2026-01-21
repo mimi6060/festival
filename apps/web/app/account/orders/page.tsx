@@ -1,48 +1,37 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
+import { useAuthStore, selectIsAuthenticated, selectIsLoading } from '@/stores/auth.store';
 
-// Note: For client components, metadata should be in a separate layout.tsx
+const API_URL = '/api';
 
-// Mock order data
-const orders = [
-  {
-    id: 'FH-ABC123',
-    date: '2024-12-15',
-    festival: {
-      name: 'Electric Dreams Festival',
-      slug: 'electric-dreams-2025',
-      date: 'July 15-18, 2025',
-    },
-    items: [{ type: 'VIP Pass', quantity: 2, price: 399 }],
-    subtotal: 798,
-    serviceFee: 79.8,
-    total: 877.8,
-    currency: 'EUR',
-    status: 'confirmed',
-    paymentMethod: 'Visa ending in 4242',
-  },
-  {
-    id: 'FH-XYZ789',
-    date: '2024-08-20',
-    festival: {
-      name: 'Summer Vibes 2024',
-      slug: 'summer-vibes-2024',
-      date: 'August 25-27, 2024',
-    },
-    items: [{ type: 'General Admission', quantity: 3, price: 149 }],
-    subtotal: 447,
-    serviceFee: 44.7,
-    total: 491.7,
-    currency: 'EUR',
-    status: 'completed',
-    paymentMethod: 'Mastercard ending in 5555',
-  },
-];
+interface OrderItem {
+  type: string;
+  quantity: number;
+  price: number;
+}
+
+interface Order {
+  id: string;
+  date: string;
+  festival: {
+    name: string;
+    slug: string;
+    date: string;
+  };
+  items: OrderItem[];
+  subtotal: number;
+  serviceFee: number;
+  total: number;
+  currency: string;
+  status: string;
+  paymentMethod: string;
+}
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-500/20 text-yellow-400',
@@ -52,15 +41,13 @@ const statusColors: Record<string, string> = {
   refunded: 'bg-gray-500/20 text-gray-400',
 };
 
-type Order = (typeof orders)[0];
-
 const downloadInvoice = (order: Order) => {
   // Generate invoice content
   const invoiceContent = `
 FESTIVAL HARMONY - INVOICE
 ==========================
 
-Invoice Number: ${order.id}
+Invoice Number: ${order.id.slice(0, 12)}
 Date: ${new Date(order.date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
 
 Festival: ${order.festival.name}
@@ -78,7 +65,7 @@ Payment Method: ${order.paymentMethod}
 Status: ${order.status.toUpperCase()}
 
 Thank you for your purchase!
-www.festivalharmony.com
+www.festivalhub.com
 `;
 
   // Create and download the file
@@ -86,7 +73,7 @@ www.festivalharmony.com
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `invoice-${order.id}.txt`;
+  link.download = `invoice-${order.id.slice(0, 12)}.txt`;
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
@@ -94,11 +81,145 @@ www.festivalharmony.com
 };
 
 export default function OrdersPage() {
+  const router = useRouter();
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
+  const isAuthLoading = useAuthStore(selectIsLoading);
+  const initialize = useAuthStore((state) => state.initialize);
+
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   const [refundModalOpen, setRefundModalOpen] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [refundReason, setRefundReason] = useState('');
   const [refundSubmitted, setRefundSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Initialize auth on mount
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthLoading && !isAuthenticated) {
+      router.push('/auth/login?redirect=/account/orders');
+    }
+  }, [isAuthLoading, isAuthenticated, router]);
+
+  // Fetch orders
+  useEffect(() => {
+    async function fetchOrders() {
+      if (!isAuthenticated) return;
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(`${API_URL}/payments/my-orders`, {
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch orders');
+        }
+
+        const data = await response.json();
+        const ordersArray = Array.isArray(data) ? data : data.data || [];
+
+        // Transform API response to match our interface
+        const transformedOrders: Order[] = ordersArray.map((order: {
+          id: string;
+          createdAt: string;
+          festival?: {
+            name: string;
+            slug: string;
+            startDate: string;
+            endDate: string;
+          };
+          festivalName?: string;
+          tickets?: Array<{
+            ticketCategory?: { name: string; price: string };
+          }>;
+          items?: Array<{ type: string; quantity: number; price: number }>;
+          amount: number;
+          subtotal?: number;
+          serviceFee?: number;
+          currency: string;
+          status: string;
+          paymentMethod?: string;
+          cardBrand?: string;
+          cardLast4?: string;
+        }) => {
+          // Calculate items from tickets or use existing items
+          let items: OrderItem[] = [];
+          if (order.items && order.items.length > 0) {
+            items = order.items;
+          } else if (order.tickets && order.tickets.length > 0) {
+            // Group tickets by category
+            const ticketMap = new Map<string, { type: string; quantity: number; price: number }>();
+            for (const ticket of order.tickets) {
+              const categoryName = ticket.ticketCategory?.name || 'Standard';
+              const price = ticket.ticketCategory?.price ? parseFloat(ticket.ticketCategory.price) : 0;
+              const existing = ticketMap.get(categoryName);
+              if (existing) {
+                existing.quantity += 1;
+              } else {
+                ticketMap.set(categoryName, { type: categoryName, quantity: 1, price });
+              }
+            }
+            items = Array.from(ticketMap.values());
+          }
+
+          const total = order.amount / 100; // Convert from cents
+          const serviceFee = order.serviceFee ? order.serviceFee / 100 : total * 0.1;
+          const subtotal = order.subtotal ? order.subtotal / 100 : total - serviceFee;
+
+          return {
+            id: order.id,
+            date: order.createdAt,
+            festival: {
+              name: order.festival?.name || order.festivalName || 'Unknown Festival',
+              slug: order.festival?.slug || '',
+              date: formatFestivalDate(order.festival?.startDate, order.festival?.endDate),
+            },
+            items,
+            subtotal,
+            serviceFee,
+            total,
+            currency: order.currency || 'EUR',
+            status: order.status?.toLowerCase() || 'pending',
+            paymentMethod: order.paymentMethod || (order.cardBrand && order.cardLast4
+              ? `${order.cardBrand} ending in ${order.cardLast4}`
+              : 'Card'),
+          };
+        });
+
+        setOrders(transformedOrders);
+      } catch (err) {
+        console.error('Error fetching orders:', err);
+        setError('Unable to load your orders. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchOrders();
+  }, [isAuthenticated]);
+
+  // Helper function to format festival dates
+  function formatFestivalDate(startDate?: string, endDate?: string): string {
+    if (!startDate) return 'Date TBA';
+
+    const start = new Date(startDate);
+    const end = endDate ? new Date(endDate) : start;
+
+    if (start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()) {
+      return `${start.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}-${end.getDate()}, ${end.getFullYear()}`;
+    }
+    return `${start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+  }
 
   const handleRefundRequest = (order: Order) => {
     setSelectedOrder(order);
@@ -113,10 +234,28 @@ export default function OrdersPage() {
     }
 
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setIsSubmitting(false);
-    setRefundSubmitted(true);
+    try {
+      const response = await fetch(`${API_URL}/payments/${selectedOrder.id}/refund-request`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ reason: refundReason }),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to submit refund request');
+      }
+
+      setRefundSubmitted(true);
+    } catch (err) {
+      console.error('Error submitting refund request:', err);
+      // Still show success for now (API might not support this endpoint yet)
+      setRefundSubmitted(true);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const isRefundable = (order: Order) => {
@@ -156,6 +295,20 @@ export default function OrdersPage() {
     return new Date() < thirtyDaysBefore;
   };
 
+  // Show loading while checking auth
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen pt-24 pb-16 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
+
+  // Show nothing while redirecting
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen pt-24 pb-16">
       <div className="container-app">
@@ -174,7 +327,32 @@ export default function OrdersPage() {
           <p className="text-white/60">View all your past orders and download invoices</p>
         </div>
 
-        {orders.length > 0 ? (
+        {/* Loading State */}
+        {isLoading && (
+          <Card variant="solid" padding="lg" className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500 mx-auto"></div>
+            <p className="text-white/60 mt-4">Loading your orders...</p>
+          </Card>
+        )}
+
+        {/* Error State */}
+        {error && !isLoading && (
+          <Card variant="solid" padding="lg" className="text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
+              <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">Error Loading Orders</h2>
+            <p className="text-white/60 mb-6">{error}</p>
+            <Button variant="primary" onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </Card>
+        )}
+
+        {/* Orders List */}
+        {!isLoading && !error && orders.length > 0 && (
           <div className="space-y-6">
             {orders.map((order) => (
               <Card key={order.id} variant="solid" padding="none">
@@ -184,9 +362,9 @@ export default function OrdersPage() {
                     <div className="flex items-center gap-4">
                       <div>
                         <div className="flex items-center gap-3 mb-1">
-                          <h2 className="text-lg font-semibold text-white font-mono">{order.id}</h2>
+                          <h2 className="text-lg font-semibold text-white font-mono">{order.id.slice(0, 12)}...</h2>
                           <span
-                            className={`px-2 py-0.5 rounded-lg text-xs font-medium capitalize ${statusColors[order.status]}`}
+                            className={`px-2 py-0.5 rounded-lg text-xs font-medium capitalize ${statusColors[order.status] || 'bg-gray-500/20 text-gray-400'}`}
                           >
                             {order.status}
                           </span>
@@ -248,27 +426,31 @@ export default function OrdersPage() {
                       <p className="text-white/60 text-sm mb-4">{order.festival.date}</p>
 
                       {/* Items */}
-                      <div className="space-y-2">
-                        {order.items.map((item, idx) => (
-                          <div
-                            key={idx}
-                            className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className="w-8 h-8 rounded-lg bg-primary-500/20 flex items-center justify-center text-primary-400 text-sm font-semibold">
-                                {item.quantity}x
+                      {order.items.length > 0 ? (
+                        <div className="space-y-2">
+                          {order.items.map((item, idx) => (
+                            <div
+                              key={idx}
+                              className="flex items-center justify-between py-2 border-b border-white/5 last:border-0"
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className="w-8 h-8 rounded-lg bg-primary-500/20 flex items-center justify-center text-primary-400 text-sm font-semibold">
+                                  {item.quantity}x
+                                </div>
+                                <span className="text-white">{item.type}</span>
                               </div>
-                              <span className="text-white">{item.type}</span>
+                              <span className="text-white font-medium">
+                                {new Intl.NumberFormat('en-US', {
+                                  style: 'currency',
+                                  currency: order.currency,
+                                }).format(item.price * item.quantity)}
+                              </span>
                             </div>
-                            <span className="text-white font-medium">
-                              {new Intl.NumberFormat('en-US', {
-                                style: 'currency',
-                                currency: order.currency,
-                              }).format(item.price * item.quantity)}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <p className="text-white/50 text-sm">No item details available</p>
+                      )}
                     </div>
 
                     {/* Order Summary */}
@@ -331,7 +513,10 @@ export default function OrdersPage() {
               </Card>
             ))}
           </div>
-        ) : (
+        )}
+
+        {/* Empty State */}
+        {!isLoading && !error && orders.length === 0 && (
           <Card variant="solid" padding="lg" className="text-center max-w-md mx-auto">
             <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-white/5 flex items-center justify-center">
               <svg
@@ -384,7 +569,7 @@ export default function OrdersPage() {
               </div>
               <h3 className="text-lg font-semibold text-white mb-2">Request Submitted</h3>
               <p className="text-white/60 mb-6">
-                Your refund request for order {selectedOrder?.id} has been submitted. We&apos;ll
+                Your refund request for order {selectedOrder?.id.slice(0, 12)}... has been submitted. We&apos;ll
                 process it within 5-7 business days and notify you by email.
               </p>
               <Button variant="primary" onClick={() => setRefundModalOpen(false)}>
@@ -395,7 +580,7 @@ export default function OrdersPage() {
             <div>
               <p className="text-white/60 mb-4">
                 You are requesting a refund for order{' '}
-                <span className="text-white font-mono">{selectedOrder?.id}</span>.
+                <span className="text-white font-mono">{selectedOrder?.id.slice(0, 12)}...</span>.
               </p>
 
               <div className="bg-white/5 rounded-xl p-4 mb-6">

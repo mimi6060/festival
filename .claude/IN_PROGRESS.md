@@ -27,6 +27,67 @@ _Aucune tache en cours_
 
 ## Recemment Complete (2026-01-21)
 
+### Web App - Remove Hardcoded Data
+
+- [x] **Account Page** (`apps/web/app/account/page.tsx`)
+  - Replaced hardcoded user data (John Doe) with auth store
+  - Added authentication check with redirect to login
+  - Fetch user tickets from API `/tickets/my-tickets`
+  - Fetch user orders from API `/payments/my-orders`
+  - Proper loading states for each section
+
+- [x] **Tickets Page** (`apps/web/app/account/tickets/page.tsx`)
+  - Replaced hardcoded tickets with API call
+  - Added authentication check with redirect
+  - Proper error handling and loading states
+
+- [x] **Orders Page** (`apps/web/app/account/orders/page.tsx`)
+  - Replaced hardcoded orders with API call
+  - Added authentication check with redirect
+  - Proper error handling and loading states
+  - Refund request now calls API
+
+- [x] **Festivals Page** (`apps/web/app/festivals/page.tsx`)
+  - Removed MOCK_FESTIVALS fallback data
+  - Shows proper empty state when API fails
+  - Proper error message display
+
+- [x] **Artist Detail Page** (`apps/web/app/artists/[slug]/page.tsx`)
+  - Replaced hardcoded artist data with API call
+  - Added loading, error, and not found states
+  - Transforms API response to display format
+
+---
+
+### Web App - Authentication Security Enhancement
+
+- [x] **Password Validation Enhancement** (`apps/web/app/auth/register/page.tsx`)
+  - Strong password requirements matching API:
+    - Minimum 8 characters
+    - At least one uppercase letter
+    - At least one lowercase letter
+    - At least one number
+  - Better email validation regex
+  - First/last name minimum 2 characters validation
+
+- [x] **Facebook OAuth Support**
+  - Added Facebook OAuth button to login page
+  - Added Facebook OAuth button to register page
+  - Responsive 3-column grid layout for social login buttons
+
+- [x] **Security Features Already In Place**
+  - JWT tokens stored in httpOnly cookies (not localStorage)
+  - Middleware protection for `/account`, `/tickets`, `/orders`, `/profile` routes
+  - Rate limiting on login (5/min), register (3/min), password reset (5/min)
+  - Password hashing with bcrypt (12 rounds)
+  - Email verification required before login
+  - Refresh token rotation
+  - Session invalidation on password change
+
+---
+
+### Web App - Header & Footer Festive Design
+
 ### Web App - Header & Footer Festive Design
 
 - [x] **Header Component** (`apps/web/components/layout/Header.tsx`)

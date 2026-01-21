@@ -1,51 +1,158 @@
-import { Metadata } from 'next';
+'use client';
+
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { DownloadableQRCode } from '@/components/ui/QRCode';
+import { useAuthStore, selectIsAuthenticated, selectIsLoading } from '@/stores/auth.store';
 
-export const dynamic = 'force-dynamic';
+const API_URL = '/api';
 
-export const metadata: Metadata = {
-  title: 'My Tickets',
-  description: 'View and manage your festival tickets.',
-};
-
-// Mock ticket data
-const tickets = [
-  {
-    id: 'TK-001',
-    orderId: 'FH-ABC123',
-    festival: {
-      name: 'Electric Dreams Festival',
-      slug: 'electric-dreams-2025',
-      date: 'July 15-18, 2025',
-      location: 'Barcelona, Spain',
-      imageUrl: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&h=300&fit=crop',
-    },
-    ticketType: 'VIP Pass',
-    holderName: 'John Doe',
-    qrCode: 'EDVIP2025JD001',
-    status: 'valid',
-  },
-  {
-    id: 'TK-002',
-    orderId: 'FH-ABC123',
-    festival: {
-      name: 'Electric Dreams Festival',
-      slug: 'electric-dreams-2025',
-      date: 'July 15-18, 2025',
-      location: 'Barcelona, Spain',
-      imageUrl: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&h=300&fit=crop',
-    },
-    ticketType: 'VIP Pass',
-    holderName: 'Jane Doe',
-    qrCode: 'EDVIP2025JD002',
-    status: 'valid',
-  },
-];
+interface Ticket {
+  id: string;
+  orderId: string;
+  festival: {
+    name: string;
+    slug: string;
+    date: string;
+    location: string;
+    imageUrl: string;
+  };
+  ticketType: string;
+  holderName: string;
+  qrCode: string;
+  status: 'valid' | 'used' | 'cancelled' | 'expired';
+}
 
 export default function TicketsPage() {
+  const router = useRouter();
+  const isAuthenticated = useAuthStore(selectIsAuthenticated);
+  const isAuthLoading = useAuthStore(selectIsLoading);
+  const initialize = useAuthStore((state) => state.initialize);
+
+  const [tickets, setTickets] = useState<Ticket[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  // Initialize auth on mount
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!isAuthLoading && !isAuthenticated) {
+      router.push('/auth/login?redirect=/account/tickets');
+    }
+  }, [isAuthLoading, isAuthenticated, router]);
+
+  // Fetch tickets
+  useEffect(() => {
+    async function fetchTickets() {
+      if (!isAuthenticated) return;
+
+      setIsLoading(true);
+      setError(null);
+
+      try {
+        const response = await fetch(`${API_URL}/tickets/my-tickets`, {
+          credentials: 'include',
+        });
+
+        if (!response.ok) {
+          throw new Error('Failed to fetch tickets');
+        }
+
+        const data = await response.json();
+        const ticketsArray = Array.isArray(data) ? data : data.data || [];
+
+        // Transform API response to match our interface
+        const transformedTickets: Ticket[] = ticketsArray.map((ticket: {
+          id: string;
+          paymentId?: string;
+          payment?: { id: string };
+          festival?: {
+            name: string;
+            slug: string;
+            startDate: string;
+            endDate: string;
+            location: string;
+            bannerUrl?: string;
+          };
+          ticketCategory?: { name: string };
+          holderName?: string;
+          holderFirstName?: string;
+          holderLastName?: string;
+          qrCode?: string;
+          qrCodeData?: string;
+          status: string;
+        }) => ({
+          id: ticket.id,
+          orderId: ticket.paymentId || ticket.payment?.id || 'N/A',
+          festival: {
+            name: ticket.festival?.name || 'Unknown Festival',
+            slug: ticket.festival?.slug || '',
+            date: formatFestivalDate(ticket.festival?.startDate, ticket.festival?.endDate),
+            location: ticket.festival?.location || 'Location TBA',
+            imageUrl: ticket.festival?.bannerUrl || 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&h=300&fit=crop',
+          },
+          ticketType: ticket.ticketCategory?.name || 'Standard',
+          holderName: ticket.holderName || `${ticket.holderFirstName || ''} ${ticket.holderLastName || ''}`.trim() || 'Ticket Holder',
+          qrCode: ticket.qrCode || ticket.qrCodeData || ticket.id,
+          status: mapTicketStatus(ticket.status),
+        }));
+
+        setTickets(transformedTickets);
+      } catch (err) {
+        console.error('Error fetching tickets:', err);
+        setError('Unable to load your tickets. Please try again later.');
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    fetchTickets();
+  }, [isAuthenticated]);
+
+  // Helper function to format festival dates
+  function formatFestivalDate(startDate?: string, endDate?: string): string {
+    if (!startDate) return 'Date TBA';
+
+    const start = new Date(startDate);
+    const end = endDate ? new Date(endDate) : start;
+
+    if (start.getMonth() === end.getMonth() && start.getFullYear() === end.getFullYear()) {
+      return `${start.toLocaleDateString('en-US', { month: 'long', day: 'numeric' })}-${end.getDate()}, ${end.getFullYear()}`;
+    }
+    return `${start.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`;
+  }
+
+  // Map API status to our status type
+  function mapTicketStatus(status: string): 'valid' | 'used' | 'cancelled' | 'expired' {
+    const statusLower = status.toLowerCase();
+    if (statusLower === 'valid' || statusLower === 'active') return 'valid';
+    if (statusLower === 'used' || statusLower === 'scanned') return 'used';
+    if (statusLower === 'cancelled' || statusLower === 'refunded') return 'cancelled';
+    if (statusLower === 'expired') return 'expired';
+    return 'valid';
+  }
+
+  // Show loading while checking auth
+  if (isAuthLoading) {
+    return (
+      <div className="min-h-screen pt-24 pb-16 flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500"></div>
+      </div>
+    );
+  }
+
+  // Show nothing while redirecting
+  if (!isAuthenticated) {
+    return null;
+  }
+
   return (
     <div className="min-h-screen pt-24 pb-16">
       <div className="container-app">
@@ -64,7 +171,32 @@ export default function TicketsPage() {
           <p className="text-white/60">View and manage your festival tickets</p>
         </div>
 
-        {tickets.length > 0 ? (
+        {/* Loading State */}
+        {isLoading && (
+          <Card variant="solid" padding="lg" className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-primary-500 mx-auto"></div>
+            <p className="text-white/60 mt-4">Loading your tickets...</p>
+          </Card>
+        )}
+
+        {/* Error State */}
+        {error && !isLoading && (
+          <Card variant="solid" padding="lg" className="text-center">
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
+              <svg className="w-8 h-8 text-red-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            </div>
+            <h2 className="text-xl font-bold text-white mb-2">Error Loading Tickets</h2>
+            <p className="text-white/60 mb-6">{error}</p>
+            <Button variant="primary" onClick={() => window.location.reload()}>
+              Try Again
+            </Button>
+          </Card>
+        )}
+
+        {/* Tickets List */}
+        {!isLoading && !error && tickets.length > 0 && (
           <div className="space-y-6">
             {tickets.map((ticket) => (
               <Card key={ticket.id} variant="solid" padding="none" className="overflow-hidden">
@@ -144,7 +276,7 @@ export default function TicketsPage() {
                             <div className="text-white/50 text-xs uppercase tracking-wider mb-1">
                               Ticket ID
                             </div>
-                            <div className="text-white font-mono text-sm">{ticket.id}</div>
+                            <div className="text-white font-mono text-sm">{ticket.id.slice(0, 8)}...</div>
                           </div>
                           <div>
                             <div className="text-white/50 text-xs uppercase tracking-wider mb-1">
@@ -162,12 +294,16 @@ export default function TicketsPage() {
                             <div className="text-white/50 text-xs uppercase tracking-wider mb-1">
                               Order
                             </div>
-                            <Link
-                              href={`/account/orders/${ticket.orderId}`}
-                              className="text-primary-400 text-sm hover:underline"
-                            >
-                              {ticket.orderId}
-                            </Link>
+                            {ticket.orderId !== 'N/A' ? (
+                              <Link
+                                href={`/account/orders/${ticket.orderId}`}
+                                className="text-primary-400 text-sm hover:underline"
+                              >
+                                {ticket.orderId.slice(0, 8)}...
+                              </Link>
+                            ) : (
+                              <span className="text-white/60 text-sm">{ticket.orderId}</span>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -178,7 +314,7 @@ export default function TicketsPage() {
                           <DownloadableQRCode
                             value={ticket.qrCode}
                             size={112}
-                            filename={`ticket-${ticket.id}`}
+                            filename={`ticket-${ticket.id.slice(0, 8)}`}
                             showDownload={true}
                           />
                         </div>
@@ -189,7 +325,10 @@ export default function TicketsPage() {
               </Card>
             ))}
           </div>
-        ) : (
+        )}
+
+        {/* Empty State */}
+        {!isLoading && !error && tickets.length === 0 && (
           <Card variant="solid" padding="lg" className="text-center max-w-md mx-auto">
             <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-white/5 flex items-center justify-center">
               <svg
@@ -218,7 +357,7 @@ export default function TicketsPage() {
         )}
 
         {/* Info Section */}
-        {tickets.length > 0 && (
+        {!isLoading && !error && tickets.length > 0 && (
           <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6">
             <Card variant="solid" padding="md">
               <div className="flex items-start gap-4">
