@@ -1250,6 +1250,10 @@ export class ProgramService {
   // ============================================================================
 
   private mapToEventDto(perf: any, favoriteArtistIds: Set<string>): ProgramEventDto {
+    // Convert string dates from cache to Date objects
+    const startTime = this.ensureDate(perf.startTime);
+    const endTime = this.ensureDate(perf.endTime);
+
     return {
       id: perf.id,
       artist: {
@@ -1264,11 +1268,18 @@ export class ProgramService {
         location: perf.stage.location || 'TBD',
         capacity: perf.stage.capacity || 0,
       },
-      startTime: this.formatTime(perf.startTime),
-      endTime: this.formatTime(perf.endTime),
-      day: this.getDayName(perf.startTime),
+      startTime: this.formatTime(startTime),
+      endTime: this.formatTime(endTime),
+      day: this.getDayName(startTime),
       isFavorite: favoriteArtistIds.has(perf.artist.id),
     };
+  }
+
+  /**
+   * Ensure a date value is a Date object (handles both Date and string from cache)
+   */
+  private ensureDate(date: Date | string): Date {
+    return date instanceof Date ? date : new Date(date);
   }
 
   private formatTime(date: Date): string {

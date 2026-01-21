@@ -130,10 +130,11 @@ export function FestivalProgram({
 
       try {
         // Fetch all data in parallel
+        // Note: API has double /api prefix due to globalPrefix + controller path
         const [programRes, stagesRes, artistsRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/program?festivalId=${festivalId}`),
-          fetch(`${API_BASE_URL}/api/program/stages?festivalId=${festivalId}`),
-          fetch(`${API_BASE_URL}/api/program/artists?festivalId=${festivalId}`),
+          fetch(`${API_BASE_URL}/api/api/program?festivalId=${festivalId}`),
+          fetch(`${API_BASE_URL}/api/api/program/stages?festivalId=${festivalId}`),
+          fetch(`${API_BASE_URL}/api/api/program/artists?festivalId=${festivalId}`),
         ]);
 
         if (!programRes.ok || !stagesRes.ok || !artistsRes.ok) {
@@ -160,44 +161,20 @@ export function FestivalProgram({
     fetchProgramData();
   }, [festivalId]);
 
+  // Day names in French (index 0 = Sunday)
+  const dayNames = ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'];
+
   // Filter performances based on selected filters
   const filteredPerformances = useMemo(() => {
     return performances.filter((perf) => {
       // Filter by day
       if (selectedDay !== 'all') {
         // selectedDay is in format YYYY-MM-DD
-        // perf.day is the day name (e.g., "Saturday")
-        // We need to compare with actual date
-        const perfDate = new Date(
-          dates.find((d) => {
-            const dayNames = [
-              'Dimanche',
-              'Lundi',
-              'Mardi',
-              'Mercredi',
-              'Jeudi',
-              'Vendredi',
-              'Samedi',
-            ];
-            return dayNames[d.getDay()] === perf.day;
-          }) || ''
-        );
+        // perf.day is the day name in French (e.g., "Jeudi")
         const selectedDate = new Date(selectedDay);
-        if (formatDateForApi(perfDate) !== formatDateForApi(selectedDate)) {
-          // Try matching by day name
-          const selectedDayNames = [
-            'Dimanche',
-            'Lundi',
-            'Mardi',
-            'Mercredi',
-            'Jeudi',
-            'Vendredi',
-            'Samedi',
-          ];
-          const selectedDayName = selectedDayNames[selectedDate.getDay()];
-          if (perf.day !== selectedDayName) {
-            return false;
-          }
+        const selectedDayName = dayNames[selectedDate.getDay()];
+        if (perf.day !== selectedDayName) {
+          return false;
         }
       }
 
@@ -213,7 +190,7 @@ export function FestivalProgram({
 
       return true;
     });
-  }, [performances, selectedDay, selectedStage, selectedGenre, dates]);
+  }, [performances, selectedDay, selectedStage, selectedGenre]);
 
   // Group performances by stage for display
   const performancesByStage = useMemo(() => {
