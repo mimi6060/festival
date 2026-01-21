@@ -27,6 +27,41 @@ _Aucune tâche en cours_
 
 ## Recemment Complete (2026-01-21)
 
+### Admin Sponsors Management Page
+
+- [x] **Sponsors Page** (`apps/admin/app/(dashboard)/sponsors/page.tsx`)
+  - Full CRUD operations for sponsors
+  - Filter by festival and tier level
+  - Visual tier badges (Platinum=purple, Gold=yellow, Silver=gray, Bronze=orange, Partner=blue)
+  - Create/Edit modal with all sponsor fields
+  - Delete confirmation modal
+  - Toggle active status
+  - Sorted by tier then displayOrder
+  - Table with pagination and search
+  - Stats cards showing counts per tier
+  - Total sponsorship amount display
+
+- [x] **Sponsor Types** (`apps/admin/types/index.ts`)
+  - SponsorTier enum: PLATINUM, GOLD, SILVER, BRONZE, PARTNER
+  - Sponsor interface with all fields
+  - CreateSponsorDto and UpdateSponsorDto
+  - SponsorsByTier interface for grouped view
+
+- [x] **Sponsors API** (`apps/admin/lib/api.ts`)
+  - getByFestival with tier/activeOnly filters
+  - getByTier for grouped sponsors
+  - getById, create, update, delete
+  - toggleActive for status toggle
+
+- [x] **Sponsor Hooks** (`apps/admin/hooks/api/useSponsors.ts`)
+  - useSponsors, useSponsorsByTier, useSponsor
+  - useCreateSponsor, useUpdateSponsor, useDeleteSponsor
+  - useToggleSponsorActive
+
+- [x] **Sidebar Navigation** - Added Sponsors link
+
+---
+
 ### Admin Vendors Management Page
 
 - [x] **Vendors Management Page** (`apps/admin/app/(dashboard)/vendors/page.tsx`)
