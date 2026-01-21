@@ -3,7 +3,8 @@
   "compilerOptions": {
     "outDir": "../../dist/out-tsc",
     "declaration": true,
-    "types": ["node"]
+    "types": ["node"],
+    "lib": ["es2022", "dom", "dom.iterable"]
   },
   "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["src/**/*.spec.ts", "src/**/*.spec.tsx", "src/**/*.test.ts", "src/**/*.test.tsx"]

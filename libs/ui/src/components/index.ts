@@ -1,3 +1,5 @@
+'use client';
+
 /**
  * Festival UI - Component Exports
  *
@@ -78,5 +80,24 @@ export {
   type SelectOption,
 } from './Input';
 
-// Future components will be exported here:
-// export { Modal, type ModalProps } from './Modal';
+// EmptyState
+export {
+  EmptyState,
+  EmptyStateIcons,
+  type EmptyStateProps,
+  type EmptyStateVariant,
+  type EmptyStateIconSize,
+} from './EmptyState';
+
+// Modal
+export {
+  Modal,
+  ConfirmModal,
+  type ModalProps,
+  type ModalSize,
+  type ModalHeaderProps,
+  type ModalBodyProps,
+  type ModalFooterProps,
+  type ConfirmModalProps,
+  type ConfirmModalVariant,
+} from './Modal';
