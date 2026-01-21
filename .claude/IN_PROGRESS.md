@@ -108,6 +108,15 @@ _Dernière mise à jour: 2026-01-21_
 
 ### UI Library (libs/ui)
 
+- ✅ **Web App Migration to libs/ui** (Started 2026-01-21)
+  - Added `@festival/ui` path alias to web tsconfig.json
+  - Added ui library reference for TypeScript project references
+  - Migrated Spinner import in `FestivalProgram.tsx`
+  - **Pending**: Button, Card, Input migrations require libs/ui API updates
+    - Button: libs/ui uses `as="link" + LinkComponent` vs web uses `as="link"` auto-importing Link
+    - Card: libs/ui variants (`default`, `elevated`, `outlined`) differ from web (`glow`, `solid`, `gradient`)
+    - Input: libs/ui uses `size` vs web uses `inputSize`, different styling
+
 - ✅ **Card Component** - Extracted to libs/ui with compound component pattern
   - Card, Card.Header, Card.Body, Card.Footer, Card.Image, Card.Title, Card.Description
   - Variants: default, elevated, outlined

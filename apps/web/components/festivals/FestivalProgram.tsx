@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 import { Tabs, TabList, Tab, TabPanel } from '@/components/ui/Tabs';
 import { SelectComponent } from '@/components/ui/Select';
-import { Spinner } from '@/components/ui/Spinner';
+import { Spinner } from '@festival/ui';
 
 // API URL for client-side fetching
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
