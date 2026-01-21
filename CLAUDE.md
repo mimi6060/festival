@@ -34,7 +34,16 @@ curl -s http://localhost:3000 | grep -q "html" && echo "Web OK" || echo "Web FAI
 
 # Admin verification (port 4201 in dev)
 curl -s http://localhost:4201 | grep -q "html" && echo "Admin OK" || echo "Admin FAILED"
+
+# Mobile verification (Expo)
+cd apps/mobile && npx expo start --no-dev-client &
 ```
+
+**IMPORTANT: Ne JAMAIS oublier l'app Mobile !**
+
+- Toujours lancer `cd apps/mobile && npx expo start` lors des sessions de dev
+- Tester les changements sur simulateur iOS/Android
+- L'app mobile est critique pour les festivaliers
 
 **If verification fails:**
 

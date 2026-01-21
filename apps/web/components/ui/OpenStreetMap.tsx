@@ -18,6 +18,21 @@ const locationCoordinates: Record<string, { lat: number; lng: number }> = {
   'Nice, France': { lat: 43.7102, lng: 7.262 },
   'Berlin, Germany': { lat: 52.52, lng: 13.405 },
   'Milan, Italy': { lat: 45.4642, lng: 9.19 },
+  // French cities for our festivals
+  'La Rochelle': { lat: 46.1591, lng: -1.152 },
+  'La Rochelle, France': { lat: 46.1591, lng: -1.152 },
+  Chambord: { lat: 47.6161, lng: 1.5172 },
+  'Chambord, France': { lat: 47.6161, lng: 1.5172 },
+  // More French festival locations
+  'Lyon, France': { lat: 45.764, lng: 4.8357 },
+  'Marseille, France': { lat: 43.2965, lng: 5.3698 },
+  'Bordeaux, France': { lat: 44.8378, lng: -0.5792 },
+  'Toulouse, France': { lat: 43.6047, lng: 1.4442 },
+  'Nantes, France': { lat: 47.2184, lng: -1.5536 },
+  'Strasbourg, France': { lat: 48.5734, lng: 7.7521 },
+  'Montpellier, France': { lat: 43.6108, lng: 3.8767 },
+  'Rennes, France': { lat: 48.1173, lng: -1.6778 },
+  'Lille, France': { lat: 50.6292, lng: 3.0573 },
 };
 
 export function OpenStreetMap({ location, className = '' }: OpenStreetMapProps) {

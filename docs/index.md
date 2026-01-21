@@ -1,269 +1,243 @@
-# Documentation du Projet Festival
+# Index Complet de la Documentation - Festival Platform
 
-> Index principal de la documentation technique
-> Dernière mise à jour: 2026-01-14
-
-## Vue d'ensemble
-
-**Festival** est une plateforme complète de gestion de festivals musicaux multi-tenant. Le projet est structuré en monorepo NX avec 5 applications interconnectées.
-
-### Statistiques du Projet
-
-| Métrique              | Valeur                              |
-| --------------------- | ----------------------------------- |
-| Applications          | 5 (API, Web, Admin, Mobile, Shared) |
-| Modèles de données    | 52                                  |
-| Endpoints API         | 130+                                |
-| Langues supportées    | 6 (FR, EN, DE, ES, IT, NL)          |
-| Schémas de validation | 100+                                |
-| Composants UI         | 133+                                |
+> Index exhaustif de tous les fichiers markdown du projet
+> Dernire mise jour: 2026-01-21
 
 ---
 
-## Applications
+## Racine du Projet
 
-### Backend API (NestJS)
-
-- **Port**: 3333
-- **Documentation**: [API Guide](./api/API_GUIDE.md)
-- **Swagger**: `http://localhost:3333/api/docs`
-- **25+ modules** : auth, festivals, tickets, payments, cashless, zones, staff, program, vendors, etc.
-
-### Application Web (Next.js)
-
-- **Port**: 3000
-- **20 pages** pour les festivaliers
-- **3 stores Zustand** (auth, cart, UI)
-- Support RTL, thème clair/sombre, WCAG 2.1 AA
-
-### Dashboard Admin (Next.js)
-
-- **Port**: 4201
-- **25 pages** de gestion
-- Tableaux de bord temps réel avec WebSocket
-- Graphiques Recharts pour analytics
-
-### Application Mobile (React Native + Expo)
-
-- **15+ écrans** natifs
-- Mode offline-first avec WatermelonDB
-- NFC pour paiements cashless
-- Push notifications (FCM/APNs)
-
-### Bibliothèques Partagées
-
-- `@festival/shared/types` - 30+ interfaces TypeScript
-- `@festival/shared/utils` - 50+ fonctions utilitaires
-- `@festival/shared/validation` - 100+ schémas Zod
-- `@festival/shared/i18n` - 6 langues
-- `@festival/shared/api-client` - Client HTTP avec retry
+| Fichier                   | Description                                        |
+| ------------------------- | -------------------------------------------------- |
+| [CLAUDE.md](../CLAUDE.md) | Instructions pour Claude Code et rgles de workflow |
 
 ---
 
-## Documentation Technique
+## Documentation Principale (`docs/`)
 
-### Getting Started
+### Guides Essentiels
 
-| Document                                | Description                  |
-| --------------------------------------- | ---------------------------- |
-| [Development Guide](./DEVELOPMENT.md)   | Quick start, commands, ports |
-| [Troubleshooting](./TROUBLESHOOTING.md) | Common issues and solutions  |
+| Fichier                                                            | Description                                 |
+| ------------------------------------------------------------------ | ------------------------------------------- |
+| [ARCHITECTURE.md](./ARCHITECTURE.md)                               | Architecture systme avec diagrammes Mermaid |
+| [CONTRIBUTING.md](./CONTRIBUTING.md)                               | Guide de contribution au projet             |
+| [CTO_BRIEFING.md](./CTO_BRIEFING.md)                               | Briefing technique pour CTO                 |
+| [DATABASE_SEEDING.md](./DATABASE_SEEDING.md)                       | Guide de seeding de la base de donnes       |
+| [DEPLOYMENT.md](./DEPLOYMENT.md)                                   | Guide de dploiement multi-environnements    |
+| [DEVELOPMENT.md](./DEVELOPMENT.md)                                 | Guide de dmarrage rapide pour dveloppeurs   |
+| [KUBERNETES_DEPLOYMENT.md](./KUBERNETES_DEPLOYMENT.md)             | Dploiement sur Kubernetes                   |
+| [MOBILE_PERFORMANCE_AUDIT.md](./MOBILE_PERFORMANCE_AUDIT.md)       | Audit de performance application mobile     |
+| [OAUTH_SETUP.md](./OAUTH_SETUP.md)                                 | Configuration OAuth (Google, GitHub)        |
+| [TEAM_SCALING_PROPOSAL.md](./TEAM_SCALING_PROPOSAL.md)             | Proposition de scaling quipe                |
+| [TROUBLESHOOTING.md](./TROUBLESHOOTING.md)                         | Guide de dpannage des problmes courants     |
+| [sentry-alerts-configuration.md](./sentry-alerts-configuration.md) | Configuration des alertes Sentry            |
+| [source-tree.md](./source-tree.md)                                 | Arborescence dtaille du code source         |
 
-### Architecture
+### API (`docs/api/`)
 
-| Document                                 | Description                        |
-| ---------------------------------------- | ---------------------------------- |
-| [Architecture](./ARCHITECTURE.md)        | Diagrammes Mermaid et flux système |
-| [Arborescence Source](./source-tree.md)  | Structure détaillée du code        |
-| [Base de données](../prisma/DATABASE.md) | Schéma Prisma et modèles           |
+| Fichier                                        | Description                                     |
+| ---------------------------------------------- | ----------------------------------------------- |
+| [API_GUIDE.md](./api/API_GUIDE.md)             | Guide d'intgration API REST complet             |
+| [API_REFERENCE/](./api/API_REFERENCE/index.md) | Rfrence complte des endpoints API (16 sections) |
+| [WEBHOOKS.md](./api/WEBHOOKS.md)               | Documentation des webhooks                      |
 
-### API
+### Scurit (`docs/security/`)
 
-| Document                        | Description                 |
-| ------------------------------- | --------------------------- |
-| [API Guide](./api/API_GUIDE.md) | Guide complet de l'API REST |
-| [Webhooks](./api/WEBHOOKS.md)   | Intégration des webhooks    |
-| [Errors](./api/ERRORS.md)       | Codes d'erreur standardisés |
+| Fichier                                                 | Description                                       |
+| ------------------------------------------------------- | ------------------------------------------------- |
+| [GDPR_AUDIT.md](./security/GDPR_AUDIT.md)               | Rapport d'audit de conformit RGPD                 |
+| [PENTEST_GUIDE/](./security/PENTEST_GUIDE/index.md)     | Guide complet de tests de pntration (15 sections) |
+| [PRODUCTION_CONFIG.md](./security/PRODUCTION_CONFIG.md) | Configuration scurise pour production             |
+| [SECRETS.md](./security/SECRETS.md)                     | Gestion des secrets et variables sensibles        |
+| [checklist.md](./security/checklist.md)                 | Checklist de scurit                               |
+| [methodology.md](./security/methodology.md)             | Mthodologie de tests de scurit                    |
+| [pentest-plan.md](./security/pentest-plan.md)           | Plan de tests de pntration                        |
+| [scope.md](./security/scope.md)                         | Primtre des tests de scurit                       |
 
-### Sécurité & Conformité
+#### Authentification (`docs/security/authentication/`)
 
-| Document                                         | Description               |
-| ------------------------------------------------ | ------------------------- |
-| [GDPR Compliance](./security/GDPR_COMPLIANCE.md) | Conformité RGPD           |
-| [PCI-DSS](./security/PCI_DSS.md)                 | Conformité paiements      |
-| [Security Guide](./security/SECURITY_GUIDE.md)   | Bonnes pratiques sécurité |
-| [GDPR Audit](./security/GDPR_AUDIT.md)           | Rapport d'audit RGPD      |
+| Fichier                                                    | Description                                |
+| ---------------------------------------------------------- | ------------------------------------------ |
+| [README.md](./security/authentication/README.md)           | Vue d'ensemble de l'authentification       |
+| [brute-force.md](./security/authentication/brute-force.md) | Protection contre les attaques brute-force |
 
-### Légal
+### Conformit (`docs/compliance/`)
 
-| Document                                                  | Description             |
-| --------------------------------------------------------- | ----------------------- |
-| [Conditions Générales](./legal/CGV.md)                    | CGV de la plateforme    |
-| [Politique de Confidentialité](./legal/PRIVACY_POLICY.md) | Protection des données  |
-| [Politique Cookies](./legal/COOKIE_POLICY.md)             | Utilisation des cookies |
+| Fichier                                             | Description                      |
+| --------------------------------------------------- | -------------------------------- |
+| [PCI_DSS.md](./compliance/PCI_DSS.md)               | Conformit PCI-DSS pour paiements |
+| [SOC2_CHECKLIST.md](./compliance/SOC2_CHECKLIST.md) | Checklist de conformit SOC2      |
+
+#### GDPR (`docs/compliance/gdpr/`)
+
+| Fichier                                                        | Description                                   |
+| -------------------------------------------------------------- | --------------------------------------------- |
+| [data-mapping.md](./compliance/gdpr/data-mapping.md)           | Cartographie des donnes personnelles          |
+| [dpia.md](./compliance/gdpr/dpia.md)                           | Analyse d'impact sur la protection des donnes |
+| [gdpr-audit-report.md](./compliance/gdpr/gdpr-audit-report.md) | Rapport d'audit RGPD                          |
+| [legal-basis.md](./compliance/gdpr/legal-basis.md)             | Bases lgales du traitement                    |
+| [retention-policy.md](./compliance/gdpr/retention-policy.md)   | Politique de rtention des donnes              |
+
+#### PCI-DSS (`docs/compliance/pci-dss/`)
+
+| Fichier                                                               | Description                       |
+| --------------------------------------------------------------------- | --------------------------------- |
+| [evidence-collection.md](./compliance/pci-dss/evidence-collection.md) | Collecte des preuves de conformit |
+| [pci-dss-overview.md](./compliance/pci-dss/pci-dss-overview.md)       | Vue d'ensemble PCI-DSS            |
+| [saq-a-ep.md](./compliance/pci-dss/saq-a-ep.md)                       | Questionnaire d'auto-valuation    |
+| [scope-reduction.md](./compliance/pci-dss/scope-reduction.md)         | Rduction du primtre PCI           |
+
+### Lgal (`docs/legal/`)
+
+| Fichier                                                  | Description                      |
+| -------------------------------------------------------- | -------------------------------- |
+| [COOKIE_POLICY.md](./legal/COOKIE_POLICY.md)             | Politique des cookies            |
+| [PRIVACY_POLICY.md](./legal/PRIVACY_POLICY.md)           | Politique de confidentialit      |
+| [TERMS_OF_SERVICE.md](./legal/TERMS_OF_SERVICE.md)       | Conditions gnrales d'utilisation |
+| [cookie-policy-en.md](./legal/cookie-policy-en.md)       | Politique cookies (EN)           |
+| [cookie-policy-fr.md](./legal/cookie-policy-fr.md)       | Politique cookies (FR)           |
+| [privacy-policy-en.md](./legal/privacy-policy-en.md)     | Politique confidentialit (EN)    |
+| [privacy-policy-fr.md](./legal/privacy-policy-fr.md)     | Politique confidentialit (FR)    |
+| [terms-of-service-en.md](./legal/terms-of-service-en.md) | CGU (EN)                         |
+| [terms-of-service-fr.md](./legal/terms-of-service-fr.md) | CGU (FR)                         |
+
+---
+
+## Applications (`apps/`)
+
+### API NestJS (`apps/api/`)
+
+| Fichier                                          | Description                  |
+| ------------------------------------------------ | ---------------------------- |
+| [REDIS_CACHING.md](../apps/api/REDIS_CACHING.md) | Implmentation du cache Redis |
+
+### Application Web (`apps/web/`)
+
+| Fichier                                          | Description                           |
+| ------------------------------------------------ | ------------------------------------- |
+| [README.md](../apps/web/README.md)               | Documentation application web Next.js |
+| [ACCESSIBILITY.md](../apps/web/ACCESSIBILITY.md) | Guide d'accessibilit WCAG             |
+
+### Dashboard Admin (`apps/admin/`)
+
+| Fichier                              | Description                            |
+| ------------------------------------ | -------------------------------------- |
+| [README.md](../apps/admin/README.md) | Documentation dashboard administrateur |
+
+### Application Mobile (`apps/mobile/`)
+
+| Fichier                               | Description                            |
+| ------------------------------------- | -------------------------------------- |
+| [README.md](../apps/mobile/README.md) | Documentation application React Native |
+
+---
+
+## Bibliothques Partages (`libs/`)
+
+| Fichier                                                       | Description              |
+| ------------------------------------------------------------- | ------------------------ |
+| [libs/shared/types/README.md](../libs/shared/types/README.md) | Types TypeScript partags |
+| [libs/shared/utils/README.md](../libs/shared/utils/README.md) | Utilitaires partags      |
+
+---
+
+## Base de Donnes (`prisma/`)
+
+| Fichier                              | Description                           |
+| ------------------------------------ | ------------------------------------- |
+| [DATABASE.md](../prisma/DATABASE.md) | Documentation complte du schma Prisma |
+
+---
+
+## Suivi de Projet (`.claude/`)
+
+| Fichier                                                     | Description                  |
+| ----------------------------------------------------------- | ---------------------------- |
+| [BUSINESS_PLAN.md](../.claude/BUSINESS_PLAN.md)             | Plan business du projet      |
+| [CTO_MISSION.md](../.claude/CTO_MISSION.md)                 | Mission et objectifs CTO     |
+| [CTO_PLAN_Q2_Q3_2026.md](../.claude/CTO_PLAN_Q2_Q3_2026.md) | Roadmap technique Q2-Q3 2026 |
+| [DONE.md](../.claude/DONE.md)                               | Tches compltes               |
+| [IN_PROGRESS.md](../.claude/IN_PROGRESS.md)                 | Tches en cours               |
+
+---
+
+## Artefacts BMAD (`_bmad-output/`)
+
+### Artefacts d'Implmentation
+
+| Fichier                                                                                       | Description                        |
+| --------------------------------------------------------------------------------------------- | ---------------------------------- |
+| [1-1-test-coverage-api.md](../_bmad-output/implementation-artifacts/1-1-test-coverage-api.md) | Rapport de couverture de tests API |
+
+### Artefacts de Planification
+
+| Fichier                                                               | Description                |
+| --------------------------------------------------------------------- | -------------------------- |
+| [architecture.md](../_bmad-output/planning-artifacts/architecture.md) | Architecture planifie      |
+| [epics.md](../_bmad-output/planning-artifacts/epics.md)               | Epics et stories planifies |
+
+### Contexte Projet
+
+| Fichier                                                  | Description                    |
+| -------------------------------------------------------- | ------------------------------ |
+| [project-context.md](../_bmad-output/project-context.md) | Contexte projet pour agents IA |
+
+---
+
+## Statistiques
+
+| Catgorie                           | Nombre de fichiers |
+| ---------------------------------- | ------------------ |
+| Documentation principale (`docs/`) | 47                 |
+| Applications (`apps/`)             | 5                  |
+| Bibliothques (`libs/`)             | 2                  |
+| Base de donnes (`prisma/`)         | 1                  |
+| Suivi projet (`.claude/`)          | 5                  |
+| Artefacts BMAD (`_bmad-output/`)   | 4                  |
+| **Total**                          | **64**             |
 
 ---
 
 ## Stack Technologique
 
-### Backend
-
-| Technologie | Version | Rôle             |
-| ----------- | ------- | ---------------- |
-| Node.js     | 20 LTS  | Runtime          |
-| NestJS      | 11.x    | Framework        |
-| Prisma      | 6.x     | ORM              |
-| PostgreSQL  | 16+     | Base de données  |
-| Redis       | 7.x     | Cache & sessions |
-| BullMQ      | latest  | Job queue        |
-| Socket.io   | latest  | WebSocket        |
-| Stripe      | 17.x    | Paiements        |
-
-### Frontend
-
-| Technologie    | Version | Rôle               |
-| -------------- | ------- | ------------------ |
-| Next.js        | 15.1.0  | Framework React    |
-| React          | 18.3.0  | UI Library         |
-| Tailwind CSS   | 3.4.19  | Styling            |
-| Zustand        | 4.5.5   | State management   |
-| TanStack Query | 5.90.16 | Data fetching      |
-| next-intl      | 3.26.0  | i18n               |
-| Recharts       | 3.6.0   | Graphiques (Admin) |
-
-### Mobile
-
-| Technologie      | Version | Rôle        |
-| ---------------- | ------- | ----------- |
-| React Native     | 0.76.7  | Framework   |
-| Expo             | 53.x    | SDK         |
-| React Navigation | 7.x     | Navigation  |
-| WatermelonDB     | 0.27.x  | Base locale |
-| i18next          | 23.x    | i18n        |
-
-### Infrastructure
-
-| Technologie          | Rôle             |
-| -------------------- | ---------------- |
-| Docker               | Conteneurisation |
-| Kubernetes           | Orchestration    |
-| GitHub Actions       | CI/CD            |
-| Prometheus + Grafana | Monitoring       |
-| Sentry               | Error tracking   |
+| Couche    | Technologies                                 |
+| --------- | -------------------------------------------- |
+| Backend   | NestJS 11, Prisma 6, PostgreSQL 16+, Redis 7 |
+| Frontend  | Next.js 15, React 18/19, Tailwind CSS        |
+| Mobile    | React Native, Expo 53, React Navigation 7    |
+| Auth      | JWT + httpOnly cookies, Passport.js, RBAC    |
+| Paiements | Stripe Checkout + Webhooks                   |
+| Real-time | WebSocket (Socket.io)                        |
+| Queues    | BullMQ (Redis)                               |
 
 ---
 
-## Démarrage Rapide
-
-### Prérequis
-
-- Node.js 20+
-- Docker & Docker Compose
-- PostgreSQL 16+ (ou via Docker)
-- Redis 7+ (ou via Docker)
-
-### Installation
+## Dmarrage Rapide
 
 ```bash
-# Cloner le repo
-git clone <repository-url>
-cd festival
-
-# Installer les dépendances
+# Installation
 npm install
 
-# Démarrer l'infrastructure
+# Infrastructure
 docker-compose up -d
 
-# Configurer l'environnement
-cp .env.example .env.development
+# Base de donnes
+npx prisma generate && npx prisma migrate dev && npx prisma db seed
 
-# Initialiser la base de données
-npx prisma generate
-npx prisma migrate dev
-npx prisma db seed
-
-# Démarrer les applications
-npx nx serve api              # API sur :3333
-npx nx serve web              # Web sur :3000
-npx nx serve admin            # Admin sur :4201
-cd apps/mobile && npx expo start  # Mobile
+# Dmarrer les applications
+npx nx serve api     # :3333
+npx nx serve web     # :3000
+npx nx serve admin   # :4201
 ```
 
-### Comptes de test (après seed)
+### Comptes de test
 
-| Email                    | Mot de passe  | Rôle      |
+| Email                    | Mot de passe  | Rle       |
 | ------------------------ | ------------- | --------- |
 | admin@festival.fr        | Festival2025! | ADMIN     |
 | organisateur@festival.fr | Festival2025! | ORGANIZER |
-| staff@festival.fr        | Festival2025! | STAFF     |
 | user@festival.fr         | Festival2025! | USER      |
 
 ---
 
-## Commandes Utiles
-
-### Développement
-
-```bash
-# Serveurs de développement
-npx nx serve api
-npx nx serve web
-npx nx serve admin
-
-# Build
-npx nx build api --skip-nx-cache
-npm run build:all
-
-# Tests
-npx nx test api
-npm run test:all
-
-# Linting
-npm run lint:all
-npm run lint:fix
-```
-
-### Base de données
-
-```bash
-npx prisma generate     # Générer le client
-npx prisma migrate dev  # Appliquer les migrations
-npx prisma db seed      # Données de test
-npx prisma studio       # Interface visuelle
-```
-
-### Docker
-
-```bash
-docker-compose up -d    # Démarrer PostgreSQL, Redis, MailHog
-docker-compose down     # Arrêter les services
-docker-compose logs -f  # Voir les logs
-```
-
----
-
-## Workflows BMAD Disponibles
-
-Ce projet utilise le framework BMAD pour l'assistance au développement.
-
-| Workflow         | Description                                    |
-| ---------------- | ---------------------------------------------- |
-| `/quick-spec`    | Créer une spécification technique              |
-| `/quick-dev`     | Développement rapide avec spec ou instructions |
-| `/dev-story`     | Implémenter une user story                     |
-| `/code-review`   | Review de code adversariale                    |
-| `/create-story`  | Créer une nouvelle story                       |
-| `/sprint-status` | Statut du sprint                               |
-
----
-
-## Support
-
-- **Documentation API**: `http://localhost:3333/api/docs`
-- **Issues**: Créer une issue sur le repository
-- **Contribuer**: Voir [CONTRIBUTING.md](../CONTRIBUTING.md) si disponible
-
----
-
-_Documentation générée par le workflow document-project_
+_Index gnr par BMad Master - 2026-01-21_

@@ -2,12 +2,12 @@ import { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
-import { OpenStreetMap } from '@/components/ui/OpenStreetMap';
 import {
   FestivalHero,
   FestivalLineup,
   FestivalShare,
   FestivalProgram,
+  FestivalMap,
   type Festival,
 } from '@/components/festivals';
 
@@ -262,41 +262,16 @@ export default async function FestivalDetailPage({ params }: PageProps) {
               <FestivalLineup artists={festival.lineup} initialCount={4} />
             )}
 
-            {/* Location */}
+            {/* Location & Map with POIs */}
             <section id="location-section">
-              <h2 className="text-2xl font-bold text-white mb-6">Location</h2>
-              <Card variant="solid" padding="none" className="overflow-hidden">
-                <OpenStreetMap location={festival.location} className="h-64" />
-                <div className="p-6 border-t border-white/10">
-                  <div className="flex items-start gap-3">
-                    <svg
-                      className="w-5 h-5 text-primary-400 mt-0.5 flex-shrink-0"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      stroke="currentColor"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-                      />
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"
-                      />
-                    </svg>
-                    <div>
-                      <h3 className="font-semibold text-white">{festival.location}</h3>
-                      <p className="text-white/60 text-sm mt-1">
-                        Shuttle buses and transportation options available from the city center.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
+              <h2 className="text-2xl font-bold text-white mb-6">Carte & Points d&apos;interet</h2>
+              {apiFestival ? (
+                <FestivalMap festivalId={apiFestival.id} location={festival.location} />
+              ) : (
+                <Card variant="solid" padding="lg">
+                  <p className="text-white/60">Carte non disponible</p>
+                </Card>
+              )}
             </section>
           </div>
 

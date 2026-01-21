@@ -1,0 +1,149 @@
+# Sprint Stabilité - Application Festival
+# Objectif: Application robuste, 0 erreurs 404, design festif Tomorrowland-style
+# Date: 2026-01-21
+# Mode: Autonome - Boucle Dev→Test→Fix→Repeat
+
+meta:
+  sprint_name: "Stabilité & Polish"
+  deadline: "2026-01-31"
+  style_reference: ["Tomorrowland", "Coachella", "Hellfest"]
+  rules:
+    - "Aucune donnée en dur - tout en DB"
+    - "Push au fur et à mesure"
+    - "Agents parallèles"
+    - "Itération autonome"
+
+current_phase: "audit"
+
+workstreams:
+  - id: WS-1
+    name: "Audit & 404 Fixes"
+    agent: "DEV"
+    status: "in_progress"
+    tasks:
+      - id: WS-1-1
+        name: "Scanner toutes les routes Web App"
+        status: "pending"
+      - id: WS-1-2
+        name: "Identifier les pages 404"
+        status: "pending"
+      - id: WS-1-3
+        name: "Corriger les liens cassés"
+        status: "pending"
+      - id: WS-1-4
+        name: "Vérifier navigation complète"
+        status: "pending"
+
+  - id: WS-2
+    name: "Styles & Design Festif"
+    agent: "UX-DESIGNER + DEV"
+    status: "pending"
+    tasks:
+      - id: WS-2-1
+        name: "Fixer Tailwind container-app manquant"
+        status: "pending"
+      - id: WS-2-2
+        name: "Créer palette festive (Tomorrowland style)"
+        status: "pending"
+      - id: WS-2-3
+        name: "Appliquer gradients magiques/féériques"
+        status: "pending"
+      - id: WS-2-4
+        name: "Header/Footer cohérents"
+        status: "pending"
+      - id: WS-2-5
+        name: "Animations subtiles"
+        status: "pending"
+
+  - id: WS-3
+    name: "Fonctionnalités Core"
+    agent: "DEV"
+    status: "pending"
+    tasks:
+      - id: WS-3-1
+        name: "Page Festivals - liste depuis DB"
+        status: "pending"
+      - id: WS-3-2
+        name: "Page Festival détail - infos complètes"
+        status: "pending"
+      - id: WS-3-3
+        name: "Programme artistes/scènes"
+        status: "pending"
+      - id: WS-3-4
+        name: "Plan interactif (POIs: toilettes, bars, food)"
+        status: "pending"
+      - id: WS-3-5
+        name: "Billetterie fonctionnelle"
+        status: "pending"
+      - id: WS-3-6
+        name: "Authentification complète"
+        status: "pending"
+
+  - id: WS-4
+    name: "Admin Dashboard"
+    agent: "DEV"
+    status: "pending"
+    tasks:
+      - id: WS-4-1
+        name: "CRUD Festivals"
+        status: "pending"
+      - id: WS-4-2
+        name: "CRUD Artistes"
+        status: "pending"
+      - id: WS-4-3
+        name: "CRUD POIs (points d'intérêt)"
+        status: "pending"
+      - id: WS-4-4
+        name: "Gestion billets"
+        status: "pending"
+
+  - id: WS-5
+    name: "Authentification Sécurisée"
+    agent: "DEV"
+    status: "in_progress"
+    priority: "CRITICAL"
+    tasks:
+      - id: WS-5-1
+        name: "Supprimer auto-login et mock users"
+        status: "in_progress"
+      - id: WS-5-2
+        name: "Configurer Auth0 (Google, Facebook, Email)"
+        status: "pending"
+      - id: WS-5-3
+        name: "Page Login sécurisée"
+        status: "pending"
+      - id: WS-5-4
+        name: "Page Register avec validation"
+        status: "pending"
+      - id: WS-5-5
+        name: "Protection routes (middleware)"
+        status: "pending"
+      - id: WS-5-6
+        name: "Gestion des rôles (USER, ADMIN, ARTIST, TECHNICIAN, etc.)"
+        status: "pending"
+      - id: WS-5-7
+        name: "Logout fonctionnel"
+        status: "pending"
+
+  - id: WS-6
+    name: "Tests & Validation"
+    agent: "TEA"
+    status: "pending"
+    tasks:
+      - id: WS-6-1
+        name: "Tests E2E navigation"
+        status: "pending"
+      - id: WS-6-2
+        name: "Tests API endpoints"
+        status: "pending"
+      - id: WS-6-3
+        name: "Tests visuels MCP"
+        status: "pending"
+      - id: WS-6-4
+        name: "Tests authentification"
+        status: "pending"
+
+iteration_log:
+  - timestamp: "2026-01-21T19:00:00Z"
+    action: "Launched 6 parallel agents"
+    agents: ["Tailwind Fix", "Hardcoded Data", "Header/Footer", "UX Design", "Festivals Page", "Auth Security"]

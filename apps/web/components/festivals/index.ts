@@ -7,3 +7,4 @@ export type { TicketType } from './TicketSelector';
 export { FestivalShare } from './FestivalShare';
 export { FestivalLineup } from './FestivalLineup';
 export { FestivalProgram } from './FestivalProgram';
+export { FestivalMap } from './FestivalMap';
