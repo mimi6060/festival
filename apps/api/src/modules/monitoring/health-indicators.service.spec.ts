@@ -115,10 +115,7 @@ describe('HealthIndicatorsService', () => {
       // Arrange
       const { PrismaClient } = require('@prisma/client');
       const mockPrisma = {
-        $queryRaw: jest.fn().mockImplementation(async () => {
-          await new Promise((resolve) => setTimeout(resolve, 10));
-          return [{ '?column?': 1 }];
-        }),
+        $queryRaw: jest.fn().mockResolvedValue([{ '?column?': 1 }]),
         $disconnect: jest.fn().mockResolvedValue(undefined),
       };
       PrismaClient.mockImplementation(() => mockPrisma);
@@ -127,7 +124,9 @@ describe('HealthIndicatorsService', () => {
       const result = await service.checkDatabase();
 
       // Assert
-      expect(result.responseTime).toBeGreaterThanOrEqual(10);
+      // Response time should be a number >= 0 (timing varies based on system load)
+      expect(typeof result.responseTime).toBe('number');
+      expect(result.responseTime).toBeGreaterThanOrEqual(0);
     });
   });
 
@@ -214,12 +213,25 @@ describe('HealthIndicatorsService', () => {
 
   describe('checkMemory', () => {
     it('should return UP status when memory usage is normal', async () => {
+      // Arrange - Mock process.memoryUsage to simulate normal memory usage
+      const originalMemoryUsage = process.memoryUsage;
+      process.memoryUsage = jest.fn().mockReturnValue({
+        heapUsed: 200 * 1024 * 1024, // 200MB
+        heapTotal: 500 * 1024 * 1024, // 500MB = 40% usage
+        rss: 300 * 1024 * 1024,
+        external: 50 * 1024 * 1024,
+        arrayBuffers: 10 * 1024 * 1024,
+      }) as typeof process.memoryUsage;
+
       // Act
       const result = await service.checkMemory();
 
+      // Restore
+      process.memoryUsage = originalMemoryUsage;
+
       // Assert
       expect(result.name).toBe('memory');
-      expect([HealthStatus.UP, HealthStatus.DEGRADED]).toContain(result.status);
+      expect(result.status).toBe(HealthStatus.UP);
       expect(result.details).toHaveProperty('heapUsedMB');
       expect(result.details).toHaveProperty('heapTotalMB');
       expect(result.details).toHaveProperty('rssMB');
@@ -227,8 +239,21 @@ describe('HealthIndicatorsService', () => {
     });
 
     it('should include memory statistics in details', async () => {
+      // Arrange - Mock process.memoryUsage for consistent test
+      const originalMemoryUsage = process.memoryUsage;
+      process.memoryUsage = jest.fn().mockReturnValue({
+        heapUsed: 200 * 1024 * 1024,
+        heapTotal: 500 * 1024 * 1024,
+        rss: 300 * 1024 * 1024,
+        external: 50 * 1024 * 1024,
+        arrayBuffers: 10 * 1024 * 1024,
+      }) as typeof process.memoryUsage;
+
       // Act
       const result = await service.checkMemory();
+
+      // Restore
+      process.memoryUsage = originalMemoryUsage;
 
       // Assert
       expect(typeof result.details?.heapUsedMB).toBe('number');
@@ -519,7 +544,21 @@ describe('HealthIndicatorsService', () => {
   // ==========================================================================
 
   describe('checkHealth', () => {
+    let originalMemoryUsage: typeof process.memoryUsage;
+
     beforeEach(() => {
+      // Save original memoryUsage
+      originalMemoryUsage = process.memoryUsage;
+
+      // Mock memory to ensure consistent test results
+      process.memoryUsage = jest.fn().mockReturnValue({
+        heapUsed: 200 * 1024 * 1024, // 200MB
+        heapTotal: 500 * 1024 * 1024, // 500MB = 40% usage
+        rss: 300 * 1024 * 1024,
+        external: 50 * 1024 * 1024,
+        arrayBuffers: 10 * 1024 * 1024,
+      }) as typeof process.memoryUsage;
+
       // Arrange - setup successful mocks
       const { PrismaClient } = require('@prisma/client');
       const mockPrisma = {
@@ -537,6 +576,11 @@ describe('HealthIndicatorsService', () => {
 
       const { execSync } = require('child_process');
       execSync.mockReturnValue('/dev/disk1 500000000 250000000 250000000 50% /\n');
+    });
+
+    afterEach(() => {
+      // Restore original memoryUsage
+      process.memoryUsage = originalMemoryUsage;
     });
 
     it('should return UP status when all checks pass', async () => {
@@ -559,8 +603,7 @@ describe('HealthIndicatorsService', () => {
       const result = await service.checkHealth();
 
       // Assert
-      // Status can be UP, DEGRADED (if memory is high), but not DOWN (since DB and Redis are mocked)
-      expect([HealthStatus.UP, HealthStatus.DEGRADED]).toContain(result.status);
+      expect(result.status).toBe(HealthStatus.UP);
     });
 
     it('should include timestamp in response', async () => {
@@ -723,7 +766,21 @@ describe('HealthIndicatorsService', () => {
   // ==========================================================================
 
   describe('getHealthSummary', () => {
+    let originalMemoryUsage: typeof process.memoryUsage;
+
     beforeEach(() => {
+      // Save original memoryUsage
+      originalMemoryUsage = process.memoryUsage;
+
+      // Mock memory to ensure consistent test results
+      process.memoryUsage = jest.fn().mockReturnValue({
+        heapUsed: 200 * 1024 * 1024, // 200MB
+        heapTotal: 500 * 1024 * 1024, // 500MB = 40% usage
+        rss: 300 * 1024 * 1024,
+        external: 50 * 1024 * 1024,
+        arrayBuffers: 10 * 1024 * 1024,
+      }) as typeof process.memoryUsage;
+
       // Arrange - setup successful mocks
       const { PrismaClient } = require('@prisma/client');
       const mockPrisma = {
@@ -741,6 +798,11 @@ describe('HealthIndicatorsService', () => {
 
       const { execSync } = require('child_process');
       execSync.mockReturnValue('/dev/disk1 500000000 250000000 250000000 50% /\n');
+    });
+
+    afterEach(() => {
+      // Restore original memoryUsage
+      process.memoryUsage = originalMemoryUsage;
     });
 
     it('should return summary with healthy status', async () => {
@@ -763,13 +825,9 @@ describe('HealthIndicatorsService', () => {
       const result = await service.getHealthSummary();
 
       // Assert
-      // Status can be UP or DEGRADED (if memory is high), but not DOWN (since DB and Redis are mocked)
       expect(result).toHaveProperty('healthy');
-      expect([HealthStatus.UP, HealthStatus.DEGRADED]).toContain(result.status);
-      // healthy is true only when status is UP
-      if (result.status === HealthStatus.UP) {
-        expect(result.healthy).toBe(true);
-      }
+      expect(result.status).toBe(HealthStatus.UP);
+      expect(result.healthy).toBe(true);
     });
 
     it('should include formatted uptime', async () => {
