@@ -27,6 +27,44 @@ _Aucune tâche en cours_
 
 ## Recemment Complete (2026-01-21)
 
+### Seed Data - Famous Artists & World Festivals
+
+- [x] **Famous International Artists** (`prisma/seed.ts`)
+  - David Guetta - EDM/House - France
+  - Martin Garrix - Progressive House/EDM - Netherlands
+  - Charlotte de Witte - Techno - Belgium
+  - Amelie Lens - Techno - Belgium
+  - Nina Kraviz - Techno - Russia
+  - Carl Cox - House/Techno - UK
+  - Stromae - Pop/Electronic - Belgium
+  - Daft Punk - Electronic/French Touch - France
+  - Justice - Electronic/French Touch - France
+  - The Weeknd - Pop/R&B - Canada
+  - Dua Lipa - Pop/Dance - UK
+  - Calvin Harris - EDM/House - UK
+  - Tiesto - Trance/EDM - Netherlands
+  - Armin van Buuren - Trance/Progressive - Netherlands
+  - Deadmau5 - Progressive House/Electro - Canada
+  - Skrillex - Dubstep/EDM - USA
+
+- [x] **World Famous Festivals** (`prisma/seed.ts`)
+  - Tomorrowland 2025 - Boom, Belgium - 400,000 capacity - **Featured**
+  - Ultra Music Festival 2025 - Miami, USA - 165,000 capacity - **Featured**
+  - Coachella 2025 - Indio, California, USA - 125,000 capacity - **Featured**
+  - Rock en Seine 2025 - Paris, France - 40,000 capacity - **Featured**
+  - Les Vieilles Charrues 2025 - Carhaix, France - 280,000 capacity - **Featured**
+  - Hellfest 2025 - Clisson, France - 60,000 capacity - **Featured**
+  - Lollapalooza Paris 2025 - Paris, France - 70,000 capacity
+  - Main Square Festival 2025 - Arras, France - 40,000 capacity
+  - Solidays 2025 - Paris, France - 228,000 capacity
+  - Electrobeach 2025 - Le Barcares, France - 100,000 capacity - **Featured**
+
+- [x] **ESLint Fix** - Renamed unused `VendorDataItem` interface to `_VendorDataItem`
+
+---
+
+## Recemment Complete (2026-01-21)
+
 ### Platform Statistics API & Homepage Integration
 
 - [x] **Stats Module** (`apps/api/src/modules/stats/`)
