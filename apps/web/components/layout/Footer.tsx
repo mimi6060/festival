@@ -6,40 +6,40 @@ import Link from 'next/link';
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
 
 const footerLinks = {
-  product: {
-    title: 'Product',
+  discover: {
+    title: 'Decouvrir',
     links: [
       { label: 'Festivals', href: '/festivals' },
-      { label: 'Artists', href: '/artists' },
-      { label: 'Venues', href: '/venues' },
-      { label: 'Pricing', href: '/pricing' },
+      { label: 'Artistes', href: '/artists' },
+      { label: 'Programme', href: '/program' },
+      { label: 'Billetterie', href: '/tickets' },
     ],
   },
   company: {
-    title: 'Company',
+    title: 'Entreprise',
     links: [
-      { label: 'About', href: '/about' },
-      { label: 'Blog', href: '/blog' },
-      { label: 'Careers', href: '/careers' },
-      { label: 'Press', href: '/press' },
+      { label: 'A propos', href: '/about' },
+      { label: 'Carrieres', href: '/careers' },
+      { label: 'Presse', href: '/press' },
+      { label: 'Partenaires', href: '/partners' },
     ],
   },
   support: {
     title: 'Support',
     links: [
-      { label: 'Help Center', href: '/help' },
+      { label: "Centre d'aide", href: '/help' },
       { label: 'Contact', href: '/contact' },
       { label: 'FAQ', href: '/faq' },
-      { label: 'Refunds', href: '/refunds' },
+      { label: 'Remboursements', href: '/refunds' },
     ],
   },
   legal: {
     title: 'Legal',
     links: [
-      { label: 'Privacy', href: '/privacy' },
-      { label: 'Terms', href: '/terms' },
+      { label: 'Confidentialite', href: '/privacy' },
+      { label: 'CGV', href: '/terms' },
+      { label: 'Mentions legales', href: '/legal' },
       { label: 'Cookies', href: '/cookies' },
-      { label: 'Licenses', href: '/licenses' },
     ],
   },
 };
@@ -47,16 +47,16 @@ const footerLinks = {
 const socialLinks = [
   {
     name: 'Twitter',
-    href: 'https://twitter.com',
+    href: 'https://twitter.com/festivalhub',
     icon: (
       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-        <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84" />
+        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
       </svg>
     ),
   },
   {
     name: 'Instagram',
-    href: 'https://instagram.com',
+    href: 'https://instagram.com/festivalhub',
     icon: (
       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
         <path
@@ -69,7 +69,7 @@ const socialLinks = [
   },
   {
     name: 'Facebook',
-    href: 'https://facebook.com',
+    href: 'https://facebook.com/festivalhub',
     icon: (
       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
         <path
@@ -82,7 +82,7 @@ const socialLinks = [
   },
   {
     name: 'YouTube',
-    href: 'https://youtube.com',
+    href: 'https://youtube.com/festivalhub',
     icon: (
       <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
         <path
@@ -93,8 +93,33 @@ const socialLinks = [
       </svg>
     ),
   },
+  {
+    name: 'TikTok',
+    href: 'https://tiktok.com/@festivalhub',
+    icon: (
+      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.15 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z" />
+      </svg>
+    ),
+  },
 ];
 
+/**
+ * Footer Component - Festival Platform
+ *
+ * Features:
+ * - Tomorrowland-inspired festive design with gradient accents
+ * - Newsletter subscription with API integration
+ * - Responsive multi-column layout
+ * - Social media links with hover effects
+ * - Decorative gradient elements
+ *
+ * WCAG 2.1 AA Compliance:
+ * - Proper semantic footer markup
+ * - Focus indicators on all interactive elements
+ * - High contrast text
+ * - Accessible form labels
+ */
 export function Footer() {
   const [email, setEmail] = useState('');
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -104,7 +129,7 @@ export function Footer() {
   const handleNewsletterSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email?.includes('@')) {
-      setError('Please enter a valid email address');
+      setError('Veuillez entrer une adresse email valide');
       return;
     }
 
@@ -119,83 +144,116 @@ export function Footer() {
         },
         body: JSON.stringify({
           email: email,
-          language: 'en',
+          language: 'fr',
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok && response.status !== 409) {
-        throw new Error(data.message || 'Subscription failed');
+        throw new Error(data.message || "Echec de l'inscription");
       }
 
       setIsSubscribed(true);
       setEmail('');
     } catch (err) {
       console.error('Newsletter subscription failed:', err);
-      setError(err instanceof Error ? err.message : 'Subscription failed');
+      setError(err instanceof Error ? err.message : "Echec de l'inscription");
     } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <footer className="bg-festival-darker border-t border-white/5">
-      <div className="container-app py-12 lg:py-16">
+    <footer role="contentinfo" className="relative bg-festival-darker overflow-hidden">
+      {/* Decorative background elements */}
+      <div className="absolute inset-0 pointer-events-none">
+        {/* Top gradient */}
+        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
+        {/* Radial gradient accents */}
+        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-500/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/2 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl" />
+      </div>
+
+      <div className="relative container-app py-16 lg:py-20">
         {/* Main Footer Content */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 lg:gap-12">
-          {/* Brand Column */}
-          <div className="col-span-2 md:col-span-4 lg:col-span-1 mb-8 lg:mb-0">
-            <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-primary-500 to-pink-500 flex items-center justify-center">
-                <svg
-                  className="w-6 h-6 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
-                  />
-                </svg>
+        <div className="grid grid-cols-1 lg:grid-cols-6 gap-12 lg:gap-8">
+          {/* Brand Column - Takes 2 columns on large screens */}
+          <div className="lg:col-span-2">
+            {/* Logo */}
+            <Link href="/" className="inline-flex items-center gap-3 mb-6 group">
+              <div className="relative">
+                <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-purple-500 via-pink-500 to-cyan-500 blur-lg opacity-50 group-hover:opacity-70 transition-opacity duration-300" />
+                <div className="relative w-12 h-12 rounded-xl bg-gradient-to-br from-purple-600 via-pink-500 to-cyan-500 flex items-center justify-center">
+                  <svg
+                    className="w-7 h-7 text-white"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3"
+                    />
+                  </svg>
+                </div>
               </div>
-              <span className="text-xl font-bold gradient-text">FestivalHub</span>
+              <div className="flex flex-col">
+                <span className="text-2xl font-bold bg-gradient-to-r from-white via-purple-200 to-pink-200 bg-clip-text text-transparent">
+                  Festival
+                </span>
+                <span className="text-xs font-medium tracking-widest uppercase text-purple-400/80">
+                  Platform
+                </span>
+              </div>
             </Link>
-            <p className="text-white/50 text-sm mb-6 max-w-xs">
-              Discover and book tickets to the best music festivals around the world. Your next
-              unforgettable experience starts here.
+
+            {/* Description */}
+            <p className="text-white/60 text-sm leading-relaxed mb-8 max-w-sm">
+              Decouvrez et reservez vos places pour les meilleurs festivals de musique. Votre
+              prochaine experience inoubliable commence ici.
             </p>
+
             {/* Social Links */}
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2">
               {socialLinks.map((social) => (
                 <a
                   key={social.name}
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-white/40 hover:text-primary-400 transition-colors duration-300"
-                  aria-label={social.name}
+                  className="group relative p-3 rounded-xl text-white/50 hover:text-white transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500"
+                  aria-label={`Suivez-nous sur ${social.name}`}
                 >
-                  {social.icon}
+                  {/* Hover background */}
+                  <span className="absolute inset-0 rounded-xl bg-white/0 group-hover:bg-white/10 transition-colors duration-300" />
+                  {/* Glow on hover */}
+                  <span className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-purple-500/20 to-pink-500/20 blur-xl" />
+                  <span className="relative">{social.icon}</span>
                 </a>
               ))}
             </div>
           </div>
 
-          {/* Footer Links */}
+          {/* Links Columns - Each takes 1 column */}
           {Object.entries(footerLinks).map(([key, section]) => (
             <div key={key}>
-              <h3 className="text-white font-semibold mb-4">{section.title}</h3>
+              <h3 className="text-white font-semibold mb-5 text-sm uppercase tracking-wider">
+                {section.title}
+              </h3>
               <ul className="space-y-3">
                 {section.links.map((link) => (
                   <li key={link.href}>
                     <Link
                       href={link.href}
-                      className="text-white/50 hover:text-white text-sm transition-colors duration-300"
+                      className="group inline-flex items-center text-white/60 hover:text-white text-sm transition-colors duration-300 focus:outline-none focus-visible:text-purple-400"
                     >
+                      <span className="mr-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300 text-purple-400">
+                        &rarr;
+                      </span>
                       {link.label}
                     </Link>
                   </li>
@@ -206,48 +264,119 @@ export function Footer() {
         </div>
 
         {/* Newsletter Section */}
-        <div className="mt-12 pt-8 border-t border-white/5">
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-              <h3 className="text-white font-semibold mb-1">Stay in the loop</h3>
+        <div className="mt-16 pt-8 border-t border-white/10">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+            <div className="lg:max-w-md">
+              <h3 className="text-white font-semibold text-lg mb-2 flex items-center gap-2">
+                <span className="inline-block w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500" />
+                Restez connecte
+              </h3>
               <p className="text-white/50 text-sm">
-                Get the latest festivals and exclusive offers straight to your inbox.
+                Recevez les dernieres actualites et offres exclusives directement dans votre boite
+                mail.
               </p>
             </div>
+
             {isSubscribed ? (
-              <div className="flex items-center gap-2 text-green-400">
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth={2}
-                    d="M5 13l4 4L19 7"
-                  />
-                </svg>
-                <span className="text-sm font-medium">Thanks for subscribing!</span>
+              <div className="flex items-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-green-500/20 to-emerald-500/20 border border-green-500/30">
+                <div className="p-2 rounded-full bg-green-500/20">
+                  <svg
+                    className="w-5 h-5 text-green-400"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    stroke="currentColor"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                </div>
+                <span className="text-sm font-medium text-green-400">
+                  Merci pour votre inscription !
+                </span>
               </div>
             ) : (
-              <div className="w-full md:w-auto">
-                <form onSubmit={handleNewsletterSubmit} className="flex gap-3">
-                  <input
-                    type="email"
-                    placeholder="Enter your email"
-                    value={email}
-                    onChange={(e) => {
-                      setEmail(e.target.value);
-                      setError(null);
-                    }}
-                    className="flex-1 md:w-64 px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-primary-500 transition-colors"
-                  />
+              <div className="w-full lg:w-auto">
+                <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-3">
+                  <div className="relative flex-1 lg:w-80">
+                    <input
+                      type="email"
+                      placeholder="Votre adresse email"
+                      value={email}
+                      onChange={(e) => {
+                        setEmail(e.target.value);
+                        setError(null);
+                      }}
+                      aria-label="Adresse email pour la newsletter"
+                      className="w-full px-5 py-4 rounded-xl bg-white/5 border border-white/10 text-white placeholder-white/40 focus:outline-none focus:border-purple-500/50 focus:ring-2 focus:ring-purple-500/20 transition-all duration-300"
+                    />
+                  </div>
                   <button
                     type="submit"
                     disabled={isLoading}
-                    className="px-6 py-3 rounded-xl bg-primary-500 hover:bg-primary-600 disabled:bg-primary-500/50 text-white font-semibold transition-colors"
+                    className="relative group px-8 py-4 rounded-xl font-semibold text-white overflow-hidden focus:outline-none focus-visible:ring-2 focus-visible:ring-purple-500 focus-visible:ring-offset-2 focus-visible:ring-offset-festival-darker disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isLoading ? 'Subscribing...' : 'Subscribe'}
+                    {/* Gradient background */}
+                    <span className="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-500 to-purple-600 bg-[length:200%_100%] group-hover:animate-[gradientShift_3s_ease_infinite]" />
+                    {/* Glow on hover */}
+                    <span className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-gradient-to-r from-purple-400 via-pink-400 to-purple-400 blur-xl" />
+                    <span className="relative flex items-center gap-2">
+                      {isLoading ? (
+                        <>
+                          <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24" fill="none">
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            />
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            />
+                          </svg>
+                          <span>Inscription...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>S&apos;inscrire</span>
+                          <svg
+                            className="w-5 h-5 group-hover:translate-x-1 transition-transform duration-300"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            stroke="currentColor"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              strokeWidth={2}
+                              d="M14 5l7 7m0 0l-7 7m7-7H3"
+                            />
+                          </svg>
+                        </>
+                      )}
+                    </span>
                   </button>
                 </form>
-                {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
+                {error && (
+                  <p className="mt-3 text-sm text-red-400 flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                      />
+                    </svg>
+                    {error}
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -256,26 +385,28 @@ export function Footer() {
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-white/5 flex flex-col md:flex-row items-center justify-between gap-4">
           <p className="text-white/40 text-sm">
-            {new Date().getFullYear()} FestivalHub. All rights reserved.
+            &copy; {new Date().getFullYear()} Festival Platform. Tous droits reserves.
           </p>
-          <div className="flex items-center gap-6">
+          <div className="flex items-center gap-6 text-sm">
             <Link
               href="/privacy"
-              className="text-white/40 hover:text-white text-sm transition-colors"
+              className="text-white/40 hover:text-white transition-colors duration-300 focus:outline-none focus-visible:text-purple-400"
             >
-              Privacy Policy
+              Confidentialite
             </Link>
+            <span className="text-white/20">|</span>
             <Link
               href="/terms"
-              className="text-white/40 hover:text-white text-sm transition-colors"
+              className="text-white/40 hover:text-white transition-colors duration-300 focus:outline-none focus-visible:text-purple-400"
             >
-              Terms of Service
+              CGV
             </Link>
+            <span className="text-white/20">|</span>
             <Link
               href="/cookies"
-              className="text-white/40 hover:text-white text-sm transition-colors"
+              className="text-white/40 hover:text-white transition-colors duration-300 focus:outline-none focus-visible:text-purple-400"
             >
-              Cookie Settings
+              Cookies
             </Link>
           </div>
         </div>

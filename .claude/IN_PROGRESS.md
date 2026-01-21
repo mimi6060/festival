@@ -27,6 +27,36 @@ _Aucune tache en cours_
 
 ## Recemment Complete (2026-01-21)
 
+### Web App - Header & Footer Festive Design
+
+- [x] **Header Component** (`apps/web/components/layout/Header.tsx`)
+  - Tomorrowland-inspired design with gradient accents (purple/pink/cyan)
+  - Logo with animated glow effect on hover
+  - Navigation with icons and active state highlighting
+  - Scroll-aware styling (transparent -> solid background)
+  - Animated hamburger menu for mobile
+  - Theme toggle integration
+  - Mobile menu with staggered animation
+  - WCAG 2.1 AA accessibility (focus indicators, semantic markup)
+
+- [x] **Footer Component** (`apps/web/components/layout/Footer.tsx`)
+  - Cohesive festive design with gradient decorative orbs
+  - Logo with gradient text
+  - Four-column link layout (Discover, Company, Support, Legal)
+  - Social media links (Twitter/X, Instagram, Facebook, YouTube, TikTok)
+  - Newsletter subscription with API integration
+  - Animated gradient submit button
+  - Success/error state handling
+  - French localization
+
+- [x] **Layout Integration** (`apps/web/app/layout.tsx`)
+  - Header and Footer imported and integrated
+  - Proper padding for fixed header (pt-16 lg:pt-20)
+  - Flex column layout for sticky footer
+  - Updated comments for layout structure
+
+---
+
 ### UX Design - Festive Tomorrowland Theme
 
 - [x] Enhanced tokens.css with festive gradients and glow variables

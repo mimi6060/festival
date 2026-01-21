@@ -5,6 +5,8 @@ import { ThemeProvider, ThemeScript } from '../components/providers/ThemeProvide
 import { DirectionProvider } from '../components/providers/DirectionProvider';
 import { SkipLink } from '../components/a11y/SkipLink';
 import { AnnouncementProvider } from '../components/a11y/LiveRegion';
+import { Header } from '../components/layout/Header';
+import { Footer } from '../components/layout/Footer';
 import { getDirection, isRTL } from '../utils/rtl';
 import { defaultLocale } from '../i18n/config';
 
@@ -107,13 +109,26 @@ export default async function RootLayout({ children }: { children: React.ReactNo
                * The tabIndex={-1} allows the skip link to work properly
                * by making the main element programmatically focusable.
                *
-               * Child pages should render their own header and footer components.
-               * The main landmark will contain the primary page content.
+               * Layout structure:
+               * - Header: Fixed navigation with festive styling
+               * - Main: Primary content area with padding for fixed header
+               * - Footer: Site footer with links and newsletter
                */}
               <div className="min-h-screen flex flex-col">
-                <main id="main-content" tabIndex={-1} className="flex-1 focus:outline-none">
+                {/* Site Header - Fixed navigation */}
+                <Header />
+
+                {/* Main content with top padding for fixed header */}
+                <main
+                  id="main-content"
+                  tabIndex={-1}
+                  className="flex-1 focus:outline-none pt-16 lg:pt-20"
+                >
                   {children}
                 </main>
+
+                {/* Site Footer */}
+                <Footer />
               </div>
             </AnnouncementProvider>
           </DirectionProvider>
