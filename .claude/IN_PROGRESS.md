@@ -108,6 +108,14 @@ _Dernière mise à jour: 2026-01-21_
 
 ### UI Library (libs/ui)
 
+- ✅ **Admin App Migration to libs/ui** (2026-01-21)
+  - Added `@festival/ui` path alias to admin tsconfig.json
+  - Migrated Avatar imports in: staff/page.tsx, profile/page.tsx, users/page.tsx
+  - Migrated Spinner import in: loading.tsx
+  - Added 'use client' directive to libs/ui/src/components/index.ts for SSR compatibility
+  - Build verified: `npx nx build admin --skip-nx-cache` passes
+  - Note: Original components in apps/admin/components/ui/ kept for gradual migration
+
 - ✅ **Web App Migration to libs/ui** (Started 2026-01-21)
   - Added `@festival/ui` path alias to web tsconfig.json
   - Added ui library reference for TypeScript project references
