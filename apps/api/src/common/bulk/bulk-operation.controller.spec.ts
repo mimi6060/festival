@@ -12,6 +12,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { GenericBulkController, BulkOperationController } from './bulk-operation.controller';
 import { BulkOperationService } from './bulk-operation.service';
+import { PrismaService } from '../../modules/prisma/prisma.service';
 import {
   BulkDeleteDto,
   BulkImportDto,
@@ -31,6 +32,49 @@ const mockBulkOperationService = {
   bulkDelete: jest.fn(),
 };
 
+const mockPrismaService = {
+  ticket: {
+    findUnique: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+  user: {
+    findUnique: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+  vendor: {
+    findUnique: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+  payment: {
+    findUnique: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+  artist: {
+    findUnique: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+  vendorOrder: {
+    findUnique: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+  ticketCategory: {
+    findUnique: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+  festival: {
+    findUnique: jest.fn(),
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+};
+
 describe('GenericBulkController', () => {
   let controller: GenericBulkController;
   let _service: BulkOperationService;
@@ -44,6 +88,10 @@ describe('GenericBulkController', () => {
         {
           provide: BulkOperationService,
           useValue: mockBulkOperationService,
+        },
+        {
+          provide: PrismaService,
+          useValue: mockPrismaService,
         },
       ],
     }).compile();
@@ -82,12 +130,9 @@ describe('GenericBulkController', () => {
 
       mockBulkOperationService.bulkDelete.mockResolvedValue(mockResponse);
 
-      const result = await controller.bulkDelete(dto);
+      const result = await controller.bulkDelete(dto, 'ticket');
 
-      expect(mockBulkOperationService.bulkDelete).toHaveBeenCalledWith(
-        dto,
-        expect.any(Function),
-      );
+      expect(mockBulkOperationService.bulkDelete).toHaveBeenCalledWith(dto, expect.any(Function));
       expect(result).toEqual(mockResponse);
     });
 
@@ -108,7 +153,7 @@ describe('GenericBulkController', () => {
 
       mockBulkOperationService.bulkDelete.mockResolvedValue(mockResponse);
 
-      const result = await controller.bulkDelete(dto);
+      const result = await controller.bulkDelete(dto, 'ticket');
 
       expect(result).toHaveProperty('status');
       expect(result).toHaveProperty('total');
@@ -140,7 +185,7 @@ describe('GenericBulkController', () => {
 
       mockBulkOperationService.bulkDelete.mockResolvedValue(mockResponse);
 
-      const result = await controller.bulkDelete(dto);
+      const result = await controller.bulkDelete(dto, 'ticket');
 
       expect(result.status).toBe(BulkOperationStatus.PARTIAL);
       expect(result.errorSummary).toBeDefined();
@@ -381,6 +426,10 @@ describe('DTO validation (integration)', () => {
           provide: BulkOperationService,
           useValue: mockBulkOperationService,
         },
+        {
+          provide: PrismaService,
+          useValue: mockPrismaService,
+        },
       ],
     }).compile();
 
@@ -390,10 +439,7 @@ describe('DTO validation (integration)', () => {
   describe('BulkDeleteDto', () => {
     it('should accept valid UUID array', async () => {
       const dto: BulkDeleteDto = {
-        ids: [
-          '550e8400-e29b-41d4-a716-446655440000',
-          '6ba7b810-9dad-11d1-80b4-00c04fd430c8',
-        ],
+        ids: ['550e8400-e29b-41d4-a716-446655440000', '6ba7b810-9dad-11d1-80b4-00c04fd430c8'],
       };
 
       mockBulkOperationService.bulkDelete.mockResolvedValue({
@@ -406,7 +452,7 @@ describe('DTO validation (integration)', () => {
         results: [],
       });
 
-      const result = await controller.bulkDelete(dto);
+      const result = await controller.bulkDelete(dto, 'ticket');
       expect(result).toBeDefined();
     });
   });
@@ -459,6 +505,10 @@ describe('Error handling', () => {
           provide: BulkOperationService,
           useValue: mockBulkOperationService,
         },
+        {
+          provide: PrismaService,
+          useValue: mockPrismaService,
+        },
       ],
     }).compile();
 
@@ -470,7 +520,7 @@ describe('Error handling', () => {
     const error = new Error('Service error');
     mockBulkOperationService.bulkDelete.mockRejectedValue(error);
 
-    await expect(controller.bulkDelete(dto)).rejects.toThrow('Service error');
+    await expect(controller.bulkDelete(dto, 'ticket')).rejects.toThrow('Service error');
   });
 
   it('should handle malformed JSON in validateImport gracefully', async () => {
