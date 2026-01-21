@@ -27,6 +27,39 @@ _Aucune tâche en cours_
 
 ## Recemment Complete (2026-01-21)
 
+### Admin Artists Management Page
+
+- [x] **Artists Management Page** (`apps/admin/app/(dashboard)/artists/page.tsx`)
+  - List all artists with DataTable (paginated)
+  - Search by name with real-time filtering
+  - Filter by genre using dropdown
+  - Create/Edit artists via modal form
+  - Delete confirmation modal
+  - Fields: name, genre, bio, imageUrl, country, spotifyUrl, instagramUrl, websiteUrl
+  - Social links display with icons (Spotify, Instagram, Website)
+  - Performance count display from API
+  - Loading and error states
+  - Uses existing hooks: useArtists, useArtistGenres, useCreateArtist, useUpdateArtist, useDeleteArtist
+
+- [x] **Updated Artist Types** (`apps/admin/types/index.ts`)
+  - Added country and socialLinks fields to Artist interface
+  - Added CreateArtistDto and UpdateArtistDto interfaces
+
+---
+
+## Tâches En Attente
+
+- [ ] **Admin Vendors Management Page** - Create global vendors page at `/apps/admin/app/(dashboard)/vendors/page.tsx`
+  - List all vendors across festivals with filters (type, festival, status)
+  - Create/Edit/Delete vendors via modal
+  - Toggle open/closed status
+  - Table with pagination
+  - Use existing API: GET /vendors, POST /vendors, PUT /vendors/:id, DELETE /vendors/:id
+
+---
+
+## Recemment Complete (2026-01-21)
+
 ### Sprint 6 - Remove Hardcoded Frontend Data
 
 - [x] **Homepage Stats** (`apps/web/app/page.tsx`)

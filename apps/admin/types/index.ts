@@ -1,5 +1,74 @@
 // Admin Dashboard Types
 
+// Sponsor Types
+export type SponsorTier = 'PLATINUM' | 'GOLD' | 'SILVER' | 'BRONZE' | 'PARTNER';
+
+export interface Sponsor {
+  id: string;
+  festivalId: string;
+  name: string;
+  description?: string;
+  logoUrl?: string;
+  websiteUrl?: string;
+  tier: SponsorTier;
+  displayOrder: number;
+  isActive: boolean;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  startDate?: string;
+  endDate?: string;
+  sponsorshipAmount?: number;
+  benefits?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateSponsorDto {
+  name: string;
+  description?: string;
+  logoUrl?: string;
+  websiteUrl?: string;
+  tier?: SponsorTier;
+  displayOrder?: number;
+  isActive?: boolean;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  startDate?: string;
+  endDate?: string;
+  sponsorshipAmount?: number;
+  benefits?: string;
+  notes?: string;
+}
+
+export interface UpdateSponsorDto {
+  name?: string;
+  description?: string;
+  logoUrl?: string;
+  websiteUrl?: string;
+  tier?: SponsorTier;
+  displayOrder?: number;
+  isActive?: boolean;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  startDate?: string;
+  endDate?: string;
+  sponsorshipAmount?: number;
+  benefits?: string;
+  notes?: string;
+}
+
+export interface SponsorsByTier {
+  PLATINUM: Sponsor[];
+  GOLD: Sponsor[];
+  SILVER: Sponsor[];
+  BRONZE: Sponsor[];
+  PARTNER: Sponsor[];
+}
+
 export interface User {
   id: string;
   email: string;
@@ -276,15 +345,43 @@ export interface Artist {
   bio?: string;
   genre?: string;
   imageUrl?: string;
+  country?: string;
   spotifyUrl?: string;
   instagramUrl?: string;
   websiteUrl?: string;
+  socialLinks?: Record<string, string>;
+  isDeleted?: boolean;
+  deletedAt?: string;
   createdAt?: string;
   updatedAt?: string;
   _count?: {
     performances: number;
     favoriteArtists?: number;
   };
+}
+
+export interface CreateArtistDto {
+  name: string;
+  genre?: string;
+  bio?: string;
+  imageUrl?: string;
+  country?: string;
+  spotifyUrl?: string;
+  instagramUrl?: string;
+  websiteUrl?: string;
+  socialLinks?: Record<string, string>;
+}
+
+export interface UpdateArtistDto {
+  name?: string;
+  genre?: string;
+  bio?: string;
+  imageUrl?: string;
+  country?: string;
+  spotifyUrl?: string;
+  instagramUrl?: string;
+  websiteUrl?: string;
+  socialLinks?: Record<string, string>;
 }
 
 // Performance Types
@@ -338,6 +435,11 @@ export type VendorType = 'FOOD' | 'DRINK' | 'BAR' | 'MERCHANDISE';
 export interface Vendor {
   id: string;
   festivalId: string;
+  festival?: {
+    id: string;
+    name: string;
+    slug?: string;
+  };
   name: string;
   type: VendorType;
   description?: string;
@@ -699,4 +801,73 @@ export interface CashlessRefundResultItem {
   balance: number;
   success: boolean;
   error?: string;
+}
+
+// Partner Types
+export type PartnerType =
+  | 'MEDIA'
+  | 'TECHNOLOGY'
+  | 'TRANSPORT'
+  | 'ACCOMMODATION'
+  | 'FOOD_BEVERAGE'
+  | 'SECURITY'
+  | 'MEDICAL'
+  | 'ARTIST_AGENCY'
+  | 'OTHER';
+
+export interface Partner {
+  id: string;
+  festivalId: string;
+  festival?: {
+    id: string;
+    name: string;
+  };
+  name: string;
+  description?: string;
+  logoUrl?: string;
+  websiteUrl?: string;
+  type: PartnerType;
+  displayOrder: number;
+  isActive: boolean;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  servicesProvided?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreatePartnerDto {
+  name: string;
+  description?: string;
+  logoUrl?: string;
+  websiteUrl?: string;
+  type?: PartnerType;
+  displayOrder?: number;
+  isActive?: boolean;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  servicesProvided?: string;
+  notes?: string;
+}
+
+export interface UpdatePartnerDto {
+  name?: string;
+  description?: string;
+  logoUrl?: string;
+  websiteUrl?: string;
+  type?: PartnerType;
+  displayOrder?: number;
+  isActive?: boolean;
+  contactName?: string;
+  contactEmail?: string;
+  contactPhone?: string;
+  servicesProvided?: string;
+  notes?: string;
+}
+
+export interface PartnersByType {
+  [key: string]: Partner[];
 }
