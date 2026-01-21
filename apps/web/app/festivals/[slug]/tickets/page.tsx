@@ -8,7 +8,7 @@ import { Spinner } from '@festival/ui';
 import { TicketSelector, TicketType, TicketSummary } from '@/components/festivals/TicketSelector';
 import { CheckoutForm, OrderConfirmation } from '@/components/checkout/CheckoutForm';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
 
 interface ApiFestival {
   id: string;

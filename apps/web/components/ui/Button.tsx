@@ -47,8 +47,8 @@ const variantStyles: Record<ButtonVariant, string> = {
     text-white font-semibold
   `,
   accent: `
-    bg-secondary-400 hover:bg-secondary-300
-    text-festival-dark font-bold
+    bg-gradient-to-r from-primary-500 to-pink-500 hover:from-primary-400 hover:to-pink-400
+    text-white font-bold shadow-lg shadow-primary-500/25
   `,
   ghost: `
     bg-transparent hover:bg-white/10

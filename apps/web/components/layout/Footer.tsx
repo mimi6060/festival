@@ -166,8 +166,8 @@ export function Footer() {
 
   return (
     <footer role="contentinfo" className="relative bg-festival-darker overflow-hidden">
-      {/* Decorative background elements */}
-      <div className="absolute inset-0 pointer-events-none">
+      {/* Decorative background elements - z-0 to stay behind content */}
+      <div className="absolute inset-0 pointer-events-none z-0">
         {/* Top gradient */}
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-purple-500/50 to-transparent" />
         {/* Radial gradient accents */}
@@ -176,7 +176,7 @@ export function Footer() {
         <div className="absolute top-1/2 right-0 w-64 h-64 bg-cyan-500/5 rounded-full blur-3xl" />
       </div>
 
-      <div className="relative container-app py-16 lg:py-20">
+      <div className="relative z-10 container-app py-16 lg:py-20">
         {/* Main Footer Content */}
         <div className="grid grid-cols-1 lg:grid-cols-6 gap-12 lg:gap-8">
           {/* Brand Column - Takes 2 columns on large screens */}

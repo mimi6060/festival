@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 
-const API_URL = '/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
 
 interface SocialLink {
   platform: string;
@@ -70,7 +70,11 @@ export default function ArtistDetailPage() {
           slug: data.slug,
           genre: data.genre || data.genres?.join(' / ') || 'Music',
           bio: data.bio || data.biography || data.description || 'No biography available.',
-          imageUrl: data.imageUrl || data.photoUrl || data.avatar || 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=800&fit=crop',
+          imageUrl:
+            data.imageUrl ||
+            data.photoUrl ||
+            data.avatar ||
+            'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=800&fit=crop',
           socialLinks: data.socialLinks || transformSocialLinks(data),
           upcomingShows: data.upcomingShows || transformUpcomingShows(data.performances || []),
         };
@@ -107,22 +111,25 @@ export default function ArtistDetailPage() {
   }
 
   // Transform performances to upcoming shows
-  function transformUpcomingShows(performances: Array<{
-    stage?: { name: string };
-    festival?: { name: string; slug: string };
-    startTime?: string;
-    date?: string;
-  }>): UpcomingShow[] {
+  function transformUpcomingShows(
+    performances: Array<{
+      stage?: { name: string };
+      festival?: { name: string; slug: string };
+      startTime?: string;
+      date?: string;
+    }>
+  ): UpcomingShow[] {
     return performances.map((perf) => ({
       festival: perf.festival?.name || 'Unknown Festival',
       festivalSlug: perf.festival?.slug || '',
-      date: perf.startTime || perf.date
-        ? new Date(perf.startTime || perf.date || '').toLocaleDateString('en-US', {
-            month: 'long',
-            day: 'numeric',
-            year: 'numeric',
-          })
-        : 'Date TBA',
+      date:
+        perf.startTime || perf.date
+          ? new Date(perf.startTime || perf.date || '').toLocaleDateString('en-US', {
+              month: 'long',
+              day: 'numeric',
+              year: 'numeric',
+            })
+          : 'Date TBA',
       stage: perf.stage?.name || 'Stage TBA',
     }));
   }
