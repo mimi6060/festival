@@ -21,7 +21,98 @@ _Dernière mise à jour: 2026-01-21_
 
 ## Tâche En Cours
 
-_Sprint Stabilité terminé avec succès !_
+_Aucune tâche en cours_
+
+---
+
+## Recemment Complete (2026-01-21)
+
+### Platform Statistics API & Homepage Integration
+
+- [x] **Stats Module** (`apps/api/src/modules/stats/`)
+  - Created `StatsService` with database queries using PrismaService
+  - Created `StatsController` with two endpoints:
+    - `GET /platform-stats` - Public endpoint for homepage stats (cached 5 min)
+    - `GET /stats/dashboard` - Admin dashboard stats (requires auth, cached 2 min)
+  - Registered `StatsModule` in `app.module.ts`
+
+- [x] **Homepage Dynamic Stats** (`apps/web/app/page.tsx`)
+  - Added `fetchPlatformStats()` function to call API
+  - Added `formatNumber()` helper for thousands/millions formatting
+  - Stats section now displays real data from database:
+    - Total festivals count
+    - Total users (festivaliers)
+    - Total artists
+  - Fallback to placeholder values if API fails
+
+### Web App - Missing Pages Fix (404 Errors)
+
+- [x] **Help Center Page** (`apps/web/app/help/page.tsx`)
+  - Hero section "Centre d'aide" with search bar
+  - 4 categories: Billetterie, Paiement, Compte, Application
+  - Each category with relevant links to FAQ, settings, etc.
+  - Quick links to FAQ, Refunds, Privacy
+  - Contact support CTA section
+
+- [x] **Refund Policy Page** (`apps/web/app/refunds/page.tsx`)
+  - Key info cards (30 days, 100%, 5-10 days processing)
+  - Detailed refund conditions
+  - Timeline table (30+ days = 100%, 14-30 days = 80%, <14 days = non-refundable)
+  - Step-by-step refund request process
+  - Special cases (cancellation, postponement, cashless)
+  - Exclusions list
+  - Contact CTA
+
+- [x] **Account Settings Page** (`apps/web/app/account/settings/page.tsx`)
+  - Profile settings (name, phone) with save functionality
+  - Notification preferences (email, push, SMS toggles)
+  - Language selector (6 languages)
+  - Privacy settings (profile visibility, activity, marketing)
+  - Delete account with confirmation dialog
+  - Authentication protection
+
+- [x] **Saved Festivals Page** (`apps/web/app/account/saved/page.tsx`)
+  - "Mes favoris" title with count
+  - Grid display of saved festivals
+  - Festival cards with image, date, location, price
+  - Remove from favorites functionality
+  - Empty state with CTA to explore festivals
+  - Authentication protection
+
+---
+
+## Recemment Complete (2026-01-21)
+
+### Seed Data - Standard Products & Ticket Templates
+
+- [x] **Standard Drink Products** (`prisma/seed.ts`)
+  - Beers: Heineken, Corona, Leffe Blonde, 1664, Desperados, Grimbergen (6-7.50 EUR)
+  - Soft Drinks: Coca-Cola, Sprite, Fanta, Red Bull, Monster, Eau, Jus (3-6 EUR)
+  - Spirits: Vodka, Rhum, Whisky, Gin, Tequila shots (8-9 EUR)
+  - Cocktails: Mojito, Spritz, Margarita, Sex on the Beach, Pina Colada, Cuba Libre (10-12 EUR)
+  - Wine: Rouge, Blanc, Rose (verre), Champagne (coupe) (7-15 EUR)
+
+- [x] **Standard Food Items** (`prisma/seed.ts`)
+  - Burgers: Classic (12 EUR), Cheese (13 EUR)
+  - Fast-Food: Hot-dog (8 EUR), Panini (8 EUR), Croque-monsieur (7 EUR)
+  - Pizza: Margherita (10 EUR), 4 Fromages (12 EUR)
+  - Mexicain: Tacos (10 EUR), Kebab (10 EUR), Nachos (8 EUR)
+  - Wraps: Poulet, Veggie (9 EUR)
+  - Accompagnements: Frites (5 EUR), Frites Sauce (6 EUR)
+  - Desserts: Churros (6 EUR), Crepes (5-7 EUR), Glace (3 EUR)
+
+- [x] **Ticket Type Description Templates** (`prisma/seed.ts`)
+  - STANDARD: "Acces general aux scenes principales"
+  - VIP: "Acces prioritaire, zone VIP avec vue privilegiee, bar VIP"
+  - BACKSTAGE: "Tous les avantages VIP + acces aux coulisses + rencontre artistes"
+  - CAMPING: "Emplacement camping reserve avec acces sanitaires"
+  - PARKING: "Place de parking securise 24h/24"
+  - COMBO: "Pack festival + camping a tarif reduit"
+
+- [x] **Template Vendors** for standard products
+  - Bar Festival Standard: Uses all standard drink products
+  - Food Court Standard: Uses all standard food items
+  - Fixed pricing (no random pricing for template vendors)
 
 ---
 

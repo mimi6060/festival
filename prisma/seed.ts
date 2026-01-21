@@ -541,6 +541,169 @@ const FESTIVAL_DATA = [
     isFeatured: false,
     imageIndex: 1,
   },
+  // ==========================================
+  // FAMOUS WORLD FESTIVALS
+  // ==========================================
+  {
+    name: 'Tomorrowland 2025',
+    slug: 'tomorrowland-2025',
+    description:
+      "The world's biggest and most magical electronic music festival. Set in the fairy tale world of Boom, Belgium, Tomorrowland brings together 400,000 people of tomorrow for an unforgettable experience of music, art and magic.",
+    location: 'Boom, Belgium',
+    address: 'De Schorre Recreational Park, 2850 Boom, Belgium',
+    city: { name: 'Boom', lat: 51.0903, lng: 4.3742 },
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 190,
+    duration: 3,
+    maxCapacity: 400000,
+    genres: ['Electronic', 'House', 'Techno', 'Trance', 'EDM'],
+    isFeatured: true,
+    imageIndex: 5,
+  },
+  {
+    name: 'Ultra Music Festival 2025',
+    slug: 'ultra-miami-2025',
+    description:
+      'The premier electronic music festival in the world. Ultra Music Festival brings the biggest names in EDM to the heart of Miami for three days of non-stop music and entertainment.',
+    location: 'Miami, USA',
+    address: 'Bayfront Park, 301 Biscayne Blvd, Miami, FL 33132, USA',
+    city: { name: 'Miami', lat: 25.7748, lng: -80.1870 },
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 60,
+    duration: 3,
+    maxCapacity: 165000,
+    genres: ['Electronic', 'EDM', 'House', 'Techno'],
+    isFeatured: true,
+    imageIndex: 6,
+  },
+  {
+    name: 'Coachella 2025',
+    slug: 'coachella-2025',
+    description:
+      'The iconic California desert festival featuring the biggest names in music across all genres. Coachella is where music meets art, fashion, and unforgettable experiences under the California sun.',
+    location: 'Indio, California, USA',
+    address: 'Empire Polo Club, 81-800 Avenue 51, Indio, CA 92201, USA',
+    city: { name: 'Indio', lat: 33.7206, lng: -116.2156 },
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 90,
+    duration: 3,
+    maxCapacity: 125000,
+    genres: ['Pop', 'Rock', 'Hip-Hop', 'Electronic', 'Indie'],
+    isFeatured: true,
+    imageIndex: 7,
+  },
+  {
+    name: 'Rock en Seine 2025',
+    slug: 'rock-en-seine-2025',
+    description:
+      'Le festival rock incontournable de la region parisienne. Installe dans le cadre unique du Domaine national de Saint-Cloud, Rock en Seine reunit chaque annee les plus grands noms du rock et de la musique alternative.',
+    location: 'Paris, France',
+    address: 'Domaine national de Saint-Cloud, 92210 Saint-Cloud',
+    city: FRENCH_CITIES[0],
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 220,
+    duration: 3,
+    maxCapacity: 40000,
+    genres: ['Rock', 'Alternative', 'Indie'],
+    isFeatured: true,
+    imageIndex: 1,
+  },
+  {
+    name: 'Les Vieilles Charrues 2025',
+    slug: 'vieilles-charrues-2025',
+    description:
+      'Le plus grand festival de musique en France en termes de frequentation. Au coeur de la Bretagne, Les Vieilles Charrues offrent une programmation eclectique qui seduit 280 000 festivaliers chaque annee.',
+    location: 'Carhaix, France',
+    address: 'Site de Kerampuilh, 29270 Carhaix-Plouguer',
+    city: { name: 'Carhaix', lat: 48.2758, lng: -3.5717 },
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 180,
+    duration: 4,
+    maxCapacity: 280000,
+    genres: ['Pop', 'Rock', 'Electro', 'World', 'Chanson'],
+    isFeatured: true,
+    imageIndex: 4,
+  },
+  {
+    name: 'Hellfest 2025',
+    slug: 'hellfest-2025',
+    description:
+      'Le plus grand festival de metal en Europe. Hellfest accueille les legendes du metal et du hard rock dans une ambiance unique a Clisson. Une experience extreme pour les passionnes de musique lourde.',
+    location: 'Clisson, France',
+    address: 'Le Val de Moine, 44190 Clisson',
+    city: FRENCH_CITIES[5],
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 150,
+    duration: 4,
+    maxCapacity: 60000,
+    genres: ['Metal', 'Hard Rock', 'Punk', 'Hardcore'],
+    isFeatured: true,
+    imageIndex: 3,
+  },
+  {
+    name: 'Lollapalooza Paris 2025',
+    slug: 'lollapalooza-paris-2025',
+    description:
+      'La version parisienne du legendaire festival americain. Lollapalooza Paris transforme lHippodrome de Longchamp en temple de la musique pop, rock et electro pendant deux jours memorables.',
+    location: 'Paris, France',
+    address: 'Hippodrome de Longchamp, 75016 Paris',
+    city: FRENCH_CITIES[0],
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 200,
+    duration: 2,
+    maxCapacity: 70000,
+    genres: ['Pop', 'Rock', 'Electronic', 'Hip-Hop'],
+    isFeatured: false,
+    imageIndex: 8,
+  },
+  {
+    name: 'Main Square Festival 2025',
+    slug: 'main-square-2025',
+    description:
+      'Le festival rock et pop du Nord de la France. Main Square Festival investit la Citadelle dArras pour trois jours de concerts exceptionnels dans un cadre historique unique.',
+    location: 'Arras, France',
+    address: 'Citadelle dArras, 62000 Arras',
+    city: { name: 'Arras', lat: 50.2833, lng: 2.7833 },
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 165,
+    duration: 3,
+    maxCapacity: 40000,
+    genres: ['Rock', 'Pop', 'Electronic'],
+    isFeatured: false,
+    imageIndex: 9,
+  },
+  {
+    name: 'Solidays 2025',
+    slug: 'solidays-2025',
+    description:
+      'Le festival engage de Solidarite Sida. Solidays combine musique et engagement solidaire a lHippodrome de Longchamp. Trois jours de fete pour une cause essentielle.',
+    location: 'Paris, France',
+    address: 'Hippodrome de Longchamp, 75016 Paris',
+    city: FRENCH_CITIES[0],
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 155,
+    duration: 3,
+    maxCapacity: 228000,
+    genres: ['Electro', 'Pop', 'Hip-Hop', 'Rock'],
+    isFeatured: false,
+    imageIndex: 5,
+  },
+  {
+    name: 'Electrobeach 2025',
+    slug: 'electrobeach-2025',
+    description:
+      'Le plus grand festival de musique electronique en plein air du Sud de la France. Electrobeach transforme la plage du Barcares en dance floor geant pour 100 000 festivaliers.',
+    location: 'Le Barcares, France',
+    address: 'Plage du Lido, 66420 Le Barcares',
+    city: { name: 'Le Barcares', lat: 42.7908, lng: 3.0356 },
+    status: FestivalStatus.PUBLISHED,
+    daysOffset: 175,
+    duration: 3,
+    maxCapacity: 100000,
+    genres: ['Electronic', 'EDM', 'House', 'Techno'],
+    isFeatured: true,
+    imageIndex: 0,
+  },
 ];
 
 // ============================================================================
@@ -972,6 +1135,137 @@ const ARTIST_DATA = [
     spotifyUrl: 'https://open.spotify.com/artist/4V8LLVI7PbaPR0K2TGSxFF',
     instagramUrl: 'https://instagram.com/vladimircauchemar',
   },
+  // ==========================================
+  // FAMOUS INTERNATIONAL ARTISTS
+  // ==========================================
+  {
+    name: 'David Guetta',
+    genre: 'EDM / House',
+    bio: 'Legendary French DJ and producer. One of the most influential figures in electronic dance music with hits like "Titanium", "When Love Takes Over" and "Memories". Multiple Grammy Award winner.',
+    imageUrl: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&h=400&fit=crop',
+    spotifyUrl: 'https://open.spotify.com/artist/1Cs0zKBU1kc0i8ypK3B9ai',
+    instagramUrl: 'https://instagram.com/davidguetta',
+  },
+  {
+    name: 'Martin Garrix',
+    genre: 'Progressive House / EDM',
+    bio: 'Dutch DJ and producer who rose to fame with "Animals" at just 17 years old. Named worlds number 1 DJ multiple times. Known for melodic progressive house productions.',
+    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop',
+    spotifyUrl: 'https://open.spotify.com/artist/60d24wfXkVzDSfLS6hyCjZ',
+    instagramUrl: 'https://instagram.com/martingarrix',
+  },
+  {
+    name: 'Charlotte de Witte',
+    genre: 'Techno',
+    bio: 'Belgian DJ and producer, queen of techno. Known for her dark, driving techno sets. Founder of KNTXT label. First woman to close Tomorrowland mainstage.',
+    imageUrl: 'https://images.unsplash.com/photo-1571266028243-3716f02d2d2e?w=400&h=400&fit=crop',
+    spotifyUrl: 'https://open.spotify.com/artist/1VwDG9aBflQupaFNjUru9A',
+    instagramUrl: 'https://instagram.com/charlottedewittemusic',
+  },
+  {
+    name: 'Amelie Lens',
+    genre: 'Techno',
+    bio: 'Belgian techno DJ and producer. Rising star of the techno scene known for her energetic sets and productions. Founder of Lenske Records.',
+    imageUrl: 'https://images.unsplash.com/photo-1598387993441-a364f854c3e1?w=400&h=400&fit=crop',
+    spotifyUrl: 'https://open.spotify.com/artist/7aBzpmFXB4WWpPl9kE40ae',
+    instagramUrl: 'https://instagram.com/amelikitten',
+  },
+  {
+    name: 'Nina Kraviz',
+    genre: 'Techno',
+    bio: 'Russian DJ, producer and singer. One of the most influential figures in underground techno. Known for her hypnotic sets and Trip Records label.',
+    imageUrl: 'https://images.unsplash.com/photo-1508854710579-5cecc3a9ff17?w=400&h=400&fit=crop',
+    spotifyUrl: 'https://open.spotify.com/artist/0FTyipRkSh8HBiJPYYViMJ',
+    instagramUrl: 'https://instagram.com/ninakraviz',
+  },
+  {
+    name: 'Carl Cox',
+    genre: 'House / Techno',
+    bio: 'British DJ, king of techno. Legendary figure in electronic music with over 30 years of career. Known for his Space Ibiza residency and epic festival sets.',
+    imageUrl: 'https://images.unsplash.com/photo-1571935441008-3caa3d87d6f0?w=400&h=400&fit=crop',
+    spotifyUrl: 'https://open.spotify.com/artist/2RuGjBaSPnPXYqNwPa8sVA',
+    instagramUrl: 'https://instagram.com/carlcoxofficial',
+  },
+  {
+    name: 'Stromae',
+    genre: 'Pop / Electronic',
+    bio: 'Belgian singer, songwriter and producer. Master of electronic pop with profound lyrics. Known for "Alors on danse", "Papaoutai" and "Sante". A true artist and visual genius.',
+    imageUrl: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?w=400&h=400&fit=crop',
+    spotifyUrl: 'https://open.spotify.com/artist/3Y7RZ31TRPVadSFVy1o8mK',
+    instagramUrl: 'https://instagram.com/stromae',
+  },
+  {
+    name: 'Daft Punk',
+    genre: 'Electronic / French Touch',
+    bio: 'Legendary French electronic music duo. Pioneers of French Touch and electronic music. Known for "Around the World", "One More Time", "Get Lucky". Disbanded in 2021 but their legacy lives on.',
+    imageUrl: 'https://images.unsplash.com/photo-1614680376739-414d95ff43df?w=400&h=400&fit=crop',
+    spotifyUrl: 'https://open.spotify.com/artist/4tZwfgrHOc3mvqYlEYSvVi',
+    instagramUrl: 'https://instagram.com/daftpunk',
+  },
+  {
+    name: 'Justice',
+    genre: 'Electronic / French Touch',
+    bio: 'French electronic music duo. Grammy Award winners known for "D.A.N.C.E.", "Genesis" and their cross-shaped stacks of Marshall amplifiers. Masters of French electro.',
+    imageUrl: 'https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=400&h=400&fit=crop',
+    spotifyUrl: 'https://open.spotify.com/artist/1gR0gsQYfi6joyO1dlp76N',
+    instagramUrl: 'https://instagram.com/etjusticepourtous',
+  },
+  {
+    name: 'The Weeknd',
+    genre: 'Pop / R&B',
+    bio: 'Canadian singer, songwriter and record producer. One of the biggest pop stars in the world. Known for "Blinding Lights", "Starboy", "Save Your Tears". Grammy Award winner.',
+    imageUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=400&h=400&fit=crop',
+    spotifyUrl: 'https://open.spotify.com/artist/1Xyo4u8uXC1ZmMpatF05PJ',
+    instagramUrl: 'https://instagram.com/theweeknd',
+  },
+  {
+    name: 'Dua Lipa',
+    genre: 'Pop / Dance',
+    bio: 'British singer and songwriter. Global pop superstar known for "New Rules", "Levitating", "Dont Start Now". Grammy Award winner. Queen of disco-pop revival.',
+    imageUrl: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&h=400&fit=crop',
+    spotifyUrl: 'https://open.spotify.com/artist/6M2wZ9GZgrQXHCFfjv46we',
+    instagramUrl: 'https://instagram.com/dualipa',
+  },
+  {
+    name: 'Calvin Harris',
+    genre: 'EDM / House',
+    bio: 'Scottish DJ, record producer and songwriter. One of the highest-paid DJs in the world. Known for "Summer", "Feel So Close", "This Is What You Came For". Grammy Award winner.',
+    imageUrl: 'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=400&h=400&fit=crop',
+    spotifyUrl: 'https://open.spotify.com/artist/7CajNmpbOovFoOoasH2HaY',
+    instagramUrl: 'https://instagram.com/calvinharris',
+  },
+  {
+    name: 'Tiesto',
+    genre: 'Trance / EDM',
+    bio: 'Dutch DJ and producer. Pioneer of trance music and EDM. Grammy Award winner. Known for "Adagio for Strings", "Red Lights", "The Business". Godfather of EDM.',
+    imageUrl: 'https://images.unsplash.com/photo-1501386761578-eac5c94b800a?w=400&h=400&fit=crop',
+    spotifyUrl: 'https://open.spotify.com/artist/2o5jDhtHVPhrJdv3cEQ99Z',
+    instagramUrl: 'https://instagram.com/tiesto',
+  },
+  {
+    name: 'Armin van Buuren',
+    genre: 'Trance / Progressive',
+    bio: 'Dutch DJ and producer. King of trance music. Host of A State of Trance radio show. 5-time worlds number 1 DJ. Known for "This Is What It Feels Like", "Blah Blah Blah".',
+    imageUrl: 'https://images.unsplash.com/photo-1524368535928-5b5e00ddc76b?w=400&h=400&fit=crop',
+    spotifyUrl: 'https://open.spotify.com/artist/0SfsnGyD8FpIN4U4WCkBZ5',
+    instagramUrl: 'https://instagram.com/arminvanbuuren',
+  },
+  {
+    name: 'Deadmau5',
+    genre: 'Progressive House / Electro',
+    bio: 'Canadian DJ and producer. Known for his iconic mouse helmet. Pioneer of progressive house. Grammy nominated. Known for "Strobe", "Ghosts n Stuff", "I Remember".',
+    imageUrl: 'https://images.unsplash.com/photo-1571935441008-3caa3d87d6f0?w=400&h=400&fit=crop',
+    spotifyUrl: 'https://open.spotify.com/artist/2CIMQHirSU0MQqyYHq0eOx',
+    instagramUrl: 'https://instagram.com/deadmau5',
+  },
+  {
+    name: 'Skrillex',
+    genre: 'Dubstep / EDM',
+    bio: 'American DJ and producer. Pioneer of dubstep and bass music. 8-time Grammy Award winner. Known for "Bangarang", "Scary Monsters and Nice Sprites", "Where Are U Now".',
+    imageUrl: 'https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=400&h=400&fit=crop',
+    spotifyUrl: 'https://open.spotify.com/artist/5he5w2lnU9x7JFhnwcekXX',
+    instagramUrl: 'https://instagram.com/skrillex',
+  },
 ];
 
 // ============================================================================
@@ -1146,7 +1440,156 @@ const VENDOR_DATA = [
       'Cafe Gourmand',
     ],
   },
+  // Template vendors with standardized products
+  {
+    name: 'Bar Festival Standard',
+    type: VendorType.BAR,
+    description: 'Bar officiel du festival avec boissons standards',
+    useStandardProducts: true,
+    productType: 'drinks' as const,
+  },
+  {
+    name: 'Food Court Standard',
+    type: VendorType.FOOD,
+    description: 'Point restauration avec menu standard festival',
+    useStandardProducts: true,
+    productType: 'food' as const,
+  },
 ];
+
+// Type for vendor data with optional standard products flag
+interface _VendorDataItem {
+  name: string;
+  type: VendorType;
+  description: string;
+  products?: string[];
+  useStandardProducts?: boolean;
+  productType?: 'drinks' | 'food';
+}
+
+// ============================================================================
+// STANDARD PRODUCT TEMPLATES (Drinks & Food)
+// ============================================================================
+
+/**
+ * Standard drink products that vendors can use as templates.
+ * Prices are in EUR and represent typical festival pricing.
+ */
+const STANDARD_DRINKS = {
+  // Beers
+  beers: [
+    { name: 'Heineken', price: 6.0, category: 'Bieres' },
+    { name: 'Corona', price: 7.0, category: 'Bieres' },
+    { name: 'Leffe Blonde', price: 7.5, category: 'Bieres' },
+    { name: '1664', price: 6.0, category: 'Bieres' },
+    { name: 'Desperados', price: 7.0, category: 'Bieres' },
+    { name: 'Grimbergen', price: 7.5, category: 'Bieres' },
+  ],
+  // Soft Drinks
+  softDrinks: [
+    { name: 'Coca-Cola', price: 4.0, category: 'Softs' },
+    { name: 'Coca-Cola Zero', price: 4.0, category: 'Softs' },
+    { name: 'Sprite', price: 4.0, category: 'Softs' },
+    { name: 'Fanta', price: 4.0, category: 'Softs' },
+    { name: 'Red Bull', price: 6.0, category: 'Energy' },
+    { name: 'Monster', price: 6.0, category: 'Energy' },
+    { name: 'Eau minerale 50cl', price: 3.0, category: 'Eau' },
+    { name: 'Eau minerale 1L', price: 5.0, category: 'Eau' },
+    { name: "Jus d'orange", price: 4.5, category: 'Jus' },
+    { name: 'Ice Tea', price: 4.5, category: 'Softs' },
+  ],
+  // Spirits (shots)
+  spirits: [
+    { name: 'Vodka (shot)', price: 8.0, category: 'Spiritueux' },
+    { name: 'Rhum (shot)', price: 8.0, category: 'Spiritueux' },
+    { name: 'Whisky (shot)', price: 9.0, category: 'Spiritueux' },
+    { name: 'Gin (shot)', price: 8.0, category: 'Spiritueux' },
+    { name: 'Tequila (shot)', price: 8.0, category: 'Spiritueux' },
+  ],
+  // Cocktails
+  cocktails: [
+    { name: 'Mojito', price: 12.0, category: 'Cocktails' },
+    { name: 'Spritz', price: 10.0, category: 'Cocktails' },
+    { name: 'Margarita', price: 12.0, category: 'Cocktails' },
+    { name: 'Sex on the Beach', price: 11.0, category: 'Cocktails' },
+    { name: 'Pina Colada', price: 12.0, category: 'Cocktails' },
+    { name: 'Cuba Libre', price: 10.0, category: 'Cocktails' },
+  ],
+  // Wine
+  wine: [
+    { name: 'Vin Rouge (verre)', price: 7.0, category: 'Vins' },
+    { name: 'Vin Blanc (verre)', price: 7.0, category: 'Vins' },
+    { name: 'Vin Rose (verre)', price: 7.0, category: 'Vins' },
+    { name: 'Champagne (coupe)', price: 15.0, category: 'Champagne' },
+  ],
+};
+
+/**
+ * Standard food items that vendors can use as templates.
+ * Prices are in EUR and represent typical festival pricing.
+ */
+const STANDARD_FOOD_ITEMS = [
+  { name: 'Burger Classic', price: 12.0, category: 'Burgers' },
+  { name: 'Burger Cheese', price: 13.0, category: 'Burgers' },
+  { name: 'Hot-dog', price: 8.0, category: 'Fast-Food' },
+  { name: 'Pizza Margherita', price: 10.0, category: 'Pizza' },
+  { name: 'Pizza 4 Fromages', price: 12.0, category: 'Pizza' },
+  { name: 'Frites', price: 5.0, category: 'Accompagnements' },
+  { name: 'Frites Sauce', price: 6.0, category: 'Accompagnements' },
+  { name: 'Wrap Poulet', price: 9.0, category: 'Wraps' },
+  { name: 'Wrap Veggie', price: 9.0, category: 'Wraps' },
+  { name: 'Salade Caesar', price: 10.0, category: 'Salades' },
+  { name: 'Tacos', price: 10.0, category: 'Mexicain' },
+  { name: 'Kebab', price: 10.0, category: 'Kebab' },
+  { name: 'Panini', price: 8.0, category: 'Snacks' },
+  { name: 'Croque-monsieur', price: 7.0, category: 'Snacks' },
+  { name: 'Nachos', price: 8.0, category: 'Mexicain' },
+  { name: 'Churros', price: 6.0, category: 'Desserts' },
+  { name: 'Crepe Sucre', price: 5.0, category: 'Crepes' },
+  { name: 'Crepe Nutella', price: 7.0, category: 'Crepes' },
+  { name: 'Glace (boule)', price: 3.0, category: 'Desserts' },
+];
+
+/**
+ * Standard ticket type descriptions that organizers can use as templates.
+ * These provide professional descriptions for common ticket categories.
+ *
+ * Usage: This template is exported for use by the admin UI and API endpoints
+ * when creating new ticket categories. Organizers can clone these descriptions.
+ *
+ * @example
+ * const description = TICKET_TYPE_DESCRIPTIONS[TicketType.VIP].description;
+ * // => 'Acces prioritaire, zone VIP avec vue privilegiee, bar VIP'
+ */
+export const TICKET_TYPE_DESCRIPTIONS: Record<TicketType, { name: string; description: string }> = {
+  [TicketType.STANDARD]: {
+    name: 'Standard',
+    description: 'Acces general aux scenes principales',
+  },
+  [TicketType.VIP]: {
+    name: 'VIP',
+    description: 'Acces prioritaire, zone VIP avec vue privilegiee, bar VIP',
+  },
+  [TicketType.BACKSTAGE]: {
+    name: 'Backstage',
+    description: 'Tous les avantages VIP + acces aux coulisses + rencontre artistes',
+  },
+  [TicketType.CAMPING]: {
+    name: 'Camping',
+    description: 'Emplacement camping reserve avec acces sanitaires',
+  },
+  [TicketType.PARKING]: {
+    name: 'Parking',
+    description: 'Place de parking securise 24h/24',
+  },
+  [TicketType.COMBO]: {
+    name: 'Combo',
+    description: 'Pack festival + camping a tarif reduit',
+  },
+};
+
+// Also export standard products for use by other modules
+export { STANDARD_DRINKS, STANDARD_FOOD_ITEMS };
 
 // ============================================================================
 // FAQ DATA
@@ -1723,6 +2166,19 @@ async function seedPerformances(ctx: SeedContext): Promise<void> {
   log(`Created ${performanceCount} performances`, 1);
 }
 
+/**
+ * Helper to get all standard drink products flattened into a single array
+ */
+function getAllStandardDrinks(): { name: string; price: number; category: string }[] {
+  return [
+    ...STANDARD_DRINKS.beers,
+    ...STANDARD_DRINKS.softDrinks,
+    ...STANDARD_DRINKS.spirits,
+    ...STANDARD_DRINKS.cocktails,
+    ...STANDARD_DRINKS.wine,
+  ];
+}
+
 async function seedVendors(ctx: SeedContext): Promise<void> {
   logStep(8, 12, 'Creating vendors and products...');
 
@@ -1736,16 +2192,17 @@ async function seedVendors(ctx: SeedContext): Promise<void> {
 
     for (const vendorDef of VENDOR_DATA) {
       const owner = randomElement(organizers);
+      const typedVendorDef = vendorDef as VendorDataItem;
 
       const vendor = await prisma.vendor.create({
         data: {
           festivalId: festival.id,
           ownerId: owner.id,
-          name: vendorDef.name,
-          type: vendorDef.type,
-          description: vendorDef.description,
-          logoUrl: `https://example.com/vendors/${slugify(vendorDef.name)}/logo.png`,
-          location: `Zone ${vendorDef.type}`,
+          name: typedVendorDef.name,
+          type: typedVendorDef.type,
+          description: typedVendorDef.description,
+          logoUrl: `https://example.com/vendors/${slugify(typedVendorDef.name)}/logo.png`,
+          location: `Zone ${typedVendorDef.type}`,
           latitude: city.lat + randomFloat(-0.005, 0.005),
           longitude: city.lng + randomFloat(-0.005, 0.005),
           commissionRate: randomFloat(8, 15),
@@ -1766,35 +2223,58 @@ async function seedVendors(ctx: SeedContext): Promise<void> {
         name: vendor.name,
       });
 
+      // Determine which products to create
+      let productsToCreate: { name: string; price: number; category: string }[] = [];
+
+      if (typedVendorDef.useStandardProducts) {
+        // Use standard product templates with fixed prices
+        if (typedVendorDef.productType === 'drinks') {
+          productsToCreate = getAllStandardDrinks();
+        } else if (typedVendorDef.productType === 'food') {
+          productsToCreate = STANDARD_FOOD_ITEMS;
+        }
+      } else if (typedVendorDef.products) {
+        // Use custom products with random prices (legacy behavior)
+        productsToCreate = typedVendorDef.products.map((productName) => {
+          const price =
+            typedVendorDef.type === VendorType.MERCHANDISE
+              ? randomFloat(15, 45)
+              : typedVendorDef.type === VendorType.BAR
+                ? randomFloat(5, 15)
+                : randomFloat(6, 18);
+          return {
+            name: productName,
+            price,
+            category:
+              typedVendorDef.type === VendorType.FOOD
+                ? 'Plat'
+                : typedVendorDef.type === VendorType.BAR
+                  ? 'Boisson'
+                  : 'Article',
+          };
+        });
+      }
+
       // Create products for this vendor
-      for (let i = 0; i < vendorDef.products.length; i++) {
-        const productName = vendorDef.products[i];
-        const price =
-          vendorDef.type === VendorType.MERCHANDISE
-            ? randomFloat(15, 45)
-            : vendorDef.type === VendorType.BAR
-              ? randomFloat(5, 15)
-              : randomFloat(6, 18);
+      for (let i = 0; i < productsToCreate.length; i++) {
+        const productDef = productsToCreate[i];
 
         const product = await prisma.vendorProduct.create({
           data: {
             vendorId: vendor.id,
-            name: productName,
-            description: `Delicieux ${productName.toLowerCase()} prepare avec soin`,
-            price,
-            category:
-              vendorDef.type === VendorType.FOOD
-                ? 'Plat'
-                : vendorDef.type === VendorType.BAR
-                  ? 'Boisson'
-                  : 'Article',
-            imageUrl: `https://example.com/products/${slugify(productName)}.jpg`,
-            stock: vendorDef.type === VendorType.MERCHANDISE ? randomInt(50, 200) : null,
+            name: productDef.name,
+            description: typedVendorDef.useStandardProducts
+              ? `${productDef.name} - Prix standard festival`
+              : `Delicieux ${productDef.name.toLowerCase()} prepare avec soin`,
+            price: productDef.price,
+            category: productDef.category,
+            imageUrl: `https://example.com/products/${slugify(productDef.name)}.jpg`,
+            stock: typedVendorDef.type === VendorType.MERCHANDISE ? randomInt(50, 200) : null,
             soldCount: festival.status !== FestivalStatus.PUBLISHED ? randomInt(10, 100) : 0,
             isAvailable: true,
             sortOrder: i,
             allergens:
-              vendorDef.type === VendorType.FOOD
+              typedVendorDef.type === VendorType.FOOD && !typedVendorDef.useStandardProducts
                 ? randomElements(['gluten', 'lactose', 'arachides', 'soja'], randomInt(0, 2))
                 : [],
           },
