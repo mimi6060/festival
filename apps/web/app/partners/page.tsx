@@ -1,4 +1,5 @@
 import { Metadata } from 'next';
+import Link from 'next/link';
 import { Card } from '@/components/ui/Card';
 
 export const metadata: Metadata = {
@@ -12,7 +13,7 @@ export default function PartnersPage() {
       <div className="container-app">
         <h1 className="text-4xl font-bold text-white mb-4">Nos Partenaires</h1>
         <p className="text-white/70 text-lg mb-8">
-          Festival Platform collabore avec les meilleurs acteurs de l industrie evenementielle.
+          Festival Platform collabore avec les meilleurs acteurs de l&apos;industrie evenementielle.
         </p>
 
         <div className="grid gap-8 md:grid-cols-3 mb-12">
@@ -50,14 +51,14 @@ export default function PartnersPage() {
         <Card variant="gradient" padding="lg">
           <h2 className="text-xl font-semibold text-white mb-4">Devenir partenaire</h2>
           <p className="text-white/70 mb-4">
-            Interessé par un partenariat ? Contactez notre equipe pour discuter des opportunites.
+            Interesse par un partenariat ? Contactez notre equipe pour discuter des opportunites.
           </p>
-          <a
-            href="mailto:partners@festival-platform.com"
-            className="inline-block px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors"
+          <Link
+            href="/contact?subject=partnership"
+            className="inline-block px-6 py-3 bg-gradient-to-r from-primary-500 to-pink-500 hover:from-primary-600 hover:to-pink-600 text-white font-semibold rounded-xl transition-all"
           >
             Nous contacter
-          </a>
+          </Link>
         </Card>
       </div>
     </div>
