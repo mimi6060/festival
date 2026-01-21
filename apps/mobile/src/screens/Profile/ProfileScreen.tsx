@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
+import * as ImagePicker from 'expo-image-picker';
 import { Card, Avatar } from '../../components/common';
 import {
   useAuthStore,
@@ -90,25 +91,81 @@ export const ProfileScreen: React.FC = () => {
     }
   }, []);
 
-  const handleChangePhoto = useCallback(() => {
-    const options = [t('common.cancel'), t('profile.editProfile'), t('common.delete')];
+  const pickImageFromLibrary = useCallback(async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        showAlert(t('common.error'), t('profile.photoPermissionDenied'));
+        return;
+      }
 
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        const base64Uri = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
+        updateUser({ avatar: base64Uri });
+        showAlert(t('common.success'), t('profile.photoUpdated'));
+      }
+    } catch (_error) {
+      showAlert(t('common.error'), t('profile.photoError'));
+    }
+  }, [t, showAlert, updateUser]);
+
+  const takePhoto = useCallback(async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        showAlert(t('common.error'), t('profile.cameraPermissionDenied'));
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        const base64Uri = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
+        updateUser({ avatar: base64Uri });
+        showAlert(t('common.success'), t('profile.photoUpdated'));
+      }
+    } catch (_error) {
+      showAlert(t('common.error'), t('profile.photoError'));
+    }
+  }, [t, showAlert, updateUser]);
+
+  const handleChangePhoto = useCallback(() => {
     if (Platform.OS === 'ios') {
       ActionSheetIOS.showActionSheetWithOptions(
         {
-          options,
-          destructiveButtonIndex: 2,
+          options: [
+            t('common.cancel'),
+            t('profile.takePhoto'),
+            t('profile.chooseFromLibrary'),
+            t('common.delete'),
+          ],
+          destructiveButtonIndex: 3,
           cancelButtonIndex: 0,
-          title: t('profile.editProfile'),
+          title: t('profile.changePhoto'),
         },
         (buttonIndex) => {
           if (buttonIndex === 1) {
-            // Choose from library - would use expo-image-picker
-            showAlert(t('common.info'), t('common.soon'));
+            takePhoto();
           } else if (buttonIndex === 2) {
-            // Remove photo
+            pickImageFromLibrary();
+          } else if (buttonIndex === 3) {
             updateUser({ avatar: undefined });
-            showAlert(t('common.success'), t('profile.editProfile'));
+            showAlert(t('common.success'), t('profile.photoRemoved'));
           }
         }
       );
@@ -124,7 +181,7 @@ export const ProfileScreen: React.FC = () => {
           reader.onloadend = () => {
             const base64 = reader.result as string;
             updateUser({ avatar: base64 });
-            showAlert(t('common.success'), t('profile.editProfile'));
+            showAlert(t('common.success'), t('profile.photoUpdated'));
           };
           reader.readAsDataURL(file);
         }
@@ -132,23 +189,27 @@ export const ProfileScreen: React.FC = () => {
       input.click();
     } else {
       // Android
-      Alert.alert(t('profile.editProfile'), '', [
+      Alert.alert(t('profile.changePhoto'), '', [
         { text: t('common.cancel'), style: 'cancel' },
         {
-          text: t('profile.editProfile'),
-          onPress: () => showAlert(t('common.info'), t('common.soon')),
+          text: t('profile.takePhoto'),
+          onPress: takePhoto,
+        },
+        {
+          text: t('profile.chooseFromLibrary'),
+          onPress: pickImageFromLibrary,
         },
         {
           text: t('common.delete'),
           style: 'destructive',
           onPress: () => {
             updateUser({ avatar: undefined });
-            showAlert(t('common.success'), t('profile.editProfile'));
+            showAlert(t('common.success'), t('profile.photoRemoved'));
           },
         },
       ]);
     }
-  }, [t, showAlert, updateUser]);
+  }, [t, showAlert, updateUser, takePhoto, pickImageFromLibrary]);
 
   const handleLogout = useCallback(() => {
     const performLogout = () => {

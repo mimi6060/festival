@@ -289,7 +289,15 @@
     "about": "A propos",
     "version": "Version",
     "logout": "Deconnexion",
-    "logoutConfirm": "Etes-vous sur de vouloir vous deconnecter ?"
+    "logoutConfirm": "Etes-vous sur de vouloir vous deconnecter ?",
+    "changePhoto": "Changer la photo",
+    "takePhoto": "Prendre une photo",
+    "chooseFromLibrary": "Choisir depuis la galerie",
+    "photoUpdated": "Photo de profil mise a jour",
+    "photoRemoved": "Photo de profil supprimee",
+    "photoError": "Erreur lors de la mise a jour de la photo",
+    "photoPermissionDenied": "Permission d'acces a la galerie refusee",
+    "cameraPermissionDenied": "Permission d'acces a la camera refusee"
   },
   "settings": {
     "title": "Parametres",

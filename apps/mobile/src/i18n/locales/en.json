@@ -289,7 +289,15 @@
     "about": "About",
     "version": "Version",
     "logout": "Log out",
-    "logoutConfirm": "Are you sure you want to log out?"
+    "logoutConfirm": "Are you sure you want to log out?",
+    "changePhoto": "Change photo",
+    "takePhoto": "Take a photo",
+    "chooseFromLibrary": "Choose from library",
+    "photoUpdated": "Profile photo updated",
+    "photoRemoved": "Profile photo removed",
+    "photoError": "Error updating photo",
+    "photoPermissionDenied": "Photo library access denied",
+    "cameraPermissionDenied": "Camera access denied"
   },
   "settings": {
     "title": "Settings",

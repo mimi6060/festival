@@ -9,11 +9,13 @@ import {
   Alert,
   Platform,
   KeyboardAvoidingView,
+  ActionSheetIOS,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTranslation } from 'react-i18next';
+import * as ImagePicker from 'expo-image-picker';
 import { Card, Button, Avatar } from '../../components/common';
 import { useAuthStore } from '../../store';
 import { useTheme, spacing, typography, borderRadius } from '../../theme';
@@ -41,6 +43,59 @@ export const EditProfileScreen: React.FC = () => {
     }
   }, []);
 
+  const pickImageFromLibrary = useCallback(async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        showAlert(t('common.error'), t('profile.photoPermissionDenied'));
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        const base64Uri = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
+        updateUser({ avatar: base64Uri });
+        showAlert(t('common.success'), t('profile.photoUpdated'));
+      }
+    } catch (_error) {
+      showAlert(t('common.error'), t('profile.photoError'));
+    }
+  }, [t, showAlert, updateUser]);
+
+  const takePhoto = useCallback(async () => {
+    try {
+      const { status } = await ImagePicker.requestCameraPermissionsAsync();
+      if (status !== 'granted') {
+        showAlert(t('common.error'), t('profile.cameraPermissionDenied'));
+        return;
+      }
+
+      const result = await ImagePicker.launchCameraAsync({
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets[0]) {
+        const asset = result.assets[0];
+        const base64Uri = asset.base64 ? `data:image/jpeg;base64,${asset.base64}` : asset.uri;
+        updateUser({ avatar: base64Uri });
+        showAlert(t('common.success'), t('profile.photoUpdated'));
+      }
+    } catch (_error) {
+      showAlert(t('common.error'), t('profile.photoError'));
+    }
+  }, [t, showAlert, updateUser]);
+
   const handleChangeAvatar = useCallback(() => {
     if (Platform.OS === 'web') {
       // For web, create a file input element
@@ -54,16 +109,36 @@ export const EditProfileScreen: React.FC = () => {
           reader.onloadend = () => {
             const base64 = reader.result as string;
             updateUser({ avatar: base64 });
-            showAlert(t('common.success'), t('profile.editProfile'));
+            showAlert(t('common.success'), t('profile.photoUpdated'));
           };
           reader.readAsDataURL(file);
         }
       };
       input.click();
+    } else if (Platform.OS === 'ios') {
+      ActionSheetIOS.showActionSheetWithOptions(
+        {
+          options: [t('common.cancel'), t('profile.takePhoto'), t('profile.chooseFromLibrary')],
+          cancelButtonIndex: 0,
+          title: t('profile.changePhoto'),
+        },
+        (buttonIndex) => {
+          if (buttonIndex === 1) {
+            takePhoto();
+          } else if (buttonIndex === 2) {
+            pickImageFromLibrary();
+          }
+        }
+      );
     } else {
-      showAlert(t('common.soon'), t('common.info'));
+      // Android
+      Alert.alert(t('profile.changePhoto'), '', [
+        { text: t('common.cancel'), style: 'cancel' },
+        { text: t('profile.takePhoto'), onPress: takePhoto },
+        { text: t('profile.chooseFromLibrary'), onPress: pickImageFromLibrary },
+      ]);
     }
-  }, [t, showAlert, updateUser]);
+  }, [t, showAlert, updateUser, takePhoto, pickImageFromLibrary]);
 
   const validateEmail = useCallback((emailValue: string) => {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailValue);
