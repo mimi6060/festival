@@ -2,16 +2,26 @@
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { vendorsApi } from '../../lib/api';
-import type { CreateVendorDto, UpdateVendorDto } from '../../types';
+import type { CreateVendorDto, UpdateVendorDto, VendorType } from '../../types';
 
 // =====================
 // Query Keys
 // =====================
 
+export interface VendorListParams {
+  festivalId?: string;
+  type?: VendorType;
+  isOpen?: boolean;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
 export const vendorQueryKeys = {
   all: ['vendors'] as const,
   lists: () => [...vendorQueryKeys.all, 'list'] as const,
-  byFestival: (festivalId: string) => [...vendorQueryKeys.lists(), festivalId] as const,
+  list: (params?: VendorListParams) => [...vendorQueryKeys.lists(), params] as const,
+  byFestival: (festivalId: string) => [...vendorQueryKeys.lists(), 'festival', festivalId] as const,
   details: () => [...vendorQueryKeys.all, 'detail'] as const,
   detail: (id: string) => [...vendorQueryKeys.details(), id] as const,
 };
@@ -19,6 +29,17 @@ export const vendorQueryKeys = {
 // =====================
 // Vendor Hooks
 // =====================
+
+/**
+ * Hook to fetch all vendors with optional filters
+ */
+export function useAllVendors(params?: VendorListParams) {
+  return useQuery({
+    queryKey: vendorQueryKeys.list(params),
+    queryFn: () => vendorsApi.getAll(params),
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+}
 
 /**
  * Hook to fetch vendors for a specific festival
@@ -52,9 +73,10 @@ export function useCreateVendor() {
 
   return useMutation({
     mutationFn: ({ festivalId, data }: { festivalId: string; data: CreateVendorDto }) =>
-      vendorsApi.create(festivalId, data),
+      vendorsApi.create({ ...data, festivalId }),
     onSuccess: (_, { festivalId }) => {
       queryClient.invalidateQueries({ queryKey: vendorQueryKeys.byFestival(festivalId) });
+      queryClient.invalidateQueries({ queryKey: vendorQueryKeys.lists() });
     },
   });
 }

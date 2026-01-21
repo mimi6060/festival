@@ -327,24 +327,91 @@ export const cashlessAdminApi = {
 
 // Vendors
 export const vendorsApi = {
+  getAll: (params?: {
+    festivalId?: string;
+    type?: string;
+    isOpen?: boolean;
+    search?: string;
+    page?: number;
+    limit?: number;
+  }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.festivalId) {
+      searchParams.set('festivalId', params.festivalId);
+    }
+    if (params?.type) {
+      searchParams.set('type', params.type);
+    }
+    if (params?.isOpen !== undefined) {
+      searchParams.set('isOpen', params.isOpen.toString());
+    }
+    if (params?.search) {
+      searchParams.set('search', params.search);
+    }
+    if (params?.page) {
+      searchParams.set('page', params.page.toString());
+    }
+    if (params?.limit) {
+      searchParams.set('limit', params.limit.toString());
+    }
+    return request<import('../types').PaginatedResponse<import('../types').Vendor>>(
+      `/vendors?${searchParams.toString()}`
+    );
+  },
   getByFestival: (festivalId: string) =>
     request<import('../types').Vendor[]>(`/admin/festivals/${festivalId}/vendors`),
-  getById: (id: string) => request<import('../types').Vendor>(`/admin/vendors/${id}`),
-  create: (festivalId: string, data: import('../types').CreateVendorDto) =>
-    request<import('../types').Vendor>(`/admin/festivals/${festivalId}/vendors`, {
+  getById: (id: string) => request<import('../types').Vendor>(`/vendors/${id}`),
+  create: (data: import('../types').CreateVendorDto & { festivalId: string }) =>
+    request<import('../types').Vendor>('/vendors', {
       method: 'POST',
       body: data,
     }),
   update: (id: string, data: import('../types').UpdateVendorDto) =>
-    request<import('../types').Vendor>(`/admin/vendors/${id}`, {
+    request<import('../types').Vendor>(`/vendors/${id}`, {
       method: 'PUT',
       body: data,
     }),
-  delete: (id: string) => request<void>(`/admin/vendors/${id}`, { method: 'DELETE' }),
+  delete: (id: string) => request<void>(`/vendors/${id}`, { method: 'DELETE' }),
   toggleOpen: (id: string, isOpen: boolean) =>
-    request<import('../types').Vendor>(`/admin/vendors/${id}/toggle-open`, {
-      method: 'POST',
+    request<import('../types').Vendor>(`/vendors/${id}`, {
+      method: 'PUT',
       body: { isOpen },
+    }),
+};
+
+// Sponsors
+export const sponsorsApi = {
+  getByFestival: (festivalId: string, params?: { tier?: string; activeOnly?: boolean }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.tier) {
+      searchParams.set('tier', params.tier);
+    }
+    if (params?.activeOnly !== undefined) {
+      searchParams.set('activeOnly', params.activeOnly.toString());
+    }
+    const queryString = searchParams.toString();
+    return request<import('../types').Sponsor[]>(
+      `/festivals/${festivalId}/sponsors${queryString ? `?${queryString}` : ''}`
+    );
+  },
+  getByTier: (festivalId: string) =>
+    request<import('../types').SponsorsByTier>(`/festivals/${festivalId}/sponsors/by-tier`),
+  getById: (id: string) => request<import('../types').Sponsor>(`/sponsors/${id}`),
+  create: (festivalId: string, data: import('../types').CreateSponsorDto) =>
+    request<import('../types').Sponsor>(`/festivals/${festivalId}/sponsors`, {
+      method: 'POST',
+      body: data,
+    }),
+  update: (id: string, data: import('../types').UpdateSponsorDto) =>
+    request<import('../types').Sponsor>(`/sponsors/${id}`, {
+      method: 'PATCH',
+      body: data,
+    }),
+  delete: (id: string) => request<void>(`/sponsors/${id}`, { method: 'DELETE' }),
+  toggleActive: (id: string, isActive: boolean) =>
+    request<import('../types').Sponsor>(`/sponsors/${id}`, {
+      method: 'PATCH',
+      body: { isActive },
     }),
 };
 
@@ -999,6 +1066,43 @@ export const analyticsApi = {
       `/analytics/ticket-sales?${searchParams.toString()}`
     );
   },
+};
+
+// Partners
+export const partnersApi = {
+  getByFestival: (festivalId: string, params?: { type?: string; activeOnly?: boolean }) => {
+    const searchParams = new URLSearchParams();
+    if (params?.type) {
+      searchParams.set('type', params.type);
+    }
+    if (params?.activeOnly !== undefined) {
+      searchParams.set('activeOnly', params.activeOnly.toString());
+    }
+    const query = searchParams.toString();
+    return request<import('../types').Partner[]>(
+      `/festivals/${festivalId}/partners${query ? `?${query}` : ''}`
+    );
+  },
+  getById: (festivalId: string, partnerId: string) =>
+    request<import('../types').Partner>(`/festivals/${festivalId}/partners/${partnerId}`),
+  getByType: (festivalId: string) =>
+    request<import('../types').PartnersByType>(`/festivals/${festivalId}/partners/by-type`),
+  create: (festivalId: string, data: import('../types').CreatePartnerDto) =>
+    request<import('../types').Partner>(`/festivals/${festivalId}/partners`, {
+      method: 'POST',
+      body: data,
+    }),
+  update: (partnerId: string, data: import('../types').UpdatePartnerDto) =>
+    request<import('../types').Partner>(`/partners/${partnerId}`, {
+      method: 'PATCH',
+      body: data,
+    }),
+  delete: (partnerId: string) => request<void>(`/partners/${partnerId}`, { method: 'DELETE' }),
+  toggleActive: (partnerId: string, isActive: boolean) =>
+    request<import('../types').Partner>(`/partners/${partnerId}`, {
+      method: 'PATCH',
+      body: { isActive },
+    }),
 };
 
 // Axios-style API wrapper for generic requests

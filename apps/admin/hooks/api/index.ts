@@ -65,6 +65,7 @@ export type { ArtistListParams, LineupParams } from './useProgram';
 
 // Vendor hooks
 export {
+  useAllVendors,
   useVendors,
   useVendor,
   useCreateVendor,
@@ -73,6 +74,7 @@ export {
   useToggleVendorOpen,
   vendorQueryKeys,
 } from './useVendors';
+export type { VendorListParams } from './useVendors';
 
 // POI hooks
 export { usePois, usePoi, useCreatePoi, useUpdatePoi, useDeletePoi, poiQueryKeys } from './usePois';
@@ -86,3 +88,15 @@ export {
   useDeleteCampingZone,
   campingQueryKeys,
 } from './useCamping';
+
+// Sponsor hooks
+export {
+  useSponsors,
+  useSponsorsByTier,
+  useSponsor,
+  useCreateSponsor,
+  useUpdateSponsor,
+  useDeleteSponsor,
+  useToggleSponsorActive,
+  sponsorQueryKeys,
+} from './useSponsors';

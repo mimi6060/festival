@@ -27,6 +27,38 @@ _Aucune tâche en cours_
 
 ## Recemment Complete (2026-01-21)
 
+### Admin Vendors Management Page
+
+- [x] **Vendors Management Page** (`apps/admin/app/(dashboard)/vendors/page.tsx`)
+  - List all vendors across festivals with DataTable (paginated)
+  - Filter by festival dropdown
+  - Filter by type (Nourriture, Boissons, Bar, Merchandising)
+  - Filter by status (Ouverts/Fermes)
+  - Search by vendor name
+  - Stats cards showing total, open, and count by type
+  - Create/Edit vendors via modal form
+  - Delete confirmation modal with warning
+  - Toggle open/closed status directly from table
+  - Fields: name, festivalId, type, description, location, isOpen
+  - Vendor type icons and color badges
+  - Loading and error states
+  - Dark mode support
+
+- [x] **Updated Vendors API** (`apps/admin/lib/api.ts`)
+  - Added `getAll` method with filters (festivalId, type, isOpen, search, pagination)
+  - Updated `create` to use global vendors endpoint
+  - Updated `toggleOpen` to use PUT instead of custom endpoint
+
+- [x] **Updated Vendors Hooks** (`apps/admin/hooks/api/useVendors.ts`)
+  - Added `useAllVendors` hook for global vendors list with filters
+  - Added `VendorListParams` interface
+  - Updated `useCreateVendor` to invalidate global lists
+
+- [x] **Updated Vendor Types** (`apps/admin/types/index.ts`)
+  - Added festival relation to Vendor interface
+
+---
+
 ### Admin Artists Management Page
 
 - [x] **Artists Management Page** (`apps/admin/app/(dashboard)/artists/page.tsx`)
@@ -44,17 +76,6 @@ _Aucune tâche en cours_
 - [x] **Updated Artist Types** (`apps/admin/types/index.ts`)
   - Added country and socialLinks fields to Artist interface
   - Added CreateArtistDto and UpdateArtistDto interfaces
-
----
-
-## Tâches En Attente
-
-- [ ] **Admin Vendors Management Page** - Create global vendors page at `/apps/admin/app/(dashboard)/vendors/page.tsx`
-  - List all vendors across festivals with filters (type, festival, status)
-  - Create/Edit/Delete vendors via modal
-  - Toggle open/closed status
-  - Table with pagination
-  - Use existing API: GET /vendors, POST /vendors, PUT /vendors/:id, DELETE /vendors/:id
 
 ---
 
