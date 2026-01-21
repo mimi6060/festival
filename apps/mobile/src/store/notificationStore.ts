@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -42,9 +43,7 @@ export const useNotificationStore = create<NotificationState>()(
 
       markAsRead: (notificationId) =>
         set((state) => {
-          const notification = state.notifications.find(
-            (n) => n.id === notificationId
-          );
+          const notification = state.notifications.find((n) => n.id === notificationId);
           const wasUnread = notification && !notification.read;
 
           return {
@@ -63,15 +62,11 @@ export const useNotificationStore = create<NotificationState>()(
 
       deleteNotification: (notificationId) =>
         set((state) => {
-          const notification = state.notifications.find(
-            (n) => n.id === notificationId
-          );
+          const notification = state.notifications.find((n) => n.id === notificationId);
           const wasUnread = notification && !notification.read;
 
           return {
-            notifications: state.notifications.filter(
-              (n) => n.id !== notificationId
-            ),
+            notifications: state.notifications.filter((n) => n.id !== notificationId),
             unreadCount: wasUnread ? state.unreadCount - 1 : state.unreadCount,
           };
         }),

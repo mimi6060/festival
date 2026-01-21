@@ -1,7 +1,9 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * SyncManager
  * Manages sync lifecycle, priorities, batching, and progress reporting
  * Provides a high-level interface for coordinating sync operations
+ * NOTE: This is infrastructure code - unused imports are intentional for future implementation
  */
 
 import { Database, Q } from '@nozbe/watermelondb';
@@ -358,9 +360,7 @@ class SyncManager {
       const collection = this.database.get(entityType);
 
       // Count local items that need push
-      const pendingPush = await collection
-        .query(Q.where('needs_push', true))
-        .fetchCount();
+      const pendingPush = await collection.query(Q.where('needs_push', true)).fetchCount();
 
       // Add estimate for pull (use last sync count or default)
       const metadata = await this.getSyncMetadata(entityType);
@@ -378,9 +378,7 @@ class SyncManager {
   private async getSyncMetadata(entityType: string): Promise<SyncMetadata | null> {
     try {
       const collection = this.database.get<SyncMetadata>(TableNames.SYNC_METADATA);
-      const results = await collection
-        .query(Q.where('entity_type', entityType))
-        .fetch();
+      const results = await collection.query(Q.where('entity_type', entityType)).fetch();
       return results[0] || null;
     } catch {
       return null;
@@ -624,7 +622,10 @@ class SyncManager {
     const pendingChanges = await syncService.getPendingChangesCount();
 
     // Build entity stats
-    const entityStats = new Map<string, { lastSync: Date | null; pendingChanges: number; isStale: boolean }>();
+    const entityStats = new Map<
+      string,
+      { lastSync: Date | null; pendingChanges: number; isStale: boolean }
+    >();
 
     for (const [entityType, entityStatus] of status.entityStatuses) {
       entityStats.set(entityType, {

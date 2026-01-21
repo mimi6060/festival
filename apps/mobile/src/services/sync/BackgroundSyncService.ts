@@ -143,7 +143,9 @@ class BackgroundSyncService {
     this.isNativeModulesAvailable = !!(this.TaskManager && this.BackgroundFetch);
 
     if (!this.isNativeModulesAvailable) {
-      console.log('[BackgroundSyncService] Native modules not fully available, background sync will use foreground alternatives');
+      console.log(
+        '[BackgroundSyncService] Native modules not fully available, background sync will use foreground alternatives'
+      );
     }
   }
 
@@ -166,10 +168,7 @@ class BackgroundSyncService {
    */
   private async saveConfig(): Promise<void> {
     try {
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.BACKGROUND_SYNC_ENABLED,
-        String(this.config.enabled)
-      );
+      await AsyncStorage.setItem(STORAGE_KEYS.BACKGROUND_SYNC_ENABLED, String(this.config.enabled));
     } catch (error) {
       console.error('[BackgroundSyncService] Failed to save config:', error);
     }
@@ -195,10 +194,7 @@ class BackgroundSyncService {
   private async saveLastSyncTime(): Promise<void> {
     try {
       this.lastSyncTime = Date.now();
-      await AsyncStorage.setItem(
-        STORAGE_KEYS.LAST_BACKGROUND_SYNC,
-        String(this.lastSyncTime)
-      );
+      await AsyncStorage.setItem(STORAGE_KEYS.LAST_BACKGROUND_SYNC, String(this.lastSyncTime));
     } catch (error) {
       console.error('[BackgroundSyncService] Failed to save last sync time:', error);
     }

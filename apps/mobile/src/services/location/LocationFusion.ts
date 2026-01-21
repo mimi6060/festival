@@ -4,7 +4,7 @@
  * Handles indoor/outdoor transitions seamlessly
  */
 
-import { Platform } from 'react-native';
+import { Platform as _Platform } from 'react-native';
 import Geolocation, {
   GeoPosition,
   GeoOptions,
@@ -24,7 +24,7 @@ import {
 
 // Fusion algorithm constants
 const GPS_INDOOR_ACCURACY_THRESHOLD = 30; // meters - below this, GPS may be valid indoors
-const GPS_OUTDOOR_CONFIDENCE = 0.9;
+const _GPS_OUTDOOR_CONFIDENCE = 0.9;
 const BEACON_WEIGHT_BASE = 0.8;
 const WIFI_WEIGHT_BASE = 0.6;
 const GPS_WEIGHT_BASE = 0.4;
@@ -219,15 +219,23 @@ export class LocationFusion {
   }
 
   private calculateBeaconAccuracy(beacons: Beacon[]): number {
-    if (beacons.length === 0) {return Infinity;}
+    if (beacons.length === 0) {
+      return Infinity;
+    }
 
     // Calculate accuracy based on number and proximity of beacons
     const nearBeacons = beacons.filter((b) => b.distance < 5);
     const immediateBeacons = beacons.filter((b) => b.distance < 1);
 
-    if (immediateBeacons.length >= 2) {return 1;}
-    if (nearBeacons.length >= 3) {return 2;}
-    if (beacons.length >= 3) {return 5;}
+    if (immediateBeacons.length >= 2) {
+      return 1;
+    }
+    if (nearBeacons.length >= 3) {
+      return 2;
+    }
+    if (beacons.length >= 3) {
+      return 5;
+    }
     return 10;
   }
 
@@ -260,10 +268,7 @@ export class LocationFusion {
       this.state.beaconCount > 0
     ) {
       isIndoor = true;
-    } else if (
-      this.state.wifiPosition &&
-      Date.now() - this.state.wifiTimestamp < 10000
-    ) {
+    } else if (this.state.wifiPosition && Date.now() - this.state.wifiTimestamp < 10000) {
       isIndoor = true;
     }
 
@@ -412,7 +417,7 @@ export class LocationFusion {
     let weightedAlt = 0;
     const floorVotes = new Map<number, number>();
     let minAccuracy = Infinity;
-    let bestSource: LocationSource = 'fused';
+    const _bestSource: LocationSource = 'fused';
 
     samples.forEach((sample) => {
       const weight = sample.weight;
@@ -494,8 +499,7 @@ export class LocationFusion {
     const sinDLat = Math.sin(dLat / 2);
     const sinDLon = Math.sin(dLon / 2);
 
-    const h =
-      sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon;
+    const h = sinDLat * sinDLat + Math.cos(lat1) * Math.cos(lat2) * sinDLon * sinDLon;
 
     return 2 * R * Math.asin(Math.sqrt(h));
   }
@@ -560,7 +564,9 @@ export class LocationFusion {
 
   private findZoneForPosition(position: IndoorCoordinate): Zone | null {
     for (const zone of this.zones) {
-      if (zone.floor !== position.floor) {continue;}
+      if (zone.floor !== position.floor) {
+        continue;
+      }
 
       if (this.isPointInPolygon(position, zone.boundary)) {
         return zone;
@@ -570,7 +576,9 @@ export class LocationFusion {
   }
 
   private isPointInPolygon(point: IndoorCoordinate, polygon: Coordinate[]): boolean {
-    if (polygon.length < 3) {return false;}
+    if (polygon.length < 3) {
+      return false;
+    }
 
     let inside = false;
     const x = point.latitude;
@@ -609,9 +617,7 @@ export class LocationFusion {
       currentZone: this.currentZone,
       accuracy: this.state.lastFusedPosition?.accuracy || Infinity,
       heading: 0, // Would need magnetometer for this
-      speed: Math.sqrt(
-        this.state.currentVelocity.x ** 2 + this.state.currentVelocity.y ** 2
-      ),
+      speed: Math.sqrt(this.state.currentVelocity.x ** 2 + this.state.currentVelocity.y ** 2),
       isTracking: this.fusionInterval !== null,
       batteryMode: this.config.batteryMode,
     };

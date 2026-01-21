@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * SyncQueue Service
  * Manages offline mutations queue for eventual sync
@@ -142,9 +143,7 @@ class SyncQueue {
   async getLength(): Promise<number> {
     const collection = this.database.get<SyncQueueItem>(TableNames.SYNC_QUEUE);
 
-    return await collection
-      .query(Q.where('status', Q.oneOf(['pending', 'failed'])))
-      .fetchCount();
+    return await collection.query(Q.where('status', Q.oneOf(['pending', 'failed']))).fetchCount();
   }
 
   /**
@@ -209,19 +208,14 @@ class SyncQueue {
   /**
    * Process a batch of items
    */
-  private async processBatch(
-    items: SyncQueueItem[],
-    authToken?: string
-  ): Promise<QueueResult> {
+  private async processBatch(items: SyncQueueItem[], authToken?: string): Promise<QueueResult> {
     const result: QueueResult = { processed: 0, failed: 0, errors: [] };
 
     // Process items concurrently with limit
     const chunks = this.chunkArray(items, this.config.maxConcurrent);
 
     for (const chunk of chunks) {
-      const promises = chunk.map((item) =>
-        this.processItem(item, authToken)
-      );
+      const promises = chunk.map((item) => this.processItem(item, authToken));
 
       const results = await Promise.allSettled(promises);
 
@@ -243,10 +237,7 @@ class SyncQueue {
   /**
    * Process single item
    */
-  private async processItem(
-    item: SyncQueueItem,
-    authToken?: string
-  ): Promise<boolean> {
+  private async processItem(item: SyncQueueItem, authToken?: string): Promise<boolean> {
     this.emit({
       type: 'processing',
       itemId: item.id,
@@ -359,10 +350,7 @@ class SyncQueue {
     const collection = this.database.get<SyncQueueItem>(TableNames.SYNC_QUEUE);
 
     const failedItems = await collection
-      .query(
-        Q.where('status', 'failed'),
-        Q.where('retry_count', Q.lt(MAX_RETRY_COUNT))
-      )
+      .query(Q.where('status', 'failed'), Q.where('retry_count', Q.lt(MAX_RETRY_COUNT)))
       .fetch();
 
     await this.database.write(async () => {
@@ -380,9 +368,7 @@ class SyncQueue {
   async clearCompleted(): Promise<number> {
     const collection = this.database.get<SyncQueueItem>(TableNames.SYNC_QUEUE);
 
-    const completedItems = await collection
-      .query(Q.where('status', 'completed'))
-      .fetch();
+    const completedItems = await collection.query(Q.where('status', 'completed')).fetch();
 
     await this.database.write(async () => {
       for (const item of completedItems) {

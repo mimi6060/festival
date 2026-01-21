@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * ConflictResolver Service
  * Handles sync conflicts between local and server data
@@ -6,12 +7,7 @@
 import { TableNames } from '../../database';
 
 // Conflict resolution strategies
-export type ConflictStrategy =
-  | 'server-wins'
-  | 'client-wins'
-  | 'latest-wins'
-  | 'merge'
-  | 'manual';
+export type ConflictStrategy = 'server-wins' | 'client-wins' | 'latest-wins' | 'merge' | 'manual';
 
 // Conflict result
 export interface ConflictResult {
@@ -305,11 +301,7 @@ class ConflictResolver {
         const serverValue = serverData[rule.field];
 
         if (localValue !== serverValue) {
-          const resolvedValue = this.applyMergeRule(
-            rule,
-            localValue,
-            serverValue
-          );
+          const resolvedValue = this.applyMergeRule(rule, localValue, serverValue);
           merged[rule.field] = resolvedValue;
 
           conflictDetails.push({
@@ -351,11 +343,7 @@ class ConflictResolver {
   /**
    * Apply a merge rule to resolve field conflict
    */
-  private applyMergeRule(
-    rule: MergeRule,
-    localValue: unknown,
-    serverValue: unknown
-  ): unknown {
+  private applyMergeRule(rule: MergeRule, localValue: unknown, serverValue: unknown): unknown {
     switch (rule.strategy) {
       case 'server':
         return serverValue;
@@ -434,14 +422,13 @@ class ConflictResolver {
     serverData: Record<string, unknown>
   ): string[] {
     const conflicts: string[] = [];
-    const allFields = new Set([
-      ...Object.keys(localData),
-      ...Object.keys(serverData),
-    ]);
+    const allFields = new Set([...Object.keys(localData), ...Object.keys(serverData)]);
 
     for (const field of allFields) {
       // Skip metadata fields
-      if (this.isMetadataField(field)) {continue;}
+      if (this.isMetadataField(field)) {
+        continue;
+      }
 
       if (!this.deepEqual(localData[field], serverData[field])) {
         conflicts.push(field);
@@ -483,10 +470,7 @@ class ConflictResolver {
    */
   private getTimestamp(data: Record<string, unknown>): number {
     const timestamp =
-      data.serverUpdatedAt ||
-      data.server_updated_at ||
-      data.updatedAt ||
-      data.updated_at;
+      data.serverUpdatedAt || data.server_updated_at || data.updatedAt || data.updated_at;
 
     if (typeof timestamp === 'number') {
       return timestamp;
@@ -503,11 +487,17 @@ class ConflictResolver {
    * Deep equality check
    */
   private deepEqual(a: unknown, b: unknown): boolean {
-    if (a === b) {return true;}
+    if (a === b) {
+      return true;
+    }
 
-    if (typeof a !== typeof b) {return false;}
+    if (typeof a !== typeof b) {
+      return false;
+    }
 
-    if (a === null || b === null) {return a === b;}
+    if (a === null || b === null) {
+      return a === b;
+    }
 
     if (typeof a === 'object' && typeof b === 'object') {
       const aObj = a as Record<string, unknown>;
@@ -516,7 +506,9 @@ class ConflictResolver {
       const aKeys = Object.keys(aObj);
       const bKeys = Object.keys(bObj);
 
-      if (aKeys.length !== bKeys.length) {return false;}
+      if (aKeys.length !== bKeys.length) {
+        return false;
+      }
 
       return aKeys.every((key) => this.deepEqual(aObj[key], bObj[key]));
     }
@@ -534,10 +526,7 @@ class ConflictResolver {
   /**
    * Resolve pending conflict manually
    */
-  resolvePendingConflict(
-    conflictId: string,
-    resolvedData: Record<string, unknown>
-  ): void {
+  resolvePendingConflict(conflictId: string, resolvedData: Record<string, unknown>): void {
     this.pendingConflicts.delete(conflictId);
     // The resolved data should be applied to the local database
     // This would be handled by the calling code

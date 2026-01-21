@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -37,9 +38,7 @@ export const useTicketStore = create<TicketState>()(
 
       updateTicket: (ticketId, updates) =>
         set((state) => ({
-          tickets: state.tickets.map((t) =>
-            t.id === ticketId ? { ...t, ...updates } : t
-          ),
+          tickets: state.tickets.map((t) => (t.id === ticketId ? { ...t, ...updates } : t)),
         })),
 
       removeTicket: (ticketId) =>

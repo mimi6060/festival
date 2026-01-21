@@ -45,14 +45,8 @@ export interface UseCachedFestivalResult {
 /**
  * Main festival caching hook
  */
-export function useCachedFestival(
-  options: UseCachedFestivalOptions
-): UseCachedFestivalResult {
-  const {
-    festivalId,
-    autoSync = true,
-    syncInterval = CacheTTL.SCHEDULE,
-  } = options;
+export function useCachedFestival(options: UseCachedFestivalOptions): UseCachedFestivalResult {
+  const { festivalId, autoSync = true, syncInterval = CacheTTL.SCHEDULE } = options;
 
   const user = useAuthStore((state) => state.user);
 
@@ -99,7 +93,9 @@ export function useCachedFestival(
 
   // Fetch schedule
   const fetchSchedule = useCallback(async (forceRefresh = false) => {
-    if (!isMountedRef.current) {return;}
+    if (!isMountedRef.current) {
+      return;
+    }
 
     setScheduleLoading(true);
     setScheduleError(null);
@@ -107,7 +103,9 @@ export function useCachedFestival(
     try {
       const result = await cacheRef.current.getSchedule(forceRefresh);
 
-      if (!isMountedRef.current) {return;}
+      if (!isMountedRef.current) {
+        return;
+      }
 
       if (result.data) {
         setSchedule(result.data);
@@ -126,7 +124,9 @@ export function useCachedFestival(
         totalSize: stats.totalSize,
       });
     } catch (error) {
-      if (!isMountedRef.current) {return;}
+      if (!isMountedRef.current) {
+        return;
+      }
 
       const err = error instanceof Error ? error : new Error('Failed to fetch schedule');
       setScheduleError(err);
@@ -144,7 +144,9 @@ export function useCachedFestival(
 
   // Auto sync
   useEffect(() => {
-    if (!autoSync || syncInterval <= 0) {return;}
+    if (!autoSync || syncInterval <= 0) {
+      return;
+    }
 
     syncIntervalRef.current = setInterval(() => {
       fetchSchedule(true);
@@ -210,17 +212,12 @@ export function useFestivalFavorites(festivalId: string) {
     await cacheRef.current.toggleFavorite(eventId);
 
     setFavorites((prev) =>
-      prev.includes(eventId)
-        ? prev.filter((id) => id !== eventId)
-        : [...prev, eventId]
+      prev.includes(eventId) ? prev.filter((id) => id !== eventId) : [...prev, eventId]
     );
   }, []);
 
   // Check if event is favorited
-  const isFavorite = useCallback(
-    (eventId: string) => favorites.includes(eventId),
-    [favorites]
-  );
+  const isFavorite = useCallback((eventId: string) => favorites.includes(eventId), [favorites]);
 
   return {
     favorites,

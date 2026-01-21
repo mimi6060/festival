@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * OfflineMutationHandler
  * Handles offline mutations: queuing, replaying, ordering, and conflict resolution
@@ -8,7 +9,12 @@ import { Database, Q, Model } from '@nozbe/watermelondb';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { getDatabase, TableNames } from '../../database';
-import { SyncQueueItem, SyncOperation, SyncPriority, getOperationPriority } from '../../database/models';
+import {
+  SyncQueueItem,
+  SyncOperation,
+  SyncPriority,
+  getOperationPriority,
+} from '../../database/models';
 import { syncQueueService, QueueResult, QueueEvent } from './SyncQueue';
 import { conflictResolver, ConflictResult } from './ConflictResolver';
 import { syncService } from './SyncService';
@@ -416,8 +422,7 @@ class OfflineMutationHandler {
     return this.mutationOrder
       .map((id) => this.mutations.get(id))
       .filter(
-        (m): m is Mutation =>
-          m !== undefined && (m.status === 'pending' || m.status === 'failed')
+        (m): m is Mutation => m !== undefined && (m.status === 'pending' || m.status === 'failed')
       );
   }
 
@@ -426,8 +431,12 @@ class OfflineMutationHandler {
    */
   getMutationsByEntity(entityType: string, entityId?: string): Mutation[] {
     return Array.from(this.mutations.values()).filter((m) => {
-      if (m.entityType !== entityType) {return false;}
-      if (entityId && m.entityId !== entityId) {return false;}
+      if (m.entityType !== entityType) {
+        return false;
+      }
+      if (entityId && m.entityId !== entityId) {
+        return false;
+      }
       return true;
     });
   }
@@ -708,9 +717,7 @@ class OfflineMutationHandler {
     await this.database.write(async () => {
       if (mutation.type === 'create') {
         // Find local record by local ID and update with server ID
-        const localRecords = await collection
-          .query(Q.where('id', mutation.entityId))
-          .fetch();
+        const localRecords = await collection.query(Q.where('id', mutation.entityId)).fetch();
 
         if (localRecords.length > 0) {
           await localRecords[0].update((record: any) => {
@@ -768,7 +775,7 @@ class OfflineMutationHandler {
     for (const [id, mutation] of this.mutations) {
       if (
         mutation.status === 'completed' ||
-        (mutation.status === 'cancelled') ||
+        mutation.status === 'cancelled' ||
         (mutation.status === 'failed' && mutation.retryCount >= this.config.maxRetries)
       ) {
         // Remove if older than retention period

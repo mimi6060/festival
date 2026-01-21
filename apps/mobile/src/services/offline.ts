@@ -86,7 +86,7 @@ class OfflineService {
           headers: { 'Content-Type': 'application/json' },
           body: item.body ? JSON.stringify(item.body) : undefined,
         });
-      } catch (error) {
+      } catch {
         // Re-add to queue if failed
         this.syncQueue.push(item);
       }
@@ -98,7 +98,7 @@ class OfflineService {
   }
 
   async syncAllData() {
-    if (!await this.isNetworkAvailable()) {
+    if (!(await this.isNetworkAvailable())) {
       return { success: false, message: 'No network connection' };
     }
 
@@ -116,10 +116,7 @@ class OfflineService {
       ]);
 
       if (balanceResponse.success && transactionsResponse.success) {
-        useWalletStore.getState().syncWallet(
-          balanceResponse.data,
-          transactionsResponse.data
-        );
+        useWalletStore.getState().syncWallet(balanceResponse.data, transactionsResponse.data);
       }
 
       // Sync program

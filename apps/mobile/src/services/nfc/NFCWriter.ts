@@ -64,7 +64,10 @@ export class NFCWriter {
 
       // Check if tag already has data and overwrite is false
       if (!opts.overwrite && tag.ndefMessage && tag.ndefMessage.length > 0) {
-        throw new NFCError(NFCErrorCode.WRITE_ERROR, 'Tag already contains data. Enable overwrite to continue.');
+        throw new NFCError(
+          NFCErrorCode.WRITE_ERROR,
+          'Tag already contains data. Enable overwrite to continue.'
+        );
       }
 
       // Encode data
@@ -240,7 +243,7 @@ export class NFCWriter {
   /**
    * Clear/reset NFC tag
    */
-  async clearTag(options: NFCWriteOptions = {}): Promise<NFCWriteResult> {
+  async clearTag(_options: NFCWriteOptions = {}): Promise<NFCWriteResult> {
     try {
       await this.manager.startSession([NfcTech.Ndef]);
 
@@ -251,9 +254,7 @@ export class NFCWriter {
       }
 
       // Write empty message
-      const emptyBytes = Ndef.encodeMessage([
-        Ndef.textRecord(''),
-      ]);
+      const emptyBytes = Ndef.encodeMessage([Ndef.textRecord('')]);
 
       if (!emptyBytes) {
         throw new NFCError(NFCErrorCode.WRITE_ERROR, 'Failed to create empty message');
@@ -348,9 +349,7 @@ export class NFCWriter {
    * Create NDEF message from text
    */
   private createNdefMessage(text: string): number[] {
-    const bytes = Ndef.encodeMessage([
-      Ndef.textRecord(text),
-    ]);
+    const bytes = Ndef.encodeMessage([Ndef.textRecord(text)]);
 
     if (!bytes) {
       throw new NFCError(NFCErrorCode.WRITE_ERROR, 'Failed to encode NDEF message');
@@ -403,7 +402,10 @@ export class NFCWriter {
   private extractTagId(tag: { id?: number[] | string }): string {
     if (tag.id) {
       if (Array.isArray(tag.id)) {
-        return tag.id.map(byte => byte.toString(16).padStart(2, '0')).join('').toUpperCase();
+        return tag.id
+          .map((byte) => byte.toString(16).padStart(2, '0'))
+          .join('')
+          .toUpperCase();
       }
       return String(tag.id);
     }

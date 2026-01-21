@@ -4,11 +4,7 @@
  */
 
 import { CacheManager, getCacheManager, CachePriority } from './CacheManager';
-import {
-  StrategyName,
-  executeStrategy,
-  type StrategyResult,
-} from './CacheStrategies';
+import { StrategyName, executeStrategy, type StrategyResult } from './CacheStrategies';
 import { apiService } from '../api';
 import type { ProgramEvent, Artist, Stage, Ticket } from '../../types';
 
@@ -222,7 +218,7 @@ export class FestivalDataCache {
 
         const now = new Date();
         return scheduleResult.data.events
-          .filter(event => new Date(event.startTime) > now)
+          .filter((event) => new Date(event.startTime) > now)
           .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
           .slice(0, limit);
       },
@@ -286,7 +282,7 @@ export class FestivalDataCache {
 
         // Find artist and their performances
         const artistPerformances = scheduleResult.data.events.filter(
-          event => event.artist?.id === artistId
+          (event) => event.artist?.id === artistId
         );
 
         if (artistPerformances.length === 0) {
@@ -294,7 +290,9 @@ export class FestivalDataCache {
         }
 
         const firstPerformance = artistPerformances[0];
-        if (!firstPerformance) {return null;}
+        if (!firstPerformance) {
+          return null;
+        }
 
         return {
           artist: firstPerformance.artist,
@@ -360,7 +358,9 @@ export class FestivalDataCache {
   /**
    * Get single stage with schedule
    */
-  async getStage(stageId: string): Promise<StrategyResult<{ stage: Stage; events: ProgramEvent[] } | null>> {
+  async getStage(
+    stageId: string
+  ): Promise<StrategyResult<{ stage: Stage; events: ProgramEvent[] } | null>> {
     const cacheKey = `${CacheKeys.STAGE}:${stageId}`;
 
     return executeStrategy<{ stage: Stage; events: ProgramEvent[] } | null>(
@@ -372,7 +372,7 @@ export class FestivalDataCache {
         }
 
         const stageEvents = scheduleResult.data.events.filter(
-          event => event.stage?.id === stageId
+          (event) => event.stage?.id === stageId
         );
 
         if (stageEvents.length === 0) {
@@ -380,7 +380,9 @@ export class FestivalDataCache {
         }
 
         const firstEvent = stageEvents[0];
-        if (!firstEvent) {return null;}
+        if (!firstEvent) {
+          return null;
+        }
 
         return {
           stage: firstEvent.stage,
@@ -502,7 +504,7 @@ export class FestivalDataCache {
     const favorites = favoritesResult.data || [];
 
     const newFavorites = favorites.includes(eventId)
-      ? favorites.filter(id => id !== eventId)
+      ? favorites.filter((id) => id !== eventId)
       : [...favorites, eventId];
 
     await this.cacheManager.set(cacheKey, newFavorites, {
@@ -519,11 +521,13 @@ export class FestivalDataCache {
    */
   async prefetchUpcoming(): Promise<void> {
     const upcomingResult = await this.getUpcomingPerformances(20);
-    if (!upcomingResult.data) {return;}
+    if (!upcomingResult.data) {
+      return;
+    }
 
     // Prefetch artists from upcoming performances
     const artistIds = upcomingResult.data
-      .map(event => event.artist?.id)
+      .map((event) => event.artist?.id)
       .filter((id): id is string => !!id);
 
     const uniqueArtistIds = Array.from(new Set(artistIds));
@@ -534,7 +538,9 @@ export class FestivalDataCache {
    * Process prefetch queue
    */
   private async processPrefetchQueue(): Promise<void> {
-    if (this.isPrefetching || this.prefetchQueue.size === 0) {return;}
+    if (this.isPrefetching || this.prefetchQueue.size === 0) {
+      return;
+    }
 
     this.isPrefetching = true;
 
@@ -545,7 +551,9 @@ export class FestivalDataCache {
         this.prefetchQueue.delete(key);
 
         // Check if already cached
-        if (this.cacheManager.has(key)) {continue;}
+        if (this.cacheManager.has(key)) {
+          continue;
+        }
 
         // Determine type and fetch
         if (key.startsWith(CacheKeys.ARTIST)) {

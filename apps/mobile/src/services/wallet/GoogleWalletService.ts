@@ -38,10 +38,17 @@ export interface GoogleEventTicketClass {
   heroImage?: Image;
   hexBackgroundColor?: string;
   localizedIssuerName?: LocalizedString;
-  multipleDevicesAndHoldersAllowedStatus?: 'STATUS_UNSPECIFIED' | 'MULTIPLE_HOLDERS' | 'ONE_USER_ALL_DEVICES' | 'ONE_USER_ONE_DEVICE';
+  multipleDevicesAndHoldersAllowedStatus?:
+    | 'STATUS_UNSPECIFIED'
+    | 'MULTIPLE_HOLDERS'
+    | 'ONE_USER_ALL_DEVICES'
+    | 'ONE_USER_ONE_DEVICE';
   callbackOptions?: CallbackOptions;
   securityAnimation?: SecurityAnimation;
-  viewUnlockRequirement?: 'VIEW_UNLOCK_REQUIREMENT_UNSPECIFIED' | 'UNLOCK_NOT_REQUIRED' | 'UNLOCK_REQUIRED_TO_VIEW';
+  viewUnlockRequirement?:
+    | 'VIEW_UNLOCK_REQUIREMENT_UNSPECIFIED'
+    | 'UNLOCK_NOT_REQUIRED'
+    | 'UNLOCK_REQUIRED_TO_VIEW';
   linksModuleData?: LinksModuleData;
   infoModuleData?: InfoModuleData;
   classTemplateInfo?: ClassTemplateInfo;
@@ -206,7 +213,19 @@ export interface FrequentFlyerInfo {
 }
 
 export interface Barcode {
-  type: 'QR_CODE' | 'AZTEC' | 'CODE_128' | 'CODE_39' | 'CODABAR' | 'DATA_MATRIX' | 'EAN_13' | 'EAN_8' | 'ITF_14' | 'PDF_417' | 'TEXT_ONLY' | 'UPC_A';
+  type:
+    | 'QR_CODE'
+    | 'AZTEC'
+    | 'CODE_128'
+    | 'CODE_39'
+    | 'CODABAR'
+    | 'DATA_MATRIX'
+    | 'EAN_13'
+    | 'EAN_8'
+    | 'ITF_14'
+    | 'PDF_417'
+    | 'TEXT_ONLY'
+    | 'UPC_A';
   value: string;
   alternateText?: string;
   showCodeText?: LocalizedString;
@@ -478,12 +497,7 @@ export class GoogleWalletService {
       throw new Error('GoogleWalletService not initialized');
     }
 
-    const {
-      heroImageUrl,
-      logoImageUrl,
-      hexBackgroundColor = '#603BFF',
-      doorsOpenTime,
-    } = options;
+    const { heroImageUrl, logoImageUrl, hexBackgroundColor = '#603BFF', doorsOpenTime } = options;
 
     const ticketClass: GoogleEventTicketClass = {
       id: `${this.config.issuerId}.${classId}`,
@@ -690,7 +704,7 @@ export class GoogleWalletService {
   private extractTicketIdFromUrl(url: string): string | null {
     try {
       // Try to extract from JWT payload or URL parameter
-      const match = url.match(/\/([^\/]+)$/);
+      const match = url.match(/\/([^/]+)$/);
       return match ? match[1] : null;
     } catch {
       return null;

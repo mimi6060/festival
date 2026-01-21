@@ -45,9 +45,7 @@ export function useDatabase(): Database {
 /**
  * Hook to access a specific collection
  */
-export function useCollection<T extends TableName>(
-  tableName: T
-): Collection<ModelTypeMap[T]> {
+export function useCollection<T extends TableName>(tableName: T): Collection<ModelTypeMap[T]> {
   const database = useDatabase();
   return database.get<ModelTypeMap[T]>(tableName);
 }
@@ -76,9 +74,7 @@ export function useCreate<T extends TableName>(tableName: T) {
   const collection = useCollection(tableName);
 
   const create = useCallback(
-    async (
-      data: Partial<ModelTypeMap[T]>
-    ): Promise<ModelTypeMap[T]> => {
+    async (data: Partial<ModelTypeMap[T]>): Promise<ModelTypeMap[T]> => {
       return database.write(async () => {
         return collection.create((record: any) => {
           Object.assign(record, data);
@@ -99,10 +95,7 @@ export function useUpdate<T extends TableName>(tableName: T) {
   const collection = useCollection(tableName);
 
   const update = useCallback(
-    async (
-      id: string,
-      updates: Partial<ModelTypeMap[T]>
-    ): Promise<ModelTypeMap[T]> => {
+    async (id: string, updates: Partial<ModelTypeMap[T]>): Promise<ModelTypeMap[T]> => {
       return database.write(async () => {
         const record = await collection.find(id);
         await record.update((r: any) => {
@@ -165,9 +158,7 @@ export function useFindByServerId<T extends TableName>(tableName: T) {
 
   const findByServerId = useCallback(
     async (serverId: string): Promise<ModelTypeMap[T] | null> => {
-      const results = await collection
-        .query(Q.where('server_id', serverId))
-        .fetch();
+      const results = await collection.query(Q.where('server_id', serverId)).fetch();
       return results[0] || null;
     },
     [collection]
@@ -226,10 +217,7 @@ export function useBatchOperations() {
   );
 
   const batchDelete = useCallback(
-    async <T extends TableName>(
-      tableName: T,
-      ids: string[]
-    ): Promise<void> => {
+    async <T extends TableName>(tableName: T, ids: string[]): Promise<void> => {
       const collection = database.get<ModelTypeMap[T]>(tableName);
 
       return database.write(async () => {
@@ -280,18 +268,13 @@ export function usePendingSyncCount() {
     let count = 0;
 
     for (const tableName of Object.values(TableNames)) {
-      if (
-        tableName === TableNames.SYNC_METADATA ||
-        tableName === TableNames.SYNC_QUEUE
-      ) {
+      if (tableName === TableNames.SYNC_METADATA || tableName === TableNames.SYNC_QUEUE) {
         continue;
       }
 
       try {
         const collection = database.get(tableName);
-        const pending = await collection
-          .query(Q.where('needs_push', true))
-          .fetchCount();
+        const pending = await collection.query(Q.where('needs_push', true)).fetchCount();
         count += pending;
       } catch {
         // Table might not have needs_push column

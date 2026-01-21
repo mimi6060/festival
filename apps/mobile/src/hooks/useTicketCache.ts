@@ -5,10 +5,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 
-import {
-  ticketCacheService,
-  TicketCacheStatus,
-} from '../services/sync';
+import { ticketCacheService, TicketCacheStatus } from '../services/sync';
 import type Ticket from '../database/models/Ticket';
 
 // Hook return type
@@ -26,7 +23,9 @@ export interface UseTicketCacheResult {
   cacheTickets: (tickets: any[]) => Promise<void>;
   getTicket: (ticketId: string) => Promise<Ticket | null>;
   getQRCode: (ticketId: string) => Promise<{ qrCode: string; qrCodeData: string } | null>;
-  preloadTickets: (fetchFunction: () => Promise<any[]>) => Promise<{ success: boolean; ticketCount: number }>;
+  preloadTickets: (
+    fetchFunction: () => Promise<any[]>
+  ) => Promise<{ success: boolean; ticketCount: number }>;
   markAsUsed: (ticketId: string, staffId?: string) => Promise<boolean>;
   refreshStatus: () => Promise<void>;
   clearCache: () => Promise<void>;
@@ -100,20 +99,23 @@ export function useTicketCache(festivalId?: string): UseTicketCacheResult {
   /**
    * Cache tickets
    */
-  const cacheTickets = useCallback(async (ticketsToCache: any[]) => {
-    setIsLoading(true);
-    setError(null);
+  const cacheTickets = useCallback(
+    async (ticketsToCache: any[]) => {
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      await ticketCacheService.cacheTickets(ticketsToCache);
-      await refreshStatus();
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to cache tickets'));
-      throw err;
-    } finally {
-      setIsLoading(false);
-    }
-  }, [refreshStatus]);
+      try {
+        await ticketCacheService.cacheTickets(ticketsToCache);
+        await refreshStatus();
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Failed to cache tickets'));
+        throw err;
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [refreshStatus]
+  );
 
   /**
    * Get a single ticket
@@ -142,37 +144,43 @@ export function useTicketCache(festivalId?: string): UseTicketCacheResult {
   /**
    * Preload tickets
    */
-  const preloadTickets = useCallback(async (
-    fetchFunction: () => Promise<any[]>
-  ): Promise<{ success: boolean; ticketCount: number }> => {
-    setIsLoading(true);
-    setError(null);
+  const preloadTickets = useCallback(
+    async (
+      fetchFunction: () => Promise<any[]>
+    ): Promise<{ success: boolean; ticketCount: number }> => {
+      setIsLoading(true);
+      setError(null);
 
-    try {
-      const result = await ticketCacheService.preloadTickets(fetchFunction, festivalId);
-      await refreshStatus();
-      return result;
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to preload tickets'));
-      return { success: false, ticketCount: 0 };
-    } finally {
-      setIsLoading(false);
-    }
-  }, [festivalId, refreshStatus]);
+      try {
+        const result = await ticketCacheService.preloadTickets(fetchFunction, festivalId);
+        await refreshStatus();
+        return result;
+      } catch (err) {
+        setError(err instanceof Error ? err : new Error('Failed to preload tickets'));
+        return { success: false, ticketCount: 0 };
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [festivalId, refreshStatus]
+  );
 
   /**
    * Mark a ticket as used
    */
-  const markAsUsed = useCallback(async (ticketId: string, staffId?: string): Promise<boolean> => {
-    try {
-      const result = await ticketCacheService.markTicketAsUsed(ticketId, staffId);
-      await refreshStatus();
-      return result;
-    } catch (err) {
-      console.error('[useTicketCache] Failed to mark ticket as used:', err);
-      return false;
-    }
-  }, [refreshStatus]);
+  const markAsUsed = useCallback(
+    async (ticketId: string, staffId?: string): Promise<boolean> => {
+      try {
+        const result = await ticketCacheService.markTicketAsUsed(ticketId, staffId);
+        await refreshStatus();
+        return result;
+      } catch (err) {
+        console.error('[useTicketCache] Failed to mark ticket as used:', err);
+        return false;
+      }
+    },
+    [refreshStatus]
+  );
 
   /**
    * Clear the cache

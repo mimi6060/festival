@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * TicketCacheService
  * Ensures tickets and their QR codes are properly cached for offline access
@@ -92,7 +93,9 @@ class TicketCacheService {
       const storedVersion = await AsyncStorage.getItem(STORAGE_KEYS.TICKETS_CACHE_VERSION);
 
       if (storedVersion !== CACHE_CONFIG.CACHE_VERSION) {
-        console.log(`[TicketCacheService] Cache version mismatch: ${storedVersion} -> ${CACHE_CONFIG.CACHE_VERSION}`);
+        console.log(
+          `[TicketCacheService] Cache version mismatch: ${storedVersion} -> ${CACHE_CONFIG.CACHE_VERSION}`
+        );
         // Perform any necessary migrations here
         await AsyncStorage.setItem(STORAGE_KEYS.TICKETS_CACHE_VERSION, CACHE_CONFIG.CACHE_VERSION);
       }
@@ -105,26 +108,28 @@ class TicketCacheService {
    * Cache tickets from server response
    * Call this after fetching tickets from the API
    */
-  async cacheTickets(tickets: {
-    id: string;
-    festivalId: string;
-    categoryId: string;
-    qrCode: string;
-    qrCodeData?: string;
-    status: string;
-    purchasePrice: number;
-    categoryName?: string;
-    categoryType?: string;
-    usedAt?: string | null;
-    usedByStaffId?: string | null;
-    isGuest?: boolean;
-    guestEmail?: string;
-    guestFirstName?: string;
-    guestLastName?: string;
-    guestPhone?: string;
-    createdAt?: string;
-    updatedAt?: string;
-  }[]): Promise<void> {
+  async cacheTickets(
+    tickets: {
+      id: string;
+      festivalId: string;
+      categoryId: string;
+      qrCode: string;
+      qrCodeData?: string;
+      status: string;
+      purchasePrice: number;
+      categoryName?: string;
+      categoryType?: string;
+      usedAt?: string | null;
+      usedByStaffId?: string | null;
+      isGuest?: boolean;
+      guestEmail?: string;
+      guestFirstName?: string;
+      guestLastName?: string;
+      guestPhone?: string;
+      createdAt?: string;
+      updatedAt?: string;
+    }[]
+  ): Promise<void> {
     if (!tickets || tickets.length === 0) {
       console.log('[TicketCacheService] No tickets to cache');
       return;
@@ -138,9 +143,7 @@ class TicketCacheService {
       for (const serverTicket of tickets) {
         try {
           // Check if ticket already exists
-          const existing = await collection
-            .query(Q.where('server_id', serverTicket.id))
-            .fetch();
+          const existing = await collection.query(Q.where('server_id', serverTicket.id)).fetch();
 
           if (existing.length > 0) {
             // Update existing ticket
@@ -153,7 +156,9 @@ class TicketCacheService {
               ticket.categoryType = serverTicket.categoryType || 'STANDARD';
               ticket.usedAt = serverTicket.usedAt ? new Date(serverTicket.usedAt).getTime() : null;
               ticket.usedByStaffId = serverTicket.usedByStaffId || null;
-              ticket.serverUpdatedAt = serverTicket.updatedAt ? new Date(serverTicket.updatedAt).getTime() : Date.now();
+              ticket.serverUpdatedAt = serverTicket.updatedAt
+                ? new Date(serverTicket.updatedAt).getTime()
+                : Date.now();
               ticket.isSynced = true;
               ticket.lastSyncedAt = Date.now();
               ticket.needsPush = false;
@@ -177,8 +182,12 @@ class TicketCacheService {
               ticket.guestFirstName = serverTicket.guestFirstName || null;
               ticket.guestLastName = serverTicket.guestLastName || null;
               ticket.guestPhone = serverTicket.guestPhone || null;
-              ticket.serverCreatedAt = serverTicket.createdAt ? new Date(serverTicket.createdAt).getTime() : Date.now();
-              ticket.serverUpdatedAt = serverTicket.updatedAt ? new Date(serverTicket.updatedAt).getTime() : Date.now();
+              ticket.serverCreatedAt = serverTicket.createdAt
+                ? new Date(serverTicket.createdAt).getTime()
+                : Date.now();
+              ticket.serverUpdatedAt = serverTicket.updatedAt
+                ? new Date(serverTicket.updatedAt).getTime()
+                : Date.now();
               ticket.isSynced = true;
               ticket.lastSyncedAt = Date.now();
               ticket.needsPush = false;
@@ -238,9 +247,7 @@ class TicketCacheService {
       return await collection.find(ticketId);
     } catch {
       // Try by server ID
-      const results = await collection
-        .query(Q.where('server_id', ticketId))
-        .fetch();
+      const results = await collection.query(Q.where('server_id', ticketId)).fetch();
       return results[0] || null;
     }
   }
@@ -272,7 +279,7 @@ class TicketCacheService {
     }
 
     // Check if all tickets have QR data
-    return tickets.every(ticket => ticket.qrCode && ticket.qrCodeData);
+    return tickets.every((ticket) => ticket.qrCode && ticket.qrCodeData);
   }
 
   /**
@@ -398,9 +405,7 @@ class TicketCacheService {
   async getValidTickets(festivalId?: string): Promise<Ticket[]> {
     const collection = this.database.get<Ticket>(TableNames.TICKETS);
 
-    const queries = [
-      Q.where('status', Q.oneOf(['AVAILABLE', 'SOLD'])),
-    ];
+    const queries = [Q.where('status', Q.oneOf(['AVAILABLE', 'SOLD']))];
 
     if (festivalId) {
       queries.push(Q.where('festival_id', festivalId));

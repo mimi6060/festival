@@ -79,8 +79,7 @@ export function useOfflineFirst<T>(
   const refreshIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
   // Computed
-  const isStale =
-    lastUpdatedAt !== null && Date.now() - lastUpdatedAt.getTime() > staleAfter;
+  const isStale = lastUpdatedAt !== null && Date.now() - lastUpdatedAt.getTime() > staleAfter;
 
   // Build query
   const buildQuery = useCallback((): Query<T> => {
@@ -126,7 +125,9 @@ export function useOfflineFirst<T>(
 
   // Set up refresh interval
   useEffect(() => {
-    if (refreshInterval <= 0) {return;}
+    if (refreshInterval <= 0) {
+      return;
+    }
 
     refreshIntervalRef.current = setInterval(() => {
       sync().catch((err) => {
@@ -143,7 +144,9 @@ export function useOfflineFirst<T>(
 
   // Sync with server
   const sync = useCallback(async (): Promise<void> => {
-    if (isSyncing) {return;}
+    if (isSyncing) {
+      return;
+    }
 
     setIsSyncing(true);
     setError(null);
@@ -163,7 +166,9 @@ export function useOfflineFirst<T>(
 
   // Refresh from server (pull only)
   const refresh = useCallback(async (): Promise<void> => {
-    if (isRefreshing || !fetchFromServer) {return;}
+    if (isRefreshing || !fetchFromServer) {
+      return;
+    }
 
     setIsRefreshing(true);
     setError(null);
@@ -173,15 +178,11 @@ export function useOfflineFirst<T>(
 
       await database.write(async () => {
         for (const item of serverData) {
-          const localItem = transformServerData
-            ? transformServerData(item)
-            : (item as Partial<T>);
+          const localItem = transformServerData ? transformServerData(item) : (item as Partial<T>);
 
           // Check if record exists
           const serverId = (localItem as any).serverId || (item as any).id;
-          const existing = await collection
-            .query(Q.where('server_id', serverId))
-            .fetch();
+          const existing = await collection.query(Q.where('server_id', serverId)).fetch();
 
           if (existing.length > 0) {
             // Update existing
@@ -231,7 +232,9 @@ export function useOfflineFirst<T>(
         entityType: tableName,
         entityId: record.id,
         operation: 'create' as SyncOperation,
-        payload: (record as any).toJSON ? (record as any).toJSON() : recordData as Record<string, unknown>,
+        payload: (record as any).toJSON
+          ? (record as any).toJSON()
+          : (recordData as Record<string, unknown>),
       });
 
       return record as unknown as T;
@@ -258,7 +261,9 @@ export function useOfflineFirst<T>(
         entityType: tableName,
         entityId: record.id,
         operation: 'update' as SyncOperation,
-        payload: (record as any).toJSON ? (record as any).toJSON() : updates as Record<string, unknown>,
+        payload: (record as any).toJSON
+          ? (record as any).toJSON()
+          : (updates as Record<string, unknown>),
       });
 
       return record as unknown as T;
@@ -347,9 +352,7 @@ export function useOfflineFirstRecord<T>(
           record = await collection.find(id);
         } catch {
           // If not found, try by server ID
-          const results = await collection
-            .query(Q.where('server_id', id))
-            .fetch();
+          const results = await collection.query(Q.where('server_id', id)).fetch();
           record = results[0] || null;
         }
 
@@ -381,7 +384,9 @@ export function useOfflineFirstRecord<T>(
   }, [collection, id]);
 
   const refresh = useCallback(async () => {
-    if (!id || !options.fetchFromServer) {return;}
+    if (!id || !options.fetchFromServer) {
+      return;
+    }
 
     try {
       const serverData = await options.fetchFromServer(id);
@@ -405,7 +410,9 @@ export function useOfflineFirstRecord<T>(
 
   const update = useCallback(
     async (updates: Partial<T>) => {
-      if (!data) {return;}
+      if (!data) {
+        return;
+      }
 
       await database.write(async () => {
         await (data as any).update((r: any) => {
@@ -443,8 +450,7 @@ export function useOfflineFirstRecord<T>(
 export function useTickets(festivalId?: string) {
   return useOfflineFirst(TableNames.TICKETS, {
     query: festivalId
-      ? (collection) =>
-          collection.query(Q.where('festival_id', festivalId))
+      ? (collection) => collection.query(Q.where('festival_id', festivalId))
       : undefined,
     syncOnMount: true,
     staleAfter: 24 * 60 * 60 * 1000, // 24 hours
@@ -464,10 +470,7 @@ export function usePerformances(festivalId?: string) {
   return useOfflineFirst(TableNames.PERFORMANCES, {
     query: festivalId
       ? (collection) =>
-          collection.query(
-            Q.where('festival_id', festivalId),
-            Q.sortBy('start_time', Q.asc)
-          )
+          collection.query(Q.where('festival_id', festivalId), Q.sortBy('start_time', Q.asc))
       : (collection) => collection.query(Q.sortBy('start_time', Q.asc)),
     syncOnMount: true,
     refreshInterval: 30 * 60 * 1000, // Refresh every 30 minutes
@@ -478,9 +481,7 @@ export function usePerformances(festivalId?: string) {
 // Cashless account
 export function useCashlessAccount(userId?: string) {
   return useOfflineFirst(TableNames.CASHLESS_ACCOUNTS, {
-    query: userId
-      ? (collection) => collection.query(Q.where('user_id', userId))
-      : undefined,
+    query: userId ? (collection) => collection.query(Q.where('user_id', userId)) : undefined,
     syncOnMount: true,
     refreshInterval: 5 * 60 * 1000, // Refresh every 5 minutes
     staleAfter: 5 * 60 * 1000, // 5 minutes
@@ -492,12 +493,8 @@ export function useCashlessTransactions(accountId?: string) {
   return useOfflineFirst(TableNames.CASHLESS_TRANSACTIONS, {
     query: accountId
       ? (collection) =>
-          collection.query(
-            Q.where('account_id', accountId),
-            Q.sortBy('server_created_at', Q.desc)
-          )
-      : (collection) =>
-          collection.query(Q.sortBy('server_created_at', Q.desc)),
+          collection.query(Q.where('account_id', accountId), Q.sortBy('server_created_at', Q.desc))
+      : (collection) => collection.query(Q.sortBy('server_created_at', Q.desc)),
     syncOnMount: true,
     staleAfter: 5 * 60 * 1000, // 5 minutes
   });
@@ -508,12 +505,8 @@ export function useNotifications(userId?: string) {
   return useOfflineFirst(TableNames.NOTIFICATIONS, {
     query: userId
       ? (collection) =>
-          collection.query(
-            Q.where('user_id', userId),
-            Q.sortBy('server_created_at', Q.desc)
-          )
-      : (collection) =>
-          collection.query(Q.sortBy('server_created_at', Q.desc)),
+          collection.query(Q.where('user_id', userId), Q.sortBy('server_created_at', Q.desc))
+      : (collection) => collection.query(Q.sortBy('server_created_at', Q.desc)),
     syncOnMount: true,
     refreshInterval: 5 * 60 * 1000, // Refresh every 5 minutes
     staleAfter: 5 * 60 * 1000, // 5 minutes

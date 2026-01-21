@@ -4,7 +4,7 @@
  * Supports iOS (Core NFC) and Android native NFC
  */
 
-import NfcManager, { NfcTech, Ndef, NfcEvents, TagEvent } from 'react-native-nfc-manager';
+import NfcManager, { NfcTech, NfcEvents, TagEvent } from 'react-native-nfc-manager';
 import { Platform, Vibration } from 'react-native';
 import { NFCReader } from './NFCReader';
 import { NFCWriter } from './NFCWriter';
@@ -163,7 +163,7 @@ class NFCManagerService {
       Vibration.vibrate(100);
     }
 
-    this.listeners.forEach(listener => {
+    this.listeners.forEach((listener) => {
       listener.onTagDiscovered?.(tag);
     });
   }
@@ -174,7 +174,7 @@ class NFCManagerService {
   private handleSessionClosed(): void {
     this.currentStatus = this.isEnabled ? 'ready' : 'disabled';
 
-    this.listeners.forEach(listener => {
+    this.listeners.forEach((listener) => {
       listener.onSessionClosed?.();
     });
   }
@@ -194,7 +194,7 @@ class NFCManagerService {
     try {
       this.currentStatus = 'scanning';
 
-      this.listeners.forEach(listener => {
+      this.listeners.forEach((listener) => {
         listener.onSessionStarted?.();
       });
 
@@ -306,7 +306,9 @@ class NFCManagerService {
    * Provide haptic feedback
    */
   provideFeedback(type: 'success' | 'error' | 'warning' = 'success'): void {
-    if (!this.config.enableVibration) {return;}
+    if (!this.config.enableVibration) {
+      return;
+    }
 
     switch (type) {
       case 'success':

@@ -4,7 +4,7 @@
  * Configures axios defaults and sets up test utilities.
  */
 
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 
 // Configure axios defaults
 const host = process.env.HOST ?? 'localhost';

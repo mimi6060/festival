@@ -76,9 +76,7 @@ export function DatabaseProvider({
   const [stats, setStats] = useState<DatabaseStats | null>(null);
   const [pendingChanges, setPendingChanges] = useState(0);
   const [needsSync, setNeedsSync] = useState(false);
-  const [syncStatus, setSyncStatus] = useState<SyncStatus>(
-    syncService.getStatus()
-  );
+  const [syncStatus, setSyncStatus] = useState<SyncStatus>(syncService.getStatus());
 
   // Initialize database
   useEffect(() => {
@@ -116,8 +114,7 @@ export function DatabaseProvider({
           });
         }
       } catch (err) {
-        const initError =
-          err instanceof Error ? err : new Error('Database initialization failed');
+        const initError = err instanceof Error ? err : new Error('Database initialization failed');
         setError(initError);
         onError?.(initError);
         console.error('[DatabaseProvider] Initialization error:', err);
@@ -205,9 +202,7 @@ export function DatabaseProvider({
   // Render with WatermelonDB provider
   return (
     <DatabaseContext.Provider value={contextValue}>
-      <WatermelonDBProvider database={database}>
-        {children}
-      </WatermelonDBProvider>
+      <WatermelonDBProvider database={database}>{children}</WatermelonDBProvider>
     </DatabaseContext.Provider>
   );
 }
@@ -266,9 +261,7 @@ export function useDatabaseContext(): DatabaseContextValue {
   const context = useContext(DatabaseContext);
 
   if (!context) {
-    throw new Error(
-      'useDatabaseContext must be used within a DatabaseProvider'
-    );
+    throw new Error('useDatabaseContext must be used within a DatabaseProvider');
   }
 
   return context;

@@ -4,11 +4,7 @@
  */
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
-import {
-  getFestivalDataCache,
-  CacheTTL,
-  type ScheduleData,
-} from '../../services/cache';
+import { getFestivalDataCache, CacheTTL, type ScheduleData } from '../../services/cache';
 import type { ProgramEvent, Stage } from '../../types';
 
 // Hook options
@@ -74,14 +70,8 @@ export interface UseCachedScheduleResult {
 /**
  * Main schedule caching hook
  */
-export function useCachedSchedule(
-  options: UseCachedScheduleOptions
-): UseCachedScheduleResult {
-  const {
-    festivalId,
-    autoRefresh = true,
-    refreshInterval = CacheTTL.SCHEDULE,
-  } = options;
+export function useCachedSchedule(options: UseCachedScheduleOptions): UseCachedScheduleResult {
+  const { festivalId, autoRefresh = true, refreshInterval = CacheTTL.SCHEDULE } = options;
 
   // State
   const [schedule, setSchedule] = useState<ScheduleData | null>(null);
@@ -110,7 +100,9 @@ export function useCachedSchedule(
 
   // Fetch schedule
   const fetchSchedule = useCallback(async (isRefresh = false) => {
-    if (!isMountedRef.current) {return;}
+    if (!isMountedRef.current) {
+      return;
+    }
 
     if (isRefresh) {
       setIsRefreshing(true);
@@ -122,7 +114,9 @@ export function useCachedSchedule(
     try {
       const result = await cacheRef.current.getSchedule(isRefresh);
 
-      if (!isMountedRef.current) {return;}
+      if (!isMountedRef.current) {
+        return;
+      }
 
       if (result.data) {
         setSchedule(result.data);
@@ -131,7 +125,9 @@ export function useCachedSchedule(
         setError(result.error);
       }
     } catch (err) {
-      if (!isMountedRef.current) {return;}
+      if (!isMountedRef.current) {
+        return;
+      }
 
       const error = err instanceof Error ? err : new Error('Failed to fetch schedule');
       setError(error);
@@ -150,7 +146,9 @@ export function useCachedSchedule(
 
   // Auto refresh
   useEffect(() => {
-    if (!autoRefresh || refreshInterval <= 0) {return;}
+    if (!autoRefresh || refreshInterval <= 0) {
+      return;
+    }
 
     refreshIntervalRef.current = setInterval(() => {
       fetchSchedule(true);
@@ -193,46 +191,40 @@ export function useCachedSchedule(
     let result = [...events];
 
     if (filters.day) {
-      result = result.filter(event => event.day === filters.day);
+      result = result.filter((event) => event.day === filters.day);
     }
 
     if (filters.stageId) {
-      result = result.filter(event => event.stage?.id === filters.stageId);
+      result = result.filter((event) => event.stage?.id === filters.stageId);
     }
 
     if (filters.artistId) {
-      result = result.filter(event => event.artist?.id === filters.artistId);
+      result = result.filter((event) => event.artist?.id === filters.artistId);
     }
 
     if (filters.startTime) {
-      result = result.filter(
-        event => new Date(event.startTime) >= filters.startTime!
-      );
+      result = result.filter((event) => new Date(event.startTime) >= filters.startTime!);
     }
 
     if (filters.endTime) {
-      result = result.filter(
-        event => new Date(event.endTime) <= filters.endTime!
-      );
+      result = result.filter((event) => new Date(event.endTime) <= filters.endTime!);
     }
 
     if (filters.isFavoriteOnly) {
-      result = result.filter(event => event.isFavorite);
+      result = result.filter((event) => event.isFavorite);
     }
 
     if (filters.searchQuery) {
       const query = filters.searchQuery.toLowerCase();
       result = result.filter(
-        event =>
+        (event) =>
           event.artist?.name.toLowerCase().includes(query) ||
           event.stage?.name.toLowerCase().includes(query)
       );
     }
 
     // Sort by start time
-    return result.sort(
-      (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
-    );
+    return result.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime());
   }, [events, filters]);
 
   // Grouped schedule
@@ -266,13 +258,13 @@ export function useCachedSchedule(
     }
 
     // Sort events within each group
-    Object.values(byDay).forEach(events =>
+    Object.values(byDay).forEach((events) =>
       events.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
     );
-    Object.values(byStage).forEach(events =>
+    Object.values(byStage).forEach((events) =>
       events.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
     );
-    Object.values(byTimeSlot).forEach(events =>
+    Object.values(byTimeSlot).forEach((events) =>
       events.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
     );
 
@@ -286,14 +278,14 @@ export function useCachedSchedule(
 
   // Utility functions
   const getEventById = useCallback(
-    (id: string) => events.find(event => event.id === id),
+    (id: string) => events.find((event) => event.id === id),
     [events]
   );
 
   const getEventsByStage = useCallback(
     (stageId: string) =>
       events
-        .filter(event => event.stage?.id === stageId)
+        .filter((event) => event.stage?.id === stageId)
         .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()),
     [events]
   );
@@ -301,7 +293,7 @@ export function useCachedSchedule(
   const getEventsByArtist = useCallback(
     (artistId: string) =>
       events
-        .filter(event => event.artist?.id === artistId)
+        .filter((event) => event.artist?.id === artistId)
         .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()),
     [events]
   );
@@ -309,14 +301,14 @@ export function useCachedSchedule(
   const getEventsByDay = useCallback(
     (day: string) =>
       events
-        .filter(event => event.day === day)
+        .filter((event) => event.day === day)
         .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()),
     [events]
   );
 
   const getCurrentEvents = useCallback(() => {
     const now = new Date();
-    return events.filter(event => {
+    return events.filter((event) => {
       const start = new Date(event.startTime);
       const end = new Date(event.endTime);
       return start <= now && end >= now;
@@ -327,7 +319,7 @@ export function useCachedSchedule(
     (limit = 10) => {
       const now = new Date();
       return events
-        .filter(event => new Date(event.startTime) > now)
+        .filter((event) => new Date(event.startTime) > now)
         .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
         .slice(0, limit);
     },
@@ -389,10 +381,7 @@ export function useScheduleByDay(festivalId: string, day: string) {
     return grouped;
   }, [events]);
 
-  const timeSlots = useMemo(
-    () => Object.keys(eventsByTimeSlot).sort(),
-    [eventsByTimeSlot]
-  );
+  const timeSlots = useMemo(() => Object.keys(eventsByTimeSlot).sort(), [eventsByTimeSlot]);
 
   return {
     events,
@@ -414,10 +403,7 @@ export function useScheduleByStage(festivalId: string, stageId: string) {
 
   const events = useMemo(() => getEventsByStage(stageId), [getEventsByStage, stageId]);
 
-  const stage = useMemo(
-    () => stages.find(s => s.id === stageId),
-    [stages, stageId]
-  );
+  const stage = useMemo(() => stages.find((s) => s.id === stageId), [stages, stageId]);
 
   // Group by day
   const eventsByDay = useMemo(() => {
@@ -493,7 +479,9 @@ export function useSmartScheduleRefresh(festivalId: string) {
       }
 
       const nextEvent = upcoming[0];
-      if (!nextEvent) {return;}
+      if (!nextEvent) {
+        return;
+      }
       const timeUntilNext = new Date(nextEvent.startTime).getTime() - Date.now();
 
       // Refresh more frequently as we approach the next event

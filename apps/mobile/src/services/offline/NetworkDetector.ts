@@ -95,9 +95,11 @@ class NetworkDetector {
 
       // Subscribe to network changes
       this.unsubscribe = NetInfo.addEventListener((state) => {
-        const wasOnline = this.currentStatus.isConnected && this.currentStatus.isInternetReachable !== false;
+        const wasOnline =
+          this.currentStatus.isConnected && this.currentStatus.isInternetReachable !== false;
         this.updateStatus(state);
-        const isOnline = this.currentStatus.isConnected && this.currentStatus.isInternetReachable !== false;
+        const isOnline =
+          this.currentStatus.isConnected && this.currentStatus.isInternetReachable !== false;
 
         // Notify listeners if online status changed
         if (wasOnline !== isOnline) {
@@ -128,9 +130,11 @@ class NetworkDetector {
       type: state.type,
       isWifi: state.type === 'wifi',
       isCellular: state.type === 'cellular',
-      cellularGeneration: state.type === 'cellular' && state.details
-        ? (state.details as { cellularGeneration?: NetInfoCellularGeneration }).cellularGeneration ?? null
-        : null,
+      cellularGeneration:
+        state.type === 'cellular' && state.details
+          ? ((state.details as { cellularGeneration?: NetInfoCellularGeneration })
+              .cellularGeneration ?? null)
+          : null,
       quality: this.estimateConnectionQuality(state),
       details: state.details,
       timestamp: Date.now(),
@@ -138,7 +142,9 @@ class NetworkDetector {
 
     // Log quality changes
     if (previousQuality !== this.currentStatus.quality) {
-      Logger.info(`[NetworkDetector] Connection quality changed: ${previousQuality} -> ${this.currentStatus.quality}`);
+      Logger.info(
+        `[NetworkDetector] Connection quality changed: ${previousQuality} -> ${this.currentStatus.quality}`
+      );
     }
 
     Logger.debug('[NetworkDetector] Status updated:', this.currentStatus);
@@ -159,9 +165,7 @@ class NetworkDetector {
     switch (state.type) {
       case 'wifi':
         // WiFi is generally good to excellent
-        return this.metrics.latency !== null && this.metrics.latency < 50
-          ? 'excellent'
-          : 'good';
+        return this.metrics.latency !== null && this.metrics.latency < 50 ? 'excellent' : 'good';
 
       case 'cellular':
         if (state.details) {
@@ -260,10 +264,7 @@ class NetworkDetector {
    * Check if the device is online
    */
   public isOnline(): boolean {
-    return (
-      this.currentStatus.isConnected &&
-      this.currentStatus.isInternetReachable !== false
-    );
+    return this.currentStatus.isConnected && this.currentStatus.isInternetReachable !== false;
   }
 
   /**
@@ -458,9 +459,10 @@ class NetworkDetector {
     switch (this.currentStatus.type) {
       case 'wifi':
         return 'WiFi';
-      case 'cellular':
+      case 'cellular': {
         const gen = this.currentStatus.cellularGeneration;
         return gen ? `Cellular (${gen.toUpperCase()})` : 'Cellular';
+      }
       case 'ethernet':
         return 'Ethernet';
       case 'bluetooth':

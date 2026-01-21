@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * OfflineManager.ts
  * Main controller for offline functionality
@@ -28,7 +29,7 @@ export const CACHE_KEYS = {
   SYNC_METADATA: '@offline/sync_metadata',
 } as const;
 
-export type CacheKey = typeof CACHE_KEYS[keyof typeof CACHE_KEYS];
+export type CacheKey = (typeof CACHE_KEYS)[keyof typeof CACHE_KEYS];
 
 // Cache item structure with metadata
 export interface CachedItem<T> {
@@ -288,7 +289,9 @@ class OfflineManager {
   /**
    * Add an action to the sync queue
    */
-  public async queueAction(item: Omit<SyncQueueItem, 'id' | 'createdAt' | 'retryCount' | 'status'>): Promise<string> {
+  public async queueAction(
+    item: Omit<SyncQueueItem, 'id' | 'createdAt' | 'retryCount' | 'status'>
+  ): Promise<string> {
     const id = await this.syncQueue.add(item);
     Logger.debug(`[OfflineManager] Queued action: ${item.action} with id: ${id}`);
 
@@ -320,7 +323,9 @@ class OfflineManager {
     Logger.info(`[OfflineManager] Processing ${items.length} queued items`);
 
     for (const item of items) {
-      if (item.status === 'completed') {continue;}
+      if (item.status === 'completed') {
+        continue;
+      }
 
       try {
         await this.syncQueue.markProcessing(item.id);
@@ -409,7 +414,8 @@ class OfflineManager {
       this.notifyListeners('syncProgress', this.syncStatus);
       await this.processSyncQueue();
       this.syncStatus.completedSteps++;
-      this.syncStatus.progress = (this.syncStatus.completedSteps / this.syncStatus.totalSteps) * 100;
+      this.syncStatus.progress =
+        (this.syncStatus.completedSteps / this.syncStatus.totalSteps) * 100;
 
       // Then sync each data type
       for (const step of steps) {
@@ -419,7 +425,8 @@ class OfflineManager {
         try {
           await this.syncDataType(step.name);
           this.syncStatus.completedSteps++;
-          this.syncStatus.progress = (this.syncStatus.completedSteps / this.syncStatus.totalSteps) * 100;
+          this.syncStatus.progress =
+            (this.syncStatus.completedSteps / this.syncStatus.totalSteps) * 100;
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : 'Unknown error';
           this.syncStatus.errors.push({
@@ -506,7 +513,9 @@ class OfflineManager {
    */
   public async isDataStale(key: CacheKey): Promise<boolean> {
     const item = await this.getCachedItem(key);
-    if (!item) {return true;}
+    if (!item) {
+      return true;
+    }
 
     if (item.expiresAt && item.expiresAt < Date.now()) {
       return true;
@@ -561,7 +570,7 @@ class OfflineManager {
     let hash = 0;
     for (let i = 0; i < str.length; i++) {
       const char = str.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash;
     }
     return hash.toString(16);

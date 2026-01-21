@@ -381,11 +381,7 @@ class ConflictResolver {
   /**
    * Apply a merge rule to values
    */
-  private applyMergeRule(
-    rule: MergeRule,
-    localValue: unknown,
-    serverValue: unknown
-  ): unknown {
+  private applyMergeRule(rule: MergeRule, localValue: unknown, serverValue: unknown): unknown {
     switch (rule.strategy) {
       case 'local':
         return localValue;
@@ -494,10 +490,18 @@ class ConflictResolver {
    * Check if two values are equal
    */
   private areEqual(a: unknown, b: unknown): boolean {
-    if (a === b) {return true;}
-    if (typeof a !== typeof b) {return false;}
-    if (a === null || b === null) {return a === b;}
-    if (typeof a !== 'object') {return a === b;}
+    if (a === b) {
+      return true;
+    }
+    if (typeof a !== typeof b) {
+      return false;
+    }
+    if (a === null || b === null) {
+      return a === b;
+    }
+    if (typeof a !== 'object') {
+      return a === b;
+    }
     return JSON.stringify(a) === JSON.stringify(b);
   }
 
@@ -511,9 +515,7 @@ class ConflictResolver {
   /**
    * Add a conflict listener
    */
-  public addConflictListener(
-    listener: (conflict: PendingConflict<unknown>) => void
-  ): () => void {
+  public addConflictListener(listener: (conflict: PendingConflict<unknown>) => void): () => void {
     this.conflictListeners.add(listener);
     return () => this.conflictListeners.delete(listener);
   }
@@ -581,9 +583,8 @@ class ConflictResolver {
     const result: Record<string, unknown> = { ...server };
 
     for (const [path, choice] of Object.entries(resolutions)) {
-      const value = choice === 'local'
-        ? this.getValueByPath(local, path)
-        : this.getValueByPath(server, path);
+      const value =
+        choice === 'local' ? this.getValueByPath(local, path) : this.getValueByPath(server, path);
       this.setValueByPath(result, path, value);
     }
 
@@ -605,11 +606,7 @@ class ConflictResolver {
   /**
    * Set value by dot-notation path
    */
-  private setValueByPath(
-    obj: Record<string, unknown>,
-    path: string,
-    value: unknown
-  ): void {
+  private setValueByPath(obj: Record<string, unknown>, path: string, value: unknown): void {
     const keys = path.split('.');
     const lastKey = keys.pop()!;
     const target = keys.reduce((current: unknown, key: string) => {

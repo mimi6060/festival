@@ -5,16 +5,11 @@
  */
 
 import { Platform, NativeModules, PermissionsAndroid } from 'react-native';
-import {
-  WiFiAccessPoint,
-  WiFiFingerprint,
-  IndoorCoordinate,
-  LocationErrorCode,
-} from './types';
+import { WiFiAccessPoint, WiFiFingerprint, IndoorCoordinate, LocationErrorCode } from './types';
 
 // WiFi scan constants
-const MIN_RSSI = -100;
-const MAX_RSSI = -30;
+const _MIN_RSSI = -100;
+const _MAX_RSSI = -30;
 const FINGERPRINT_MATCH_THRESHOLD = 3; // Minimum matching APs
 const POSITION_SMOOTHING_FACTOR = 0.4;
 
@@ -172,7 +167,9 @@ export class WiFiPositioning {
    * Perform a single WiFi scan and estimate position
    */
   private async performScan(): Promise<void> {
-    if (!this.isScanning) {return;}
+    if (!this.isScanning) {
+      return;
+    }
 
     try {
       const accessPoints = await this.wifiModule.startScan();
@@ -322,8 +319,7 @@ export class WiFiPositioning {
     });
 
     // Calculate accuracy based on spread of candidates
-    const avgConfidence =
-      candidates.reduce((sum, c) => sum + c.confidence, 0) / candidates.length;
+    const avgConfidence = candidates.reduce((sum, c) => sum + c.confidence, 0) / candidates.length;
     const accuracy = Math.max(3, (1 - avgConfidence) * 20); // 3-20 meters
 
     return {
@@ -341,7 +337,9 @@ export class WiFiPositioning {
    * Stop WiFi positioning
    */
   stopPositioning(): void {
-    if (!this.isScanning) {return;}
+    if (!this.isScanning) {
+      return;
+    }
 
     this.isScanning = false;
 
@@ -394,10 +392,7 @@ export class WiFiPositioning {
       }
 
       // Aggregate samples
-      const apStats = new Map<
-        string,
-        { rssiValues: number[]; ssid: string }
-      >();
+      const apStats = new Map<string, { rssiValues: number[]; ssid: string }>();
 
       samples.forEach((sample) => {
         sample.forEach((ap) => {
@@ -418,8 +413,7 @@ export class WiFiPositioning {
       const accessPoints = Array.from(apStats.entries())
         .filter(([_, stats]) => stats.rssiValues.length >= sampleCount / 2)
         .map(([bssid, stats]) => {
-          const mean =
-            stats.rssiValues.reduce((a, b) => a + b, 0) / stats.rssiValues.length;
+          const mean = stats.rssiValues.reduce((a, b) => a + b, 0) / stats.rssiValues.length;
           const variance =
             stats.rssiValues.reduce((sum, val) => sum + Math.pow(val - mean, 2), 0) /
             stats.rssiValues.length;

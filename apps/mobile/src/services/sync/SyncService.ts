@@ -5,26 +5,14 @@
  */
 
 import { Database, Q } from '@nozbe/watermelondb';
-import { synchronize, SyncPullArgs, SyncPushArgs, SyncLog } from '@nozbe/watermelondb/sync';
-import { AppState, AppStateStatus } from 'react-native';
-import NetInfo, { NetInfoState } from '@react-native-community/netinfo';
+import { synchronize, type SyncLog } from '@nozbe/watermelondb/sync';
+import { AppState, type AppStateStatus } from 'react-native';
+import NetInfo, { type NetInfoState } from '@react-native-community/netinfo';
 
 import { getDatabase, TableNames } from '../../database';
-import {
-  User,
-  Festival,
-  Ticket,
-  Artist,
-  Performance,
-  CashlessAccount,
-  CashlessTransaction,
-  Notification,
-  SyncMetadata,
-  SyncQueueItem,
-  STALE_THRESHOLDS,
-} from '../../database/models';
-import { SyncQueue, syncQueueService } from './SyncQueue';
-import { ConflictResolver, conflictResolver } from './ConflictResolver';
+import { SyncMetadata, STALE_THRESHOLDS } from '../../database/models';
+import { syncQueueService } from './SyncQueue';
+import { conflictResolver } from './ConflictResolver';
 
 // API configuration
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3333/api';
@@ -342,9 +330,7 @@ class SyncService {
     }
 
     const scheduleNextSync = () => {
-      this.status.nextScheduledSync = new Date(
-        Date.now() + this.config.periodicSyncInterval
-      );
+      this.status.nextScheduledSync = new Date(Date.now() + this.config.periodicSyncInterval);
       this.notifyListeners();
     };
 
@@ -359,7 +345,9 @@ class SyncService {
     }, this.config.periodicSyncInterval);
 
     scheduleNextSync();
-    console.log(`[SyncService] Periodic sync started (interval: ${this.config.periodicSyncInterval}ms)`);
+    console.log(
+      `[SyncService] Periodic sync started (interval: ${this.config.periodicSyncInterval}ms)`
+    );
   }
 
   /**
@@ -693,10 +681,10 @@ class SyncService {
   /**
    * Perform full sync using WatermelonDB synchronize
    */
-  private async performFullSync(result: SyncResult): Promise<void> {
+  private async performFullSync(_result: SyncResult): Promise<void> {
     await synchronize({
       database: this.database,
-      pullChanges: async ({ lastPulledAt, schemaVersion, migration }) => {
+      pullChanges: async ({ lastPulledAt, schemaVersion }) => {
         return this.pullChanges(lastPulledAt, schemaVersion);
       },
       pushChanges: async ({ changes, lastPulledAt }) => {
@@ -704,7 +692,7 @@ class SyncService {
       },
       migrationsEnabledAtVersion: 1,
       log: this.createSyncLog(),
-      conflictResolver: (table, local, remote, resolved) => {
+      conflictResolver: (table, local, remote, _resolved) => {
         return conflictResolver.resolveWatermelonConflict(table, local, remote);
       },
     });
@@ -758,14 +746,11 @@ class SyncService {
       params.append('deltaSync', 'true');
     }
 
-    const response = await fetch(
-      `${this.config.apiBaseUrl}/sync/pull?${params.toString()}`,
-      {
-        method: 'GET',
-        headers,
-        signal: this.abortController?.signal,
-      }
-    );
+    const response = await fetch(`${this.config.apiBaseUrl}/sync/pull?${params.toString()}`, {
+      method: 'GET',
+      headers,
+      signal: this.abortController?.signal,
+    });
 
     if (!response.ok) {
       throw new Error(`Pull failed: ${response.status} ${response.statusText}`);
@@ -784,10 +769,7 @@ class SyncService {
   /**
    * Push changes to server
    */
-  private async pushChanges(
-    changes: any,
-    lastPulledAt: number | null
-  ): Promise<void> {
+  private async pushChanges(changes: any, lastPulledAt: number | null): Promise<void> {
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
     };
@@ -922,13 +904,9 @@ class SyncService {
   /**
    * Push changes for specific entity
    */
-  private async pushEntityChanges(
-    entityType: string
-  ): Promise<{ count: number }> {
+  private async pushEntityChanges(entityType: string): Promise<{ count: number }> {
     const collection = this.database.get(entityType);
-    const pendingRecords = await collection
-      .query(Q.where('needs_push', true))
-      .fetch();
+    const pendingRecords = await collection.query(Q.where('needs_push', true)).fetch();
 
     if (pendingRecords.length === 0) {
       return { count: 0 };
@@ -944,15 +922,12 @@ class SyncService {
 
     const records = pendingRecords.map((record: any) => record.toJSON());
 
-    const response = await fetch(
-      `${this.config.apiBaseUrl}/sync/push/${entityType}`,
-      {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ records }),
-        signal: this.abortController?.signal,
-      }
-    );
+    const response = await fetch(`${this.config.apiBaseUrl}/sync/push/${entityType}`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ records }),
+      signal: this.abortController?.signal,
+    });
 
     if (!response.ok) {
       throw new Error(`Push ${entityType} failed: ${response.status}`);
@@ -975,11 +950,10 @@ class SyncService {
   /**
    * Apply pulled changes to local database
    */
-  private async applyPulledChanges(
-    entityType: string,
-    records: any[]
-  ): Promise<void> {
-    if (!records || records.length === 0) {return;}
+  private async applyPulledChanges(entityType: string, records: any[]): Promise<void> {
+    if (!records || records.length === 0) {
+      return;
+    }
 
     const collection = this.database.get(entityType);
 
@@ -988,9 +962,7 @@ class SyncService {
         // Check if record exists locally
         let localRecord: any = null;
         try {
-          localRecord = await collection
-            .query(Q.where('server_id', serverRecord.id))
-            .fetch();
+          localRecord = await collection.query(Q.where('server_id', serverRecord.id)).fetch();
           localRecord = localRecord[0];
         } catch {
           // Record doesn't exist
@@ -998,11 +970,7 @@ class SyncService {
 
         if (localRecord) {
           // Resolve conflict and update
-          const resolved = conflictResolver.resolve(
-            entityType,
-            localRecord,
-            serverRecord
-          );
+          const resolved = conflictResolver.resolve(entityType, localRecord, serverRecord);
 
           if (resolved.useServer) {
             await localRecord.updateFromServer(serverRecord);
@@ -1020,11 +988,7 @@ class SyncService {
   /**
    * Map server record to local record format
    */
-  private mapServerToLocal(
-    local: any,
-    server: any,
-    entityType: string
-  ): void {
+  private mapServerToLocal(local: any, server: any, _entityType: string): void {
     local.serverId = server.id;
     local.isSynced = true;
     local.lastSyncedAt = Date.now();
@@ -1051,14 +1015,10 @@ class SyncService {
   /**
    * Get or create sync metadata for entity
    */
-  private async getOrCreateSyncMetadata(
-    entityType: string
-  ): Promise<SyncMetadata> {
+  private async getOrCreateSyncMetadata(entityType: string): Promise<SyncMetadata> {
     const collection = this.database.get<SyncMetadata>(TableNames.SYNC_METADATA);
 
-    const existing = await collection
-      .query(Q.where('entity_type', entityType))
-      .fetch();
+    const existing = await collection.query(Q.where('entity_type', entityType)).fetch();
 
     if (existing.length > 0) {
       return existing[0];
@@ -1102,9 +1062,7 @@ class SyncService {
 
       try {
         const collection = this.database.get(tableName);
-        const pending = await collection
-          .query(Q.where('needs_push', true))
-          .fetchCount();
+        const pending = await collection.query(Q.where('needs_push', true)).fetchCount();
         count += pending;
       } catch {
         // Table might not have needs_push column

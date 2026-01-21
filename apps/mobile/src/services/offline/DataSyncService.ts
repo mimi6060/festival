@@ -317,11 +317,7 @@ class DataSyncService {
       itemsSynced = Array.isArray(merged) ? merged.length : 1;
 
       // Cache merged data
-      await offlineManager.cacheData(
-        cacheKey,
-        merged,
-        this.getCacheExpiryForDataType(dataType)
-      );
+      await offlineManager.cacheData(cacheKey, merged, this.getCacheExpiryForDataType(dataType));
 
       // Update delta meta
       this.deltaMeta[dataType] = {
@@ -427,10 +423,7 @@ class DataSyncService {
   /**
    * Queue a local change for sync
    */
-  private async queueLocalChange(
-    dataType: SyncDataType,
-    data: unknown
-  ): Promise<void> {
+  private async queueLocalChange(dataType: SyncDataType, data: unknown): Promise<void> {
     const endpoint = this.getEndpointForDataType(dataType);
 
     await syncQueue.add({
@@ -448,11 +441,7 @@ class DataSyncService {
   /**
    * Fetch with retry logic
    */
-  private async fetchWithRetry(
-    url: string,
-    options: RequestInit,
-    attempt = 1
-  ): Promise<Response> {
+  private async fetchWithRetry(url: string, options: RequestInit, attempt = 1): Promise<Response> {
     try {
       const response = await fetch(url, options);
 
@@ -688,8 +677,7 @@ class DataSyncService {
       .map((m) => m.lastSyncTimestamp)
       .filter((t) => t > 0);
 
-    const lastFullSync =
-      lastSyncTimes.length > 0 ? new Date(Math.min(...lastSyncTimes)) : null;
+    const lastFullSync = lastSyncTimes.length > 0 ? new Date(Math.min(...lastSyncTimes)) : null;
 
     return {
       lastFullSync,

@@ -126,7 +126,6 @@ export default [
       '**/*.test.tsx',
       '**/*.e2e-spec.ts',
       '**/e2e/**/*.ts',
-      '**/api-e2e/**/*.ts',
     ],
     rules: {
       'no-console': 'off',
@@ -136,5 +135,17 @@ export default [
       '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
     },
   },
-  ...storybook.configs["flat/recommended"]
+  ...storybook.configs["flat/recommended"],
+  // E2E tests: very permissive rules (MUST be after all other configs to override)
+  {
+    files: ['**/apps/api-e2e/**/*.ts', 'apps/api-e2e/**/*.ts'],
+    rules: {
+      'no-console': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-non-null-assertion': 'off',
+      '@typescript-eslint/no-empty-function': 'off',
+      '@typescript-eslint/no-namespace': 'off',
+      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+    },
+  },
 ];

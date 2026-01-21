@@ -16,12 +16,7 @@ import React, {
 import { AppState, AppStateStatus } from 'react-native';
 import NetInfo, { NetInfoState, NetInfoStateType } from '@react-native-community/netinfo';
 
-import {
-  syncService,
-  syncManager,
-  offlineMutationHandler,
-  SyncResult,
-} from '../services/sync';
+import { syncService, syncManager, offlineMutationHandler, SyncResult } from '../services/sync';
 import { networkDetector, ConnectionQuality } from '../services/offline';
 
 // Context value type
@@ -230,7 +225,16 @@ export function NetworkStatusProvider({
 
       wasOfflineRef.current = !isNowOnline;
     },
-    [autoSyncOnReconnect, autoSyncDelay, updateNetworkState, onOnline, onOffline, onSyncStart, onSyncComplete, onSyncError]
+    [
+      autoSyncOnReconnect,
+      autoSyncDelay,
+      updateNetworkState,
+      onOnline,
+      onOffline,
+      onSyncStart,
+      onSyncComplete,
+      onSyncError,
+    ]
   );
 
   /**
@@ -353,36 +357,39 @@ export function NetworkStatusProvider({
   /**
    * Trigger sync
    */
-  const triggerSync = useCallback(async (force = false): Promise<SyncResult> => {
-    if (!isOnline) {
-      return {
-        success: false,
-        pulled: 0,
-        pushed: 0,
-        errors: ['Device is offline'],
-        timestamp: new Date(),
-        duration: 0,
-        entityResults: new Map(),
-      };
-    }
+  const triggerSync = useCallback(
+    async (force = false): Promise<SyncResult> => {
+      if (!isOnline) {
+        return {
+          success: false,
+          pulled: 0,
+          pushed: 0,
+          errors: ['Device is offline'],
+          timestamp: new Date(),
+          duration: 0,
+          entityResults: new Map(),
+        };
+      }
 
-    try {
-      onSyncStart?.();
-      setIsSyncing(true);
+      try {
+        onSyncStart?.();
+        setIsSyncing(true);
 
-      const result = await syncService.sync(force);
+        const result = await syncService.sync(force);
 
-      setLastSyncAt(new Date());
-      onSyncComplete?.(result);
+        setLastSyncAt(new Date());
+        onSyncComplete?.(result);
 
-      return result;
-    } catch (error) {
-      onSyncError?.(error instanceof Error ? error : new Error('Sync failed'));
-      throw error;
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [isOnline, onSyncStart, onSyncComplete, onSyncError]);
+        return result;
+      } catch (error) {
+        onSyncError?.(error instanceof Error ? error : new Error('Sync failed'));
+        throw error;
+      } finally {
+        setIsSyncing(false);
+      }
+    },
+    [isOnline, onSyncStart, onSyncComplete, onSyncError]
+  );
 
   /**
    * Wait for connection
@@ -450,9 +457,7 @@ export function NetworkStatusProvider({
   };
 
   return (
-    <NetworkStatusContext.Provider value={contextValue}>
-      {children}
-    </NetworkStatusContext.Provider>
+    <NetworkStatusContext.Provider value={contextValue}>{children}</NetworkStatusContext.Provider>
   );
 }
 

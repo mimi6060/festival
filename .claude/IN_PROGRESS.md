@@ -21,19 +21,7 @@ _Dernière mise à jour: 2026-01-21_
 
 ## Tâches En Attente
 
-### Haute Priorité
-
-- [ ] **MOB-01**: Audit performance React Native
-  - Identifier les problèmes de performance
-  - Optimiser les re-renders
-  - Analyser l'utilisation mémoire
-
 ### Moyenne Priorité
-
-- [ ] **Sprint 4 Stabilization Work**
-  - Corriger les bugs d'intégration entre modules
-  - Améliorer la gestion des erreurs et cas limites
-  - Tests de régression
 
 - [ ] **Mobile Offline/NFC Code Cleanup** (59 erreurs ESLint)
   - Fichiers concernés: `services/offline/`, `services/nfc/`, `services/location/`, `hooks/cache/`
@@ -92,6 +80,7 @@ _Dernière mise à jour: 2026-01-21_
 - ✅ Language selection (6 langues)
 - ✅ Photo/Avatar change
 - ✅ Ticket ownership validation (sécurité IDOR)
+- ✅ **MOB-01 Performance Audit** - App bien optimisée, EventItem/HomeEventCard extraits
 
 ### Infrastructure
 

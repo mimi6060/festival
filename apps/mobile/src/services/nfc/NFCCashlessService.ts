@@ -4,11 +4,11 @@
  * Handles tap-to-pay, balance checks, and secure transactions
  */
 
-import { nfcManager, NFCError, NFCErrorCode } from './NFCManager';
-import { NFCReader, NFCReadResult } from './NFCReader';
+import { nfcManager } from './NFCManager';
+import { NFCReader } from './NFCReader';
 import { NFCWriter } from './NFCWriter';
 import { NFCFormatter, CashlessData } from './NFCFormatter';
-import { offlineManager, CACHE_KEYS } from '../offline/OfflineManager';
+import { offlineManager as _offlineManager } from '../offline/OfflineManager';
 import { syncQueue } from '../offline/SyncQueue';
 import { networkDetector } from '../offline/NetworkDetector';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -255,7 +255,9 @@ class NFCCashlessService {
   /**
    * Process a payment
    */
-  public async processPayment(request: PaymentRequest): Promise<CashlessResult<CashlessTransaction>> {
+  public async processPayment(
+    request: PaymentRequest
+  ): Promise<CashlessResult<CashlessTransaction>> {
     try {
       if (!this.isInitialized) {
         return { success: false, error: 'Service not initialized', errorCode: 'NOT_INITIALIZED' };
@@ -411,7 +413,9 @@ class NFCCashlessService {
   /**
    * Process a transfer between bracelets
    */
-  public async processTransfer(request: TransferRequest): Promise<CashlessResult<CashlessTransaction>> {
+  public async processTransfer(
+    request: TransferRequest
+  ): Promise<CashlessResult<CashlessTransaction>> {
     try {
       if (!networkDetector.isOnline()) {
         return {
@@ -587,12 +591,9 @@ class NFCCashlessService {
    */
   private async fetchBalanceFromServer(braceletId: string): Promise<CashlessBalance | null> {
     try {
-      const response = await fetch(
-        `${this.config.apiBaseUrl}/api/cashless/balance/${braceletId}`,
-        {
-          headers: this.getHeaders(),
-        }
-      );
+      const response = await fetch(`${this.config.apiBaseUrl}/api/cashless/balance/${braceletId}`, {
+        headers: this.getHeaders(),
+      });
 
       if (!response.ok) {
         return null;
@@ -702,10 +703,14 @@ class NFCCashlessService {
       return;
     }
 
-    console.log(`[NFCCashlessService] Syncing ${this.offlineTransactions.length} offline transactions`);
+    console.log(
+      `[NFCCashlessService] Syncing ${this.offlineTransactions.length} offline transactions`
+    );
 
     for (const transaction of this.offlineTransactions) {
-      if (transaction.syncStatus !== 'pending') {continue;}
+      if (transaction.syncStatus !== 'pending') {
+        continue;
+      }
 
       try {
         const result = await this.processOnlineTransaction(transaction);
@@ -714,15 +719,13 @@ class NFCCashlessService {
         } else {
           transaction.syncStatus = 'failed';
         }
-      } catch (error) {
+      } catch {
         transaction.syncStatus = 'failed';
       }
     }
 
     // Remove synced transactions
-    this.offlineTransactions = this.offlineTransactions.filter(
-      (tx) => tx.syncStatus !== 'synced'
-    );
+    this.offlineTransactions = this.offlineTransactions.filter((tx) => tx.syncStatus !== 'synced');
     await this.saveOfflineTransactions();
   }
 

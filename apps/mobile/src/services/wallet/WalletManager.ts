@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * WalletManager - Unified Wallet Service Manager
  * Handles both Apple Wallet and Google Wallet integration
@@ -172,8 +173,12 @@ export class WalletManager {
    * Get preferred wallet type for current platform
    */
   public getPreferredWalletType(): WalletType {
-    if (Platform.OS === 'ios') {return 'apple';}
-    if (Platform.OS === 'android') {return 'google';}
+    if (Platform.OS === 'ios') {
+      return 'apple';
+    }
+    if (Platform.OS === 'android') {
+      return 'google';
+    }
     return 'none';
   }
 
@@ -296,15 +301,12 @@ export class WalletManager {
    */
   private async fetchApplePassUrl(ticketId: string): Promise<string | null> {
     try {
-      const response = await fetch(
-        `${this.config.apiBaseUrl}/wallet/apple/pass/${ticketId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await fetch(`${this.config.apiBaseUrl}/wallet/apple/pass/${ticketId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -323,15 +325,12 @@ export class WalletManager {
    */
   private async fetchGoogleWalletUrl(ticketId: string): Promise<string | null> {
     try {
-      const response = await fetch(
-        `${this.config.apiBaseUrl}/wallet/google/pass/${ticketId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await fetch(`${this.config.apiBaseUrl}/wallet/google/pass/${ticketId}`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -388,15 +387,12 @@ export class WalletManager {
     lastUpdated?: string;
   }> {
     try {
-      const response = await fetch(
-        `${this.config.apiBaseUrl}/wallet/pass/${ticketId}/status`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await fetch(`${this.config.apiBaseUrl}/wallet/pass/${ticketId}/status`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
@@ -414,15 +410,12 @@ export class WalletManager {
    */
   public async requestPassUpdate(ticketId: string): Promise<boolean> {
     try {
-      const response = await fetch(
-        `${this.config.apiBaseUrl}/wallet/pass/${ticketId}/update`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const response = await fetch(`${this.config.apiBaseUrl}/wallet/pass/${ticketId}/update`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
       return response.ok;
     } catch (error) {
