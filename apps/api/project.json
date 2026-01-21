@@ -14,7 +14,15 @@
         "main": "apps/api/src/main.ts",
         "tsConfig": "apps/api/tsconfig.app.json",
         "webpackConfig": "apps/api/webpack.config.js",
-        "generatePackageJson": true
+        "generatePackageJson": true,
+        "assets": [
+          "apps/api/src/assets",
+          {
+            "glob": "**/*.hbs",
+            "input": "apps/api/src/modules/email/templates",
+            "output": "templates"
+          }
+        ]
       },
       "configurations": {
         "development": {

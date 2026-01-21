@@ -15,10 +15,12 @@ import { AuthService } from './auth.service';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { GitHubStrategy } from './strategies/github.strategy';
+import { FacebookStrategy } from './strategies/facebook.strategy';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { RolesGuard } from './guards/roles.guard';
 import { GoogleOAuthGuard } from './guards/google-oauth.guard';
 import { GitHubOAuthGuard } from './guards/github-oauth.guard';
+import { FacebookOAuthGuard } from './guards/facebook-oauth.guard';
 import { PrismaModule } from '../../prisma/prisma.module';
 import { EmailModule } from '../email/email.module';
 
@@ -45,11 +47,20 @@ import { EmailModule } from '../email/email.module';
     JwtStrategy,
     GoogleStrategy,
     GitHubStrategy,
+    FacebookStrategy,
     JwtAuthGuard,
     RolesGuard,
     GoogleOAuthGuard,
     GitHubOAuthGuard,
+    FacebookOAuthGuard,
   ],
-  exports: [AuthService, JwtAuthGuard, RolesGuard, GoogleOAuthGuard, GitHubOAuthGuard],
+  exports: [
+    AuthService,
+    JwtAuthGuard,
+    RolesGuard,
+    GoogleOAuthGuard,
+    GitHubOAuthGuard,
+    FacebookOAuthGuard,
+  ],
 })
 export class AuthModule {}

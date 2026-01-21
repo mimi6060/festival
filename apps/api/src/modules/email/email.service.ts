@@ -52,7 +52,15 @@ export class EmailService implements OnModuleInit {
   private isEnabled = false;
 
   constructor(private readonly configService: ConfigService) {
-    this.templateDir = path.join(__dirname, 'templates');
+    // Try multiple paths for templates: development vs production builds
+    const possiblePaths = [
+      path.join(__dirname, 'templates'),
+      path.join(__dirname, '..', 'templates'),
+      path.join(process.cwd(), 'dist', 'apps', 'api', 'templates'),
+      path.join(process.cwd(), 'apps', 'api', 'src', 'modules', 'email', 'templates'),
+    ];
+
+    this.templateDir = possiblePaths.find((p) => fs.existsSync(p)) || possiblePaths[0];
     this.config = {
       from:
         this.configService.get<string>('SMTP_FROM') ||

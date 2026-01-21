@@ -6,7 +6,62 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
+
+// Fetch all artists from all festivals to find one by ID
+async function fetchArtistById(artistId: string): Promise<Artist | null> {
+  try {
+    // Get all festivals first
+    const festivalsRes = await fetch(`${API_URL}/festivals`);
+    if (!festivalsRes.ok) return null;
+
+    const festivalsData = await festivalsRes.json();
+    const festivals = festivalsData.data || festivalsData;
+
+    // Search for artist in each festival
+    for (const festival of festivals) {
+      const artistsRes = await fetch(`${API_URL}/program/artists?festivalId=${festival.id}`);
+      if (!artistsRes.ok) continue;
+
+      const artists = await artistsRes.json();
+      const artist = artists.find((a: { id: string }) => a.id === artistId);
+
+      if (artist) {
+        // Also get performances for this artist
+        const programRes = await fetch(`${API_URL}/program?festivalId=${festival.id}`);
+        const performances = programRes.ok ? await programRes.json() : [];
+        const artistPerformances = performances.filter(
+          (p: { artist: { id: string } }) => p.artist?.id === artistId
+        );
+
+        return {
+          id: artist.id,
+          name: artist.name,
+          slug: artist.id,
+          genre: artist.genre || 'Music',
+          bio: artist.bio || 'Biographie non disponible.',
+          imageUrl:
+            artist.imageUrl ||
+            'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=800&fit=crop',
+          socialLinks: [],
+          upcomingShows: artistPerformances.map(
+            (perf: { stage?: { name: string }; day?: string; startTime?: string }) => ({
+              festival: festival.name,
+              festivalSlug: festival.slug,
+              date: perf.day || 'Date TBA',
+              stage: perf.stage?.name || 'Stage TBA',
+            })
+          ),
+        };
+      }
+    }
+
+    return null;
+  } catch (err) {
+    console.error('Error fetching artist:', err);
+    return null;
+  }
+}
 
 interface SocialLink {
   platform: string;
@@ -41,98 +96,25 @@ export default function ArtistDetailPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchArtist() {
+    async function loadArtist() {
       if (!slug) return;
 
       setIsLoading(true);
       setError(null);
 
       try {
-        const response = await fetch(`${API_URL}/artists/${slug}`, {
-          credentials: 'include',
-        });
-
-        if (!response.ok) {
-          if (response.status === 404) {
-            setArtist(null);
-          } else {
-            throw new Error('Failed to fetch artist');
-          }
-          return;
-        }
-
-        const data = await response.json();
-
-        // Transform API response to match our interface
-        const transformedArtist: Artist = {
-          id: data.id,
-          name: data.name,
-          slug: data.slug,
-          genre: data.genre || data.genres?.join(' / ') || 'Music',
-          bio: data.bio || data.biography || data.description || 'No biography available.',
-          imageUrl:
-            data.imageUrl ||
-            data.photoUrl ||
-            data.avatar ||
-            'https://images.unsplash.com/photo-1493225457124-a3eb161ffa5f?w=800&h=800&fit=crop',
-          socialLinks: data.socialLinks || transformSocialLinks(data),
-          upcomingShows: data.upcomingShows || transformUpcomingShows(data.performances || []),
-        };
-
-        setArtist(transformedArtist);
+        const foundArtist = await fetchArtistById(slug);
+        setArtist(foundArtist);
       } catch (err) {
         console.error('Error fetching artist:', err);
-        setError('Unable to load artist information. Please try again later.');
+        setError("Impossible de charger les informations de l'artiste.");
       } finally {
         setIsLoading(false);
       }
     }
 
-    fetchArtist();
+    loadArtist();
   }, [slug]);
-
-  // Transform social links from API response
-  function transformSocialLinks(data: {
-    spotifyUrl?: string;
-    instagramUrl?: string;
-    twitterUrl?: string;
-    facebookUrl?: string;
-    youtubeUrl?: string;
-    websiteUrl?: string;
-  }): SocialLink[] {
-    const links: SocialLink[] = [];
-    if (data.spotifyUrl) links.push({ platform: 'Spotify', url: data.spotifyUrl });
-    if (data.instagramUrl) links.push({ platform: 'Instagram', url: data.instagramUrl });
-    if (data.twitterUrl) links.push({ platform: 'Twitter', url: data.twitterUrl });
-    if (data.facebookUrl) links.push({ platform: 'Facebook', url: data.facebookUrl });
-    if (data.youtubeUrl) links.push({ platform: 'YouTube', url: data.youtubeUrl });
-    if (data.websiteUrl) links.push({ platform: 'Website', url: data.websiteUrl });
-    return links;
-  }
-
-  // Transform performances to upcoming shows
-  function transformUpcomingShows(
-    performances: Array<{
-      stage?: { name: string };
-      festival?: { name: string; slug: string };
-      startTime?: string;
-      date?: string;
-    }>
-  ): UpcomingShow[] {
-    return performances.map((perf) => ({
-      festival: perf.festival?.name || 'Unknown Festival',
-      festivalSlug: perf.festival?.slug || '',
-      date:
-        perf.startTime || perf.date
-          ? new Date(perf.startTime || perf.date || '').toLocaleDateString('en-US', {
-              month: 'long',
-              day: 'numeric',
-              year: 'numeric',
-            })
-          : 'Date TBA',
-      stage: perf.stage?.name || 'Stage TBA',
-    }));
-  }
 
   // Loading state
   if (isLoading) {

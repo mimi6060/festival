@@ -53,6 +53,7 @@ import { Public } from './decorators/public.decorator';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { GoogleOAuthGuard } from './guards/google-oauth.guard';
 import { GitHubOAuthGuard } from './guards/github-oauth.guard';
+import { FacebookOAuthGuard } from './guards/facebook-oauth.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 
 /**
@@ -812,6 +813,58 @@ Sends a new verification email to the specified address.
   }
 
   /**
+   * Initiate Facebook OAuth flow
+   */
+  @Get('facebook')
+  @Public()
+  @UseGuards(FacebookOAuthGuard)
+  @ApiOperation({
+    summary: 'Login with Facebook',
+    description: 'Redirects to Facebook OAuth authorization page.',
+  })
+  @ApiOkResponse({
+    description: 'Redirects to Facebook OAuth',
+  })
+  async facebookAuth() {
+    // Guard handles redirect to Facebook
+  }
+
+  /**
+   * Facebook OAuth callback
+   */
+  @Get('facebook/callback')
+  @Public()
+  @UseGuards(FacebookOAuthGuard)
+  @ApiExcludeEndpoint()
+  async facebookAuthCallback(@Req() req: Request, @Res() res: Response) {
+    const user = req.user as AuthenticatedUser;
+    const result = await this.authService.loginOAuth(user);
+
+    // Set httpOnly cookies for tokens
+    const isProduction = this.configService.get<string>('NODE_ENV') === 'production';
+    const frontendUrl = this.configService.get<string>('APP_URL') || 'http://localhost:3000';
+    const cookieOptions = {
+      httpOnly: true,
+      secure: isProduction,
+      sameSite: isProduction ? ('strict' as const) : ('lax' as const),
+      path: '/',
+    };
+
+    res.cookie('access_token', result.tokens.accessToken, {
+      ...cookieOptions,
+      maxAge: result.tokens.expiresIn * 1000,
+    });
+
+    res.cookie('refresh_token', result.tokens.refreshToken, {
+      ...cookieOptions,
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    // Redirect to frontend callback page (without tokens in URL)
+    res.redirect(`${frontendUrl}/auth/callback?success=true`);
+  }
+
+  /**
    * Get available OAuth providers
    */
   @Get('providers')
@@ -835,6 +888,11 @@ Sends a new verification email to the specified address.
           name: 'github',
           enabled: this.configService.get<boolean>('GITHUB_OAUTH_ENABLED') || false,
           url: '/api/auth/github',
+        },
+        {
+          name: 'facebook',
+          enabled: this.configService.get<boolean>('FACEBOOK_OAUTH_ENABLED') || false,
+          url: '/api/auth/facebook',
         },
       ],
     };

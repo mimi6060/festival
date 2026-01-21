@@ -83,14 +83,6 @@ function formatDateForApi(date: Date): string {
   return date.toISOString().split('T')[0];
 }
 
-// Generate a slug from artist name
-function getArtistSlug(name: string): string {
-  return name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-|-$)/g, '');
-}
-
 export function FestivalProgram({
   festivalId,
   festivalSlug: _festivalSlug,
@@ -338,7 +330,7 @@ export function FestivalProgram({
                       {stagePerformances.map((perf) => (
                         <Link
                           key={perf.id}
-                          href={`/artists/${getArtistSlug(perf.artist.name)}`}
+                          href={`/artists/${perf.artist.id}`}
                           className="block group"
                         >
                           <Card
