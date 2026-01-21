@@ -130,11 +130,10 @@ export function FestivalProgram({
 
       try {
         // Fetch all data in parallel
-        // Note: API has double /api prefix due to globalPrefix + controller path
         const [programRes, stagesRes, artistsRes] = await Promise.all([
-          fetch(`${API_BASE_URL}/api/api/program?festivalId=${festivalId}`),
-          fetch(`${API_BASE_URL}/api/api/program/stages?festivalId=${festivalId}`),
-          fetch(`${API_BASE_URL}/api/api/program/artists?festivalId=${festivalId}`),
+          fetch(`${API_BASE_URL}/program?festivalId=${festivalId}`),
+          fetch(`${API_BASE_URL}/program/stages?festivalId=${festivalId}`),
+          fetch(`${API_BASE_URL}/program/artists?festivalId=${festivalId}`),
         ]);
 
         if (!programRes.ok || !stagesRes.ok || !artistsRes.ok) {

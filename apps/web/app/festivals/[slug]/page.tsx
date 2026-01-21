@@ -83,7 +83,7 @@ interface ApiFestival {
 // Fetch festival from API
 async function fetchFestival(slug: string): Promise<ApiFestival | null> {
   try {
-    const res = await fetch(`${API_BASE_URL}/api/festivals/by-slug/${slug}`, {
+    const res = await fetch(`${API_BASE_URL}/festivals/by-slug/${slug}`, {
       next: { revalidate: 60 }, // Cache for 60 seconds
     });
 
