@@ -23,10 +23,11 @@ _Dernière mise à jour: 2026-01-21_
 
 ### Moyenne Priorité
 
-- [ ] **Mobile Offline/NFC Code Cleanup** (59 erreurs ESLint)
-  - Fichiers concernés: `services/offline/`, `services/nfc/`, `services/location/`, `hooks/cache/`
-  - Type d'erreurs: imports/variables inutilisés (code placeholder)
-  - Action: Nettoyer ou implémenter les fonctionnalités
+- [x] ~~**Mobile Offline/NFC Code Cleanup** (59 erreurs ESLint)~~ - **COMPLÉTÉ 2026-01-21**
+  - Corrigé 175 warnings ESLint dans l'app mobile
+  - console.log remplacés par console.info/warn/error/debug
+  - any types ajoutés avec eslint-disable appropriés pour WatermelonDB
+  - 0 erreurs, 0 warnings
 
 - [ ] **ESLint Configuration Improvements**
   - Mettre à jour les règles ESLint
@@ -85,12 +86,24 @@ _Dernière mise à jour: 2026-01-21_
 - ✅ Announcements toggle (push notifications séparées)
 - ✅ GDPR data export request
 - ✅ Live chat placeholder (WebSocket coming soon)
+- ✅ **ESLint Mobile Cleanup** - 175 warnings corrigés, 0 erreurs
 
 ### Infrastructure
 
 - ✅ Kubernetes production manifests
 - ✅ Monitoring Prometheus/Grafana dashboards
 - ✅ Currency module avec taux de change live
+
+### UI Library (libs/ui)
+
+- ✅ **Card Component** - Extracted to libs/ui with compound component pattern
+  - Card, Card.Header, Card.Body, Card.Footer, Card.Image, Card.Title, Card.Description
+  - Variants: default, elevated, outlined
+  - Padding: none, sm, md, lg
+  - Interactive mode with keyboard navigation (Enter/Space)
+  - Image aspect ratios: auto, square, video, wide, portrait
+  - Dark mode support
+  - forwardRef for all components
 
 ---
 

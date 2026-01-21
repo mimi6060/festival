@@ -36,8 +36,47 @@ export {
   type StatusType,
 } from './Badge';
 
+// Card
+export {
+  Card,
+  type CardVariant,
+  type CardPadding,
+  type CardImageAspectRatio,
+  type CardProps,
+  type CardHeaderProps,
+  type CardBodyProps,
+  type CardFooterProps,
+  type CardImageProps,
+  type CardTitleProps,
+  type CardDescriptionProps,
+} from './Card';
+
+// Avatar
+export {
+  Avatar,
+  AvatarGroup,
+  getInitials,
+  getInitialsFromNames,
+  type AvatarProps,
+  type AvatarGroupProps,
+  type AvatarSize,
+  type AvatarStatus,
+} from './Avatar';
+
+// Input / Form components
+export {
+  Input,
+  Textarea,
+  Select,
+  type InputProps,
+  type InputType,
+  type InputVariant,
+  type InputSize,
+  type ValidationState,
+  type TextareaProps,
+  type SelectProps,
+  type SelectOption,
+} from './Input';
+
 // Future components will be exported here:
-// export { Card, type CardProps } from './Card';
-// export { Input, type InputProps } from './Input';
 // export { Modal, type ModalProps } from './Modal';
-// export { Avatar, type AvatarProps } from './Avatar';
