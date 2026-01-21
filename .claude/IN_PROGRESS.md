@@ -78,9 +78,13 @@ _Dernière mise à jour: 2026-01-21_
 
 - ✅ Theme selection (light/dark/system)
 - ✅ Language selection (6 langues)
-- ✅ Photo/Avatar change
+- ✅ Photo/Avatar change (expo-image-picker - camera & galerie)
 - ✅ Ticket ownership validation (sécurité IDOR)
 - ✅ **MOB-01 Performance Audit** - App bien optimisée, EventItem/HomeEventCard extraits
+- ✅ Event reminders selection (5, 10, 15, 30, 60 min)
+- ✅ Announcements toggle (push notifications séparées)
+- ✅ GDPR data export request
+- ✅ Live chat placeholder (WebSocket coming soon)
 
 ### Infrastructure
 

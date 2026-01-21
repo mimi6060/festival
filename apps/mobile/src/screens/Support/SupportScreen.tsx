@@ -10,8 +10,13 @@ import {
   Linking,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Card, Button } from '../../components/common';
 import { colors, spacing, typography, borderRadius } from '../../theme';
+import type { RootStackParamList } from '../../types';
+
+type SupportNavigationProp = NativeStackNavigationProp<RootStackParamList>;
 
 interface FAQItem {
   id: string;
@@ -89,6 +94,7 @@ interface LostItemFormData {
 }
 
 export const SupportScreen: React.FC = () => {
+  const navigation = useNavigation<SupportNavigationProp>();
   const [activeTab, setActiveTab] = useState<'faq' | 'contact' | 'lost'>('faq');
   const [selectedCategory, setSelectedCategory] = useState('Tous');
   const [expandedFAQ, setExpandedFAQ] = useState<string | null>(null);
@@ -118,10 +124,7 @@ export const SupportScreen: React.FC = () => {
   };
 
   const handleChat = () => {
-    Alert.alert(
-      'Chat en direct',
-      'Le chat en direct sera bientot disponible. En attendant, contactez-nous par email ou telephone.'
-    );
+    navigation.navigate('LiveChat');
   };
 
   const handleSubmitLostItem = () => {

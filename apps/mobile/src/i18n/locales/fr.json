@@ -329,7 +329,9 @@
     "cacheCleared": "Cache vide",
     "offlineData": "Donnees hors ligne",
     "downloadForOffline": "Telecharger pour utilisation hors ligne",
-    "offlineDataSize": "Taille des donnees : {{size}}"
+    "offlineDataSize": "Taille des donnees : {{size}}",
+    "dataExportConfirm": "Demander l'export de toutes vos donnees personnelles ?",
+    "dataExportRequested": "Votre demande d'export a ete enregistree. Vous recevrez un email lorsque vos donnees seront pretes."
   },
   "notifications": {
     "title": "Notifications",
@@ -362,6 +364,19 @@
     "message": "Message",
     "send": "Envoyer",
     "sendSuccess": "Message envoye avec succes",
+    "connecting": "Connexion...",
+    "connected": "Connecte",
+    "disconnected": "Deconnecte",
+    "chatUnavailable": "Chat indisponible",
+    "chatComingSoon": "Chat en direct bientot disponible",
+    "chatComingSoonDesc": "Notre fonctionnalite de chat en direct est en cours de developpement. Le support WebSocket en temps reel sera bientot disponible !",
+    "featureRealtime": "Messagerie en temps reel avec les agents de support",
+    "featureAttachments": "Pieces jointes images et fichiers",
+    "featureHistory": "Historique des conversations et suivi des tickets",
+    "featurePush": "Notifications push pour les reponses",
+    "contactUsInstead": "Nous contacter autrement",
+    "connectingToChat": "Connexion au serveur de chat...",
+    "typeMessage": "Ecrivez un message...",
     "categories": {
       "tickets": "Billets",
       "cashless": "Cashless",

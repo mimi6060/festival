@@ -1,13 +1,16 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Notification } from '../types';
 
+export type ReminderMinutes = 5 | 10 | 15 | 30 | 60;
+
 interface NotificationState {
   notifications: Notification[];
   unreadCount: number;
   pushEnabled: boolean;
+  announcementsEnabled: boolean;
+  eventReminderMinutes: ReminderMinutes;
   isLoading: boolean;
 
   // Actions
@@ -18,15 +21,19 @@ interface NotificationState {
   deleteNotification: (notificationId: string) => void;
   clearNotifications: () => void;
   setPushEnabled: (enabled: boolean) => void;
+  setAnnouncementsEnabled: (enabled: boolean) => void;
+  setEventReminderMinutes: (minutes: ReminderMinutes) => void;
   setLoading: (loading: boolean) => void;
 }
 
 export const useNotificationStore = create<NotificationState>()(
   persist(
-    (set, get) => ({
+    (set, _get) => ({
       notifications: [],
       unreadCount: 0,
       pushEnabled: true,
+      announcementsEnabled: true,
+      eventReminderMinutes: 15 as ReminderMinutes,
       isLoading: false,
 
       setNotifications: (notifications) =>
@@ -79,6 +86,10 @@ export const useNotificationStore = create<NotificationState>()(
 
       setPushEnabled: (enabled) => set({ pushEnabled: enabled }),
 
+      setAnnouncementsEnabled: (enabled) => set({ announcementsEnabled: enabled }),
+
+      setEventReminderMinutes: (minutes) => set({ eventReminderMinutes: minutes }),
+
       setLoading: (loading) => set({ isLoading: loading }),
     }),
     {
@@ -88,6 +99,8 @@ export const useNotificationStore = create<NotificationState>()(
         notifications: state.notifications,
         unreadCount: state.unreadCount,
         pushEnabled: state.pushEnabled,
+        announcementsEnabled: state.announcementsEnabled,
+        eventReminderMinutes: state.eventReminderMinutes,
       }),
     }
   )

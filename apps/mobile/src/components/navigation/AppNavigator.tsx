@@ -15,7 +15,7 @@ import { TransactionsScreen } from '../../screens/Wallet/TransactionsScreen';
 import { MapScreen } from '../../screens/Map/MapScreen';
 import { SettingsScreen } from '../../screens/Settings/SettingsScreen';
 import { EditProfileScreen, ChangePasswordScreen } from '../../screens/Profile';
-import { HelpCenterScreen, ContactUsScreen } from '../../screens/Support';
+import { HelpCenterScreen, ContactUsScreen, LiveChatScreen } from '../../screens/Support';
 import { NotificationsScreen } from '../../screens/Notifications/NotificationsScreen';
 import { ProfileScreen } from '../../screens/Profile/ProfileScreen';
 import { StaffDashboardScreen, StaffValidationScreen, StaffZonesScreen } from '../../screens/Staff';
@@ -63,6 +63,7 @@ const linking: LinkingOptions<RootStackParamList> = {
       ChangePassword: 'profile/password',
       HelpCenter: 'help',
       ContactUs: 'contact',
+      LiveChat: 'chat',
       Notifications: 'notifications',
     },
   },
@@ -221,6 +222,8 @@ export const AppNavigator: React.FC = () => {
           <Stack.Screen name="HelpCenter" component={HelpCenterScreen} options={fastSlideOptions} />
 
           <Stack.Screen name="ContactUs" component={ContactUsScreen} options={fastSlideOptions} />
+
+          <Stack.Screen name="LiveChat" component={LiveChatScreen} options={fastSlideOptions} />
 
           {/* Staff Mode Screens */}
           <Stack.Screen

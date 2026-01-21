@@ -100,6 +100,7 @@ export interface RootStackParamList {
   ChangePassword: undefined;
   HelpCenter: undefined;
   ContactUs: undefined;
+  LiveChat: undefined;
   // Staff routes
   StaffDashboard: undefined;
   StaffValidation: undefined;

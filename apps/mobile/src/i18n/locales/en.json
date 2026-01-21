@@ -329,7 +329,9 @@
     "cacheCleared": "Cache cleared",
     "offlineData": "Offline data",
     "downloadForOffline": "Download for offline use",
-    "offlineDataSize": "Data size: {{size}}"
+    "offlineDataSize": "Data size: {{size}}",
+    "dataExportConfirm": "Request export of all your personal data?",
+    "dataExportRequested": "Your data export request has been registered. You will receive an email when your data is ready."
   },
   "notifications": {
     "title": "Notifications",
@@ -362,6 +364,19 @@
     "message": "Message",
     "send": "Send",
     "sendSuccess": "Message sent successfully",
+    "connecting": "Connecting...",
+    "connected": "Connected",
+    "disconnected": "Disconnected",
+    "chatUnavailable": "Chat unavailable",
+    "chatComingSoon": "Live Chat Coming Soon",
+    "chatComingSoonDesc": "Our live chat feature is currently under development. Real-time WebSocket support will be available soon!",
+    "featureRealtime": "Real-time messaging with support agents",
+    "featureAttachments": "Image and file attachments",
+    "featureHistory": "Chat history and ticket tracking",
+    "featurePush": "Push notifications for responses",
+    "contactUsInstead": "Contact Us Instead",
+    "connectingToChat": "Connecting to chat server...",
+    "typeMessage": "Type a message...",
     "categories": {
       "tickets": "Tickets",
       "cashless": "Cashless",

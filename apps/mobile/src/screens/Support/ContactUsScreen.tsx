@@ -77,7 +77,7 @@ export const ContactUsScreen: React.FC = () => {
       title: 'Chat en direct',
       icon: '💬',
       subtitle: 'Disponible 9h-18h',
-      action: () => showAlert('Chat', 'Le chat sera disponible bientot'),
+      action: () => navigation.navigate('LiveChat'),
     },
   ];
 
