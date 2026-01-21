@@ -105,7 +105,9 @@ export class ImageCache {
    * Initialize image cache
    */
   async initialize(): Promise<void> {
-    if (this.initialized) {return;}
+    if (this.initialized) {
+      return;
+    }
 
     if (Platform.OS !== 'web') {
       // Ensure cache directory exists
@@ -167,7 +169,9 @@ export class ImageCache {
   async cacheImage(url: string): Promise<string | null> {
     // Check if already cached
     const existing = await this.getImage(url);
-    if (existing) {return existing;}
+    if (existing) {
+      return existing;
+    }
 
     if (Platform.OS === 'web') {
       // Web platform - use browser caching
@@ -265,7 +269,9 @@ export class ImageCache {
     const meta = this.metadata.get(url);
     if (meta?.thumbnailPath) {
       const exists = await this.fileExists(meta.thumbnailPath);
-      if (exists) {return meta.thumbnailPath;}
+      if (exists) {
+        return meta.thumbnailPath;
+      }
     }
 
     // Return a default placeholder color
@@ -277,7 +283,7 @@ export class ImageCache {
    */
   async prefetch(urls: string[]): Promise<PrefetchResult[]> {
     const results: PrefetchResult[] = [];
-    const urlsToFetch = urls.filter(url => !this.metadata.has(url));
+    const urlsToFetch = urls.filter((url) => !this.metadata.has(url));
 
     // Process in batches
     const batches: string[][] = [];
@@ -287,7 +293,7 @@ export class ImageCache {
 
     for (const batch of batches) {
       const batchResults = await Promise.all(
-        batch.map(async url => {
+        batch.map(async (url) => {
           // Check if already being prefetched
           const existing = this.prefetchQueue.get(url);
           if (existing) {
@@ -356,7 +362,7 @@ export class ImageCache {
     }
 
     // Filter out invalid URLs
-    const validUrls = allUrls.filter(url => url && url.startsWith('http'));
+    const validUrls = allUrls.filter((url) => url?.startsWith('http'));
 
     await this.prefetch(validUrls);
   }
@@ -381,7 +387,9 @@ export class ImageCache {
    */
   async remove(url: string): Promise<boolean> {
     const meta = this.metadata.get(url);
-    if (!meta) {return false;}
+    if (!meta) {
+      return false;
+    }
 
     try {
       // Remove from disk
@@ -488,7 +496,7 @@ export class ImageCache {
     let hash = 0;
     for (let i = 0; i < url.length; i++) {
       const char = url.charCodeAt(i);
-      hash = ((hash << 5) - hash) + char;
+      hash = (hash << 5) - hash + char;
       hash = hash & hash; // Convert to 32-bit integer
     }
 
@@ -504,7 +512,9 @@ export class ImageCache {
   }
 
   private async fileExists(path: string): Promise<boolean> {
-    if (Platform.OS === 'web') {return false;}
+    if (Platform.OS === 'web') {
+      return false;
+    }
 
     try {
       const info = await FileSystem.getInfoAsync(path);
@@ -546,14 +556,18 @@ export class ImageCache {
   private async ensureDiskCapacity(requiredSize: number): Promise<void> {
     while (this.currentDiskSize + requiredSize > this.config.maxDiskSize) {
       const evicted = await this.evictOldestFromDisk();
-      if (!evicted) {break;}
+      if (!evicted) {
+        break;
+      }
     }
   }
 
   private async ensureMemoryCapacity(requiredSize: number): Promise<void> {
     while (this.currentMemorySize + requiredSize > this.config.maxMemorySize) {
       const evicted = this.evictOldestFromMemory();
-      if (!evicted) {break;}
+      if (!evicted) {
+        break;
+      }
     }
   }
 
@@ -643,10 +657,7 @@ export class ImageCache {
         entries: Array.from(this.metadata.entries()),
         diskSize: this.currentDiskSize,
       };
-      await AsyncStorage.setItem(
-        this.config.storageKeyPrefix + 'metadata',
-        JSON.stringify(data)
-      );
+      await AsyncStorage.setItem(this.config.storageKeyPrefix + 'metadata', JSON.stringify(data));
     } catch (error) {
       console.error('[ImageCache] Failed to save metadata:', error);
     }
@@ -679,7 +690,9 @@ export async function getCachedImageUri(url: string): Promise<string> {
   await cache.initialize();
 
   const cached = await cache.getImage(url);
-  if (cached) {return cached;}
+  if (cached) {
+    return cached;
+  }
 
   // Try to cache it
   const newCached = await cache.cacheImage(url);

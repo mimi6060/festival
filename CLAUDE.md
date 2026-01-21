@@ -132,6 +132,19 @@ npx prisma studio                   # Interactive viewer
 docker-compose up -d                # Start PostgreSQL, Redis, MailHog
 docker-compose down                 # Stop services
 
+# Typecheck (faster than full build)
+npm run typecheck                   # All projects
+npx tsc --noEmit --project apps/api/tsconfig.json  # Single project
+
+# Affected commands (for large PRs)
+npm run affected:build              # Build only affected projects
+npm run affected:test               # Test only affected projects
+npm run affected:lint               # Lint only affected projects
+
+# Storybook
+npm run storybook                   # Dev server on :6006
+npm run build-storybook             # Production build
+
 # Quick npm aliases (from package.json)
 npm run start:api                   # Same as nx serve api
 npm run build:api                   # Same as nx build api
@@ -162,14 +175,16 @@ festival/
 
 ## Tech Stack
 
-| Layer     | Technologies                                  |
-| --------- | --------------------------------------------- |
-| Backend   | NestJS 11, Prisma 6, PostgreSQL 15+, Redis 7  |
-| Frontend  | Next.js 15, React 18, Tailwind CSS, next-intl |
-| Mobile    | React Native, Expo, AsyncStorage              |
-| Auth      | JWT + httpOnly cookies, Passport.js, RBAC     |
-| Payments  | Stripe Checkout + Webhooks                    |
-| Real-time | WebSocket (Socket.io)                         |
+| Layer     | Technologies                                     |
+| --------- | ------------------------------------------------ |
+| Backend   | NestJS 11, Prisma 6, PostgreSQL 15+, Redis 7     |
+| Frontend  | Next.js 15, React 18/19, Tailwind CSS, next-intl |
+| Mobile    | React Native, Expo, AsyncStorage                 |
+| Auth      | JWT + httpOnly cookies, Passport.js, RBAC        |
+| Payments  | Stripe Checkout + Webhooks                       |
+| Real-time | WebSocket (Socket.io)                            |
+| Queues    | BullMQ (Redis-based job processing)              |
+| Logging   | Pino (nestjs-pino)                               |
 
 ## Key Path Aliases
 

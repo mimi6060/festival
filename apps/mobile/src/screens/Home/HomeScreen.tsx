@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, memo } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
@@ -18,6 +18,45 @@ import { colors, spacing, typography, webPressable } from '../../theme';
 import type { RootStackParamList, MainTabParamList, Ticket } from '../../types';
 
 type HomeNavigationProp = NativeStackNavigationProp<RootStackParamList & MainTabParamList, 'Home'>;
+
+// Memoized event card for home screen - extracted for stable reference
+const HomeEventCard = memo(
+  ({
+    event,
+    isFavorite,
+    onToggleFavorite,
+  }: {
+    event: {
+      id: string;
+      startTime: string;
+      day: string;
+      artist: { name: string; genre: string };
+      stage: { name: string };
+    };
+    isFavorite: boolean;
+    onToggleFavorite: (id: string) => void;
+  }) => (
+    <Card style={styles.eventCard}>
+      <View style={styles.eventContent}>
+        <View style={styles.eventTime}>
+          <Text style={styles.eventTimeText}>{event.startTime}</Text>
+          <Text style={styles.eventDay}>{event.day}</Text>
+        </View>
+        <View style={styles.eventInfo}>
+          <Text style={styles.eventArtist}>{event.artist.name}</Text>
+          <Text style={styles.eventStage}>📍 {event.stage.name}</Text>
+          <Text style={styles.eventGenre}>{event.artist.genre}</Text>
+        </View>
+        <TouchableOpacity
+          style={[styles.favoriteButton, webPressable]}
+          onPress={() => onToggleFavorite(event.id)}
+        >
+          <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
+        </TouchableOpacity>
+      </View>
+    </Card>
+  )
+);
 
 export const HomeScreen: React.FC = () => {
   const navigation = useNavigation<HomeNavigationProp>();
@@ -50,22 +89,32 @@ export const HomeScreen: React.FC = () => {
     navigation.navigate('TicketDetail', { ticketId: ticket.id });
   };
 
-  const handleQuickAction = (action: string) => {
-    switch (action) {
-      case 'plan':
-        navigation.navigate('Map', { filter: 'all' });
-        break;
-      case 'food':
-        navigation.navigate('Map', { filter: 'food' });
-        break;
-      case 'toilettes':
-        navigation.navigate('Map', { filter: 'services' });
-        break;
-      case 'secours':
-        navigation.navigate('Map', { filter: 'emergency' });
-        break;
-    }
-  };
+  const handleToggleFavorite = useCallback(
+    (eventId: string) => {
+      toggleFavorite(eventId);
+    },
+    [toggleFavorite]
+  );
+
+  const handleQuickAction = useCallback(
+    (action: string) => {
+      switch (action) {
+        case 'plan':
+          navigation.navigate('Map', { filter: 'all' });
+          break;
+        case 'food':
+          navigation.navigate('Map', { filter: 'food' });
+          break;
+        case 'toilettes':
+          navigation.navigate('Map', { filter: 'services' });
+          break;
+        case 'secours':
+          navigation.navigate('Map', { filter: 'emergency' });
+          break;
+      }
+    },
+    [navigation]
+  );
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
@@ -165,30 +214,14 @@ export const HomeScreen: React.FC = () => {
             </TouchableOpacity>
           </View>
 
-          {upcomingEvents.map((event) => {
-            const isFavorite = favorites.includes(event.id);
-            return (
-              <Card key={event.id} style={styles.eventCard}>
-                <View style={styles.eventContent}>
-                  <View style={styles.eventTime}>
-                    <Text style={styles.eventTimeText}>{event.startTime}</Text>
-                    <Text style={styles.eventDay}>{event.day}</Text>
-                  </View>
-                  <View style={styles.eventInfo}>
-                    <Text style={styles.eventArtist}>{event.artist.name}</Text>
-                    <Text style={styles.eventStage}>📍 {event.stage.name}</Text>
-                    <Text style={styles.eventGenre}>{event.artist.genre}</Text>
-                  </View>
-                  <TouchableOpacity
-                    style={[styles.favoriteButton, webPressable]}
-                    onPress={() => toggleFavorite(event.id)}
-                  >
-                    <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
-                  </TouchableOpacity>
-                </View>
-              </Card>
-            );
-          })}
+          {upcomingEvents.map((event) => (
+            <HomeEventCard
+              key={event.id}
+              event={event}
+              isFavorite={favorites.includes(event.id)}
+              onToggleFavorite={handleToggleFavorite}
+            />
+          ))}
         </View>
 
         {/* Quick Actions */}

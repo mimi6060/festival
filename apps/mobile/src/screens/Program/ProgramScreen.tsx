@@ -111,6 +111,45 @@ const mockProgram: ProgramEvent[] = [
   },
 ];
 
+// Memoized event item component - extracted outside for stable reference
+const EventItem = memo(
+  ({
+    item,
+    isFavorite,
+    onToggleFavorite,
+  }: {
+    item: ProgramEvent;
+    isFavorite: boolean;
+    onToggleFavorite: (id: string) => void;
+  }) => (
+    <Card style={styles.eventCard}>
+      <View style={styles.eventContent}>
+        {/* Time Column */}
+        <View style={styles.timeColumn}>
+          <Text style={styles.startTime}>{item.startTime}</Text>
+          <View style={styles.timeLine} />
+          <Text style={styles.endTime}>{item.endTime}</Text>
+        </View>
+
+        {/* Event Info */}
+        <View style={styles.eventInfo}>
+          <Text style={styles.artistName}>{item.artist.name}</Text>
+          <Text style={styles.genre}>{item.artist.genre}</Text>
+          <View style={styles.stageRow}>
+            <Text style={styles.stageIcon}>📍</Text>
+            <Text style={styles.stageName}>{item.stage.name}</Text>
+          </View>
+        </View>
+
+        {/* Favorite Button */}
+        <TouchableOpacity style={styles.favoriteButton} onPress={() => onToggleFavorite(item.id)}>
+          <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
+        </TouchableOpacity>
+      </View>
+    </Card>
+  )
+);
+
 export const ProgramScreen: React.FC = () => {
   const { favorites, toggleFavorite, events: storeEvents } = useProgramStore();
   const [selectedDay, setSelectedDay] = useState('vendredi');
@@ -139,45 +178,6 @@ export const ProgramScreen: React.FC = () => {
       toggleFavorite(eventId);
     },
     [toggleFavorite]
-  );
-
-  // Memoized event item component for better performance
-  const EventItem = memo(
-    ({
-      item,
-      isFavorite,
-      onToggleFavorite,
-    }: {
-      item: ProgramEvent;
-      isFavorite: boolean;
-      onToggleFavorite: (id: string) => void;
-    }) => (
-      <Card style={styles.eventCard}>
-        <View style={styles.eventContent}>
-          {/* Time Column */}
-          <View style={styles.timeColumn}>
-            <Text style={styles.startTime}>{item.startTime}</Text>
-            <View style={styles.timeLine} />
-            <Text style={styles.endTime}>{item.endTime}</Text>
-          </View>
-
-          {/* Event Info */}
-          <View style={styles.eventInfo}>
-            <Text style={styles.artistName}>{item.artist.name}</Text>
-            <Text style={styles.genre}>{item.artist.genre}</Text>
-            <View style={styles.stageRow}>
-              <Text style={styles.stageIcon}>📍</Text>
-              <Text style={styles.stageName}>{item.stage.name}</Text>
-            </View>
-          </View>
-
-          {/* Favorite Button */}
-          <TouchableOpacity style={styles.favoriteButton} onPress={() => onToggleFavorite(item.id)}>
-            <Text style={styles.favoriteIcon}>{isFavorite ? '❤️' : '🤍'}</Text>
-          </TouchableOpacity>
-        </View>
-      </Card>
-    )
   );
 
   const renderEvent = useCallback(
