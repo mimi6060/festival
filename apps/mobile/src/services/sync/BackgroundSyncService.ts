@@ -71,7 +71,9 @@ class BackgroundSyncService {
   private isOnline = true;
 
   // TaskManager and BackgroundFetch will be dynamically imported
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic Expo module imports require any
   private TaskManager: any = null;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any -- Dynamic Expo module imports require any
   private BackgroundFetch: any = null;
   private isNativeModulesAvailable = false;
 
@@ -90,7 +92,7 @@ class BackgroundSyncService {
    * Initialize the background sync service
    */
   async initialize(): Promise<void> {
-    console.log('[BackgroundSyncService] Initializing...');
+    console.info('[BackgroundSyncService] Initializing...');
 
     // Load last sync time
     await this.loadLastSyncTime();
@@ -112,7 +114,7 @@ class BackgroundSyncService {
       await this.registerBackgroundTask();
     }
 
-    console.log('[BackgroundSyncService] Initialized');
+    console.info('[BackgroundSyncService] Initialized');
   }
 
   /**
@@ -120,30 +122,30 @@ class BackgroundSyncService {
    */
   private async loadNativeModules(): Promise<void> {
     if (Platform.OS === 'web') {
-      console.log('[BackgroundSyncService] Background sync not available on web');
+      console.info('[BackgroundSyncService] Background sync not available on web');
       return;
     }
 
     try {
       // Try to import expo-task-manager
       this.TaskManager = require('expo-task-manager');
-      console.log('[BackgroundSyncService] TaskManager loaded');
+      console.info('[BackgroundSyncService] TaskManager loaded');
     } catch (error) {
-      console.log('[BackgroundSyncService] expo-task-manager not available:', error);
+      console.info('[BackgroundSyncService] expo-task-manager not available:', error);
     }
 
     try {
       // Try to import expo-background-fetch
       this.BackgroundFetch = require('expo-background-fetch');
-      console.log('[BackgroundSyncService] BackgroundFetch loaded');
+      console.info('[BackgroundSyncService] BackgroundFetch loaded');
     } catch (error) {
-      console.log('[BackgroundSyncService] expo-background-fetch not available:', error);
+      console.info('[BackgroundSyncService] expo-background-fetch not available:', error);
     }
 
     this.isNativeModulesAvailable = !!(this.TaskManager && this.BackgroundFetch);
 
     if (!this.isNativeModulesAvailable) {
-      console.log(
+      console.info(
         '[BackgroundSyncService] Native modules not fully available, background sync will use foreground alternatives'
       );
     }
@@ -222,7 +224,7 @@ class BackgroundSyncService {
 
     // Trigger sync when coming back online
     if (wasOffline && this.isOnline) {
-      console.log('[BackgroundSyncService] Network reconnected, triggering sync');
+      console.info('[BackgroundSyncService] Network reconnected, triggering sync');
       this.triggerSyncOnReconnect();
     }
   }
@@ -237,7 +239,7 @@ class BackgroundSyncService {
       // Small delay to allow network to stabilize
       setTimeout(async () => {
         if (this.isOnline && !this.isSyncing) {
-          console.log('[BackgroundSyncService] Syncing after reconnection');
+          console.info('[BackgroundSyncService] Syncing after reconnection');
           await this.performSync(false);
         }
       }, 2000);
@@ -262,7 +264,7 @@ class BackgroundSyncService {
       // App came to foreground - check if we need to sync
       const timeSinceLastSync = Date.now() - this.lastSyncTime;
       if (timeSinceLastSync >= MIN_SYNC_INTERVAL_MS && this.isOnline && !this.isSyncing) {
-        console.log('[BackgroundSyncService] App foregrounded, triggering sync');
+        console.info('[BackgroundSyncService] App foregrounded, triggering sync');
         this.performSync(false).catch((error) => {
           console.error('[BackgroundSyncService] Foreground sync failed:', error);
         });
@@ -275,19 +277,19 @@ class BackgroundSyncService {
    */
   async registerBackgroundTask(): Promise<void> {
     if (!this.isNativeModulesAvailable) {
-      console.log('[BackgroundSyncService] Cannot register task - native modules not available');
+      console.info('[BackgroundSyncService] Cannot register task - native modules not available');
       return;
     }
 
     if (this.isTaskRegistered) {
-      console.log('[BackgroundSyncService] Task already registered');
+      console.info('[BackgroundSyncService] Task already registered');
       return;
     }
 
     try {
       // Define the background task
       this.TaskManager.defineTask(BACKGROUND_SYNC_TASK, async () => {
-        console.log('[BackgroundSyncService] Background task executing');
+        console.info('[BackgroundSyncService] Background task executing');
 
         try {
           const result = await this.performSync(true);
@@ -311,7 +313,7 @@ class BackgroundSyncService {
       this.isTaskRegistered = true;
       this.notifyListeners({ type: 'task_registered' });
 
-      console.log('[BackgroundSyncService] Background task registered successfully');
+      console.info('[BackgroundSyncService] Background task registered successfully');
     } catch (error) {
       console.error('[BackgroundSyncService] Failed to register background task:', error);
     }
@@ -330,7 +332,7 @@ class BackgroundSyncService {
       this.isTaskRegistered = false;
       this.notifyListeners({ type: 'task_unregistered' });
 
-      console.log('[BackgroundSyncService] Background task unregistered');
+      console.info('[BackgroundSyncService] Background task unregistered');
     } catch (error) {
       console.error('[BackgroundSyncService] Failed to unregister background task:', error);
     }
@@ -341,7 +343,7 @@ class BackgroundSyncService {
    */
   async performSync(isBackgroundTask: boolean): Promise<BackgroundSyncResult> {
     if (this.isSyncing) {
-      console.log('[BackgroundSyncService] Sync already in progress');
+      console.info('[BackgroundSyncService] Sync already in progress');
       return {
         success: false,
         syncedAt: new Date(),
@@ -353,7 +355,7 @@ class BackgroundSyncService {
     }
 
     if (!this.isOnline) {
-      console.log('[BackgroundSyncService] Cannot sync - offline');
+      console.info('[BackgroundSyncService] Cannot sync - offline');
       return {
         success: false,
         syncedAt: new Date(),
@@ -399,7 +401,7 @@ class BackgroundSyncService {
         data: result,
       });
 
-      console.log(
+      console.info(
         `[BackgroundSyncService] Sync completed: pulled=${result.pulled}, pushed=${result.pushed}, background=${isBackgroundTask}`
       );
     } catch (error) {
@@ -437,7 +439,7 @@ class BackgroundSyncService {
       await this.registerBackgroundTask();
     }
 
-    console.log('[BackgroundSyncService] Background sync enabled');
+    console.info('[BackgroundSyncService] Background sync enabled');
   }
 
   /**
@@ -451,7 +453,7 @@ class BackgroundSyncService {
       await this.unregisterBackgroundTask();
     }
 
-    console.log('[BackgroundSyncService] Background sync disabled');
+    console.info('[BackgroundSyncService] Background sync disabled');
   }
 
   /**
@@ -591,7 +593,7 @@ class BackgroundSyncService {
 
     this.listeners.clear();
 
-    console.log('[BackgroundSyncService] Destroyed');
+    console.info('[BackgroundSyncService] Destroyed');
   }
 }
 

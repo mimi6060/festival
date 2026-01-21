@@ -71,7 +71,7 @@ class IndoorLocationManager {
 
   private config: IndoorLocationManagerConfig | null = null;
   private callbacks: IndoorLocationManagerCallbacks = {};
-  private appStateSubscription: any = null;
+  private appStateSubscription: ReturnType<typeof AppState.addEventListener> | null = null;
   private isInitialized = false;
   private isTracking = false;
 
@@ -104,11 +104,11 @@ class IndoorLocationManager {
     callbacks: IndoorLocationManagerCallbacks = {}
   ): Promise<void> {
     if (this.isInitialized) {
-      console.log('[IndoorLocationManager] Already initialized');
+      console.info('[IndoorLocationManager] Already initialized');
       return;
     }
 
-    console.log('[IndoorLocationManager] Initializing...');
+    console.info('[IndoorLocationManager] Initializing...');
     this.config = config;
     this.callbacks = callbacks;
 
@@ -128,7 +128,7 @@ class IndoorLocationManager {
     );
 
     this.isInitialized = true;
-    console.log('[IndoorLocationManager] Initialized successfully');
+    console.info('[IndoorLocationManager] Initialized successfully');
   }
 
   /**
@@ -172,7 +172,7 @@ class IndoorLocationManager {
       // Extract beacon regions from configs
       this.beaconRegions = this.extractBeaconRegions();
 
-      console.log('[IndoorLocationManager] Loaded cached data');
+      console.info('[IndoorLocationManager] Loaded cached data');
     } catch (error) {
       console.error('[IndoorLocationManager] Error loading cached data:', error);
     }
@@ -199,7 +199,7 @@ class IndoorLocationManager {
    */
   private async fetchConfiguration(): Promise<void> {
     if (!this.config?.apiEndpoint || !this.config?.festivalId) {
-      console.log('[IndoorLocationManager] No API endpoint configured, using cached data');
+      console.info('[IndoorLocationManager] No API endpoint configured, using cached data');
       return;
     }
 
@@ -245,7 +245,7 @@ class IndoorLocationManager {
 
       this.beaconRegions = this.extractBeaconRegions();
 
-      console.log('[IndoorLocationManager] Fetched configuration from API');
+      console.info('[IndoorLocationManager] Fetched configuration from API');
     } catch (error) {
       console.error('[IndoorLocationManager] Error fetching configuration:', error);
     }
@@ -425,7 +425,7 @@ class IndoorLocationManager {
       location,
     };
 
-    console.log(`[IndoorLocationManager] Geofence ${type}: ${geofence.name}`);
+    console.info(`[IndoorLocationManager] Geofence ${type}: ${geofence.name}`);
     this.callbacks.onGeofenceEvent?.(event);
 
     // Trigger notification if configured
@@ -436,7 +436,7 @@ class IndoorLocationManager {
 
   private async showGeofenceNotification(notification: GeofenceNotification): Promise<void> {
     // This would integrate with push notification service
-    console.log('[IndoorLocationManager] Notification:', notification.title);
+    console.info('[IndoorLocationManager] Notification:', notification.title);
     // Implementation would depend on notification library (e.g., notifee, react-native-push-notification)
   }
 
@@ -460,7 +460,7 @@ class IndoorLocationManager {
   }
 
   private enterBackgroundMode(): void {
-    console.log('[IndoorLocationManager] Entering background mode');
+    console.info('[IndoorLocationManager] Entering background mode');
 
     // Reduce scan frequency
     if (this.config?.batteryMode !== 'high_accuracy') {
@@ -469,7 +469,7 @@ class IndoorLocationManager {
   }
 
   private enterForegroundMode(): void {
-    console.log('[IndoorLocationManager] Entering foreground mode');
+    console.info('[IndoorLocationManager] Entering foreground mode');
 
     // Restore configured battery mode
     const savedMode = this.config?.batteryMode || 'balanced';
@@ -485,11 +485,11 @@ class IndoorLocationManager {
     }
 
     if (this.isTracking) {
-      console.log('[IndoorLocationManager] Already tracking');
+      console.info('[IndoorLocationManager] Already tracking');
       return;
     }
 
-    console.log('[IndoorLocationManager] Starting tracking');
+    console.info('[IndoorLocationManager] Starting tracking');
 
     // Start all services
     await this.beaconScanner?.startScanning();
@@ -507,7 +507,7 @@ class IndoorLocationManager {
       return;
     }
 
-    console.log('[IndoorLocationManager] Stopping tracking');
+    console.info('[IndoorLocationManager] Stopping tracking');
 
     this.beaconScanner?.stopScanning();
     this.wifiPositioning?.stopPositioning();
@@ -520,7 +520,7 @@ class IndoorLocationManager {
    * Set battery mode
    */
   setBatteryMode(mode: BatteryMode): void {
-    console.log(`[IndoorLocationManager] Setting battery mode: ${mode}`);
+    console.info(`[IndoorLocationManager] Setting battery mode: ${mode}`);
 
     if (this.config) {
       this.config.batteryMode = mode;
@@ -726,7 +726,7 @@ class IndoorLocationManager {
 
     IndoorLocationManager.instance = null;
 
-    console.log('[IndoorLocationManager] Destroyed');
+    console.info('[IndoorLocationManager] Destroyed');
   }
 }
 

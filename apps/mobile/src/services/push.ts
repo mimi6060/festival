@@ -30,12 +30,12 @@ class PushNotificationService {
 
     PushNotification.configure({
       onRegister: async (token) => {
-        console.log('Push token:', token);
+        console.info('Push token:', token);
         await apiService.registerPushToken(token.token);
       },
 
       onNotification: (notification) => {
-        console.log('Notification received:', notification);
+        console.info('Notification received:', notification);
 
         // Add to store
         const newNotification: Notification = {
@@ -55,7 +55,7 @@ class PushNotificationService {
       },
 
       onAction: (notification) => {
-        console.log('Notification action:', notification.action);
+        console.info('Notification action:', notification.action);
       },
 
       onRegistrationError: (err) => {
@@ -84,7 +84,7 @@ class PushNotificationService {
           importance: Importance.HIGH,
           vibrate: true,
         },
-        (created) => console.log(`Channel created: ${created}`)
+        (created) => console.info(`Channel created: ${created}`)
       );
     }
 

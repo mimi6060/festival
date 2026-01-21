@@ -172,7 +172,7 @@ class SyncQueue {
    */
   async processQueue(authToken?: string): Promise<QueueResult> {
     if (this.isProcessing) {
-      console.log('[SyncQueue] Already processing');
+      console.info('[SyncQueue] Already processing');
       return { processed: 0, failed: 0, errors: [] };
     }
 
@@ -183,11 +183,11 @@ class SyncQueue {
       const items = await this.getPendingItems();
 
       if (items.length === 0) {
-        console.log('[SyncQueue] No items to process');
+        console.info('[SyncQueue] No items to process');
         return result;
       }
 
-      console.log(`[SyncQueue] Processing ${items.length} items`);
+      console.info(`[SyncQueue] Processing ${items.length} items`);
 
       // Process in batches
       for (let i = 0; i < items.length; i += this.config.batchSize) {

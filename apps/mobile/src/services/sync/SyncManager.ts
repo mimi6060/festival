@@ -164,11 +164,11 @@ class SyncManager {
    */
   async initialize(): Promise<void> {
     if (this.isInitialized) {
-      console.log('[SyncManager] Already initialized');
+      console.info('[SyncManager] Already initialized');
       return;
     }
 
-    console.log('[SyncManager] Initializing...');
+    console.info('[SyncManager] Initializing...');
 
     // Initialize sync service
     await syncService.initialize();
@@ -177,7 +177,7 @@ class SyncManager {
     syncService.addListener(this.handleSyncStatusChange.bind(this));
 
     this.isInitialized = true;
-    console.log('[SyncManager] Initialized successfully');
+    console.info('[SyncManager] Initialized successfully');
   }
 
   /**
@@ -242,7 +242,7 @@ class SyncManager {
   }): Promise<SyncResult> {
     const { force = false, priorities, entities } = options || {};
 
-    console.log('[SyncManager] Starting sync...', { force, priorities, entities });
+    console.info('[SyncManager] Starting sync...', { force, priorities, entities });
 
     // Reset progress
     this.progress = this.createInitialProgress();
@@ -398,7 +398,7 @@ class SyncManager {
    * Sync specific entity
    */
   async syncEntity(entityType: string, force = false): Promise<SyncResult> {
-    console.log(`[SyncManager] Syncing entity: ${entityType}`);
+    console.info(`[SyncManager] Syncing entity: ${entityType}`);
 
     this.setPhase('preparing');
 
@@ -563,14 +563,14 @@ class SyncManager {
     syncService.cancelSync();
 
     this.setPhase('idle');
-    console.log('[SyncManager] Sync cancelled');
+    console.info('[SyncManager] Sync cancelled');
   }
 
   /**
    * Retry failed sync
    */
   async retryFailedSync(): Promise<SyncResult> {
-    console.log('[SyncManager] Retrying failed sync...');
+    console.info('[SyncManager] Retrying failed sync...');
 
     // Get failed tasks
     const failedTasks = Array.from(this.tasks.values()).filter(
@@ -578,7 +578,7 @@ class SyncManager {
     );
 
     if (failedTasks.length === 0) {
-      console.log('[SyncManager] No failed tasks to retry');
+      console.info('[SyncManager] No failed tasks to retry');
       return {
         success: true,
         pulled: 0,
@@ -653,7 +653,7 @@ class SyncManager {
    */
   updateBatchConfig(config: Partial<BatchConfig>): void {
     this.batchConfig = { ...this.batchConfig, ...config };
-    console.log('[SyncManager] Batch config updated:', this.batchConfig);
+    console.info('[SyncManager] Batch config updated:', this.batchConfig);
   }
 
   /**
@@ -722,7 +722,7 @@ class SyncManager {
     this.currentPhase = 'idle';
     this.processedItemsHistory = [];
 
-    console.log('[SyncManager] State reset');
+    console.info('[SyncManager] State reset');
   }
 
   /**
@@ -733,7 +733,7 @@ class SyncManager {
     this.tasks.clear();
     this.reset();
 
-    console.log('[SyncManager] Destroyed');
+    console.info('[SyncManager] Destroyed');
   }
 }
 

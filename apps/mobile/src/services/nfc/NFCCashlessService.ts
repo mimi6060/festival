@@ -166,7 +166,7 @@ class NFCCashlessService {
       });
 
       if (!nfcReady) {
-        console.log('[NFCCashlessService] NFC not available');
+        console.info('[NFCCashlessService] NFC not available');
         return false;
       }
 
@@ -181,7 +181,7 @@ class NFCCashlessService {
       });
 
       this.isInitialized = true;
-      console.log('[NFCCashlessService] Initialized successfully');
+      console.info('[NFCCashlessService] Initialized successfully');
       return true;
     } catch (error) {
       console.error('[NFCCashlessService] Initialization failed:', error);
@@ -703,7 +703,7 @@ class NFCCashlessService {
       return;
     }
 
-    console.log(
+    console.info(
       `[NFCCashlessService] Syncing ${this.offlineTransactions.length} offline transactions`
     );
 

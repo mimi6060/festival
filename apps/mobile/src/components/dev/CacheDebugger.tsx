@@ -101,7 +101,9 @@ interface CacheDebuggerProps {
 export const CacheDebugger: React.FC<CacheDebuggerProps> = ({ visible, onClose }) => {
   // State
   const [stats, setStats] = useState<CacheStatistics | null>(null);
-  const [imageCacheStats, setImageCacheStats] = useState<any>(null);
+  const [imageCacheStats, setImageCacheStats] = useState<ReturnType<
+    typeof imageCache.getStats
+  > | null>(null);
   const [events, setEvents] = useState<CacheEvent[]>([]);
   const [autoRefresh, setAutoRefresh] = useState(true);
   const [selectedTab, setSelectedTab] = useState<'general' | 'images' | 'events'>('general');

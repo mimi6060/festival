@@ -11,14 +11,33 @@ import { TableNames, TableName } from '../database/schema';
 import { syncService, syncQueueService } from '../services/sync';
 import { SyncOperation } from '../database/models/SyncQueueItem';
 
+// WatermelonDB record type for dynamic property access
+type WatermelonRecord = Record<string, unknown> & {
+  id: string;
+  serverId?: string;
+  isSynced?: boolean;
+  needsPush?: boolean;
+  lastSyncedAt?: number;
+  serverCreatedAt?: number;
+  serverUpdatedAt?: number;
+  toJSON?: () => Record<string, unknown>;
+  update: (updater: (record: WatermelonRecord) => void) => Promise<void>;
+  observe: () => {
+    subscribe: (observer: { next: (value: unknown) => void; error: (err: Error) => void }) => {
+      unsubscribe: () => void;
+    };
+  };
+  destroyPermanently: () => Promise<void>;
+};
+
 // Hook options
 export interface UseOfflineFirstOptions<T> {
   // Query configuration
-  query?: (collection: any) => Query<T>;
+  query?: (collection: { query: (...args: unknown[]) => Query<T> }) => Query<T>;
   // Server fetch function
   fetchFromServer?: () => Promise<T[]>;
   // Transform server data to local format
-  transformServerData?: (serverData: any) => Partial<T>;
+  transformServerData?: (serverData: unknown) => Partial<T>;
   // Sync behavior
   syncOnMount?: boolean;
   refreshInterval?: number; // milliseconds, 0 = disabled
@@ -181,24 +200,28 @@ export function useOfflineFirst<T>(
           const localItem = transformServerData ? transformServerData(item) : (item as Partial<T>);
 
           // Check if record exists
-          const serverId = (localItem as any).serverId || (item as any).id;
+          const localItemRecord = localItem as WatermelonRecord;
+          const itemRecord = item as WatermelonRecord;
+          const serverId = localItemRecord.serverId || itemRecord.id;
           const existing = await collection.query(Q.where('server_id', serverId)).fetch();
 
           if (existing.length > 0) {
             // Update existing
-            await existing[0].update((record: any) => {
+            const existingRecord = existing[0] as unknown as WatermelonRecord;
+            await existingRecord.update((record) => {
               Object.assign(record, localItem);
               record.isSynced = true;
               record.lastSyncedAt = Date.now();
             });
           } else {
             // Create new
-            await collection.create((record: any) => {
-              Object.assign(record, localItem);
-              record.serverId = serverId;
-              record.isSynced = true;
-              record.lastSyncedAt = Date.now();
-              record.needsPush = false;
+            await collection.create((record) => {
+              const wmRecord = record as unknown as WatermelonRecord;
+              Object.assign(wmRecord, localItem);
+              wmRecord.serverId = serverId as string;
+              wmRecord.isSynced = true;
+              wmRecord.lastSyncedAt = Date.now();
+              wmRecord.needsPush = false;
             });
           }
         }
@@ -218,23 +241,23 @@ export function useOfflineFirst<T>(
   const create = useCallback(
     async (recordData: Partial<T>): Promise<T> => {
       const record = await database.write(async () => {
-        return collection.create((r: any) => {
-          Object.assign(r, recordData);
-          r.isSynced = false;
-          r.needsPush = true;
-          r.serverCreatedAt = Date.now();
-          r.serverUpdatedAt = Date.now();
+        return collection.create((r) => {
+          const wmRecord = r as unknown as WatermelonRecord;
+          Object.assign(wmRecord, recordData);
+          wmRecord.isSynced = false;
+          wmRecord.needsPush = true;
+          wmRecord.serverCreatedAt = Date.now();
+          wmRecord.serverUpdatedAt = Date.now();
         });
       });
 
       // Add to sync queue
+      const wmRecord = record as unknown as WatermelonRecord;
       await syncQueueService.add({
         entityType: tableName,
-        entityId: record.id,
+        entityId: wmRecord.id,
         operation: 'create' as SyncOperation,
-        payload: (record as any).toJSON
-          ? (record as any).toJSON()
-          : (recordData as Record<string, unknown>),
+        payload: wmRecord.toJSON ? wmRecord.toJSON() : (recordData as Record<string, unknown>),
       });
 
       return record as unknown as T;
@@ -247,7 +270,8 @@ export function useOfflineFirst<T>(
     async (id: string, updates: Partial<T>): Promise<T> => {
       const record = await database.write(async () => {
         const existing = await collection.find(id);
-        await existing.update((r: any) => {
+        const wmExisting = existing as unknown as WatermelonRecord;
+        await wmExisting.update((r) => {
           Object.assign(r, updates);
           r.isSynced = false;
           r.needsPush = true;
@@ -257,13 +281,12 @@ export function useOfflineFirst<T>(
       });
 
       // Add to sync queue
+      const wmRecord = record as unknown as WatermelonRecord;
       await syncQueueService.add({
         entityType: tableName,
-        entityId: record.id,
+        entityId: wmRecord.id,
         operation: 'update' as SyncOperation,
-        payload: (record as any).toJSON
-          ? (record as any).toJSON()
-          : (updates as Record<string, unknown>),
+        payload: wmRecord.toJSON ? wmRecord.toJSON() : (updates as Record<string, unknown>),
       });
 
       return record as unknown as T;
@@ -275,14 +298,15 @@ export function useOfflineFirst<T>(
   const remove = useCallback(
     async (id: string): Promise<void> => {
       const record = await collection.find(id);
-      const recordData = (record as any).toJSON ? (record as any).toJSON() : { id };
+      const wmRecord = record as unknown as WatermelonRecord;
+      const recordData = wmRecord.toJSON ? wmRecord.toJSON() : { id };
 
       await database.write(async () => {
-        await record.destroyPermanently();
+        await wmRecord.destroyPermanently();
       });
 
       // Add to sync queue (if record was synced)
-      if ((record as any).serverId) {
+      if (wmRecord.serverId) {
         await syncQueueService.add({
           entityType: tableName,
           entityId: id,
@@ -318,7 +342,7 @@ export function useOfflineFirstRecord<T>(
   id: string | null,
   options: {
     fetchFromServer?: (id: string) => Promise<T>;
-    transformServerData?: (serverData: any) => Partial<T>;
+    transformServerData?: (serverData: unknown) => Partial<T>;
   } = {}
 ): {
   data: T | null;
@@ -360,8 +384,9 @@ export function useOfflineFirstRecord<T>(
           setData(record);
 
           // Subscribe to changes
-          subscriptionRef.current = (record as any).observe().subscribe({
-            next: (updated: T) => setData(updated),
+          const wmRecord = record as unknown as WatermelonRecord;
+          subscriptionRef.current = wmRecord.observe().subscribe({
+            next: (updated) => setData(updated as T),
             error: (err: Error) => setError(err),
           });
         } else {
@@ -396,7 +421,8 @@ export function useOfflineFirstRecord<T>(
 
       await database.write(async () => {
         if (data) {
-          await (data as any).update((r: any) => {
+          const wmData = data as unknown as WatermelonRecord;
+          await wmData.update((r) => {
             Object.assign(r, localData);
             r.isSynced = true;
             r.lastSyncedAt = Date.now();
@@ -414,8 +440,9 @@ export function useOfflineFirstRecord<T>(
         return;
       }
 
+      const wmData = data as unknown as WatermelonRecord;
       await database.write(async () => {
-        await (data as any).update((r: any) => {
+        await wmData.update((r) => {
           Object.assign(r, updates);
           r.isSynced = false;
           r.needsPush = true;
@@ -425,7 +452,7 @@ export function useOfflineFirstRecord<T>(
       // Add to sync queue
       await syncQueueService.add({
         entityType: tableName,
-        entityId: (data as any).id,
+        entityId: wmData.id,
         operation: 'update',
         payload: updates as Record<string, unknown>,
       });

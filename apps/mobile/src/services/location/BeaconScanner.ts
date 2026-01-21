@@ -116,7 +116,7 @@ export class BeaconScanner {
    */
   async startScanning(): Promise<void> {
     if (this.isScanning) {
-      console.log('[BeaconScanner] Already scanning');
+      console.info('[BeaconScanner] Already scanning');
       return;
     }
 
@@ -141,7 +141,7 @@ export class BeaconScanner {
     }
 
     this.isScanning = true;
-    console.log('[BeaconScanner] Starting beacon scan');
+    console.info('[BeaconScanner] Starting beacon scan');
 
     // Start continuous scanning with intervals
     this.startScanCycle();
@@ -398,7 +398,7 @@ export class BeaconScanner {
     this.bleManager.stopDeviceScan();
     this.trackedBeacons.clear();
 
-    console.log('[BeaconScanner] Stopped scanning');
+    console.info('[BeaconScanner] Stopped scanning');
   }
 
   /**

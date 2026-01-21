@@ -104,11 +104,11 @@ export function DatabaseProvider({
         setIsReady(true);
         onReady?.();
 
-        console.log('[DatabaseProvider] Database initialized');
+        console.info('[DatabaseProvider] Database initialized');
 
         // Trigger initial sync if needed and autoSync is enabled
         if (autoSync && needsInitial) {
-          console.log('[DatabaseProvider] Triggering initial sync');
+          console.info('[DatabaseProvider] Triggering initial sync');
           syncService.sync().catch((err) => {
             console.error('[DatabaseProvider] Initial sync failed:', err);
           });
@@ -159,7 +159,7 @@ export function DatabaseProvider({
       await resetDatabase();
       await refreshStats();
       setNeedsSync(true);
-      console.log('[DatabaseProvider] Database reset');
+      console.info('[DatabaseProvider] Database reset');
     } catch (err) {
       console.error('[DatabaseProvider] Failed to reset database:', err);
       throw err;

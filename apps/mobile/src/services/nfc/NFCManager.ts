@@ -102,7 +102,7 @@ class NFCManagerService {
 
       if (!this.isSupported) {
         this.currentStatus = 'unavailable';
-        console.log('[NFCManager] NFC not supported on this device');
+        console.info('[NFCManager] NFC not supported on this device');
         return false;
       }
 
@@ -118,7 +118,7 @@ class NFCManagerService {
       // Setup event listeners
       this.setupEventListeners();
 
-      console.log('[NFCManager] Initialized successfully');
+      console.info('[NFCManager] Initialized successfully');
       return true;
     } catch (error) {
       console.error('[NFCManager] Initialization error:', error);

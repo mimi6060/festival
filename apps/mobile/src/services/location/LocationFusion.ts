@@ -136,7 +136,7 @@ export class LocationFusion {
    * Start location fusion
    */
   startFusion(): void {
-    console.log('[LocationFusion] Starting location fusion');
+    console.info('[LocationFusion] Starting location fusion');
 
     // Start GPS tracking if enabled
     if (this.config.enableGPS) {
@@ -275,7 +275,7 @@ export class LocationFusion {
     if (isIndoor !== wasIndoor) {
       this.state.isIndoor = isIndoor;
       this.config.onIndoorOutdoorTransition(isIndoor);
-      console.log(`[LocationFusion] Transition to ${isIndoor ? 'indoor' : 'outdoor'}`);
+      console.info(`[LocationFusion] Transition to ${isIndoor ? 'indoor' : 'outdoor'}`);
     }
   }
 
@@ -656,7 +656,7 @@ export class LocationFusion {
       this.fusionInterval = null;
     }
 
-    console.log('[LocationFusion] Stopped');
+    console.info('[LocationFusion] Stopped');
   }
 
   /**

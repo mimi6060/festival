@@ -20,11 +20,11 @@ export interface UseTicketCacheResult {
   validTickets: Ticket[];
 
   // Actions
-  cacheTickets: (tickets: any[]) => Promise<void>;
+  cacheTickets: (tickets: unknown[]) => Promise<void>;
   getTicket: (ticketId: string) => Promise<Ticket | null>;
   getQRCode: (ticketId: string) => Promise<{ qrCode: string; qrCodeData: string } | null>;
   preloadTickets: (
-    fetchFunction: () => Promise<any[]>
+    fetchFunction: () => Promise<unknown[]>
   ) => Promise<{ success: boolean; ticketCount: number }>;
   markAsUsed: (ticketId: string, staffId?: string) => Promise<boolean>;
   refreshStatus: () => Promise<void>;
@@ -100,7 +100,7 @@ export function useTicketCache(festivalId?: string): UseTicketCacheResult {
    * Cache tickets
    */
   const cacheTickets = useCallback(
-    async (ticketsToCache: any[]) => {
+    async (ticketsToCache: unknown[]) => {
       setIsLoading(true);
       setError(null);
 
@@ -146,7 +146,7 @@ export function useTicketCache(festivalId?: string): UseTicketCacheResult {
    */
   const preloadTickets = useCallback(
     async (
-      fetchFunction: () => Promise<any[]>
+      fetchFunction: () => Promise<unknown[]>
     ): Promise<{ success: boolean; ticketCount: number }> => {
       setIsLoading(true);
       setError(null);

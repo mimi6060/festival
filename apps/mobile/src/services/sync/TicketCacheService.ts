@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any -- WatermelonDB record callbacks require dynamic typing */
 /**
  * TicketCacheService
  * Ensures tickets and their QR codes are properly cached for offline access
@@ -76,13 +77,13 @@ class TicketCacheService {
       return;
     }
 
-    console.log('[TicketCacheService] Initializing...');
+    console.info('[TicketCacheService] Initializing...');
 
     // Check cache version and migrate if needed
     await this.checkCacheVersion();
 
     this.isInitialized = true;
-    console.log('[TicketCacheService] Initialized');
+    console.info('[TicketCacheService] Initialized');
   }
 
   /**
@@ -93,7 +94,7 @@ class TicketCacheService {
       const storedVersion = await AsyncStorage.getItem(STORAGE_KEYS.TICKETS_CACHE_VERSION);
 
       if (storedVersion !== CACHE_CONFIG.CACHE_VERSION) {
-        console.log(
+        console.info(
           `[TicketCacheService] Cache version mismatch: ${storedVersion} -> ${CACHE_CONFIG.CACHE_VERSION}`
         );
         // Perform any necessary migrations here
@@ -131,11 +132,11 @@ class TicketCacheService {
     }[]
   ): Promise<void> {
     if (!tickets || tickets.length === 0) {
-      console.log('[TicketCacheService] No tickets to cache');
+      console.info('[TicketCacheService] No tickets to cache');
       return;
     }
 
-    console.log(`[TicketCacheService] Caching ${tickets.length} tickets`);
+    console.info(`[TicketCacheService] Caching ${tickets.length} tickets`);
 
     const collection = this.database.get<Ticket>(TableNames.TICKETS);
 
@@ -202,7 +203,7 @@ class TicketCacheService {
     // Update cache metadata
     await this.updateCacheMetadata(tickets.length);
 
-    console.log(`[TicketCacheService] Successfully cached ${tickets.length} tickets`);
+    console.info(`[TicketCacheService] Successfully cached ${tickets.length} tickets`);
   }
 
   /**
@@ -328,7 +329,7 @@ class TicketCacheService {
    * Clear all cached tickets
    */
   async clearCache(): Promise<void> {
-    console.log('[TicketCacheService] Clearing ticket cache');
+    console.info('[TicketCacheService] Clearing ticket cache');
 
     const collection = this.database.get<Ticket>(TableNames.TICKETS);
     const allTickets = await collection.query().fetch();
@@ -345,7 +346,7 @@ class TicketCacheService {
       STORAGE_KEYS.QR_CODES_CACHED,
     ]);
 
-    console.log('[TicketCacheService] Cache cleared');
+    console.info('[TicketCacheService] Cache cleared');
   }
 
   /**
@@ -355,7 +356,7 @@ class TicketCacheService {
     fetchFunction: () => Promise<any[]>,
     festivalId?: string
   ): Promise<{ success: boolean; ticketCount: number }> {
-    console.log('[TicketCacheService] Preloading tickets...');
+    console.info('[TicketCacheService] Preloading tickets...');
 
     try {
       const tickets = await fetchFunction();
@@ -384,7 +385,7 @@ class TicketCacheService {
     // Check if already cached
     const cached = await this.getCachedTicketById(ticketId);
     if (cached) {
-      console.log(`[TicketCacheService] Ticket ${ticketId} already cached`);
+      console.info(`[TicketCacheService] Ticket ${ticketId} already cached`);
       return cached;
     }
 
@@ -427,7 +428,7 @@ class TicketCacheService {
 
     try {
       await ticket.markAsUsed(staffId);
-      console.log(`[TicketCacheService] Ticket ${ticketId} marked as used locally`);
+      console.info(`[TicketCacheService] Ticket ${ticketId} marked as used locally`);
       return true;
     } catch (error) {
       console.error(`[TicketCacheService] Failed to mark ticket ${ticketId} as used:`, error);

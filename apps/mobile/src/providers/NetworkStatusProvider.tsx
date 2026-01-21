@@ -185,7 +185,7 @@ export function NetworkStatusProvider({
 
       // Check for reconnection
       if (wasOfflineRef.current && isNowOnline) {
-        console.log('[NetworkStatusProvider] Network reconnected');
+        console.info('[NetworkStatusProvider] Network reconnected');
         onOnline?.();
 
         // Trigger sync on reconnection
@@ -197,7 +197,7 @@ export function NetworkStatusProvider({
 
           // Delay sync to allow network to stabilize
           syncTimeoutRef.current = setTimeout(async () => {
-            console.log('[NetworkStatusProvider] Triggering reconnection sync');
+            console.info('[NetworkStatusProvider] Triggering reconnection sync');
             try {
               onSyncStart?.();
               setIsSyncing(true);
@@ -219,7 +219,7 @@ export function NetworkStatusProvider({
           }, autoSyncDelay);
         }
       } else if (!isNowOnline && !wasOfflineRef.current) {
-        console.log('[NetworkStatusProvider] Network disconnected');
+        console.info('[NetworkStatusProvider] Network disconnected');
         onOffline?.();
       }
 
@@ -247,7 +247,7 @@ export function NetworkStatusProvider({
         appStateRef.current.match(/inactive|background/) &&
         nextAppState === 'active'
       ) {
-        console.log('[NetworkStatusProvider] App came to foreground');
+        console.info('[NetworkStatusProvider] App came to foreground');
 
         // Refresh network state
         NetInfo.fetch().then(updateNetworkState);

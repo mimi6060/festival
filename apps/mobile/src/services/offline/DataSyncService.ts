@@ -148,7 +148,7 @@ class DataSyncService {
   public async initialize(config: Partial<DataSyncConfig>): Promise<void> {
     this.config = { ...this.config, ...config };
     await this.loadDeltaMeta();
-    console.log('[DataSyncService] Initialized');
+    console.info('[DataSyncService] Initialized');
   }
 
   /**
@@ -188,7 +188,7 @@ class DataSyncService {
    */
   public async syncAll(force = false): Promise<FullSyncResult> {
     if (this.isSyncing && !force) {
-      console.log('[DataSyncService] Sync already in progress');
+      console.info('[DataSyncService] Sync already in progress');
       return {
         success: false,
         results: [],
@@ -201,7 +201,7 @@ class DataSyncService {
     }
 
     if (!networkDetector.isOnline()) {
-      console.log('[DataSyncService] Offline, cannot sync');
+      console.info('[DataSyncService] Offline, cannot sync');
       return {
         success: false,
         results: [],
@@ -248,7 +248,7 @@ class DataSyncService {
       const totalConflicts = results.reduce((sum, r) => sum + r.conflicts, 0);
       const totalErrors = results.reduce((sum, r) => sum + r.errors.length, 0);
 
-      console.log(`[DataSyncService] Full sync completed in ${duration}ms`);
+      console.info(`[DataSyncService] Full sync completed in ${duration}ms`);
 
       return {
         success: totalErrors === 0,
@@ -326,7 +326,7 @@ class DataSyncService {
         checksums: this.generateChecksums(merged),
       };
 
-      console.log(`[DataSyncService] Synced ${dataType}: ${itemsSynced} items`);
+      console.info(`[DataSyncService] Synced ${dataType}: ${itemsSynced} items`);
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       errors.push(errorMessage);
@@ -353,7 +353,7 @@ class DataSyncService {
       return;
     }
 
-    console.log(`[DataSyncService] Pushing ${pendingCount} local changes`);
+    console.info(`[DataSyncService] Pushing ${pendingCount} local changes`);
     await offlineManager.processSyncQueue();
   }
 
@@ -651,7 +651,7 @@ class DataSyncService {
     await syncQueue.clear();
     this.deltaMeta = this.getInitialDeltaMeta();
     await this.saveDeltaMeta();
-    console.log('[DataSyncService] All data cleared');
+    console.info('[DataSyncService] All data cleared');
   }
 
   /**

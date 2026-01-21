@@ -232,7 +232,7 @@ export function useFestivalFavorites(festivalId: string) {
  * Hook for upcoming performances
  */
 export function useUpcomingPerformances(_festivalId: string, limit = 10) {
-  const [performances, setPerformances] = useState<any[]>([]);
+  const [performances, setPerformances] = useState<unknown[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
   const cacheRef = useRef(getFestivalDataCache());

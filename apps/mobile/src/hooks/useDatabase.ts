@@ -76,7 +76,7 @@ export function useCreate<T extends TableName>(tableName: T) {
   const create = useCallback(
     async (data: Partial<ModelTypeMap[T]>): Promise<ModelTypeMap[T]> => {
       return database.write(async () => {
-        return collection.create((record: any) => {
+        return collection.create((record) => {
           Object.assign(record, data);
         });
       });
@@ -98,7 +98,7 @@ export function useUpdate<T extends TableName>(tableName: T) {
     async (id: string, updates: Partial<ModelTypeMap[T]>): Promise<ModelTypeMap[T]> => {
       return database.write(async () => {
         const record = await collection.find(id);
-        await record.update((r: any) => {
+        await record.update((r) => {
           Object.assign(r, updates);
         });
         return record;
@@ -183,7 +183,7 @@ export function useBatchOperations() {
       return database.write(async () => {
         const records: ModelTypeMap[T][] = [];
         for (const data of dataArray) {
-          const record = await collection.create((r: any) => {
+          const record = await collection.create((r) => {
             Object.assign(r, data);
           });
           records.push(record);
@@ -205,7 +205,7 @@ export function useBatchOperations() {
         const records: ModelTypeMap[T][] = [];
         for (const { id, data } of updates) {
           const record = await collection.find(id);
-          await record.update((r: any) => {
+          await record.update((r) => {
             Object.assign(r, data);
           });
           records.push(record);

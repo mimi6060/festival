@@ -39,7 +39,7 @@ const MockWiFiScanner: WiFiScannerModule = {
     // In production, this would use platform-specific native modules
     // For iOS: NEHotspotHelper (requires entitlement)
     // For Android: WifiManager.startScan()
-    console.log('[WiFiPositioning] Mock WiFi scan triggered');
+    console.info('[WiFiPositioning] Mock WiFi scan triggered');
     return [];
   },
   async getLastScanResults() {
@@ -131,7 +131,7 @@ export class WiFiPositioning {
    */
   async startPositioning(): Promise<void> {
     if (this.isScanning) {
-      console.log('[WiFiPositioning] Already scanning');
+      console.info('[WiFiPositioning] Already scanning');
       return;
     }
 
@@ -154,7 +154,7 @@ export class WiFiPositioning {
     }
 
     this.isScanning = true;
-    console.log('[WiFiPositioning] Starting WiFi positioning');
+    console.info('[WiFiPositioning] Starting WiFi positioning');
 
     // Start scanning cycle
     this.performScan();
@@ -348,7 +348,7 @@ export class WiFiPositioning {
       this.scanInterval = null;
     }
 
-    console.log('[WiFiPositioning] Stopped positioning');
+    console.info('[WiFiPositioning] Stopped positioning');
   }
 
   /**

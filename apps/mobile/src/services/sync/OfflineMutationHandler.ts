@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable @typescript-eslint/no-explicit-any -- WatermelonDB record callbacks require dynamic typing */
 /**
  * OfflineMutationHandler
  * Handles offline mutations: queuing, replaying, ordering, and conflict resolution
@@ -132,7 +133,7 @@ class OfflineMutationHandler {
    * Initialize the mutation handler
    */
   async initialize(): Promise<void> {
-    console.log('[OfflineMutationHandler] Initializing...');
+    console.info('[OfflineMutationHandler] Initializing...');
 
     // Load persisted mutations
     await this.loadMutations();
@@ -144,7 +145,7 @@ class OfflineMutationHandler {
     if (this.config.autoReplayOnOnline) {
       syncService.addNetworkListener((isOnline) => {
         if (isOnline && this.mutations.size > 0 && !this.isReplaying) {
-          console.log('[OfflineMutationHandler] Online - auto-replaying mutations');
+          console.info('[OfflineMutationHandler] Online - auto-replaying mutations');
           this.replayMutations().catch((error) => {
             console.error('[OfflineMutationHandler] Auto-replay failed:', error);
           });
@@ -152,7 +153,7 @@ class OfflineMutationHandler {
       });
     }
 
-    console.log('[OfflineMutationHandler] Initialized');
+    console.info('[OfflineMutationHandler] Initialized');
   }
 
   /**
@@ -181,7 +182,7 @@ class OfflineMutationHandler {
         this.nextOrder = this.mutationOrder.length;
       }
 
-      console.log(`[OfflineMutationHandler] Loaded ${this.mutations.size} pending mutations`);
+      console.info(`[OfflineMutationHandler] Loaded ${this.mutations.size} pending mutations`);
     } catch (error) {
       console.error('[OfflineMutationHandler] Failed to load mutations:', error);
     }
@@ -294,13 +295,13 @@ class OfflineMutationHandler {
       const merged = this.mergeMutations(existingMutation, mutation);
       this.mutations.set(existingMutation.id, merged);
 
-      console.log(`[OfflineMutationHandler] Merged mutation: ${existingMutation.id}`);
+      console.info(`[OfflineMutationHandler] Merged mutation: ${existingMutation.id}`);
     } else {
       // Add new mutation
       this.mutations.set(mutationId, mutation);
       this.mutationOrder.push(mutationId);
 
-      console.log(`[OfflineMutationHandler] Queued mutation: ${mutationId}`);
+      console.info(`[OfflineMutationHandler] Queued mutation: ${mutationId}`);
     }
 
     // Also add to sync queue
@@ -446,12 +447,12 @@ class OfflineMutationHandler {
    */
   async replayMutations(): Promise<ReplayResult> {
     if (this.isReplaying) {
-      console.log('[OfflineMutationHandler] Already replaying');
+      console.info('[OfflineMutationHandler] Already replaying');
       return { total: 0, successful: 0, failed: 0, conflicts: 0, errors: [] };
     }
 
     if (!syncService.isOnline()) {
-      console.log('[OfflineMutationHandler] Cannot replay: offline');
+      console.info('[OfflineMutationHandler] Cannot replay: offline');
       return { total: 0, successful: 0, failed: 0, conflicts: 0, errors: [] };
     }
 
@@ -467,12 +468,12 @@ class OfflineMutationHandler {
     };
 
     if (pendingMutations.length === 0) {
-      console.log('[OfflineMutationHandler] No mutations to replay');
+      console.info('[OfflineMutationHandler] No mutations to replay');
       this.isReplaying = false;
       return result;
     }
 
-    console.log(`[OfflineMutationHandler] Replaying ${pendingMutations.length} mutations`);
+    console.info(`[OfflineMutationHandler] Replaying ${pendingMutations.length} mutations`);
 
     this.notifyListeners({
       type: 'replay_started',
@@ -546,7 +547,7 @@ class OfflineMutationHandler {
     // Cleanup completed mutations
     await this.cleanupCompletedMutations();
 
-    console.log(
+    console.info(
       `[OfflineMutationHandler] Replay completed: ${result.successful} successful, ${result.failed} failed, ${result.conflicts} conflicts`
     );
 
@@ -559,7 +560,7 @@ class OfflineMutationHandler {
    * Process a single mutation
    */
   private async processMutation(mutation: Mutation): Promise<MutationResult> {
-    console.log(`[OfflineMutationHandler] Processing mutation: ${mutation.id}`);
+    console.info(`[OfflineMutationHandler] Processing mutation: ${mutation.id}`);
 
     await this.updateMutationStatus(mutation.id, 'processing');
 
@@ -872,7 +873,7 @@ class OfflineMutationHandler {
     this.mutations.clear();
     this.mutationOrder = [];
     await this.persistMutations();
-    console.log('[OfflineMutationHandler] All mutations cleared');
+    console.info('[OfflineMutationHandler] All mutations cleared');
   }
 
   /**
@@ -880,7 +881,7 @@ class OfflineMutationHandler {
    */
   updateConfig(config: Partial<OfflineMutationConfig>): void {
     this.config = { ...this.config, ...config };
-    console.log('[OfflineMutationHandler] Config updated');
+    console.info('[OfflineMutationHandler] Config updated');
   }
 
   /**
@@ -911,7 +912,7 @@ class OfflineMutationHandler {
    */
   destroy(): void {
     this.listeners.clear();
-    console.log('[OfflineMutationHandler] Destroyed');
+    console.info('[OfflineMutationHandler] Destroyed');
   }
 }
 

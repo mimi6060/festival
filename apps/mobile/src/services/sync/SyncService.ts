@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any -- WatermelonDB record callbacks require dynamic typing */
 /**
  * SyncService
  * Enhanced bidirectional sync service between WatermelonDB and backend API
@@ -177,7 +178,7 @@ class SyncService {
    * Sets up network monitoring, app state monitoring, and periodic sync
    */
   async initialize(): Promise<void> {
-    console.log('[SyncService] Initializing...');
+    console.info('[SyncService] Initializing...');
 
     // Initialize entity sync statuses
     await this.initializeEntityStatuses();
@@ -198,7 +199,7 @@ class SyncService {
     // Load pending changes count
     await this.updatePendingChangesCount();
 
-    console.log('[SyncService] Initialized successfully');
+    console.info('[SyncService] Initialized successfully');
   }
 
   /**
@@ -271,7 +272,7 @@ class SyncService {
 
     // Auto-sync on reconnection
     if (wasOffline && isNowOnline && this.config.autoSyncOnReconnect) {
-      console.log('[SyncService] Network reconnected, triggering sync');
+      console.info('[SyncService] Network reconnected, triggering sync');
       this.pendingReconnectionSync = true;
 
       // Delay sync slightly to allow network to stabilize
@@ -301,7 +302,7 @@ class SyncService {
    */
   private handleAppStateChange(nextAppState: AppStateStatus): void {
     if (nextAppState === 'active') {
-      console.log('[SyncService] App came to foreground');
+      console.info('[SyncService] App came to foreground');
 
       // Check if we should sync
       const timeSinceLastSync = Date.now() - this.lastSyncTime;
@@ -311,7 +312,7 @@ class SyncService {
         this.status.state !== 'syncing';
 
       if (shouldSync) {
-        console.log('[SyncService] Triggering background-to-foreground sync');
+        console.info('[SyncService] Triggering background-to-foreground sync');
         this.sync().catch((error) => {
           console.error('[SyncService] Foreground sync failed:', error);
         });
@@ -336,7 +337,7 @@ class SyncService {
 
     this.periodicSyncTimer = setInterval(async () => {
       if (this.status.isOnline && this.status.state !== 'syncing') {
-        console.log('[SyncService] Periodic sync triggered');
+        console.info('[SyncService] Periodic sync triggered');
         await this.sync().catch((error) => {
           console.error('[SyncService] Periodic sync failed:', error);
         });
@@ -345,7 +346,7 @@ class SyncService {
     }, this.config.periodicSyncInterval);
 
     scheduleNextSync();
-    console.log(
+    console.info(
       `[SyncService] Periodic sync started (interval: ${this.config.periodicSyncInterval}ms)`
     );
   }
@@ -358,7 +359,7 @@ class SyncService {
       clearInterval(this.periodicSyncTimer);
       this.periodicSyncTimer = null;
       this.status.nextScheduledSync = null;
-      console.log('[SyncService] Periodic sync stopped');
+      console.info('[SyncService] Periodic sync stopped');
     }
   }
 
@@ -489,7 +490,7 @@ class SyncService {
   async sync(force = false): Promise<SyncResult> {
     // Check if online
     if (!this.status.isOnline) {
-      console.log('[SyncService] Cannot sync: offline');
+      console.info('[SyncService] Cannot sync: offline');
       return {
         success: false,
         pulled: 0,
@@ -505,7 +506,7 @@ class SyncService {
     if (!force && this.lastSyncTime > 0) {
       const timeSinceLastSync = Date.now() - this.lastSyncTime;
       if (timeSinceLastSync < this.config.minSyncInterval) {
-        console.log('[SyncService] Sync throttled, too soon since last sync');
+        console.info('[SyncService] Sync throttled, too soon since last sync');
         return {
           success: true,
           pulled: 0,
@@ -520,7 +521,7 @@ class SyncService {
 
     // If already syncing, return existing promise
     if (this.syncPromise && !force) {
-      console.log('[SyncService] Sync already in progress');
+      console.info('[SyncService] Sync already in progress');
       return this.syncPromise;
     }
 
@@ -595,7 +596,7 @@ class SyncService {
       // Update pending changes count
       await this.updatePendingChangesCount();
 
-      console.log(
+      console.info(
         `[SyncService] Sync completed: pulled=${result.pulled}, pushed=${result.pushed}, duration=${result.duration}ms`
       );
     } catch (error) {
@@ -813,7 +814,7 @@ class SyncService {
    * Sync specific entity type
    */
   async syncEntity(entityType: string): Promise<SyncResult> {
-    console.log(`[SyncService] Syncing entity: ${entityType}`);
+    console.info(`[SyncService] Syncing entity: ${entityType}`);
 
     const startTime = Date.now();
     const result: SyncResult = {
@@ -1133,7 +1134,7 @@ class SyncService {
       failedSyncCount: 0,
     });
 
-    console.log('[SyncService] Sync state reset');
+    console.info('[SyncService] Sync state reset');
   }
 
   /**
@@ -1155,7 +1156,7 @@ class SyncService {
     this.listeners.clear();
     this.networkListeners.clear();
 
-    console.log('[SyncService] Destroyed');
+    console.info('[SyncService] Destroyed');
   }
 }
 
