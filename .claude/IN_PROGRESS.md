@@ -117,6 +117,25 @@ _Dernière mise à jour: 2026-01-21_
   - Dark mode support
   - forwardRef for all components
 
+- ✅ **Button Component Enhancement** - Enhanced with polymorphism and accessibility
+  - Polymorphism: `as` prop for rendering as button, a, or custom Link component
+  - Variants: primary, secondary, outline, ghost, danger
+  - Sizes: sm, md, lg with WCAG 2.5.5 touch target sizes
+  - States: disabled, loading with spinner and loadingText
+  - Icons: leftIcon, rightIcon props
+  - fullWidth prop for responsive layouts
+  - WCAG 2.1 AA compliance: aria-busy, aria-disabled, focus-visible
+  - cn() utility for class merging
+  - forwardRef for ref forwarding to all element types
+
+- ✅ **EmptyState Component** - Extracted to libs/ui with flexible variants
+  - Variants: default, card, page, compact (different spacing for contexts)
+  - Icon sizes: sm, md, lg with responsive sizing
+  - Props: icon, illustration (custom), title, description, action, secondaryAction
+  - EmptyStateIcons: search, noData, inbox, folder, calendar, ticket, users, bell, error, table, chart, plus, document, image, music, shoppingBag, creditCard
+  - Dark mode support with proper color handling
+  - forwardRef and testId support
+
 ---
 
 ## Notes Techniques
