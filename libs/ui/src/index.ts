@@ -12,3 +12,6 @@ export * from './components';
 
 // Re-export theme and design tokens
 export * from './theme';
+
+// Re-export utility functions
+export * from './utils';
