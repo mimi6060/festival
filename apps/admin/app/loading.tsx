@@ -1,4 +1,4 @@
-import { Spinner } from '../components/ui/Spinner';
+import { Spinner } from '@festival/ui';
 
 export default function Loading() {
   return (

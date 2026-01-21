@@ -33,7 +33,8 @@
       "@/lib/*": ["./lib/*"],
       "@/hooks/*": ["./hooks/*"],
       "@/types": ["./types/index.ts"],
-      "@/types/*": ["./types/*"]
+      "@/types/*": ["./types/*"],
+      "@festival/ui": ["../../libs/ui/src/index.ts"]
     }
   },
   "include": [
@@ -45,5 +46,10 @@
     "next-env.d.ts",
     "../../dist/apps/admin/.next/types/**/*.ts"
   ],
-  "exclude": ["node_modules"]
+  "exclude": ["node_modules"],
+  "references": [
+    {
+      "path": "../../libs/ui"
+    }
+  ]
 }

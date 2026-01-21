@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../../lib/auth-context';
 import { usersApi } from '@/lib/api';
-import { Avatar } from '@/components/ui';
+import { Avatar } from '@festival/ui';
 
 export default function ProfilePage() {
   const { user, updateUser } = useAuth();

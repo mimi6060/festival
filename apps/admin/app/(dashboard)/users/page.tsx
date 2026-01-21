@@ -3,7 +3,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import DataTable from '@/components/tables/DataTable';
 import ExportButton from '@/components/export/ExportButton';
-import { Avatar } from '@/components/ui';
+import { Avatar } from '@festival/ui';
 import { mockUsers } from '@/lib/mock-data';
 import { userExportColumns } from '@/lib/export';
 import { formatDateTime, cn } from '@/lib/utils';
