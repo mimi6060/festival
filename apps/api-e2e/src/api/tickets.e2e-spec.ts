@@ -13,20 +13,11 @@ import {
   createTestUser,
   createTestFestival,
   createTestTicketCategory,
-  purchaseTicket,
-  validateTicket,
   authenticatedRequest,
   randomEmail,
   randomPassword,
-  expectValidationError,
-  expectUnauthorized,
-  expectNotFound,
 } from '../support';
-import {
-  validFestivalData,
-  standardTicketCategory,
-  vipTicketCategory,
-} from '../support/fixtures';
+import { validFestivalData, standardTicketCategory, vipTicketCategory } from '../support/fixtures';
 
 describe('Tickets E2E Tests', () => {
   let organizerToken: string;
@@ -75,7 +66,7 @@ describe('Tickets E2E Tests', () => {
         name: 'VIP Pass ' + Date.now(),
       });
       vipCategoryId = vipCategory.id;
-    } catch (error) {
+    } catch {
       console.log('Setup may have failed - tests will skip if festival not created');
     }
   });
@@ -227,7 +218,7 @@ describe('Tickets E2E Tests', () => {
           'post',
           '/api/tickets/validate',
           staffToken,
-          { qrCode },
+          { qrCode }
         );
 
         expect([200, 201]).toContain(validateResponse.status);
@@ -238,12 +229,9 @@ describe('Tickets E2E Tests', () => {
     });
 
     it('should return invalid for non-existent QR code', async () => {
-      const response = await authenticatedRequest(
-        'post',
-        '/api/tickets/validate',
-        staffToken,
-        { qrCode: 'INVALID-QR-CODE-12345' },
-      );
+      const response = await authenticatedRequest('post', '/api/tickets/validate', staffToken, {
+        qrCode: 'INVALID-QR-CODE-12345',
+      });
 
       if (response.status >= 200 && response.status < 300) {
         expect(response.data.valid).toBe(false);
@@ -253,12 +241,7 @@ describe('Tickets E2E Tests', () => {
     });
 
     it('should return 400 for missing QR code', async () => {
-      const response = await authenticatedRequest(
-        'post',
-        '/api/tickets/validate',
-        staffToken,
-        {},
-      );
+      const response = await authenticatedRequest('post', '/api/tickets/validate', staffToken, {});
 
       expect(response.status).toBe(400);
     });
@@ -289,7 +272,7 @@ describe('Tickets E2E Tests', () => {
       const response = await authenticatedRequest(
         'get',
         `/api/tickets/me?festivalId=${festivalId}`,
-        userToken,
+        userToken
       );
 
       expect(response.status).toBe(200);
@@ -308,12 +291,17 @@ describe('Tickets E2E Tests', () => {
         password: randomPassword(),
       });
 
-      const response = await authenticatedRequest('get', '/api/tickets/me', anotherUser.accessToken!);
+      const response = await authenticatedRequest(
+        'get',
+        '/api/tickets/me',
+        anotherUser.accessToken!
+      );
 
       expect(response.status).toBe(200);
       // New user should have empty or no tickets
-      const tickets = Array.isArray(response.data) ? response.data : response.data.tickets || [];
+      const _tickets = Array.isArray(response.data) ? response.data : response.data.tickets || [];
       // Tickets from previous test user should not appear
+      expect(_tickets).toBeDefined();
     });
   });
 
@@ -348,7 +336,7 @@ describe('Tickets E2E Tests', () => {
       const response = await authenticatedRequest(
         'get',
         '/api/tickets/non-existent-ticket-id',
-        userToken,
+        userToken
       );
 
       expect(response.status).toBe(404);
@@ -384,7 +372,7 @@ describe('Tickets E2E Tests', () => {
         const response = await authenticatedRequest(
           'post',
           `/api/tickets/${ticketId}/cancel`,
-          userToken,
+          userToken
         );
 
         // Could be 200, 201, or 400 if cancellation is not allowed
@@ -396,7 +384,7 @@ describe('Tickets E2E Tests', () => {
       const response = await authenticatedRequest(
         'post',
         '/api/tickets/non-existent-id/cancel',
-        userToken,
+        userToken
       );
 
       expect(response.status).toBe(404);
@@ -437,7 +425,7 @@ describe('Tickets E2E Tests', () => {
         const response = await authenticatedRequest(
           'post',
           `/api/tickets/${ticketId}/cancel`,
-          anotherUser.accessToken!,
+          anotherUser.accessToken!
         );
 
         expect([403, 404]).toContain(response.status);
@@ -468,7 +456,7 @@ describe('Tickets E2E Tests', () => {
         const response = await authenticatedRequest(
           'get',
           `/api/tickets/${ticketId}/qrcode`,
-          userToken,
+          userToken
         );
 
         // Could be 200 with image data or 404 if endpoint doesn't exist
@@ -519,7 +507,7 @@ describe('Tickets E2E Tests', () => {
         'post',
         '/api/tickets/validate',
         staffToken,
-        { qrCode: ticket.qrCode },
+        { qrCode: ticket.qrCode }
       );
 
       if (validateResponse.status >= 200 && validateResponse.status < 300) {
@@ -527,12 +515,9 @@ describe('Tickets E2E Tests', () => {
       }
 
       // 3. Scan ticket (mark as used)
-      const scanResponse = await authenticatedRequest(
-        'post',
-        '/api/tickets/scan',
-        staffToken,
-        { qrCode: ticket.qrCode },
-      );
+      const scanResponse = await authenticatedRequest('post', '/api/tickets/scan', staffToken, {
+        qrCode: ticket.qrCode,
+      });
 
       if (scanResponse.status >= 200 && scanResponse.status < 300) {
         expect(scanResponse.data.accessGranted).toBe(true);
@@ -543,7 +528,7 @@ describe('Tickets E2E Tests', () => {
         'post',
         '/api/tickets/validate',
         staffToken,
-        { qrCode: ticket.qrCode },
+        { qrCode: ticket.qrCode }
       );
 
       if (revalidateResponse.status >= 200 && revalidateResponse.status < 300) {

@@ -21,7 +21,11 @@ import {
   randomPassword,
   loginUser,
 } from '../support';
-import { validFestivalData, standardTicketCategory, vipTicketCategory } from '../support/fixtures';
+import {
+  validFestivalData,
+  standardTicketCategory,
+  vipTicketCategory as _vipTicketCategory,
+} from '../support/fixtures';
 
 // Get the base URL from environment
 const host = process.env.HOST ?? 'localhost';
@@ -187,9 +191,7 @@ describe('Flow 1: Purchase Ticket Flow', () => {
           ? myTicketsResponse.data
           : myTicketsResponse.data.tickets || [];
 
-        const purchasedTicket = myTickets.find(
-          (t: { id: string }) => t.id === tickets[0].id
-        );
+        const purchasedTicket = myTickets.find((t: { id: string }) => t.id === tickets[0].id);
         expect(purchasedTicket).toBeDefined();
       }
     });
@@ -336,14 +338,12 @@ describe('Flow 2: Login Flow', () => {
     testPassword = randomPassword();
 
     // Register test user
-    await request(baseUrl)
-      .post('/api/auth/register')
-      .send({
-        email: testEmail,
-        password: testPassword,
-        firstName: 'Login',
-        lastName: 'Flow',
-      });
+    await request(baseUrl).post('/api/auth/register').send({
+      email: testEmail,
+      password: testPassword,
+      firstName: 'Login',
+      lastName: 'Flow',
+    });
   });
 
   describe('2.1 Login and Token Management', () => {
@@ -590,12 +590,10 @@ describe('Flow 3: Admin Dashboard KPIs', () => {
   describe('3.1 Admin Login and Dashboard Access', () => {
     it('should login as admin and verify admin role', async () => {
       // Try seeded admin credentials
-      const response = await request(baseUrl)
-        .post('/api/auth/login')
-        .send({
-          email: 'admin@festival.fr',
-          password: 'Festival2025!',
-        });
+      const response = await request(baseUrl).post('/api/auth/login').send({
+        email: 'admin@festival.fr',
+        password: 'Festival2025!',
+      });
 
       if (response.status === 200) {
         expect(response.body.user.role).toBe('ADMIN');
@@ -815,8 +813,12 @@ describe('Flow 4: Cashless Topup Flow', () => {
       const response1 = await authenticatedRequest('post', '/api/cashless/account', userToken);
       const response2 = await authenticatedRequest('post', '/api/cashless/account', userToken);
 
-      if (response1.status >= 200 && response1.status < 300 &&
-          response2.status >= 200 && response2.status < 300) {
+      if (
+        response1.status >= 200 &&
+        response1.status < 300 &&
+        response2.status >= 200 &&
+        response2.status < 300
+      ) {
         expect(response1.data.id).toBe(response2.data.id);
       }
     });
@@ -1154,7 +1156,7 @@ describe('Cross-Flow Integration Tests', () => {
         .expect(201);
 
       const accessToken = registerResponse.body.tokens.accessToken;
-      const userId = registerResponse.body.user.id;
+      const _userId = registerResponse.body.user.id;
 
       // Step 2: Verify profile
       const profileResponse = await request(baseUrl)

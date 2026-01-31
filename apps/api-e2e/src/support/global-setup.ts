@@ -6,7 +6,6 @@
  */
 
 import { execSync, spawn, ChildProcess } from 'child_process';
-import { existsSync } from 'fs';
 import path from 'path';
 
 // Store server process for teardown
@@ -25,7 +24,7 @@ const waitForServer = async (url: string, maxRetries = 30, delay = 1000): Promis
     } catch {
       // Server not ready yet
     }
-    await new Promise(resolve => setTimeout(resolve, delay));
+    await new Promise((resolve) => setTimeout(resolve, delay));
   }
   return false;
 };
@@ -41,7 +40,8 @@ module.exports = async function globalSetup() {
 
   // Set environment variables for tests
   process.env.NODE_ENV = 'test';
-  process.env.DATABASE_URL = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/festival_test';
+  process.env.DATABASE_URL =
+    process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/festival_test';
   process.env.JWT_SECRET = 'test-jwt-secret-e2e-testing-only';
   process.env.JWT_EXPIRATION = '1h';
   process.env.REFRESH_TOKEN_SECRET = 'test-refresh-token-secret-e2e';

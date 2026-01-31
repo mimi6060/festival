@@ -1,4 +1,6 @@
 // Pagination utility functions
+// Note: `any` types are intentional for Prisma WHERE clause flexibility
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 /**
  * Pagination metadata
@@ -41,11 +43,7 @@ export const MAX_LIMIT = 100;
 /**
  * Build pagination metadata
  */
-export function buildPaginationMeta(
-  page: number,
-  limit: number,
-  total: number
-): PaginationMeta {
+export function buildPaginationMeta(page: number, limit: number, total: number): PaginationMeta {
   const totalPages = Math.ceil(total / limit);
   const hasNextPage = page < totalPages;
   const hasPreviousPage = page > 1;
@@ -113,11 +111,7 @@ export function createPaginatedResponse<T>(
 /**
  * Paginate an array in memory
  */
-export function paginateArray<T>(
-  items: T[],
-  page: number,
-  limit: number
-): PaginatedResponse<T> {
+export function paginateArray<T>(items: T[], page: number, limit: number): PaginatedResponse<T> {
   const total = items.length;
   const offset = (page - 1) * limit;
   const data = items.slice(offset, offset + limit);
@@ -264,8 +258,7 @@ export function buildCursorPaginationMeta(
  * Encode a cursor (typically an ID or timestamp)
  */
 export function encodeCursor(value: string | number | Date): string {
-  const stringValue =
-    value instanceof Date ? value.toISOString() : String(value);
+  const stringValue = value instanceof Date ? value.toISOString() : String(value);
   return Buffer.from(stringValue).toString('base64url');
 }
 
@@ -283,9 +276,7 @@ export function decodeCursor(cursor: string): string {
 /**
  * Parse cursor from query
  */
-export function parseCursor(
-  query: Record<string, unknown>
-): string | undefined {
+export function parseCursor(query: Record<string, unknown>): string | undefined {
   const cursor = query['cursor'] || query['after'];
   if (typeof cursor === 'string' && cursor.length > 0) {
     return decodeCursor(cursor);
@@ -408,7 +399,9 @@ export function buildLimitedInclude(
       limitedInclude[key] = value;
     } else if (typeof value === 'object') {
       const nested = buildLimitedInclude(value.include || {}, maxDepth, currentDepth + 1);
-      limitedInclude[key] = nested ? { ...value, include: nested } : { ...value, include: undefined };
+      limitedInclude[key] = nested
+        ? { ...value, include: nested }
+        : { ...value, include: undefined };
     }
   }
 
@@ -491,10 +484,7 @@ export function buildKeysetWhere(
         OR: [
           { [sortField]: { [operator]: new Date(parsed.timestamp) } },
           {
-            AND: [
-              { [sortField]: new Date(parsed.timestamp) },
-              { id: { [operator]: parsed.id } },
-            ],
+            AND: [{ [sortField]: new Date(parsed.timestamp) }, { id: { [operator]: parsed.id } }],
           },
         ],
       };

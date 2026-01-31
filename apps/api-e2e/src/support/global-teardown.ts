@@ -22,13 +22,13 @@ module.exports = async function globalTeardown() {
       if (globalThis.__API_SERVER__.pid) {
         process.kill(-globalThis.__API_SERVER__.pid, 'SIGTERM');
       }
-    } catch (error) {
+    } catch {
       // Process might already be dead
       console.log('Server process may have already terminated.');
     }
 
     // Give it a moment to clean up
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise((resolve) => setTimeout(resolve, 1000));
 
     console.log('API server stopped.');
   }

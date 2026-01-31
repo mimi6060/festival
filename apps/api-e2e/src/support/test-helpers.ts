@@ -89,7 +89,7 @@ export async function authenticatedRequest<T = unknown>(
   method: 'get' | 'post' | 'put' | 'patch' | 'delete',
   url: string,
   accessToken: string,
-  data?: unknown,
+  data?: unknown
 ): Promise<AxiosResponse<T>> {
   const config = {
     method,
@@ -119,7 +119,7 @@ export async function createTestUser(
     password: string;
     firstName: string;
     lastName: string;
-  }> = {},
+  }> = {}
 ): Promise<TestUser> {
   userCounter++;
   const timestamp = Date.now();
@@ -154,7 +154,9 @@ export async function createTestUser(
   // In tests, we may need a seeded admin user for this
   if (role !== 'USER' && user.id) {
     // This would require admin privileges - handle via seed or mock
-    console.log(`Note: User ${user.email} created with USER role. Role ${role} requires admin update.`);
+    console.log(
+      `Note: User ${user.email} created with USER role. Role ${role} requires admin update.`
+    );
   }
 
   return user;
@@ -165,7 +167,7 @@ export async function createTestUser(
  */
 export async function loginUser(
   email: string,
-  password: string,
+  password: string
 ): Promise<{ accessToken: string; refreshToken: string; user: unknown }> {
   const response = await axios.post('/api/auth/login', { email, password });
 
@@ -219,7 +221,7 @@ export async function createTestFestival(
     endDate: string;
     maxCapacity: number;
     description: string;
-  }> = {},
+  }> = {}
 ): Promise<TestFestival> {
   festivalCounter++;
   const timestamp = Date.now();
@@ -280,10 +282,9 @@ export async function createTestTicketCategory(
     maxPerUser: number;
     saleStartDate: string;
     saleEndDate: string;
-  }> = {},
+  }> = {}
 ): Promise<TestTicketCategory> {
   ticketCategoryCounter++;
-  const timestamp = Date.now();
 
   // Sale dates: starts now, ends in 60 days
   const saleStartDate = new Date();
@@ -305,7 +306,7 @@ export async function createTestTicketCategory(
     'post',
     `/api/festivals/${festivalId}/ticket-categories`,
     accessToken,
-    categoryData,
+    categoryData
   );
 
   if (response.status !== 201 && response.status !== 200) {
@@ -330,7 +331,7 @@ export async function purchaseTicket(
   accessToken: string,
   festivalId: string,
   categoryId: string,
-  quantity = 1,
+  quantity = 1
 ): Promise<TestTicket[]> {
   const response = await authenticatedRequest('post', '/api/tickets/buy', accessToken, {
     festivalId,
@@ -361,7 +362,7 @@ export async function purchaseTicket(
  */
 export async function validateTicket(
   accessToken: string,
-  qrCode: string,
+  qrCode: string
 ): Promise<{ valid: boolean; ticket?: unknown; error?: string }> {
   const response = await authenticatedRequest('post', '/api/tickets/validate', accessToken, {
     qrCode,
@@ -381,9 +382,7 @@ export async function validateTicket(
 /**
  * Creates or gets a cashless account for a user
  */
-export async function createCashlessAccount(
-  accessToken: string,
-): Promise<TestCashlessAccount> {
+export async function createCashlessAccount(accessToken: string): Promise<TestCashlessAccount> {
   const response = await authenticatedRequest('post', '/api/cashless/account', accessToken);
 
   if (response.status !== 201 && response.status !== 200) {
@@ -405,7 +404,7 @@ export async function createCashlessAccount(
 export async function topupCashlessAccount(
   accessToken: string,
   amount: number,
-  festivalId: string,
+  festivalId: string
 ): Promise<{ balance: number; transactionId: string }> {
   const response = await authenticatedRequest('post', '/api/cashless/topup', accessToken, {
     amount,
@@ -429,7 +428,7 @@ export async function makeCashlessPayment(
   accessToken: string,
   amount: number,
   festivalId: string,
-  description?: string,
+  description?: string
 ): Promise<{ balance: number; transactionId: string }> {
   const response = await authenticatedRequest('post', '/api/cashless/pay', accessToken, {
     amount,
@@ -450,9 +449,7 @@ export async function makeCashlessPayment(
 /**
  * Gets the current cashless balance
  */
-export async function getCashlessBalance(
-  accessToken: string,
-): Promise<number> {
+export async function getCashlessBalance(accessToken: string): Promise<number> {
   const response = await authenticatedRequest('get', '/api/cashless/balance', accessToken);
 
   if (response.status !== 200) {
@@ -558,5 +555,5 @@ export function randomPassword(): string {
  * Waits for a specified amount of time
  */
 export function wait(ms: number): Promise<void> {
-  return new Promise(resolve => setTimeout(resolve, ms));
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
