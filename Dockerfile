@@ -3,7 +3,7 @@
 FROM node:20-alpine@sha256:6a91081a440be0b57336fbc4ee87f3dab1a2fd6f80cdb355dcf960e13bda3b59 AS base
 
 # Install dependencies for native modules
-RUN apk add --no-cache libc6-compat python3 make g++
+RUN apk add --no-cache libc6-compat openssl python3 make g++
 
 # Stage 1: Install dependencies
 FROM base AS deps
@@ -11,10 +11,11 @@ WORKDIR /app
 
 # Copy package files
 COPY package*.json ./
+COPY apps/api/package.json ./apps/api/package.json
 COPY prisma ./prisma/
 
-# Install all dependencies
-RUN npm ci
+# Install all dependencies (apps/mobile and the frontends are not part of this image)
+RUN HUSKY=0 npm install --include=dev --no-audit --no-fund
 
 # Generate Prisma client
 RUN npx prisma generate
@@ -24,10 +25,11 @@ FROM base AS builder
 WORKDIR /app
 
 COPY --from=deps /app/node_modules ./node_modules
+COPY --from=deps /app/apps/api/node_modules ./apps/api/node_modules
 COPY . .
 
 # Build the API
-RUN npm run build
+RUN npm run build:api
 
 # Stage 3: Production runner
 FROM base AS runner
@@ -43,6 +45,7 @@ RUN addgroup --system --gid 1001 nodejs && \
 # Copy necessary files
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/apps/api/node_modules ./apps/api/node_modules
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/package*.json ./
 

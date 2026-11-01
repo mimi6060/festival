@@ -64,8 +64,7 @@ export class StatsController {
   @Get('platform')
   @Public()
   @RateLimit(60, 60) // 60 requests per minute
-  @Cacheable({ ttl: 300 }) // Cache for 5 minutes
-  @CacheTag('platform-stats')
+  @Cacheable({ ttl: 300, tags: [CacheTag.ANALYTICS] }) // Cache for 5 minutes
   @ApiOperation({
     summary: 'Get public platform statistics',
     description:
@@ -86,8 +85,7 @@ export class StatsController {
   @Get('dashboard')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.ORGANIZER)
-  @Cacheable({ ttl: 120 }) // Cache for 2 minutes
-  @CacheTag('dashboard-stats')
+  @Cacheable({ ttl: 120, tags: [CacheTag.ANALYTICS] }) // Cache for 2 minutes
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Get admin dashboard statistics',

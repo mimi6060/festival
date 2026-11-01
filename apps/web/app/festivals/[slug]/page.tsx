@@ -13,7 +13,7 @@ import {
 export const dynamic = 'force-dynamic';
 
 // API URL for server-side fetching
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
 
 interface ApiFestival {
   id: string;

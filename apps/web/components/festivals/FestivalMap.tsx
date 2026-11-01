@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Card } from '@/components/ui/Card';
 import { Spinner } from '@festival/ui';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
 
 // POI types with icons and colors
 const POI_CONFIG: Record<string, { icon: string; color: string; label: string }> = {

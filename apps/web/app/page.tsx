@@ -7,7 +7,7 @@ import {
 export const dynamic = 'force-dynamic';
 
 // API URL for server-side fetching
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3333/api';
 
 interface PlatformStats {
   totalFestivals: number;
@@ -49,7 +49,7 @@ interface ApiFestival {
 // Fetch platform statistics from API
 async function fetchPlatformStats(): Promise<PlatformStats | null> {
   try {
-    const res = await fetch(`${API_BASE_URL}/platform-stats`, {
+    const res = await fetch(`${API_BASE_URL}/stats/platform`, {
       next: { revalidate: 300 }, // Cache for 5 minutes
     });
 

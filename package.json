@@ -8,6 +8,7 @@
     "start:web": "nx serve web",
     "start:admin": "nx serve admin",
     "start:mobile": "cd apps/mobile && npx expo start",
+    "start:prod": "node dist/apps/api/main.js",
     "build": "nx build",
     "build:api": "nx build api",
     "build:web": "NODE_ENV=production nx build web",
@@ -34,6 +35,9 @@
     "build-storybook": "storybook build"
   },
   "private": true,
+  "prisma": {
+    "seed": "ts-node --transpile-only --project prisma/tsconfig.seed.json prisma/seed.ts"
+  },
   "devDependencies": {
     "@chromatic-com/storybook": "^4.1.3",
     "@eslint/js": "^9.39.2",
