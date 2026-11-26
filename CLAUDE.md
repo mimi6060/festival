@@ -202,6 +202,10 @@ import { ... } from '@festival/shared/types';
 import { ... } from '@festival/shared/utils';
 import { ... } from '@festival/shared/constants';
 import { ... } from '@festival/shared/i18n';
+import { ... } from '@festival/shared/validation';   // Zod schemas
+import { ... } from '@festival/shared/hooks';        // React hooks
+import { ... } from '@festival/shared/api-client';   // API client
+import { ... } from '@festival/ui';                  // Shared UI components
 ```
 
 ## API Module Structure (apps/api/src/)
@@ -252,14 +256,16 @@ common/
 - **Error Codes**: Standardized format `ERR_XXXX` (1xxx=general, 2xxx=auth, 3xxx=authz, etc.)
 - **Rate Limiting**: Use `@RateLimit(limit, window)` decorator on public endpoints
 - **API Versioning**: `X-API-Version` header, defaults to v1
-- **WebSocket**: Gateways in `gateways/` use Socket.io, test with `@nestjs/testing` + socket.io-client
+- **Job Queues**: BullMQ with Redis for async tasks (emails, exports, notifications)
 
 ## Frontend Patterns (Next.js)
 
 - **State**: Zustand stores in `stores/`
-- **Data fetching**: React Query with hooks
+- **Data fetching**: React Query with hooks in `hooks/api/`
 - **Forms**: react-hook-form + zod validation
 - **API calls**: Include `credentials: 'include'` for cookies
+- **i18n**: next-intl with 6 languages (FR, EN, ES, DE, IT, PT)
+- **Styling**: Tailwind CSS with festive design tokens in `globals.css`
 
 ## Database (Prisma)
 
@@ -294,9 +300,24 @@ Test credentials (after `npx prisma db seed`):
 - Organizer: `organisateur@festival.fr` / `Festival2025!`
 - User: `user@festival.fr` / `Festival2025!`
 
+## WebSocket Gateways
+
+Real-time features use Socket.io gateways in `apps/api/src/gateways/`:
+
+| Gateway | Purpose | Events |
+|---------|---------|--------|
+| events | General notifications | `notification`, `festival-update` |
+| presence | Online status | `user-online`, `user-offline`, `typing` |
+| zones | Zone occupancy | `zone-capacity`, `zone-alert` |
+| broadcast | Announcements | `emergency`, `announcement` |
+| support-chat | Support tickets | `message`, `ticket-update` |
+
+Test with `@nestjs/testing` + `socket.io-client`.
+
 ## Reference
 
 - API Docs: `http://localhost:3333/api/docs` (Swagger)
 - API Guide: `docs/api/API_GUIDE.md`
 - Database Docs: `prisma/DATABASE.md`
 - Security: `docs/security/`
+- Postman Collection: `docs/api/festival-api.postman_collection.json`

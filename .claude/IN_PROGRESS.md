@@ -1,6 +1,6 @@
 # Tâches En Cours & À Faire
 
-_Dernière mise à jour: 2026-01-21_
+_Dernière mise à jour: 2026-01-31_
 
 ---
 
@@ -414,12 +414,13 @@ _Aucune tâche en cours_
   - any types ajoutés avec eslint-disable appropriés pour WatermelonDB
   - 0 erreurs, 0 warnings
 
-- [ ] **ESLint Configuration Improvements**
-  - Mettre à jour les règles ESLint
-  - Corriger les nouveaux warnings
-  - Assurer un style cohérent sur toutes les apps
+- [x] ~~**ESLint Configuration Improvements**~~ - **COMPLÉTÉ 2026-01-31**
+  - Corrigé tous les warnings ESLint restants (24 → 0)
+  - api-e2e: supprimé imports inutilisés, préfixé variables non utilisées
+  - shared-utils: ajouté eslint-disable pour les types any intentionnels (Prisma)
+  - 0 erreurs, 0 warnings sur tous les projets
 
-### À Vérifier
+### À Vérifier (optionnel)
 
 - [ ] Mobile `/program` page - vérifier affichage des concerts
 - [ ] Admin `/payments` page - tester fonctionnalité complète
